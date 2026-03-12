@@ -1,0 +1,22 @@
+[package]
+name = "wi-http-trigger"
+description = "Dynamic webhook ingress for WorldInterface"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+wi-core = { workspace = true }
+wi-contextstore = { workspace = true }
+wi-host = { workspace = true }
+axum = { workspace = true }
+chrono = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+uuid = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+tokio = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }

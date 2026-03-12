@@ -1,0 +1,21 @@
+# Webhook-triggered variant: receives trigger data, transforms, writes.
+name: golden-path-webhook
+nodes:
+  - id: b0000001-0000-0000-0000-000000000001
+    label: echo trigger
+    node_type: !transform
+      transform: identity
+      input: "{{trigger.body}}"
+
+  - id: b0000001-0000-0000-0000-000000000002
+    label: write trigger data
+    node_type: !connector
+      connector: fs.write
+      params:
+        path: /tmp/wi-golden-path-webhook.txt
+        content: "{{nodes.b0000001-0000-0000-0000-000000000001.output}}"
+        mode: overwrite
+
+edges:
+  - from: b0000001-0000-0000-0000-000000000001
+    to: b0000001-0000-0000-0000-000000000002

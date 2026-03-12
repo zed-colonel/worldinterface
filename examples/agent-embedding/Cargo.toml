@@ -1,0 +1,25 @@
+[package]
+name = "agent-embedding-example"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[workspace]
+
+[dependencies]
+wi-core = { path = "../../crates/wi-core" }
+wi-host = { path = "../../crates/wi-host" }
+wi-connector = { path = "../../crates/wi-connector" }
+wi-contextstore = { path = "../../crates/wi-contextstore" }
+serde_json = "1.0"
+tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
+tempfile = "3"
+
+[patch.crates-io]
+actionqueue-core = { path = "../../../actionqueue/crates/actionqueue-core" }
+actionqueue-workflow = { path = "../../../actionqueue/crates/actionqueue-workflow" }
+actionqueue-engine = { path = "../../../actionqueue/crates/actionqueue-engine" }
+actionqueue-budget = { path = "../../../actionqueue/crates/actionqueue-budget" }
+actionqueue-storage = { path = "../../../actionqueue/crates/actionqueue-storage" }
+actionqueue-runtime = { path = "../../../actionqueue/crates/actionqueue-runtime" }
+actionqueue-executor-local = { path = "../../../actionqueue/crates/actionqueue-executor-local" }

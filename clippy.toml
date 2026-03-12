@@ -1,0 +1,11 @@
+# Clippy configuration for WorldInterface v1.0
+# Baseline lint policy for consistent code quality
+
+# Threshold for lints like `too_many_arguments`
+too-many-arguments-threshold = 8
+
+# Threshold for lints like `too_many_lines`
+too-many-lines-threshold = 100
+
+# Threshold for lints like `cognitive_complexity`
+cognitive-complexity-threshold = 20

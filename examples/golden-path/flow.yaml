@@ -1,0 +1,32 @@
+# Golden-path example: delay -> identity transform -> fs.write
+# Demonstrates: connector execution, transform processing, durable output,
+#               receipt generation, and kill/restart survival.
+name: golden-path-demo
+nodes:
+  - id: a0000001-0000-0000-0000-000000000001
+    label: initial delay
+    node_type: !connector
+      connector: delay
+      params:
+        duration_ms: 50
+
+  - id: a0000001-0000-0000-0000-000000000002
+    label: transform result
+    node_type: !transform
+      transform: identity
+      input: {}
+
+  - id: a0000001-0000-0000-0000-000000000003
+    label: write output
+    node_type: !connector
+      connector: fs.write
+      params:
+        path: /tmp/wi-golden-path-output.txt
+        content: golden path complete
+        mode: overwrite
+
+edges:
+  - from: a0000001-0000-0000-0000-000000000001
+    to: a0000001-0000-0000-0000-000000000002
+  - from: a0000001-0000-0000-0000-000000000002
+    to: a0000001-0000-0000-0000-000000000003

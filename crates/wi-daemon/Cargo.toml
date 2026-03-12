@@ -1,0 +1,28 @@
+[package]
+name = "wi-daemon"
+description = "HTTP API daemon for WorldInterface"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+wi-core = { workspace = true }
+wi-host = { workspace = true }
+wi-http-trigger = { workspace = true }
+wi-connector = { workspace = true }
+axum = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+uuid = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+tokio = { workspace = true }
+toml = { workspace = true }
+prometheus = { workspace = true }
+tower-http = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }
+reqwest = { workspace = true }
+serde_yaml = { workspace = true }

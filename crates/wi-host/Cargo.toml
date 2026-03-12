@@ -1,0 +1,27 @@
+[package]
+name = "wi-host"
+description = "Embedded Host trait for WorldInterface (Agent integration surface)"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+
+[dependencies]
+wi-core = { workspace = true }
+wi-flowspec = { workspace = true }
+wi-contextstore = { workspace = true }
+wi-connector = { workspace = true }
+wi-coordinator = { workspace = true }
+actionqueue-core = "0.1.0"
+actionqueue-runtime = { version = "0.1.1", features = ["budget"] }
+actionqueue-executor-local = "0.1.1"
+actionqueue-storage = "0.1.0"
+serde = { workspace = true }
+serde_json = { workspace = true }
+uuid = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+tokio = { workspace = true }
+chrono = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }

@@ -1,0 +1,68 @@
+[workspace]
+resolver = "2"
+members = [
+    "crates/wi-core",
+    "crates/wi-flowspec",
+    "crates/wi-contextstore",
+    "crates/wi-connector",
+    "crates/wi-coordinator",
+    "crates/wi-host",
+    "crates/wi-http-trigger",
+    "crates/wi-daemon",
+    "crates/wi-cli",
+]
+exclude = [
+    "examples/agent-embedding",
+]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+license = "MIT"
+repository = "https://github.com/zed-colonel/worldinterface"
+
+[workspace.dependencies]
+# Internal crates
+wi-core = { path = "crates/wi-core" }
+wi-flowspec = { path = "crates/wi-flowspec" }
+wi-contextstore = { path = "crates/wi-contextstore" }
+wi-connector = { path = "crates/wi-connector" }
+wi-coordinator = { path = "crates/wi-coordinator" }
+wi-host = { path = "crates/wi-host" }
+wi-http-trigger = { path = "crates/wi-http-trigger" }
+wi-daemon = { path = "crates/wi-daemon" }
+
+# ActionQueue crates (from crates.io)
+actionqueue-core = { version = "0.1.0", features = ["serde"] }
+actionqueue-workflow = "0.1.0"
+actionqueue-engine = "0.1.0"
+actionqueue-budget = "0.1.0"
+actionqueue-actor = "0.1.0"
+actionqueue-platform = "0.1.0"
+actionqueue-storage = "0.1.0"
+actionqueue-runtime = "0.1.1"
+actionqueue-executor-local = "0.1.1"
+
+# Shared dependencies
+serde = { version = ">=1.0, <1.0.224", features = ["derive"] }
+serde_json = "1.0"
+serde_yaml = "0.9"
+uuid = { version = "1.0", features = ["v4", "v5", "serde"] }
+thiserror = "2"
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+tokio = { version = "1", features = ["rt-multi-thread", "sync", "time", "macros", "signal"] }
+axum = "0.7"
+reqwest = { version = "0.12", features = ["json", "blocking"] }
+rusqlite = { version = "0.32", features = ["bundled"] }
+clap = { version = "4", features = ["derive", "env"] }
+prometheus = "0.13"
+tower-http = { version = "0.6", features = ["trace"] }
+chrono = { version = "0.4", features = ["serde"] }
+toml = "0.8"
+sha2 = "0.10"
+
+# Test dependencies
+tempfile = "3"
+proptest = "1.4"
+tokio-test = "0.4"
