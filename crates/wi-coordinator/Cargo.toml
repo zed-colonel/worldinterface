@@ -1,9 +1,14 @@
 [package]
 name = "wi-coordinator"
+authors.workspace = true
 description = "ActionQueue handler for WorldInterface FlowRun orchestration"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+readme = "README.md"
+repository.workspace = true
+keywords = ["worldinterface", "coordinator", "orchestration", "workflow", "actionqueue"]
+categories = ["concurrency"]
 
 [dependencies]
 wi-core = { workspace = true }

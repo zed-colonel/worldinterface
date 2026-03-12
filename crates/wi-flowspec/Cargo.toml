@@ -1,9 +1,14 @@
 [package]
 name = "wi-flowspec"
+authors.workspace = true
 description = "FlowSpec parser, validator, and compiler to ActionQueue DAG"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+readme = "README.md"
+repository.workspace = true
+keywords = ["worldinterface", "flowspec", "compiler", "dag", "workflow"]
+categories = ["compilers"]
 
 [dependencies]
 wi-core = { workspace = true }

@@ -1,9 +1,14 @@
 [package]
 name = "wi-host"
+authors.workspace = true
 description = "Embedded Host trait for WorldInterface (Agent integration surface)"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+readme = "README.md"
+repository.workspace = true
+keywords = ["worldinterface", "host", "embedding", "agent", "runtime"]
+categories = ["concurrency"]
 
 [dependencies]
 wi-core = { workspace = true }

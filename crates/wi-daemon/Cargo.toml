@@ -1,9 +1,14 @@
 [package]
 name = "wi-daemon"
+authors.workspace = true
 description = "HTTP API daemon for WorldInterface"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+readme = "README.md"
+repository.workspace = true
+keywords = ["worldinterface", "daemon", "api", "http", "metrics"]
+categories = ["web-programming::http-server"]
 
 [dependencies]
 wi-core = { workspace = true }

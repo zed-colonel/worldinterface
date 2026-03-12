@@ -17,20 +17,21 @@ exclude = [
 
 [workspace.package]
 version = "0.1.0"
+authors = ["Keith <zed.colonel@gmail.com>"]
 edition = "2021"
 license = "MIT"
 repository = "https://github.com/zed-colonel/worldinterface"
 
 [workspace.dependencies]
 # Internal crates
-wi-core = { path = "crates/wi-core" }
-wi-flowspec = { path = "crates/wi-flowspec" }
-wi-contextstore = { path = "crates/wi-contextstore" }
-wi-connector = { path = "crates/wi-connector" }
-wi-coordinator = { path = "crates/wi-coordinator" }
-wi-host = { path = "crates/wi-host" }
-wi-http-trigger = { path = "crates/wi-http-trigger" }
-wi-daemon = { path = "crates/wi-daemon" }
+wi-core = { path = "crates/wi-core", version = "0.1.0" }
+wi-flowspec = { path = "crates/wi-flowspec", version = "0.1.0" }
+wi-contextstore = { path = "crates/wi-contextstore", version = "0.1.0" }
+wi-connector = { path = "crates/wi-connector", version = "0.1.0" }
+wi-coordinator = { path = "crates/wi-coordinator", version = "0.1.0" }
+wi-host = { path = "crates/wi-host", version = "0.1.0" }
+wi-http-trigger = { path = "crates/wi-http-trigger", version = "0.1.0" }
+wi-daemon = { path = "crates/wi-daemon", version = "0.1.0" }
 
 # ActionQueue crates (from crates.io)
 actionqueue-core = { version = "0.1.0", features = ["serde"] }

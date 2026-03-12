@@ -1,9 +1,14 @@
 [package]
 name = "wi-http-trigger"
+authors.workspace = true
 description = "Dynamic webhook ingress for WorldInterface"
 version.workspace = true
 edition.workspace = true
 license.workspace = true
+readme = "README.md"
+repository.workspace = true
+keywords = ["worldinterface", "webhook", "trigger", "http", "ingress"]
+categories = ["web-programming::http-server"]
 
 [dependencies]
 wi-core = { workspace = true }
