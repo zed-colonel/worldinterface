@@ -295,7 +295,7 @@ async fn acceptance_c_idempotency() {
     let marker_files: Vec<_> = std::fs::read_dir(dir.path())
         .unwrap()
         .filter_map(|e| e.ok())
-        .filter(|e| e.path().to_str().map_or(false, |s| s.starts_with(&marker_pattern)))
+        .filter(|e| e.path().to_str().is_some_and(|s| s.starts_with(&marker_pattern)))
         .collect();
     assert!(
         !marker_files.is_empty(),
@@ -337,7 +337,7 @@ async fn acceptance_c_idempotency() {
     let marker_files2: Vec<_> = std::fs::read_dir(dir.path())
         .unwrap()
         .filter_map(|e| e.ok())
-        .filter(|e| e.path().to_str().map_or(false, |s| s.starts_with(&marker_pattern2)))
+        .filter(|e| e.path().to_str().is_some_and(|s| s.starts_with(&marker_pattern2)))
         .collect();
     assert!(!marker_files2.is_empty(), "second marker file should exist with different run_id");
 

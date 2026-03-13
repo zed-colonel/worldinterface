@@ -21,8 +21,10 @@ pub struct ServeArgs {
 fn init_tracing() {
     let filter = EnvFilter::try_from_default_env().unwrap_or_else(|_| {
         EnvFilter::new(
-            "worldinterface_core=info,worldinterface_flowspec=info,worldinterface_contextstore=info,worldinterface_connector=info,\
-             worldinterface_coordinator=info,worldinterface_host=info,worldinterface_http_trigger=info,worldinterface_daemon=info,worldinterface_cli=info,\
+            "worldinterface_core=info,worldinterface_flowspec=info,\
+             worldinterface_contextstore=info,worldinterface_connector=info,\
+             worldinterface_coordinator=info,worldinterface_host=info,\
+             worldinterface_http_trigger=info,worldinterface_daemon=info,worldinterface_cli=info,\
              tower_http=info,warn",
         )
     });

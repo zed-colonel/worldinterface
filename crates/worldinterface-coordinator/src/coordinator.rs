@@ -452,7 +452,8 @@ fn rebuild_step_spec(
     };
     let payload_bytes = serde_json::to_vec(&step_payload).expect("StepPayload serialization");
 
-    let coordinator_task_id = worldinterface_flowspec::id::derive_coordinator_task_id(payload.flow_run_id);
+    let coordinator_task_id =
+        worldinterface_flowspec::id::derive_coordinator_task_id(payload.flow_run_id);
 
     let safety_level = match &node.node_type {
         NodeType::Connector(_) => SafetyLevel::Idempotent,

@@ -169,7 +169,8 @@ mod tests {
 
     #[test]
     fn webhook_not_found_maps_to_404() {
-        let err: ApiError = WebhookError::WebhookNotFound(worldinterface_http_trigger::WebhookId::new()).into();
+        let err: ApiError =
+            WebhookError::WebhookNotFound(worldinterface_http_trigger::WebhookId::new()).into();
         assert!(matches!(err, ApiError::NotFound(_)));
     }
 

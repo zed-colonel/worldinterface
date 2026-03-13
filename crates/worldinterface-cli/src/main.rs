@@ -60,8 +60,9 @@ async fn run(cli: Cli) -> Result<(), error::CliError> {
             // Initialize tracing for serve mode
             tracing_subscriber::fmt()
                 .with_env_filter(
-                    tracing_subscriber::EnvFilter::try_from_default_env()
-                        .unwrap_or_else(|_| "info,worldinterface_daemon=debug,worldinterface_host=debug".into()),
+                    tracing_subscriber::EnvFilter::try_from_default_env().unwrap_or_else(|_| {
+                        "info,worldinterface_daemon=debug,worldinterface_host=debug".into()
+                    }),
                 )
                 .init();
             commands::serve::execute(args).await

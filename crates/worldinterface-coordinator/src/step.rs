@@ -11,7 +11,9 @@ use actionqueue_executor_local::handler::{ExecutorContext, HandlerOutput};
 use serde::{Deserialize, Serialize};
 use worldinterface_connector::execute_transform;
 use worldinterface_connector::invoke_with_receipt;
-use worldinterface_connector::{CancellationToken, ConnectorError, ConnectorRegistry, InvocationContext};
+use worldinterface_connector::{
+    CancellationToken, ConnectorError, ConnectorRegistry, InvocationContext,
+};
 use worldinterface_contextstore::{AtomicWriter, ContextStore, ContextStoreError};
 use worldinterface_core::flowspec::branch::BranchNode;
 use worldinterface_core::flowspec::{ConnectorNode, NodeType, TransformNode};
@@ -764,7 +766,10 @@ mod tests {
         let inv_ctx = InvocationContext {
             flow_run_id: FlowRunId::new(),
             node_id: NodeId::new(),
-            step_run_id: worldinterface_flowspec::id::derive_step_run_id(FlowRunId::new(), NodeId::new()),
+            step_run_id: worldinterface_flowspec::id::derive_step_run_id(
+                FlowRunId::new(),
+                NodeId::new(),
+            ),
             run_id: uuid::Uuid::new_v4(),
             attempt_id: uuid::Uuid::new_v4(),
             attempt_number: 1,
@@ -784,7 +789,10 @@ mod tests {
         let inv_ctx = InvocationContext {
             flow_run_id: FlowRunId::new(),
             node_id: NodeId::new(),
-            step_run_id: worldinterface_flowspec::id::derive_step_run_id(FlowRunId::new(), NodeId::new()),
+            step_run_id: worldinterface_flowspec::id::derive_step_run_id(
+                FlowRunId::new(),
+                NodeId::new(),
+            ),
             run_id: uuid::Uuid::new_v4(),
             attempt_id: uuid::Uuid::new_v4(),
             attempt_number: 1,

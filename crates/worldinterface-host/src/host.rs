@@ -116,8 +116,11 @@ impl EmbeddedHost {
     pub async fn submit_flow(&self, spec: FlowSpec) -> Result<FlowRunId, HostError> {
         let flow_run_id = FlowRunId::new();
         tracing::info!(%flow_run_id, "submitting flow");
-        let result =
-            worldinterface_flowspec::compile_with_config(&spec, &self.inner.compiler_config, flow_run_id)?;
+        let result = worldinterface_flowspec::compile_with_config(
+            &spec,
+            &self.inner.compiler_config,
+            flow_run_id,
+        )?;
 
         // Step 1: Insert into coordinator_map (brief std::sync::Mutex lock, no await)
         {
@@ -153,8 +156,11 @@ impl EmbeddedHost {
     ) -> Result<FlowRunId, HostError> {
         let flow_run_id = FlowRunId::new();
         tracing::info!(%flow_run_id, trigger = true, "submitting flow with trigger input");
-        let result =
-            worldinterface_flowspec::compile_with_config(&spec, &self.inner.compiler_config, flow_run_id)?;
+        let result = worldinterface_flowspec::compile_with_config(
+            &spec,
+            &self.inner.compiler_config,
+            flow_run_id,
+        )?;
 
         // Write trigger input to ContextStore BEFORE AQ submission.
         let trigger_node_id = trigger_input_node_id();

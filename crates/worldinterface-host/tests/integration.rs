@@ -9,7 +9,9 @@ use worldinterface_connector::connectors::{DelayConnector, FsReadConnector, FsWr
 use worldinterface_connector::ConnectorRegistry;
 use worldinterface_core::flowspec::*;
 use worldinterface_core::id::{FlowRunId, NodeId};
-use worldinterface_host::{EmbeddedHost, FlowPhase, FlowRunStatus, HostConfig, HostError, StepPhase};
+use worldinterface_host::{
+    EmbeddedHost, FlowPhase, FlowRunStatus, HostConfig, HostError, StepPhase,
+};
 
 // ── Helpers ─────────────────────────────────────────────────────────────
 

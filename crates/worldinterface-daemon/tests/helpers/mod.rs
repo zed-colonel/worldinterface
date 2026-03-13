@@ -106,7 +106,8 @@ pub async fn start_test_daemon_at_path(path: &std::path::Path) -> TestDaemon {
     let registry = test_registry();
     let host = EmbeddedHost::start(host_config, registry).await.unwrap();
     let webhook_registry =
-        worldinterface_http_trigger::WebhookRegistry::load_from_store(host.context_store()).unwrap();
+        worldinterface_http_trigger::WebhookRegistry::load_from_store(host.context_store())
+            .unwrap();
     let state: SharedState =
         Arc::new(AppState { host, webhook_registry: RwLock::new(webhook_registry), metrics });
     let router = worldinterface_daemon::router::build_router(Arc::clone(&state));
