@@ -7,10 +7,10 @@ publish = false
 [workspace]
 
 [dependencies]
-wi-core = { path = "../../crates/wi-core" }
-wi-host = { path = "../../crates/wi-host" }
-wi-connector = { path = "../../crates/wi-connector" }
-wi-contextstore = { path = "../../crates/wi-contextstore" }
+worldinterface-core = { path = "../../crates/worldinterface-core" }
+worldinterface-host = { path = "../../crates/worldinterface-host" }
+worldinterface-connector = { path = "../../crates/worldinterface-connector" }
+worldinterface-contextstore = { path = "../../crates/worldinterface-contextstore" }
 serde_json = "1.0"
 tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
 tempfile = "3"

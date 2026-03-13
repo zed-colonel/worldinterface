@@ -13,11 +13,11 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use serde_json::json;
-use wi_connector::connectors::{DelayConnector, FsReadConnector, FsWriteConnector};
-use wi_connector::ConnectorRegistry;
-use wi_core::flowspec::*;
-use wi_core::id::NodeId;
-use wi_host::{EmbeddedHost, FlowPhase, HostConfig};
+use worldinterface_connector::connectors::{DelayConnector, FsReadConnector, FsWriteConnector};
+use worldinterface_connector::ConnectorRegistry;
+use worldinterface_core::flowspec::*;
+use worldinterface_core::id::NodeId;
+use worldinterface_host::{EmbeddedHost, FlowPhase, HostConfig};
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {

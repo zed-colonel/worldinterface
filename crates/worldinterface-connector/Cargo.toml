@@ -1,0 +1,27 @@
+[package]
+name = "worldinterface-connector"
+authors.workspace = true
+description = "Connector trait, registry, and built-in connectors for WorldInterface"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+readme = "README.md"
+repository.workspace = true
+keywords = ["worldinterface", "connector", "boundary", "integration", "http"]
+categories = ["web-programming"]
+
+[dependencies]
+worldinterface-core = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+reqwest = { workspace = true }
+tokio = { workspace = true }
+chrono = { workspace = true }
+sha2 = { workspace = true }
+uuid = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }
+tracing-subscriber = { workspace = true }

@@ -2422,179 +2422,6 @@ dependencies = [
 ]
 
 [[package]]
-name = "wi-cli"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "clap",
- "reqwest",
- "serde",
- "serde_json",
- "serde_yaml",
- "thiserror 2.0.18",
- "tokio",
- "tracing",
- "tracing-subscriber",
- "uuid",
- "wi-connector",
- "wi-core",
- "wi-daemon",
- "wi-host",
-]
-
-[[package]]
-name = "wi-connector"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "reqwest",
- "serde",
- "serde_json",
- "sha2",
- "tempfile",
- "thiserror 2.0.18",
- "tokio",
- "tracing",
- "tracing-subscriber",
- "uuid",
- "wi-core",
-]
-
-[[package]]
-name = "wi-contextstore"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "proptest",
- "rusqlite",
- "serde",
- "serde_json",
- "tempfile",
- "thiserror 2.0.18",
- "tracing",
- "uuid",
- "wi-core",
-]
-
-[[package]]
-name = "wi-coordinator"
-version = "0.1.0"
-dependencies = [
- "actionqueue-core",
- "actionqueue-engine",
- "actionqueue-executor-local",
- "actionqueue-runtime",
- "actionqueue-workflow",
- "serde",
- "serde_json",
- "tempfile",
- "thiserror 2.0.18",
- "tokio",
- "tracing",
- "tracing-subscriber",
- "uuid",
- "wi-connector",
- "wi-contextstore",
- "wi-core",
- "wi-flowspec",
-]
-
-[[package]]
-name = "wi-core"
-version = "0.1.0"
-dependencies = [
- "chrono",
- "proptest",
- "serde",
- "serde_json",
- "serde_yaml",
- "sha2",
- "thiserror 2.0.18",
- "uuid",
-]
-
-[[package]]
-name = "wi-daemon"
-version = "0.1.0"
-dependencies = [
- "axum",
- "prometheus",
- "reqwest",
- "serde",
- "serde_json",
- "serde_yaml",
- "tempfile",
- "thiserror 2.0.18",
- "tokio",
- "toml",
- "tower-http",
- "tracing",
- "tracing-subscriber",
- "uuid",
- "wi-connector",
- "wi-core",
- "wi-host",
- "wi-http-trigger",
-]
-
-[[package]]
-name = "wi-flowspec"
-version = "0.1.0"
-dependencies = [
- "actionqueue-core",
- "actionqueue-workflow",
- "proptest",
- "serde",
- "serde_json",
- "serde_yaml",
- "thiserror 2.0.18",
- "tracing",
- "uuid",
- "wi-core",
-]
-
-[[package]]
-name = "wi-host"
-version = "0.1.0"
-dependencies = [
- "actionqueue-core",
- "actionqueue-executor-local",
- "actionqueue-runtime",
- "actionqueue-storage",
- "chrono",
- "serde",
- "serde_json",
- "tempfile",
- "thiserror 2.0.18",
- "tokio",
- "tracing",
- "uuid",
- "wi-connector",
- "wi-contextstore",
- "wi-coordinator",
- "wi-core",
- "wi-flowspec",
-]
-
-[[package]]
-name = "wi-http-trigger"
-version = "0.1.0"
-dependencies = [
- "axum",
- "chrono",
- "serde",
- "serde_json",
- "tempfile",
- "thiserror 2.0.18",
- "tokio",
- "tracing",
- "uuid",
- "wi-contextstore",
- "wi-core",
- "wi-host",
-]
-
-[[package]]
 name = "windows-core"
 version = "0.62.2"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -2915,6 +2742,179 @@ dependencies = [
  "serde_json",
  "unicode-xid",
  "wasmparser",
+]
+
+[[package]]
+name = "worldinterface-cli"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "clap",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "thiserror 2.0.18",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
+ "worldinterface-connector",
+ "worldinterface-core",
+ "worldinterface-daemon",
+ "worldinterface-host",
+]
+
+[[package]]
+name = "worldinterface-connector"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "sha2",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
+ "worldinterface-core",
+]
+
+[[package]]
+name = "worldinterface-contextstore"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "proptest",
+ "rusqlite",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tracing",
+ "uuid",
+ "worldinterface-core",
+]
+
+[[package]]
+name = "worldinterface-coordinator"
+version = "0.1.0"
+dependencies = [
+ "actionqueue-core",
+ "actionqueue-engine",
+ "actionqueue-executor-local",
+ "actionqueue-runtime",
+ "actionqueue-workflow",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
+ "worldinterface-connector",
+ "worldinterface-contextstore",
+ "worldinterface-core",
+ "worldinterface-flowspec",
+]
+
+[[package]]
+name = "worldinterface-core"
+version = "0.1.0"
+dependencies = [
+ "chrono",
+ "proptest",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "sha2",
+ "thiserror 2.0.18",
+ "uuid",
+]
+
+[[package]]
+name = "worldinterface-daemon"
+version = "0.1.0"
+dependencies = [
+ "axum",
+ "prometheus",
+ "reqwest",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+ "toml",
+ "tower-http",
+ "tracing",
+ "tracing-subscriber",
+ "uuid",
+ "worldinterface-connector",
+ "worldinterface-core",
+ "worldinterface-host",
+ "worldinterface-http-trigger",
+]
+
+[[package]]
+name = "worldinterface-flowspec"
+version = "0.1.0"
+dependencies = [
+ "actionqueue-core",
+ "actionqueue-workflow",
+ "proptest",
+ "serde",
+ "serde_json",
+ "serde_yaml",
+ "thiserror 2.0.18",
+ "tracing",
+ "uuid",
+ "worldinterface-core",
+]
+
+[[package]]
+name = "worldinterface-host"
+version = "0.1.0"
+dependencies = [
+ "actionqueue-core",
+ "actionqueue-executor-local",
+ "actionqueue-runtime",
+ "actionqueue-storage",
+ "chrono",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+ "tracing",
+ "uuid",
+ "worldinterface-connector",
+ "worldinterface-contextstore",
+ "worldinterface-coordinator",
+ "worldinterface-core",
+ "worldinterface-flowspec",
+]
+
+[[package]]
+name = "worldinterface-http-trigger"
+version = "0.1.0"
+dependencies = [
+ "axum",
+ "chrono",
+ "serde",
+ "serde_json",
+ "tempfile",
+ "thiserror 2.0.18",
+ "tokio",
+ "tracing",
+ "uuid",
+ "worldinterface-contextstore",
+ "worldinterface-core",
+ "worldinterface-host",
 ]
 
 [[package]]

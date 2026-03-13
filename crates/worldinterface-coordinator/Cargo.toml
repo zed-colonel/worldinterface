@@ -1,0 +1,32 @@
+[package]
+name = "worldinterface-coordinator"
+authors.workspace = true
+description = "ActionQueue handler for WorldInterface FlowRun orchestration"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+readme = "README.md"
+repository.workspace = true
+keywords = ["worldinterface", "coordinator", "orchestration", "workflow", "actionqueue"]
+categories = ["concurrency"]
+
+[dependencies]
+worldinterface-core = { workspace = true }
+worldinterface-flowspec = { workspace = true }
+worldinterface-contextstore = { workspace = true }
+worldinterface-connector = { workspace = true }
+actionqueue-core = "0.1.0"
+actionqueue-workflow = "0.1.0"
+actionqueue-executor-local = "0.1.1"
+serde = { workspace = true }
+serde_json = { workspace = true }
+uuid = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+
+[dev-dependencies]
+actionqueue-engine = "0.1.0"
+actionqueue-runtime = { version = "0.1.1", features = ["budget"] }
+tempfile = { workspace = true }
+tokio = { workspace = true }
+tracing-subscriber = { workspace = true }

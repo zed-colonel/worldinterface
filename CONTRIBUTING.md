@@ -21,12 +21,12 @@ cargo build --workspace
 cargo test --workspace
 
 # Specific crate
-cargo test -p wi-core
-cargo test -p wi-coordinator
+cargo test -p worldinterface-core
+cargo test -p worldinterface-coordinator
 
 # Integration and acceptance tests
-cargo test --test integration -p wi-daemon
-cargo test --test acceptance -p wi-daemon
+cargo test --test integration -p worldinterface-daemon
+cargo test --test acceptance -p worldinterface-daemon
 ```
 
 ## Linting & Formatting
@@ -52,19 +52,19 @@ Formatting rules (see `rustfmt.toml`):
 WorldInterface is organized as 9 workspace crates with a strict dependency DAG:
 
 ```
-wi-core (types, FlowSpec model)
- ├─ wi-flowspec (compiler)
- ├─ wi-contextstore (durable store)
- └─ wi-connector (trait + connectors)
-     └─ wi-coordinator (AQ handler)
-         └─ wi-host (embedded host)
-             ├─ wi-daemon (HTTP API)
-             ├─ wi-cli (CLI binary)
-             └─ wi-http-trigger (webhooks)
+worldinterface-core (types, FlowSpec model)
+ ├─ worldinterface-flowspec (compiler)
+ ├─ worldinterface-contextstore (durable store)
+ └─ worldinterface-connector (trait + connectors)
+     └─ worldinterface-coordinator (AQ handler)
+         └─ worldinterface-host (embedded host)
+             ├─ worldinterface-daemon (HTTP API)
+             ├─ worldinterface-cli (CLI binary)
+             └─ worldinterface-http-trigger (webhooks)
 ```
 
 Key principles:
-- **`wi-core`** has no ActionQueue dependency and no I/O
+- **`worldinterface-core`** has no ActionQueue dependency and no I/O
 - All execution goes through ActionQueue — never bypass it
 - Connectors must be `Send + Sync`
 - Use `thiserror` for error types, `tracing` for instrumentation

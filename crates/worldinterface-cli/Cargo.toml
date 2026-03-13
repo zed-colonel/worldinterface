@@ -1,0 +1,32 @@
+[package]
+name = "worldinterface-cli"
+authors.workspace = true
+description = "CLI binary for WorldInterface"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+readme = "README.md"
+repository.workspace = true
+keywords = ["worldinterface", "cli", "command-line", "workflow"]
+categories = ["command-line-utilities"]
+
+[[bin]]
+name = "wi"
+path = "src/main.rs"
+
+[dependencies]
+worldinterface-core = { workspace = true }
+worldinterface-host = { workspace = true }
+worldinterface-daemon = { workspace = true }
+worldinterface-connector = { workspace = true }
+clap = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+serde_yaml = { workspace = true }
+reqwest = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+tracing-subscriber = { workspace = true }
+tokio = { workspace = true }
+chrono = { workspace = true }
+uuid = { workspace = true }

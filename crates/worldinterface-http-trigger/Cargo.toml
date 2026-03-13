@@ -1,0 +1,27 @@
+[package]
+name = "worldinterface-http-trigger"
+authors.workspace = true
+description = "Dynamic webhook ingress for WorldInterface"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+readme = "README.md"
+repository.workspace = true
+keywords = ["worldinterface", "webhook", "trigger", "http", "ingress"]
+categories = ["web-programming::http-server"]
+
+[dependencies]
+worldinterface-core = { workspace = true }
+worldinterface-contextstore = { workspace = true }
+worldinterface-host = { workspace = true }
+axum = { workspace = true }
+chrono = { workspace = true }
+serde = { workspace = true }
+serde_json = { workspace = true }
+uuid = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+tokio = { workspace = true }
+
+[dev-dependencies]
+tempfile = { workspace = true }

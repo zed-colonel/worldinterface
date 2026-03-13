@@ -1,15 +1,15 @@
 [workspace]
 resolver = "2"
 members = [
-    "crates/wi-core",
-    "crates/wi-flowspec",
-    "crates/wi-contextstore",
-    "crates/wi-connector",
-    "crates/wi-coordinator",
-    "crates/wi-host",
-    "crates/wi-http-trigger",
-    "crates/wi-daemon",
-    "crates/wi-cli",
+    "crates/worldinterface-core",
+    "crates/worldinterface-flowspec",
+    "crates/worldinterface-contextstore",
+    "crates/worldinterface-connector",
+    "crates/worldinterface-coordinator",
+    "crates/worldinterface-host",
+    "crates/worldinterface-http-trigger",
+    "crates/worldinterface-daemon",
+    "crates/worldinterface-cli",
 ]
 exclude = [
     "examples/agent-embedding",
@@ -24,14 +24,14 @@ repository = "https://github.com/zed-colonel/worldinterface"
 
 [workspace.dependencies]
 # Internal crates
-wi-core = { path = "crates/wi-core", version = "0.1.0" }
-wi-flowspec = { path = "crates/wi-flowspec", version = "0.1.0" }
-wi-contextstore = { path = "crates/wi-contextstore", version = "0.1.0" }
-wi-connector = { path = "crates/wi-connector", version = "0.1.0" }
-wi-coordinator = { path = "crates/wi-coordinator", version = "0.1.0" }
-wi-host = { path = "crates/wi-host", version = "0.1.0" }
-wi-http-trigger = { path = "crates/wi-http-trigger", version = "0.1.0" }
-wi-daemon = { path = "crates/wi-daemon", version = "0.1.0" }
+worldinterface-core = { path = "crates/worldinterface-core", version = "0.1.0" }
+worldinterface-flowspec = { path = "crates/worldinterface-flowspec", version = "0.1.0" }
+worldinterface-contextstore = { path = "crates/worldinterface-contextstore", version = "0.1.0" }
+worldinterface-connector = { path = "crates/worldinterface-connector", version = "0.1.0" }
+worldinterface-coordinator = { path = "crates/worldinterface-coordinator", version = "0.1.0" }
+worldinterface-host = { path = "crates/worldinterface-host", version = "0.1.0" }
+worldinterface-http-trigger = { path = "crates/worldinterface-http-trigger", version = "0.1.0" }
+worldinterface-daemon = { path = "crates/worldinterface-daemon", version = "0.1.0" }
 
 # ActionQueue crates (from crates.io)
 actionqueue-core = { version = "0.1.0", features = ["serde"] }

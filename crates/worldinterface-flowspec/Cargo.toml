@@ -1,0 +1,25 @@
+[package]
+name = "worldinterface-flowspec"
+authors.workspace = true
+description = "FlowSpec parser, validator, and compiler to ActionQueue DAG"
+version.workspace = true
+edition.workspace = true
+license.workspace = true
+readme = "README.md"
+repository.workspace = true
+keywords = ["worldinterface", "flowspec", "compiler", "dag", "workflow"]
+categories = ["compilers"]
+
+[dependencies]
+worldinterface-core = { workspace = true }
+actionqueue-core = "0.1.0"
+actionqueue-workflow = "0.1.0"
+serde = { workspace = true }
+serde_json = { workspace = true }
+uuid = { workspace = true }
+thiserror = { workspace = true }
+tracing = { workspace = true }
+
+[dev-dependencies]
+serde_yaml = { workspace = true }
+proptest = { workspace = true }

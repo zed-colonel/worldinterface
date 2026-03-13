@@ -15,10 +15,10 @@ cargo build --workspace
 cargo test --workspace
 
 # Start the daemon
-cargo run -p wi-cli -- serve
+cargo run -p worldinterface-cli -- serve
 
 # Submit a flow
-cargo run -p wi-cli -- flow submit examples/golden-path/flow.yaml --wait
+cargo run -p worldinterface-cli -- flow submit examples/golden-path/flow.yaml --wait
 ```
 
 ## Architecture
@@ -28,7 +28,7 @@ FlowSpec (YAML/JSON)
     │
     ▼
 ┌─────────────┐
-│  wi-flowspec │  Compile to AQ DAG
+│  worldinterface-flowspec │  Compile to AQ DAG
 └─────┬───────┘
       │
       ▼
@@ -39,13 +39,13 @@ FlowSpec (YAML/JSON)
       │
       ▼
 ┌─────────────────┐     ┌──────────────────┐
-│  wi-coordinator  │────▶│  wi-connector     │  Boundary crossings
+│  worldinterface-coordinator  │────▶│  worldinterface-connector     │  Boundary crossings
 │  (AQ handler)    │     │  (delay, fs, http)│
 └─────┬───────────┘     └──────────────────┘
       │
       ▼
 ┌─────────────────┐
-│  wi-contextstore │  Atomic output storage
+│  worldinterface-contextstore │  Atomic output storage
 │  (SQLite)        │
 └─────────────────┘
 ```
@@ -54,15 +54,15 @@ FlowSpec (YAML/JSON)
 
 | Crate | Description |
 |-------|-------------|
-| `wi-core` | FlowSpec model, identity types, descriptors, receipts |
-| `wi-flowspec` | Parser, validator, compiler to ActionQueue DAG |
-| `wi-contextstore` | Atomic durable store (SQLite) |
-| `wi-connector` | Connector trait, registry, built-in connectors |
-| `wi-coordinator` | ActionQueue handler for FlowRun orchestration |
-| `wi-host` | Embedded host API (for programmatic use) |
-| `wi-http-trigger` | Dynamic webhook ingress |
-| `wi-daemon` | HTTP API daemon |
-| `wi-cli` | CLI binary (`wi`) |
+| `worldinterface-core` | FlowSpec model, identity types, descriptors, receipts |
+| `worldinterface-flowspec` | Parser, validator, compiler to ActionQueue DAG |
+| `worldinterface-contextstore` | Atomic durable store (SQLite) |
+| `worldinterface-connector` | Connector trait, registry, built-in connectors |
+| `worldinterface-coordinator` | ActionQueue handler for FlowRun orchestration |
+| `worldinterface-host` | Embedded host API (for programmatic use) |
+| `worldinterface-http-trigger` | Dynamic webhook ingress |
+| `worldinterface-daemon` | HTTP API daemon |
+| `worldinterface-cli` | CLI binary (`wi`) |
 
 ## HTTP API
 
