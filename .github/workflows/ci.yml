@@ -83,4 +83,4 @@ jobs:
         run: cargo test --workspace --no-fail-fast -- --test-threads=1
 
       - name: Run daemon acceptance tests
-        run: cargo test --test acceptance -p wi-daemon --no-fail-fast -- --test-threads=1
+        run: cargo test --test acceptance -p worldinterface-daemon --no-fail-fast -- --test-threads=1
