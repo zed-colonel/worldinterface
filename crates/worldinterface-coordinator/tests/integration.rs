@@ -13,7 +13,7 @@ use actionqueue_runtime::config::{BackoffStrategyConfig, RuntimeConfig};
 use actionqueue_runtime::engine::ActionQueueEngine;
 use serde_json::json;
 use worldinterface_connector::{
-    connectors::{DelayConnector, FsReadConnector, FsWriteConnector},
+    connectors::{DelayConnector, FsReadConnector, FsWriteConnector, HttpRequestConnector},
     ConnectorRegistry,
 };
 use worldinterface_contextstore::{ContextStore, SqliteContextStore};
@@ -30,13 +30,13 @@ fn noop_metrics() -> Arc<dyn MetricsRecorder> {
     Arc::new(NoopMetricsRecorder)
 }
 
-/// Build a registry WITHOUT the HTTP connector (which contains reqwest::blocking::Client
-/// that creates an internal tokio runtime, incompatible with #[tokio::test]).
+/// Build a registry with all built-in connectors including HTTP.
 fn test_registry() -> ConnectorRegistry {
     let mut registry = ConnectorRegistry::new();
     registry.register(Arc::new(DelayConnector));
     registry.register(Arc::new(FsReadConnector));
     registry.register(Arc::new(FsWriteConnector));
+    registry.register(Arc::new(HttpRequestConnector::new()));
     registry
 }
 

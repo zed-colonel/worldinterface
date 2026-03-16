@@ -5,7 +5,9 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use serde_json::json;
-use worldinterface_connector::connectors::{DelayConnector, FsReadConnector, FsWriteConnector};
+use worldinterface_connector::connectors::{
+    DelayConnector, FsReadConnector, FsWriteConnector, HttpRequestConnector,
+};
 use worldinterface_connector::ConnectorRegistry;
 use worldinterface_core::flowspec::*;
 use worldinterface_core::id::{FlowRunId, NodeId};
@@ -15,13 +17,13 @@ use worldinterface_host::{
 
 // ── Helpers ─────────────────────────────────────────────────────────────
 
-/// Build a registry WITHOUT the HTTP connector (reqwest::blocking::Client
-/// creates an internal tokio runtime, incompatible with #[tokio::test]).
+/// Build a registry with all built-in connectors including HTTP.
 fn test_registry() -> ConnectorRegistry {
     let mut registry = ConnectorRegistry::new();
     registry.register(Arc::new(DelayConnector));
     registry.register(Arc::new(FsReadConnector));
     registry.register(Arc::new(FsWriteConnector));
+    registry.register(Arc::new(HttpRequestConnector::new()));
     registry
 }
 

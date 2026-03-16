@@ -1,7 +1,9 @@
 //! The `http.request` connector — makes HTTP requests to external endpoints.
 //!
-//! Uses `reqwest::blocking::Client` because AQ's `ExecutorHandler::execute()`
-//! is synchronous and runs on OS threads (not tokio worker threads).
+//! Uses async `reqwest::Client` with `Handle::current().block_on()` to bridge
+//! the sync `Connector::invoke()` trait to async HTTP calls. The async client
+//! does not create its own tokio runtime, so it is safe to construct and drop
+//! inside an existing async context (e.g., `#[tokio::test]`, vessel runtime).
 
 use std::collections::HashMap;
 use std::time::Duration;
@@ -16,13 +18,13 @@ use crate::traits::Connector;
 /// Makes HTTP requests to external endpoints. Injects `X-Idempotency-Key`
 /// header with the `run_id` on every request (Invariant 3).
 pub struct HttpRequestConnector {
-    client: reqwest::blocking::Client,
+    client: reqwest::Client,
 }
 
 impl HttpRequestConnector {
     pub fn new() -> Self {
         Self {
-            client: reqwest::blocking::Client::builder()
+            client: reqwest::Client::builder()
                 .build()
                 .expect("failed to build HTTP client"),
         }
@@ -35,39 +37,13 @@ impl Default for HttpRequestConnector {
     }
 }
 
-impl Connector for HttpRequestConnector {
-    fn describe(&self) -> Descriptor {
-        Descriptor {
-            name: "http.request".into(),
-            display_name: "HTTP Request".into(),
-            description: "Makes an HTTP request to an external URL.".into(),
-            category: ConnectorCategory::Http,
-            input_schema: Some(json!({
-                "type": "object",
-                "required": ["url"],
-                "properties": {
-                    "method": { "type": "string", "enum": ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD"] },
-                    "url": { "type": "string" },
-                    "headers": { "type": "object" },
-                    "body": {},
-                    "timeout_ms": { "type": "integer", "minimum": 0 }
-                }
-            })),
-            output_schema: Some(json!({
-                "type": "object",
-                "properties": {
-                    "status": { "type": "integer" },
-                    "headers": { "type": "object" },
-                    "body": { "type": "string" }
-                }
-            })),
-            idempotent: false,
-            side_effects: true,
-        }
-    }
-
-    fn invoke(&self, ctx: &InvocationContext, params: &Value) -> Result<Value, ConnectorError> {
-        // Check cancellation before starting the request
+impl HttpRequestConnector {
+    /// Async implementation of the HTTP request logic.
+    async fn invoke_async(
+        &self,
+        ctx: &InvocationContext,
+        params: &Value,
+    ) -> Result<Value, ConnectorError> {
         if ctx.cancellation.is_cancelled() {
             return Err(ConnectorError::Cancelled);
         }
@@ -116,7 +92,7 @@ impl Connector for HttpRequestConnector {
         }
 
         // Send request
-        let response = request.send().map_err(|e| classify_reqwest_error(&e, url))?;
+        let response = request.send().await.map_err(|e| classify_reqwest_error(&e, url))?;
 
         // Build output — all HTTP responses (including 4xx, 5xx) are success
         let status = response.status().as_u16();
@@ -127,6 +103,7 @@ impl Connector for HttpRequestConnector {
             .collect();
         let body = response
             .text()
+            .await
             .map_err(|e| ConnectorError::Retryable(format!("failed to read response body: {e}")))?;
 
         Ok(json!({
@@ -134,6 +111,42 @@ impl Connector for HttpRequestConnector {
             "headers": response_headers,
             "body": body,
         }))
+    }
+}
+
+impl Connector for HttpRequestConnector {
+    fn describe(&self) -> Descriptor {
+        Descriptor {
+            name: "http.request".into(),
+            display_name: "HTTP Request".into(),
+            description: "Makes an HTTP request to an external URL.".into(),
+            category: ConnectorCategory::Http,
+            input_schema: Some(json!({
+                "type": "object",
+                "required": ["url"],
+                "properties": {
+                    "method": { "type": "string", "enum": ["GET", "POST", "PUT", "DELETE", "PATCH", "HEAD"] },
+                    "url": { "type": "string" },
+                    "headers": { "type": "object" },
+                    "body": {},
+                    "timeout_ms": { "type": "integer", "minimum": 0 }
+                }
+            })),
+            output_schema: Some(json!({
+                "type": "object",
+                "properties": {
+                    "status": { "type": "integer" },
+                    "headers": { "type": "object" },
+                    "body": { "type": "string" }
+                }
+            })),
+            idempotent: false,
+            side_effects: true,
+        }
+    }
+
+    fn invoke(&self, ctx: &InvocationContext, params: &Value) -> Result<Value, ConnectorError> {
+        tokio::runtime::Handle::current().block_on(self.invoke_async(ctx, params))
     }
 }
 
@@ -218,12 +231,23 @@ mod tests {
         ("200 OK".into(), vec![("Content-Type".into(), "text/plain".into())], "ok".into())
     }
 
-    #[test]
-    fn http_get_success() {
-        let (url, handle) = mock_server(simple_ok_handler);
+    /// Invoke the connector on a blocking thread (mimics AQ executor OS threads).
+    /// `Handle::current().block_on()` cannot be called from within a tokio
+    /// worker thread, but works on OS threads that have entered the runtime context.
+    async fn invoke_on_blocking_thread(
+        params: Value,
+    ) -> Result<Value, ConnectorError> {
         let ctx = test_ctx();
-        let result = HttpRequestConnector::new()
-            .invoke(&ctx, &json!({"url": url, "method": "GET"}))
+        tokio::task::spawn_blocking(move || HttpRequestConnector::new().invoke(&ctx, &params))
+            .await
+            .expect("spawn_blocking join failed")
+    }
+
+    #[tokio::test]
+    async fn http_get_success() {
+        let (url, handle) = mock_server(simple_ok_handler);
+        let result = invoke_on_blocking_thread(json!({"url": url, "method": "GET"}))
+            .await
             .unwrap();
 
         assert_eq!(result["status"], 200);
@@ -231,10 +255,9 @@ mod tests {
         handle.join().unwrap();
     }
 
-    #[test]
-    fn http_post_with_body() {
+    #[tokio::test]
+    async fn http_post_with_body() {
         let (url, handle) = mock_server(|lines| {
-            // Verify it's a POST
             assert!(lines[0].starts_with("POST"));
             (
                 "201 Created".into(),
@@ -243,39 +266,33 @@ mod tests {
             )
         });
 
-        let ctx = test_ctx();
-        let result = HttpRequestConnector::new()
-            .invoke(
-                &ctx,
-                &json!({
-                    "url": url,
-                    "method": "POST",
-                    "body": "request body"
-                }),
-            )
-            .unwrap();
+        let result = invoke_on_blocking_thread(json!({
+            "url": url,
+            "method": "POST",
+            "body": "request body"
+        }))
+        .await
+        .unwrap();
 
         assert_eq!(result["status"], 201);
         assert_eq!(result["body"], r#"{"id":1}"#);
         handle.join().unwrap();
     }
 
-    #[test]
-    fn http_includes_idempotency_header() {
+    #[tokio::test]
+    async fn http_includes_idempotency_header() {
         let (url, handle) = mock_server(|lines| {
-            // Find the idempotency key header
             let has_key = lines.iter().any(|l| l.to_lowercase().starts_with("x-idempotency-key:"));
             assert!(has_key, "X-Idempotency-Key header not found in: {lines:?}");
             simple_ok_handler(lines)
         });
 
-        let ctx = test_ctx();
-        HttpRequestConnector::new().invoke(&ctx, &json!({"url": url})).unwrap();
+        invoke_on_blocking_thread(json!({"url": url})).await.unwrap();
         handle.join().unwrap();
     }
 
-    #[test]
-    fn http_returns_response_headers() {
+    #[tokio::test]
+    async fn http_returns_response_headers() {
         let (url, handle) = mock_server(|_| {
             (
                 "200 OK".into(),
@@ -287,99 +304,91 @@ mod tests {
             )
         });
 
-        let ctx = test_ctx();
-        let result = HttpRequestConnector::new().invoke(&ctx, &json!({"url": url})).unwrap();
+        let result = invoke_on_blocking_thread(json!({"url": url})).await.unwrap();
 
         let headers = result["headers"].as_object().unwrap();
         assert_eq!(headers["x-custom"], "custom-value");
         handle.join().unwrap();
     }
 
-    #[test]
-    fn http_connection_refused_is_retryable() {
-        // Bind a port then drop the listener so it's closed
+    #[tokio::test]
+    async fn http_connection_refused_is_retryable() {
         let listener = TcpListener::bind("127.0.0.1:0").unwrap();
         let port = listener.local_addr().unwrap().port();
         drop(listener);
 
-        let ctx = test_ctx();
-        let result = HttpRequestConnector::new()
-            .invoke(&ctx, &json!({"url": format!("http://127.0.0.1:{port}"), "timeout_ms": 1000}));
+        let result = invoke_on_blocking_thread(
+            json!({"url": format!("http://127.0.0.1:{port}"), "timeout_ms": 1000}),
+        )
+        .await;
 
         assert!(matches!(result, Err(ConnectorError::Retryable(_))));
     }
 
-    #[test]
-    fn http_invalid_url_is_invalid_params() {
-        let ctx = test_ctx();
-        let result = HttpRequestConnector::new().invoke(&ctx, &json!({"url": "not a valid url"}));
-        // reqwest may treat this as a builder error or connection error
+    #[tokio::test]
+    async fn http_invalid_url_is_invalid_params() {
+        let result =
+            invoke_on_blocking_thread(json!({"url": "not a valid url"})).await;
         assert!(result.is_err());
     }
 
-    #[test]
-    fn http_missing_url_is_invalid_params() {
-        let ctx = test_ctx();
-        let result = HttpRequestConnector::new().invoke(&ctx, &json!({"method": "GET"}));
+    #[tokio::test]
+    async fn http_missing_url_is_invalid_params() {
+        let result = invoke_on_blocking_thread(json!({"method": "GET"})).await;
         assert!(matches!(result, Err(ConnectorError::InvalidParams(_))));
     }
 
-    #[test]
-    fn http_missing_method_defaults_to_get() {
+    #[tokio::test]
+    async fn http_missing_method_defaults_to_get() {
         let (url, handle) = mock_server(|lines| {
             assert!(lines[0].starts_with("GET"));
             simple_ok_handler(lines)
         });
 
-        let ctx = test_ctx();
-        let result = HttpRequestConnector::new().invoke(&ctx, &json!({"url": url})).unwrap();
+        let result = invoke_on_blocking_thread(json!({"url": url})).await.unwrap();
 
         assert_eq!(result["status"], 200);
         handle.join().unwrap();
     }
 
-    #[test]
-    fn http_5xx_is_successful_output() {
+    #[tokio::test]
+    async fn http_5xx_is_successful_output() {
         let (url, handle) =
             mock_server(|_| ("500 Internal Server Error".into(), vec![], "server error".into()));
 
-        let ctx = test_ctx();
-        let result = HttpRequestConnector::new().invoke(&ctx, &json!({"url": url})).unwrap();
+        let result = invoke_on_blocking_thread(json!({"url": url})).await.unwrap();
 
         assert_eq!(result["status"], 500);
         assert_eq!(result["body"], "server error");
         handle.join().unwrap();
     }
 
-    #[test]
-    fn http_4xx_is_successful_output() {
+    #[tokio::test]
+    async fn http_4xx_is_successful_output() {
         let (url, handle) = mock_server(|_| ("404 Not Found".into(), vec![], "not found".into()));
 
-        let ctx = test_ctx();
-        let result = HttpRequestConnector::new().invoke(&ctx, &json!({"url": url})).unwrap();
+        let result = invoke_on_blocking_thread(json!({"url": url})).await.unwrap();
 
         assert_eq!(result["status"], 404);
         assert_eq!(result["body"], "not found");
         handle.join().unwrap();
     }
 
-    #[test]
-    fn http_timeout_is_retryable() {
+    #[tokio::test]
+    async fn http_timeout_is_retryable() {
         let (url, _handle) = mock_server(|_| {
-            // Sleep longer than the timeout
             std::thread::sleep(std::time::Duration::from_secs(5));
             simple_ok_handler(&[])
         });
 
-        let ctx = test_ctx();
         let result =
-            HttpRequestConnector::new().invoke(&ctx, &json!({"url": url, "timeout_ms": 100}));
+            invoke_on_blocking_thread(json!({"url": url, "timeout_ms": 100})).await;
 
         assert!(matches!(result, Err(ConnectorError::Retryable(_))));
     }
 
-    #[test]
-    fn http_descriptor() {
+    #[tokio::test]
+    async fn http_descriptor() {
         let desc = HttpRequestConnector::new().describe();
         assert_eq!(desc.name, "http.request");
         assert_eq!(desc.category, ConnectorCategory::Http);

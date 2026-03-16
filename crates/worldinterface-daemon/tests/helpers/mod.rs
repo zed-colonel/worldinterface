@@ -7,7 +7,9 @@ use std::sync::{Arc, RwLock};
 use std::time::Duration;
 
 use serde_json::{json, Value};
-use worldinterface_connector::connectors::{DelayConnector, FsReadConnector, FsWriteConnector};
+use worldinterface_connector::connectors::{
+    DelayConnector, FsReadConnector, FsWriteConnector, HttpRequestConnector,
+};
 use worldinterface_connector::ConnectorRegistry;
 use worldinterface_core::flowspec::{
     BranchCondition, BranchNode, ConnectorNode, Edge, EdgeCondition, FlowSpec, Node, NodeType,
@@ -18,13 +20,13 @@ use worldinterface_daemon::metrics::PrometheusMetricsRecorder;
 use worldinterface_daemon::{AppState, DaemonConfig, SharedState, WiMetricsRegistry};
 use worldinterface_host::{EmbeddedHost, FlowPhase, FlowRunStatus};
 
-/// Build a registry WITHOUT the HTTP connector (reqwest::blocking::Client
-/// creates an internal tokio runtime, incompatible with #[tokio::test]).
+/// Build a registry with all built-in connectors including HTTP.
 pub fn test_registry() -> ConnectorRegistry {
     let mut registry = ConnectorRegistry::new();
     registry.register(Arc::new(DelayConnector));
     registry.register(Arc::new(FsReadConnector));
     registry.register(Arc::new(FsWriteConnector));
+    registry.register(Arc::new(HttpRequestConnector::new()));
     registry
 }
 
