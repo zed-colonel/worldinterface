@@ -23,11 +23,7 @@ pub struct HttpRequestConnector {
 
 impl HttpRequestConnector {
     pub fn new() -> Self {
-        Self {
-            client: reqwest::Client::builder()
-                .build()
-                .expect("failed to build HTTP client"),
-        }
+        Self { client: reqwest::Client::builder().build().expect("failed to build HTTP client") }
     }
 }
 
@@ -234,9 +230,7 @@ mod tests {
     /// Invoke the connector on a blocking thread (mimics AQ executor OS threads).
     /// `Handle::current().block_on()` cannot be called from within a tokio
     /// worker thread, but works on OS threads that have entered the runtime context.
-    async fn invoke_on_blocking_thread(
-        params: Value,
-    ) -> Result<Value, ConnectorError> {
+    async fn invoke_on_blocking_thread(params: Value) -> Result<Value, ConnectorError> {
         let ctx = test_ctx();
         tokio::task::spawn_blocking(move || HttpRequestConnector::new().invoke(&ctx, &params))
             .await
@@ -246,9 +240,7 @@ mod tests {
     #[tokio::test]
     async fn http_get_success() {
         let (url, handle) = mock_server(simple_ok_handler);
-        let result = invoke_on_blocking_thread(json!({"url": url, "method": "GET"}))
-            .await
-            .unwrap();
+        let result = invoke_on_blocking_thread(json!({"url": url, "method": "GET"})).await.unwrap();
 
         assert_eq!(result["status"], 200);
         assert_eq!(result["body"], "ok");
@@ -327,8 +319,7 @@ mod tests {
 
     #[tokio::test]
     async fn http_invalid_url_is_invalid_params() {
-        let result =
-            invoke_on_blocking_thread(json!({"url": "not a valid url"})).await;
+        let result = invoke_on_blocking_thread(json!({"url": "not a valid url"})).await;
         assert!(result.is_err());
     }
 
@@ -381,8 +372,7 @@ mod tests {
             simple_ok_handler(&[])
         });
 
-        let result =
-            invoke_on_blocking_thread(json!({"url": url, "timeout_ms": 100})).await;
+        let result = invoke_on_blocking_thread(json!({"url": url, "timeout_ms": 100})).await;
 
         assert!(matches!(result, Err(ConnectorError::Retryable(_))));
     }
