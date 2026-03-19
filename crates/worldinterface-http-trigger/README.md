@@ -20,4 +20,4 @@ See the [workspace root](https://github.com/zed-colonel/worldinterface) for full
 
 ## License
 
-MIT
+Apache-2.0

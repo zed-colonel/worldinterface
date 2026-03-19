@@ -163,4 +163,4 @@ See `examples/agent-embedding/` for a complete working example.
 
 ## License
 
-MIT
+Apache-2.0

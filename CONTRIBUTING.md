@@ -92,4 +92,4 @@ See `world-interface-v1.0-invariant-boundaries-policy.md` for the full specifica
 ## License
 
 By contributing, you agree that your contributions will be licensed under the
-MIT License that covers this project.
+Apache License, Version 2.0 that covers this project.
