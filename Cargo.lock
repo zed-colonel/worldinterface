@@ -2746,7 +2746,7 @@ dependencies = [
 
 [[package]]
 name = "worldinterface-cli"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "chrono",
  "clap",
@@ -2767,7 +2767,7 @@ dependencies = [
 
 [[package]]
 name = "worldinterface-connector"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "chrono",
  "reqwest",
@@ -2785,7 +2785,7 @@ dependencies = [
 
 [[package]]
 name = "worldinterface-contextstore"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "chrono",
  "proptest",
@@ -2801,7 +2801,7 @@ dependencies = [
 
 [[package]]
 name = "worldinterface-coordinator"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "actionqueue-core",
  "actionqueue-engine",
@@ -2824,7 +2824,7 @@ dependencies = [
 
 [[package]]
 name = "worldinterface-core"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "chrono",
  "proptest",
@@ -2838,7 +2838,7 @@ dependencies = [
 
 [[package]]
 name = "worldinterface-daemon"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "axum",
  "prometheus",
@@ -2862,7 +2862,7 @@ dependencies = [
 
 [[package]]
 name = "worldinterface-flowspec"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "actionqueue-core",
  "actionqueue-workflow",
@@ -2878,7 +2878,7 @@ dependencies = [
 
 [[package]]
 name = "worldinterface-host"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "actionqueue-core",
  "actionqueue-executor-local",
@@ -2901,7 +2901,7 @@ dependencies = [
 
 [[package]]
 name = "worldinterface-http-trigger"
-version = "0.1.0"
+version = "0.1.2"
 dependencies = [
  "axum",
  "chrono",

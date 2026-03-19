@@ -16,7 +16,7 @@ exclude = [
 ]
 
 [workspace.package]
-version = "0.1.0"
+version = "0.1.2"
 authors = ["Keith <zed.colonel@gmail.com>"]
 edition = "2021"
 license = "Apache-2.0"
@@ -24,14 +24,14 @@ repository = "https://github.com/zed-colonel/worldinterface"
 
 [workspace.dependencies]
 # Internal crates
-worldinterface-core = { path = "crates/worldinterface-core", version = "0.1.0" }
-worldinterface-flowspec = { path = "crates/worldinterface-flowspec", version = "0.1.0" }
-worldinterface-contextstore = { path = "crates/worldinterface-contextstore", version = "0.1.0" }
-worldinterface-connector = { path = "crates/worldinterface-connector", version = "0.1.0" }
-worldinterface-coordinator = { path = "crates/worldinterface-coordinator", version = "0.1.0" }
-worldinterface-host = { path = "crates/worldinterface-host", version = "0.1.0" }
-worldinterface-http-trigger = { path = "crates/worldinterface-http-trigger", version = "0.1.0" }
-worldinterface-daemon = { path = "crates/worldinterface-daemon", version = "0.1.0" }
+worldinterface-core = { path = "crates/worldinterface-core", version = "0.1.2" }
+worldinterface-flowspec = { path = "crates/worldinterface-flowspec", version = "0.1.2" }
+worldinterface-contextstore = { path = "crates/worldinterface-contextstore", version = "0.1.2" }
+worldinterface-connector = { path = "crates/worldinterface-connector", version = "0.1.2" }
+worldinterface-coordinator = { path = "crates/worldinterface-coordinator", version = "0.1.2" }
+worldinterface-host = { path = "crates/worldinterface-host", version = "0.1.2" }
+worldinterface-http-trigger = { path = "crates/worldinterface-http-trigger", version = "0.1.2" }
+worldinterface-daemon = { path = "crates/worldinterface-daemon", version = "0.1.2" }
 
 # ActionQueue crates (from crates.io)
 actionqueue-core = { version = "0.1.0", features = ["serde"] }
@@ -67,3 +67,14 @@ sha2 = "0.10"
 tempfile = "3"
 proptest = "1.4"
 tokio-test = "0.4"
+
+[patch.crates-io]
+worldinterface-core = { path = "crates/worldinterface-core" }
+worldinterface-flowspec = { path = "crates/worldinterface-flowspec" }
+worldinterface-contextstore = { path = "crates/worldinterface-contextstore" }
+worldinterface-connector = { path = "crates/worldinterface-connector" }
+worldinterface-coordinator = { path = "crates/worldinterface-coordinator" }
+worldinterface-host = { path = "crates/worldinterface-host" }
+worldinterface-http-trigger = { path = "crates/worldinterface-http-trigger" }
+worldinterface-daemon = { path = "crates/worldinterface-daemon" }
+worldinterface-cli = { path = "crates/worldinterface-cli" }
