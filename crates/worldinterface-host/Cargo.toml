@@ -10,12 +10,18 @@ repository.workspace = true
 keywords = ["worldinterface", "host", "embedding", "agent", "runtime"]
 categories = ["concurrency"]
 
+[features]
+default = ["wasm"]
+wasm = ["dep:worldinterface-wasm"]
+wasm-tests = ["wasm"]
+
 [dependencies]
 worldinterface-core = { workspace = true }
 worldinterface-flowspec = { workspace = true }
 worldinterface-contextstore = { workspace = true }
 worldinterface-connector = { workspace = true }
 worldinterface-coordinator = { workspace = true }
+worldinterface-wasm = { workspace = true, optional = true }
 actionqueue-core = "0.1.0"
 actionqueue-runtime = { version = "0.1.1", features = ["budget"] }
 actionqueue-executor-local = "0.1.1"

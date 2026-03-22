@@ -58,4 +58,12 @@ pub enum HostError {
     /// Internal error (should not happen — indicates a bug).
     #[error("internal error: {0}")]
     InternalError(String),
+
+    /// WASM runtime initialization failed.
+    #[error("WASM initialization failed: {0}")]
+    WasmInit(String),
+
+    /// Duplicate connector name (native vs WASM or WASM vs WASM).
+    #[error("duplicate connector name: '{0}'")]
+    DuplicateConnector(String),
 }

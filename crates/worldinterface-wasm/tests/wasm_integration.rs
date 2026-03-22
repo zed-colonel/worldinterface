@@ -440,3 +440,214 @@ kv = true
     // Should fail because process capability is denied
     assert!(result.is_err(), "expected error from process policy denial, got: {result:?}");
 }
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Reference Connector Tests (Sprint E2-S4)
+// ══════════════════════════════════════════════════════════════════════════════
+
+fn ref_compiled_dir() -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../examples/wasm-connectors/compiled")
+}
+
+fn load_json_validate() -> worldinterface_wasm::WasmConnector {
+    let runtime = test_runtime();
+    let dir = ref_compiled_dir();
+    module_loader::load_module(
+        &runtime,
+        &dir.join("json-validate.wasm"),
+        &dir.join("json-validate.connector.toml"),
+    )
+    .expect("json-validate module should load")
+}
+
+fn load_host_demo() -> worldinterface_wasm::WasmConnector {
+    let runtime = test_runtime();
+    let dir = ref_compiled_dir();
+    module_loader::load_module(
+        &runtime,
+        &dir.join("host-demo.wasm"),
+        &dir.join("host-demo.connector.toml"),
+    )
+    .expect("host-demo module should load")
+}
+
+// ── E2S4-T16: json-validate describe returns expected name ──
+
+#[test]
+fn json_validate_describe() {
+    let connector = load_json_validate();
+    let desc = connector.describe();
+    assert_eq!(desc.name, "json.validate");
+    assert!(matches!(desc.category, ConnectorCategory::Wasm(ref name) if name == "json.validate"));
+    assert!(desc.description.contains("JSON"));
+}
+
+// ── E2S4-T17: json-validate valid document → {"valid": true} ──
+
+#[test]
+fn json_validate_valid_document() {
+    let connector = load_json_validate();
+    let ctx = test_ctx();
+    let params = json!({
+        "document": {"name": "test", "age": 25},
+        "schema": {
+            "type": "object",
+            "required": ["name", "age"],
+            "properties": {
+                "name": {"type": "string"},
+                "age": {"type": "number"}
+            }
+        }
+    });
+    let result = connector.invoke(&ctx, &params).unwrap();
+    assert_eq!(result["valid"], true);
+    assert_eq!(result["errors"].as_array().unwrap().len(), 0);
+}
+
+// ── E2S4-T18: json-validate invalid document → {"valid": false, "errors": [...]} ──
+
+#[test]
+fn json_validate_invalid_document() {
+    let connector = load_json_validate();
+    let ctx = test_ctx();
+    let params = json!({
+        "document": {"name": "test"},
+        "schema": {
+            "type": "object",
+            "required": ["name", "age"],
+            "properties": {
+                "name": {"type": "string"},
+                "age": {"type": "number"}
+            }
+        }
+    });
+    let result = connector.invoke(&ctx, &params).unwrap();
+    assert_eq!(result["valid"], false);
+    let errors = result["errors"].as_array().unwrap();
+    assert!(!errors.is_empty());
+    assert!(errors.iter().any(|e| e.as_str().unwrap().contains("age")));
+}
+
+// ── E2S4-T19: json-validate missing document → guest error ──
+
+#[test]
+fn json_validate_missing_document() {
+    let connector = load_json_validate();
+    let ctx = test_ctx();
+    let params = json!({"schema": {"type": "object"}});
+    let result = connector.invoke(&ctx, &params);
+    assert!(result.is_err());
+}
+
+// ── E2S4-T20: json-validate missing schema → guest error ──
+
+#[test]
+fn json_validate_missing_schema() {
+    let connector = load_json_validate();
+    let ctx = test_ctx();
+    let params = json!({"document": {"a": 1}});
+    let result = connector.invoke(&ctx, &params);
+    assert!(result.is_err());
+}
+
+// ── E2S4-T21: json-validate receipt has connector = "json.validate" ──
+
+#[test]
+fn json_validate_receipt() {
+    use worldinterface_connector::receipt_gen::invoke_with_receipt;
+
+    let connector = load_json_validate();
+    let ctx = test_ctx();
+    let params = json!({
+        "document": "hello",
+        "schema": {"type": "string"}
+    });
+
+    let (result, receipt) = invoke_with_receipt(&connector, &ctx, &params);
+    assert!(result.is_ok());
+    assert_eq!(receipt.connector, "json.validate");
+    assert_eq!(receipt.status, worldinterface_core::receipt::ReceiptStatus::Success);
+}
+
+// ── E2S4-T22: host-demo describe returns expected name ──
+
+#[test]
+fn host_demo_describe() {
+    let connector = load_host_demo();
+    let desc = connector.describe();
+    assert_eq!(desc.name, "demo.host-functions");
+    assert!(
+        matches!(desc.category, ConnectorCategory::Wasm(ref name) if name == "demo.host-functions")
+    );
+}
+
+// ── E2S4-T23: host-demo invoke returns SHA-256 digest ──
+
+#[test]
+fn host_demo_crypto() {
+    let connector = load_host_demo();
+    let ctx = test_ctx();
+    let params = json!({"message": "hello world"});
+    let result = connector.invoke(&ctx, &params).unwrap();
+    assert_eq!(result["message"], "hello world");
+    // SHA-256 of "hello world"
+    assert_eq!(
+        result["sha256"].as_str().unwrap(),
+        "b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9"
+    );
+}
+
+// ── E2S4-T24: host-demo invoke stores and retrieves from KV ──
+
+#[test]
+fn host_demo_kv() {
+    let connector = load_host_demo();
+    let ctx = test_ctx();
+    let params = json!({"message": "test-msg"});
+    let result = connector.invoke(&ctx, &params).unwrap();
+    assert_eq!(result["stored"], true);
+}
+
+// ── E2S4-T25: host-demo receipt has connector = "demo.host-functions" ──
+
+#[test]
+fn host_demo_receipt() {
+    use worldinterface_connector::receipt_gen::invoke_with_receipt;
+
+    let connector = load_host_demo();
+    let ctx = test_ctx();
+    let params = json!({"message": "receipt-test"});
+
+    let (result, receipt) = invoke_with_receipt(&connector, &ctx, &params);
+    assert!(result.is_ok());
+    assert_eq!(receipt.connector, "demo.host-functions");
+    assert_eq!(receipt.status, worldinterface_core::receipt::ReceiptStatus::Success);
+}
+
+// ── E2S4-T29: WasmRuntime persists across multiple invocations ──
+
+#[test]
+fn wasm_runtime_persists_across_invocations() {
+    let runtime = test_runtime();
+    let dir = ref_compiled_dir();
+
+    let connector = module_loader::load_module(
+        &runtime,
+        &dir.join("json-validate.wasm"),
+        &dir.join("json-validate.connector.toml"),
+    )
+    .unwrap();
+
+    let ctx1 = test_ctx();
+    let ctx2 = test_ctx();
+    let params = json!({
+        "document": "hello",
+        "schema": {"type": "string"}
+    });
+
+    // Two invocations on the same connector/runtime
+    let r1 = connector.invoke(&ctx1, &params).unwrap();
+    let r2 = connector.invoke(&ctx2, &params).unwrap();
+    assert_eq!(r1["valid"], true);
+    assert_eq!(r2["valid"], true);
+}

@@ -39,6 +39,10 @@ pub struct DaemonConfig {
     /// Graceful shutdown timeout in seconds.
     #[serde(default = "default_shutdown_timeout_secs")]
     pub shutdown_timeout_secs: u64,
+
+    /// Optional directory to scan for WASM connector modules.
+    #[serde(default)]
+    pub connectors_dir: Option<PathBuf>,
 }
 
 fn default_bind_address() -> String {
@@ -73,6 +77,7 @@ impl Default for DaemonConfig {
             dispatch_concurrency: default_dispatch_concurrency(),
             lease_timeout_secs: default_lease_timeout_secs(),
             shutdown_timeout_secs: default_shutdown_timeout_secs(),
+            connectors_dir: None,
         }
     }
 }
@@ -119,6 +124,9 @@ impl DaemonConfig {
                 .parse()
                 .map_err(|e| DaemonError::Config(format!("WI_SHUTDOWN_TIMEOUT_SECS: {e}")))?;
         }
+        if let Ok(val) = std::env::var("WI_CONNECTORS_DIR") {
+            config.connectors_dir = Some(PathBuf::from(val));
+        }
 
         Ok(config)
     }
@@ -133,6 +141,7 @@ impl DaemonConfig {
                 .unwrap_or(NonZeroUsize::new(4).unwrap()),
             lease_timeout_secs: self.lease_timeout_secs,
             shutdown_timeout: Duration::from_secs(self.shutdown_timeout_secs),
+            connectors_dir: self.connectors_dir.clone(),
             ..HostConfig::default()
         }
     }
@@ -222,6 +231,64 @@ tick_interval_ms = 10
             Some(val) => std::env::set_var(key, val),
             None => std::env::remove_var(key),
         }
+    }
+
+    // ── E2S4-T4: connectors_dir parses from TOML ──
+
+    #[test]
+    fn connectors_dir_from_toml() {
+        let _lock = ENV_LOCK.lock().unwrap();
+
+        let dir = tempfile::tempdir().unwrap();
+        let path = dir.path().join("test.toml");
+        std::fs::write(
+            &path,
+            r#"
+connectors_dir = "/opt/connectors"
+"#,
+        )
+        .unwrap();
+        let config = DaemonConfig::load(Some(&path)).unwrap();
+        assert_eq!(config.connectors_dir, Some(PathBuf::from("/opt/connectors")));
+    }
+
+    // ── E2S4-T5: WI_CONNECTORS_DIR env var override ──
+
+    #[test]
+    fn connectors_dir_env_override() {
+        let _lock = ENV_LOCK.lock().unwrap();
+
+        let key = "WI_CONNECTORS_DIR";
+        let original = std::env::var(key).ok();
+
+        std::env::set_var(key, "/env/connectors");
+        let config = DaemonConfig::load(None).unwrap();
+        assert_eq!(config.connectors_dir, Some(PathBuf::from("/env/connectors")));
+
+        match original {
+            Some(val) => std::env::set_var(key, val),
+            None => std::env::remove_var(key),
+        }
+    }
+
+    // ── E2S4-T6: missing connectors_dir → None (backward compat) ──
+
+    #[test]
+    fn connectors_dir_default_none() {
+        let config = DaemonConfig::default();
+        assert!(config.connectors_dir.is_none());
+    }
+
+    // ── E2S4-T7: to_host_config propagates connectors_dir ──
+
+    #[test]
+    fn to_host_config_propagates_connectors_dir() {
+        let config = DaemonConfig {
+            connectors_dir: Some(PathBuf::from("/wasm/modules")),
+            ..Default::default()
+        };
+        let host_config = config.to_host_config();
+        assert_eq!(host_config.connectors_dir, Some(PathBuf::from("/wasm/modules")));
     }
 
     #[test]

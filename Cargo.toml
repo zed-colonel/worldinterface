@@ -14,6 +14,8 @@ members = [
 ]
 exclude = [
     "examples/agent-embedding",
+    "examples/wasm-connectors/json-validate",
+    "examples/wasm-connectors/host-demo",
     "crates/worldinterface-wasm/test-modules/echo",
     "crates/worldinterface-wasm/test-modules/host-caller",
     "crates/worldinterface-wasm/test-modules/stress",

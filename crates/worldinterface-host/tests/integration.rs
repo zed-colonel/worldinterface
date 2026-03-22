@@ -836,3 +836,349 @@ async fn sandbox_exec_invocable_via_host() {
 
     host.shutdown().await.unwrap();
 }
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Sprint E2-S4: WASM ConnectorRegistry Integration Tests
+// ══════════════════════════════════════════════════════════════════════════════
+
+#[cfg(feature = "wasm-tests")]
+mod wasm_host_tests {
+    use super::*;
+    use std::path::PathBuf;
+
+    fn ref_compiled_dir() -> PathBuf {
+        PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../examples/wasm-connectors/compiled")
+    }
+
+    fn wasm_config(dir: &std::path::Path) -> HostConfig {
+        HostConfig {
+            aq_data_dir: dir.join("aq"),
+            context_store_path: dir.join("context.db"),
+            tick_interval: Duration::from_millis(10),
+            connectors_dir: Some(ref_compiled_dir()),
+            ..Default::default()
+        }
+    }
+
+    // ── E2S4-T8: EmbeddedHost::start with connectors_dir loads WASM connectors ──
+
+    #[tokio::test]
+    async fn host_loads_wasm_connectors() {
+        let dir = tempfile::tempdir().unwrap();
+        let config = wasm_config(dir.path());
+        let registry = test_registry();
+
+        let host = EmbeddedHost::start(config, registry).await.unwrap();
+
+        // Should have native connectors + WASM connectors
+        let caps = host.list_capabilities();
+        let names: Vec<&str> = caps.iter().map(|d| d.name.as_str()).collect();
+        assert!(names.contains(&"json.validate"), "missing json.validate in {names:?}");
+        assert!(names.contains(&"demo.host-functions"), "missing demo.host-functions in {names:?}");
+
+        host.shutdown().await.unwrap();
+    }
+
+    // ── E2S4-T9: WASM + native connectors coexist in registry ──
+
+    #[tokio::test]
+    async fn wasm_and_native_coexist() {
+        let dir = tempfile::tempdir().unwrap();
+        let config = wasm_config(dir.path());
+        let registry = test_registry();
+
+        let host = EmbeddedHost::start(config, registry).await.unwrap();
+        let caps = host.list_capabilities();
+
+        // Natives: delay, fs.read, fs.write, http.request
+        assert!(caps.iter().any(|d| d.name == "delay"));
+        assert!(caps.iter().any(|d| d.name == "http.request"));
+        // WASM:
+        assert!(caps.iter().any(|d| d.name == "json.validate"));
+        assert!(caps.iter().any(|d| d.name == "demo.host-functions"));
+
+        host.shutdown().await.unwrap();
+    }
+
+    // ── E2S4-T10: list_capabilities returns both native and WASM descriptors ──
+
+    #[tokio::test]
+    async fn list_capabilities_includes_wasm() {
+        let dir = tempfile::tempdir().unwrap();
+        let config = wasm_config(dir.path());
+        let registry = test_registry();
+
+        let host = EmbeddedHost::start(config, registry).await.unwrap();
+        let caps = host.list_capabilities();
+
+        // At least 4 native + 2 WASM = 6
+        assert!(caps.len() >= 6, "expected ≥6 capabilities, got {}", caps.len());
+
+        host.shutdown().await.unwrap();
+    }
+
+    // ── E2S4-T11: describe("json.validate") returns WASM connector descriptor ──
+
+    #[tokio::test]
+    async fn describe_wasm_connector() {
+        let dir = tempfile::tempdir().unwrap();
+        let config = wasm_config(dir.path());
+        let registry = test_registry();
+
+        let host = EmbeddedHost::start(config, registry).await.unwrap();
+        let desc = host.describe("json.validate");
+
+        assert!(desc.is_some());
+        let desc = desc.unwrap();
+        assert_eq!(desc.name, "json.validate");
+
+        host.shutdown().await.unwrap();
+    }
+
+    // ── E2S4-T12: WASM connector invocable via invoke_single ──
+
+    #[tokio::test]
+    async fn wasm_invoke_single() {
+        let dir = tempfile::tempdir().unwrap();
+        let config = wasm_config(dir.path());
+        let registry = test_registry();
+
+        let host = EmbeddedHost::start(config, registry).await.unwrap();
+
+        let result = host
+            .invoke_single(
+                "json.validate",
+                json!({
+                    "document": "hello",
+                    "schema": {"type": "string"}
+                }),
+            )
+            .await
+            .unwrap();
+
+        assert_eq!(result["valid"], true);
+
+        host.shutdown().await.unwrap();
+    }
+
+    // ── E2S4-T13: Empty connectors_dir → 0 WASM connectors, no error ──
+
+    #[tokio::test]
+    async fn empty_connectors_dir() {
+        let dir = tempfile::tempdir().unwrap();
+        let empty_dir = tempfile::tempdir().unwrap();
+        let config = HostConfig {
+            aq_data_dir: dir.path().join("aq"),
+            context_store_path: dir.path().join("context.db"),
+            tick_interval: Duration::from_millis(10),
+            connectors_dir: Some(empty_dir.path().to_path_buf()),
+            ..Default::default()
+        };
+        let registry = test_registry();
+
+        let host = EmbeddedHost::start(config, registry).await.unwrap();
+        let caps = host.list_capabilities();
+
+        // Only native connectors (4 from test_registry)
+        assert_eq!(caps.len(), 4, "expected only native connectors, got {}", caps.len());
+
+        host.shutdown().await.unwrap();
+    }
+
+    // ── E2S4-T14: Duplicate name (WASM matches native) → DuplicateConnector ──
+
+    #[tokio::test]
+    async fn duplicate_connector_name_error() {
+        let dir = tempfile::tempdir().unwrap();
+        let connectors_dir = tempfile::tempdir().unwrap();
+
+        // Create a WASM module that has the same name as a native connector
+        let manifest = r#"
+[connector]
+name = "delay"
+description = "Fake connector with duplicate name"
+
+[capabilities]
+"#;
+        // Copy a real WASM module and give it a conflicting manifest
+        let ref_dir = ref_compiled_dir();
+        std::fs::copy(
+            ref_dir.join("json-validate.wasm"),
+            connectors_dir.path().join("conflict.wasm"),
+        )
+        .unwrap();
+        std::fs::write(connectors_dir.path().join("conflict.connector.toml"), manifest).unwrap();
+
+        let config = HostConfig {
+            aq_data_dir: dir.path().join("aq"),
+            context_store_path: dir.path().join("context.db"),
+            tick_interval: Duration::from_millis(10),
+            connectors_dir: Some(connectors_dir.path().to_path_buf()),
+            ..Default::default()
+        };
+        let registry = test_registry();
+
+        let result = EmbeddedHost::start(config, registry).await;
+        match result {
+            Err(HostError::DuplicateConnector(ref name)) if name == "delay" => {
+                // Expected
+            }
+            Err(e) => panic!("expected DuplicateConnector(\"delay\"), got: {e:?}"),
+            Ok(host) => {
+                host.shutdown().await.unwrap();
+                panic!("expected DuplicateConnector error, but start succeeded");
+            }
+        }
+    }
+
+    // ── E2S4-T15: Invalid module in connectors_dir → skipped, valid still loads ──
+
+    #[tokio::test]
+    async fn invalid_module_skipped() {
+        let dir = tempfile::tempdir().unwrap();
+        let connectors_dir = tempfile::tempdir().unwrap();
+
+        // Copy valid modules
+        let ref_dir = ref_compiled_dir();
+        for entry in std::fs::read_dir(&ref_dir).unwrap() {
+            let entry = entry.unwrap();
+            let name = entry.file_name();
+            let name_str = name.to_str().unwrap();
+            if name_str.ends_with(".wasm") || name_str.ends_with(".connector.toml") {
+                std::fs::copy(entry.path(), connectors_dir.path().join(&name)).unwrap();
+            }
+        }
+
+        // Add an invalid WASM module (just garbage bytes)
+        std::fs::write(connectors_dir.path().join("broken.wasm"), b"not a wasm module").unwrap();
+        std::fs::write(
+            connectors_dir.path().join("broken.connector.toml"),
+            "[connector]\nname = \"test.broken\"\n[capabilities]\n",
+        )
+        .unwrap();
+
+        let config = HostConfig {
+            aq_data_dir: dir.path().join("aq"),
+            context_store_path: dir.path().join("context.db"),
+            tick_interval: Duration::from_millis(10),
+            connectors_dir: Some(connectors_dir.path().to_path_buf()),
+            ..Default::default()
+        };
+        let registry = test_registry();
+
+        let host = EmbeddedHost::start(config, registry).await.unwrap();
+        let caps = host.list_capabilities();
+
+        // json.validate and demo.host-functions should still load
+        let names: Vec<&str> = caps.iter().map(|d| d.name.as_str()).collect();
+        assert!(names.contains(&"json.validate"), "valid module should still load");
+        assert!(names.contains(&"demo.host-functions"), "valid module should still load");
+
+        host.shutdown().await.unwrap();
+    }
+
+    // ── E2S4-T26: FlowSpec with WASM connector node compiles and executes ──
+
+    #[tokio::test]
+    async fn flowspec_with_wasm_node() {
+        let dir = tempfile::tempdir().unwrap();
+        let config = wasm_config(dir.path());
+        let registry = test_registry();
+
+        let host = EmbeddedHost::start(config, registry).await.unwrap();
+
+        let id = NodeId::new();
+        let spec = make_spec(
+            vec![connector_node(
+                id,
+                "json.validate",
+                json!({
+                    "document": 42,
+                    "schema": {"type": "number"}
+                }),
+            )],
+            vec![],
+        );
+
+        let frid = host.submit_flow(spec).await.unwrap();
+        let status = poll_until_terminal(&host, frid).await;
+
+        assert_eq!(status.phase, FlowPhase::Completed);
+        assert_eq!(status.steps.len(), 1);
+
+        host.shutdown().await.unwrap();
+    }
+
+    // ── E2S4-T27: FlowSpec with WASM + native nodes → both execute ──
+
+    #[tokio::test]
+    async fn flowspec_mixed_wasm_and_native() {
+        let dir = tempfile::tempdir().unwrap();
+        let config = wasm_config(dir.path());
+        let registry = test_registry();
+
+        let host = EmbeddedHost::start(config, registry).await.unwrap();
+
+        let delay_id = NodeId::new();
+        let wasm_id = NodeId::new();
+        let spec = make_spec(
+            vec![
+                delay_node(delay_id, 10),
+                connector_node(
+                    wasm_id,
+                    "json.validate",
+                    json!({
+                        "document": "test",
+                        "schema": {"type": "string"}
+                    }),
+                ),
+            ],
+            vec![edge(delay_id, wasm_id)],
+        );
+
+        let frid = host.submit_flow(spec).await.unwrap();
+        let status = poll_until_terminal(&host, frid).await;
+
+        assert_eq!(status.phase, FlowPhase::Completed);
+        assert_eq!(status.steps.len(), 2);
+
+        host.shutdown().await.unwrap();
+    }
+
+    // ── E2S4-T28: WASM connector via invoke_single → receipt stored ──
+
+    #[tokio::test]
+    async fn wasm_invoke_single_stores_receipt() {
+        let dir = tempfile::tempdir().unwrap();
+        let config = wasm_config(dir.path());
+        let registry = test_registry();
+
+        let host = EmbeddedHost::start(config, registry).await.unwrap();
+
+        // invoke_single wraps in an ephemeral FlowSpec, so receipts should
+        // be generated through the normal Connector::invoke path
+        let result = host
+            .invoke_single("demo.host-functions", json!({"message": "receipt-test"}))
+            .await
+            .unwrap();
+
+        assert_eq!(result["message"], "receipt-test");
+        assert!(result["sha256"].is_string());
+        assert_eq!(result["stored"], true);
+
+        host.shutdown().await.unwrap();
+    }
+
+    // ── E2S4-T30: Host shutdown drops WasmRuntime cleanly (no panic) ──
+
+    #[tokio::test]
+    async fn host_shutdown_drops_wasm_runtime() {
+        let dir = tempfile::tempdir().unwrap();
+        let config = wasm_config(dir.path());
+        let registry = test_registry();
+
+        let host = EmbeddedHost::start(config, registry).await.unwrap();
+        // Just verify shutdown completes without panic
+        host.shutdown().await.unwrap();
+    }
+}

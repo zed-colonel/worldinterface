@@ -38,6 +38,11 @@ pub(crate) struct HostInner {
     pub coordinator_map: Arc<std::sync::Mutex<HashMap<FlowRunId, TaskId>>>,
     pub compiler_config: worldinterface_flowspec::CompilerConfig,
     pub shutdown_tx: watch::Sender<bool>,
+    /// Keeps the WASM runtime alive (epoch ticker, resource pool).
+    /// Wrapped in Mutex<Option> so it can be taken out and dropped on a blocking
+    /// thread during shutdown (reqwest::blocking::Client panics if dropped in async context).
+    #[cfg(feature = "wasm")]
+    pub wasm_runtime: std::sync::Mutex<Option<Arc<worldinterface_wasm::WasmRuntime>>>,
 }
 
 /// The embedded WorldInterface host.
@@ -53,7 +58,11 @@ pub struct EmbeddedHost {
 impl EmbeddedHost {
     /// Start the host: validate config, bootstrap AQ engine, restore coordinator map,
     /// and launch the background tick loop.
-    pub async fn start(config: HostConfig, registry: ConnectorRegistry) -> Result<Self, HostError> {
+    #[allow(unused_mut)]
+    pub async fn start(
+        config: HostConfig,
+        mut registry: ConnectorRegistry,
+    ) -> Result<Self, HostError> {
         config.validate()?;
 
         // Ensure data directories exist
@@ -61,6 +70,50 @@ impl EmbeddedHost {
         if let Some(parent) = config.context_store_path.parent() {
             if !parent.as_os_str().is_empty() {
                 std::fs::create_dir_all(parent)?;
+            }
+        }
+
+        // ── Load WASM connectors (if configured) ──
+        // WasmRuntime creation involves reqwest::blocking::Client, which builds
+        // an internal tokio runtime. This must happen on a blocking thread to
+        // avoid "Cannot create Runtime within async context" panic.
+        #[cfg(feature = "wasm")]
+        let (wasm_runtime, wasm_connectors) =
+            if let Some(ref connectors_dir) = config.connectors_dir {
+                let wasm_config = config.wasm_runtime_config();
+                let dir = connectors_dir.clone();
+                let (runtime, connectors) = tokio::task::spawn_blocking(move || {
+                    let runtime = Arc::new(
+                        worldinterface_wasm::WasmRuntime::new(wasm_config)
+                            .map_err(|e| HostError::WasmInit(e.to_string()))?,
+                    );
+                    let connectors = worldinterface_wasm::load_modules_from_dir(&runtime, &dir)
+                        .map_err(|e| HostError::WasmInit(e.to_string()))?;
+                    Ok::<_, HostError>((runtime, connectors))
+                })
+                .await
+                .map_err(|e| HostError::InternalError(format!("WASM loading join error: {e}")))??;
+                (Some(runtime), connectors)
+            } else {
+                (None, Vec::new())
+            };
+        #[cfg(feature = "wasm")]
+        {
+            let wasm_count = wasm_connectors.len();
+            for connector in wasm_connectors {
+                use worldinterface_connector::traits::Connector as _;
+                let name = connector.describe().name.clone();
+                if registry.get(&name).is_some() {
+                    return Err(HostError::DuplicateConnector(name));
+                }
+                registry.register(Arc::new(connector));
+            }
+            if let Some(ref connectors_dir) = config.connectors_dir {
+                tracing::info!(
+                    dir = %connectors_dir.display(),
+                    count = wasm_count,
+                    "WASM connectors loaded"
+                );
             }
         }
 
@@ -104,6 +157,8 @@ impl EmbeddedHost {
             coordinator_map,
             compiler_config: config.compiler_config,
             shutdown_tx,
+            #[cfg(feature = "wasm")]
+            wasm_runtime: std::sync::Mutex::new(wasm_runtime),
         });
 
         Ok(Self { inner, tick_handle })
@@ -355,17 +410,22 @@ impl EmbeddedHost {
     pub async fn shutdown(self) -> Result<(), HostError> {
         tracing::info!("shutting down host");
 
+        // Take the WASM runtime out before stop_and_take_engine moves self.
+        // reqwest::blocking::Client panics if dropped in async context.
+        #[cfg(feature = "wasm")]
+        let wasm_rt = self.inner.wasm_runtime.lock().unwrap().take();
+
         let engine = self.stop_and_take_engine().await?;
 
-        // Drop engine on a blocking thread — AQ's internal runtime cannot
-        // be dropped from within an async context.
-        if let Some(eng) = engine {
-            tokio::task::spawn_blocking(move || {
-                drop(eng);
-            })
-            .await
-            .map_err(|e| HostError::InternalError(format!("shutdown join error: {e}")))?;
-        }
+        // Drop engine (and WASM runtime) on a blocking thread — AQ's internal
+        // runtime cannot be dropped from within an async context.
+        tokio::task::spawn_blocking(move || {
+            drop(engine);
+            #[cfg(feature = "wasm")]
+            drop(wasm_rt);
+        })
+        .await
+        .map_err(|e| HostError::InternalError(format!("shutdown join error: {e}")))?;
 
         tracing::info!("host shut down");
         Ok(())
@@ -386,13 +446,15 @@ impl EmbeddedHost {
     /// Data files are preserved for crash-resume testing.
     #[doc(hidden)]
     pub async fn crash_drop(self) {
+        #[cfg(feature = "wasm")]
+        let wasm_rt = self.inner.wasm_runtime.lock().unwrap().take();
         let engine = self.stop_and_take_engine().await.ok().flatten();
-        if let Some(eng) = engine {
-            tokio::task::spawn_blocking(move || {
-                drop(eng);
-            })
-            .await
-            .ok();
-        }
+        tokio::task::spawn_blocking(move || {
+            drop(engine);
+            #[cfg(feature = "wasm")]
+            drop(wasm_rt);
+        })
+        .await
+        .ok();
     }
 }

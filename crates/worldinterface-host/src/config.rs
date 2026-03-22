@@ -1,6 +1,8 @@
 //! Host configuration.
 
 use std::num::NonZeroUsize;
+#[cfg(feature = "wasm")]
+use std::path::Path;
 use std::path::PathBuf;
 use std::sync::Arc;
 use std::time::Duration;
@@ -42,6 +44,11 @@ pub struct HostConfig {
     /// Metrics recorder for observability.
     /// Defaults to [`NoopMetricsRecorder`] (no-op) for embedded/test use.
     pub metrics: Arc<dyn MetricsRecorder>,
+
+    /// Optional directory to scan for WASM connector modules.
+    /// Each module is a pair: `{name}.wasm` + `{name}.connector.toml`.
+    /// If `None`, no WASM connectors are loaded (existing behavior).
+    pub connectors_dir: Option<PathBuf>,
 }
 
 impl Default for HostConfig {
@@ -55,6 +62,7 @@ impl Default for HostConfig {
             compiler_config: CompilerConfig::default(),
             shutdown_timeout: Duration::from_secs(30),
             metrics: Arc::new(NoopMetricsRecorder),
+            connectors_dir: None,
         }
     }
 }
@@ -69,6 +77,7 @@ impl std::fmt::Debug for HostConfig {
             .field("lease_timeout_secs", &self.lease_timeout_secs)
             .field("compiler_config", &self.compiler_config)
             .field("shutdown_timeout", &self.shutdown_timeout)
+            .field("connectors_dir", &self.connectors_dir)
             .finish()
     }
 }
@@ -91,7 +100,29 @@ impl HostConfig {
         if self.shutdown_timeout.is_zero() {
             return Err(HostError::InvalidConfig("shutdown_timeout must be > 0".into()));
         }
+        if let Some(ref dir) = self.connectors_dir {
+            if !dir.exists() {
+                return Err(HostError::InvalidConfig(format!(
+                    "connectors_dir does not exist: {}",
+                    dir.display()
+                )));
+            }
+        }
         Ok(())
+    }
+
+    /// Build a `WasmRuntimeConfig` for the WASM runtime.
+    /// The KV store lives alongside the ContextStore database.
+    #[cfg(feature = "wasm")]
+    pub(crate) fn wasm_runtime_config(&self) -> worldinterface_wasm::runtime::WasmRuntimeConfig {
+        worldinterface_wasm::runtime::WasmRuntimeConfig {
+            kv_store_dir: self
+                .context_store_path
+                .parent()
+                .unwrap_or(Path::new("."))
+                .join("wasm-kv"),
+            ..Default::default()
+        }
     }
 
     /// Build a RuntimeConfig for ActionQueue from this HostConfig.
@@ -135,6 +166,36 @@ mod tests {
         let config = HostConfig { shutdown_timeout: Duration::ZERO, ..Default::default() };
         let err = config.validate().unwrap_err();
         assert!(matches!(err, HostError::InvalidConfig(_)));
+    }
+
+    // ── E2S4-T1: connectors_dir = None → default behavior ──
+
+    #[test]
+    fn connectors_dir_none_is_valid() {
+        let config = HostConfig { connectors_dir: None, ..Default::default() };
+        assert!(config.validate().is_ok());
+    }
+
+    // ── E2S4-T2: connectors_dir = Some(valid) → passes validation ──
+
+    #[test]
+    fn connectors_dir_valid_passes() {
+        let dir = tempfile::tempdir().unwrap();
+        let config =
+            HostConfig { connectors_dir: Some(dir.path().to_path_buf()), ..Default::default() };
+        assert!(config.validate().is_ok());
+    }
+
+    // ── E2S4-T3: connectors_dir = Some(nonexistent) → InvalidConfig ──
+
+    #[test]
+    fn connectors_dir_nonexistent_rejected() {
+        let config = HostConfig {
+            connectors_dir: Some(PathBuf::from("/tmp/nonexistent-e2s4-test-dir")),
+            ..Default::default()
+        };
+        let err = config.validate().unwrap_err();
+        assert!(matches!(err, HostError::InvalidConfig(ref msg) if msg.contains("connectors_dir")));
     }
 
     #[test]
