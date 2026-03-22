@@ -843,8 +843,9 @@ async fn sandbox_exec_invocable_via_host() {
 
 #[cfg(feature = "wasm-tests")]
 mod wasm_host_tests {
-    use super::*;
     use std::path::PathBuf;
+
+    use super::*;
 
     fn ref_compiled_dir() -> PathBuf {
         PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../examples/wasm-connectors/compiled")
