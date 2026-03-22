@@ -18,7 +18,7 @@ pub mod environment;
 pub mod filesystem;
 pub mod random;
 
-use wasmtime::component::Linker;
+use wasmtime::component::{HasSelf, Linker};
 
 use crate::state::WasmState;
 
@@ -30,6 +30,6 @@ pub fn register_all(linker: &mut Linker<WasmState>) -> Result<(), anyhow::Error>
     // The bindgen! macro in connector.rs generates add_to_linker which
     // registers all the custom interface implementations.
     // We call it here using the generated function.
-    crate::connector::ConnectorWorld::add_to_linker(linker, |state| state)?;
+    crate::connector::ConnectorWorld::add_to_linker::<_, HasSelf<_>>(linker, |state| state)?;
     Ok(())
 }

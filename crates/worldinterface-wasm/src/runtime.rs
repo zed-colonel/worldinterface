@@ -69,7 +69,7 @@ impl WasmRuntime {
         let mut linker: Linker<WasmState> = Linker::new(&engine);
 
         // Register WASI standard implementations
-        wasmtime_wasi::add_to_linker_sync(&mut linker)
+        wasmtime_wasi::p2::add_to_linker_sync(&mut linker)
             .map_err(|e| crate::error::WasmError::Compilation(format!("WASI linker: {e}")))?;
 
         // Register custom Exo host functions
@@ -143,7 +143,7 @@ mod tests {
         let wasi_ctx = wasmtime_wasi::WasiCtxBuilder::new().build();
         let state = WasmState {
             wasi_ctx,
-            resource_table: wasmtime_wasi::ResourceTable::new(),
+            resource_table: wasmtime::component::ResourceTable::new(),
             policy: Arc::new(crate::policy::CapabilityPolicy::deny_all()),
             resource_pool: Arc::clone(runtime.resource_pool()),
             module_name: "test".into(),

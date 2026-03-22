@@ -5,7 +5,8 @@
 
 use std::sync::Arc;
 
-use wasmtime_wasi::{ResourceTable, WasiCtx, WasiView};
+use wasmtime::component::ResourceTable;
+use wasmtime_wasi::{WasiCtx, WasiCtxView, WasiView};
 
 use crate::policy::CapabilityPolicy;
 use crate::resource_pool::WasmResourcePool;
@@ -25,10 +26,7 @@ pub struct WasmState {
 }
 
 impl WasiView for WasmState {
-    fn ctx(&mut self) -> &mut WasiCtx {
-        &mut self.wasi_ctx
-    }
-    fn table(&mut self) -> &mut ResourceTable {
-        &mut self.resource_table
+    fn ctx(&mut self) -> WasiCtxView<'_> {
+        WasiCtxView { ctx: &mut self.wasi_ctx, table: &mut self.resource_table }
     }
 }

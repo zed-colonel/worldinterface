@@ -5,9 +5,9 @@
 use std::sync::Arc;
 
 use serde_json::Value;
-use wasmtime::component::Component;
+use wasmtime::component::{Component, ResourceTable};
 use wasmtime::Store;
-use wasmtime_wasi::{ResourceTable, WasiCtxBuilder};
+use wasmtime_wasi::{WasiCtx, WasiCtxBuilder};
 use worldinterface_connector::context::InvocationContext;
 use worldinterface_connector::error::ConnectorError;
 use worldinterface_connector::traits::Connector;
@@ -27,8 +27,12 @@ use crate::state::WasmState;
 wasmtime::component::bindgen!({
     world: "connector-world",
     path: "wit",
-    async: false,
-    trappable_imports: true,
+    imports: {
+        "exo:connector/logging@0.1.0": trappable,
+        "exo:connector/kv@0.1.0": trappable,
+        "exo:connector/crypto@0.1.0": trappable,
+        "exo:connector/process@0.1.0": trappable,
+    },
 });
 
 /// A WASM connector module implementing the Connector trait.
@@ -61,7 +65,7 @@ impl WasmConnector {
     }
 
     /// Build a per-invocation WASI context scoped to the manifest's capabilities.
-    fn build_wasi_ctx(&self) -> Result<wasmtime_wasi::WasiCtx, ConnectorError> {
+    fn build_wasi_ctx(&self) -> Result<WasiCtx, ConnectorError> {
         let mut builder = WasiCtxBuilder::new();
 
         // Only expose allowed environment variables
