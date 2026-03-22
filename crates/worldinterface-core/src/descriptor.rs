@@ -39,6 +39,7 @@ pub enum ConnectorCategory {
     Delay,
     Transform,
     Shell,
+    Sandbox,
     Custom(String),
 }
 
@@ -89,6 +90,7 @@ mod tests {
             ConnectorCategory::Delay,
             ConnectorCategory::Transform,
             ConnectorCategory::Shell,
+            ConnectorCategory::Sandbox,
             ConnectorCategory::Custom("my_plugin".into()),
         ];
         for cat in categories {
@@ -116,5 +118,16 @@ mod tests {
         // Verify schemas are omitted from serialized form
         assert!(!json.contains("input_schema"));
         assert!(!json.contains("output_schema"));
+    }
+
+    // ── E2S2-T19: ConnectorCategory::Sandbox roundtrip ──
+
+    #[test]
+    fn connector_category_sandbox_roundtrip() {
+        let cat = ConnectorCategory::Sandbox;
+        let json = serde_json::to_string(&cat).unwrap();
+        assert_eq!(json, "\"sandbox\"");
+        let back: ConnectorCategory = serde_json::from_str(&json).unwrap();
+        assert_eq!(cat, back);
     }
 }

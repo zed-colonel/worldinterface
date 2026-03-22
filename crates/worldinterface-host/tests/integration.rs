@@ -6,7 +6,8 @@ use std::time::Duration;
 
 use serde_json::json;
 use worldinterface_connector::connectors::{
-    DelayConnector, FsReadConnector, FsWriteConnector, HttpRequestConnector, ShellExecConnector,
+    DelayConnector, FsReadConnector, FsWriteConnector, HttpRequestConnector, SandboxExecConnector,
+    ShellExecConnector,
 };
 use worldinterface_connector::ConnectorRegistry;
 use worldinterface_core::flowspec::*;
@@ -799,6 +800,39 @@ async fn flowspec_with_shell_exec_compiles_and_runs() {
     assert_eq!(status.phase, FlowPhase::Completed);
     assert_eq!(status.steps.len(), 1);
     assert_eq!(status.steps[0].phase, StepPhase::Completed);
+
+    host.shutdown().await.unwrap();
+}
+
+// ── E2S2-T43: sandbox.exec invocable via EmbeddedHost ──
+
+#[tokio::test]
+async fn sandbox_exec_invocable_via_host() {
+    let dir = tempfile::tempdir().unwrap();
+    let config = test_config(dir.path());
+
+    // Use a sandbox dir that exists on the host (tempdir, not /sandbox)
+    let sandbox_dir = tempfile::tempdir().unwrap();
+
+    // Use a registry that includes both ShellExecConnector and SandboxExecConnector
+    let mut registry = test_registry();
+    registry.register(Arc::new(ShellExecConnector::new()));
+    registry.register(Arc::new(SandboxExecConnector::with_sandbox_dir(
+        sandbox_dir.path().to_str().unwrap(),
+    )));
+
+    let host = EmbeddedHost::start(config, registry).await.unwrap();
+
+    let output = host
+        .invoke_single(
+            "sandbox.exec",
+            json!({"command": "echo", "args": ["-n", "sandbox_host_test"]}),
+        )
+        .await
+        .unwrap();
+
+    assert_eq!(output["stdout"], "sandbox_host_test");
+    assert_eq!(output["exit_code"], 0);
 
     host.shutdown().await.unwrap();
 }

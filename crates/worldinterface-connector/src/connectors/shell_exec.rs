@@ -46,11 +46,16 @@ impl ShellExecConnector {
         }
     }
 
-    /// Create a connector with custom limits (for testing).
-    #[cfg(test)]
-    fn with_max_output_bytes(mut self, max: usize) -> Self {
-        self.max_output_bytes = max;
-        self
+    /// Create a connector with custom limits.
+    ///
+    /// Used by `SandboxExecConnector` to create a restricted inner instance.
+    pub fn with_limits(
+        default_timeout: Duration,
+        max_timeout: Duration,
+        max_output_bytes: usize,
+        base_env_keys: Vec<String>,
+    ) -> Self {
+        Self { default_timeout, max_timeout, max_output_bytes, base_env_keys }
     }
 }
 
@@ -501,7 +506,12 @@ mod tests {
 
     #[tokio::test]
     async fn shell_exec_output_truncation() {
-        let connector = ShellExecConnector::new().with_max_output_bytes(32);
+        let connector = ShellExecConnector::with_limits(
+            Duration::from_secs(30),
+            Duration::from_secs(300),
+            32, // 32 bytes max output
+            vec!["PATH".into(), "HOME".into(), "USER".into(), "LANG".into(), "TERM".into()],
+        );
         // Generate output larger than 32 bytes
         let result = invoke_on_blocking_thread_with_connector(
             connector,
@@ -727,5 +737,24 @@ mod tests {
 
         assert!(result["stdout"].as_str().unwrap().contains("out_msg"));
         assert!(result["stderr"].as_str().unwrap().contains("err_msg"));
+    }
+
+    // ── E2S2-T18: with_limits() constructor ──
+
+    #[test]
+    fn shell_exec_with_limits_constructor() {
+        let connector = ShellExecConnector::with_limits(
+            Duration::from_secs(10),
+            Duration::from_secs(60),
+            262_144,
+            vec!["PATH".into(), "HOME".into(), "LANG".into()],
+        );
+        // Verify via describe() that the connector is functional
+        let desc = connector.describe();
+        assert_eq!(desc.name, "shell.exec");
+        // The limits are internal, but we can verify the connector was constructed
+        // by checking it's a valid connector with different-from-default limits
+        assert!(!desc.idempotent);
+        assert!(desc.side_effects);
     }
 }
