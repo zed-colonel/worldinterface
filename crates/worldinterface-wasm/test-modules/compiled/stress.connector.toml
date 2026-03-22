@@ -1,0 +1,9 @@
+[connector]
+name = "test.stress"
+version = "0.1.0"
+description = "Stress tests for metering safety"
+
+[resources]
+max_fuel = 10_000_000
+timeout_ms = 2000
+max_memory_bytes = 16_777_216

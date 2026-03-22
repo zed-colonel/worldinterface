@@ -40,6 +40,7 @@ pub enum ConnectorCategory {
     Transform,
     Shell,
     Sandbox,
+    Wasm(String),
     Custom(String),
 }
 
@@ -91,6 +92,7 @@ mod tests {
             ConnectorCategory::Transform,
             ConnectorCategory::Shell,
             ConnectorCategory::Sandbox,
+            ConnectorCategory::Wasm("test.echo".into()),
             ConnectorCategory::Custom("my_plugin".into()),
         ];
         for cat in categories {
@@ -118,6 +120,18 @@ mod tests {
         // Verify schemas are omitted from serialized form
         assert!(!json.contains("input_schema"));
         assert!(!json.contains("output_schema"));
+    }
+
+    // ── E2S3-T49: ConnectorCategory::Wasm serde roundtrip ──
+
+    #[test]
+    fn connector_category_wasm_roundtrip() {
+        let cat = ConnectorCategory::Wasm("test.echo".into());
+        let json = serde_json::to_string(&cat).unwrap();
+        let back: ConnectorCategory = serde_json::from_str(&json).unwrap();
+        assert_eq!(cat, back);
+        // Verify it contains the module name
+        assert!(json.contains("test.echo"));
     }
 
     // ── E2S2-T19: ConnectorCategory::Sandbox roundtrip ──

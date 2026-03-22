@@ -1,0 +1,7 @@
+[connector]
+name = "test.echo"
+version = "0.1.0"
+description = "Echoes input parameters back as output"
+
+[capabilities]
+logging = true

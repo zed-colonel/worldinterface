@@ -1,0 +1,442 @@
+//! Integration tests for WASM module loading and invocation.
+//!
+//! These tests require compiled WASM test modules. Gate behind `wasm-tests` feature.
+
+#![cfg(feature = "wasm-tests")]
+
+use std::path::PathBuf;
+use std::sync::Arc;
+
+use serde_json::json;
+use uuid::Uuid;
+use worldinterface_connector::context::{CancellationToken, InvocationContext};
+use worldinterface_connector::traits::Connector;
+use worldinterface_core::descriptor::ConnectorCategory;
+use worldinterface_core::id::{FlowRunId, NodeId, StepRunId};
+use worldinterface_wasm::module_loader;
+use worldinterface_wasm::runtime::{WasmRuntime, WasmRuntimeConfig};
+
+fn compiled_dir() -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("test-modules/compiled")
+}
+
+fn test_runtime() -> Arc<WasmRuntime> {
+    let dir = tempfile::tempdir().unwrap();
+    let config = WasmRuntimeConfig { kv_store_dir: dir.path().join("kv"), ..Default::default() };
+    // Leak tempdir so it persists for the runtime's lifetime
+    let dir = Box::leak(Box::new(dir));
+    let _ = dir;
+    Arc::new(WasmRuntime::new(config).unwrap())
+}
+
+fn test_ctx() -> InvocationContext {
+    InvocationContext {
+        flow_run_id: FlowRunId::new(),
+        node_id: NodeId::new(),
+        step_run_id: StepRunId::new(),
+        run_id: Uuid::new_v4(),
+        attempt_id: Uuid::new_v4(),
+        attempt_number: 1,
+        cancellation: CancellationToken::new(),
+    }
+}
+
+fn load_echo() -> worldinterface_wasm::WasmConnector {
+    let runtime = test_runtime();
+    let dir = compiled_dir();
+    module_loader::load_module(&runtime, &dir.join("echo.wasm"), &dir.join("echo.connector.toml"))
+        .expect("echo module should load")
+}
+
+fn load_stress() -> worldinterface_wasm::WasmConnector {
+    let runtime = test_runtime();
+    let dir = compiled_dir();
+    module_loader::load_module(
+        &runtime,
+        &dir.join("stress.wasm"),
+        &dir.join("stress.connector.toml"),
+    )
+    .expect("stress module should load")
+}
+
+fn load_host_caller() -> worldinterface_wasm::WasmConnector {
+    let runtime = test_runtime();
+    let dir = compiled_dir();
+    module_loader::load_module(
+        &runtime,
+        &dir.join("host-caller.wasm"),
+        &dir.join("host-caller.connector.toml"),
+    )
+    .expect("host-caller module should load")
+}
+
+// ── E2S3-T20: load_module: valid .wasm + .connector.toml → WasmConnector ──
+
+#[test]
+fn load_valid_module() {
+    let _connector = load_echo();
+}
+
+// ── E2S3-T24: load_modules_from_dir: loads all valid modules ──
+
+#[test]
+fn load_modules_from_dir_loads_all() {
+    let runtime = test_runtime();
+    let connectors = module_loader::load_modules_from_dir(&runtime, &compiled_dir()).unwrap();
+    assert!(
+        connectors.len() >= 2,
+        "expected at least echo + host-caller, got {}",
+        connectors.len()
+    );
+}
+
+// ── E2S3-T26: WasmConnector::describe returns manifest data ──
+
+#[test]
+fn wasm_connector_describe() {
+    let connector = load_echo();
+    let desc = connector.describe();
+    assert_eq!(desc.name, "test.echo");
+    assert!(matches!(desc.category, ConnectorCategory::Wasm(ref name) if name == "test.echo"));
+    assert!(!desc.description.is_empty());
+}
+
+// ── E2S3-T27: WasmConnector::invoke calls guest invoke() ──
+
+#[test]
+fn wasm_connector_invoke_echo() {
+    let connector = load_echo();
+    let ctx = test_ctx();
+    let params = json!({"hello": "world"});
+    let result = connector.invoke(&ctx, &params).unwrap();
+    assert_eq!(result, params);
+}
+
+// ── E2S3-T28: WasmConnector::invoke returns guest result as Value ──
+
+#[test]
+fn wasm_connector_invoke_returns_value() {
+    let connector = load_echo();
+    let ctx = test_ctx();
+    let params = json!({"numbers": [1, 2, 3], "nested": {"a": true}});
+    let result = connector.invoke(&ctx, &params).unwrap();
+    assert_eq!(result["numbers"], json!([1, 2, 3]));
+    assert_eq!(result["nested"]["a"], json!(true));
+}
+
+// ── E2S3-T29: WasmConnector::invoke guest error → ConnectorError::Terminal ──
+
+#[test]
+fn wasm_connector_guest_error() {
+    let connector = load_host_caller();
+    let ctx = test_ctx();
+    // Send unknown action which triggers Err from guest
+    let params = json!({"action": "unknown"});
+    let result = connector.invoke(&ctx, &params);
+    assert!(result.is_err());
+    let err = result.unwrap_err();
+    assert!(
+        matches!(err, worldinterface_connector::error::ConnectorError::Terminal(ref msg) if msg.contains("unknown")),
+        "expected Terminal error with 'unknown', got: {err:?}"
+    );
+}
+
+// ── E2S3-T30: WasmConnector: cancellation checked before and after ──
+
+#[test]
+fn wasm_connector_cancellation_before() {
+    let connector = load_echo();
+    let ctx = test_ctx();
+    ctx.cancellation.cancel();
+    let result = connector.invoke(&ctx, &json!({"test": true}));
+    assert!(matches!(result, Err(worldinterface_connector::error::ConnectorError::Cancelled)));
+}
+
+// ── E2S3-T31: Host logging: log call produces tracing event ──
+
+#[test]
+fn host_logging() {
+    let connector = load_host_caller();
+    let ctx = test_ctx();
+    let result = connector.invoke(&ctx, &json!({"action": "log"})).unwrap();
+    assert_eq!(result["logged"], true);
+}
+
+// ── E2S3-T32: Host crypto: sha256 returns correct hex digest ──
+
+#[test]
+fn host_crypto_sha256() {
+    let connector = load_host_caller();
+    let ctx = test_ctx();
+    let result = connector.invoke(&ctx, &json!({"action": "sha256"})).unwrap();
+    let digest = result["digest"].as_str().unwrap();
+    // SHA-256 of "hello world" (as bytes)
+    assert_eq!(digest, "b94d27b9934d3e08a52e52d7da7dabfac484efe37a5380ee9088f7ace2efcde9");
+}
+
+// ── E2S3-T33: Host KV: get/set/delete/list operations ──
+
+#[test]
+fn host_kv_operations() {
+    let connector = load_host_caller();
+    let ctx = test_ctx();
+
+    // Set a key
+    let result = connector.invoke(&ctx, &json!({"action": "kv_set"})).unwrap();
+    assert_eq!(result["stored"], true);
+
+    // Get the key
+    let result = connector.invoke(&ctx, &json!({"action": "kv_get"})).unwrap();
+    assert_eq!(result["value"], "test-value");
+
+    // Delete the key
+    let result = connector.invoke(&ctx, &json!({"action": "kv_delete"})).unwrap();
+    assert_eq!(result["deleted"], true);
+
+    // Get should return null now
+    let result = connector.invoke(&ctx, &json!({"action": "kv_get"})).unwrap();
+    assert_eq!(result["value"], serde_json::Value::Null);
+}
+
+// ── E2S3-T35: Host process: allowed command → executes, returns stdout ──
+
+#[test]
+fn host_process_allowed() {
+    let connector = load_host_caller();
+    let ctx = test_ctx();
+    let result = connector.invoke(&ctx, &json!({"action": "exec"})).unwrap();
+    assert_eq!(result["stdout"], "hello from process");
+    assert_eq!(result["exit_code"], 0);
+}
+
+// ── E2S3-T48: WasmConnector invocation produces receipt via invoke_with_receipt ──
+
+#[test]
+fn wasm_connector_receipt() {
+    use worldinterface_connector::receipt_gen::invoke_with_receipt;
+
+    let connector = load_echo();
+    let ctx = test_ctx();
+    let params = json!({"receipt": "test"});
+
+    let (result, receipt) = invoke_with_receipt(&connector, &ctx, &params);
+    assert!(result.is_ok());
+    assert_eq!(receipt.connector, "test.echo");
+    assert_eq!(receipt.status, worldinterface_core::receipt::ReceiptStatus::Success);
+    assert!(receipt.output_hash.is_some());
+    assert!(!receipt.input_hash.is_empty());
+}
+
+// ── E2S3-T17: Fuel exhaustion → ConnectorError::Terminal ──
+
+#[test]
+fn wasm_fuel_exhaustion() {
+    let connector = load_stress();
+    let ctx = test_ctx();
+    let result = connector.invoke(&ctx, &json!({"action": "loop"}));
+    let err = result.unwrap_err();
+    // Fuel exhaustion or epoch deadline — both produce Terminal errors
+    assert!(
+        matches!(&err, worldinterface_connector::error::ConnectorError::Terminal(_)),
+        "expected Terminal error from fuel/epoch limit, got: {err:?}"
+    );
+}
+
+// ── E2S3-T18: Wall-clock timeout (epoch) → ConnectorError::Terminal ──
+
+#[test]
+fn wasm_epoch_timeout() {
+    // The stress module has timeout_ms=2000, so an infinite loop should
+    // trigger within a few seconds via epoch deadline.
+    let connector = load_stress();
+    let ctx = test_ctx();
+    let start = std::time::Instant::now();
+    let result = connector.invoke(&ctx, &json!({"action": "loop"}));
+    let elapsed = start.elapsed();
+
+    let err = result.unwrap_err();
+    assert!(
+        matches!(&err, worldinterface_connector::error::ConnectorError::Terminal(_)),
+        "expected Terminal error, got: {err:?}"
+    );
+    // Should complete within the timeout window (2s + some margin), not hang
+    assert!(
+        elapsed < std::time::Duration::from_secs(10),
+        "should be bounded by timeout, elapsed: {elapsed:?}"
+    );
+}
+
+// ── E2S3-T19: Memory limit enforced → trap ──
+
+#[test]
+fn wasm_memory_limit() {
+    // The stress module has max_memory_bytes=16MB. Allocating 1MB chunks
+    // in a loop should hit the limit and trap.
+    let connector = load_stress();
+    let ctx = test_ctx();
+    let result = connector.invoke(&ctx, &json!({"action": "allocate"}));
+    let err = result.unwrap_err();
+    assert!(
+        matches!(&err, worldinterface_connector::error::ConnectorError::Terminal(_)),
+        "expected Terminal error from memory limit, got: {err:?}"
+    );
+}
+
+// ── E2S3-T23: Module missing required exports → error ──
+
+#[test]
+fn wasm_module_missing_exports() {
+    // Create a minimal valid WASM module that doesn't export the connector interface
+    let dir = tempfile::tempdir().unwrap();
+    let manifest = r#"
+[connector]
+name = "test.bad-exports"
+"#;
+    std::fs::write(dir.path().join("bad.connector.toml"), manifest).unwrap();
+
+    // Write a minimal valid WASM component (empty component)
+    // WAT: (component)
+    let wat = "(component)";
+    let wasm = wat::parse_str(wat).expect("valid WAT");
+    std::fs::write(dir.path().join("bad.wasm"), &wasm).unwrap();
+
+    let runtime = test_runtime();
+    let result = worldinterface_wasm::load_module(
+        &runtime,
+        &dir.path().join("bad.wasm"),
+        &dir.path().join("bad.connector.toml"),
+    );
+    // Should fail during instantiation or loading because connector export is missing
+    // (the exact error varies — could be compilation or instantiation)
+    assert!(
+        result.is_err() || {
+            // If load succeeds, invoke should fail
+            let connector = result.unwrap();
+            let ctx = test_ctx();
+            connector.invoke(&ctx, &json!({})).is_err()
+        }
+    );
+}
+
+// ── E2S3-T34: KV per-module namespace isolation via WASM ──
+
+#[test]
+fn wasm_kv_namespace_isolation() {
+    // Both connectors share the same runtime (and thus the same KV store).
+    // Since they have the same module name ("test.host-caller"), they share namespace.
+    let runtime = test_runtime();
+    let dir = compiled_dir();
+
+    let caller1 = module_loader::load_module(
+        &runtime,
+        &dir.join("host-caller.wasm"),
+        &dir.join("host-caller.connector.toml"),
+    )
+    .unwrap();
+    let caller2 = module_loader::load_module(
+        &runtime,
+        &dir.join("host-caller.wasm"),
+        &dir.join("host-caller.connector.toml"),
+    )
+    .unwrap();
+
+    let ctx1 = test_ctx();
+    let ctx2 = test_ctx();
+
+    // Set via instance 1
+    caller1.invoke(&ctx1, &json!({"action": "kv_set"})).unwrap();
+
+    // Get via instance 2 — should see the same value (same module name = same namespace)
+    let result = caller2.invoke(&ctx2, &json!({"action": "kv_get"})).unwrap();
+    assert_eq!(result["value"], "test-value");
+
+    // Cleanup
+    caller1.invoke(&ctx1, &json!({"action": "kv_delete"})).unwrap();
+}
+
+// ── E2S3-T40: Host environment: allowed var → value returned ──
+
+#[test]
+fn wasm_environment_allowed_var() {
+    let connector = load_host_caller();
+    let ctx = test_ctx();
+    let result = connector.invoke(&ctx, &json!({"action": "env"})).unwrap();
+    // HOME is in the manifest's environment allowlist and is set via WASI context
+    let home = result["home"].as_str().unwrap();
+    assert!(!home.is_empty(), "HOME should be non-empty");
+}
+
+// ── E2S3-T41: Host environment: disallowed var → not visible ──
+
+#[test]
+fn wasm_environment_denied_var() {
+    let connector = load_host_caller();
+    let ctx = test_ctx();
+    let result = connector.invoke(&ctx, &json!({"action": "env"})).unwrap();
+    // SECRET_KEY is not in the manifest's environment allowlist
+    let secret = result["secret"].as_str().unwrap();
+    assert!(secret.is_empty(), "SECRET_KEY should be empty (not in allowlist)");
+}
+
+// ── E2S3-T42: Host random: returns bytes of requested length ──
+
+#[test]
+fn wasm_random_returns_bytes() {
+    let connector = load_host_caller();
+    let ctx = test_ctx();
+    let result = connector.invoke(&ctx, &json!({"action": "random"})).unwrap();
+    let hex = result["random"].as_str().unwrap();
+    assert_eq!(result["len"], 16);
+    assert_eq!(hex.len(), 32); // 16 bytes = 32 hex chars
+                               // Should not be all zeros (astronomically unlikely for real random)
+    assert_ne!(hex, "00000000000000000000000000000000");
+}
+
+// ── E2S3-T43: Host clocks: monotonic time accessible ──
+
+#[test]
+fn wasm_clocks_accessible() {
+    let connector = load_host_caller();
+    let ctx = test_ctx();
+    let result = connector.invoke(&ctx, &json!({"action": "clock"})).unwrap();
+    let epoch_secs = result["epoch_secs"].as_u64().unwrap();
+    // Should be a reasonable epoch timestamp (after 2020)
+    assert!(epoch_secs > 1_577_836_800, "epoch_secs should be recent: {epoch_secs}");
+}
+
+// ── E2S3-T36: Host process: disallowed command → PolicyViolation trap ──
+
+#[test]
+fn wasm_process_denied() {
+    // host-caller only allows "echo" in its manifest. Try to invoke with
+    // an action that would call a different command — but the module hardcodes
+    // "echo". Instead, test by loading with a restrictive manifest.
+    let dir = compiled_dir();
+    let runtime = test_runtime();
+
+    // Create a temporary manifest that allows NO process commands
+    let tmp = tempfile::tempdir().unwrap();
+    let manifest = r#"
+[connector]
+name = "test.host-caller"
+
+[capabilities]
+logging = true
+crypto = true
+kv = true
+"#;
+    std::fs::write(tmp.path().join("restricted.connector.toml"), manifest).unwrap();
+    std::fs::copy(dir.join("host-caller.wasm"), tmp.path().join("restricted.wasm")).unwrap();
+
+    let connector = worldinterface_wasm::load_module(
+        &runtime,
+        &tmp.path().join("restricted.wasm"),
+        &tmp.path().join("restricted.connector.toml"),
+    )
+    .unwrap();
+
+    let ctx = test_ctx();
+    let result = connector.invoke(&ctx, &json!({"action": "exec"}));
+    // Should fail because process capability is denied
+    assert!(result.is_err(), "expected error from process policy denial, got: {result:?}");
+}

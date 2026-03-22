@@ -1,0 +1,15 @@
+[connector]
+name = "test.host-caller"
+version = "0.1.0"
+description = "Exercises host functions for testing"
+
+[capabilities]
+logging = true
+crypto = true
+kv = true
+process = ["echo"]
+environment = ["HOME", "PATH"]
+
+[resources]
+max_fuel = 1_000_000_000
+timeout_ms = 30000

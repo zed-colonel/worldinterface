@@ -10,9 +10,13 @@ members = [
     "crates/worldinterface-http-trigger",
     "crates/worldinterface-daemon",
     "crates/worldinterface-cli",
+    "crates/worldinterface-wasm",
 ]
 exclude = [
     "examples/agent-embedding",
+    "crates/worldinterface-wasm/test-modules/echo",
+    "crates/worldinterface-wasm/test-modules/host-caller",
+    "crates/worldinterface-wasm/test-modules/stress",
 ]
 
 [workspace.package]
@@ -32,6 +36,7 @@ worldinterface-coordinator = { path = "crates/worldinterface-coordinator", versi
 worldinterface-host = { path = "crates/worldinterface-host", version = "0.1.2" }
 worldinterface-http-trigger = { path = "crates/worldinterface-http-trigger", version = "0.1.2" }
 worldinterface-daemon = { path = "crates/worldinterface-daemon", version = "0.1.2" }
+worldinterface-wasm = { path = "crates/worldinterface-wasm", version = "0.1.2" }
 
 # ActionQueue crates (from crates.io)
 actionqueue-core = { version = "0.1.0", features = ["serde"] }
@@ -63,6 +68,10 @@ chrono = { version = "0.4", features = ["serde"] }
 toml = "0.8"
 sha2 = "0.10"
 nix = { version = "0.29", default-features = false, features = ["signal", "process"] }
+wasmtime = { version = "29", features = ["component-model"] }
+wasmtime-wasi = "29"
+hmac = "0.12"
+anyhow = "1"
 
 # Test dependencies
 tempfile = "3"

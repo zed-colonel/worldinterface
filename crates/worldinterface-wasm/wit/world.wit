@@ -1,0 +1,73 @@
+package exo:connector@0.1.0;
+
+/// The contract a WASM connector module must implement.
+interface connector {
+    record descriptor {
+        name: string,
+        display-name: string,
+        description: string,
+        input-schema: option<string>,
+        output-schema: option<string>,
+        idempotent: bool,
+        side-effects: bool,
+    }
+
+    record invocation-context {
+        flow-run-id: string,
+        node-id: string,
+        run-id: string,
+        attempt-number: u32,
+    }
+
+    /// Self-describe this connector.
+    describe: func() -> descriptor;
+
+    /// Invoke the connector. Params and result are JSON strings.
+    invoke: func(ctx: invocation-context, params: string) -> result<string, string>;
+}
+
+/// Structured logging to the host's tracing infrastructure.
+interface logging {
+    enum log-level { trace, debug, info, warn, error }
+    log: func(level: log-level, message: string);
+}
+
+/// Per-module key-value store (host-managed, SQLite-backed).
+interface kv {
+    get: func(key: string) -> option<string>;
+    set: func(key: string, value: string);
+    delete: func(key: string) -> bool;
+    list-keys: func(prefix: string) -> list<string>;
+}
+
+/// Cryptographic operations.
+interface crypto {
+    /// SHA-256 hash, returned as hex string.
+    sha256: func(data: list<u8>) -> string;
+    /// HMAC-SHA256, returned as raw bytes.
+    hmac-sha256: func(key: list<u8>, data: list<u8>) -> list<u8>;
+}
+
+/// Scoped process execution (policy-gated by command allowlist).
+interface process {
+    record exec-result {
+        stdout: string,
+        stderr: string,
+        exit-code: option<s32>,
+        timed-out: bool,
+    }
+    /// Execute a command. Timeout defaults to 30s, max 60s.
+    exec: func(command: string, args: list<string>, timeout-ms: option<u32>) -> result<exec-result, string>;
+}
+
+/// The full world: custom Exo imports + guest exports.
+world connector-world {
+    // Custom Exo host imports
+    import logging;
+    import kv;
+    import crypto;
+    import process;
+
+    // Guest exports
+    export connector;
+}

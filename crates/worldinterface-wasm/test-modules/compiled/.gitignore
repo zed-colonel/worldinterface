@@ -1,0 +1,2 @@
+# Compiled WASM test modules — built by scripts/build-test-modules.sh
+*.wasm
