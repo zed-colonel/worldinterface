@@ -6,7 +6,7 @@ use std::time::Duration;
 
 use serde_json::json;
 use worldinterface_connector::connectors::{
-    DelayConnector, FsReadConnector, FsWriteConnector, HttpRequestConnector,
+    DelayConnector, FsReadConnector, FsWriteConnector, HttpRequestConnector, ShellExecConnector,
 };
 use worldinterface_connector::ConnectorRegistry;
 use worldinterface_core::flowspec::*;
@@ -743,6 +743,62 @@ async fn concurrent_submit_and_status() {
     let s2 = poll_until_terminal(&host, frid2).await;
     assert_eq!(s1.phase, FlowPhase::Completed);
     assert_eq!(s2.phase, FlowPhase::Completed);
+
+    host.shutdown().await.unwrap();
+}
+
+// ── E2S1-T47: shell.exec invocable via EmbeddedHost ──
+
+#[tokio::test]
+async fn shell_exec_invocable_via_host() {
+    let dir = tempfile::tempdir().unwrap();
+    let config = test_config(dir.path());
+
+    // Use a registry that includes ShellExecConnector
+    let mut registry = test_registry();
+    registry.register(Arc::new(ShellExecConnector::new()));
+
+    let host = EmbeddedHost::start(config, registry).await.unwrap();
+
+    let output = host
+        .invoke_single("shell.exec", json!({"command": "echo", "args": ["-n", "from_host"]}))
+        .await
+        .unwrap();
+
+    assert_eq!(output["stdout"], "from_host");
+    assert_eq!(output["exit_code"], 0);
+
+    host.shutdown().await.unwrap();
+}
+
+// ── E2S1-T48: FlowSpec with shell.exec node compiles and runs ──
+
+#[tokio::test]
+async fn flowspec_with_shell_exec_compiles_and_runs() {
+    let dir = tempfile::tempdir().unwrap();
+    let config = test_config(dir.path());
+
+    let mut registry = test_registry();
+    registry.register(Arc::new(ShellExecConnector::new()));
+
+    let host = EmbeddedHost::start(config, registry).await.unwrap();
+
+    let id = NodeId::new();
+    let spec = make_spec(
+        vec![connector_node(
+            id,
+            "shell.exec",
+            json!({"command": "echo", "args": ["flowspec_test"]}),
+        )],
+        vec![],
+    );
+
+    let frid = host.submit_flow(spec).await.unwrap();
+    let status = poll_until_terminal(&host, frid).await;
+
+    assert_eq!(status.phase, FlowPhase::Completed);
+    assert_eq!(status.steps.len(), 1);
+    assert_eq!(status.steps[0].phase, StepPhase::Completed);
 
     host.shutdown().await.unwrap();
 }

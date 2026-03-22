@@ -38,6 +38,7 @@ pub enum ConnectorCategory {
     FileSystem,
     Delay,
     Transform,
+    Shell,
     Custom(String),
 }
 
@@ -87,6 +88,7 @@ mod tests {
             ConnectorCategory::FileSystem,
             ConnectorCategory::Delay,
             ConnectorCategory::Transform,
+            ConnectorCategory::Shell,
             ConnectorCategory::Custom("my_plugin".into()),
         ];
         for cat in categories {

@@ -5,7 +5,9 @@
 //! keys, and produce no receipts.
 
 use serde_json::Value;
-use worldinterface_core::flowspec::transform::{FieldMappingSpec, TransformType};
+use worldinterface_core::flowspec::transform::{
+    FieldMappingSpec, FilterCondition, FilterSpec, StringTemplateSpec, TransformType,
+};
 
 use crate::error::TransformError;
 
@@ -20,6 +22,10 @@ pub fn execute_transform(
     match transform_type {
         TransformType::Identity => Ok(input.clone()),
         TransformType::FieldMapping(spec) => execute_field_mapping(spec, input),
+        TransformType::Filter(spec) => execute_filter(spec, input),
+        TransformType::StringTemplate(spec) => execute_string_template(spec, input),
+        TransformType::ArrayFlatten { path } => execute_array_flatten(path, input),
+        TransformType::ArrayMap { path, mapping } => execute_array_map(path, mapping, input),
     }
 }
 
@@ -96,6 +102,97 @@ fn merge_maps(target: &mut serde_json::Map<String, Value>, source: serde_json::M
             }
         }
         target.insert(key, value);
+    }
+}
+
+fn execute_filter(spec: &FilterSpec, input: &Value) -> Result<Value, TransformError> {
+    let passes = match &spec.condition {
+        FilterCondition::Equals { path, value } => {
+            resolve_path(input, path).is_some_and(|v| v == value)
+        }
+        FilterCondition::Exists { path } => resolve_path(input, path).is_some_and(|v| !v.is_null()),
+        FilterCondition::NotEquals { path, value } => {
+            resolve_path(input, path).is_none_or(|v| v != value)
+        }
+        FilterCondition::NotExists { path } => {
+            resolve_path(input, path).is_none_or(|v| v.is_null())
+        }
+    };
+    if passes {
+        Ok(input.clone())
+    } else {
+        Ok(Value::Null)
+    }
+}
+
+fn execute_string_template(
+    spec: &StringTemplateSpec,
+    input: &Value,
+) -> Result<Value, TransformError> {
+    let mut result = spec.template.clone();
+    let mut search_from = 0;
+    while let Some(offset) = result[search_from..].find("{{") {
+        let start = search_from + offset;
+        let Some(end_offset) = result[start..].find("}}") else {
+            break;
+        };
+        let end = start + end_offset + 2;
+        let path = result[start + 2..end - 2].trim();
+        let value = resolve_path(input, path)
+            .ok_or_else(|| TransformError::FieldNotFound { path: path.to_string() })?;
+        let replacement = match value {
+            Value::String(s) => s.clone(),
+            other => other.to_string(),
+        };
+        result.replace_range(start..end, &replacement);
+        search_from = start + replacement.len();
+    }
+    Ok(Value::String(result))
+}
+
+fn execute_array_flatten(path: &str, input: &Value) -> Result<Value, TransformError> {
+    let arr = resolve_path(input, path)
+        .ok_or_else(|| TransformError::FieldNotFound { path: path.to_string() })?;
+    let outer = arr.as_array().ok_or_else(|| TransformError::TypeMismatch {
+        expected: "array".into(),
+        actual: value_type_name(arr).into(),
+    })?;
+    let mut flat = Vec::new();
+    for item in outer {
+        match item.as_array() {
+            Some(inner) => flat.extend(inner.iter().cloned()),
+            None => flat.push(item.clone()),
+        }
+    }
+    Ok(Value::Array(flat))
+}
+
+fn execute_array_map(
+    path: &str,
+    mapping: &FieldMappingSpec,
+    input: &Value,
+) -> Result<Value, TransformError> {
+    let arr = resolve_path(input, path)
+        .ok_or_else(|| TransformError::FieldNotFound { path: path.to_string() })?;
+    let items = arr.as_array().ok_or_else(|| TransformError::TypeMismatch {
+        expected: "array".into(),
+        actual: value_type_name(arr).into(),
+    })?;
+    let mut mapped = Vec::with_capacity(items.len());
+    for item in items {
+        mapped.push(execute_field_mapping(mapping, item)?);
+    }
+    Ok(Value::Array(mapped))
+}
+
+fn value_type_name(v: &Value) -> &'static str {
+    match v {
+        Value::Null => "null",
+        Value::Bool(_) => "boolean",
+        Value::Number(_) => "number",
+        Value::String(_) => "string",
+        Value::Array(_) => "array",
+        Value::Object(_) => "object",
     }
 }
 
@@ -253,5 +350,265 @@ mod tests {
         assert_eq!(result["o_null"], json!(null));
         assert_eq!(result["o_arr"], json!([1, 2, 3]));
         assert_eq!(result["o_obj"], json!({"key": "val"}));
+    }
+
+    // ── E2S1-T19: Filter equals passes ──
+
+    #[test]
+    fn filter_equals_passes() {
+        let spec = FilterSpec {
+            condition: FilterCondition::Equals { path: "status".into(), value: json!("ok") },
+        };
+        let input = json!({"status": "ok"});
+        let result = execute_transform(&TransformType::Filter(spec), &input).unwrap();
+        assert_eq!(result, input);
+    }
+
+    // ── E2S1-T20: Filter equals rejects ──
+
+    #[test]
+    fn filter_equals_rejects() {
+        let spec = FilterSpec {
+            condition: FilterCondition::Equals { path: "status".into(), value: json!("ok") },
+        };
+        let input = json!({"status": "error"});
+        let result = execute_transform(&TransformType::Filter(spec), &input).unwrap();
+        assert_eq!(result, Value::Null);
+    }
+
+    // ── E2S1-T21: Filter exists present ──
+
+    #[test]
+    fn filter_exists_present() {
+        let spec = FilterSpec { condition: FilterCondition::Exists { path: "key".into() } };
+        let input = json!({"key": 42});
+        let result = execute_transform(&TransformType::Filter(spec), &input).unwrap();
+        assert_eq!(result, input);
+    }
+
+    // ── E2S1-T22: Filter exists null ──
+
+    #[test]
+    fn filter_exists_null() {
+        let spec = FilterSpec { condition: FilterCondition::Exists { path: "key".into() } };
+        let input = json!({"key": null});
+        let result = execute_transform(&TransformType::Filter(spec), &input).unwrap();
+        assert_eq!(result, Value::Null);
+    }
+
+    // ── E2S1-T23: Filter exists missing ──
+
+    #[test]
+    fn filter_exists_missing() {
+        let spec = FilterSpec { condition: FilterCondition::Exists { path: "key".into() } };
+        let input = json!({});
+        let result = execute_transform(&TransformType::Filter(spec), &input).unwrap();
+        assert_eq!(result, Value::Null);
+    }
+
+    // ── E2S1-T24: Filter not equals ──
+
+    #[test]
+    fn filter_not_equals() {
+        let spec = FilterSpec {
+            condition: FilterCondition::NotEquals { path: "x".into(), value: json!(2) },
+        };
+        let input = json!({"x": 1});
+        let result = execute_transform(&TransformType::Filter(spec), &input).unwrap();
+        assert_eq!(result, input);
+    }
+
+    // ── E2S1-T25: Filter not exists ──
+
+    #[test]
+    fn filter_not_exists() {
+        let spec = FilterSpec { condition: FilterCondition::NotExists { path: "key".into() } };
+        let input = json!({});
+        let result = execute_transform(&TransformType::Filter(spec), &input).unwrap();
+        assert_eq!(result, input);
+    }
+
+    // ── E2S1-T26: Filter nested path ──
+
+    #[test]
+    fn filter_nested_path() {
+        let spec = FilterSpec {
+            condition: FilterCondition::Equals { path: "a.b".into(), value: json!("c") },
+        };
+        let input = json!({"a": {"b": "c"}});
+        let result = execute_transform(&TransformType::Filter(spec), &input).unwrap();
+        assert_eq!(result, input);
+    }
+
+    // ── E2S1-T27: String template single ──
+
+    #[test]
+    fn string_template_single() {
+        let spec = StringTemplateSpec { template: "Hello, {{name}}!".into() };
+        let input = json!({"name": "Alice"});
+        let result = execute_transform(&TransformType::StringTemplate(spec), &input).unwrap();
+        assert_eq!(result, json!("Hello, Alice!"));
+    }
+
+    // ── E2S1-T28: String template multiple ──
+
+    #[test]
+    fn string_template_multiple() {
+        let spec = StringTemplateSpec { template: "{{greeting}}, {{name}}!".into() };
+        let input = json!({"greeting": "Hi", "name": "Bob"});
+        let result = execute_transform(&TransformType::StringTemplate(spec), &input).unwrap();
+        assert_eq!(result, json!("Hi, Bob!"));
+    }
+
+    // ── E2S1-T29: String template nested path ──
+
+    #[test]
+    fn string_template_nested_path() {
+        let spec = StringTemplateSpec { template: "User: {{user.name}}".into() };
+        let input = json!({"user": {"name": "Bob"}});
+        let result = execute_transform(&TransformType::StringTemplate(spec), &input).unwrap();
+        assert_eq!(result, json!("User: Bob"));
+    }
+
+    // ── E2S1-T30: String template non-string value ──
+
+    #[test]
+    fn string_template_non_string_value() {
+        let spec = StringTemplateSpec { template: "Count: {{count}}".into() };
+        let input = json!({"count": 42});
+        let result = execute_transform(&TransformType::StringTemplate(spec), &input).unwrap();
+        assert_eq!(result, json!("Count: 42"));
+    }
+
+    // ── E2S1-T31: String template missing path ──
+
+    #[test]
+    fn string_template_missing_path() {
+        let spec = StringTemplateSpec { template: "{{nonexistent}}".into() };
+        let input = json!({});
+        let result = execute_transform(&TransformType::StringTemplate(spec), &input);
+        assert!(matches!(
+            result,
+            Err(TransformError::FieldNotFound { path }) if path == "nonexistent"
+        ));
+    }
+
+    // ── E2S1-T32: String template no templates ──
+
+    #[test]
+    fn string_template_no_templates() {
+        let spec = StringTemplateSpec { template: "plain text".into() };
+        let input = json!({});
+        let result = execute_transform(&TransformType::StringTemplate(spec), &input).unwrap();
+        assert_eq!(result, json!("plain text"));
+    }
+
+    // ── E2S1-T33: Array flatten nested ──
+
+    #[test]
+    fn array_flatten_nested() {
+        let input = json!({"data": [[1, 2], [3, 4]]});
+        let result =
+            execute_transform(&TransformType::ArrayFlatten { path: "data".into() }, &input)
+                .unwrap();
+        assert_eq!(result, json!([1, 2, 3, 4]));
+    }
+
+    // ── E2S1-T34: Array flatten mixed ──
+
+    #[test]
+    fn array_flatten_mixed() {
+        let input = json!({"data": [[1, 2], 3, [4]]});
+        let result =
+            execute_transform(&TransformType::ArrayFlatten { path: "data".into() }, &input)
+                .unwrap();
+        assert_eq!(result, json!([1, 2, 3, 4]));
+    }
+
+    // ── E2S1-T35: Array flatten empty ──
+
+    #[test]
+    fn array_flatten_empty() {
+        let input = json!({"data": []});
+        let result =
+            execute_transform(&TransformType::ArrayFlatten { path: "data".into() }, &input)
+                .unwrap();
+        assert_eq!(result, json!([]));
+    }
+
+    // ── E2S1-T36: Array flatten not array ──
+
+    #[test]
+    fn array_flatten_not_array() {
+        let input = json!({"data": "not an array"});
+        let result =
+            execute_transform(&TransformType::ArrayFlatten { path: "data".into() }, &input);
+        assert!(matches!(result, Err(TransformError::TypeMismatch { .. })));
+    }
+
+    // ── E2S1-T37: Array map basic ──
+
+    #[test]
+    fn array_map_basic() {
+        let input = json!({
+            "users": [
+                {"first": "Alice", "last": "A"},
+                {"first": "Bob", "last": "B"}
+            ]
+        });
+        let result = execute_transform(
+            &TransformType::ArrayMap {
+                path: "users".into(),
+                mapping: FieldMappingSpec {
+                    mappings: vec![FieldMapping { from: "first".into(), to: "name".into() }],
+                },
+            },
+            &input,
+        )
+        .unwrap();
+        assert_eq!(result, json!([{"name": "Alice"}, {"name": "Bob"}]));
+    }
+
+    // ── E2S1-T38: Array map empty ──
+
+    #[test]
+    fn array_map_empty() {
+        let input = json!({"items": []});
+        let result = execute_transform(
+            &TransformType::ArrayMap {
+                path: "items".into(),
+                mapping: FieldMappingSpec {
+                    mappings: vec![FieldMapping { from: "a".into(), to: "b".into() }],
+                },
+            },
+            &input,
+        )
+        .unwrap();
+        assert_eq!(result, json!([]));
+    }
+
+    // ── E2S1-T39: Array map nested path ──
+
+    #[test]
+    fn array_map_nested_path() {
+        let input = json!({
+            "data": {
+                "users": [
+                    {"name": "Alice"},
+                    {"name": "Bob"}
+                ]
+            }
+        });
+        let result = execute_transform(
+            &TransformType::ArrayMap {
+                path: "data.users".into(),
+                mapping: FieldMappingSpec {
+                    mappings: vec![FieldMapping { from: "name".into(), to: "display".into() }],
+                },
+            },
+            &input,
+        )
+        .unwrap();
+        assert_eq!(result, json!([{"display": "Alice"}, {"display": "Bob"}]));
     }
 }
