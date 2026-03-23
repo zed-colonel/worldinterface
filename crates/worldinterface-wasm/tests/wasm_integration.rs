@@ -20,13 +20,11 @@ fn compiled_dir() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("test-modules/compiled")
 }
 
-fn test_runtime() -> Arc<WasmRuntime> {
+fn test_runtime() -> (tempfile::TempDir, Arc<WasmRuntime>) {
     let dir = tempfile::tempdir().unwrap();
     let config = WasmRuntimeConfig { kv_store_dir: dir.path().join("kv"), ..Default::default() };
-    // Leak tempdir so it persists for the runtime's lifetime
-    let dir = Box::leak(Box::new(dir));
-    let _ = dir;
-    Arc::new(WasmRuntime::new(config).unwrap())
+    let runtime = Arc::new(WasmRuntime::new(config).unwrap());
+    (dir, runtime)
 }
 
 fn test_ctx() -> InvocationContext {
@@ -41,47 +39,54 @@ fn test_ctx() -> InvocationContext {
     }
 }
 
-fn load_echo() -> worldinterface_wasm::WasmConnector {
-    let runtime = test_runtime();
+fn load_echo() -> (tempfile::TempDir, worldinterface_wasm::WasmConnector) {
+    let (_td, runtime) = test_runtime();
     let dir = compiled_dir();
-    module_loader::load_module(&runtime, &dir.join("echo.wasm"), &dir.join("echo.connector.toml"))
-        .expect("echo module should load")
+    let connector = module_loader::load_module(
+        &runtime,
+        &dir.join("echo.wasm"),
+        &dir.join("echo.connector.toml"),
+    )
+    .expect("echo module should load");
+    (_td, connector)
 }
 
-fn load_stress() -> worldinterface_wasm::WasmConnector {
-    let runtime = test_runtime();
+fn load_stress() -> (tempfile::TempDir, worldinterface_wasm::WasmConnector) {
+    let (_td, runtime) = test_runtime();
     let dir = compiled_dir();
-    module_loader::load_module(
+    let connector = module_loader::load_module(
         &runtime,
         &dir.join("stress.wasm"),
         &dir.join("stress.connector.toml"),
     )
-    .expect("stress module should load")
+    .expect("stress module should load");
+    (_td, connector)
 }
 
-fn load_host_caller() -> worldinterface_wasm::WasmConnector {
-    let runtime = test_runtime();
+fn load_host_caller() -> (tempfile::TempDir, worldinterface_wasm::WasmConnector) {
+    let (_td, runtime) = test_runtime();
     let dir = compiled_dir();
-    module_loader::load_module(
+    let connector = module_loader::load_module(
         &runtime,
         &dir.join("host-caller.wasm"),
         &dir.join("host-caller.connector.toml"),
     )
-    .expect("host-caller module should load")
+    .expect("host-caller module should load");
+    (_td, connector)
 }
 
 // ── E2S3-T20: load_module: valid .wasm + .connector.toml → WasmConnector ──
 
 #[test]
 fn load_valid_module() {
-    let _connector = load_echo();
+    let (_dir, _connector) = load_echo();
 }
 
 // ── E2S3-T24: load_modules_from_dir: loads all valid modules ──
 
 #[test]
 fn load_modules_from_dir_loads_all() {
-    let runtime = test_runtime();
+    let (_td, runtime) = test_runtime();
     let connectors = module_loader::load_modules_from_dir(&runtime, &compiled_dir()).unwrap();
     assert!(
         connectors.len() >= 2,
@@ -94,7 +99,7 @@ fn load_modules_from_dir_loads_all() {
 
 #[test]
 fn wasm_connector_describe() {
-    let connector = load_echo();
+    let (_dir, connector) = load_echo();
     let desc = connector.describe();
     assert_eq!(desc.name, "test.echo");
     assert!(matches!(desc.category, ConnectorCategory::Wasm(ref name) if name == "test.echo"));
@@ -105,7 +110,7 @@ fn wasm_connector_describe() {
 
 #[test]
 fn wasm_connector_invoke_echo() {
-    let connector = load_echo();
+    let (_dir, connector) = load_echo();
     let ctx = test_ctx();
     let params = json!({"hello": "world"});
     let result = connector.invoke(&ctx, &params).unwrap();
@@ -116,7 +121,7 @@ fn wasm_connector_invoke_echo() {
 
 #[test]
 fn wasm_connector_invoke_returns_value() {
-    let connector = load_echo();
+    let (_dir, connector) = load_echo();
     let ctx = test_ctx();
     let params = json!({"numbers": [1, 2, 3], "nested": {"a": true}});
     let result = connector.invoke(&ctx, &params).unwrap();
@@ -128,7 +133,7 @@ fn wasm_connector_invoke_returns_value() {
 
 #[test]
 fn wasm_connector_guest_error() {
-    let connector = load_host_caller();
+    let (_dir, connector) = load_host_caller();
     let ctx = test_ctx();
     // Send unknown action which triggers Err from guest
     let params = json!({"action": "unknown"});
@@ -145,7 +150,7 @@ fn wasm_connector_guest_error() {
 
 #[test]
 fn wasm_connector_cancellation_before() {
-    let connector = load_echo();
+    let (_dir, connector) = load_echo();
     let ctx = test_ctx();
     ctx.cancellation.cancel();
     let result = connector.invoke(&ctx, &json!({"test": true}));
@@ -156,7 +161,7 @@ fn wasm_connector_cancellation_before() {
 
 #[test]
 fn host_logging() {
-    let connector = load_host_caller();
+    let (_dir, connector) = load_host_caller();
     let ctx = test_ctx();
     let result = connector.invoke(&ctx, &json!({"action": "log"})).unwrap();
     assert_eq!(result["logged"], true);
@@ -166,7 +171,7 @@ fn host_logging() {
 
 #[test]
 fn host_crypto_sha256() {
-    let connector = load_host_caller();
+    let (_dir, connector) = load_host_caller();
     let ctx = test_ctx();
     let result = connector.invoke(&ctx, &json!({"action": "sha256"})).unwrap();
     let digest = result["digest"].as_str().unwrap();
@@ -178,7 +183,7 @@ fn host_crypto_sha256() {
 
 #[test]
 fn host_kv_operations() {
-    let connector = load_host_caller();
+    let (_dir, connector) = load_host_caller();
     let ctx = test_ctx();
 
     // Set a key
@@ -202,7 +207,7 @@ fn host_kv_operations() {
 
 #[test]
 fn host_process_allowed() {
-    let connector = load_host_caller();
+    let (_dir, connector) = load_host_caller();
     let ctx = test_ctx();
     let result = connector.invoke(&ctx, &json!({"action": "exec"})).unwrap();
     assert_eq!(result["stdout"], "hello from process");
@@ -215,7 +220,7 @@ fn host_process_allowed() {
 fn wasm_connector_receipt() {
     use worldinterface_connector::receipt_gen::invoke_with_receipt;
 
-    let connector = load_echo();
+    let (_dir, connector) = load_echo();
     let ctx = test_ctx();
     let params = json!({"receipt": "test"});
 
@@ -231,7 +236,7 @@ fn wasm_connector_receipt() {
 
 #[test]
 fn wasm_fuel_exhaustion() {
-    let connector = load_stress();
+    let (_dir, connector) = load_stress();
     let ctx = test_ctx();
     let result = connector.invoke(&ctx, &json!({"action": "loop"}));
     let err = result.unwrap_err();
@@ -248,7 +253,7 @@ fn wasm_fuel_exhaustion() {
 fn wasm_epoch_timeout() {
     // The stress module has timeout_ms=2000, so an infinite loop should
     // trigger within a few seconds via epoch deadline.
-    let connector = load_stress();
+    let (_dir, connector) = load_stress();
     let ctx = test_ctx();
     let start = std::time::Instant::now();
     let result = connector.invoke(&ctx, &json!({"action": "loop"}));
@@ -272,7 +277,7 @@ fn wasm_epoch_timeout() {
 fn wasm_memory_limit() {
     // The stress module has max_memory_bytes=16MB. Allocating 1MB chunks
     // in a loop should hit the limit and trap.
-    let connector = load_stress();
+    let (_dir, connector) = load_stress();
     let ctx = test_ctx();
     let result = connector.invoke(&ctx, &json!({"action": "allocate"}));
     let err = result.unwrap_err();
@@ -300,7 +305,7 @@ name = "test.bad-exports"
     let wasm = wat::parse_str(wat).expect("valid WAT");
     std::fs::write(dir.path().join("bad.wasm"), &wasm).unwrap();
 
-    let runtime = test_runtime();
+    let (_td2, runtime) = test_runtime();
     let result = worldinterface_wasm::load_module(
         &runtime,
         &dir.path().join("bad.wasm"),
@@ -324,7 +329,7 @@ name = "test.bad-exports"
 fn wasm_kv_namespace_isolation() {
     // Both connectors share the same runtime (and thus the same KV store).
     // Since they have the same module name ("test.host-caller"), they share namespace.
-    let runtime = test_runtime();
+    let (_td, runtime) = test_runtime();
     let dir = compiled_dir();
 
     let caller1 = module_loader::load_module(
@@ -358,7 +363,7 @@ fn wasm_kv_namespace_isolation() {
 
 #[test]
 fn wasm_environment_allowed_var() {
-    let connector = load_host_caller();
+    let (_dir, connector) = load_host_caller();
     let ctx = test_ctx();
     let result = connector.invoke(&ctx, &json!({"action": "env"})).unwrap();
     // HOME is in the manifest's environment allowlist and is set via WASI context
@@ -370,7 +375,7 @@ fn wasm_environment_allowed_var() {
 
 #[test]
 fn wasm_environment_denied_var() {
-    let connector = load_host_caller();
+    let (_dir, connector) = load_host_caller();
     let ctx = test_ctx();
     let result = connector.invoke(&ctx, &json!({"action": "env"})).unwrap();
     // SECRET_KEY is not in the manifest's environment allowlist
@@ -382,7 +387,7 @@ fn wasm_environment_denied_var() {
 
 #[test]
 fn wasm_random_returns_bytes() {
-    let connector = load_host_caller();
+    let (_dir, connector) = load_host_caller();
     let ctx = test_ctx();
     let result = connector.invoke(&ctx, &json!({"action": "random"})).unwrap();
     let hex = result["random"].as_str().unwrap();
@@ -396,7 +401,7 @@ fn wasm_random_returns_bytes() {
 
 #[test]
 fn wasm_clocks_accessible() {
-    let connector = load_host_caller();
+    let (_dir, connector) = load_host_caller();
     let ctx = test_ctx();
     let result = connector.invoke(&ctx, &json!({"action": "clock"})).unwrap();
     let epoch_secs = result["epoch_secs"].as_u64().unwrap();
@@ -412,7 +417,7 @@ fn wasm_process_denied() {
     // an action that would call a different command — but the module hardcodes
     // "echo". Instead, test by loading with a restrictive manifest.
     let dir = compiled_dir();
-    let runtime = test_runtime();
+    let (_td, runtime) = test_runtime();
 
     // Create a temporary manifest that allows NO process commands
     let tmp = tempfile::tempdir().unwrap();
@@ -449,33 +454,35 @@ fn ref_compiled_dir() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../examples/wasm-connectors/compiled")
 }
 
-fn load_json_validate() -> worldinterface_wasm::WasmConnector {
-    let runtime = test_runtime();
+fn load_json_validate() -> (tempfile::TempDir, worldinterface_wasm::WasmConnector) {
+    let (_td, runtime) = test_runtime();
     let dir = ref_compiled_dir();
-    module_loader::load_module(
+    let connector = module_loader::load_module(
         &runtime,
         &dir.join("json-validate.wasm"),
         &dir.join("json-validate.connector.toml"),
     )
-    .expect("json-validate module should load")
+    .expect("json-validate module should load");
+    (_td, connector)
 }
 
-fn load_host_demo() -> worldinterface_wasm::WasmConnector {
-    let runtime = test_runtime();
+fn load_host_demo() -> (tempfile::TempDir, worldinterface_wasm::WasmConnector) {
+    let (_td, runtime) = test_runtime();
     let dir = ref_compiled_dir();
-    module_loader::load_module(
+    let connector = module_loader::load_module(
         &runtime,
         &dir.join("host-demo.wasm"),
         &dir.join("host-demo.connector.toml"),
     )
-    .expect("host-demo module should load")
+    .expect("host-demo module should load");
+    (_td, connector)
 }
 
 // ── E2S4-T16: json-validate describe returns expected name ──
 
 #[test]
 fn json_validate_describe() {
-    let connector = load_json_validate();
+    let (_dir, connector) = load_json_validate();
     let desc = connector.describe();
     assert_eq!(desc.name, "json.validate");
     assert!(matches!(desc.category, ConnectorCategory::Wasm(ref name) if name == "json.validate"));
@@ -486,7 +493,7 @@ fn json_validate_describe() {
 
 #[test]
 fn json_validate_valid_document() {
-    let connector = load_json_validate();
+    let (_dir, connector) = load_json_validate();
     let ctx = test_ctx();
     let params = json!({
         "document": {"name": "test", "age": 25},
@@ -508,7 +515,7 @@ fn json_validate_valid_document() {
 
 #[test]
 fn json_validate_invalid_document() {
-    let connector = load_json_validate();
+    let (_dir, connector) = load_json_validate();
     let ctx = test_ctx();
     let params = json!({
         "document": {"name": "test"},
@@ -532,7 +539,7 @@ fn json_validate_invalid_document() {
 
 #[test]
 fn json_validate_missing_document() {
-    let connector = load_json_validate();
+    let (_dir, connector) = load_json_validate();
     let ctx = test_ctx();
     let params = json!({"schema": {"type": "object"}});
     let result = connector.invoke(&ctx, &params);
@@ -543,7 +550,7 @@ fn json_validate_missing_document() {
 
 #[test]
 fn json_validate_missing_schema() {
-    let connector = load_json_validate();
+    let (_dir, connector) = load_json_validate();
     let ctx = test_ctx();
     let params = json!({"document": {"a": 1}});
     let result = connector.invoke(&ctx, &params);
@@ -556,7 +563,7 @@ fn json_validate_missing_schema() {
 fn json_validate_receipt() {
     use worldinterface_connector::receipt_gen::invoke_with_receipt;
 
-    let connector = load_json_validate();
+    let (_dir, connector) = load_json_validate();
     let ctx = test_ctx();
     let params = json!({
         "document": "hello",
@@ -573,7 +580,7 @@ fn json_validate_receipt() {
 
 #[test]
 fn host_demo_describe() {
-    let connector = load_host_demo();
+    let (_dir, connector) = load_host_demo();
     let desc = connector.describe();
     assert_eq!(desc.name, "demo.host-functions");
     assert!(
@@ -585,7 +592,7 @@ fn host_demo_describe() {
 
 #[test]
 fn host_demo_crypto() {
-    let connector = load_host_demo();
+    let (_dir, connector) = load_host_demo();
     let ctx = test_ctx();
     let params = json!({"message": "hello world"});
     let result = connector.invoke(&ctx, &params).unwrap();
@@ -601,7 +608,7 @@ fn host_demo_crypto() {
 
 #[test]
 fn host_demo_kv() {
-    let connector = load_host_demo();
+    let (_dir, connector) = load_host_demo();
     let ctx = test_ctx();
     let params = json!({"message": "test-msg"});
     let result = connector.invoke(&ctx, &params).unwrap();
@@ -614,7 +621,7 @@ fn host_demo_kv() {
 fn host_demo_receipt() {
     use worldinterface_connector::receipt_gen::invoke_with_receipt;
 
-    let connector = load_host_demo();
+    let (_dir, connector) = load_host_demo();
     let ctx = test_ctx();
     let params = json!({"message": "receipt-test"});
 
@@ -628,7 +635,7 @@ fn host_demo_receipt() {
 
 #[test]
 fn wasm_runtime_persists_across_invocations() {
-    let runtime = test_runtime();
+    let (_td, runtime) = test_runtime();
     let dir = ref_compiled_dir();
 
     let connector = module_loader::load_module(
