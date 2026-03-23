@@ -47,13 +47,11 @@ impl PeerResolveConnector {
 
         // Validate name contains only safe characters (defense-in-depth against path injection)
         if name.is_empty()
-            || !name
-                .chars()
-                .all(|c| c.is_ascii_alphanumeric() || c == '.' || c == '-' || c == '_')
+            || !name.chars().all(|c| c.is_ascii_alphanumeric() || c == '.' || c == '-' || c == '_')
         {
             return Err(ConnectorError::InvalidParams(format!(
-                "invalid vessel name '{name}': must be non-empty and contain only \
-                 alphanumeric characters, dots, hyphens, or underscores"
+                "invalid vessel name '{name}': must be non-empty and contain only alphanumeric \
+                 characters, dots, hyphens, or underscores"
             )));
         }
 
@@ -270,8 +268,7 @@ mod tests {
         let connector = PeerResolveConnector::new("http://localhost:9090".into(), None);
 
         // Path traversal attempt
-        let result =
-            invoke_on_blocking_thread(&connector, json!({"name": "../../admin"})).await;
+        let result = invoke_on_blocking_thread(&connector, json!({"name": "../../admin"})).await;
         assert!(
             matches!(result, Err(ConnectorError::InvalidParams(_))),
             "expected InvalidParams for path traversal, got: {result:?}"
@@ -285,8 +282,7 @@ mod tests {
         );
 
         // Name with spaces
-        let result =
-            invoke_on_blocking_thread(&connector, json!({"name": "bad name"})).await;
+        let result = invoke_on_blocking_thread(&connector, json!({"name": "bad name"})).await;
         assert!(
             matches!(result, Err(ConnectorError::InvalidParams(_))),
             "expected InvalidParams for name with spaces, got: {result:?}"
@@ -336,8 +332,7 @@ mod tests {
             .create_async()
             .await;
 
-        let connector =
-            PeerResolveConnector::new(server.url(), Some("test-token-123".into()));
+        let connector = PeerResolveConnector::new(server.url(), Some("test-token-123".into()));
         let result = invoke_on_blocking_thread(&connector, json!({"name": "atlas"})).await;
 
         assert!(result.is_ok(), "expected success, got: {result:?}");

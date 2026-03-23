@@ -42,9 +42,12 @@ fn test_ctx() -> InvocationContext {
 fn load_echo() -> (tempfile::TempDir, worldinterface_wasm::WasmConnector) {
     let (_td, runtime) = test_runtime();
     let dir = compiled_dir();
-    let connector =
-        module_loader::load_module(&runtime, &dir.join("echo.wasm"), &dir.join("echo.connector.toml"))
-            .expect("echo module should load");
+    let connector = module_loader::load_module(
+        &runtime,
+        &dir.join("echo.wasm"),
+        &dir.join("echo.connector.toml"),
+    )
+    .expect("echo module should load");
     (_td, connector)
 }
 
