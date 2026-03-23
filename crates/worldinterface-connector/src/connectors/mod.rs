@@ -4,6 +4,7 @@ pub mod delay;
 pub mod fs_read;
 pub mod fs_write;
 pub mod http_request;
+pub mod peer_resolve;
 pub mod sandbox_exec;
 pub mod shell_exec;
 
@@ -13,6 +14,7 @@ pub use delay::DelayConnector;
 pub use fs_read::FsReadConnector;
 pub use fs_write::FsWriteConnector;
 pub use http_request::HttpRequestConnector;
+pub use peer_resolve::PeerResolveConnector;
 pub use sandbox_exec::SandboxExecConnector;
 pub use shell_exec::ShellExecConnector;
 

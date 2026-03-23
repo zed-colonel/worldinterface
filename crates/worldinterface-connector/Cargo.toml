@@ -24,5 +24,6 @@ uuid = { workspace = true }
 nix = { workspace = true }
 
 [dev-dependencies]
+mockito = "1"
 tempfile = { workspace = true }
 tracing-subscriber = { workspace = true }
