@@ -45,6 +45,18 @@ impl PeerResolveConnector {
             ConnectorError::InvalidParams("missing or invalid 'name' (expected string)".into())
         })?;
 
+        // Validate name contains only safe characters (defense-in-depth against path injection)
+        if name.is_empty()
+            || !name
+                .chars()
+                .all(|c| c.is_ascii_alphanumeric() || c == '.' || c == '-' || c == '_')
+        {
+            return Err(ConnectorError::InvalidParams(format!(
+                "invalid vessel name '{name}': must be non-empty and contain only \
+                 alphanumeric characters, dots, hyphens, or underscores"
+            )));
+        }
+
         // Build request URL
         let url = format!("{}/api/v1/fleet/vessels/{}/inbox-url", self.observatory_url, name);
 
@@ -64,6 +76,12 @@ impl PeerResolveConnector {
         let status = response.status();
         if status == reqwest::StatusCode::NOT_FOUND {
             return Err(ConnectorError::Terminal(format!("vessel '{}' not found", name)));
+        }
+        if status.is_server_error() {
+            return Err(ConnectorError::Retryable(format!(
+                "fleet registry returned HTTP {}",
+                status.as_u16()
+            )));
         }
         if !status.is_success() {
             return Err(ConnectorError::Terminal(format!(
@@ -243,6 +261,87 @@ mod tests {
             matches!(result, Err(ConnectorError::InvalidParams(_))),
             "expected InvalidParams error, got: {result:?}"
         );
+    }
+
+    // ── E4S1-T5b: peer_resolve_invalid_name ──
+
+    #[tokio::test]
+    async fn peer_resolve_invalid_name() {
+        let connector = PeerResolveConnector::new("http://localhost:9090".into(), None);
+
+        // Path traversal attempt
+        let result =
+            invoke_on_blocking_thread(&connector, json!({"name": "../../admin"})).await;
+        assert!(
+            matches!(result, Err(ConnectorError::InvalidParams(_))),
+            "expected InvalidParams for path traversal, got: {result:?}"
+        );
+
+        // Empty name
+        let result = invoke_on_blocking_thread(&connector, json!({"name": ""})).await;
+        assert!(
+            matches!(result, Err(ConnectorError::InvalidParams(_))),
+            "expected InvalidParams for empty name, got: {result:?}"
+        );
+
+        // Name with spaces
+        let result =
+            invoke_on_blocking_thread(&connector, json!({"name": "bad name"})).await;
+        assert!(
+            matches!(result, Err(ConnectorError::InvalidParams(_))),
+            "expected InvalidParams for name with spaces, got: {result:?}"
+        );
+    }
+
+    // ── E4S1-T5c: peer_resolve_server_error_is_retryable ──
+
+    #[tokio::test]
+    async fn peer_resolve_server_error_is_retryable() {
+        let mut server = mockito::Server::new_async().await;
+        let mock = server
+            .mock("GET", "/api/v1/fleet/vessels/atlas/inbox-url")
+            .with_status(503)
+            .with_body("service unavailable")
+            .create_async()
+            .await;
+
+        let connector = PeerResolveConnector::new(server.url(), None);
+        let result = invoke_on_blocking_thread(&connector, json!({"name": "atlas"})).await;
+
+        assert!(
+            matches!(result, Err(ConnectorError::Retryable(_))),
+            "expected Retryable for 5xx, got: {result:?}"
+        );
+        mock.assert_async().await;
+    }
+
+    // ── E4S1-T5d: peer_resolve_auth_header_sent ──
+
+    #[tokio::test]
+    async fn peer_resolve_auth_header_sent() {
+        let mut server = mockito::Server::new_async().await;
+        let mock = server
+            .mock("GET", "/api/v1/fleet/vessels/atlas/inbox-url")
+            .match_header("Authorization", "Bearer test-token-123")
+            .with_status(200)
+            .with_header("content-type", "application/json")
+            .with_body(
+                json!({
+                    "name": "atlas",
+                    "inbox_url": "http://atlas:7600/api/v1/inbox",
+                    "vessel_id": "550e8400-e29b-41d4-a716-446655440000"
+                })
+                .to_string(),
+            )
+            .create_async()
+            .await;
+
+        let connector =
+            PeerResolveConnector::new(server.url(), Some("test-token-123".into()));
+        let result = invoke_on_blocking_thread(&connector, json!({"name": "atlas"})).await;
+
+        assert!(result.is_ok(), "expected success, got: {result:?}");
+        mock.assert_async().await;
     }
 
     // ── E4S1-T6: peer_resolve_receipt_generated ──
