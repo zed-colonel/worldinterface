@@ -46,10 +46,7 @@ impl PeerResolveConnector {
         })?;
 
         // Build request URL
-        let url = format!(
-            "{}/api/v1/fleet/vessels/{}/inbox-url",
-            self.observatory_url, name
-        );
+        let url = format!("{}/api/v1/fleet/vessels/{}/inbox-url", self.observatory_url, name);
 
         // Build request with optional auth header
         let mut request = self.client.get(&url);
@@ -58,17 +55,15 @@ impl PeerResolveConnector {
         }
 
         // Send request
-        let response = request.send().await.map_err(|e| {
-            ConnectorError::Retryable(format!("peer resolve request failed: {e}"))
-        })?;
+        let response = request
+            .send()
+            .await
+            .map_err(|e| ConnectorError::Retryable(format!("peer resolve request failed: {e}")))?;
 
         // Handle non-2xx responses
         let status = response.status();
         if status == reqwest::StatusCode::NOT_FOUND {
-            return Err(ConnectorError::Terminal(format!(
-                "vessel '{}' not found",
-                name
-            )));
+            return Err(ConnectorError::Terminal(format!("vessel '{}' not found", name)));
         }
         if !status.is_success() {
             return Err(ConnectorError::Terminal(format!(
@@ -161,8 +156,7 @@ mod tests {
 
     #[test]
     fn peer_resolve_descriptor() {
-        let connector =
-            PeerResolveConnector::new("http://localhost:9090".into(), None);
+        let connector = PeerResolveConnector::new("http://localhost:9090".into(), None);
         let desc = connector.describe();
         assert_eq!(desc.name, "peer.resolve");
         assert_eq!(desc.category, ConnectorCategory::Http);
@@ -193,12 +187,7 @@ mod tests {
             .await;
 
         let connector = PeerResolveConnector::new(server.url(), None);
-        let result = invoke_on_blocking_thread(
-            &connector,
-            json!({"name": "atlas"}),
-        )
-        .await
-        .unwrap();
+        let result = invoke_on_blocking_thread(&connector, json!({"name": "atlas"})).await.unwrap();
 
         assert_eq!(result["name"], "atlas");
         assert_eq!(result["inbox_url"], "http://atlas:7600/api/v1/inbox");
@@ -219,11 +208,7 @@ mod tests {
             .await;
 
         let connector = PeerResolveConnector::new(server.url(), None);
-        let result = invoke_on_blocking_thread(
-            &connector,
-            json!({"name": "unknown"}),
-        )
-        .await;
+        let result = invoke_on_blocking_thread(&connector, json!({"name": "unknown"})).await;
 
         match result {
             Err(ConnectorError::Terminal(msg)) => {
@@ -238,13 +223,8 @@ mod tests {
 
     #[tokio::test]
     async fn peer_resolve_network_error() {
-        let connector =
-            PeerResolveConnector::new("http://127.0.0.1:1".into(), None);
-        let result = invoke_on_blocking_thread(
-            &connector,
-            json!({"name": "atlas"}),
-        )
-        .await;
+        let connector = PeerResolveConnector::new("http://127.0.0.1:1".into(), None);
+        let result = invoke_on_blocking_thread(&connector, json!({"name": "atlas"})).await;
 
         assert!(
             matches!(result, Err(ConnectorError::Retryable(_))),
@@ -256,8 +236,7 @@ mod tests {
 
     #[tokio::test]
     async fn peer_resolve_missing_name() {
-        let connector =
-            PeerResolveConnector::new("http://localhost:9090".into(), None);
+        let connector = PeerResolveConnector::new("http://localhost:9090".into(), None);
         let result = invoke_on_blocking_thread(&connector, json!({})).await;
 
         assert!(
@@ -290,11 +269,10 @@ mod tests {
         let ctx = test_ctx();
         let params = json!({"name": "atlas"});
 
-        let (result, receipt) = tokio::task::spawn_blocking(move || {
-            invoke_with_receipt(&connector, &ctx, &params)
-        })
-        .await
-        .expect("spawn_blocking join failed");
+        let (result, receipt) =
+            tokio::task::spawn_blocking(move || invoke_with_receipt(&connector, &ctx, &params))
+                .await
+                .expect("spawn_blocking join failed");
 
         assert!(result.is_ok());
         assert_eq!(receipt.connector, "peer.resolve");
