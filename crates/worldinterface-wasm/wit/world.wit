@@ -103,6 +103,47 @@ interface websocket {
     close: func(id: string) -> result<_, string>;
 }
 
+/// Streaming connector — persistent inbound I/O.
+///
+/// Modules that export this interface get host-managed background
+/// WebSocket connections. The module provides connection configuration
+/// and message parsing; the host manages the lifecycle.
+interface streaming-connector {
+    /// Connection configuration returned by stream-config().
+    record stream-setup {
+        /// WebSocket URL to connect to.
+        url: string,
+        /// HTTP headers for the WebSocket upgrade request.
+        headers: list<tuple<string, string>>,
+        /// Messages to send immediately after connection (e.g., IDENTIFY).
+        init-messages: list<string>,
+        /// Heartbeat interval in milliseconds (0 = no heartbeat).
+        heartbeat-interval-ms: u32,
+        /// Heartbeat payload to send at each interval. None = no heartbeat.
+        heartbeat-payload: option<string>,
+    }
+
+    /// A parsed application-level message from the stream.
+    record stream-message {
+        /// External identity of the sender (e.g., "discord:user:123456789").
+        source-identity: string,
+        /// Message content text.
+        content: string,
+        /// Platform-specific metadata key-value pairs.
+        metadata: list<tuple<string, string>>,
+    }
+
+    /// Connection setup — called once when the streaming lifecycle starts.
+    /// The host uses these parameters to establish and manage the connection.
+    stream-config: func() -> stream-setup;
+
+    /// Parse a raw WebSocket frame into application-level messages.
+    /// Called by the host for each incoming frame. Return an empty list
+    /// for protocol-level frames (heartbeat, ack) that don't produce
+    /// application messages.
+    on-message: func(raw: string) -> list<stream-message>;
+}
+
 /// The full world: custom Exo imports + guest exports.
 world connector-world {
     // Custom Exo host imports
@@ -115,4 +156,21 @@ world connector-world {
 
     // Guest exports
     export connector;
+}
+
+/// Extended world for streaming connectors.
+/// Exports both the standard connector interface and the streaming interface.
+world streaming-connector-world {
+    // Same imports as connector-world
+    import logging;
+    import kv;
+    import crypto;
+    import process;
+    import http;
+    import websocket;
+
+    // Standard connector exports
+    export connector;
+    // Streaming extension
+    export streaming-connector;
 }

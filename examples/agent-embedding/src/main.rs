@@ -38,7 +38,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         ..Default::default()
     };
 
-    let host = EmbeddedHost::start(config, registry).await?;
+    let host = EmbeddedHost::start(config, registry, None).await?;
     println!("Host started successfully.");
 
     // --- Step 3: Discover capabilities ---

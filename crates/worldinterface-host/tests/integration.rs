@@ -101,7 +101,7 @@ async fn poll_until_terminal(host: &EmbeddedHost, flow_run_id: FlowRunId) -> Flo
 async fn host_starts_with_default_config() {
     let dir = tempfile::tempdir().unwrap();
     let config = test_config(dir.path());
-    let host = EmbeddedHost::start(config, test_registry()).await.unwrap();
+    let host = EmbeddedHost::start(config, test_registry(), None).await.unwrap();
     host.shutdown().await.unwrap();
 }
 
@@ -110,7 +110,7 @@ async fn host_starts_with_empty_data_dir() {
     let dir = tempfile::tempdir().unwrap();
     let config = test_config(dir.path());
     assert!(!dir.path().join("aq").exists());
-    let host = EmbeddedHost::start(config, test_registry()).await.unwrap();
+    let host = EmbeddedHost::start(config, test_registry(), None).await.unwrap();
     assert!(dir.path().join("aq").exists());
     assert!(dir.path().join("context.db").exists());
     host.shutdown().await.unwrap();
@@ -123,12 +123,12 @@ async fn host_starts_with_existing_data_dir() {
 
     // First start — creates directories
     {
-        let host = EmbeddedHost::start(config.clone(), test_registry()).await.unwrap();
+        let host = EmbeddedHost::start(config.clone(), test_registry(), None).await.unwrap();
         host.shutdown().await.unwrap();
     }
 
     // Second start — replays from existing data
-    let host = EmbeddedHost::start(config, test_registry()).await.unwrap();
+    let host = EmbeddedHost::start(config, test_registry(), None).await.unwrap();
     host.shutdown().await.unwrap();
 }
 
@@ -136,7 +136,7 @@ async fn host_starts_with_existing_data_dir() {
 async fn host_shutdown_stops_tick_loop() {
     let dir = tempfile::tempdir().unwrap();
     let config = test_config(dir.path());
-    let host = EmbeddedHost::start(config, test_registry()).await.unwrap();
+    let host = EmbeddedHost::start(config, test_registry(), None).await.unwrap();
     // Shutdown should complete without hanging
     tokio::time::timeout(Duration::from_secs(5), host.shutdown())
         .await
@@ -150,7 +150,7 @@ async fn host_shutdown_stops_tick_loop() {
 async fn submit_valid_flow_returns_flow_run_id() {
     let dir = tempfile::tempdir().unwrap();
     let config = test_config(dir.path());
-    let host = EmbeddedHost::start(config, test_registry()).await.unwrap();
+    let host = EmbeddedHost::start(config, test_registry(), None).await.unwrap();
 
     let id = NodeId::new();
     let spec = make_spec(vec![delay_node(id, 10)], vec![]);
@@ -164,7 +164,7 @@ async fn submit_valid_flow_returns_flow_run_id() {
 async fn submit_invalid_flow_returns_error() {
     let dir = tempfile::tempdir().unwrap();
     let config = test_config(dir.path());
-    let host = EmbeddedHost::start(config, test_registry()).await.unwrap();
+    let host = EmbeddedHost::start(config, test_registry(), None).await.unwrap();
 
     let ids = [NodeId::new(), NodeId::new()];
     let spec = make_spec(
@@ -181,7 +181,7 @@ async fn submit_invalid_flow_returns_error() {
 async fn submit_multiple_flows() {
     let dir = tempfile::tempdir().unwrap();
     let config = test_config(dir.path());
-    let host = EmbeddedHost::start(config, test_registry()).await.unwrap();
+    let host = EmbeddedHost::start(config, test_registry(), None).await.unwrap();
 
     let mut frids = Vec::new();
     for _ in 0..3 {
@@ -204,7 +204,7 @@ async fn submit_multiple_flows() {
 async fn single_delay_flow_completes() {
     let dir = tempfile::tempdir().unwrap();
     let config = test_config(dir.path());
-    let host = EmbeddedHost::start(config, test_registry()).await.unwrap();
+    let host = EmbeddedHost::start(config, test_registry(), None).await.unwrap();
 
     let id = NodeId::new();
     let spec = make_spec(vec![delay_node(id, 10)], vec![]);
@@ -220,7 +220,7 @@ async fn single_delay_flow_completes() {
 async fn linear_three_step_flow_completes() {
     let dir = tempfile::tempdir().unwrap();
     let config = test_config(dir.path());
-    let host = EmbeddedHost::start(config, test_registry()).await.unwrap();
+    let host = EmbeddedHost::start(config, test_registry(), None).await.unwrap();
 
     let ids = [NodeId::new(), NodeId::new(), NodeId::new()];
     let spec = make_spec(
@@ -242,7 +242,7 @@ async fn linear_three_step_flow_completes() {
 async fn linear_flow_with_identity_transform() {
     let dir = tempfile::tempdir().unwrap();
     let config = test_config(dir.path());
-    let host = EmbeddedHost::start(config, test_registry()).await.unwrap();
+    let host = EmbeddedHost::start(config, test_registry(), None).await.unwrap();
 
     let ids = [NodeId::new(), NodeId::new(), NodeId::new()];
     let spec = make_spec(
@@ -261,7 +261,7 @@ async fn linear_flow_with_identity_transform() {
 async fn branch_flow_executes_taken_path() {
     let dir = tempfile::tempdir().unwrap();
     let config = test_config(dir.path());
-    let host = EmbeddedHost::start(config, test_registry()).await.unwrap();
+    let host = EmbeddedHost::start(config, test_registry(), None).await.unwrap();
 
     let ids = [NodeId::new(), NodeId::new(), NodeId::new(), NodeId::new()];
     // A(delay) → Branch → B(delay, then) | C(delay, else)
@@ -309,7 +309,7 @@ async fn branch_flow_executes_taken_path() {
 async fn flow_failure_propagates() {
     let dir = tempfile::tempdir().unwrap();
     let config = test_config(dir.path());
-    let host = EmbeddedHost::start(config, test_registry()).await.unwrap();
+    let host = EmbeddedHost::start(config, test_registry(), None).await.unwrap();
 
     // fs.read on a nonexistent file → terminal connector failure
     let id = NodeId::new();
@@ -331,7 +331,7 @@ async fn flow_failure_propagates() {
 async fn failed_step_shows_in_status() {
     let dir = tempfile::tempdir().unwrap();
     let config = test_config(dir.path());
-    let host = EmbeddedHost::start(config, test_registry()).await.unwrap();
+    let host = EmbeddedHost::start(config, test_registry(), None).await.unwrap();
 
     let ids = [NodeId::new(), NodeId::new()];
     // delay(ok) → fs.read(fail)
@@ -363,7 +363,7 @@ async fn failed_step_shows_in_status() {
 async fn status_completed_after_flow_finishes() {
     let dir = tempfile::tempdir().unwrap();
     let config = test_config(dir.path());
-    let host = EmbeddedHost::start(config, test_registry()).await.unwrap();
+    let host = EmbeddedHost::start(config, test_registry(), None).await.unwrap();
 
     let id = NodeId::new();
     let spec = make_spec(vec![delay_node(id, 5)], vec![]);
@@ -381,7 +381,7 @@ async fn status_completed_after_flow_finishes() {
 async fn status_includes_step_details() {
     let dir = tempfile::tempdir().unwrap();
     let config = test_config(dir.path());
-    let host = EmbeddedHost::start(config, test_registry()).await.unwrap();
+    let host = EmbeddedHost::start(config, test_registry(), None).await.unwrap();
 
     let ids = [NodeId::new(), NodeId::new()];
     let spec =
@@ -406,7 +406,7 @@ async fn status_includes_step_details() {
 async fn status_unknown_flow_run_id() {
     let dir = tempfile::tempdir().unwrap();
     let config = test_config(dir.path());
-    let host = EmbeddedHost::start(config, test_registry()).await.unwrap();
+    let host = EmbeddedHost::start(config, test_registry(), None).await.unwrap();
 
     let err = host.run_status(FlowRunId::new()).await.unwrap_err();
     assert!(matches!(err, HostError::FlowRunNotFound(_)));
@@ -418,7 +418,7 @@ async fn status_unknown_flow_run_id() {
 async fn status_has_timestamps() {
     let dir = tempfile::tempdir().unwrap();
     let config = test_config(dir.path());
-    let host = EmbeddedHost::start(config, test_registry()).await.unwrap();
+    let host = EmbeddedHost::start(config, test_registry(), None).await.unwrap();
 
     let id = NodeId::new();
     let spec = make_spec(vec![delay_node(id, 5)], vec![]);
@@ -439,7 +439,7 @@ async fn status_has_timestamps() {
 async fn list_capabilities_returns_all_connectors() {
     let dir = tempfile::tempdir().unwrap();
     let config = test_config(dir.path());
-    let host = EmbeddedHost::start(config, test_registry()).await.unwrap();
+    let host = EmbeddedHost::start(config, test_registry(), None).await.unwrap();
 
     let caps = host.list_capabilities();
     let names: Vec<&str> = caps.iter().map(|d| d.name.as_str()).collect();
@@ -454,7 +454,7 @@ async fn list_capabilities_returns_all_connectors() {
 async fn describe_existing_connector() {
     let dir = tempfile::tempdir().unwrap();
     let config = test_config(dir.path());
-    let host = EmbeddedHost::start(config, test_registry()).await.unwrap();
+    let host = EmbeddedHost::start(config, test_registry(), None).await.unwrap();
 
     let desc = host.describe("delay");
     assert!(desc.is_some());
@@ -467,7 +467,7 @@ async fn describe_existing_connector() {
 async fn describe_nonexistent_connector() {
     let dir = tempfile::tempdir().unwrap();
     let config = test_config(dir.path());
-    let host = EmbeddedHost::start(config, test_registry()).await.unwrap();
+    let host = EmbeddedHost::start(config, test_registry(), None).await.unwrap();
 
     assert!(host.describe("nonexistent").is_none());
 
@@ -480,7 +480,7 @@ async fn describe_nonexistent_connector() {
 async fn invoke_single_delay() {
     let dir = tempfile::tempdir().unwrap();
     let config = test_config(dir.path());
-    let host = EmbeddedHost::start(config, test_registry()).await.unwrap();
+    let host = EmbeddedHost::start(config, test_registry(), None).await.unwrap();
 
     let output = host.invoke_single("delay", json!({"duration_ms": 10})).await.unwrap();
     assert!(output.is_object());
@@ -492,7 +492,7 @@ async fn invoke_single_delay() {
 async fn invoke_single_unknown_connector() {
     let dir = tempfile::tempdir().unwrap();
     let config = test_config(dir.path());
-    let host = EmbeddedHost::start(config, test_registry()).await.unwrap();
+    let host = EmbeddedHost::start(config, test_registry(), None).await.unwrap();
 
     let err = host.invoke_single("nonexistent", json!({})).await.unwrap_err();
     assert!(matches!(err, HostError::ConnectorNotFound(_)));
@@ -509,7 +509,7 @@ async fn crash_resume_restores_coordinator_map() {
     // Phase 1: Start host, submit flow, crash_drop
     let flow_run_id = {
         let config = test_config(dir.path());
-        let host = EmbeddedHost::start(config, test_registry()).await.unwrap();
+        let host = EmbeddedHost::start(config, test_registry(), None).await.unwrap();
 
         let id = NodeId::new();
         let spec = make_spec(vec![delay_node(id, 5)], vec![]);
@@ -527,7 +527,7 @@ async fn crash_resume_restores_coordinator_map() {
     // Phase 2: Restart from same data
     {
         let config = test_config(dir.path());
-        let host = EmbeddedHost::start(config, test_registry()).await.unwrap();
+        let host = EmbeddedHost::start(config, test_registry(), None).await.unwrap();
 
         // The coordinator map should be restored — we can query the old flow
         let status = host.run_status(flow_run_id).await.unwrap();
@@ -544,7 +544,7 @@ async fn crash_resume_linear_flow() {
     // Phase 1: Start, submit multi-step flow, let it run briefly, then crash
     let flow_run_id = {
         let config = test_config(dir.path());
-        let host = EmbeddedHost::start(config, test_registry()).await.unwrap();
+        let host = EmbeddedHost::start(config, test_registry(), None).await.unwrap();
 
         let ids = [NodeId::new(), NodeId::new(), NodeId::new()];
         let spec = make_spec(
@@ -564,7 +564,7 @@ async fn crash_resume_linear_flow() {
     // Phase 2: Restart — flow should complete
     {
         let config = test_config(dir.path());
-        let host = EmbeddedHost::start(config, test_registry()).await.unwrap();
+        let host = EmbeddedHost::start(config, test_registry(), None).await.unwrap();
 
         let status = poll_until_terminal(&host, flow_run_id).await;
         assert_eq!(status.phase, FlowPhase::Completed);
@@ -583,7 +583,7 @@ async fn crash_resume_no_duplicate_fs_write() {
     // Phase 1: Submit flow with fs.write, let it complete, then crash
     let flow_run_id = {
         let config = test_config(dir.path());
-        let host = EmbeddedHost::start(config, test_registry()).await.unwrap();
+        let host = EmbeddedHost::start(config, test_registry(), None).await.unwrap();
 
         let ids = [NodeId::new(), NodeId::new()];
         let spec = make_spec(
@@ -614,7 +614,7 @@ async fn crash_resume_no_duplicate_fs_write() {
     // Phase 2: Restart — should NOT re-run the fs.write
     {
         let config = test_config(dir.path());
-        let host = EmbeddedHost::start(config, test_registry()).await.unwrap();
+        let host = EmbeddedHost::start(config, test_registry(), None).await.unwrap();
 
         let status = host.run_status(flow_run_id).await.unwrap();
         assert_eq!(status.phase, FlowPhase::Completed);
@@ -633,7 +633,7 @@ async fn crash_resume_no_duplicate_fs_write() {
 async fn tick_loop_drives_execution() {
     let dir = tempfile::tempdir().unwrap();
     let config = test_config(dir.path());
-    let host = EmbeddedHost::start(config, test_registry()).await.unwrap();
+    let host = EmbeddedHost::start(config, test_registry(), None).await.unwrap();
 
     let id = NodeId::new();
     let spec = make_spec(vec![delay_node(id, 5)], vec![]);
@@ -650,7 +650,7 @@ async fn tick_loop_drives_execution() {
 async fn tick_loop_resumes_suspended_coordinators() {
     let dir = tempfile::tempdir().unwrap();
     let config = test_config(dir.path());
-    let host = EmbeddedHost::start(config, test_registry()).await.unwrap();
+    let host = EmbeddedHost::start(config, test_registry(), None).await.unwrap();
 
     // Multi-step flow requires coordinator resume between steps
     let ids = [NodeId::new(), NodeId::new()];
@@ -671,7 +671,7 @@ async fn tick_loop_resumes_suspended_coordinators() {
 async fn multiple_flows_execute_concurrently() {
     let dir = tempfile::tempdir().unwrap();
     let config = test_config(dir.path());
-    let host = EmbeddedHost::start(config, test_registry()).await.unwrap();
+    let host = EmbeddedHost::start(config, test_registry(), None).await.unwrap();
 
     let mut frids = Vec::new();
     for _ in 0..3 {
@@ -692,7 +692,7 @@ async fn multiple_flows_execute_concurrently() {
 async fn coordinator_map_prunes_terminal_flows() {
     let dir = tempfile::tempdir().unwrap();
     let config = test_config(dir.path());
-    let host = EmbeddedHost::start(config.clone(), test_registry()).await.unwrap();
+    let host = EmbeddedHost::start(config.clone(), test_registry(), None).await.unwrap();
 
     // Submit a flow and let it complete
     let id = NodeId::new();
@@ -709,7 +709,7 @@ async fn coordinator_map_prunes_terminal_flows() {
     host.shutdown().await.unwrap();
 
     // Restart and verify the pruned map was persisted
-    let host2 = EmbeddedHost::start(config, test_registry()).await.unwrap();
+    let host2 = EmbeddedHost::start(config, test_registry(), None).await.unwrap();
 
     // The terminal flow should no longer be in the coordinator map,
     // so run_status should return FlowRunNotFound
@@ -726,7 +726,7 @@ async fn coordinator_map_prunes_terminal_flows() {
 async fn concurrent_submit_and_status() {
     let dir = tempfile::tempdir().unwrap();
     let config = test_config(dir.path());
-    let host = EmbeddedHost::start(config, test_registry()).await.unwrap();
+    let host = EmbeddedHost::start(config, test_registry(), None).await.unwrap();
 
     // Submit first flow
     let id1 = NodeId::new();
@@ -759,7 +759,7 @@ async fn shell_exec_invocable_via_host() {
     let mut registry = test_registry();
     registry.register(Arc::new(ShellExecConnector::new()));
 
-    let host = EmbeddedHost::start(config, registry).await.unwrap();
+    let host = EmbeddedHost::start(config, registry, None).await.unwrap();
 
     let output = host
         .invoke_single("shell.exec", json!({"command": "echo", "args": ["-n", "from_host"]}))
@@ -782,7 +782,7 @@ async fn flowspec_with_shell_exec_compiles_and_runs() {
     let mut registry = test_registry();
     registry.register(Arc::new(ShellExecConnector::new()));
 
-    let host = EmbeddedHost::start(config, registry).await.unwrap();
+    let host = EmbeddedHost::start(config, registry, None).await.unwrap();
 
     let id = NodeId::new();
     let spec = make_spec(
@@ -821,7 +821,7 @@ async fn sandbox_exec_invocable_via_host() {
         sandbox_dir.path().to_str().unwrap(),
     )));
 
-    let host = EmbeddedHost::start(config, registry).await.unwrap();
+    let host = EmbeddedHost::start(config, registry, None).await.unwrap();
 
     let output = host
         .invoke_single(
@@ -869,7 +869,7 @@ mod wasm_host_tests {
         let config = wasm_config(dir.path());
         let registry = test_registry();
 
-        let host = EmbeddedHost::start(config, registry).await.unwrap();
+        let host = EmbeddedHost::start(config, registry, None).await.unwrap();
 
         // Should have native connectors + WASM connectors
         let caps = host.list_capabilities();
@@ -888,7 +888,7 @@ mod wasm_host_tests {
         let config = wasm_config(dir.path());
         let registry = test_registry();
 
-        let host = EmbeddedHost::start(config, registry).await.unwrap();
+        let host = EmbeddedHost::start(config, registry, None).await.unwrap();
         let caps = host.list_capabilities();
 
         // Natives: delay, fs.read, fs.write, http.request
@@ -909,7 +909,7 @@ mod wasm_host_tests {
         let config = wasm_config(dir.path());
         let registry = test_registry();
 
-        let host = EmbeddedHost::start(config, registry).await.unwrap();
+        let host = EmbeddedHost::start(config, registry, None).await.unwrap();
         let caps = host.list_capabilities();
 
         // At least 4 native + 2 WASM = 6
@@ -926,7 +926,7 @@ mod wasm_host_tests {
         let config = wasm_config(dir.path());
         let registry = test_registry();
 
-        let host = EmbeddedHost::start(config, registry).await.unwrap();
+        let host = EmbeddedHost::start(config, registry, None).await.unwrap();
         let desc = host.describe("json.validate");
 
         assert!(desc.is_some());
@@ -944,7 +944,7 @@ mod wasm_host_tests {
         let config = wasm_config(dir.path());
         let registry = test_registry();
 
-        let host = EmbeddedHost::start(config, registry).await.unwrap();
+        let host = EmbeddedHost::start(config, registry, None).await.unwrap();
 
         let result = host
             .invoke_single(
@@ -977,7 +977,7 @@ mod wasm_host_tests {
         };
         let registry = test_registry();
 
-        let host = EmbeddedHost::start(config, registry).await.unwrap();
+        let host = EmbeddedHost::start(config, registry, None).await.unwrap();
         let caps = host.list_capabilities();
 
         // Only native connectors (4 from test_registry)
@@ -1019,7 +1019,7 @@ description = "Fake connector with duplicate name"
         };
         let registry = test_registry();
 
-        let result = EmbeddedHost::start(config, registry).await;
+        let result = EmbeddedHost::start(config, registry, None).await;
         match result {
             Err(HostError::DuplicateConnector(ref name)) if name == "delay" => {
                 // Expected
@@ -1067,7 +1067,7 @@ description = "Fake connector with duplicate name"
         };
         let registry = test_registry();
 
-        let host = EmbeddedHost::start(config, registry).await.unwrap();
+        let host = EmbeddedHost::start(config, registry, None).await.unwrap();
         let caps = host.list_capabilities();
 
         // json.validate and demo.host-functions should still load
@@ -1086,7 +1086,7 @@ description = "Fake connector with duplicate name"
         let config = wasm_config(dir.path());
         let registry = test_registry();
 
-        let host = EmbeddedHost::start(config, registry).await.unwrap();
+        let host = EmbeddedHost::start(config, registry, None).await.unwrap();
 
         let id = NodeId::new();
         let spec = make_spec(
@@ -1118,7 +1118,7 @@ description = "Fake connector with duplicate name"
         let config = wasm_config(dir.path());
         let registry = test_registry();
 
-        let host = EmbeddedHost::start(config, registry).await.unwrap();
+        let host = EmbeddedHost::start(config, registry, None).await.unwrap();
 
         let delay_id = NodeId::new();
         let wasm_id = NodeId::new();
@@ -1154,7 +1154,7 @@ description = "Fake connector with duplicate name"
         let config = wasm_config(dir.path());
         let registry = test_registry();
 
-        let host = EmbeddedHost::start(config, registry).await.unwrap();
+        let host = EmbeddedHost::start(config, registry, None).await.unwrap();
 
         // invoke_single wraps in an ephemeral FlowSpec, so receipts should
         // be generated through the normal Connector::invoke path
@@ -1178,8 +1178,48 @@ description = "Fake connector with duplicate name"
         let config = wasm_config(dir.path());
         let registry = test_registry();
 
-        let host = EmbeddedHost::start(config, registry).await.unwrap();
+        let host = EmbeddedHost::start(config, registry, None).await.unwrap();
         // Just verify shutdown completes without panic
+        host.shutdown().await.unwrap();
+    }
+
+    // ── E4S3-T21: EmbeddedHost accepts stream handler ──
+
+    #[tokio::test]
+    async fn embedded_host_accepts_stream_handler() {
+        use worldinterface_core::streaming::{StreamMessage, StreamMessageHandler};
+
+        struct NoopHandler;
+        impl StreamMessageHandler for NoopHandler {
+            fn handle_messages(
+                &self,
+                _connector_name: &str,
+                _messages: Vec<StreamMessage>,
+            ) -> Result<(), String> {
+                Ok(())
+            }
+        }
+
+        let dir = tempfile::tempdir().unwrap();
+        let config = wasm_config(dir.path());
+        let registry = test_registry();
+        let handler: Arc<dyn StreamMessageHandler> = Arc::new(NoopHandler);
+
+        // start() with Some(handler) should succeed even when no streaming
+        // modules are loaded (the handler is simply not used)
+        let host = EmbeddedHost::start(config, registry, Some(handler)).await.unwrap();
+        host.shutdown().await.unwrap();
+    }
+
+    // ── E4S3-T22: EmbeddedHost None handler works (standalone WI mode) ──
+
+    #[tokio::test]
+    async fn embedded_host_none_handler_ok() {
+        let dir = tempfile::tempdir().unwrap();
+        let config = wasm_config(dir.path());
+        let registry = test_registry();
+
+        let host = EmbeddedHost::start(config, registry, None).await.unwrap();
         host.shutdown().await.unwrap();
     }
 }

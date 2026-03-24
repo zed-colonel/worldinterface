@@ -26,6 +26,11 @@ pub struct ManifestConnector {
     pub version: String,
     #[serde(default)]
     pub description: String,
+    /// Whether this connector exports the streaming-connector interface.
+    /// Streaming connectors get host-managed background WebSocket connections.
+    /// Default: false.
+    #[serde(default)]
+    pub streaming: bool,
 }
 
 /// Capabilities section — deny-by-default. Empty = no permissions.
@@ -280,6 +285,31 @@ max_fuel = 0
 "#;
         let result = ConnectorManifest::from_toml(toml);
         assert!(matches!(result, Err(ManifestError::Validation(msg)) if msg.contains("max_fuel")));
+    }
+
+    // ── E4S3-T3: Manifest: streaming defaults to false ──
+
+    #[test]
+    fn manifest_streaming_default_false() {
+        let toml = r#"
+[connector]
+name = "test.basic"
+"#;
+        let manifest = ConnectorManifest::from_toml(toml).unwrap();
+        assert!(!manifest.connector.streaming);
+    }
+
+    // ── E4S3-T4: Manifest: streaming = true parsed correctly ──
+
+    #[test]
+    fn manifest_streaming_true_parsed() {
+        let toml = r#"
+[connector]
+name = "test.streamer"
+streaming = true
+"#;
+        let manifest = ConnectorManifest::from_toml(toml).unwrap();
+        assert!(manifest.connector.streaming);
     }
 
     #[test]

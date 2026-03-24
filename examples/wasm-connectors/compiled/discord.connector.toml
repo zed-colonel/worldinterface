@@ -1,7 +1,8 @@
 [connector]
 name = "discord"
 version = "0.1.0"
-description = "Discord communication — outbound REST API (S2), inbound Gateway (S3)"
+description = "Discord communication — outbound REST + inbound Gateway"
+streaming = true
 
 [capabilities]
 http = ["discord.com"]

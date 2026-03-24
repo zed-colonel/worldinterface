@@ -1,0 +1,9 @@
+[connector]
+name = "test.streaming-echo"
+version = "0.1.0"
+description = "Streaming connector that echoes messages for testing"
+streaming = true
+
+[capabilities]
+websocket = ["127.0.0.1"]
+logging = true

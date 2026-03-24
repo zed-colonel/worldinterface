@@ -27,7 +27,7 @@ pub async fn run(config: DaemonConfig) -> Result<(), DaemonError> {
     host_config.metrics = Arc::new(PrometheusMetricsRecorder::new(Arc::clone(&metrics_registry)));
 
     let registry = default_registry();
-    let host = EmbeddedHost::start(host_config, registry).await?;
+    let host = EmbeddedHost::start(host_config, registry, None).await?;
 
     tracing::info!("host started successfully");
 

@@ -22,13 +22,16 @@ pub mod policy;
 pub mod resource_pool;
 pub mod runtime;
 pub mod state;
+pub mod streaming;
+pub mod streaming_bindings;
 
 // Re-exports
 pub use connector::WasmConnector;
 pub use error::{ManifestError, PolicyViolation, WasmError};
 pub use manifest::ConnectorManifest;
-pub use module_loader::{load_module, load_modules_from_dir};
+pub use module_loader::{load_module, load_modules_from_dir, LoadedModules, StreamingModuleInfo};
 pub use policy::CapabilityPolicy;
 pub use resource_pool::WasmResourcePool;
 pub use runtime::{WasmRuntime, WasmRuntimeConfig};
 pub use state::WasmState;
+pub use streaming::StreamingLifecycleManager;
