@@ -32,6 +32,8 @@ wasmtime::component::bindgen!({
         "exo:connector/kv@0.1.0": trappable,
         "exo:connector/crypto@0.1.0": trappable,
         "exo:connector/process@0.1.0": trappable,
+        "exo:connector/http@0.1.0": trappable,
+        "exo:connector/websocket@0.1.0": trappable,
     },
 });
 

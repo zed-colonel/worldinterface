@@ -11,6 +11,7 @@ pub mod kv;
 pub mod logging;
 pub mod process;
 pub mod sockets;
+pub mod websocket;
 
 // WASI standard/scoped (handled by wasmtime-wasi, policy at configuration time)
 pub mod clocks;

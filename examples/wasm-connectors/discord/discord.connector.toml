@@ -1,0 +1,15 @@
+[connector]
+name = "discord"
+version = "0.1.0"
+description = "Discord communication — outbound REST API (S2), inbound Gateway (S3)"
+
+[capabilities]
+http = ["discord.com"]
+websocket = ["gateway.discord.gg"]
+logging = true
+kv = true
+environment = ["DISCORD_BOT_TOKEN"]
+
+[resources]
+max_fuel = 1_000_000_000
+timeout_ms = 30000

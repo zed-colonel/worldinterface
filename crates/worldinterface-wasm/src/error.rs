@@ -62,6 +62,9 @@ pub enum PolicyViolation {
     #[error("environment variable '{var}' not in allowlist")]
     EnvironmentDenied { var: String },
 
+    #[error("WebSocket access denied for URL '{url}': no matching pattern")]
+    WebSocketDenied { url: String },
+
     #[error("raw socket access not permitted")]
     SocketsDenied,
 

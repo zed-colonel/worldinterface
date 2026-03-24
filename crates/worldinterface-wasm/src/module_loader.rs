@@ -82,6 +82,25 @@ pub fn load_module(
     Ok(WasmConnector::new(Arc::clone(runtime), component, manifest, policy))
 }
 
+/// Load a single WASM module with a pre-parsed manifest.
+///
+/// Used by integration tests to modify capability policies at test time
+/// (e.g., adding mock server hostnames to HTTP patterns).
+pub fn load_module_with_manifest(
+    runtime: &Arc<WasmRuntime>,
+    wasm_path: &Path,
+    manifest: &ConnectorManifest,
+) -> Result<WasmConnector, WasmError> {
+    let policy = CapabilityPolicy::from_manifest(manifest)?;
+    let wasm_bytes = std::fs::read(wasm_path).map_err(|_| WasmError::MissingWasm {
+        name: manifest.connector.name.clone(),
+        path: wasm_path.to_path_buf(),
+    })?;
+    let component = Component::new(runtime.engine(), &wasm_bytes)
+        .map_err(|e| WasmError::Compilation(e.to_string()))?;
+    Ok(WasmConnector::new(Arc::clone(runtime), component, manifest.clone(), policy))
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

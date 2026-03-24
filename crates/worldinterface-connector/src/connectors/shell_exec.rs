@@ -1,7 +1,7 @@
-//! The `shell.exec` connector — executes commands in the vessel's container environment.
+//! The `shell.exec` connector — executes commands in the host container environment.
 //!
 //! Security model:
-//! - Align-gated at trust >= 0.6 (destructive tier)
+//! - The embedding application is responsible for gating execution policy
 //! - Environment filtered: child starts with empty env, only explicit allowlist inherited
 //! - Output bounded: stdout/stderr capped at `max_output_bytes`
 //! - Timeout enforced: SIGTERM then SIGKILL after 5s grace period
@@ -333,7 +333,7 @@ impl Connector for ShellExecConnector {
         Descriptor {
             name: "shell.exec".into(),
             display_name: "Shell Execute".into(),
-            description: "Executes a command in the vessel's container environment.".into(),
+            description: "Executes a command in the host container environment.".into(),
             category: ConnectorCategory::Shell,
             input_schema: Some(json!({
                 "type": "object",

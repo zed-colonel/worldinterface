@@ -16,6 +16,9 @@ exclude = [
     "examples/agent-embedding",
     "examples/wasm-connectors/json-validate",
     "examples/wasm-connectors/host-demo",
+    "examples/wasm-connectors/webhook-send",
+    "examples/wasm-connectors/web-search",
+    "examples/wasm-connectors/discord",
     "crates/worldinterface-wasm/test-modules/echo",
     "crates/worldinterface-wasm/test-modules/host-caller",
     "crates/worldinterface-wasm/test-modules/stress",
@@ -74,6 +77,9 @@ wasmtime = { version = "36", features = ["component-model"] }
 wasmtime-wasi = "36"
 hmac = "0.12"
 anyhow = "1"
+tokio-tungstenite = { version = "0.26", features = ["native-tls"] }
+futures-util = "0.3"
+hex = "0.4"
 
 # Test dependencies
 tempfile = "3"
