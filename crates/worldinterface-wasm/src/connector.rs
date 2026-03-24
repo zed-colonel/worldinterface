@@ -2,6 +2,7 @@
 //!
 //! The rest of WorldInterface doesn't know or care that a connector is WASM.
 
+use std::collections::HashMap;
 use std::sync::Arc;
 
 use serde_json::Value;
@@ -47,6 +48,9 @@ pub struct WasmConnector {
     manifest: ConnectorManifest,
     /// Compiled capability policy.
     policy: Arc<CapabilityPolicy>,
+    /// Environment variable overrides — take priority over process env in build_wasi_ctx().
+    /// Avoids unsound std::env::set_var in multithreaded contexts (tests, production).
+    env_overrides: HashMap<String, String>,
 }
 
 impl std::fmt::Debug for WasmConnector {
@@ -63,16 +67,34 @@ impl WasmConnector {
         manifest: ConnectorManifest,
         policy: CapabilityPolicy,
     ) -> Self {
-        Self { runtime, component, manifest, policy: Arc::new(policy) }
+        Self {
+            runtime,
+            component,
+            manifest,
+            policy: Arc::new(policy),
+            env_overrides: HashMap::new(),
+        }
+    }
+
+    /// Set an environment variable override for this connector.
+    ///
+    /// Overrides take priority over process environment variables when building
+    /// the per-invocation WASI context. This avoids the need for unsound
+    /// `std::env::set_var` calls in multithreaded contexts.
+    pub fn set_env(&mut self, key: impl Into<String>, value: impl Into<String>) {
+        self.env_overrides.insert(key.into(), value.into());
     }
 
     /// Build a per-invocation WASI context scoped to the manifest's capabilities.
     fn build_wasi_ctx(&self) -> Result<WasiCtx, ConnectorError> {
         let mut builder = WasiCtxBuilder::new();
 
-        // Only expose allowed environment variables
+        // Only expose allowed environment variables.
+        // Check env_overrides first, then fall back to process env.
         for var in &self.manifest.capabilities.environment {
-            if let Ok(val) = std::env::var(var) {
+            if let Some(val) = self.env_overrides.get(var) {
+                builder.env(var, val);
+            } else if let Ok(val) = std::env::var(var) {
                 builder.env(var, &val);
             }
         }

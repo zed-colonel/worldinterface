@@ -814,11 +814,11 @@ timeout_ms = 15000
     // Pre-seed KV with mock provider URL
     runtime.resource_pool().kv_set("web.search", "provider_url", &server.url());
 
-    // Set API key env var
-    std::env::set_var("BRAVE_API_KEY", "test-key-12345");
-
-    let connector =
+    let mut connector =
         module_loader::load_module_with_manifest(&runtime, &wasm_path, &manifest).unwrap();
+
+    // Use env override instead of unsound std::env::set_var
+    connector.set_env("BRAVE_API_KEY", "test-key-12345");
 
     let ctx = test_ctx();
     let params = json!({"query": "rust programming", "max_results": 2});
@@ -829,8 +829,6 @@ timeout_ms = 15000
     let results = result["results"].as_array().unwrap();
     assert_eq!(results[0]["title"], "Rust Lang");
     mock.assert();
-
-    std::env::remove_var("BRAVE_API_KEY");
 }
 
 // ── E4S2-T23: web.search empty query rejected ──
@@ -860,7 +858,7 @@ fn discord_descriptor() {
 fn discord_send_message_success() {
     let mut server = mockito::Server::new();
     let mock = server
-        .mock("POST", "/api/v10/channels/123456/messages")
+        .mock("POST", "/channels/123456/messages")
         .with_status(200)
         .with_header("content-type", "application/json")
         .with_body(r#"{"id":"msg-001","channel_id":"123456"}"#)
@@ -880,6 +878,7 @@ name = "discord"
 [capabilities]
 http = ["{mock_host}"]
 logging = true
+kv = true
 environment = ["DISCORD_BOT_TOKEN"]
 
 [resources]
@@ -889,40 +888,74 @@ timeout_ms = 30000
     ))
     .unwrap();
 
-    std::env::set_var("DISCORD_BOT_TOKEN", "test-bot-token-xyz");
+    // Pre-seed KV with mock server as API base URL
+    runtime.resource_pool().kv_set("discord", "api_base_url", &server.url());
 
-    let connector =
+    let mut connector =
         module_loader::load_module_with_manifest(&runtime, &wasm_path, &manifest).unwrap();
 
+    // Use env override instead of unsound std::env::set_var
+    connector.set_env("DISCORD_BOT_TOKEN", "test-bot-token-xyz");
+
     let ctx = test_ctx();
-    // Override the API base URL by using mock server URL directly in channel URL
     let params = json!({
         "action": "send_message",
         "channel_id": "123456",
         "content": "Hello from test!",
     });
 
-    // The connector hardcodes discord.com API base, so we need to handle this differently.
-    // For integration test: the connector's URL will be https://discord.com/api/v10/...
-    // which won't hit our mock. Instead, test that the module loads and describes correctly.
-    // The actual HTTP call to discord.com will fail (policy allows mock_host, not discord.com).
-    // This validates the module loads, parses params, and attempts the correct action.
-    let result = connector.invoke(&ctx, &params);
-    // Will fail because the connector tries to hit discord.com which isn't in the mock policy
-    assert!(result.is_err());
-
-    std::env::remove_var("DISCORD_BOT_TOKEN");
-    // Mock not hit because discord.com != mock server — drop verifies no hits
-    drop(mock);
+    let result = connector.invoke(&ctx, &params).unwrap();
+    assert_eq!(result["message_id"], "msg-001");
+    assert_eq!(result["channel_id"], "123456");
+    mock.assert();
 }
 
 // ── E4S2-T26: discord send with embeds ──
 
 #[test]
 fn discord_send_with_embeds() {
-    let (_td, connector) = load_with_extra_http_hosts("discord", &[]);
+    let mut server = mockito::Server::new();
+    let mock = server
+        .mock("POST", "/channels/789/messages")
+        .match_body(mockito::Matcher::PartialJsonString(
+            r#"{"embeds":[{"title":"Test Embed","description":"An embed"}]}"#.into(),
+        ))
+        .with_status(200)
+        .with_header("content-type", "application/json")
+        .with_body(r#"{"id":"msg-002","channel_id":"789"}"#)
+        .create();
 
-    std::env::set_var("DISCORD_BOT_TOKEN", "test-token");
+    let mock_host = extract_mock_hostname(&server.url());
+
+    let (_td, runtime) = test_runtime();
+    let dir = ref_compiled_dir();
+    let wasm_path = dir.join("discord.wasm");
+
+    let manifest = worldinterface_wasm::manifest::ConnectorManifest::from_toml(&format!(
+        r#"
+[connector]
+name = "discord"
+
+[capabilities]
+http = ["{mock_host}"]
+logging = true
+kv = true
+environment = ["DISCORD_BOT_TOKEN"]
+
+[resources]
+max_fuel = 1_000_000_000
+timeout_ms = 30000
+"#
+    ))
+    .unwrap();
+
+    // Pre-seed KV with mock server as API base URL
+    runtime.resource_pool().kv_set("discord", "api_base_url", &server.url());
+
+    let mut connector =
+        module_loader::load_module_with_manifest(&runtime, &wasm_path, &manifest).unwrap();
+
+    connector.set_env("DISCORD_BOT_TOKEN", "test-token");
 
     let ctx = test_ctx();
     let params = json!({
@@ -931,11 +964,10 @@ fn discord_send_with_embeds() {
         "embeds": [{"title": "Test Embed", "description": "An embed"}],
     });
 
-    // Will fail at HTTP level (discord.com not accessible) but validates param parsing
-    let result = connector.invoke(&ctx, &params);
-    assert!(result.is_err()); // Expected — no actual Discord API
-
-    std::env::remove_var("DISCORD_BOT_TOKEN");
+    let result = connector.invoke(&ctx, &params).unwrap();
+    assert_eq!(result["message_id"], "msg-002");
+    assert_eq!(result["channel_id"], "789");
+    mock.assert();
 }
 
 // ── E4S2-T27: discord policy allows discord.com only ──

@@ -9,7 +9,7 @@ wit_bindgen::generate!({
     path: "../../../crates/worldinterface-wasm/wit",
 });
 
-use exo::connector::{http, logging};
+use exo::connector::{http, kv, logging};
 
 struct DiscordConnector;
 
@@ -41,14 +41,18 @@ impl exports::exo::connector::connector::Guest for DiscordConnector {
         let bot_token = std::env::var("DISCORD_BOT_TOKEN")
             .map_err(|_| "DISCORD_BOT_TOKEN not set in environment".to_string())?;
 
+        // Read API base URL from KV (configurable for testing/custom deployments)
+        let api_base = kv::get("api_base_url")
+            .unwrap_or_else(|| DISCORD_API_BASE.to_string());
+
         match action {
-            "send_message" => send_message(&parsed, &bot_token),
+            "send_message" => send_message(&parsed, &bot_token, &api_base),
             _ => Err(format!("unknown action: '{action}'. Valid: send_message")),
         }
     }
 }
 
-fn send_message(params: &serde_json::Value, bot_token: &str) -> Result<String, String> {
+fn send_message(params: &serde_json::Value, bot_token: &str, api_base: &str) -> Result<String, String> {
     let channel_id =
         params["channel_id"].as_str().ok_or("missing required field 'channel_id'")?;
 
@@ -65,7 +69,7 @@ fn send_message(params: &serde_json::Value, bot_token: &str) -> Result<String, S
         return Err("must provide 'content' and/or 'embeds'".into());
     }
 
-    let url = format!("{}/channels/{}/messages", DISCORD_API_BASE, channel_id);
+    let url = format!("{}/channels/{}/messages", api_base, channel_id);
     let body =
         serde_json::to_string(&payload).map_err(|e| format!("failed to serialize payload: {e}"))?;
 

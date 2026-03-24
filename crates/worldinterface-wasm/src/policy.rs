@@ -457,13 +457,13 @@ timeout_ms = 10000
         assert_eq!(extract_hostname("https://host.com"), Some("host.com".into()));
     }
 
-    // ── E4S2 WebSocket policy tests ──
-
     fn policy_with_websocket(patterns: &[&str]) -> CapabilityPolicy {
         let mut policy = CapabilityPolicy::deny_all();
         policy.websocket_patterns = patterns.iter().map(|p| HostPattern::parse(p)).collect();
         policy
     }
+
+    // ── E4S2-T1: WebSocket policy allows matching hostname ──
 
     #[test]
     fn policy_websocket_allows_matching() {
@@ -471,12 +471,16 @@ timeout_ms = 10000
         assert!(policy.check_websocket("wss://gateway.discord.gg/?v=10").is_ok());
     }
 
+    // ── E4S2-T2: WebSocket policy denies non-matching hostname ──
+
     #[test]
     fn policy_websocket_denies_non_matching() {
         let policy = policy_with_websocket(&["gateway.discord.gg"]);
         let result = policy.check_websocket("wss://evil.com/ws");
         assert!(matches!(result, Err(PolicyViolation::WebSocketDenied { .. })));
     }
+
+    // ── E4S2-T3: WebSocket policy wildcard matching ──
 
     #[test]
     fn policy_websocket_wildcard() {
@@ -487,6 +491,8 @@ timeout_ms = 10000
         assert!(policy.check_websocket("wss://discord.gg/ws").is_err());
     }
 
+    // ── E4S2-T4: extract_hostname handles ws:// and wss:// schemes ──
+
     #[test]
     fn extract_hostname_handles_ws_schemes() {
         assert_eq!(extract_hostname("ws://localhost:8080/ws"), Some("localhost".into()));
@@ -495,6 +501,8 @@ timeout_ms = 10000
             Some("gateway.discord.gg".into())
         );
     }
+
+    // ── E4S2-T5: Policy from manifest includes websocket patterns ──
 
     #[test]
     fn policy_from_manifest_includes_websocket() {
@@ -510,6 +518,8 @@ websocket = ["gateway.discord.gg"]
         assert!(policy.check_websocket("wss://gateway.discord.gg/?v=10").is_ok());
         assert!(policy.check_websocket("wss://evil.com").is_err());
     }
+
+    // ── E4S2-T6: deny_all blocks WebSocket ──
 
     #[test]
     fn policy_deny_all_blocks_websocket() {

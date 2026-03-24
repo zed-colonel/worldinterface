@@ -35,11 +35,19 @@ impl websocket::Host for WasmState {
 
             // Add custom headers on top of the auto-generated ones
             for (key, value) in &headers {
-                if let (Ok(name), Ok(val)) = (
+                match (
                     key.parse::<tokio_tungstenite::tungstenite::http::HeaderName>(),
                     value.parse::<tokio_tungstenite::tungstenite::http::HeaderValue>(),
                 ) {
-                    request.headers_mut().insert(name, val);
+                    (Ok(name), Ok(val)) => {
+                        request.headers_mut().insert(name, val);
+                    }
+                    _ => {
+                        tracing::warn!(
+                            header_key = %key,
+                            "WebSocket connect: dropping invalid header"
+                        );
+                    }
                 }
             }
 
