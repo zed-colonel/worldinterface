@@ -13,6 +13,7 @@ pub mod flowspec;
 pub mod id;
 pub mod metrics;
 pub mod receipt;
+pub mod streaming;
 
 #[cfg(test)]
 mod tests {

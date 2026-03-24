@@ -43,6 +43,9 @@ pub(crate) struct HostInner {
     /// thread during shutdown (reqwest::blocking::Client panics if dropped in async context).
     #[cfg(feature = "wasm")]
     pub wasm_runtime: std::sync::Mutex<Option<Arc<worldinterface_wasm::WasmRuntime>>>,
+    /// Streaming lifecycle managers for background WebSocket connections.
+    #[cfg(feature = "wasm")]
+    pub streaming_managers: std::sync::Mutex<Vec<worldinterface_wasm::StreamingLifecycleManager>>,
 }
 
 /// The embedded WorldInterface host.
@@ -58,10 +61,14 @@ pub struct EmbeddedHost {
 impl EmbeddedHost {
     /// Start the host: validate config, bootstrap AQ engine, restore coordinator map,
     /// and launch the background tick loop.
+    ///
+    /// If `stream_handler` is provided and any loaded WASM connectors declare
+    /// `streaming = true`, background lifecycle managers are spawned for them.
     #[allow(unused_mut)]
     pub async fn start(
         config: HostConfig,
         mut registry: ConnectorRegistry,
+        stream_handler: Option<Arc<dyn worldinterface_core::streaming::StreamMessageHandler>>,
     ) -> Result<Self, HostError> {
         config.validate()?;
 
@@ -78,24 +85,24 @@ impl EmbeddedHost {
         // an internal tokio runtime. This must happen on a blocking thread to
         // avoid "Cannot create Runtime within async context" panic.
         #[cfg(feature = "wasm")]
-        let (wasm_runtime, wasm_connectors) =
+        let (wasm_runtime, wasm_connectors, wasm_streaming) =
             if let Some(ref connectors_dir) = config.connectors_dir {
                 let wasm_config = config.wasm_runtime_config();
                 let dir = connectors_dir.clone();
-                let (runtime, connectors) = tokio::task::spawn_blocking(move || {
+                let (runtime, connectors, streaming) = tokio::task::spawn_blocking(move || {
                     let runtime = Arc::new(
                         worldinterface_wasm::WasmRuntime::new(wasm_config)
                             .map_err(|e| HostError::WasmInit(e.to_string()))?,
                     );
-                    let connectors = worldinterface_wasm::load_modules_from_dir(&runtime, &dir)
+                    let loaded = worldinterface_wasm::load_modules_from_dir(&runtime, &dir)
                         .map_err(|e| HostError::WasmInit(e.to_string()))?;
-                    Ok::<_, HostError>((runtime, connectors))
+                    Ok::<_, HostError>((runtime, loaded.connectors, loaded.streaming))
                 })
                 .await
                 .map_err(|e| HostError::InternalError(format!("WASM loading join error: {e}")))??;
-                (Some(runtime), connectors)
+                (Some(runtime), connectors, streaming)
             } else {
-                (None, Vec::new())
+                (None, Vec::new(), Vec::new())
             };
         #[cfg(feature = "wasm")]
         {
@@ -116,6 +123,38 @@ impl EmbeddedHost {
                 );
             }
         }
+
+        // ── Start streaming lifecycle managers ──
+        #[cfg(feature = "wasm")]
+        let streaming_managers = {
+            let mut managers = Vec::new();
+            if let Some(ref handler) = stream_handler {
+                for streaming_info in wasm_streaming {
+                    let shutdown = Arc::new(std::sync::atomic::AtomicBool::new(false));
+                    let mut manager = worldinterface_wasm::StreamingLifecycleManager::new(
+                        streaming_info,
+                        Arc::clone(handler),
+                        Arc::clone(&shutdown),
+                    );
+                    match manager.start() {
+                        Ok(()) => {
+                            tracing::info!(
+                                connector = %manager.connector_name(),
+                                "streaming lifecycle started"
+                            );
+                            managers.push(manager);
+                        }
+                        Err(e) => {
+                            tracing::warn!(
+                                error = %e,
+                                "streaming lifecycle start failed, skipping"
+                            );
+                        }
+                    }
+                }
+            }
+            managers
+        };
 
         // Open ContextStore
         let store = Arc::new(SqliteContextStore::open(&config.context_store_path)?);
@@ -159,6 +198,8 @@ impl EmbeddedHost {
             shutdown_tx,
             #[cfg(feature = "wasm")]
             wasm_runtime: std::sync::Mutex::new(wasm_runtime),
+            #[cfg(feature = "wasm")]
+            streaming_managers: std::sync::Mutex::new(streaming_managers),
         });
 
         Ok(Self { inner, tick_handle })
@@ -409,6 +450,16 @@ impl EmbeddedHost {
     /// On next restart, incomplete tasks are recovered from the WAL.
     pub async fn shutdown(self) -> Result<(), HostError> {
         tracing::info!("shutting down host");
+
+        // Shut down streaming lifecycles before anything else
+        #[cfg(feature = "wasm")]
+        {
+            let managers: Vec<_> =
+                self.inner.streaming_managers.lock().unwrap().drain(..).collect();
+            for manager in managers {
+                manager.shutdown().await;
+            }
+        }
 
         // Take the WASM runtime out before stop_and_take_engine moves self.
         // reqwest::blocking::Client panics if dropped in async context.

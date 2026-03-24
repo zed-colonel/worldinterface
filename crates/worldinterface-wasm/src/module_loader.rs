@@ -1,5 +1,6 @@
 //! Module loader — loads `.wasm` + `.connector.toml` pairs from a directory.
 
+use std::collections::HashMap;
 use std::path::Path;
 use std::sync::Arc;
 
@@ -11,16 +12,39 @@ use crate::manifest::ConnectorManifest;
 use crate::policy::CapabilityPolicy;
 use crate::runtime::WasmRuntime;
 
+/// Result of loading WASM modules from a directory.
+pub struct LoadedModules {
+    /// Standard connectors (registered in ConnectorRegistry).
+    pub connectors: Vec<WasmConnector>,
+    /// Streaming connector metadata (for lifecycle management).
+    pub streaming: Vec<StreamingModuleInfo>,
+}
+
+/// Metadata for a module that declares streaming capability.
+pub struct StreamingModuleInfo {
+    /// Shared runtime (Engine + Linker + resource pool).
+    pub runtime: Arc<WasmRuntime>,
+    /// Pre-compiled WASM component.
+    pub component: Component,
+    /// Parsed manifest metadata.
+    pub manifest: ConnectorManifest,
+    /// Compiled capability policy.
+    pub policy: Arc<CapabilityPolicy>,
+    /// Environment variable overrides.
+    pub env_overrides: HashMap<String, String>,
+}
+
 /// Load all WASM modules from a directory.
 ///
 /// Scans for pairs: `{name}.connector.toml` + `{name}.wasm`.
-/// Returns a Vec of WasmConnectors. Invalid modules are reported
-/// via tracing::warn and skipped (no crash).
+/// Returns `LoadedModules` with both standard connectors and streaming module info.
+/// Invalid modules are reported via tracing::warn and skipped (no crash).
 pub fn load_modules_from_dir(
     runtime: &Arc<WasmRuntime>,
     dir: &Path,
-) -> Result<Vec<WasmConnector>, WasmError> {
+) -> Result<LoadedModules, WasmError> {
     let mut connectors = Vec::new();
+    let mut streaming = Vec::new();
 
     let entries = std::fs::read_dir(dir)?;
     for entry in entries {
@@ -38,7 +62,25 @@ pub fn load_modules_from_dir(
 
         match load_module(runtime, &wasm_path, &path) {
             Ok(connector) => {
-                tracing::info!(module = %stem, "loaded WASM connector");
+                tracing::info!(
+                    module = %stem,
+                    streaming = connector.manifest().connector.streaming,
+                    "loaded WASM connector"
+                );
+
+                // If the manifest declares streaming, also record streaming info.
+                // Reuse the already-compiled policy from the connector (avoid
+                // redundant from_manifest call).
+                if connector.manifest().connector.streaming {
+                    streaming.push(StreamingModuleInfo {
+                        runtime: Arc::clone(runtime),
+                        component: connector.component().clone(),
+                        manifest: connector.manifest().clone(),
+                        policy: Arc::clone(connector.policy()),
+                        env_overrides: HashMap::new(),
+                    });
+                }
+
                 connectors.push(connector);
             }
             Err(e) => {
@@ -47,7 +89,7 @@ pub fn load_modules_from_dir(
         }
     }
 
-    Ok(connectors)
+    Ok(LoadedModules { connectors, streaming })
 }
 
 /// Load a single WASM module from explicit paths.
@@ -178,8 +220,9 @@ name = "test.orphan"
         let runtime = Arc::new(WasmRuntime::new(config).unwrap());
 
         // Should not panic, just skip
-        let connectors = load_modules_from_dir(&runtime, dir.path()).unwrap();
-        assert!(connectors.is_empty());
+        let loaded = load_modules_from_dir(&runtime, dir.path()).unwrap();
+        assert!(loaded.connectors.is_empty());
+        assert!(loaded.streaming.is_empty());
     }
 
     // ── E2S3-T39: Host HTTP: uses separate client (not native connector's) ──

@@ -87,11 +87,11 @@ fn load_valid_module() {
 #[test]
 fn load_modules_from_dir_loads_all() {
     let (_td, runtime) = test_runtime();
-    let connectors = module_loader::load_modules_from_dir(&runtime, &compiled_dir()).unwrap();
+    let loaded = module_loader::load_modules_from_dir(&runtime, &compiled_dir()).unwrap();
     assert!(
-        connectors.len() >= 2,
+        loaded.connectors.len() >= 2,
         "expected at least echo + host-caller, got {}",
-        connectors.len()
+        loaded.connectors.len()
     );
 }
 
@@ -995,4 +995,217 @@ fn extract_mock_hostname(url: &str) -> String {
         url.strip_prefix("http://").or_else(|| url.strip_prefix("https://")).unwrap_or(url);
     let host_part = without_scheme.split('/').next().unwrap_or("");
     host_part.split(':').next().unwrap_or("").to_string()
+}
+
+// ── Discord Streaming Integration Tests ──
+
+fn production_compiled_dir() -> PathBuf {
+    PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../../examples/wasm-connectors/compiled")
+}
+
+/// Load the Discord WASM module with StreamingConnectorWorld bindings.
+/// Seeds KV with bot_user_id for mention filtering.
+fn load_discord_streaming() -> (
+    tempfile::TempDir,
+    Arc<WasmRuntime>,
+    wasmtime::component::Component,
+    worldinterface_wasm::manifest::ConnectorManifest,
+    Arc<worldinterface_wasm::CapabilityPolicy>,
+) {
+    let dir = tempfile::tempdir().unwrap();
+    let config = WasmRuntimeConfig { kv_store_dir: dir.path().join("kv"), ..Default::default() };
+    let runtime = Arc::new(WasmRuntime::new(config).unwrap());
+
+    let prod_dir = production_compiled_dir();
+    let wasm_path = prod_dir.join("discord.wasm");
+    let manifest_path = prod_dir.join("discord.connector.toml");
+
+    let manifest_content = std::fs::read_to_string(&manifest_path).unwrap();
+    let manifest =
+        worldinterface_wasm::manifest::ConnectorManifest::from_toml(&manifest_content).unwrap();
+
+    let policy = Arc::new(worldinterface_wasm::CapabilityPolicy::from_manifest(&manifest).unwrap());
+
+    let wasm_bytes = std::fs::read(&wasm_path).unwrap();
+    let component = wasmtime::component::Component::new(runtime.engine(), &wasm_bytes).unwrap();
+
+    // Seed KV with bot_user_id for mention filtering
+    runtime.resource_pool().kv_set("discord", "bot_user_id", "bot123");
+
+    (dir, runtime, component, manifest, policy)
+}
+
+fn call_discord_on_message(
+    runtime: &Arc<WasmRuntime>,
+    component: &wasmtime::component::Component,
+    manifest: &worldinterface_wasm::manifest::ConnectorManifest,
+    policy: &Arc<worldinterface_wasm::CapabilityPolicy>,
+    raw: &str,
+) -> Vec<(String, String, Vec<(String, String)>)> {
+    use worldinterface_wasm::streaming_bindings::StreamingConnectorWorld;
+
+    let wasi_ctx = wasmtime_wasi::WasiCtxBuilder::new().build();
+    let mut store = wasmtime::Store::new(
+        runtime.engine(),
+        worldinterface_wasm::WasmState {
+            wasi_ctx,
+            resource_table: wasmtime::component::ResourceTable::new(),
+            policy: Arc::clone(policy),
+            resource_pool: Arc::clone(runtime.resource_pool()),
+            module_name: manifest.connector.name.clone(),
+        },
+    );
+    store.set_fuel(policy.max_fuel).unwrap();
+    store.epoch_deadline_trap();
+    store.set_epoch_deadline(300);
+
+    let bindings = StreamingConnectorWorld::instantiate(&mut store, component, runtime.linker())
+        .expect("streaming instantiation should succeed");
+
+    let results = bindings
+        .exo_connector_streaming_connector()
+        .call_on_message(&mut store, raw)
+        .expect("on_message call should succeed");
+
+    results.into_iter().map(|m| (m.source_identity, m.content, m.metadata)).collect()
+}
+
+// ── E4S3-T11: Discord on_message filters mentions ──
+
+#[test]
+fn discord_on_message_filters_mentions() {
+    let (_dir, runtime, component, manifest, policy) = load_discord_streaming();
+
+    let event = serde_json::json!({
+        "op": 0,
+        "t": "MESSAGE_CREATE",
+        "d": {
+            "id": "msg-001",
+            "channel_id": "ch-123",
+            "guild_id": "guild-456",
+            "content": "<@bot123> what is the weather?",
+            "author": { "id": "user-789", "username": "testuser" },
+            "mentions": [{ "id": "bot123", "username": "exo-vessel" }]
+        }
+    });
+
+    let results =
+        call_discord_on_message(&runtime, &component, &manifest, &policy, &event.to_string());
+    assert_eq!(results.len(), 1, "should produce one message for @bot mention");
+}
+
+// ── E4S3-T12: Discord on_message ignores non-mentions ──
+
+#[test]
+fn discord_on_message_ignores_non_mentions() {
+    let (_dir, runtime, component, manifest, policy) = load_discord_streaming();
+
+    let event = serde_json::json!({
+        "op": 0,
+        "t": "MESSAGE_CREATE",
+        "d": {
+            "id": "msg-002",
+            "channel_id": "ch-123",
+            "content": "hello everyone",
+            "author": { "id": "user-789", "username": "testuser" },
+            "mentions": []
+        }
+    });
+
+    let results =
+        call_discord_on_message(&runtime, &component, &manifest, &policy, &event.to_string());
+    assert!(results.is_empty(), "should produce no messages without @bot mention");
+}
+
+// ── E4S3-T13: Discord on_message strips mention ──
+
+#[test]
+fn discord_on_message_strips_mention() {
+    let (_dir, runtime, component, manifest, policy) = load_discord_streaming();
+
+    let event = serde_json::json!({
+        "op": 0,
+        "t": "MESSAGE_CREATE",
+        "d": {
+            "id": "msg-003",
+            "channel_id": "ch-123",
+            "content": "<@bot123> hello",
+            "author": { "id": "user-789", "username": "testuser" },
+            "mentions": [{ "id": "bot123" }]
+        }
+    });
+
+    let results =
+        call_discord_on_message(&runtime, &component, &manifest, &policy, &event.to_string());
+    assert_eq!(results.len(), 1);
+    assert_eq!(results[0].1, "hello", "mention tag should be stripped");
+}
+
+// ── E4S3-T14: Discord on_message extracts identity ──
+
+#[test]
+fn discord_on_message_extracts_identity() {
+    let (_dir, runtime, component, manifest, policy) = load_discord_streaming();
+
+    let event = serde_json::json!({
+        "op": 0,
+        "t": "MESSAGE_CREATE",
+        "d": {
+            "id": "msg-004",
+            "channel_id": "ch-123",
+            "content": "<@bot123> ping",
+            "author": { "id": "user-789", "username": "testuser" },
+            "mentions": [{ "id": "bot123" }]
+        }
+    });
+
+    let results =
+        call_discord_on_message(&runtime, &component, &manifest, &policy, &event.to_string());
+    assert_eq!(results.len(), 1);
+    assert_eq!(results[0].0, "discord:user:user-789");
+}
+
+// ── E4S3-T15: Discord stream_config valid ──
+
+#[test]
+fn discord_stream_config_valid() {
+    use worldinterface_wasm::streaming_bindings::StreamingConnectorWorld;
+
+    let (_dir, runtime, component, manifest, policy) = load_discord_streaming();
+
+    let wasi_ctx = wasmtime_wasi::WasiCtxBuilder::new().build();
+    let mut store = wasmtime::Store::new(
+        runtime.engine(),
+        worldinterface_wasm::WasmState {
+            wasi_ctx,
+            resource_table: wasmtime::component::ResourceTable::new(),
+            policy: Arc::clone(&policy),
+            resource_pool: Arc::clone(runtime.resource_pool()),
+            module_name: manifest.connector.name.clone(),
+        },
+    );
+    store.set_fuel(policy.max_fuel).unwrap();
+    store.epoch_deadline_trap();
+    store.set_epoch_deadline(300);
+
+    let bindings = StreamingConnectorWorld::instantiate(&mut store, &component, runtime.linker())
+        .expect("streaming instantiation should succeed");
+
+    let setup = bindings
+        .exo_connector_streaming_connector()
+        .call_stream_config(&mut store)
+        .expect("stream_config call should succeed");
+
+    assert!(setup.url.starts_with("wss://"), "Gateway URL should start with wss://");
+    assert!(
+        setup.url.contains("gateway.discord.gg"),
+        "Gateway URL should contain gateway.discord.gg"
+    );
+    assert_eq!(setup.init_messages.len(), 1, "should have IDENTIFY init message");
+    assert!(
+        setup.init_messages[0].contains("\"op\":2") || setup.init_messages[0].contains("\"op\": 2"),
+        "IDENTIFY should be op 2"
+    );
+    assert_eq!(setup.heartbeat_interval_ms, 41250);
+    assert!(setup.heartbeat_payload.is_some());
 }

@@ -76,6 +76,21 @@ impl WasmConnector {
         }
     }
 
+    /// Access the parsed manifest metadata.
+    pub fn manifest(&self) -> &ConnectorManifest {
+        &self.manifest
+    }
+
+    /// Access the pre-compiled WASM component.
+    pub fn component(&self) -> &Component {
+        &self.component
+    }
+
+    /// Access the compiled capability policy.
+    pub fn policy(&self) -> &Arc<CapabilityPolicy> {
+        &self.policy
+    }
+
     /// Set an environment variable override for this connector.
     ///
     /// Overrides take priority over process environment variables when building
