@@ -29,8 +29,12 @@ uuid.workspace = true
 nix.workspace = true
 thiserror.workspace = true
 anyhow.workspace = true
+tokio-tungstenite = { workspace = true }
+futures-util = { workspace = true }
+hex = { workspace = true }
 
 [dev-dependencies]
 tempfile.workspace = true
 tokio = { workspace = true, features = ["macros", "rt-multi-thread"] }
 wat = "1"
+mockito = "1"

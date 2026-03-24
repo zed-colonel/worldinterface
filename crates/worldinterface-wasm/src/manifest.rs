@@ -55,6 +55,10 @@ pub struct ManifestCapabilities {
     /// Crypto operations access
     #[serde(default)]
     pub crypto: bool,
+    /// WebSocket URL hostname patterns (same matching as HTTP patterns).
+    /// Empty = WebSocket access denied (deny-by-default).
+    #[serde(default)]
+    pub websocket: Vec<String>,
 }
 
 fn default_max_fuel() -> u64 {

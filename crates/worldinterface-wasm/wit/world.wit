@@ -60,6 +60,49 @@ interface process {
     exec: func(command: string, args: list<string>, timeout-ms: option<u32>) -> result<exec-result, string>;
 }
 
+/// Policy-gated outbound HTTP requests.
+///
+/// Every request is checked against the module's capability policy
+/// (http hostname patterns from the manifest) before execution.
+/// This replaces reliance on the unpolicied wasmtime-wasi HTTP path.
+interface http {
+    record http-response {
+        status: u16,
+        headers: list<tuple<string, string>>,
+        body: string,
+    }
+
+    /// Make an HTTP request. URL checked against capability policy before sending.
+    request: func(
+        method: string,
+        url: string,
+        headers: list<tuple<string, string>>,
+        body: option<string>,
+    ) -> result<http-response, string>;
+}
+
+/// Persistent WebSocket connections (policy-gated by URL pattern).
+///
+/// Connections are managed by the host and survive across invoke() calls.
+/// Each connection is identified by a caller-chosen string ID.
+/// URL checked against capability policy before connecting.
+interface websocket {
+    /// Open a persistent WebSocket connection.
+    /// URL checked against capability policy before connecting.
+    connect: func(id: string, url: string, headers: list<tuple<string, string>>)
+        -> result<_, string>;
+
+    /// Send a text message on an open connection.
+    send: func(id: string, message: string) -> result<_, string>;
+
+    /// Receive next message. Blocks up to timeout-ms (0 = non-blocking poll).
+    /// Returns none if timeout expires with no message.
+    recv: func(id: string, timeout-ms: u32) -> result<option<string>, string>;
+
+    /// Close a connection and release resources.
+    close: func(id: string) -> result<_, string>;
+}
+
 /// The full world: custom Exo imports + guest exports.
 world connector-world {
     // Custom Exo host imports
@@ -67,6 +110,8 @@ world connector-world {
     import kv;
     import crypto;
     import process;
+    import http;
+    import websocket;
 
     // Guest exports
     export connector;

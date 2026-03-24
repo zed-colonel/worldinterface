@@ -8,6 +8,18 @@ use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 use std::time::Instant;
 
+use tokio::sync::Mutex as TokioMutex;
+use tokio_tungstenite::MaybeTlsStream;
+
+/// A persistent WebSocket connection managed by the resource pool.
+///
+/// Uses tokio async Mutex because WebSocket I/O is async.
+/// Host functions bridge to async via `Handle::current().block_on()`.
+pub struct WebSocketConnection {
+    pub stream:
+        TokioMutex<tokio_tungstenite::WebSocketStream<MaybeTlsStream<tokio::net::TcpStream>>>,
+}
+
 /// Shared resource pool for WASM host functions.
 ///
 /// Resource isolation principle: WASM modules get their own HTTP client,
@@ -21,6 +33,10 @@ pub struct WasmResourcePool {
     pub rate_limiters: Arc<Mutex<HashMap<String, RateLimiter>>>,
     /// KV store directory path.
     kv_store_dir: PathBuf,
+    /// Persistent WebSocket connections (survive across invoke() calls).
+    /// Outer Mutex is std::sync (held briefly for HashMap lookup).
+    /// Inner TokioMutex on each connection is for async I/O.
+    pub websocket_connections: Mutex<HashMap<String, Arc<WebSocketConnection>>>,
 }
 
 /// Simple token-bucket rate limiter.
@@ -97,6 +113,7 @@ impl WasmResourcePool {
             kv_store: Arc::new(Mutex::new(conn)),
             rate_limiters: Arc::new(Mutex::new(HashMap::new())),
             kv_store_dir: kv_store_dir.to_path_buf(),
+            websocket_connections: Mutex::new(HashMap::new()),
         })
     }
 
@@ -149,6 +166,29 @@ impl WasmResourcePool {
             .expect("kv_list_keys query failed")
             .filter_map(|r| r.ok())
             .collect()
+    }
+
+    /// Insert a new WebSocket connection.
+    pub fn ws_insert(&self, id: String, conn: Arc<WebSocketConnection>) {
+        self.websocket_connections.lock().unwrap().insert(id, conn);
+    }
+
+    /// Get a WebSocket connection by ID. Returns cloned Arc (brief lock).
+    pub fn ws_get(&self, id: &str) -> Option<Arc<WebSocketConnection>> {
+        self.websocket_connections.lock().unwrap().get(id).cloned()
+    }
+
+    /// Remove a WebSocket connection by ID.
+    pub fn ws_remove(&self, id: &str) -> Option<Arc<WebSocketConnection>> {
+        self.websocket_connections.lock().unwrap().remove(id)
+    }
+
+    /// Create a minimal resource pool for unit tests (in-memory KV, no disk).
+    #[cfg(test)]
+    pub fn new_for_test() -> Self {
+        let dir = std::env::temp_dir().join(format!("wi-test-{}", uuid::Uuid::new_v4()));
+        std::fs::create_dir_all(&dir).unwrap();
+        Self::new(&dir).unwrap()
     }
 
     /// Try to acquire a rate limit token for a module.

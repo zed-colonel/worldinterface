@@ -18,6 +18,7 @@ pub struct CapabilityPolicy {
     pub filesystem_prefixes: Vec<PathBuf>,
     pub process_commands: HashSet<String>,
     pub environment_vars: HashSet<String>,
+    pub websocket_patterns: Vec<HostPattern>,
     pub sockets_allowed: bool,
     pub kv_allowed: bool,
     pub logging_allowed: bool,
@@ -69,6 +70,7 @@ impl CapabilityPolicy {
 
         Ok(Self {
             http_patterns: caps.http.iter().map(|p| HostPattern::parse(p)).collect(),
+            websocket_patterns: caps.websocket.iter().map(|p| HostPattern::parse(p)).collect(),
             filesystem_prefixes: caps.filesystem.clone(),
             process_commands: caps.process.iter().cloned().collect(),
             environment_vars: caps.environment.iter().cloned().collect(),
@@ -87,6 +89,7 @@ impl CapabilityPolicy {
     pub fn deny_all() -> Self {
         Self {
             http_patterns: Vec::new(),
+            websocket_patterns: Vec::new(),
             filesystem_prefixes: Vec::new(),
             process_commands: HashSet::new(),
             environment_vars: HashSet::new(),
@@ -113,6 +116,19 @@ impl CapabilityPolicy {
             }
         }
         Err(PolicyViolation::HttpDenied { url: url.to_string() })
+    }
+
+    /// Check if a WebSocket URL is allowed by the policy.
+    pub fn check_websocket(&self, url: &str) -> Result<(), PolicyViolation> {
+        let hostname = extract_hostname(url)
+            .ok_or_else(|| PolicyViolation::WebSocketDenied { url: url.to_string() })?;
+
+        for pattern in &self.websocket_patterns {
+            if pattern.matches(&hostname) {
+                return Ok(());
+            }
+        }
+        Err(PolicyViolation::WebSocketDenied { url: url.to_string() })
     }
 
     /// Check if a filesystem path is within allowed prefixes.
@@ -188,8 +204,12 @@ impl CapabilityPolicy {
 /// Extract hostname from a URL string.
 fn extract_hostname(url: &str) -> Option<String> {
     // Simple URL parsing: strip scheme, then take hostname before port/path
-    let without_scheme =
-        url.strip_prefix("https://").or_else(|| url.strip_prefix("http://")).unwrap_or(url);
+    let without_scheme = url
+        .strip_prefix("https://")
+        .or_else(|| url.strip_prefix("http://"))
+        .or_else(|| url.strip_prefix("wss://"))
+        .or_else(|| url.strip_prefix("ws://"))
+        .unwrap_or(url);
 
     let host_part = without_scheme.split('/').next()?;
     let hostname = host_part.split(':').next()?;
@@ -349,6 +369,7 @@ mod tests {
     fn policy_deny_all_blocks_everything() {
         let policy = CapabilityPolicy::deny_all();
         assert!(policy.check_http("https://example.com").is_err());
+        assert!(policy.check_websocket("wss://example.com").is_err());
         assert!(policy.check_filesystem(Path::new("/tmp")).is_err());
         assert!(policy.check_process("echo").is_err());
         assert!(policy.check_environment("HOME").is_err());
@@ -364,6 +385,7 @@ mod tests {
     fn policy_violation_distinct_messages() {
         let violations = [
             PolicyViolation::HttpDenied { url: "https://evil.com".into() },
+            PolicyViolation::WebSocketDenied { url: "wss://evil.com".into() },
             PolicyViolation::FilesystemDenied { path: "/secret".into() },
             PolicyViolation::ProcessDenied { command: "rm".into() },
             PolicyViolation::EnvironmentDenied { var: "SECRET".into() },
@@ -378,11 +400,12 @@ mod tests {
 
         // Verify key content in messages
         assert!(messages[0].contains("evil.com"));
-        assert!(messages[1].contains("/secret"));
-        assert!(messages[2].contains("rm"));
-        assert!(messages[3].contains("SECRET"));
-        assert!(messages[4].contains("socket"));
-        assert!(messages[5].contains("kv"));
+        assert!(messages[1].contains("evil.com"));
+        assert!(messages[2].contains("/secret"));
+        assert!(messages[3].contains("rm"));
+        assert!(messages[4].contains("SECRET"));
+        assert!(messages[5].contains("socket"));
+        assert!(messages[6].contains("kv"));
     }
 
     #[test]
@@ -432,5 +455,75 @@ timeout_ms = 10000
         assert_eq!(extract_hostname("https://api.example.com/v1"), Some("api.example.com".into()));
         assert_eq!(extract_hostname("http://localhost:8080/path"), Some("localhost".into()));
         assert_eq!(extract_hostname("https://host.com"), Some("host.com".into()));
+    }
+
+    fn policy_with_websocket(patterns: &[&str]) -> CapabilityPolicy {
+        let mut policy = CapabilityPolicy::deny_all();
+        policy.websocket_patterns = patterns.iter().map(|p| HostPattern::parse(p)).collect();
+        policy
+    }
+
+    // ── E4S2-T1: WebSocket policy allows matching hostname ──
+
+    #[test]
+    fn policy_websocket_allows_matching() {
+        let policy = policy_with_websocket(&["gateway.discord.gg"]);
+        assert!(policy.check_websocket("wss://gateway.discord.gg/?v=10").is_ok());
+    }
+
+    // ── E4S2-T2: WebSocket policy denies non-matching hostname ──
+
+    #[test]
+    fn policy_websocket_denies_non_matching() {
+        let policy = policy_with_websocket(&["gateway.discord.gg"]);
+        let result = policy.check_websocket("wss://evil.com/ws");
+        assert!(matches!(result, Err(PolicyViolation::WebSocketDenied { .. })));
+    }
+
+    // ── E4S2-T3: WebSocket policy wildcard matching ──
+
+    #[test]
+    fn policy_websocket_wildcard() {
+        let policy = policy_with_websocket(&["*.discord.gg"]);
+        assert!(policy.check_websocket("wss://gateway.discord.gg/?v=10").is_ok());
+        assert!(policy.check_websocket("wss://other.discord.gg/ws").is_ok());
+        // Bare "discord.gg" should NOT match "*.discord.gg"
+        assert!(policy.check_websocket("wss://discord.gg/ws").is_err());
+    }
+
+    // ── E4S2-T4: extract_hostname handles ws:// and wss:// schemes ──
+
+    #[test]
+    fn extract_hostname_handles_ws_schemes() {
+        assert_eq!(extract_hostname("ws://localhost:8080/ws"), Some("localhost".into()));
+        assert_eq!(
+            extract_hostname("wss://gateway.discord.gg/?v=10"),
+            Some("gateway.discord.gg".into())
+        );
+    }
+
+    // ── E4S2-T5: Policy from manifest includes websocket patterns ──
+
+    #[test]
+    fn policy_from_manifest_includes_websocket() {
+        let toml = r#"
+[connector]
+name = "test.ws"
+
+[capabilities]
+websocket = ["gateway.discord.gg"]
+"#;
+        let manifest = crate::manifest::ConnectorManifest::from_toml(toml).unwrap();
+        let policy = CapabilityPolicy::from_manifest(&manifest).unwrap();
+        assert!(policy.check_websocket("wss://gateway.discord.gg/?v=10").is_ok());
+        assert!(policy.check_websocket("wss://evil.com").is_err());
+    }
+
+    // ── E4S2-T6: deny_all blocks WebSocket ──
+
+    #[test]
+    fn policy_deny_all_blocks_websocket() {
+        let policy = CapabilityPolicy::deny_all();
+        assert!(policy.check_websocket("wss://example.com").is_err());
     }
 }

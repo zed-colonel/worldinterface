@@ -1,0 +1,12 @@
+[connector]
+name = "webhook.send"
+version = "0.1.0"
+description = "Generic outbound HTTP webhook — sends an HTTP request to a specified URL"
+
+[capabilities]
+http = ["*"]
+logging = true
+
+[resources]
+max_fuel = 500_000_000
+timeout_ms = 15000

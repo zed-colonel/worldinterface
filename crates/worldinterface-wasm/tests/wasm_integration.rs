@@ -658,3 +658,341 @@ fn wasm_runtime_persists_across_invocations() {
     assert_eq!(r1["valid"], true);
     assert_eq!(r2["valid"], true);
 }
+
+// ────────────────────────────────────────────────────────────────────────────
+// E4-S2 WASM Connector Integration Tests
+// ────────────────────────────────────────────────────────────────────────────
+
+fn load_with_extra_http_hosts(
+    name: &str,
+    extra_hosts: &[&str],
+) -> (tempfile::TempDir, worldinterface_wasm::WasmConnector) {
+    let (_td, runtime) = test_runtime();
+    let dir = ref_compiled_dir();
+    let manifest_path = dir.join(format!("{name}.connector.toml"));
+    let wasm_path = dir.join(format!("{name}.wasm"));
+
+    let manifest_content = std::fs::read_to_string(&manifest_path)
+        .unwrap_or_else(|e| panic!("missing manifest for {name}: {e}"));
+    let mut manifest =
+        worldinterface_wasm::manifest::ConnectorManifest::from_toml(&manifest_content).unwrap();
+    for host in extra_hosts {
+        manifest.capabilities.http.push(host.to_string());
+    }
+
+    let connector =
+        module_loader::load_module_with_manifest(&runtime, &wasm_path, &manifest).unwrap();
+    (_td, connector)
+}
+
+// ── E4S2-T18: webhook.send descriptor ──
+
+#[test]
+fn webhook_send_descriptor() {
+    let (_td, connector) = load_with_extra_http_hosts("webhook-send", &[]);
+    let desc = connector.describe();
+    assert_eq!(desc.name, "webhook.send");
+    assert!(matches!(desc.category, ConnectorCategory::Wasm(ref name) if name == "webhook.send"));
+}
+
+// ── E4S2-T19: webhook.send invoke success ──
+
+#[test]
+fn webhook_send_invoke_success() {
+    let mut server = mockito::Server::new();
+    let mock = server.mock("POST", "/hook").with_status(200).with_body(r#"{"ok":true}"#).create();
+
+    let mock_host = extract_mock_hostname(&server.url());
+    let (_td, connector) = load_with_extra_http_hosts("webhook-send", &[&mock_host]);
+    let ctx = test_ctx();
+    let params = json!({
+        "url": format!("{}/hook", server.url()),
+        "method": "POST",
+        "body": r#"{"event":"test"}"#,
+    });
+
+    let result = connector.invoke(&ctx, &params).unwrap();
+    assert_eq!(result["status"], 200);
+    assert_eq!(result["body"], r#"{"ok":true}"#);
+    mock.assert();
+}
+
+// ── E4S2-T20: webhook.send policy blocks unlisted host ──
+
+#[test]
+fn webhook_send_policy_blocks_unlisted_host() {
+    // Load with a restrictive manifest (only example.com allowed)
+    let (_td, runtime) = test_runtime();
+    let dir = ref_compiled_dir();
+    let wasm_path = dir.join("webhook-send.wasm");
+
+    let manifest = worldinterface_wasm::manifest::ConnectorManifest::from_toml(
+        r#"
+[connector]
+name = "webhook.send"
+
+[capabilities]
+http = ["example.com"]
+logging = true
+
+[resources]
+max_fuel = 500_000_000
+timeout_ms = 15000
+"#,
+    )
+    .unwrap();
+
+    let connector =
+        module_loader::load_module_with_manifest(&runtime, &wasm_path, &manifest).unwrap();
+
+    let ctx = test_ctx();
+    let params = json!({
+        "url": "https://evil.com/hack",
+        "method": "GET",
+    });
+
+    // Should fail — evil.com not in allowed http patterns
+    let result = connector.invoke(&ctx, &params);
+    assert!(result.is_err(), "should be blocked by policy");
+}
+
+// ── E4S2-T21: web.search descriptor ──
+
+#[test]
+fn web_search_descriptor() {
+    let (_td, connector) = load_with_extra_http_hosts("web-search", &[]);
+    let desc = connector.describe();
+    assert_eq!(desc.name, "web.search");
+    assert!(matches!(desc.category, ConnectorCategory::Wasm(ref name) if name == "web.search"));
+}
+
+// ── E4S2-T22: web.search invoke success ──
+
+#[test]
+fn web_search_invoke_success() {
+    let mut server = mockito::Server::new();
+    let mock_response = serde_json::json!({
+        "web": {
+            "results": [
+                {"title": "Rust Lang", "url": "https://rust-lang.org", "description": "Systems programming"},
+                {"title": "Cargo", "url": "https://doc.rust-lang.org/cargo", "description": "Rust package manager"},
+            ]
+        }
+    });
+    let mock = server
+        .mock("GET", mockito::Matcher::Regex(r".*q=rust.*".to_string()))
+        .with_status(200)
+        .with_header("content-type", "application/json")
+        .with_body(mock_response.to_string())
+        .create();
+
+    let mock_host = extract_mock_hostname(&server.url());
+
+    // Load with custom manifest that points to mock server
+    let (_td, runtime) = test_runtime();
+    let dir = ref_compiled_dir();
+    let wasm_path = dir.join("web-search.wasm");
+
+    let manifest = worldinterface_wasm::manifest::ConnectorManifest::from_toml(&format!(
+        r#"
+[connector]
+name = "web.search"
+
+[capabilities]
+http = ["{mock_host}"]
+logging = true
+kv = true
+environment = ["BRAVE_API_KEY"]
+
+[resources]
+max_fuel = 500_000_000
+timeout_ms = 15000
+"#
+    ))
+    .unwrap();
+
+    // Pre-seed KV with mock provider URL
+    runtime.resource_pool().kv_set("web.search", "provider_url", &server.url());
+
+    let mut connector =
+        module_loader::load_module_with_manifest(&runtime, &wasm_path, &manifest).unwrap();
+
+    // Use env override instead of unsound std::env::set_var
+    connector.set_env("BRAVE_API_KEY", "test-key-12345");
+
+    let ctx = test_ctx();
+    let params = json!({"query": "rust programming", "max_results": 2});
+
+    let result = connector.invoke(&ctx, &params).unwrap();
+    assert_eq!(result["count"], 2);
+    assert_eq!(result["query"], "rust programming");
+    let results = result["results"].as_array().unwrap();
+    assert_eq!(results[0]["title"], "Rust Lang");
+    mock.assert();
+}
+
+// ── E4S2-T23: web.search empty query rejected ──
+
+#[test]
+fn web_search_empty_query_rejected() {
+    let (_td, connector) = load_with_extra_http_hosts("web-search", &[]);
+    let ctx = test_ctx();
+    let params = json!({"query": "  "});
+    let result = connector.invoke(&ctx, &params);
+    assert!(result.is_err(), "empty query should be rejected");
+}
+
+// ── E4S2-T24: discord descriptor ──
+
+#[test]
+fn discord_descriptor() {
+    let (_td, connector) = load_with_extra_http_hosts("discord", &[]);
+    let desc = connector.describe();
+    assert_eq!(desc.name, "discord");
+    assert!(matches!(desc.category, ConnectorCategory::Wasm(ref name) if name == "discord"));
+}
+
+// ── E4S2-T25: discord send_message success ──
+
+#[test]
+fn discord_send_message_success() {
+    let mut server = mockito::Server::new();
+    let mock = server
+        .mock("POST", "/channels/123456/messages")
+        .with_status(200)
+        .with_header("content-type", "application/json")
+        .with_body(r#"{"id":"msg-001","channel_id":"123456"}"#)
+        .create();
+
+    let mock_host = extract_mock_hostname(&server.url());
+
+    let (_td, runtime) = test_runtime();
+    let dir = ref_compiled_dir();
+    let wasm_path = dir.join("discord.wasm");
+
+    let manifest = worldinterface_wasm::manifest::ConnectorManifest::from_toml(&format!(
+        r#"
+[connector]
+name = "discord"
+
+[capabilities]
+http = ["{mock_host}"]
+logging = true
+kv = true
+environment = ["DISCORD_BOT_TOKEN"]
+
+[resources]
+max_fuel = 1_000_000_000
+timeout_ms = 30000
+"#
+    ))
+    .unwrap();
+
+    // Pre-seed KV with mock server as API base URL
+    runtime.resource_pool().kv_set("discord", "api_base_url", &server.url());
+
+    let mut connector =
+        module_loader::load_module_with_manifest(&runtime, &wasm_path, &manifest).unwrap();
+
+    // Use env override instead of unsound std::env::set_var
+    connector.set_env("DISCORD_BOT_TOKEN", "test-bot-token-xyz");
+
+    let ctx = test_ctx();
+    let params = json!({
+        "action": "send_message",
+        "channel_id": "123456",
+        "content": "Hello from test!",
+    });
+
+    let result = connector.invoke(&ctx, &params).unwrap();
+    assert_eq!(result["message_id"], "msg-001");
+    assert_eq!(result["channel_id"], "123456");
+    mock.assert();
+}
+
+// ── E4S2-T26: discord send with embeds ──
+
+#[test]
+fn discord_send_with_embeds() {
+    let mut server = mockito::Server::new();
+    let mock = server
+        .mock("POST", "/channels/789/messages")
+        .match_body(mockito::Matcher::PartialJsonString(
+            r#"{"embeds":[{"title":"Test Embed","description":"An embed"}]}"#.into(),
+        ))
+        .with_status(200)
+        .with_header("content-type", "application/json")
+        .with_body(r#"{"id":"msg-002","channel_id":"789"}"#)
+        .create();
+
+    let mock_host = extract_mock_hostname(&server.url());
+
+    let (_td, runtime) = test_runtime();
+    let dir = ref_compiled_dir();
+    let wasm_path = dir.join("discord.wasm");
+
+    let manifest = worldinterface_wasm::manifest::ConnectorManifest::from_toml(&format!(
+        r#"
+[connector]
+name = "discord"
+
+[capabilities]
+http = ["{mock_host}"]
+logging = true
+kv = true
+environment = ["DISCORD_BOT_TOKEN"]
+
+[resources]
+max_fuel = 1_000_000_000
+timeout_ms = 30000
+"#
+    ))
+    .unwrap();
+
+    // Pre-seed KV with mock server as API base URL
+    runtime.resource_pool().kv_set("discord", "api_base_url", &server.url());
+
+    let mut connector =
+        module_loader::load_module_with_manifest(&runtime, &wasm_path, &manifest).unwrap();
+
+    connector.set_env("DISCORD_BOT_TOKEN", "test-token");
+
+    let ctx = test_ctx();
+    let params = json!({
+        "action": "send_message",
+        "channel_id": "789",
+        "embeds": [{"title": "Test Embed", "description": "An embed"}],
+    });
+
+    let result = connector.invoke(&ctx, &params).unwrap();
+    assert_eq!(result["message_id"], "msg-002");
+    assert_eq!(result["channel_id"], "789");
+    mock.assert();
+}
+
+// ── E4S2-T27: discord policy allows discord.com only ──
+
+#[test]
+fn discord_policy_allows_discord_only() {
+    let (_td, runtime) = test_runtime();
+    let dir = ref_compiled_dir();
+    let wasm_path = dir.join("discord.wasm");
+
+    // Load with original manifest (http = ["discord.com"])
+    let manifest_content = std::fs::read_to_string(dir.join("discord.connector.toml")).unwrap();
+    let manifest =
+        worldinterface_wasm::manifest::ConnectorManifest::from_toml(&manifest_content).unwrap();
+    assert_eq!(manifest.capabilities.http, vec!["discord.com"]);
+
+    let connector =
+        module_loader::load_module_with_manifest(&runtime, &wasm_path, &manifest).unwrap();
+    let desc = connector.describe();
+    assert_eq!(desc.name, "discord");
+}
+
+fn extract_mock_hostname(url: &str) -> String {
+    let without_scheme =
+        url.strip_prefix("http://").or_else(|| url.strip_prefix("https://")).unwrap_or(url);
+    let host_part = without_scheme.split('/').next().unwrap_or("");
+    host_part.split(':').next().unwrap_or("").to_string()
+}
