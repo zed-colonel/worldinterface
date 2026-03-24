@@ -66,12 +66,14 @@ impl http::Host for WasmState {
 
 #[cfg(test)]
 mod tests {
+    use std::sync::Arc;
+
+    use wasmtime::component::ResourceTable;
+    use wasmtime_wasi::WasiCtxBuilder;
+
     use super::*;
     use crate::policy::CapabilityPolicy;
     use crate::resource_pool::WasmResourcePool;
-    use std::sync::Arc;
-    use wasmtime::component::ResourceTable;
-    use wasmtime_wasi::WasiCtxBuilder;
 
     fn extract_mock_hostname(url: &str) -> String {
         let without_scheme =

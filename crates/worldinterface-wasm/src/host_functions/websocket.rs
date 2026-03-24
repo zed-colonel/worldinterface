@@ -145,11 +145,12 @@ fn extract_text(msg: Message) -> Option<String> {
 
 #[cfg(test)]
 mod tests {
+    use wasmtime::component::ResourceTable;
+    use wasmtime_wasi::WasiCtxBuilder;
+
     use super::*;
     use crate::policy::{CapabilityPolicy, HostPattern};
     use crate::resource_pool::WasmResourcePool;
-    use wasmtime::component::ResourceTable;
-    use wasmtime_wasi::WasiCtxBuilder;
 
     fn test_state_with_pool(patterns: &[&str], pool: Arc<WasmResourcePool>) -> WasmState {
         let mut policy = CapabilityPolicy::deny_all();
