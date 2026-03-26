@@ -49,6 +49,10 @@ pub struct HostConfig {
     /// Each module is a pair: `{name}.wasm` + `{name}.connector.toml`.
     /// If `None`, no WASM connectors are loaded (existing behavior).
     pub connectors_dir: Option<PathBuf>,
+
+    /// Whether to watch `connectors_dir` for new connector modules at runtime.
+    /// Requires the `watcher` feature. Default: false.
+    pub watch_connectors_dir: bool,
 }
 
 impl Default for HostConfig {
@@ -63,6 +67,7 @@ impl Default for HostConfig {
             shutdown_timeout: Duration::from_secs(30),
             metrics: Arc::new(NoopMetricsRecorder),
             connectors_dir: None,
+            watch_connectors_dir: false,
         }
     }
 }
@@ -78,6 +83,7 @@ impl std::fmt::Debug for HostConfig {
             .field("compiler_config", &self.compiler_config)
             .field("shutdown_timeout", &self.shutdown_timeout)
             .field("connectors_dir", &self.connectors_dir)
+            .field("watch_connectors_dir", &self.watch_connectors_dir)
             .finish()
     }
 }
@@ -212,5 +218,13 @@ mod tests {
         assert_eq!(rc.tick_interval, Duration::from_millis(100));
         assert_eq!(rc.dispatch_concurrency, NonZeroUsize::new(8).unwrap());
         assert_eq!(rc.lease_timeout_secs, 600);
+    }
+
+    // ── E5S3: watch_connectors_dir defaults to false ──
+
+    #[test]
+    fn watch_connectors_dir_defaults_to_false() {
+        let config = HostConfig::default();
+        assert!(!config.watch_connectors_dir);
     }
 }

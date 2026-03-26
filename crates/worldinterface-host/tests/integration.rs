@@ -20,7 +20,7 @@ use worldinterface_host::{
 
 /// Build a registry with all built-in connectors including HTTP.
 fn test_registry() -> ConnectorRegistry {
-    let mut registry = ConnectorRegistry::new();
+    let registry = ConnectorRegistry::new();
     registry.register(Arc::new(DelayConnector));
     registry.register(Arc::new(FsReadConnector));
     registry.register(Arc::new(FsWriteConnector));
@@ -756,7 +756,7 @@ async fn shell_exec_invocable_via_host() {
     let config = test_config(dir.path());
 
     // Use a registry that includes ShellExecConnector
-    let mut registry = test_registry();
+    let registry = test_registry();
     registry.register(Arc::new(ShellExecConnector::new()));
 
     let host = EmbeddedHost::start(config, registry, None).await.unwrap();
@@ -779,7 +779,7 @@ async fn flowspec_with_shell_exec_compiles_and_runs() {
     let dir = tempfile::tempdir().unwrap();
     let config = test_config(dir.path());
 
-    let mut registry = test_registry();
+    let registry = test_registry();
     registry.register(Arc::new(ShellExecConnector::new()));
 
     let host = EmbeddedHost::start(config, registry, None).await.unwrap();
@@ -815,7 +815,7 @@ async fn sandbox_exec_invocable_via_host() {
     let sandbox_dir = tempfile::tempdir().unwrap();
 
     // Use a registry that includes both ShellExecConnector and SandboxExecConnector
-    let mut registry = test_registry();
+    let registry = test_registry();
     registry.register(Arc::new(ShellExecConnector::new()));
     registry.register(Arc::new(SandboxExecConnector::with_sandbox_dir(
         sandbox_dir.path().to_str().unwrap(),
@@ -1221,5 +1221,255 @@ description = "Fake connector with duplicate name"
 
         let host = EmbeddedHost::start(config, registry, None).await.unwrap();
         host.shutdown().await.unwrap();
+    }
+
+    // ── E5S3-T6: host_load_connector ──
+
+    fn test_compiled_dir() -> PathBuf {
+        PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("../worldinterface-wasm/test-modules/compiled")
+    }
+
+    #[tokio::test]
+    async fn host_load_connector() {
+        let dir = tempfile::tempdir().unwrap();
+        let empty_connectors_dir = tempfile::tempdir().unwrap();
+        let config = HostConfig {
+            aq_data_dir: dir.path().join("aq"),
+            context_store_path: dir.path().join("context.db"),
+            tick_interval: Duration::from_millis(10),
+            connectors_dir: Some(empty_connectors_dir.path().to_path_buf()),
+            ..Default::default()
+        };
+        let registry = test_registry();
+        let host = EmbeddedHost::start(config, registry, None).await.unwrap();
+
+        // test.echo should not be present yet
+        assert!(host.describe("test.echo").is_none());
+
+        let compiled = test_compiled_dir();
+        let manifest_path = compiled.join("echo.connector.toml");
+        let wasm_path = compiled.join("echo.wasm");
+
+        let descriptor = host.load_connector(&manifest_path, &wasm_path).await.unwrap();
+        assert_eq!(descriptor.name, "test.echo");
+
+        // Now it should appear in list_capabilities
+        let caps = host.list_capabilities();
+        let names: Vec<&str> = caps.iter().map(|d| d.name.as_str()).collect();
+        assert!(names.contains(&"test.echo"), "test.echo should be in capabilities: {names:?}");
+
+        host.shutdown().await.unwrap();
+    }
+
+    // ── E5S3-T7: host_load_connector_invalid_manifest ──
+
+    #[tokio::test]
+    async fn host_load_connector_invalid_manifest() {
+        let dir = tempfile::tempdir().unwrap();
+        let empty_connectors_dir = tempfile::tempdir().unwrap();
+        let config = HostConfig {
+            aq_data_dir: dir.path().join("aq"),
+            context_store_path: dir.path().join("context.db"),
+            tick_interval: Duration::from_millis(10),
+            connectors_dir: Some(empty_connectors_dir.path().to_path_buf()),
+            ..Default::default()
+        };
+        let registry = test_registry();
+        let host = EmbeddedHost::start(config, registry, None).await.unwrap();
+
+        // Nonexistent manifest path should fail
+        let nonexistent = dir.path().join("nonexistent.connector.toml");
+        let wasm_path = dir.path().join("nonexistent.wasm");
+
+        let result = host.load_connector(&nonexistent, &wasm_path).await;
+        assert!(result.is_err(), "load_connector with nonexistent manifest should fail");
+
+        host.shutdown().await.unwrap();
+    }
+
+    // ── E5S3-T8: host_unload_connector ──
+
+    #[tokio::test]
+    async fn host_unload_connector() {
+        let dir = tempfile::tempdir().unwrap();
+        let empty_connectors_dir = tempfile::tempdir().unwrap();
+        let config = HostConfig {
+            aq_data_dir: dir.path().join("aq"),
+            context_store_path: dir.path().join("context.db"),
+            tick_interval: Duration::from_millis(10),
+            connectors_dir: Some(empty_connectors_dir.path().to_path_buf()),
+            ..Default::default()
+        };
+        let registry = test_registry();
+        let host = EmbeddedHost::start(config, registry, None).await.unwrap();
+
+        // Load the echo connector
+        let compiled = test_compiled_dir();
+        let manifest_path = compiled.join("echo.connector.toml");
+        let wasm_path = compiled.join("echo.wasm");
+        host.load_connector(&manifest_path, &wasm_path).await.unwrap();
+        assert!(host.describe("test.echo").is_some());
+
+        // Unload it
+        host.unload_connector("test.echo").unwrap();
+        assert!(host.describe("test.echo").is_none());
+
+        // Unloading again should return ConnectorNotFound
+        let err = host.unload_connector("test.echo").unwrap_err();
+        assert!(
+            matches!(err, HostError::ConnectorNotFound(_)),
+            "expected ConnectorNotFound, got: {err:?}"
+        );
+
+        host.shutdown().await.unwrap();
+    }
+
+    // ── E5S3-T9: host_rescan_connectors ──
+
+    #[tokio::test]
+    async fn host_rescan_connectors() {
+        let dir = tempfile::tempdir().unwrap();
+        let connectors_dir = tempfile::tempdir().unwrap();
+        let config = HostConfig {
+            aq_data_dir: dir.path().join("aq"),
+            context_store_path: dir.path().join("context.db"),
+            tick_interval: Duration::from_millis(10),
+            connectors_dir: Some(connectors_dir.path().to_path_buf()),
+            ..Default::default()
+        };
+        let registry = test_registry();
+        let host = EmbeddedHost::start(config, registry, None).await.unwrap();
+
+        // Initially no WASM connectors
+        let caps_before = host.list_capabilities();
+        assert!(
+            !caps_before.iter().any(|d| d.name == "test.echo"),
+            "test.echo should not be loaded yet"
+        );
+
+        // Copy echo module into connectors_dir
+        let compiled = test_compiled_dir();
+        std::fs::copy(
+            compiled.join("echo.connector.toml"),
+            connectors_dir.path().join("echo.connector.toml"),
+        )
+        .unwrap();
+        std::fs::copy(compiled.join("echo.wasm"), connectors_dir.path().join("echo.wasm")).unwrap();
+
+        // Rescan should pick up the new module
+        let newly_loaded = host.rescan_connectors().await.unwrap();
+        assert_eq!(newly_loaded.len(), 1);
+        assert_eq!(newly_loaded[0].name, "test.echo");
+
+        // Verify it's now in capabilities
+        let caps_after = host.list_capabilities();
+        assert!(
+            caps_after.iter().any(|d| d.name == "test.echo"),
+            "test.echo should be loaded after rescan"
+        );
+
+        // Rescan again should find nothing new
+        let second_rescan = host.rescan_connectors().await.unwrap();
+        assert!(second_rescan.is_empty(), "second rescan should find nothing new");
+
+        host.shutdown().await.unwrap();
+    }
+}
+
+// ══════════════════════════════════════════════════════════════════════════════
+// Sprint E5-S3: Directory Watcher Tests
+// ══════════════════════════════════════════════════════════════════════════════
+
+#[cfg(feature = "watcher")]
+mod watcher_tests {
+    use std::path::PathBuf;
+    use std::time::Duration;
+
+    // ── E5S3-T21: directory_watcher_detects_new_module ──
+    //
+    // Tests the watcher using notify directly (same approach as the production
+    // code) but with a synchronous channel to avoid spawn_blocking timing issues
+    // in CI environments.
+    //
+    // Accepts both Create and Modify events — on Linux (inotify),
+    // std::fs::write() to a new file may emit Modify rather than Create
+    // depending on filesystem and timing.
+
+    #[test]
+    fn directory_watcher_detects_new_module() {
+        use notify::{Event, EventKind, RecursiveMode, Watcher};
+
+        let watch_dir = tempfile::tempdir().unwrap();
+        let watch_path = watch_dir.path().to_path_buf();
+
+        let (tx, rx) = std::sync::mpsc::channel::<(PathBuf, PathBuf)>();
+        let dir_clone = watch_path.clone();
+
+        let (notify_tx, notify_rx) = std::sync::mpsc::channel();
+        let _watcher = {
+            let mut w = notify::recommended_watcher(move |res: Result<Event, _>| {
+                if let Ok(event) = res {
+                    let _ = notify_tx.send(event);
+                }
+            })
+            .expect("failed to create filesystem watcher");
+            w.watch(&watch_path, RecursiveMode::NonRecursive).expect("failed to watch directory");
+            w
+        };
+
+        // Spawn a thread to process notify events (mirrors production watcher logic)
+        let processor = std::thread::spawn(move || {
+            while let Ok(event) = notify_rx.recv_timeout(Duration::from_secs(10)) {
+                if matches!(event.kind, EventKind::Create(_) | EventKind::Modify(_)) {
+                    for path in &event.paths {
+                        let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+                        if name.ends_with(".connector.toml") {
+                            if let Some(stem) = name.strip_suffix(".connector.toml") {
+                                let wasm_path = dir_clone.join(format!("{stem}.wasm"));
+                                if wasm_path.exists() {
+                                    let _ = tx.send((path.clone(), wasm_path));
+                                    return; // Done — exit after first detection
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        });
+
+        // Give the watcher time to register with the OS
+        std::thread::sleep(Duration::from_millis(200));
+
+        // Write .wasm file first
+        let test_compiled = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("../worldinterface-wasm/test-modules/compiled");
+        let wasm_bytes = std::fs::read(test_compiled.join("echo.wasm")).unwrap();
+        std::fs::write(watch_dir.path().join("echo.wasm"), &wasm_bytes).unwrap();
+
+        // Small delay
+        std::thread::sleep(Duration::from_millis(100));
+
+        // Write .connector.toml — this should trigger detection
+        let manifest_bytes = std::fs::read(test_compiled.join("echo.connector.toml")).unwrap();
+        std::fs::write(watch_dir.path().join("echo.connector.toml"), &manifest_bytes).unwrap();
+
+        // Wait for the processor to detect and send
+        let result = rx.recv_timeout(Duration::from_secs(5));
+        match result {
+            Ok((manifest_path, wasm_path)) => {
+                assert!(
+                    manifest_path.to_str().unwrap().ends_with("echo.connector.toml"),
+                    "manifest path should end with echo.connector.toml, got: {manifest_path:?}"
+                );
+                assert!(
+                    wasm_path.to_str().unwrap().ends_with("echo.wasm"),
+                    "wasm path should end with echo.wasm, got: {wasm_path:?}"
+                );
+            }
+            Err(_) => panic!("timed out waiting for watcher event"),
+        }
+
+        processor.join().ok();
     }
 }

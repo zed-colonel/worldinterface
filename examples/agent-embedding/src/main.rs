@@ -23,7 +23,7 @@ use worldinterface_host::{EmbeddedHost, FlowPhase, HostConfig};
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
     // --- Step 1: Build connector registry ---
     println!("=== Step 1: Building connector registry ===");
-    let mut registry = ConnectorRegistry::new();
+    let registry = ConnectorRegistry::new();
     registry.register(Arc::new(DelayConnector));
     registry.register(Arc::new(FsReadConnector));
     registry.register(Arc::new(FsWriteConnector));

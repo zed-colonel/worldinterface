@@ -22,7 +22,7 @@ use crate::registry::ConnectorRegistry;
 
 /// Build a ConnectorRegistry pre-populated with all built-in connectors.
 pub fn default_registry() -> ConnectorRegistry {
-    let mut registry = ConnectorRegistry::new();
+    let registry = ConnectorRegistry::new();
     registry.register(Arc::new(DelayConnector));
     registry.register(Arc::new(HttpRequestConnector::new()));
     registry.register(Arc::new(FsReadConnector));

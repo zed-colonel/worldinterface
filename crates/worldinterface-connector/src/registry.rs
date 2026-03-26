@@ -1,60 +1,93 @@
 //! Central registry for connector lookup and discovery.
 
 use std::collections::HashMap;
-use std::sync::Arc;
+use std::sync::{Arc, RwLock};
 
 use worldinterface_core::descriptor::Descriptor;
 
 use crate::traits::Connector;
 
+/// Errors from the connector registry.
+#[derive(Debug, thiserror::Error)]
+pub enum RegistryError {
+    #[error("duplicate connector: {0}")]
+    DuplicateConnector(String),
+    #[error("connector not found: {0}")]
+    NotFound(String),
+}
+
 /// Central registry for connector lookup and discovery.
 ///
 /// Connectors register by name (matching the `name` field in their Descriptor).
-/// The registry is constructed at startup and is immutable during execution.
+/// The registry uses `RwLock` to allow concurrent reads and exclusive writes,
+/// supporting runtime hot-loading of connectors.
 pub struct ConnectorRegistry {
-    connectors: HashMap<String, Arc<dyn Connector>>,
+    connectors: RwLock<HashMap<String, Arc<dyn Connector>>>,
 }
 
 impl ConnectorRegistry {
     pub fn new() -> Self {
-        Self { connectors: HashMap::new() }
+        Self { connectors: RwLock::new(HashMap::new()) }
     }
 
     /// Register a connector. Panics if a connector with the same name is
     /// already registered (names must be unique).
-    pub fn register(&mut self, connector: Arc<dyn Connector>) {
+    ///
+    /// For fallible registration at runtime, use [`register_runtime`](Self::register_runtime).
+    pub fn register(&self, connector: Arc<dyn Connector>) {
+        self.register_runtime(connector).expect("duplicate connector registration");
+    }
+
+    /// Register a connector at runtime, returning an error on duplicate names.
+    pub fn register_runtime(&self, connector: Arc<dyn Connector>) -> Result<(), RegistryError> {
         let name = connector.describe().name;
-        if self.connectors.contains_key(&name) {
-            panic!("duplicate connector registration: '{name}'");
+        let mut map = self.connectors.write().unwrap();
+        if map.contains_key(&name) {
+            return Err(RegistryError::DuplicateConnector(name));
         }
-        self.connectors.insert(name, connector);
+        map.insert(name, connector);
+        Ok(())
+    }
+
+    /// Unregister a connector by name, returning an error if not found.
+    pub fn unregister(&self, name: &str) -> Result<(), RegistryError> {
+        let mut map = self.connectors.write().unwrap();
+        if map.remove(name).is_none() {
+            return Err(RegistryError::NotFound(name.to_string()));
+        }
+        Ok(())
     }
 
     /// Look up a connector by name.
     pub fn get(&self, name: &str) -> Option<Arc<dyn Connector>> {
-        self.connectors.get(name).cloned()
+        let map = self.connectors.read().unwrap();
+        map.get(name).cloned()
     }
 
     /// List all registered connector descriptors.
     pub fn list_capabilities(&self) -> Vec<Descriptor> {
-        let mut descriptors: Vec<_> = self.connectors.values().map(|c| c.describe()).collect();
+        let map = self.connectors.read().unwrap();
+        let mut descriptors: Vec<_> = map.values().map(|c| c.describe()).collect();
         descriptors.sort_by(|a, b| a.name.cmp(&b.name));
         descriptors
     }
 
     /// Describe a specific connector by name.
     pub fn describe(&self, name: &str) -> Option<Descriptor> {
-        self.connectors.get(name).map(|c| c.describe())
+        let map = self.connectors.read().unwrap();
+        map.get(name).map(|c| c.describe())
     }
 
     /// Returns the number of registered connectors.
     pub fn len(&self) -> usize {
-        self.connectors.len()
+        let map = self.connectors.read().unwrap();
+        map.len()
     }
 
     /// Returns true if no connectors are registered.
     pub fn is_empty(&self) -> bool {
-        self.connectors.is_empty()
+        let map = self.connectors.read().unwrap();
+        map.is_empty()
     }
 }
 
@@ -108,7 +141,7 @@ mod tests {
 
     #[test]
     fn register_and_lookup() {
-        let mut registry = ConnectorRegistry::new();
+        let registry = ConnectorRegistry::new();
         registry.register(Arc::new(StubConnector::new("test.one")));
         let c = registry.get("test.one");
         assert!(c.is_some());
@@ -123,7 +156,7 @@ mod tests {
 
     #[test]
     fn list_capabilities_returns_all() {
-        let mut registry = ConnectorRegistry::new();
+        let registry = ConnectorRegistry::new();
         registry.register(Arc::new(StubConnector::new("c")));
         registry.register(Arc::new(StubConnector::new("a")));
         registry.register(Arc::new(StubConnector::new("b")));
@@ -137,7 +170,7 @@ mod tests {
 
     #[test]
     fn describe_returns_descriptor() {
-        let mut registry = ConnectorRegistry::new();
+        let registry = ConnectorRegistry::new();
         registry.register(Arc::new(StubConnector::new("test.desc")));
         let desc = registry.describe("test.desc");
         assert!(desc.is_some());
@@ -151,20 +184,97 @@ mod tests {
     }
 
     #[test]
-    #[should_panic(expected = "duplicate connector registration: 'dup'")]
+    #[should_panic(expected = "duplicate connector registration")]
     fn register_duplicate_panics() {
-        let mut registry = ConnectorRegistry::new();
+        let registry = ConnectorRegistry::new();
         registry.register(Arc::new(StubConnector::new("dup")));
         registry.register(Arc::new(StubConnector::new("dup")));
     }
 
     #[test]
     fn len_and_is_empty() {
-        let mut registry = ConnectorRegistry::new();
+        let registry = ConnectorRegistry::new();
         assert!(registry.is_empty());
         assert_eq!(registry.len(), 0);
         registry.register(Arc::new(StubConnector::new("x")));
         assert!(!registry.is_empty());
         assert_eq!(registry.len(), 1);
+    }
+
+    // ── E5S3-T1: concurrent reads don't block ──
+
+    #[test]
+    fn registry_rwlock_concurrent_reads() {
+        let registry = Arc::new(ConnectorRegistry::new());
+        registry.register(Arc::new(StubConnector::new("alpha")));
+        registry.register(Arc::new(StubConnector::new("beta")));
+
+        let handles: Vec<_> = (0..4)
+            .map(|_| {
+                let reg = Arc::clone(&registry);
+                std::thread::spawn(move || {
+                    for _ in 0..100 {
+                        assert!(reg.get("alpha").is_some());
+                        assert_eq!(reg.len(), 2);
+                        let caps = reg.list_capabilities();
+                        assert_eq!(caps.len(), 2);
+                    }
+                })
+            })
+            .collect();
+
+        for h in handles {
+            h.join().expect("reader thread panicked");
+        }
+    }
+
+    // ── E5S3-T2: register_runtime success ──
+
+    #[test]
+    fn registry_register_runtime_success() {
+        let registry = ConnectorRegistry::new();
+        let result = registry.register_runtime(Arc::new(StubConnector::new("rt.new")));
+        assert!(result.is_ok());
+        assert!(registry.get("rt.new").is_some());
+        assert_eq!(registry.len(), 1);
+    }
+
+    // ── E5S3-T3: register_runtime duplicate returns Err ──
+
+    #[test]
+    fn registry_register_runtime_duplicate() {
+        let registry = ConnectorRegistry::new();
+        registry.register(Arc::new(StubConnector::new("rt.dup")));
+        let result = registry.register_runtime(Arc::new(StubConnector::new("rt.dup")));
+        assert!(result.is_err());
+        assert!(
+            matches!(result, Err(RegistryError::DuplicateConnector(ref name)) if name == "rt.dup")
+        );
+    }
+
+    // ── E5S3-T4: unregister success ──
+
+    #[test]
+    fn registry_unregister_success() {
+        let registry = ConnectorRegistry::new();
+        registry.register(Arc::new(StubConnector::new("rm.me")));
+        assert!(registry.get("rm.me").is_some());
+
+        let result = registry.unregister("rm.me");
+        assert!(result.is_ok());
+        assert!(registry.get("rm.me").is_none());
+        assert_eq!(registry.len(), 0);
+        // Not in list_capabilities either
+        assert!(registry.list_capabilities().is_empty());
+    }
+
+    // ── E5S3-T5: unregister not found ──
+
+    #[test]
+    fn registry_unregister_not_found() {
+        let registry = ConnectorRegistry::new();
+        let result = registry.unregister("ghost");
+        assert!(result.is_err());
+        assert!(matches!(result, Err(RegistryError::NotFound(ref name)) if name == "ghost"));
     }
 }

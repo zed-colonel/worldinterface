@@ -32,7 +32,7 @@ fn noop_metrics() -> Arc<dyn MetricsRecorder> {
 
 /// Build a registry with all built-in connectors including HTTP.
 fn test_registry() -> ConnectorRegistry {
-    let mut registry = ConnectorRegistry::new();
+    let registry = ConnectorRegistry::new();
     registry.register(Arc::new(DelayConnector));
     registry.register(Arc::new(FsReadConnector));
     registry.register(Arc::new(FsWriteConnector));

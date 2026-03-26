@@ -12,6 +12,8 @@ mod helpers;
 pub mod host;
 pub mod status;
 mod tick;
+#[cfg(feature = "watcher")]
+pub mod watcher;
 
 pub use config::HostConfig;
 pub use error::HostError;

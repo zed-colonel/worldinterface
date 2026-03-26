@@ -19,6 +19,6 @@ pub use connectors::{
 pub use context::{CancellationToken, InvocationContext};
 pub use error::{ConnectorError, TransformError};
 pub use receipt_gen::invoke_with_receipt;
-pub use registry::ConnectorRegistry;
+pub use registry::{ConnectorRegistry, RegistryError};
 pub use traits::Connector;
 pub use transform::execute_transform;

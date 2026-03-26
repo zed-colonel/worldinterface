@@ -1,6 +1,7 @@
 //! EmbeddedHost — the primary programmatic API surface for WorldInterface.
 
 use std::collections::HashMap;
+use std::path::PathBuf;
 use std::sync::Arc;
 
 use actionqueue_core::ids::TaskId;
@@ -38,6 +39,8 @@ pub(crate) struct HostInner {
     pub coordinator_map: Arc<std::sync::Mutex<HashMap<FlowRunId, TaskId>>>,
     pub compiler_config: worldinterface_flowspec::CompilerConfig,
     pub shutdown_tx: watch::Sender<bool>,
+    /// Optional directory to scan for WASM connector modules (hot-load / rescan).
+    pub connectors_dir: Option<PathBuf>,
     /// Keeps the WASM runtime alive (epoch ticker, resource pool).
     /// Wrapped in Mutex<Option> so it can be taken out and dropped on a blocking
     /// thread during shutdown (reqwest::blocking::Client panics if dropped in async context).
@@ -67,7 +70,7 @@ impl EmbeddedHost {
     #[allow(unused_mut)]
     pub async fn start(
         config: HostConfig,
-        mut registry: ConnectorRegistry,
+        registry: ConnectorRegistry,
         stream_handler: Option<Arc<dyn worldinterface_core::streaming::StreamMessageHandler>>,
     ) -> Result<Self, HostError> {
         config.validate()?;
@@ -196,6 +199,7 @@ impl EmbeddedHost {
             coordinator_map,
             compiler_config: config.compiler_config,
             shutdown_tx,
+            connectors_dir: config.connectors_dir.clone(),
             #[cfg(feature = "wasm")]
             wasm_runtime: std::sync::Mutex::new(wasm_runtime),
             #[cfg(feature = "wasm")]
@@ -406,6 +410,123 @@ impl EmbeddedHost {
                 status.phase
             ))),
         }
+    }
+
+    /// Hot-load a single WASM connector from explicit manifest + WASM paths.
+    ///
+    /// Compiles the WASM component on a blocking thread, then registers it
+    /// in the ConnectorRegistry. Returns the descriptor of the loaded connector.
+    #[cfg(feature = "wasm")]
+    pub async fn load_connector(
+        &self,
+        manifest_path: &std::path::Path,
+        wasm_path: &std::path::Path,
+    ) -> Result<Descriptor, HostError> {
+        // Preview the name from the manifest to check for duplicates before
+        // expensive compilation.
+        let manifest_path = manifest_path.to_path_buf();
+        let wasm_path = wasm_path.to_path_buf();
+        let registry = Arc::clone(&self.inner.registry);
+
+        let name_preview = {
+            let content = std::fs::read_to_string(&manifest_path)
+                .map_err(|e| HostError::InternalError(format!("read manifest: {e}")))?;
+            let manifest = worldinterface_wasm::ConnectorManifest::from_toml(&content)
+                .map_err(|e| HostError::WasmInit(e.to_string()))?;
+            manifest.connector.name.clone()
+        };
+        if registry.get(&name_preview).is_some() {
+            return Err(HostError::DuplicateConnector(name_preview));
+        }
+
+        let wasm_runtime = {
+            let guard = self.inner.wasm_runtime.lock().unwrap();
+            guard
+                .as_ref()
+                .ok_or_else(|| HostError::WasmInit("WASM runtime not initialized".into()))?
+                .clone()
+        };
+
+        let connector = tokio::task::spawn_blocking(move || {
+            worldinterface_wasm::load_module(&wasm_runtime, &wasm_path, &manifest_path)
+        })
+        .await
+        .map_err(|e| HostError::InternalError(format!("spawn_blocking join: {e}")))?
+        .map_err(|e| HostError::WasmInit(e.to_string()))?;
+
+        let descriptor = {
+            use worldinterface_connector::traits::Connector as _;
+            connector.describe()
+        };
+        registry
+            .register_runtime(Arc::new(connector))
+            .map_err(|e| HostError::DuplicateConnector(e.to_string()))?;
+
+        tracing::info!(name = %descriptor.name, "hot-loaded WASM connector");
+        Ok(descriptor)
+    }
+
+    /// Unload a connector by name, removing it from the registry.
+    pub fn unload_connector(&self, name: &str) -> Result<(), HostError> {
+        use worldinterface_connector::registry::RegistryError;
+        self.inner.registry.unregister(name).map_err(|e| match e {
+            RegistryError::NotFound(n) => HostError::ConnectorNotFound(n),
+            RegistryError::DuplicateConnector(n) => HostError::DuplicateConnector(n),
+        })?;
+        tracing::info!(name, "unloaded connector");
+        Ok(())
+    }
+
+    /// Rescan the connectors directory and hot-load any new modules.
+    ///
+    /// Iterates `{name}.connector.toml` files in the configured connectors directory.
+    /// For each one where a matching `{name}.wasm` exists and the connector is not
+    /// already registered, calls [`load_connector`](Self::load_connector).
+    #[cfg(feature = "wasm")]
+    pub async fn rescan_connectors(&self) -> Result<Vec<Descriptor>, HostError> {
+        let connectors_dir = self
+            .inner
+            .connectors_dir
+            .as_ref()
+            .ok_or_else(|| HostError::InternalError("no connectors_dir configured".into()))?;
+
+        let mut newly_loaded = Vec::new();
+        let entries = std::fs::read_dir(connectors_dir)
+            .map_err(|e| HostError::InternalError(format!("read connectors dir: {e}")))?;
+
+        for entry in entries {
+            let entry = match entry {
+                Ok(e) => e,
+                Err(_) => continue,
+            };
+            let path = entry.path();
+            let name = path.file_name().and_then(|n| n.to_str()).unwrap_or("");
+            if !name.ends_with(".connector.toml") {
+                continue;
+            }
+            let stem = match name.strip_suffix(".connector.toml") {
+                Some(s) => s,
+                None => continue,
+            };
+
+            if self.inner.registry.get(stem).is_some() {
+                continue;
+            }
+
+            let wasm_path = connectors_dir.join(format!("{stem}.wasm"));
+            if !wasm_path.exists() {
+                continue;
+            }
+
+            match self.load_connector(&path, &wasm_path).await {
+                Ok(desc) => newly_loaded.push(desc),
+                Err(e) => {
+                    tracing::warn!(module = stem, error = %e, "failed to hot-load during rescan");
+                }
+            }
+        }
+
+        Ok(newly_loaded)
     }
 
     /// Poll a flow run until it reaches a terminal state.
