@@ -38,10 +38,19 @@ FlowSpec (YAML/JSON)
 └─────┬───────────┘
       │
       ▼
-┌─────────────────┐     ┌──────────────────┐
-│  worldinterface-coordinator  │────▶│  worldinterface-connector     │  Boundary crossings
-│  (AQ handler)    │     │  (delay, fs, http)│
-└─────┬───────────┘     └──────────────────┘
+┌─────────────────┐     ┌──────────────────────────────────────┐
+│  worldinterface-coordinator  │────▶│  worldinterface-connector              │
+│  (AQ handler)    │     │  Native: delay, http.request, fs.read,│
+└─────┬───────────┘     │  fs.write, shell.exec, sandbox.exec,  │
+      │                 │  peer.resolve                          │
+      │                 └──────────────────────────────────────┘
+      │                        │
+      │                        ▼
+      │                 ┌──────────────────────────────────────┐
+      │                 │  worldinterface-wasm                   │
+      │                 │  WASM: json-validate, streaming-echo,  │
+      │                 │  webhook.send, web.search, discord     │
+      │                 └──────────────────────────────────────┘
       │
       ▼
 ┌─────────────────┐
@@ -62,6 +71,7 @@ FlowSpec (YAML/JSON)
 | `worldinterface-host` | Embedded host API (for programmatic use) |
 | `worldinterface-http-trigger` | Dynamic webhook ingress |
 | `worldinterface-daemon` | HTTP API daemon |
+| `worldinterface-wasm` | WASM connector runtime (wasmtime, WIT, capability model) |
 | `worldinterface-cli` | CLI binary (`wi`) |
 
 ## HTTP API

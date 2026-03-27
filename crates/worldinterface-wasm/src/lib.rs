@@ -1,3 +1,4 @@
+#![forbid(unsafe_code)]
 //! WASM runtime for WorldInterface connector modules.
 //!
 //! Provides a wasmtime-based runtime that loads, sandboxes, and executes

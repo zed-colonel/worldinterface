@@ -1,3 +1,4 @@
+#![forbid(unsafe_code)]
 //! HTTP API daemon for WorldInterface.
 //!
 //! Wraps `worldinterface-host` in an axum HTTP server with endpoints for flow submission,

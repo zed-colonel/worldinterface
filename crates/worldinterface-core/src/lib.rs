@@ -1,3 +1,4 @@
+#![forbid(unsafe_code)]
 //! Core domain types for WorldInterface.
 //!
 //! This crate defines the foundational types shared across all WI crates:

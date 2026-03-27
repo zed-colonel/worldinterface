@@ -1,3 +1,4 @@
+#![forbid(unsafe_code)]
 //! ActionQueue handler for WorldInterface FlowRun orchestration.
 //!
 //! The Coordinator is an ActionQueue `ExecutorHandler` that manages a FlowRun's

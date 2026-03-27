@@ -1,3 +1,4 @@
+#![forbid(unsafe_code)]
 //! Atomic durable store for WorldInterface node outputs.
 //!
 //! ContextStore provides write-once, read-many storage for flow node outputs,

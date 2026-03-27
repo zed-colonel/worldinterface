@@ -1,3 +1,4 @@
+#![forbid(unsafe_code)]
 //! Embedded Host for WorldInterface.
 //!
 //! The Host is the primary programmatic API surface. It owns the ActionQueue

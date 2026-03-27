@@ -1,3 +1,4 @@
+#![forbid(unsafe_code)]
 //! Dynamic webhook ingress for WorldInterface.
 //!
 //! Provides HTTPS endpoints that trigger FlowRuns when called. Webhook

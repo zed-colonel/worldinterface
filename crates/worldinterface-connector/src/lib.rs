@@ -1,3 +1,4 @@
+#![forbid(unsafe_code)]
 //! Connector trait, registry, and built-in connectors for WorldInterface.
 //!
 //! Connectors are the boundary crossing units. Each connector implements

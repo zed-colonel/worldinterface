@@ -1,3 +1,4 @@
+#![forbid(unsafe_code)]
 //! FlowSpec parser, validator, and compiler to ActionQueue DAG.
 //!
 //! This crate takes a declarative `FlowSpec` (from `worldinterface-core`) and compiles it
