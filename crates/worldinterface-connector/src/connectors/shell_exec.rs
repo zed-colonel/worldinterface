@@ -333,18 +333,31 @@ impl Connector for ShellExecConnector {
         Descriptor {
             name: "shell.exec".into(),
             display_name: "Shell Execute".into(),
-            description: "Executes a command in the host container environment.".into(),
+            description: "Executes a command in the host container environment. By default, \
+                'command' is a binary path (e.g. \"echo\") with separate 'args'. \
+                Set shell:true to pass a full shell string to /bin/sh -c."
+                .into(),
             category: ConnectorCategory::Shell,
             input_schema: Some(json!({
                 "type": "object",
                 "required": ["command"],
                 "properties": {
-                    "command": { "type": "string" },
-                    "args": { "type": "array", "items": { "type": "string" } },
+                    "command": {
+                        "type": "string",
+                        "description": "Binary path (default) or shell string (if shell:true). Example: \"ls\" or \"echo hello && date\""
+                    },
+                    "args": {
+                        "type": "array",
+                        "items": { "type": "string" },
+                        "description": "Arguments passed to the binary (ignored when shell:true)"
+                    },
                     "working_dir": { "type": "string" },
                     "env": { "type": "object" },
                     "timeout_ms": { "type": "integer", "minimum": 0 },
-                    "shell": { "type": "boolean" }
+                    "shell": {
+                        "type": "boolean",
+                        "description": "If true, command is passed to /bin/sh -c (enables pipes, expansion). Default: false"
+                    }
                 }
             })),
             output_schema: Some(json!({
