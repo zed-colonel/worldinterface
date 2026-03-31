@@ -81,17 +81,26 @@ impl Connector for SandboxExecConnector {
         Descriptor {
             name: "sandbox.exec".into(),
             display_name: "Sandbox Execute".into(),
-            description: "Executes a command in the sandbox environment (/sandbox). Restricted: \
-                          reduced timeout (60s max), reduced output (256KB), no shell mode, no \
-                          access to /data."
+            description: "Executes a command in the isolated sandbox at /sandbox. Use for code \
+                          experimentation, data processing, and safe testing. Available runtimes: \
+                          python3 (with venv support), shell utilities (curl, jq, git). \
+                          Constraints: 60s max timeout, 256KB output limit, no /data access. \
+                          The command is a binary path (e.g. \"python3\") with separate args."
                 .into(),
             category: ConnectorCategory::Sandbox,
             input_schema: Some(json!({
                 "type": "object",
                 "required": ["command"],
                 "properties": {
-                    "command": { "type": "string" },
-                    "args": { "type": "array", "items": { "type": "string" } },
+                    "command": {
+                        "type": "string",
+                        "description": "Binary path to execute (e.g. \"python3\", \"curl\"). No shell expansion."
+                    },
+                    "args": {
+                        "type": "array",
+                        "items": { "type": "string" },
+                        "description": "Arguments to the command. For python: [\"-c\", \"print('hello')\"]"
+                    },
                     "env": { "type": "object" },
                     "timeout_ms": { "type": "integer", "minimum": 0, "maximum": 60000 }
                 }
