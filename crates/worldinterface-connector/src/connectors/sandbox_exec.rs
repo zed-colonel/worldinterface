@@ -84,8 +84,8 @@ impl Connector for SandboxExecConnector {
             description: "Executes a command in the isolated sandbox at /sandbox. Use for code \
                           experimentation, data processing, and safe testing. Available runtimes: \
                           python3 (with venv support), shell utilities (curl, jq, git). \
-                          Constraints: 60s max timeout, 256KB output limit, no /data access. \
-                          The command is a binary path (e.g. \"python3\") with separate args."
+                          Constraints: 60s max timeout, 256KB output limit, no /data access. The \
+                          command is a binary path (e.g. \"python3\") with separate args."
                 .into(),
             category: ConnectorCategory::Sandbox,
             input_schema: Some(json!({

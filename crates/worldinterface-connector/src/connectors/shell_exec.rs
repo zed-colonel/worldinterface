@@ -334,8 +334,8 @@ impl Connector for ShellExecConnector {
             name: "shell.exec".into(),
             display_name: "Shell Execute".into(),
             description: "Executes a command in the host container environment. By default, \
-                'command' is a binary path (e.g. \"echo\") with separate 'args'. \
-                Set shell:true to pass a full shell string to /bin/sh -c."
+                          'command' is a binary path (e.g. \"echo\") with separate 'args'. Set \
+                          shell:true to pass a full shell string to /bin/sh -c."
                 .into(),
             category: ConnectorCategory::Shell,
             input_schema: Some(json!({
