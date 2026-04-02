@@ -158,6 +158,10 @@ impl Connector for WasmConnector {
             output_schema: None,
             idempotent: false,
             side_effects: true,
+            is_read_only: false,
+            is_mutating: true,
+            is_concurrency_safe: false,
+            requires_read_before_write: false,
         }
     }
 

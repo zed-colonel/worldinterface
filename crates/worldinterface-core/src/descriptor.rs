@@ -28,6 +28,20 @@ pub struct Descriptor {
     pub idempotent: bool,
     /// Whether the connector has external side effects.
     pub side_effects: bool,
+    /// Whether this connector only reads external state and has no side effects
+    /// that modify the environment.
+    #[serde(default)]
+    pub is_read_only: bool,
+    /// Whether this connector mutates external state.
+    #[serde(default)]
+    pub is_mutating: bool,
+    /// Whether concurrent invocations are safe.
+    #[serde(default)]
+    pub is_concurrency_safe: bool,
+    /// Whether the caller should verify a prior read of the target resource
+    /// before allowing a write-like invocation.
+    #[serde(default)]
+    pub requires_read_before_write: bool,
 }
 
 /// Category of a connector, used for grouping and filtering in discovery.
@@ -40,6 +54,7 @@ pub enum ConnectorCategory {
     Transform,
     Shell,
     Sandbox,
+    Code,
     Wasm(String),
     Custom(String),
 }
@@ -72,6 +87,10 @@ mod tests {
             })),
             idempotent: false,
             side_effects: true,
+            is_read_only: false,
+            is_mutating: true,
+            is_concurrency_safe: false,
+            requires_read_before_write: false,
         }
     }
 
@@ -92,6 +111,7 @@ mod tests {
             ConnectorCategory::Transform,
             ConnectorCategory::Shell,
             ConnectorCategory::Sandbox,
+            ConnectorCategory::Code,
             ConnectorCategory::Wasm("test.echo".into()),
             ConnectorCategory::Custom("my_plugin".into()),
         ];
@@ -113,6 +133,10 @@ mod tests {
             output_schema: None,
             idempotent: true,
             side_effects: false,
+            is_read_only: true,
+            is_mutating: false,
+            is_concurrency_safe: true,
+            requires_read_before_write: false,
         };
         let json = serde_json::to_string(&desc).unwrap();
         let back: Descriptor = serde_json::from_str(&json).unwrap();
@@ -141,6 +165,51 @@ mod tests {
         let cat = ConnectorCategory::Sandbox;
         let json = serde_json::to_string(&cat).unwrap();
         assert_eq!(json, "\"sandbox\"");
+        let back: ConnectorCategory = serde_json::from_str(&json).unwrap();
+        assert_eq!(cat, back);
+    }
+
+    #[test]
+    fn descriptor_safety_fields_default() {
+        let json = json!({
+            "name": "legacy.connector",
+            "display_name": "Legacy Connector",
+            "description": "legacy",
+            "category": "delay",
+            "idempotent": true,
+            "side_effects": false
+        });
+
+        let desc: Descriptor = serde_json::from_value(json).unwrap();
+        assert!(!desc.is_read_only);
+        assert!(!desc.is_mutating);
+        assert!(!desc.is_concurrency_safe);
+        assert!(!desc.requires_read_before_write);
+    }
+
+    #[test]
+    fn descriptor_safety_fields_roundtrip() {
+        let desc = Descriptor {
+            is_read_only: true,
+            is_mutating: false,
+            is_concurrency_safe: true,
+            requires_read_before_write: false,
+            ..sample_descriptor()
+        };
+
+        let json = serde_json::to_string(&desc).unwrap();
+        let back: Descriptor = serde_json::from_str(&json).unwrap();
+        assert_eq!(back.is_read_only, desc.is_read_only);
+        assert_eq!(back.is_mutating, desc.is_mutating);
+        assert_eq!(back.is_concurrency_safe, desc.is_concurrency_safe);
+        assert_eq!(back.requires_read_before_write, desc.requires_read_before_write);
+    }
+
+    #[test]
+    fn connector_category_code_roundtrip() {
+        let cat = ConnectorCategory::Code;
+        let json = serde_json::to_string(&cat).unwrap();
+        assert_eq!(json, "\"code\"");
         let back: ConnectorCategory = serde_json::from_str(&json).unwrap();
         assert_eq!(cat, back);
     }

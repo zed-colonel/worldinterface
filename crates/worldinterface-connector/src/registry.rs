@@ -127,6 +127,10 @@ mod tests {
                 output_schema: None,
                 idempotent: true,
                 side_effects: false,
+                is_read_only: true,
+                is_mutating: false,
+                is_concurrency_safe: true,
+                requires_read_before_write: false,
             }
         }
 

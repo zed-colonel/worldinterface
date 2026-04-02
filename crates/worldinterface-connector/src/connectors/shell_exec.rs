@@ -372,6 +372,10 @@ impl Connector for ShellExecConnector {
             })),
             idempotent: false,
             side_effects: true,
+            is_read_only: false,
+            is_mutating: true,
+            is_concurrency_safe: false,
+            requires_read_before_write: false,
         }
     }
 
@@ -689,6 +693,10 @@ mod tests {
         assert_eq!(desc.category, ConnectorCategory::Shell);
         assert!(!desc.idempotent);
         assert!(desc.side_effects);
+        assert!(!desc.is_read_only);
+        assert!(desc.is_mutating);
+        assert!(!desc.is_concurrency_safe);
+        assert!(!desc.requires_read_before_write);
         assert!(desc.input_schema.is_some());
         assert!(desc.output_schema.is_some());
     }

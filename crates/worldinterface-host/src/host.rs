@@ -338,7 +338,12 @@ impl EmbeddedHost {
 
     /// Describe a specific connector by name.
     pub fn describe(&self, connector_name: &str) -> Option<Descriptor> {
-        self.inner.registry.describe(connector_name)
+        self.describe_connector(connector_name)
+    }
+
+    /// Look up a connector descriptor by name.
+    pub fn describe_connector(&self, name: &str) -> Option<Descriptor> {
+        self.inner.registry.describe(name)
     }
 
     /// List all known flow runs with summary status.

@@ -161,6 +161,30 @@ async fn submit_valid_flow_returns_flow_run_id() {
 }
 
 #[tokio::test]
+async fn describe_connector_returns_descriptor() {
+    let dir = tempfile::tempdir().unwrap();
+    let config = test_config(dir.path());
+    let host = EmbeddedHost::start(config, test_registry(), None).await.unwrap();
+
+    let desc = host.describe_connector("delay").unwrap();
+    assert_eq!(desc.name, "delay");
+    assert!(desc.is_read_only);
+
+    host.shutdown().await.unwrap();
+}
+
+#[tokio::test]
+async fn describe_connector_unknown_returns_none() {
+    let dir = tempfile::tempdir().unwrap();
+    let config = test_config(dir.path());
+    let host = EmbeddedHost::start(config, test_registry(), None).await.unwrap();
+
+    assert!(host.describe_connector("unknown.connector").is_none());
+
+    host.shutdown().await.unwrap();
+}
+
+#[tokio::test]
 async fn submit_invalid_flow_returns_error() {
     let dir = tempfile::tempdir().unwrap();
     let config = test_config(dir.path());

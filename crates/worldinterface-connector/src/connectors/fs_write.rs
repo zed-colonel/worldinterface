@@ -47,6 +47,10 @@ impl Connector for FsWriteConnector {
             })),
             idempotent: true,
             side_effects: true,
+            is_read_only: false,
+            is_mutating: true,
+            is_concurrency_safe: false,
+            requires_read_before_write: false,
         }
     }
 
@@ -363,5 +367,9 @@ mod tests {
         assert_eq!(desc.category, ConnectorCategory::FileSystem);
         assert!(desc.idempotent);
         assert!(desc.side_effects);
+        assert!(!desc.is_read_only);
+        assert!(desc.is_mutating);
+        assert!(!desc.is_concurrency_safe);
+        assert!(!desc.requires_read_before_write);
     }
 }

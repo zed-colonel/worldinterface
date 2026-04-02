@@ -14,8 +14,9 @@ pub mod traits;
 pub mod transform;
 
 pub use connectors::{
-    default_registry, DelayConnector, FsReadConnector, FsWriteConnector, HttpRequestConnector,
-    SandboxExecConnector, ShellExecConnector,
+    default_registry, CodeEditConnector, CodeReadConnector, CodeWriteConnector, DelayConnector,
+    FsReadConnector, FsWriteConnector, HttpRequestConnector, SandboxExecConnector,
+    ShellExecConnector,
 };
 pub use context::{CancellationToken, InvocationContext};
 pub use error::{ConnectorError, TransformError};

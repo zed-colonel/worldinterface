@@ -126,6 +126,10 @@ impl Connector for PeerResolveConnector {
             })),
             idempotent: true,
             side_effects: false,
+            is_read_only: true,
+            is_mutating: false,
+            is_concurrency_safe: true,
+            requires_read_before_write: false,
         }
     }
 
@@ -178,6 +182,10 @@ mod tests {
         assert_eq!(desc.category, ConnectorCategory::Http);
         assert!(desc.idempotent);
         assert!(!desc.side_effects);
+        assert!(desc.is_read_only);
+        assert!(!desc.is_mutating);
+        assert!(desc.is_concurrency_safe);
+        assert!(!desc.requires_read_before_write);
         assert!(desc.input_schema.is_some());
         assert!(desc.output_schema.is_some());
     }
