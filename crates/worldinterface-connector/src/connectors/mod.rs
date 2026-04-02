@@ -1,7 +1,11 @@
 //! Built-in connectors and default registry builder.
 
+pub mod code_apply_patch;
 pub mod code_common;
 pub mod code_edit;
+pub mod code_glob;
+pub mod code_grep;
+pub mod code_ls;
 pub mod code_read;
 pub mod code_write;
 pub mod delay;
@@ -15,7 +19,11 @@ pub mod shell_exec;
 
 use std::sync::Arc;
 
+pub use code_apply_patch::CodeApplyPatchConnector;
 pub use code_edit::CodeEditConnector;
+pub use code_glob::CodeGlobConnector;
+pub use code_grep::CodeGrepConnector;
+pub use code_ls::CodeLsConnector;
 pub use code_read::CodeReadConnector;
 pub use code_write::CodeWriteConnector;
 pub use delay::DelayConnector;
@@ -40,6 +48,10 @@ pub fn default_registry() -> ConnectorRegistry {
     registry.register(Arc::new(CodeReadConnector));
     registry.register(Arc::new(CodeEditConnector));
     registry.register(Arc::new(CodeWriteConnector));
+    registry.register(Arc::new(CodeGrepConnector));
+    registry.register(Arc::new(CodeGlobConnector));
+    registry.register(Arc::new(CodeLsConnector));
+    registry.register(Arc::new(CodeApplyPatchConnector));
     registry
 }
 
@@ -50,9 +62,9 @@ mod tests {
     use worldinterface_core::descriptor::ConnectorCategory;
 
     #[test]
-    fn default_registry_has_code_connectors() {
+    fn default_registry_has_13_connectors() {
         let registry = default_registry();
-        assert_eq!(registry.len(), 9);
+        assert_eq!(registry.len(), 13);
         assert!(registry.get("delay").is_some());
         assert!(registry.get("http.request").is_some());
         assert!(registry.get("fs.read").is_some());
@@ -62,12 +74,24 @@ mod tests {
         assert!(registry.get("code.read").is_some());
         assert!(registry.get("code.edit").is_some());
         assert!(registry.get("code.write").is_some());
+        assert!(registry.get("code.grep").is_some());
+        assert!(registry.get("code.glob").is_some());
+        assert!(registry.get("code.ls").is_some());
+        assert!(registry.get("code.apply_patch").is_some());
     }
 
     #[test]
-    fn code_connectors_all_code_category() {
+    fn new_code_connectors_all_code_category() {
         let registry = default_registry();
-        for name in ["code.read", "code.edit", "code.write"] {
+        for name in [
+            "code.read",
+            "code.edit",
+            "code.write",
+            "code.grep",
+            "code.glob",
+            "code.ls",
+            "code.apply_patch",
+        ] {
             let desc = registry.describe(name).unwrap();
             assert_eq!(desc.category, ConnectorCategory::Code);
         }
