@@ -17,7 +17,10 @@ impl Connector for CodeEditConnector {
         Descriptor {
             name: "code.edit".into(),
             display_name: "Code Edit".into(),
-            description: "Performs targeted string replacement in a file. The old_string must match exactly once (unless replace_all is true). Returns a unified diff of the change. Respects .gitignore.".into(),
+            description: "Performs targeted string replacement in a file. The old_string must \
+                          match exactly once (unless replace_all is true). Returns a unified diff \
+                          of the change. Respects .gitignore."
+                .into(),
             category: ConnectorCategory::Code,
             input_schema: Some(json!({
                 "type": "object",
@@ -107,7 +110,8 @@ impl Connector for CodeEditConnector {
         }
         if count > 1 && !replace_all {
             return Err(ConnectorError::Terminal(format!(
-                "old_string found {count} times in {path_str} — use replace_all: true to replace all, or provide a larger context string to match uniquely"
+                "old_string found {count} times in {path_str} — use replace_all: true to replace \
+                 all, or provide a larger context string to match uniquely"
             )));
         }
 

@@ -10,6 +10,7 @@ pub mod context;
 pub mod error;
 pub mod receipt_gen;
 pub mod registry;
+pub mod signal_registry;
 pub mod traits;
 pub mod transform;
 
@@ -22,5 +23,6 @@ pub use context::{CancellationToken, InvocationContext};
 pub use error::{ConnectorError, TransformError};
 pub use receipt_gen::invoke_with_receipt;
 pub use registry::{ConnectorRegistry, RegistryError};
+pub use signal_registry::SignalRegistry;
 pub use traits::Connector;
 pub use transform::execute_transform;

@@ -16,7 +16,9 @@ impl Connector for CodeReadConnector {
         Descriptor {
             name: "code.read".into(),
             display_name: "Code Read".into(),
-            description: "Reads file contents with line numbers, supporting windowed reads for navigating large files. Respects .gitignore.".into(),
+            description: "Reads file contents with line numbers, supporting windowed reads for \
+                          navigating large files. Respects .gitignore."
+                .into(),
             category: ConnectorCategory::Code,
             input_schema: Some(json!({
                 "type": "object",

@@ -17,7 +17,10 @@ impl Connector for CodeWriteConnector {
         Descriptor {
             name: "code.write".into(),
             display_name: "Code Write".into(),
-            description: "Writes content to a file, creating it if it doesn't exist or overwriting if it does. Returns a unified diff for overwrites. Respects .gitignore.".into(),
+            description: "Writes content to a file, creating it if it doesn't exist or \
+                          overwriting if it does. Returns a unified diff for overwrites. Respects \
+                          .gitignore."
+                .into(),
             category: ConnectorCategory::Code,
             input_schema: Some(json!({
                 "type": "object",

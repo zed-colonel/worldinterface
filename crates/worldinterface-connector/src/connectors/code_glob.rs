@@ -17,7 +17,10 @@ impl Connector for CodeGlobConnector {
         Descriptor {
             name: "code.glob".into(),
             display_name: "Code Glob".into(),
-            description: "Finds files matching a glob pattern, sorted by modification time (most recent first). Respects .gitignore. Supports standard glob syntax: *, **, ?, {a,b}, [abc].".into(),
+            description: "Finds files matching a glob pattern, sorted by modification time (most \
+                          recent first). Respects .gitignore. Supports standard glob syntax: *, \
+                          **, ?, {a,b}, [abc]."
+                .into(),
             category: ConnectorCategory::Code,
             input_schema: Some(json!({
                 "type": "object",

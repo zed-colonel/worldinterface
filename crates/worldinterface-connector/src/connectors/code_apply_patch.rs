@@ -18,7 +18,10 @@ impl Connector for CodeApplyPatchConnector {
         Descriptor {
             name: "code.apply_patch".into(),
             display_name: "Code Apply Patch".into(),
-            description: "Applies a unified diff patch to a file. Supports multi-hunk patches with context validation. Can create new files. Returns a summary of changes applied. Respects .gitignore.".into(),
+            description: "Applies a unified diff patch to a file. Supports multi-hunk patches \
+                          with context validation. Can create new files. Returns a summary of \
+                          changes applied. Respects .gitignore."
+                .into(),
             category: ConnectorCategory::Code,
             input_schema: Some(json!({
                 "type": "object",

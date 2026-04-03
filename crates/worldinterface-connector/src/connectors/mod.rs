@@ -13,9 +13,10 @@ pub mod fs_read;
 pub mod fs_write;
 pub mod gitignore_check;
 pub mod http_request;
-pub mod peer_resolve;
 pub mod sandbox_exec;
 pub mod shell_exec;
+pub mod signal_await;
+pub mod signal_emit;
 
 use std::sync::Arc;
 
@@ -30,9 +31,10 @@ pub use delay::DelayConnector;
 pub use fs_read::FsReadConnector;
 pub use fs_write::FsWriteConnector;
 pub use http_request::HttpRequestConnector;
-pub use peer_resolve::PeerResolveConnector;
 pub use sandbox_exec::SandboxExecConnector;
 pub use shell_exec::ShellExecConnector;
+pub use signal_await::SignalAwaitConnector;
+pub use signal_emit::SignalEmitConnector;
 
 use crate::registry::ConnectorRegistry;
 
@@ -57,9 +59,9 @@ pub fn default_registry() -> ConnectorRegistry {
 
 #[cfg(test)]
 mod tests {
-    use super::*;
-
     use worldinterface_core::descriptor::ConnectorCategory;
+
+    use super::*;
 
     #[test]
     fn default_registry_has_13_connectors() {
@@ -95,5 +97,22 @@ mod tests {
             let desc = registry.describe(name).unwrap();
             assert_eq!(desc.category, ConnectorCategory::Code);
         }
+    }
+
+    // ── T16: signal_connectors_have_signal_category ──
+    #[test]
+    fn signal_connectors_have_signal_category() {
+        use crate::signal_registry::SignalRegistry;
+        use crate::traits::Connector;
+
+        let registry = Arc::new(SignalRegistry::new());
+        let await_conn = SignalAwaitConnector::new(Arc::clone(&registry));
+        let emit_conn = SignalEmitConnector::new(registry);
+
+        let await_desc = await_conn.describe();
+        assert_eq!(await_desc.category, ConnectorCategory::Custom("signal".into()));
+
+        let emit_desc = emit_conn.describe();
+        assert_eq!(emit_desc.category, ConnectorCategory::Custom("signal".into()));
     }
 }

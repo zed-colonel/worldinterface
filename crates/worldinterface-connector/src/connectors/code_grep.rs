@@ -18,7 +18,10 @@ impl Connector for CodeGrepConnector {
         Descriptor {
             name: "code.grep".into(),
             display_name: "Code Grep".into(),
-            description: "Searches file contents using regex patterns. Supports multiple output modes (matching lines, file paths, counts), glob-based file filtering, context lines, and case-insensitive matching. Respects .gitignore.".into(),
+            description: "Searches file contents using regex patterns. Supports multiple output \
+                          modes (matching lines, file paths, counts), glob-based file filtering, \
+                          context lines, and case-insensitive matching. Respects .gitignore."
+                .into(),
             category: ConnectorCategory::Code,
             input_schema: Some(json!({
                 "type": "object",

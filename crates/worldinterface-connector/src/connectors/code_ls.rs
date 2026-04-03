@@ -15,7 +15,10 @@ impl Connector for CodeLsConnector {
         Descriptor {
             name: "code.ls".into(),
             display_name: "Code List Directory".into(),
-            description: "Lists directory contents with type indicators, respecting .gitignore. Supports depth control and entry limits for navigating large directories.".into(),
+            description: "Lists directory contents with type indicators, respecting .gitignore. \
+                          Supports depth control and entry limits for navigating large \
+                          directories."
+                .into(),
             category: ConnectorCategory::Code,
             input_schema: Some(json!({
                 "type": "object",
