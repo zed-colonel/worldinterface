@@ -105,7 +105,7 @@ fn try_whitespace_normalized(haystack: &str, needle: &str) -> Option<MatchResult
         }
 
         for (index, norm_line) in norm_needle_lines.iter().enumerate() {
-            if normalize_whitespace(&haystack_lines[start + index]) != *norm_line {
+            if normalize_whitespace(haystack_lines[start + index]) != *norm_line {
                 continue 'outer;
             }
         }
@@ -121,7 +121,7 @@ fn try_whitespace_normalized(haystack: &str, needle: &str) -> Option<MatchResult
     let mut offset = 0;
     while let Some(pos) = norm_haystack[offset..].find(&norm_needle) {
         count += 1;
-        offset += pos + 1;
+        offset += pos + norm_needle.len();
     }
 
     Some(MatchResult {
@@ -295,6 +295,17 @@ mod tests {
         assert!(result.is_some());
         let layer = result.unwrap().layer;
         assert!(layer == MatchLayer::Exact || layer == MatchLayer::WhitespaceNormalized);
+    }
+
+    #[test]
+    fn whitespace_normalized_count_is_non_overlapping() {
+        let file = "  a\n  a\n  a\n";
+        let needle = "a\na";
+
+        let result = find_match(file, needle, 0.85).unwrap();
+
+        assert_eq!(result.layer, MatchLayer::WhitespaceNormalized);
+        assert_eq!(result.count, 1);
     }
 
     #[test]

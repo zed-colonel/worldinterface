@@ -228,9 +228,9 @@ impl Connector for CodeGrepConnector {
                 "pattern_compiled": true,
                 "files_searched": files_searched,
                 "suggestion": if looks_literal {
-                    "no matches found; if you intended a literal regex-sensitive pattern, escape special characters"
-                } else {
                     "no matches found; try broadening the pattern or searching a different path"
+                } else {
+                    "no matches found; if you intended a literal regex-sensitive pattern, escape special characters"
                 },
             });
         }
@@ -541,6 +541,26 @@ mod tests {
         assert_eq!(result["truncated"], false);
         assert_eq!(result["files_searched"], 1);
         assert!(result["diagnostics"]["pattern_compiled"].as_bool().unwrap());
+        assert_eq!(
+            result["diagnostics"]["suggestion"],
+            "no matches found; try broadening the pattern or searching a different path"
+        );
+    }
+
+    #[test]
+    fn grep_no_matches_regex_pattern_suggests_escaping() {
+        let dir = tempfile::tempdir().unwrap();
+        std::fs::write(dir.path().join("main.rs"), "literal a+b\n").unwrap();
+
+        let result = CodeGrepConnector
+            .invoke(&test_ctx(), &json!({"path": dir.path().to_str().unwrap(), "pattern": "a+b"}))
+            .unwrap();
+
+        assert_eq!(result["total_matches"], 0);
+        assert_eq!(
+            result["diagnostics"]["suggestion"],
+            "no matches found; if you intended a literal regex-sensitive pattern, escape special characters"
+        );
     }
 
     #[test]
