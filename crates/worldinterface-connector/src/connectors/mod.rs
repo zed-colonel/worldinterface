@@ -4,6 +4,7 @@ pub mod code_apply_patch;
 pub mod code_common;
 pub mod code_edit;
 pub mod code_fuzzy;
+pub mod code_git_diff;
 pub mod code_glob;
 pub mod code_grep;
 pub mod code_ls;
@@ -23,6 +24,7 @@ use std::sync::Arc;
 
 pub use code_apply_patch::CodeApplyPatchConnector;
 pub use code_edit::CodeEditConnector;
+pub use code_git_diff::CodeGitDiffConnector;
 pub use code_glob::CodeGlobConnector;
 pub use code_grep::CodeGrepConnector;
 pub use code_ls::CodeLsConnector;
@@ -55,6 +57,7 @@ pub fn default_registry() -> ConnectorRegistry {
     registry.register(Arc::new(CodeGlobConnector));
     registry.register(Arc::new(CodeLsConnector));
     registry.register(Arc::new(CodeApplyPatchConnector));
+    registry.register(Arc::new(CodeGitDiffConnector));
     registry
 }
 
@@ -65,9 +68,9 @@ mod tests {
     use super::*;
 
     #[test]
-    fn default_registry_has_13_connectors() {
+    fn default_registry_has_14_connectors() {
         let registry = default_registry();
-        assert_eq!(registry.len(), 13);
+        assert_eq!(registry.len(), 14);
         assert!(registry.get("delay").is_some());
         assert!(registry.get("http.request").is_some());
         assert!(registry.get("fs.read").is_some());
@@ -81,6 +84,7 @@ mod tests {
         assert!(registry.get("code.glob").is_some());
         assert!(registry.get("code.ls").is_some());
         assert!(registry.get("code.apply_patch").is_some());
+        assert!(registry.get("code.git_diff").is_some());
     }
 
     #[test]
@@ -94,6 +98,7 @@ mod tests {
             "code.glob",
             "code.ls",
             "code.apply_patch",
+            "code.git_diff",
         ] {
             let desc = registry.describe(name).unwrap();
             assert_eq!(desc.category, ConnectorCategory::Code);
