@@ -286,7 +286,7 @@ fn map_step_error(err: StepError) -> HandlerOutput {
         StepError::ConnectorError(ConnectorError::Cancelled) => {
             HandlerOutput::retryable_failure(err.to_string())
         }
-        StepError::ConnectorError(ConnectorError::Terminal(_))
+        StepError::ConnectorError(ConnectorError::Terminal { .. })
         | StepError::ConnectorError(ConnectorError::InvalidParams(_)) => {
             HandlerOutput::terminal_failure(err.to_string())
         }

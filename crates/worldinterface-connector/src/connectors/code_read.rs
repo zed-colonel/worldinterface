@@ -69,7 +69,7 @@ impl Connector for CodeReadConnector {
 
         let path = Path::new(path_str);
         if gitignore_check::is_gitignored(path) {
-            return Err(ConnectorError::Terminal(format!("path is gitignored: {path_str}")));
+            return Err(ConnectorError::terminal(format!("path is gitignored: {path_str}")));
         }
 
         let text = code_common::read_utf8_file(path)?;
@@ -177,7 +177,7 @@ mod tests {
     fn code_read_nonexistent_terminal() {
         let result = CodeReadConnector
             .invoke(&test_ctx(), &json!({"file_path": "/tmp/no-such-code-read-file"}));
-        assert!(matches!(result, Err(ConnectorError::Terminal(_))));
+        assert!(matches!(result, Err(ConnectorError::Terminal { .. })));
     }
 
     #[test]
@@ -190,7 +190,7 @@ mod tests {
 
         let result =
             CodeReadConnector.invoke(&test_ctx(), &json!({"file_path": file.to_str().unwrap()}));
-        assert!(matches!(result, Err(ConnectorError::Terminal(_))));
+        assert!(matches!(result, Err(ConnectorError::Terminal { .. })));
     }
 
     #[test]

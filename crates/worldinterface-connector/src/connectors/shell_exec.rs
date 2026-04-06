@@ -150,7 +150,7 @@ impl ShellExecConnector {
         // ── Spawn ──
 
         let mut child = cmd.spawn().map_err(|e| {
-            ConnectorError::Terminal(format!("failed to spawn command '{command}': {e}"))
+            ConnectorError::terminal(format!("failed to spawn command '{command}': {e}"))
         })?;
 
         // ── Read stdout/stderr concurrently with timeout + cancellation ──
@@ -471,7 +471,7 @@ mod tests {
         }))
         .await;
 
-        assert!(matches!(result, Err(ConnectorError::Terminal(_))));
+        assert!(matches!(result, Err(ConnectorError::Terminal { .. })));
     }
 
     // ── E2S1-T4: Non-zero exit code ──

@@ -81,7 +81,7 @@ impl Connector for FsWriteConnector {
         // Validate parent directory exists
         if let Some(parent) = path.parent() {
             if !parent.as_os_str().is_empty() && !parent.exists() {
-                return Err(ConnectorError::Terminal(format!(
+                return Err(ConnectorError::terminal(format!(
                     "parent directory does not exist: {}",
                     parent.display()
                 )));
@@ -91,7 +91,7 @@ impl Connector for FsWriteConnector {
         match mode {
             "create" => {
                 if path.exists() {
-                    return Err(ConnectorError::Terminal(format!(
+                    return Err(ConnectorError::terminal(format!(
                         "file already exists (mode: create): {path_str}"
                     )));
                 }
@@ -142,10 +142,10 @@ fn marker_path(path: &str, run_id: Uuid) -> PathBuf {
 fn classify_io_error(err: &io::Error, path: &str) -> ConnectorError {
     match err.kind() {
         io::ErrorKind::PermissionDenied => {
-            ConnectorError::Terminal(format!("permission denied: {path}"))
+            ConnectorError::terminal(format!("permission denied: {path}"))
         }
         io::ErrorKind::NotFound => {
-            ConnectorError::Terminal(format!("parent directory does not exist: {path}"))
+            ConnectorError::terminal(format!("parent directory does not exist: {path}"))
         }
         _ => ConnectorError::Retryable(format!("I/O error writing {path}: {err}")),
     }
@@ -263,7 +263,7 @@ mod tests {
         let result = FsWriteConnector
             .invoke(&ctx, &json!({"path": file_path.to_str().unwrap(), "content": "new"}));
 
-        assert!(matches!(result, Err(ConnectorError::Terminal(_))));
+        assert!(matches!(result, Err(ConnectorError::Terminal { .. })));
     }
 
     #[test]
@@ -337,7 +337,7 @@ mod tests {
         let ctx2 = test_ctx();
         let result = FsWriteConnector
             .invoke(&ctx2, &json!({"path": file_path.to_str().unwrap(), "content": "again"}));
-        assert!(matches!(result, Err(ConnectorError::Terminal(_))));
+        assert!(matches!(result, Err(ConnectorError::Terminal { .. })));
     }
 
     #[test]

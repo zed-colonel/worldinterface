@@ -26,7 +26,7 @@ pub fn read_utf8_file(path: &Path) -> Result<String, ConnectorError> {
     let path_str = path.display().to_string();
     let content = std::fs::read(path).map_err(|e| classify_io_error(&e, &path_str))?;
     String::from_utf8(content)
-        .map_err(|_| ConnectorError::Terminal(format!("file is not valid UTF-8: {path_str}")))
+        .map_err(|_| ConnectorError::terminal(format!("file is not valid UTF-8: {path_str}")))
 }
 
 /// Load a previously stored idempotent result from the marker file.
@@ -60,9 +60,9 @@ pub fn store_marker_result(path: &str, run_id: Uuid, value: &Value) -> Result<()
 /// Classify I/O errors into ConnectorError variants.
 pub fn classify_io_error(err: &io::Error, path: &str) -> ConnectorError {
     match err.kind() {
-        io::ErrorKind::NotFound => ConnectorError::Terminal(format!("file not found: {path}")),
+        io::ErrorKind::NotFound => ConnectorError::terminal(format!("file not found: {path}")),
         io::ErrorKind::PermissionDenied => {
-            ConnectorError::Terminal(format!("permission denied: {path}"))
+            ConnectorError::terminal(format!("permission denied: {path}"))
         }
         _ => ConnectorError::Retryable(format!("I/O error on {path}: {err}")),
     }

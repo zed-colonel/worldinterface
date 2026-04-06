@@ -50,7 +50,7 @@ impl Connector for FsReadConnector {
         let content = std::fs::read(path).map_err(|e| classify_io_error(&e, path))?;
 
         let text = String::from_utf8(content)
-            .map_err(|_| ConnectorError::Terminal(format!("file is not valid UTF-8: {path}")))?;
+            .map_err(|_| ConnectorError::terminal(format!("file is not valid UTF-8: {path}")))?;
 
         let size = text.len();
         Ok(json!({ "content": text, "size": size }))
@@ -59,9 +59,9 @@ impl Connector for FsReadConnector {
 
 fn classify_io_error(err: &io::Error, path: &str) -> ConnectorError {
     match err.kind() {
-        io::ErrorKind::NotFound => ConnectorError::Terminal(format!("file not found: {path}")),
+        io::ErrorKind::NotFound => ConnectorError::terminal(format!("file not found: {path}")),
         io::ErrorKind::PermissionDenied => {
-            ConnectorError::Terminal(format!("permission denied: {path}"))
+            ConnectorError::terminal(format!("permission denied: {path}"))
         }
         _ => ConnectorError::Retryable(format!("I/O error reading {path}: {err}")),
     }
@@ -109,7 +109,7 @@ mod tests {
         let ctx = test_ctx();
         let result =
             FsReadConnector.invoke(&ctx, &json!({"path": "/tmp/nonexistent_ui_test_file"}));
-        assert!(matches!(result, Err(ConnectorError::Terminal(_))));
+        assert!(matches!(result, Err(ConnectorError::Terminal { .. })));
     }
 
     #[test]

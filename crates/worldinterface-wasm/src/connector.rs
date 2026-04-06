@@ -124,7 +124,7 @@ impl WasmConnector {
                         wasmtime_wasi::DirPerms::all(),
                         wasmtime_wasi::FilePerms::all(),
                     )
-                    .map_err(|e| ConnectorError::Terminal(format!("WASI preopened dir: {e}")))?;
+                    .map_err(|e| ConnectorError::terminal(format!("WASI preopened dir: {e}")))?;
             }
         }
 
@@ -136,13 +136,13 @@ impl WasmConnector {
     fn map_trap(err: wasmtime::Error) -> ConnectorError {
         let msg = err.to_string();
         if msg.contains("all fuel consumed") {
-            ConnectorError::Terminal("WASM fuel exhausted".into())
+            ConnectorError::terminal("WASM fuel exhausted")
         } else if msg.contains("epoch deadline") || msg.contains("epoch-deadline") {
-            ConnectorError::Terminal("WASM execution timed out".into())
+            ConnectorError::terminal("WASM execution timed out")
         } else if msg.contains("memory") && msg.contains("limit") {
-            ConnectorError::Terminal("WASM memory limit exceeded".into())
+            ConnectorError::terminal("WASM memory limit exceeded")
         } else {
-            ConnectorError::Terminal(format!("WASM trap: {msg}"))
+            ConnectorError::terminal(format!("WASM trap: {msg}"))
         }
     }
 }
@@ -187,7 +187,7 @@ impl Connector for WasmConnector {
         );
         store
             .set_fuel(self.policy.max_fuel)
-            .map_err(|e| ConnectorError::Terminal(format!("fuel setup: {e}")))?;
+            .map_err(|e| ConnectorError::terminal(format!("fuel setup: {e}")))?;
 
         let epoch_ticks = self.policy.timeout.as_millis() as u64 / EPOCH_INTERVAL_MS;
         store.epoch_deadline_trap();
@@ -196,7 +196,7 @@ impl Connector for WasmConnector {
         // 4. Instantiate component
         let bindings =
             ConnectorWorld::instantiate(&mut store, &self.component, self.runtime.linker())
-                .map_err(|e| ConnectorError::Terminal(format!("WASM instantiation: {e}")))?;
+                .map_err(|e| ConnectorError::terminal(format!("WASM instantiation: {e}")))?;
 
         // 5. Build guest invocation context
         let guest_ctx = exports::exo::connector::connector::InvocationContext {
@@ -221,8 +221,8 @@ impl Connector for WasmConnector {
         // 8. Map result
         match result {
             Ok(Ok(output_json)) => serde_json::from_str(&output_json)
-                .map_err(|e| ConnectorError::Terminal(format!("WASM output not valid JSON: {e}"))),
-            Ok(Err(guest_error)) => Err(ConnectorError::Terminal(guest_error)),
+                .map_err(|e| ConnectorError::terminal(format!("WASM output not valid JSON: {e}"))),
+            Ok(Err(guest_error)) => Err(ConnectorError::terminal(guest_error)),
             Err(trap) => Err(Self::map_trap(trap)),
         }
     }

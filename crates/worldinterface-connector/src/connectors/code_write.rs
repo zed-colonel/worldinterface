@@ -77,7 +77,7 @@ impl Connector for CodeWriteConnector {
 
         let path = Path::new(path_str);
         if gitignore_check::is_gitignored(path) {
-            return Err(ConnectorError::Terminal(format!("path is gitignored: {path_str}")));
+            return Err(ConnectorError::terminal(format!("path is gitignored: {path_str}")));
         }
         if let Some(result) = code_common::load_marker_result(path_str, ctx.run_id)? {
             return Ok(result);
@@ -92,10 +92,14 @@ impl Connector for CodeWriteConnector {
             }
         } else if let Some(parent) = path.parent() {
             if !parent.as_os_str().is_empty() && !parent.exists() {
-                return Err(ConnectorError::Terminal(format!(
-                    "parent directory does not exist: {} (use create_dirs: true)",
-                    parent.display()
-                )));
+                return Err(ConnectorError::terminal_with_diagnostics(
+                    format!("parent directory does not exist: {}", parent.display()),
+                    json!({
+                        "file_path": path_str,
+                        "parent_dir": parent.display().to_string(),
+                        "suggestion": "use create_dirs: true to create parent directories",
+                    }),
+                ));
             }
         }
 
@@ -240,7 +244,7 @@ mod tests {
         let result = CodeWriteConnector
             .invoke(&test_ctx(), &json!({"file_path": file.to_str().unwrap(), "content": "new\n"}));
 
-        assert!(matches!(result, Err(ConnectorError::Terminal(_))));
+        assert!(matches!(result, Err(ConnectorError::Terminal { .. })));
     }
 
     #[test]
@@ -255,7 +259,7 @@ mod tests {
             &json!({"file_path": file.to_str().unwrap(), "content": "secret\n"}),
         );
 
-        assert!(matches!(result, Err(ConnectorError::Terminal(_))));
+        assert!(matches!(result, Err(ConnectorError::Terminal { .. })));
     }
 
     #[test]
@@ -300,5 +304,24 @@ mod tests {
             .unwrap();
 
         assert_eq!(std::fs::read_to_string(&file).unwrap(), "Héllo 🌍\n");
+    }
+
+    #[test]
+    fn code_write_missing_parent_has_diagnostics() {
+        let dir = tempfile::tempdir().unwrap();
+        let file = dir.path().join("nested").join("sample.rs");
+
+        let result = CodeWriteConnector
+            .invoke(&test_ctx(), &json!({"file_path": file.to_str().unwrap(), "content": "new\n"}));
+
+        match result {
+            Err(ConnectorError::Terminal { diagnostics, .. }) => {
+                let diag = diagnostics.expect("should have diagnostics");
+                assert_eq!(diag["file_path"], file.to_str().unwrap());
+                assert!(diag.get("parent_dir").is_some());
+                assert!(diag.get("suggestion").is_some());
+            }
+            other => panic!("expected Terminal with diagnostics, got {other:?}"),
+        }
     }
 }

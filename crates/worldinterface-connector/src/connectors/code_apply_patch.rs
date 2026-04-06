@@ -72,7 +72,7 @@ impl Connector for CodeApplyPatchConnector {
 
         let path = Path::new(path_str);
         if gitignore_check::is_gitignored(path) {
-            return Err(ConnectorError::Terminal(format!("path is gitignored: {path_str}")));
+            return Err(ConnectorError::terminal(format!("path is gitignored: {path_str}")));
         }
         if let Some(result) = code_common::load_marker_result(path_str, ctx.run_id)? {
             return Ok(result);
@@ -215,20 +215,25 @@ fn validate_creation_only(path_str: &str, hunks: &[Hunk]) -> Result<(), Connecto
     if creation_only {
         Ok(())
     } else {
-        Err(ConnectorError::Terminal(format!("file not found: {path_str}")))
+        Err(ConnectorError::terminal(format!("file not found: {path_str}")))
     }
 }
 
 fn apply_hunks(mut file_lines: Vec<String>, hunks: &[Hunk]) -> Result<Vec<String>, ConnectorError> {
     let mut line_offset = 0isize;
 
-    for hunk in hunks {
+    for (hunk_idx, hunk) in hunks.iter().enumerate() {
         let base_start = if hunk.old_start == 0 { 0 } else { hunk.old_start - 1 };
         let adjusted_start = base_start as isize + line_offset;
         if adjusted_start < 0 {
-            return Err(ConnectorError::Terminal(
-                "context mismatch at line 1: expected start before file, found beginning of file"
-                    .to_string(),
+            return Err(ConnectorError::terminal_with_diagnostics(
+                format!("context mismatch at line 1 in hunk {hunk_idx}"),
+                json!({
+                    "hunk_index": hunk_idx,
+                    "line_number": 1,
+                    "expected_line": "<before-file>",
+                    "actual_line": "<start-of-file>",
+                }),
             ));
         }
         let start = adjusted_start as usize;
@@ -250,31 +255,43 @@ fn apply_hunks(mut file_lines: Vec<String>, hunks: &[Hunk]) -> Result<Vec<String
             .collect::<Vec<_>>();
 
         if start > file_lines.len() {
-            return Err(ConnectorError::Terminal(format!(
-                "context mismatch at line {}: expected '{}', found '<EOF>'",
-                start + 1,
-                expected_old.first().copied().unwrap_or("")
-            )));
+            return Err(ConnectorError::terminal_with_diagnostics(
+                format!("context mismatch at line {} in hunk {}", start + 1, hunk_idx),
+                json!({
+                    "hunk_index": hunk_idx,
+                    "line_number": start + 1,
+                    "expected_line": expected_old.first().copied().unwrap_or(""),
+                    "actual_line": "<EOF>",
+                }),
+            ));
         }
 
         for (index, expected) in expected_old.iter().enumerate() {
             let actual = file_lines.get(start + index).map(String::as_str).unwrap_or("<EOF>");
             if actual != *expected {
-                return Err(ConnectorError::Terminal(format!(
-                    "context mismatch at line {}: expected '{}', found '{}'",
-                    start + index + 1,
-                    expected,
-                    actual
-                )));
+                return Err(ConnectorError::terminal_with_diagnostics(
+                    format!("context mismatch at line {} in hunk {}", start + index + 1, hunk_idx),
+                    json!({
+                        "hunk_index": hunk_idx,
+                        "line_number": start + index + 1,
+                        "expected_line": expected,
+                        "actual_line": actual,
+                    }),
+                ));
             }
         }
 
         let end = start + hunk.old_count;
         if end > file_lines.len() {
-            return Err(ConnectorError::Terminal(format!(
-                "context mismatch at line {}: expected '<EOF>', found '<EOF>'",
-                file_lines.len() + 1
-            )));
+            return Err(ConnectorError::terminal_with_diagnostics(
+                format!("context mismatch at line {} in hunk {}", file_lines.len() + 1, hunk_idx),
+                json!({
+                    "hunk_index": hunk_idx,
+                    "line_number": file_lines.len() + 1,
+                    "expected_line": "<EOF>",
+                    "actual_line": "<EOF>",
+                }),
+            ));
         }
 
         file_lines.splice(start..end, replacement);
@@ -445,9 +462,34 @@ mod tests {
             }),
         );
 
-        assert!(
-            matches!(result, Err(ConnectorError::Terminal(message)) if message.contains("context mismatch"))
+        assert!(matches!(
+            result,
+            Err(ConnectorError::Terminal { message, .. }) if message.contains("context mismatch")
+        ));
+    }
+
+    #[test]
+    fn code_apply_patch_context_mismatch_has_diagnostics() {
+        let dir = tempfile::tempdir().unwrap();
+        let file = dir.path().join("sample.rs");
+        std::fs::write(&file, "line 1\nline 2\nline 3\n").unwrap();
+
+        let patch = "@@ -1,3 +1,3 @@\n line 1\n-wrong line\n+replaced\n line 3\n";
+        let result = CodeApplyPatchConnector.invoke(
+            &test_ctx(),
+            &json!({
+                "file_path": file.to_str().unwrap(),
+                "patch": patch
+            }),
         );
+
+        match result {
+            Err(ConnectorError::Terminal { diagnostics, .. }) => {
+                let diag = diagnostics.expect("should have diagnostics");
+                assert!(diag.get("expected_line").is_some() || diag.get("hunk_index").is_some());
+            }
+            other => panic!("expected Terminal error, got {other:?}"),
+        }
     }
 
     #[test]
@@ -484,7 +526,7 @@ mod tests {
             }),
         );
 
-        assert!(matches!(result, Err(ConnectorError::Terminal(_))));
+        assert!(matches!(result, Err(ConnectorError::Terminal { .. })));
     }
 
     #[test]
@@ -559,7 +601,7 @@ mod tests {
             }),
         );
 
-        assert!(matches!(result, Err(ConnectorError::Terminal(_))));
+        assert!(matches!(result, Err(ConnectorError::Terminal { .. })));
     }
 
     #[test]

@@ -5,6 +5,7 @@ use similar::{ChangeTag, TextDiff};
 use worldinterface_core::descriptor::{ConnectorCategory, Descriptor};
 
 use super::code_common;
+use super::code_fuzzy::{self, MatchLayer};
 use super::gitignore_check;
 use crate::context::InvocationContext;
 use crate::error::ConnectorError;
@@ -96,29 +97,57 @@ impl Connector for CodeEditConnector {
 
         let path = Path::new(path_str);
         if gitignore_check::is_gitignored(path) {
-            return Err(ConnectorError::Terminal(format!("path is gitignored: {path_str}")));
+            return Err(ConnectorError::terminal(format!("path is gitignored: {path_str}")));
         }
         if let Some(result) = code_common::load_marker_result(path_str, ctx.run_id)? {
             return Ok(result);
         }
 
         let original = code_common::read_utf8_file(path)?;
-        let count = original.matches(old_string).count();
+        let match_result = code_fuzzy::find_match(&original, old_string, 0.85);
+        let (actual_old_string, match_layer, similarity, count, matched_line) = match match_result {
+            Some(found) => {
+                let layer = match found.layer {
+                    MatchLayer::Exact => "exact",
+                    MatchLayer::WhitespaceNormalized => "whitespace_normalized",
+                    MatchLayer::Fuzzy => "fuzzy",
+                };
+                (found.matched_text, layer, found.similarity, found.count, found.line_number)
+            }
+            None => {
+                let line_count = original.lines().count();
+                let mut diagnostics = json!({
+                    "line_count": line_count,
+                    "file_path": path_str,
+                });
 
-        if count == 0 {
-            return Err(ConnectorError::Terminal(format!("old_string not found in {path_str}")));
-        }
+                if let Some(closest) = code_fuzzy::closest_match_info(&original, old_string) {
+                    diagnostics["closest_match"] = json!({
+                        "line_number": closest.line_number,
+                        "similarity": (closest.similarity * 100.0).round() / 100.0,
+                        "preview": closest.preview,
+                    });
+                }
+
+                return Err(ConnectorError::terminal_with_diagnostics(
+                    format!("old_string not found in {path_str}"),
+                    diagnostics,
+                ));
+            }
+        };
+
         if count > 1 && !replace_all {
-            return Err(ConnectorError::Terminal(format!(
-                "old_string found {count} times in {path_str} — use replace_all: true to replace \
-                 all, or provide a larger context string to match uniquely"
+            return Err(ConnectorError::terminal(format!(
+                "old_string found {count} times in {path_str} (via {match_layer} match) — use \
+                 replace_all: true to replace all, or provide a larger context string to match \
+                 uniquely"
             )));
         }
 
         let new_content = if replace_all {
-            original.replace(old_string, new_string)
+            original.replace(&actual_old_string, new_string)
         } else {
-            original.replacen(old_string, new_string, 1)
+            original.replacen(&actual_old_string, new_string, 1)
         };
 
         let diff = TextDiff::from_lines(&original, &new_content);
@@ -130,15 +159,20 @@ impl Connector for CodeEditConnector {
 
         code_common::write_atomic(path, ctx.run_id, &new_content)?;
 
-        let result = json!({
+        let mut result = json!({
             "file_path": path_str,
             "replacements_made": if replace_all { count } else { 1 },
+            "matched_line": matched_line,
             "diff": {
                 "unified": unified,
                 "lines_added": lines_added,
                 "lines_removed": lines_removed
             }
         });
+        if match_layer != "exact" {
+            result["match_layer"] = json!(match_layer);
+            result["similarity"] = json!(similarity);
+        }
         code_common::store_marker_result(path_str, ctx.run_id, &result)?;
 
         Ok(result)
@@ -240,7 +274,7 @@ mod tests {
             }),
         );
 
-        assert!(matches!(result, Err(ConnectorError::Terminal(_))));
+        assert!(matches!(result, Err(ConnectorError::Terminal { .. })));
     }
 
     #[test]
@@ -258,7 +292,7 @@ mod tests {
             }),
         );
 
-        assert!(matches!(result, Err(ConnectorError::Terminal(_))));
+        assert!(matches!(result, Err(ConnectorError::Terminal { .. })));
     }
 
     #[test]
@@ -315,7 +349,7 @@ mod tests {
             }),
         );
 
-        assert!(matches!(result, Err(ConnectorError::Terminal(_))));
+        assert!(matches!(result, Err(ConnectorError::Terminal { .. })));
     }
 
     #[test]
@@ -328,7 +362,7 @@ mod tests {
                 "new_string": "y"
             }),
         );
-        assert!(matches!(result, Err(ConnectorError::Terminal(_))));
+        assert!(matches!(result, Err(ConnectorError::Terminal { .. })));
     }
 
     #[test]
@@ -366,5 +400,74 @@ mod tests {
             .unwrap();
 
         assert_eq!(std::fs::read_to_string(&file).unwrap(), "x\ny\nc\n");
+    }
+
+    #[test]
+    fn code_edit_whitespace_normalized_match() {
+        let dir = tempfile::tempdir().unwrap();
+        let file = dir.path().join("sample.rs");
+        std::fs::write(&file, "fn main() {\n\tlet x = 1;\n}\n").unwrap();
+
+        let result = CodeEditConnector
+            .invoke(
+                &test_ctx(),
+                &json!({
+                    "file_path": file.to_str().unwrap(),
+                    "old_string": "    let x = 1;",
+                    "new_string": "\tlet x = 2;"
+                }),
+            )
+            .unwrap();
+
+        assert_eq!(std::fs::read_to_string(&file).unwrap(), "fn main() {\n\tlet x = 2;\n}\n");
+        assert_eq!(result["match_layer"], "whitespace_normalized");
+    }
+
+    #[test]
+    fn code_edit_fuzzy_match() {
+        let dir = tempfile::tempdir().unwrap();
+        let file = dir.path().join("sample.rs");
+        std::fs::write(&file, "fn calculate(items: &[Item]) -> f64 {\n").unwrap();
+
+        let result = CodeEditConnector
+            .invoke(
+                &test_ctx(),
+                &json!({
+                    "file_path": file.to_str().unwrap(),
+                    "old_string": "fn calculate(items: &[Item]) -> f32 {",
+                    "new_string": "fn calculate(items: &[Item]) -> u64 {"
+                }),
+            )
+            .unwrap();
+
+        let content = std::fs::read_to_string(&file).unwrap();
+        assert!(content.contains("-> u64 {"));
+        assert_eq!(result["match_layer"], "fuzzy");
+        assert!(result["similarity"].as_f64().unwrap() >= 0.85);
+    }
+
+    #[test]
+    fn code_edit_not_found_has_diagnostics() {
+        let dir = tempfile::tempdir().unwrap();
+        let file = dir.path().join("sample.rs");
+        std::fs::write(&file, "fn alpha() {}\nfn beta() {}\nfn gamma() {}\n").unwrap();
+
+        let result = CodeEditConnector.invoke(
+            &test_ctx(),
+            &json!({
+                "file_path": file.to_str().unwrap(),
+                "old_string": "fn completely_different_name() { very_different_body(); }",
+                "new_string": "fn replacement()"
+            }),
+        );
+
+        match result {
+            Err(ConnectorError::Terminal { diagnostics, .. }) => {
+                let diag = diagnostics.expect("should have diagnostics");
+                assert!(diag.get("line_count").is_some());
+                assert!(diag.get("closest_match").is_some());
+            }
+            other => panic!("expected Terminal with diagnostics, got {other:?}"),
+        }
     }
 }

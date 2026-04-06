@@ -3,6 +3,7 @@
 pub mod code_apply_patch;
 pub mod code_common;
 pub mod code_edit;
+pub mod code_fuzzy;
 pub mod code_glob;
 pub mod code_grep;
 pub mod code_ls;

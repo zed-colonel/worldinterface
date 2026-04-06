@@ -215,12 +215,27 @@ impl Connector for CodeGrepConnector {
             }
         }
 
-        Ok(json!({
+        let mut result = json!({
             "content": output.join("\n"),
             "total_matches": total_matches,
             "files_searched": files_searched,
             "truncated": truncated,
-        }))
+        });
+
+        if total_matches == 0 {
+            let looks_literal = pattern.chars().all(|ch| ch.is_alphanumeric() || ch == '_');
+            result["diagnostics"] = json!({
+                "pattern_compiled": true,
+                "files_searched": files_searched,
+                "suggestion": if looks_literal {
+                    "no matches found; if you intended a literal regex-sensitive pattern, escape special characters"
+                } else {
+                    "no matches found; try broadening the pattern or searching a different path"
+                },
+            });
+        }
+
+        Ok(result)
     }
 }
 
@@ -251,17 +266,17 @@ fn resolve_root(path_str: Option<&str>) -> Result<PathBuf, ConnectorError> {
     };
 
     if !root.exists() {
-        return Err(ConnectorError::Terminal(format!("directory not found: {}", root.display())));
+        return Err(ConnectorError::terminal(format!("directory not found: {}", root.display())));
     }
 
     let root = root.canonicalize().map_err(|err| match err.kind() {
         std::io::ErrorKind::PermissionDenied => {
-            ConnectorError::Terminal(format!("permission denied: {}", root.display()))
+            ConnectorError::terminal(format!("permission denied: {}", root.display()))
         }
         _ => ConnectorError::Retryable(format!("I/O error on {}: {err}", root.display())),
     })?;
     if !root.is_dir() {
-        return Err(ConnectorError::Terminal(format!("not a directory: {}", root.display())));
+        return Err(ConnectorError::terminal(format!("not a directory: {}", root.display())));
     }
 
     Ok(root)
@@ -275,7 +290,7 @@ fn walk_error(err: ignore::Error) -> ConnectorError {
     if let Some(io_err) = err.io_error() {
         return match io_err.kind() {
             std::io::ErrorKind::PermissionDenied => {
-                ConnectorError::Terminal("permission denied during directory walk".into())
+                ConnectorError::terminal("permission denied during directory walk")
             }
             _ => ConnectorError::Retryable(format!("directory walk error: {io_err}")),
         };
@@ -524,6 +539,8 @@ mod tests {
         assert_eq!(result["content"], "");
         assert_eq!(result["total_matches"], 0);
         assert_eq!(result["truncated"], false);
+        assert_eq!(result["files_searched"], 1);
+        assert!(result["diagnostics"]["pattern_compiled"].as_bool().unwrap());
     }
 
     #[test]
@@ -544,7 +561,7 @@ mod tests {
     fn grep_nonexistent_path_terminal() {
         let result = CodeGrepConnector
             .invoke(&test_ctx(), &json!({"path": "/tmp/no-such-code-grep", "pattern": "alpha"}));
-        assert!(matches!(result, Err(ConnectorError::Terminal(_))));
+        assert!(matches!(result, Err(ConnectorError::Terminal { .. })));
     }
 
     #[test]

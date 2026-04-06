@@ -141,7 +141,11 @@ fn wasm_connector_guest_error() {
     assert!(result.is_err());
     let err = result.unwrap_err();
     assert!(
-        matches!(err, worldinterface_connector::error::ConnectorError::Terminal(ref msg) if msg.contains("unknown")),
+        matches!(
+            err,
+            worldinterface_connector::error::ConnectorError::Terminal { ref message, .. }
+                if message.contains("unknown")
+        ),
         "expected Terminal error with 'unknown', got: {err:?}"
     );
 }
@@ -242,7 +246,7 @@ fn wasm_fuel_exhaustion() {
     let err = result.unwrap_err();
     // Fuel exhaustion or epoch deadline — both produce Terminal errors
     assert!(
-        matches!(&err, worldinterface_connector::error::ConnectorError::Terminal(_)),
+        matches!(&err, worldinterface_connector::error::ConnectorError::Terminal { .. }),
         "expected Terminal error from fuel/epoch limit, got: {err:?}"
     );
 }
@@ -261,7 +265,7 @@ fn wasm_epoch_timeout() {
 
     let err = result.unwrap_err();
     assert!(
-        matches!(&err, worldinterface_connector::error::ConnectorError::Terminal(_)),
+        matches!(&err, worldinterface_connector::error::ConnectorError::Terminal { .. }),
         "expected Terminal error, got: {err:?}"
     );
     // Should complete within the timeout window (2s + some margin), not hang
@@ -282,7 +286,7 @@ fn wasm_memory_limit() {
     let result = connector.invoke(&ctx, &json!({"action": "allocate"}));
     let err = result.unwrap_err();
     assert!(
-        matches!(&err, worldinterface_connector::error::ConnectorError::Terminal(_)),
+        matches!(&err, worldinterface_connector::error::ConnectorError::Terminal { .. }),
         "expected Terminal error from memory limit, got: {err:?}"
     );
 }
