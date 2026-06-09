@@ -10,14 +10,16 @@ pub mod context;
 pub mod error;
 pub mod receipt_gen;
 pub mod registry;
+mod semantic;
 pub mod signal_registry;
 pub mod traits;
 pub mod transform;
 
 pub use connectors::{
-    default_registry, CodeEditConnector, CodeReadConnector, CodeWriteConnector, DelayConnector,
-    FsReadConnector, FsWriteConnector, HttpRequestConnector, SandboxExecConnector,
-    ShellExecConnector,
+    default_registry, CodeEditConnector, CodeImplsConnector, CodeReadConnector,
+    CodeReadSymbolConnector, CodeReferencesConnector, CodeSymbolConnector, CodeWriteConnector,
+    DelayConnector, FsReadConnector, FsWriteConnector, HttpRequestConnector, RepoLocateConnector,
+    SandboxExecConnector, ShellExecConnector,
 };
 pub use context::{CancellationToken, InvocationContext};
 pub use error::{ConnectorError, TransformError};

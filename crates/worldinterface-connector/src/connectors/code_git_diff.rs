@@ -141,6 +141,35 @@ impl Connector for CodeGitDiffConnector {
     }
 }
 
+/// Extract the file path from a `diff --git a/PATH b/PATH` line.
+///
+/// Handles paths containing spaces and ` b/` substrings by using the
+/// known structure: both paths are identical, so `a/X b/X` means the
+/// boundary ` b/` is exactly at `prefix_len + path_len`.
+fn extract_diff_path(line: &str) -> Option<String> {
+    // "diff --git a/PATH b/PATH"
+    let after_prefix = line.strip_prefix("diff --git a/")?;
+    // after_prefix is "PATH b/PATH" — the path repeats, so its length is
+    // (total_len - len(" b/")) / 2
+    let sep = " b/";
+    let total = after_prefix.len();
+    // The separator " b/" has length 3; total = path_len + 3 + path_len
+    if total < 4 {
+        return None;
+    }
+    let path_len = (total - sep.len()) / 2;
+    let path = &after_prefix[..path_len];
+
+    // Sanity check: verify the b/ portion matches
+    let expected_suffix = format!("{sep}{path}");
+    if after_prefix.ends_with(&expected_suffix) {
+        Some(path.to_string())
+    } else {
+        // Fallback for edge cases (e.g., renames where a/ and b/ paths differ)
+        after_prefix.rsplit_once(sep).map(|(_, b_path)| b_path.to_string())
+    }
+}
+
 /// Parse unified diff output into structured per-file entries.
 fn parse_diff_output(diff_text: &str) -> Vec<Value> {
     let mut files = Vec::new();
@@ -162,7 +191,7 @@ fn parse_diff_output(diff_text: &str) -> Vec<Value> {
                 }));
             }
 
-            current_path = line.split(" b/").last().map(ToOwned::to_owned);
+            current_path = extract_diff_path(line);
             current_diff.clear();
             current_diff.push_str(line);
             current_diff.push('\n');
@@ -430,5 +459,24 @@ mod tests {
         assert_eq!(files[0]["path"], "src/lib.rs");
         assert_eq!(files[0]["lines_added"], 2);
         assert_eq!(files[0]["lines_removed"], 1);
+    }
+
+    #[test]
+    fn extract_diff_path_simple() {
+        let path = extract_diff_path("diff --git a/src/lib.rs b/src/lib.rs");
+        assert_eq!(path.as_deref(), Some("src/lib.rs"));
+    }
+
+    #[test]
+    fn extract_diff_path_with_b_in_name() {
+        // Path containing " b/" as a substring should still parse correctly
+        let path = extract_diff_path("diff --git a/lib b/utils.rs b/lib b/utils.rs");
+        assert_eq!(path.as_deref(), Some("lib b/utils.rs"));
+    }
+
+    #[test]
+    fn extract_diff_path_spaces() {
+        let path = extract_diff_path("diff --git a/my file.rs b/my file.rs");
+        assert_eq!(path.as_deref(), Some("my file.rs"));
     }
 }

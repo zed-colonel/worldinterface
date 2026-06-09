@@ -109,8 +109,11 @@ impl Connector for CodeGrepConnector {
             })
             .transpose()?;
 
-        let output_mode = OutputMode::parse(params.get("output_mode").and_then(Value::as_str))?;
-        let shared_context = params.get("context").and_then(Value::as_u64).unwrap_or(0) as usize;
+        let output_mode_param = params.get("output_mode").and_then(Value::as_str);
+        let output_mode = OutputMode::parse(output_mode_param)?;
+        let default_context = if output_mode_param == Some("context") { 2 } else { 0 };
+        let shared_context =
+            params.get("context").and_then(Value::as_u64).unwrap_or(default_context) as usize;
         let context_before = params
             .get("context_before")
             .and_then(Value::as_u64)
@@ -250,6 +253,7 @@ impl OutputMode {
     fn parse(value: Option<&str>) -> Result<Self, ConnectorError> {
         match value.unwrap_or("files_with_matches") {
             "content" => Ok(Self::Content),
+            "context" => Ok(Self::Content),
             "files_with_matches" => Ok(Self::FilesWithMatches),
             "count" => Ok(Self::Count),
             other => Err(ConnectorError::InvalidParams(format!("invalid output_mode: {other}"))),
@@ -499,6 +503,29 @@ mod tests {
                     "pattern": "match",
                     "output_mode": "content",
                     "context": 1
+                }),
+            )
+            .unwrap();
+        let content = result["content"].as_str().unwrap();
+
+        assert!(content.contains(&format!("{}-1-before", file.display())));
+        assert!(content.contains(&format!("{}:2:match", file.display())));
+        assert!(content.contains(&format!("{}-3-after", file.display())));
+    }
+
+    #[test]
+    fn grep_context_output_mode_aliases_content_with_default_context() {
+        let dir = tempfile::tempdir().unwrap();
+        let file = dir.path().join("main.rs");
+        std::fs::write(&file, "before\nmatch\nafter\n").unwrap();
+
+        let result = CodeGrepConnector
+            .invoke(
+                &test_ctx(),
+                &json!({
+                    "path": dir.path().to_str().unwrap(),
+                    "pattern": "match",
+                    "output_mode": "context"
                 }),
             )
             .unwrap();

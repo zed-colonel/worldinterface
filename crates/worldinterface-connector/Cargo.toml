@@ -26,6 +26,10 @@ ignore = "0.4"
 globset = "0.4"
 regex = "1"
 similar = "3.0"
+cargo_metadata = "0.19"
+syn = { version = "2", features = ["full", "visit"] }
+quote = "1"
+proc-macro2 = { version = "1", features = ["span-locations"] }
 
 [dev-dependencies]
 mockito = "1"
