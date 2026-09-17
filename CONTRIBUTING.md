@@ -121,5 +121,7 @@ Generated inventory is reviewable source; regenerate with
 changed disposition in `inventory/dispositions.json`. Do not auto-accept target
 ownership or ADR decisions. Milestone advancement is controller-owned: externally
 supplied `WI_MILESTONE_STATE` requires `WI_APPROVED_MILESTONE_SHA256` and a
-contiguous approved prefix. The checked-in state admits WI-01 only and asserts no
-completed milestone. Do not weaken policy files to make deletion gates pass.
+set of unique approved milestone IDs including WI-01 entry. Each rule activates
+only when its own milestone is present; WI-04 and WI-05 need no WI-03 entry.
+Scheduling, dependency admission and rollback protection remain controller-owned.
+The checked-in state admits WI-01 only and asserts no completed milestone. Do not weaken policy files to make deletion gates pass.

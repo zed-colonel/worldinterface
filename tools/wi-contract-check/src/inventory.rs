@@ -217,6 +217,14 @@ pub fn scan_source(path: &str, source: &str) -> Result<SourceInventory> {
     Ok((s.items, s.registrations))
 }
 pub fn generate(root: &Path) -> Result<Vec<Item>> {
+    let uncovered = crate::policy::source_coverage(root)?;
+    if !uncovered.is_empty() {
+        return Err(format!(
+            "inventory source coverage rejected: {}",
+            serde_json::to_string(&uncovered)?
+        )
+        .into());
+    }
     let mut items = vec![];
     let mut sites = vec![];
     let workspace = read(&root.join("Cargo.toml"))?;

@@ -1,11 +1,15 @@
 //! Synthetic mutation tests of the development checker. None execute WI/AQ conformance.
 use serde_json::{json, Value};
 use std::{
+    collections::BTreeSet,
     fs,
     path::{Path, PathBuf},
 };
 use tempfile::TempDir;
 use wi_contract_check::{contracts, evidence, files, hash, inventory, policy, read};
+fn milestones(ids: &[u64]) -> BTreeSet<u64> {
+    ids.iter().copied().collect()
+}
 fn root() -> PathBuf {
     Path::new(env!("CARGO_MANIFEST_DIR")).join("../..").canonicalize().unwrap()
 }
@@ -136,26 +140,25 @@ fn all_deletion_rules_activate_only_at_approved_milestones() {
     assert_eq!(cases.len(), p["rules"].as_array().unwrap().len());
     for (id, path, src, at) in cases {
         for milestone in 1..=14 {
-            let f = policy::symbol_findings(path, src, &p, milestone).unwrap();
-            assert_eq!(f.iter().any(|x| x.rule == id), milestone >= at, "{id} at {milestone}")
+            let f = policy::symbol_findings(path, src, &p, &milestones(&[milestone])).unwrap();
+            assert_eq!(f.iter().any(|x| x.rule == id), milestone == at, "{id} at {milestone}")
         }
     }
 }
 #[test]
-fn milestones_require_controller_digest_and_contiguous_state() {
+fn milestones_require_controller_digest_unique_known_ids_and_wi01_entry() {
     let v = json!({"version":1,"reached":["WI-01","WI-02"]});
     let bytes = serde_json::to_vec(&v).unwrap();
     assert!(policy::validate_state(&v, None, &bytes, true).is_err());
     assert!(policy::validate_state(&v, Some("wrong"), &bytes, true).is_err());
     assert!(policy::validate_state(&v, None, &bytes, false).is_err());
-    assert_eq!(policy::validate_state(&v, Some(&hash(&bytes)), &bytes, true).unwrap(), 2);
-    for reached in [
-        json!([]),
-        json!(["WI-02"]),
-        json!(["WI-01", "WI-03"]),
-        json!(["WI-01", "WI-01"]),
-        json!(["WI-01", "WI-99"]),
-    ] {
+    assert_eq!(
+        policy::validate_state(&v, Some(&hash(&bytes)), &bytes, true).unwrap(),
+        milestones(&[1, 2])
+    );
+    for reached in
+        [json!([]), json!(["WI-02"]), json!(["WI-01", "WI-01"]), json!(["WI-01", "WI-99"])]
+    {
         let v = json!({"version":1,"reached":reached});
         let b = serde_json::to_vec(&v).unwrap();
         assert!(policy::validate_state(&v, Some(&hash(&b)), &b, true).is_err());
@@ -163,14 +166,19 @@ fn milestones_require_controller_digest_and_contiguous_state() {
 }
 #[test]
 fn domain_semantics_rejected_opaque_strings_permitted() {
-    assert!(!policy::symbol_findings("crates/a/src/lib.rs", "struct Vessel;", &pol(), 1)
-        .unwrap()
-        .is_empty());
+    assert!(!policy::symbol_findings(
+        "crates/a/src/lib.rs",
+        "struct Vessel;",
+        &pol(),
+        &milestones(&[1])
+    )
+    .unwrap()
+    .is_empty());
     assert!(policy::symbol_findings(
         "crates/a/src/lib.rs",
         r#"struct OpaqueRef(String); const EXAMPLE: &str="ref://exo/Vessel/opaque";"#,
         &pol(),
-        1
+        &milestones(&[1])
     )
     .unwrap()
     .is_empty());
@@ -178,7 +186,7 @@ fn domain_semantics_rejected_opaque_strings_permitted() {
         "crates/a/src/protocol/mod.rs",
         "use crate::runtime::Effect;",
         &pol(),
-        1
+        &milestones(&[1])
     )
     .unwrap()
     .is_empty());
@@ -472,10 +480,10 @@ fn frozen_tag_and_copied_git_blobs_match() {
 fn legacy_connector_wire_names_activate_with_coding_catalog_gate() {
     for name in ["code.read", "code.apply_patch", "code.impls", "repo.locate", "repo.context"] {
         let src = format!("fn f() {{ invoke(\"{name}\"); }}");
-        assert!(policy::symbol_findings("crates/a/src/lib.rs", &src, &pol(), 9)
+        assert!(policy::symbol_findings("crates/a/src/lib.rs", &src, &pol(), &milestones(&[9]))
             .unwrap()
             .is_empty());
-        assert!(policy::symbol_findings("crates/a/src/lib.rs", &src, &pol(), 10)
+        assert!(policy::symbol_findings("crates/a/src/lib.rs", &src, &pol(), &milestones(&[10]))
             .unwrap()
             .iter()
             .any(|f| f.rule == "CB-CODING"));
@@ -488,4 +496,138 @@ fn required_parent_features_make_indirect_identity_dependency_mandatory() {
     write(t.path(),"crates/a/Cargo.toml","[package]\nname='a'\nversion='0.1.0'\n[dependencies]\na_quiet={path='../helper'}\nz_active={path='../helper',features=['portable']}\n");
     write(t.path(),"crates/helper/Cargo.toml","[package]\nname='helper'\nversion='0.1.0'\n[dependencies]\nidentity={package='entityid',version='=1.0.0',optional=true}\n[features]\nportable=['identity/sign']\n");
     assert!(policy::dependencies(t.path(), &pol()).unwrap().iter().any(|f| f.rule == "DEP-DOMAIN"));
+}
+
+#[test]
+fn independent_controller_milestones_activate_only_their_own_rules() {
+    // F-001: Appendix A admits WI-04 and WI-05 independently after WI-02.
+    for ids in [vec![1, 2, 4], vec![5, 1, 2], vec![1, 2, 5, 4]] {
+        let v = json!({"version":1,"reached":ids.iter().map(|n| format!("WI-{n:02}")).collect::<Vec<_>>()});
+        let bytes = serde_json::to_vec(&v).unwrap();
+        let approved = policy::validate_state(&v, Some(&hash(&bytes)), &bytes, true).unwrap();
+        assert_eq!(approved, milestones(&ids));
+        for (id, path, source, at) in [
+            ("CB-COMPAT-PRINCIPAL", "crates/a/src/lib.rs", "struct AnonymousPrincipal;", 4),
+            ("CB-RECEIPT-MODEL", "crates/worldinterface-core/src/receipt.rs", "struct Receipt;", 5),
+            ("CB-RECEIPT-WRITER", "crates/a/src/lib.rs", "mod receipt_gen;", 6),
+        ] {
+            let findings = policy::symbol_findings(path, source, &pol(), &approved).unwrap();
+            assert_eq!(findings.iter().any(|f| f.rule == id), ids.contains(&at));
+        }
+    }
+}
+
+#[test]
+fn nested_non_rs_source_routes_cannot_bypass_policy_or_inventory() {
+    // F-002: rustc accepts this route; both development checks must reject it.
+    for route in [r#"#[path="extra.inc"] mod extra;"#, r#"include!("extra.inc");"#] {
+        let t = tiny_repo();
+        data(t.path(), "contracts/forbidden-symbols.yaml", &pol());
+        write(t.path(), "crates/a/src/lib.rs", route);
+        write(t.path(), "crates/a/src/extra.inc", r#"include!("../../../fixtures/old.rs");"#);
+        write(t.path(), "fixtures/old.rs", "pub struct Vessel;");
+        assert!(policy::check_at(t.path(), &milestones(&[1]))
+            .unwrap()
+            .iter()
+            .any(|f| f.rule == "ARCHIVE-INCLUSION"));
+        let err = inventory::generate(t.path()).unwrap_err().to_string();
+        assert!(err.contains("inventory source coverage rejected"), "{err}");
+    }
+}
+
+#[test]
+fn cargo_targets_outside_scanned_sources_fail_inventory_and_policy() {
+    for target in ["src/entry.inc", "../../unscanned.rs", "src/target/entry.rs"] {
+        let t = tiny_repo();
+        write(t.path(), &format!("crates/a/{target}"), "pub struct Vessel;");
+        write(
+            t.path(),
+            "crates/a/Cargo.toml",
+            &format!("[package]\nname='a'\nversion='0.1.0'\n[lib]\npath='{target}'\n"),
+        );
+        assert!(policy::dependencies(t.path(), &pol())
+            .unwrap()
+            .iter()
+            .any(|f| f.rule == "ARCHIVE-TARGET"));
+        assert!(inventory::generate(t.path()).is_err());
+    }
+}
+
+#[test]
+fn scanned_module_cycles_are_bounded_and_all_contents_are_checked() {
+    let t = tiny_repo();
+    data(t.path(), "contracts/forbidden-symbols.yaml", &pol());
+    write(t.path(), "crates/a/src/lib.rs", r#"#[path="extra.rs"] mod extra;"#);
+    write(t.path(), "crates/a/src/extra.rs", r#"#[path="lib.rs"] mod back; pub struct Vessel;"#);
+    let findings = policy::check_at(t.path(), &milestones(&[1])).unwrap();
+    assert!(findings.iter().any(|f| f.rule == "DOMAIN-EXO" && f.path.ends_with("extra.rs")));
+    let items = inventory::generate(t.path()).unwrap();
+    assert_eq!(items.iter().filter(|i| i.name == "Vessel").count(), 1);
+    write(t.path(), "crates/a/src/extra.rs", r#"#[path="../../../fixtures/old.rs"] mod old;"#);
+    assert!(policy::check_at(t.path(), &milestones(&[1]))
+        .unwrap()
+        .iter()
+        .any(|f| f.rule == "ARCHIVE-INCLUSION" && f.path.ends_with("extra.rs")));
+    assert!(inventory::generate(t.path()).is_err());
+}
+
+#[test]
+fn contextual_module_paths_fail_closed_and_resource_includes_remain_supported() {
+    let t = tiny_repo();
+    let r = t.path().canonicalize().unwrap();
+    let p = r.join("crates/a/src/lib.rs");
+    write(&r, "crates/a/src/safe.rs", "pub struct Safe;");
+    for source in
+        [r#"mod nested { #[path="safe.rs"] mod another; }"#, r#"#[path="safe.rs"] mod nested {}"#]
+    {
+        assert!(!policy::source_routes(&r, &p, source).unwrap().is_empty());
+    }
+    write(&r, "crates/a/src/resource.txt", "data");
+    assert!(policy::source_routes(&r, &p,
+        r#"const S:&str=include_str!("resource.txt"); const B:&[u8]=include_bytes!("resource.txt");"#
+    ).unwrap().is_empty());
+}
+
+#[test]
+fn optional_exo_dependencies_are_unconditionally_rejected_outside_foundation() {
+    // F-003: features, aliases and target/workspace inheritance cannot invert WI -> EXO.
+    for declaration in [
+        "[dependencies]\nexo={package='exoskeleton',version='=1.0.0',optional=true}\n[features]\nextra=['dep:exo']\n",
+        "[target.'cfg(unix)'.dependencies]\nexo={package='exoskeleton',version='=1.0.0',optional=true}\n",
+        "[dependencies]\nexo={workspace=true,optional=true}\n",
+    ] {
+        let t = tiny_repo();
+        write(t.path(), "Cargo.toml", "[workspace]\nmembers=['crates/a']\n[workspace.dependencies]\nexo={package='exoskeleton',version='=1.0.0'}\n");
+        write(t.path(), "crates/a/Cargo.toml", &format!(
+            "[package]\nname='a'\nversion='0.1.0'\n{declaration}"));
+        assert!(policy::dependencies(t.path(), &pol()).unwrap().iter()
+            .any(|f| f.rule == "DEP-DOMAIN" && f.item == "exoskeleton"));
+    }
+}
+
+#[test]
+fn optional_local_and_locked_transitive_exo_routes_are_rejected() {
+    let t = tiny_repo();
+    write(t.path(), "crates/a/Cargo.toml", "[package]\nname='a'\nversion='0.1.0'\n[dependencies]\nhelper={path='../helper',optional=true}\n");
+    write(t.path(), "crates/helper/Cargo.toml", "[package]\nname='helper'\nversion='0.1.0'\n[dependencies]\nexo={path='../renamed',optional=true}\n");
+    write(
+        t.path(),
+        "crates/renamed/Cargo.toml",
+        "[package]\nname='exoskeleton'\nversion='1.0.0'\n",
+    );
+    assert!(policy::dependencies(t.path(), &pol())
+        .unwrap()
+        .iter()
+        .any(|f| f.rule == "DEP-DOMAIN" && f.item == "exoskeleton"));
+    write(t.path(), "crates/helper/Cargo.toml", "[package]\nname='helper'\nversion='0.1.0'\n[dependencies]\nfacade={version='=1.0.0',optional=true}\n");
+    for (leaf, rejected) in [("exoskeleton", true), ("entityid", false)] {
+        write(t.path(), "Cargo.lock", &format!("version=4\n[[package]]\nname='facade'\nversion='1.0.0'\ndependencies=['{leaf} 1.0.0']\n[[package]]\nname='{leaf}'\nversion='1.0.0'\n"));
+        assert_eq!(
+            policy::dependencies(t.path(), &pol())
+                .unwrap()
+                .iter()
+                .any(|f| f.rule == "DEP-LOCK-REACHABILITY" && f.item == leaf),
+            rejected
+        );
+    }
 }

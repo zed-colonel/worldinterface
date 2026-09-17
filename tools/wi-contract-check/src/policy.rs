@@ -21,7 +21,7 @@ pub fn validate_state(
     approved_digest: Option<&str>,
     bytes: &[u8],
     external: bool,
-) -> Result<u64> {
+) -> Result<BTreeSet<u64>> {
     if external && approved_digest != Some(hash(bytes).as_str()) {
         return Err("milestone state lacks matching controller-approved digest".into());
     }
@@ -32,17 +32,23 @@ pub fn validate_state(
     if reached.is_empty() {
         return Err("regressed milestone state".into());
     }
-    for (i, m) in reached.iter().enumerate() {
-        if milestone_number(m.as_str().ok_or("invalid milestone")?)? != i as u64 + 1 {
-            return Err("milestones must be a contiguous, non-regressed prefix".into());
+    let mut approved = BTreeSet::new();
+    for m in reached {
+        if !approved.insert(milestone_number(m.as_str().ok_or("invalid milestone")?)?) {
+            return Err("duplicate milestone".into());
         }
     }
-    if !external && reached.len() != 1 {
+    if !approved.contains(&1) {
+        return Err("regressed milestone state: WI-01 entry missing".into());
+    }
+    if !external && approved != BTreeSet::from([1]) {
         return Err("repository cannot advance controller milestones".into());
     }
-    Ok(reached.len() as u64)
+    // Dependency admission and rollback protection belong to the controller.
+    // Numeric IDs do not imply predecessor edges (WI-03/04/05 are independent).
+    Ok(approved)
 }
-pub fn state(root: &Path) -> Result<u64> {
+pub fn state(root: &Path) -> Result<BTreeSet<u64>> {
     let ext = std::env::var_os("WI_MILESTONE_STATE");
     let p =
         ext.as_ref().map(PathBuf::from).unwrap_or_else(|| root.join("contracts/milestones.json"));
@@ -94,11 +100,11 @@ pub fn symbol_findings(
     path: &str,
     tokens: &str,
     policy: &Value,
-    reached: u64,
+    reached: &BTreeSet<u64>,
 ) -> Result<Vec<Finding>> {
     let mut f = vec![];
     for r in array(policy, "rules")? {
-        if reached >= milestone_number(string(r, "activate_at")?)?
+        if reached.contains(&milestone_number(string(r, "activate_at")?)?)
             && array(r, "paths")?.iter().any(|p| path.starts_with(p.as_str().unwrap_or("!")))
             && Regex::new(string(r, "pattern")?)?.is_match(tokens)
         {
@@ -195,7 +201,86 @@ fn static_string(expr: &syn::Expr, manifest_dir: &Path) -> Option<String> {
         _ => None,
     }
 }
+/// The scanner visits this finite set once, so source-route cycles cannot hide
+/// declarations or cause recursive traversal. Every code route must stay in it.
+pub fn production_sources(root: &Path) -> Result<BTreeSet<PathBuf>> {
+    let mut sources = BTreeSet::new();
+    for dir in ["crates", "examples"] {
+        for p in files(&root.join(dir))? {
+            let rel = relative(root, &p);
+            if p.extension().and_then(|x| x.to_str()) == Some("rs")
+                && !rel.contains("/tests/")
+                && !rel.contains("/test-modules/")
+            {
+                sources.insert(p.canonicalize()?);
+            }
+        }
+    }
+    Ok(sources)
+}
+fn scanned_source(sources: &BTreeSet<PathBuf>, path: &Path) -> bool {
+    path.canonicalize().is_ok_and(|p| sources.contains(&p))
+}
+/// Inventory may only claim completeness when all production code routes are
+/// inspectable. Unsupported extensions/layouts fail closed rather than vanishing.
+pub fn source_coverage(root: &Path) -> Result<Vec<Finding>> {
+    let root = root.canonicalize()?;
+    let mut findings = vec![];
+    let sources = production_sources(&root)?;
+    for path in &sources {
+        findings.extend(source_routes_in(&root, path, &fs::read_to_string(path)?, &sources)?);
+    }
+    let mut manifests = vec![root.join("Cargo.toml")];
+    for dir in ["crates", "examples"] {
+        manifests.extend(
+            files(&root.join(dir))?
+                .into_iter()
+                .filter(|p| p.file_name().is_some_and(|n| n == "Cargo.toml")),
+        );
+    }
+    for path in manifests {
+        findings.extend(target_routes(&root, &path, &read(&path)?, &sources)?);
+    }
+    Ok(findings)
+}
+fn target_routes(
+    root: &Path,
+    manifest: &Path,
+    value: &Value,
+    sources: &BTreeSet<PathBuf>,
+) -> Result<Vec<Finding>> {
+    let mut findings = vec![];
+    for kind in ["lib", "bin", "example", "test", "bench"] {
+        let entries: Vec<&Value> = if let Some(a) = value[kind].as_array() {
+            a.iter().collect()
+        } else {
+            vec![&value[kind]]
+        };
+        for entry in entries {
+            if let Some(s) = entry["path"].as_str() {
+                if !scanned_source(sources, &manifest.parent().unwrap().join(s)) {
+                    findings.push(finding(
+                        "ARCHIVE-TARGET",
+                        &relative(root, manifest),
+                        kind,
+                        "WI-01 §1.5",
+                        "Cargo target is outside inspected production Rust sources",
+                    ));
+                }
+            }
+        }
+    }
+    Ok(findings)
+}
 pub fn source_routes(root: &Path, path: &Path, source: &str) -> Result<Vec<Finding>> {
+    source_routes_in(root, path, source, &production_sources(root)?)
+}
+fn source_routes_in(
+    root: &Path,
+    path: &Path,
+    source: &str,
+    sources: &BTreeSet<PathBuf>,
+) -> Result<Vec<Finding>> {
     let mut manifest_dir = path.parent().ok_or("source parent missing")?;
     while !manifest_dir.join("Cargo.toml").exists() {
         manifest_dir = manifest_dir.parent().ok_or("Cargo manifest missing")?
@@ -205,24 +290,38 @@ pub fn source_routes(root: &Path, path: &Path, source: &str) -> Result<Vec<Findi
         path: &'a Path,
         manifest_dir: &'a Path,
         findings: Vec<Finding>,
+        sources: &'a BTreeSet<PathBuf>,
+        inline_depth: usize,
     }
     impl Routes<'_> {
-        fn route(&mut self, target: Option<PathBuf>) {
-            if target.as_ref().is_none_or(|t| archive_path(self.root, t)) {
-                self.findings.push(finding("ARCHIVE-INCLUSION",&relative(self.root,self.path),"production-source-route","WI-01 §1.5", "archive, outside-root, missing, or dynamic source inclusion; use reviewed production source only"));
+        fn route(&mut self, target: Option<PathBuf>, code: bool) {
+            if target.as_ref().is_none_or(|t| {
+                archive_path(self.root, t) || code && !scanned_source(self.sources, t)
+            }) {
+                self.findings.push(finding("ARCHIVE-INCLUSION",&relative(self.root,self.path),"production-source-route","WI-01 §1.5", "archive, missing, dynamic, or uninspected source inclusion; code must use inspected .rs files under crates/ or examples/"));
             }
         }
     }
     impl<'ast> Visit<'ast> for Routes<'_> {
+        fn visit_item_mod(&mut self, m: &'ast syn::ItemMod) {
+            // Inline #[path] resolution depends on module/expansion context. Do
+            // not guess a path and accidentally approve a different file.
+            let inline = m.content.is_some();
+            self.inline_depth += usize::from(inline);
+            syn::visit::visit_item_mod(self, m);
+            self.inline_depth -= usize::from(inline);
+        }
         fn visit_attribute(&mut self, a: &'ast syn::Attribute) {
             if a.path().is_ident("path") {
-                let target = if let syn::Meta::NameValue(n) = &a.meta {
+                let target = if self.inline_depth > 0 {
+                    None
+                } else if let syn::Meta::NameValue(n) = &a.meta {
                     static_string(&n.value, self.manifest_dir)
                         .map(|s| self.path.parent().unwrap().join(s))
                 } else {
                     None
                 };
-                self.route(target);
+                self.route(target, true);
             }
             // cfg_attr may hide #[path]; fail closed unless it has no path argument.
             if a.path().is_ident("cfg_attr")
@@ -231,7 +330,7 @@ pub fn source_routes(root: &Path, path: &Path, source: &str) -> Result<Vec<Findi
                     .split(|c: char| !c.is_alphanumeric() && c != '_')
                     .any(|s| s == "path")
             {
-                self.route(None)
+                self.route(None, true)
             }
             syn::visit::visit_attribute(self, a);
         }
@@ -243,7 +342,7 @@ pub fn source_routes(root: &Path, path: &Path, source: &str) -> Result<Vec<Findi
                     .ok()
                     .and_then(|e| static_string(&e, self.manifest_dir))
                     .map(|s| self.path.parent().unwrap().join(s));
-                self.route(target);
+                self.route(target, m.path.segments.last().unwrap().ident == "include");
             }
             // Inspect macro token bodies too: a declaration generator can hide inclusion.
             fn suspicious(t: proc_macro2::TokenStream) -> bool {
@@ -259,13 +358,13 @@ pub fn source_routes(root: &Path, path: &Path, source: &str) -> Result<Vec<Findi
             if !["include", "include_str", "include_bytes"].iter().any(|x| m.path.is_ident(x))
                 && suspicious(m.tokens.clone())
             {
-                self.route(None)
+                self.route(None, true)
             }
         }
     }
     let tokens = production_tokens(source)?;
     let ast = syn::parse_file(&tokens)?;
-    let mut r = Routes { root, path, manifest_dir, findings: vec![] };
+    let mut r = Routes { root, path, manifest_dir, findings: vec![], sources, inline_depth: 0 };
     r.visit_file(&ast);
     Ok(r.findings)
 }
@@ -283,9 +382,20 @@ fn dep_tables(v: &Value) -> Vec<(&str, &Value)> {
     }
     out
 }
+fn prohibited_dependency(policy: &Value, name: &str, identity_restricted: bool) -> Result<bool> {
+    let normalized = name.to_lowercase();
+    Ok(array(policy, "unconditional_forbidden_dependency_patterns")?
+        .iter()
+        .any(|x| normalized.contains(x.as_str().unwrap_or("!")))
+        || identity_restricted
+            && array(policy, "forbidden_dependency_patterns")?
+                .iter()
+                .any(|x| normalized.contains(x.as_str().unwrap_or("!"))))
+}
 pub fn dependencies(root: &Path, policy: &Value) -> Result<Vec<Finding>> {
     let root = root.canonicalize()?;
     let ws = read(&root.join("Cargo.toml"))?;
+    let sources = production_sources(&root)?;
     let mut f = vec![];
     let mut manifests = BTreeMap::new();
     if ws["package"].is_object() {
@@ -396,25 +506,20 @@ pub fn dependencies(root: &Path, policy: &Value) -> Result<Vec<Finding>> {
                 || enabled.iter().any(|feature| feature.starts_with(&format!("{alias}/")));
             let required = mandatory
                 && ((d["optional"] != true && decl["optional"] != true) || default_enabled);
-            let normalized = name.to_lowercase();
-            let prohibited = array(policy, "forbidden_dependency_patterns")?
-                .iter()
-                .any(|x| normalized.contains(x.as_str().unwrap_or("!")));
+            let prohibited = prohibited_dependency(policy, name, required || foundation)?;
             let direction = foundation
                 && array(policy, "foundation_forbidden_packages")?.iter().any(|x| x == name);
-            if direction || prohibited && (required || foundation) {
+            if direction || prohibited {
                 f.push(finding("DEP-DOMAIN",&path,name,"stack dependency direction; §12.3","remove domain dependency; optional identity adapters belong outside protocol/capability"))
             }
-            if d["path"].is_null() && (required || foundation) && root.join("Cargo.lock").exists() {
+            if d["path"].is_null() && root.join("Cargo.lock").exists() {
                 let mut pending = vec![name.to_string()];
                 let mut visited = BTreeSet::new();
                 while let Some(package) = pending.pop() {
                     if !visited.insert(package.clone()) {
                         continue;
                     }
-                    let bad = array(policy, "forbidden_dependency_patterns")?
-                        .iter()
-                        .any(|x| package.to_lowercase().contains(x.as_str().unwrap_or("!")));
+                    let bad = prohibited_dependency(policy, &package, required || foundation)?;
                     if bad {
                         f.push(finding("DEP-LOCK-REACHABILITY",&path,&package,"stack dependency direction; §12.3","locked transitive dependency reaches prohibited domain; review feature graph before admission"));
                     }
@@ -465,10 +570,8 @@ pub fn dependencies(root: &Path, policy: &Value) -> Result<Vec<Finding>> {
                 // A renamed local package is checked using its actual package identity.
                 let actual =
                     child["package"]["name"].as_str().ok_or("local package missing name")?;
-                let bad = array(policy, "forbidden_dependency_patterns")?
-                    .iter()
-                    .any(|x| actual.to_lowercase().contains(x.as_str().unwrap_or("!")));
-                if bad && (required || foundation)
+                let bad = prohibited_dependency(policy, actual, required || foundation)?;
+                if bad
                     || foundation
                         && array(policy, "foundation_forbidden_packages")?
                             .iter()
@@ -503,45 +606,23 @@ pub fn dependencies(root: &Path, policy: &Value) -> Result<Vec<Finding>> {
         if v["package"]["build"] != false && build.exists() {
             f.push(finding("ARCHIVE-BUILD-SCRIPT",&relative(&root,&build),"build-script","WI-01 archive isolation","arbitrary build scripts require a separately reviewed source-generator policy; none is approved at WI-01"))
         }
-        for kind in ["lib", "bin", "example", "test", "bench"] {
-            let entries: Vec<&Value> =
-                if let Some(a) = v[kind].as_array() { a.iter().collect() } else { vec![&v[kind]] };
-            for entry in entries {
-                if let Some(s) = entry["path"].as_str() {
-                    if archive_path(&root, &p.parent().unwrap().join(s)) {
-                        f.push(finding(
-                            "ARCHIVE-TARGET",
-                            &relative(&root, p),
-                            kind,
-                            "WI-01 §1.5",
-                            "Cargo target reaches non-production source",
-                        ))
-                    }
-                }
-            }
-        }
+        f.extend(target_routes(&root, p, v, &sources)?);
     }
     Ok(f)
 }
-pub fn check_at(root: &Path, reached: u64) -> Result<Vec<Finding>> {
+pub fn check_at(root: &Path, reached: &BTreeSet<u64>) -> Result<Vec<Finding>> {
     let root = root.canonicalize()?;
     let policy = read(&root.join("contracts/forbidden-symbols.yaml"))?;
     let mut f = dependencies(&root, &policy)?;
-    for dir in ["crates", "examples"] {
-        for p in files(&root.join(dir))? {
-            let rel = relative(&root, &p);
-            if p.extension().and_then(|x| x.to_str()) == Some("rs")
-                && !rel.contains("/tests/")
-                && !rel.contains("/test-modules/")
-            {
-                let source = fs::read_to_string(&p)?;
-                f.extend(symbol_findings(&rel, &production_tokens(&source)?, &policy, reached)?);
-                f.extend(source_routes(&root, &p, &source)?);
-            }
-        }
+    let sources = production_sources(&root)?;
+    for p in &sources {
+        let rel = relative(&root, p);
+        let source = fs::read_to_string(p)?;
+        f.extend(symbol_findings(&rel, &production_tokens(&source)?, &policy, reached)?);
+        f.extend(source_routes_in(&root, p, &source, &sources)?);
     }
     Ok(f)
 }
 pub fn check(root: &Path) -> Result<Vec<Finding>> {
-    check_at(root, state(root)?)
+    check_at(root, &state(root)?)
 }

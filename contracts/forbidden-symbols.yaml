@@ -134,8 +134,8 @@
     "CommitmentAdmission",
     "RelationshipTrust"
   ],
+  "unconditional_forbidden_dependency_patterns": ["exoskeleton"],
   "forbidden_dependency_patterns": [
-    "exoskeleton",
     "entityid",
     "entity-id",
     "keri",
