@@ -347,11 +347,16 @@ pub fn dependencies(root: &Path, policy: &Value) -> Result<Vec<Finding>> {
         v: &Value,
         foundation: bool,
         mandatory: bool,
-        seen: &mut BTreeSet<(PathBuf, bool, bool)>,
+        seen: &mut BTreeSet<(PathBuf, bool, bool, String)>,
         f: &mut Vec<Finding>,
     ) -> Result<()> {
         let (root, ws, policy, lock) = env;
-        if !seen.insert((p.to_path_buf(), foundation, mandatory)) {
+        if !seen.insert((
+            p.to_path_buf(),
+            foundation,
+            mandatory,
+            hash(serde_json::to_vec(&v["features"])?),
+        )) {
             return Ok(());
         }
         let path = relative(root, p);
@@ -386,8 +391,9 @@ pub fn dependencies(root: &Path, policy: &Value) -> Result<Vec<Finding>> {
                 }
             }
             feature(v, "default", &mut enabled);
-            let default_enabled =
-                enabled.contains(alias) || enabled.contains(&format!("dep:{alias}"));
+            let default_enabled = enabled.contains(alias)
+                || enabled.contains(&format!("dep:{alias}"))
+                || enabled.iter().any(|feature| feature.starts_with(&format!("{alias}/")));
             let required = mandatory
                 && ((d["optional"] != true && decl["optional"] != true) || default_enabled);
             let normalized = name.to_lowercase();
@@ -438,7 +444,24 @@ pub fn dependencies(root: &Path, policy: &Value) -> Result<Vec<Finding>> {
                     continue;
                 }
                 let target = target.canonicalize()?;
-                let child = read(&target)?;
+                let mut child = read(&target)?;
+                // Features requested by a required parent can activate an otherwise
+                // optional identity SDK. Carry those selections into local traversal.
+                let mut selected =
+                    if d["default-features"] == false || decl["default-features"] == false {
+                        vec![]
+                    } else {
+                        child["features"]["default"].as_array().cloned().unwrap_or_default()
+                    };
+                for spec in [d, decl] {
+                    if let Some(features) = spec["features"].as_array() {
+                        selected.extend(features.iter().cloned());
+                    }
+                }
+                if child.get("features").is_none() {
+                    child["features"] = serde_json::json!({});
+                }
+                child["features"]["default"] = serde_json::json!(selected);
                 // A renamed local package is checked using its actual package identity.
                 let actual =
                     child["package"]["name"].as_str().ok_or("local package missing name")?;

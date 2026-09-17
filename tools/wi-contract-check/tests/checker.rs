@@ -467,3 +467,25 @@ fn statement_macros_cannot_silently_introduce_types() {
 fn frozen_tag_and_copied_git_blobs_match() {
     assert!(contracts::baseline(&root()).unwrap().is_empty());
 }
+
+#[test]
+fn legacy_connector_wire_names_activate_with_coding_catalog_gate() {
+    for name in ["code.read", "code.apply_patch", "code.impls", "repo.locate", "repo.context"] {
+        let src = format!("fn f() {{ invoke(\"{name}\"); }}");
+        assert!(policy::symbol_findings("crates/a/src/lib.rs", &src, &pol(), 9)
+            .unwrap()
+            .is_empty());
+        assert!(policy::symbol_findings("crates/a/src/lib.rs", &src, &pol(), 10)
+            .unwrap()
+            .iter()
+            .any(|f| f.rule == "CB-CODING"));
+    }
+}
+
+#[test]
+fn required_parent_features_make_indirect_identity_dependency_mandatory() {
+    let t = tiny_repo();
+    write(t.path(),"crates/a/Cargo.toml","[package]\nname='a'\nversion='0.1.0'\n[dependencies]\na_quiet={path='../helper'}\nz_active={path='../helper',features=['portable']}\n");
+    write(t.path(),"crates/helper/Cargo.toml","[package]\nname='helper'\nversion='0.1.0'\n[dependencies]\nidentity={package='entityid',version='=1.0.0',optional=true}\n[features]\nportable=['identity/sign']\n");
+    assert!(policy::dependencies(t.path(), &pol()).unwrap().iter().any(|f| f.rule == "DEP-DOMAIN"));
+}

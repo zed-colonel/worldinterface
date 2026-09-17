@@ -69,7 +69,7 @@
     {
       "id": "CB-CODING",
       "activate_at": "WI-10",
-      "pattern": "\\b(code_(common|grep|fuzzy|glob|ls|read|symbol|read_symbol|references|impls|test|git_diff|edit|write|apply_patch)|repo_(context|locate)|gitignore_check|(?:Code\\w+|RepoContext|RepoLocate)Connector)\\b",
+      "pattern": "\\b(code[._](common|grep|fuzzy|glob|ls|read|symbol|read_symbol|references|impls|test|git_diff|edit|write|apply_patch)|repo[._](context|locate)|gitignore_check|(?:Code\\w+|RepoContext|RepoLocate)Connector)\\b",
       "paths": [
         "crates/",
         "examples/"
