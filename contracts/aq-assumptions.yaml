@@ -1,0 +1,298 @@
+version: 2
+status: source-reconciled-consumer-evidence-pending
+date: '2026-09-15'
+consumer: WI-FABRIC-2
+owner: AQ-CONT-1
+rule: These are source-reconciled AQ-CONT-1 integration requirements. Current statements and the pinned amendment
+  are normative; prior_assumption_text is historical only. Consumer conformance remains pending.
+gates:
+  WI-AQ-G1: Core lineage
+  WI-AQ-G2: Idempotent admission
+  WI-AQ-G3: Continuations
+  WI-AQ-G4: Attempt and workflow
+  WI-AQ-G5: Release candidate
+assumptions:
+- id: WI-AQ-001
+  statement: Use EnsureTaskRequest with persisted stable TaskId/key/full request; high-level digest is computed
+    CanonicalAdmissionV2, not independently supplied.
+  required_by:
+  - WI-04
+  - WI-07
+  gate: WI-AQ-G2
+  status: source-reconciled-consumer-evidence-pending
+  conformance_case: Repeat admission after simulated client timeout returns the same durable task identity.
+  consequence_if_changed: WorldInterface dispatch outbox cannot safely retry across an unknown admission response.
+  prior_assumption_text: Idempotent task admission accepts a caller-provided admission key and canonical digest.
+  source_resolution: Use EnsureTaskRequest with persisted stable TaskId/key/full request; high-level digest
+    is computed CanonicalAdmissionV2, not independently supplied.
+  consumer_status: not-run
+  source_lock: aq-baseline.lock.json
+- id: WI-AQ-002
+  statement: Same key with identical canonical request deduplicates. Same key with changed TaskId or other
+    digest-bearing content conflicts. Retry after unknown acknowledgment only after recovery, using unchanged
+    request.
+  required_by:
+  - WI-04
+  gate: WI-AQ-G2
+  status: source-reconciled-consumer-evidence-pending
+  conformance_case: Same key plus different payload/spec yields a deterministic conflict.
+  consequence_if_changed: ClientRequestId or EffectIntentId could alias semantically different effects.
+  prior_assumption_text: Reusing an admission key with a different canonical digest fails loudly and does not
+    mutate the existing task.
+  source_resolution: Same key with identical canonical request deduplicates. Same key with changed TaskId or
+    other digest-bearing content conflicts. Retry after unknown acknowledgment only after recovery, using unchanged
+    request.
+  consumer_status: not-run
+  source_lock: aq-baseline.lock.json
+- id: WI-AQ-003
+  statement: One task admission atomically includes bounded initial runs/dependencies/parentage. No unbounded
+    multi-task Flow transaction; use explicit bounded staging and children.
+  required_by:
+  - WI-07
+  gate: WI-AQ-G2
+  status: source-reconciled-consumer-evidence-pending
+  conformance_case: Crash during compound Flow admission yields all graph facts or none.
+  consequence_if_changed: Flow coordinator needs a different generic atomic admission primitive.
+  prior_assumption_text: Admission can atomically establish task, derived runs, dependencies, parentage, and
+    causal context for required WorldInterface shapes.
+  source_resolution: One task admission atomically includes bounded initial runs/dependencies/parentage. No
+    unbounded multi-task Flow transaction; use explicit bounded staging and children.
+  consumer_status: not-run
+  source_lock: aq-baseline.lock.json
+- id: WI-AQ-004
+  statement: Created/AlreadyExists return sequence, task_id, admission_key and digest only. RunIds are discovered
+    separately by authorized bounded paginated inspection.
+  required_by:
+  - WI-04
+  - WI-07
+  gate: WI-AQ-G2
+  status: source-reconciled-consumer-evidence-pending
+  conformance_case: Created and AlreadyExists return the same durable TaskId/key/digest; discover and persist
+    RunIds separately using authorized pagination and stale-cursor restart.
+  consequence_if_changed: WorldInterface cannot correlate domain intent with queue execution without polling/index
+    assumptions.
+  prior_assumption_text: Successful idempotent admission returns stable task and run references suitable for
+    durable downstream mapping.
+  source_resolution: Created/AlreadyExists return sequence, task_id, admission_key and digest only. RunIds
+    are discovered separately by authorized bounded paginated inspection.
+  consumer_status: not-run
+  source_lock: aq-baseline.lock.json
+- id: WI-AQ-005
+  statement: Producer AdmitSignalRequest uses SignalId. Host supplies tenant/received_at/control. Identity
+    is (tenant, SignalId) plus canonical content; no separate dedup_key.
+  required_by:
+  - WI-03
+  - WI-08
+  - WI-09
+  gate: WI-AQ-G3
+  status: source-reconciled-consumer-evidence-pending
+  conformance_case: Duplicate signal admission before and after restart causes one logical satisfaction per
+    matching wait.
+  consequence_if_changed: Provider callbacks and worker events could duplicate resumptions.
+  prior_assumption_text: Signal admission is durable, tenant-scoped, and idempotent by stable signal identity
+    or deduplication key.
+  source_resolution: Producer AdmitSignalRequest uses SignalId. Host supplies tenant/received_at/control. Identity
+    is (tenant, SignalId) plus canonical content; no separate dedup_key.
+  consumer_status: not-run
+  source_lock: aq-baseline.lock.json
+- id: WI-AQ-006
+  statement: Commit authoritative domain event and wake outbox atomically even before Awaiting. Correlated
+    AnyRetained handles early signals; fanout is non-consuming. One durable resolution does not imply exactly-once
+    resume invocation.
+  required_by:
+  - WI-03
+  - WI-08
+  gate: WI-AQ-G3
+  status: source-reconciled-consumer-evidence-pending
+  conformance_case: signal -> crash -> wait results in one resume.
+  consequence_if_changed: WorldInterface would require polling or its own durable signal registry, violating
+    the stack design.
+  prior_assumption_text: A signal admitted before a matching wait is retained long enough to satisfy that later
+    wait exactly once.
+  source_resolution: Commit authoritative domain event and wake outbox atomically even before Awaiting. Correlated
+    AnyRetained handles early signals; fanout is non-consuming. One durable resolution does not imply exactly-once
+    resume invocation.
+  consumer_status: not-run
+  source_lock: aq-baseline.lock.json
+- id: WI-AQ-007
+  statement: One active wait per run; one exact SignalFilter or direct-children target. Tenant/namespace/kind
+    exact; optional correlation/source. No principal predicate/wildcard/OR list. Normalize domain event streams
+    or use explicit children.
+  required_by:
+  - WI-08
+  - WI-09
+  gate: WI-AQ-G3
+  status: source-reconciled-consumer-evidence-pending
+  conformance_case: Reject unsupported principal/wildcard/OR matching assumptions; use one exact filter or
+    bounded child target and test correlated AnyRetained/After lowering.
+  consequence_if_changed: WorldInterface signal taxonomy or coordinator decomposition must change.
+  prior_assumption_text: Wait matching supports structurally bounded namespace, kind, correlation, source,
+    and tenant/principal criteria or an equivalent safe composition.
+  source_resolution: One active wait per run; one exact SignalFilter or direct-children target. Tenant/namespace/kind
+    exact; optional correlation/source. No principal predicate/wildcard/OR list. Normalize domain event streams
+    or use explicit children.
+  consumer_status: not-run
+  source_lock: aq-baseline.lock.json
+- id: WI-AQ-008
+  statement: A valid Awaiting disposition commits checkpoint reference, one wait/deadline policy, attempt transition
+    and lease/key-release policy atomically. Local invalid/capacity fallback commits no subordinate effects;
+    test accepted-versus-rejected proposals separately.
+  required_by:
+  - WI-08
+  - WI-09
+  gate: WI-AQ-G3
+  status: source-reconciled-consumer-evidence-pending
+  conformance_case: Kill at each mutation boundary leaves either running attempt or one durable wait, never
+    a lost continuation.
+  consequence_if_changed: Callback/reconciliation coordination can lose wakeups or leak leases.
+  prior_assumption_text: Checkpoint reference, wait registration, Awaiting transition, deadline policy, and
+    lease release commit atomically.
+  source_resolution: A valid Awaiting disposition commits checkpoint reference, one wait/deadline policy, attempt
+    transition and lease/key-release policy atomically. Local invalid/capacity fallback commits no subordinate
+    effects; test accepted-versus-rejected proposals separately.
+  consumer_status: not-run
+  source_lock: aq-baseline.lock.json
+- id: WI-AQ-009
+  statement: ResumeContext is stable and may be redelivered Initial/Retry/Recovery. WakeReason includes signal,
+    children, deadline, control and administrative forms; always reload authoritative domain state.
+  required_by:
+  - WI-08
+  - WI-09
+  gate: WI-AQ-G3
+  status: source-reconciled-consumer-evidence-pending
+  conformance_case: Resumed handler deterministically identifies authoritative WorldInterface record referenced
+    by the wake signal.
+  consequence_if_changed: WorldInterface coordinators need extra queries or ambiguous resume inference.
+  prior_assumption_text: Resume context exposes the matched signal reference, checkpoint reference, wait identity,
+    and resume reason.
+  source_resolution: ResumeContext is stable and may be redelivered Initial/Retry/Recovery. WakeReason includes
+    signal, children, deadline, control and administrative forms; always reload authoritative domain state.
+  consumer_status: not-run
+  source_lock: aq-baseline.lock.json
+- id: WI-AQ-010
+  statement: Signal/deadline/control races follow first committed eligible resolution and deterministic replay.
+    Retained signals reconcile before remaining deadlines; administrative resume cannot resolve an active wait.
+    Preserve historical winner on later cancellation.
+  required_by:
+  - WI-08
+  - WI-09
+  gate: WI-AQ-G3
+  status: source-reconciled-consumer-evidence-pending
+  conformance_case: Generated race orders produce the same terminal/ready state after replay.
+  consequence_if_changed: WorldInterface could double-reconcile, double-terminate, or resume canceled work.
+  prior_assumption_text: Signal, deadline, cancellation, and administrative suspension races have deterministic
+    replayable winner rules.
+  source_resolution: Signal/deadline/control races follow first committed eligible resolution and deterministic
+    replay. Retained signals reconcile before remaining deadlines; administrative resume cannot resolve an
+    active wait. Preserve historical winner on later cancellation.
+  consumer_status: not-run
+  source_lock: aq-baseline.lock.json
+- id: WI-AQ-011
+  statement: 'Use validated disposition algebra: Complete excludes checkpoint/wait/children; Awaiting requires
+    wait/no output; Suspended excludes wait/output/children/signals. Required child termination is not domain
+    success.'
+  required_by:
+  - WI-06
+  - WI-07
+  gate: WI-AQ-G4
+  status: source-reconciled-consumer-evidence-pending
+  conformance_case: Parent Flow coordinator yields children plus wait as one durable commit.
+  consequence_if_changed: WorldInterface needs a smaller equivalent set of purpose-built atomic records or
+    Flow design changes.
+  prior_assumption_text: AttemptDisposition can atomically include outcome, lease release, checkpoint, wait,
+    transactional child admissions, emitted signals, and budget consumption.
+  source_resolution: 'Use validated disposition algebra: Complete excludes checkpoint/wait/children; Awaiting
+    requires wait/no output; Suspended excludes wait/output/children/signals. Required child termination is
+    not domain success.'
+  consumer_status: not-run
+  source_lock: aq-baseline.lock.json
+- id: WI-AQ-012
+  statement: Use exact typed/bounded fields at each API, not an assumption that all records share every causal
+    slot. Children inherit owned ancestry; foreign queue causation uses external_ref. Opaque refs are not grants.
+  required_by:
+  - WI-02
+  - WI-04
+  - WI-07
+  - WI-08
+  gate: WI-AQ-G1
+  status: source-reconciled-consumer-evidence-pending
+  conformance_case: Purpose/intent/authorization references survive child admission and replay byte-for-byte.
+  consequence_if_changed: Cross-stack causal inspection loses continuity or duplicates reference fields in
+    payloads.
+  prior_assumption_text: ActionQueue propagates bounded opaque causal references through task, run, attempt,
+    child, signal, and control-mutation records without interpreting them.
+  source_resolution: Use exact typed/bounded fields at each API, not an assumption that all records share every
+    causal slot. Children inherit owned ancestry; foreign queue causation uses external_ref. Opaque refs are
+    not grants.
+  consumer_status: not-run
+  source_lock: aq-baseline.lock.json
+- id: WI-AQ-013
+  statement: Queue mutations and signal admission use host-created HostControlContext/SignalIngressContext
+    with authenticated scope, separate from domain authorization. Reauthorize duplicates without rewriting
+    original durable attribution; opaque refs are not grants.
+  required_by:
+  - WI-11
+  gate: WI-AQ-G4
+  status: source-reconciled-consumer-evidence-pending
+  conformance_case: Cancel/resume/signal records identify the authenticated platform actor while ActionQueue
+    does not infer permission.
+  consequence_if_changed: NetCorp/platform audit requires a parallel control audit log or upstream extension.
+  prior_assumption_text: Queue control mutations and signal admission carry authenticated caller attribution
+    separate from domain authorization.
+  source_resolution: Queue mutations and signal admission use host-created HostControlContext/SignalIngressContext
+    with authenticated scope, separate from domain authorization. Reauthorize duplicates without rewriting
+    original durable attribution; opaque refs are not grants.
+  consumer_status: not-run
+  source_lock: aq-baseline.lock.json
+- id: WI-AQ-014
+  statement: Executor traits select execution resources, not external capabilities or grants. Embedded handlers
+    require explicit dispatch; daemon-only hosting is insufficient. HTTP API v2 and actor protocol v1 are distinct;
+    real remote/platform parity remains separately gated.
+  required_by:
+  - WI-06
+  - WI-09
+  - WI-11
+  gate: WI-AQ-G1
+  status: source-reconciled-consumer-evidence-pending
+  conformance_case: Executor trait selects an eligible worker but has no effect on WorldInterface authorization.
+  consequence_if_changed: Terminology and security boundary remain dangerously ambiguous.
+  prior_assumption_text: Remote executor routing uses traits/labels and cannot be confused with external-resource
+    capabilities or grants.
+  source_resolution: Executor traits select execution resources, not external capabilities or grants. Embedded
+    handlers require explicit dispatch; daemon-only hosting is insufficient. HTTP API v2 and actor protocol
+    v1 are distinct; real remote/platform parity remains separately gated.
+  consumer_status: not-run
+  source_lock: aq-baseline.lock.json
+- id: WI-AQ-015
+  statement: TaskPayload is bounded opaque bytes, not DataRef. Serialize small application-owned locator envelopes;
+    actual DataRef APIs do not fetch blobs. WI owns authorization/integrity/availability and consistent restore.
+  required_by:
+  - WI-02
+  - WI-03
+  - WI-05
+  - WI-08
+  - WI-09
+  gate: WI-AQ-G1
+  status: source-reconciled-consumer-evidence-pending
+  conformance_case: Resume and signal delivery preserve hash/reference while artifact bytes remain in WorldInterface
+    storage.
+  consequence_if_changed: WAL amplification or a separate bounded inline-size profile must be designed.
+  prior_assumption_text: Large payloads, checkpoints, and signal data may be represented by immutable artifact/data
+    references rather than WAL-inline bytes.
+  source_resolution: TaskPayload is bounded opaque bytes, not DataRef. Serialize small application-owned locator
+    envelopes; actual DataRef APIs do not fetch blobs. WI owns authorization/integrity/availability and consistent
+    restore.
+  consumer_status: not-run
+  source_lock: aq-baseline.lock.json
+plan_revision: WI-PLAN-5
+stack_contract: STACK-2026-07-25-FOUNDATIONAL-2
+foundational_amendment:
+  new_aq_assumptions: 0
+  developmental_profile_revision: STACK-DEVELOPMENTAL-DIAGNOSTICS-1
+  developmental_profile_new_aq_assumptions: 0
+  statement: Commissioning, acting capacity, information-use, candidate provenance, lifecycle effects, and
+    developmental experiment evidence use existing AQ-CONT-1 admission, Awaiting, signal, checkpoint, and bounded
+    causal-reference semantics. ActionQueue remains domain-neutral and does not evaluate campaigns, arms, or
+    task quality.
+source_binding: aq-baseline.lock.json
+normative_amendment: AQ-BASELINE-ALIGNMENT.md

@@ -1,0 +1,45 @@
+{
+  "fixture_version": 1,
+  "classification": "planned-scenario-input",
+  "runtime_executed": false,
+  "scenarios": [
+    {
+      "id": "STORE-EMPTY",
+      "files": {},
+      "expected": "initialize"
+    },
+    {
+      "id": "STORE-VALID",
+      "files": {
+        "manifest.json": {
+          "contract": "WI-FABRIC-2",
+          "fabric_schema": 1,
+          "context_schema": 1,
+          "flow_schema": 1,
+          "platform_schema": 1
+        }
+      },
+      "expected": "open"
+    },
+    {
+      "id": "STORE-PRE-CONTRACT",
+      "files": {
+        "old-context.marker": "pre-contract evidence; no target manifest"
+      },
+      "expected": "reject-without-modification"
+    },
+    {
+      "id": "STORE-UNKNOWN",
+      "files": {
+        "manifest.json": {
+          "contract": "WI-FABRIC-2",
+          "fabric_schema": 999,
+          "context_schema": 1,
+          "flow_schema": 1,
+          "platform_schema": 1
+        }
+      },
+      "expected": "reject-without-modification"
+    }
+  ]
+}

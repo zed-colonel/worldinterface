@@ -1,0 +1,29 @@
+name: WI development contract
+on:
+  push:
+    branches: [wi-fabric-2]
+  pull_request:
+    branches: [wi-fabric-2]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout reviewed candidate
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Verify independent WI-01 obligations
+        shell: bash
+        run: |
+          set -euo pipefail
+          : "${CRAFTINGTABLE_DEPENDENCY_MANIFEST:?controller provisioning required}"
+          : "${CRAFTINGTABLE_CARGO_CONFIG:?controller Cargo config required}"
+          : "${CRAFTINGTABLE_CI_ARTIFACTS_DIR:?external evidence directory required}"
+          : "${CRAFTINGTABLE_VERIFICATION_MODE:?scoped-checks mode required}"
+          test "$CRAFTINGTABLE_VERIFICATION_MODE" = scoped-checks
+          export CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$RUNNER_TEMP/wi-contract-target}"
+          mkdir -p "$CRAFTINGTABLE_CI_ARTIFACTS_DIR"
+          scripts/check-wi-contract.sh 2>&1 | tee "$CRAFTINGTABLE_CI_ARTIFACTS_DIR/wi-contract.log"

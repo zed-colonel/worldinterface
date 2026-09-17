@@ -1,0 +1,168 @@
+{
+  "version": 1,
+  "rules": [
+    {
+      "id": "CB-RECEIPT-MODEL",
+      "activate_at": "WI-05",
+      "pattern": "\\b(Receipt|ReceiptId|ReceiptStatus)\\b",
+      "paths": [
+        "crates/worldinterface-core/src/receipt.rs"
+      ],
+      "source": "implementation plan WI-05",
+      "disposition": "delete active legacy path by WI-05"
+    },
+    {
+      "id": "CB-RECEIPT-WRITER",
+      "activate_at": "WI-06",
+      "pattern": "\\b(receipt_gen|invoke_with_receipt|generate_receipt|ReceiptBuilder)\\b",
+      "paths": [
+        "crates/",
+        "examples/"
+      ],
+      "source": "implementation plan WI-06",
+      "disposition": "delete active legacy path by WI-06"
+    },
+    {
+      "id": "CB-CONNECTOR-SPI",
+      "activate_at": "WI-06",
+      "pattern": "\\bInvocationContext\\b",
+      "paths": [
+        "crates/",
+        "examples/"
+      ],
+      "source": "implementation plan WI-06",
+      "disposition": "delete active legacy path by WI-06"
+    },
+    {
+      "id": "CB-FLOW",
+      "activate_at": "WI-07",
+      "pattern": "\\b(FlowSpec|invoke_single)\\b",
+      "paths": [
+        "crates/",
+        "examples/"
+      ],
+      "source": "implementation plan WI-07",
+      "disposition": "delete active legacy path by WI-07"
+    },
+    {
+      "id": "CB-SIGNAL",
+      "activate_at": "WI-08",
+      "pattern": "\\b(SignalRegistry|signal_await|signal_emit)\\b|signal\\.(await|emit)",
+      "paths": [
+        "crates/",
+        "examples/"
+      ],
+      "source": "implementation plan WI-08",
+      "disposition": "delete active legacy path by WI-08"
+    },
+    {
+      "id": "CB-DELAY",
+      "activate_at": "WI-08",
+      "pattern": "\\bDelayConnector\\b|\\b(thread|tokio\\s*::\\s*time)\\s*::\\s*sleep\\b",
+      "paths": [
+        "crates/worldinterface-connector/src/",
+        "crates/worldinterface-coordinator/src/"
+      ],
+      "source": "implementation plan WI-08",
+      "disposition": "delete active legacy path by WI-08"
+    },
+    {
+      "id": "CB-CODING",
+      "activate_at": "WI-10",
+      "pattern": "\\b(code_(common|grep|fuzzy|glob|ls|read|symbol|read_symbol|references|impls|test|git_diff|edit|write|apply_patch)|repo_(context|locate)|gitignore_check|(?:Code\\w+|RepoContext|RepoLocate)Connector)\\b",
+      "paths": [
+        "crates/",
+        "examples/"
+      ],
+      "source": "implementation plan WI-10",
+      "disposition": "delete active legacy path by WI-10"
+    },
+    {
+      "id": "CB-COMPAT-PRINCIPAL",
+      "activate_at": "WI-04",
+      "pattern": "\\b(CompatibilityPrincipal|AnonymousPrincipal|compatibility_principal|anonymous_principal)\\b",
+      "paths": [
+        "crates/",
+        "examples/"
+      ],
+      "source": "implementation plan WI-04; \u00a72.3",
+      "disposition": "delete active legacy path by WI-04"
+    },
+    {
+      "id": "CB-FIRE-FORGET",
+      "activate_at": "WI-07",
+      "pattern": "\\bTaskSubmissionPort\\b",
+      "paths": [
+        "crates/",
+        "examples/"
+      ],
+      "source": "implementation plan WI-07; Appendix C",
+      "disposition": "delete active legacy path by WI-07"
+    },
+    {
+      "id": "CB-CODING-SEMANTIC",
+      "activate_at": "WI-10",
+      "pattern": "\\S",
+      "paths": [
+        "crates/worldinterface-connector/src/semantic/"
+      ],
+      "source": "implementation plan \u00a71.4; WI-10",
+      "disposition": "move semantic Rust analysis into specialist backend/verifier"
+    }
+  ],
+  "archival_exclusions": [
+    "fixtures/",
+    "contracts/sources/",
+    "docs/",
+    "inventory/",
+    "conformance/",
+    "tools/"
+  ],
+  "exclusion_condition": "excluded paths must remain unreachable from all production Cargo/module/include/build paths",
+  "domain_types": [
+    "Vessel",
+    "VesselId",
+    "GenesisRecord",
+    "PurposeCharter",
+    "Belief",
+    "BeliefAdmission",
+    "CognitiveArbitration",
+    "ImprovementProposal",
+    "ImprovementAcceptance",
+    "AutobiographicalNarrative",
+    "MissionAdmission",
+    "CommitmentAdmission",
+    "RelationshipTrust"
+  ],
+  "forbidden_dependency_patterns": [
+    "exoskeleton",
+    "entityid",
+    "entity-id",
+    "keri",
+    "blockchain",
+    "web3",
+    "ethers",
+    "alloy",
+    "solana",
+    "bitcoin",
+    "token-sdk",
+    "global-reputation"
+  ],
+  "foundation_packages": [
+    "worldinterface-protocol",
+    "worldinterface-capability"
+  ],
+  "foundation_forbidden_packages": [
+    "worldinterface-runtime",
+    "worldinterface-flow-coordinator",
+    "worldinterface-coordinator",
+    "worldinterface-flowspec",
+    "worldinterface-flow-model",
+    "worldinterface-flow-compiler",
+    "worldinterface-daemon",
+    "worldinterface-host",
+    "worldinterface-embedded",
+    "worldinterface-connector"
+  ],
+  "source": "implementation plan WI-01, \u00a712.3; stack WI-FABRIC-2 must_not_own"
+}

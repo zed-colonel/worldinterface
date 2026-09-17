@@ -1,0 +1,581 @@
+{
+  "contract": "WI-FABRIC-2",
+  "package_revision": 1,
+  "status": "skeleton",
+  "upstream_target": {
+    "contract": "AQ-CONT-1",
+    "implementation_commit": "29e096c4f06985d1a9bd9d5fe5a3a6a5db8a6860",
+    "git_tree": "1c0c85dd700bd9d0c75de223dada911ffeadbb5b",
+    "archive_sha256": "f91f496f22772e8dda044b0cf2cf05cf2eafa9f86d6f0c7e0061b46e3926ffb1",
+    "source_tree_sha256": "a6a8f87272d76e94e69e10d8bcf0992296d1bf8e28ff3d9222374c3b8cdcc34e",
+    "conformance_revision": 16
+  },
+  "assigned_aq_baseline_cases": [],
+  "fixture_manifest": "fixtures/pre-wi-fabric-2/manifest.json",
+  "fixture_manifest_sha256": "a03984aacf7c7b15f5d38ad5840958cbb784da02acaaa1d96f6bd054bb10882c",
+  "cases": [
+    {
+      "id": "WI-SKELETON-W1",
+      "invariants": [
+        "W1"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W2",
+      "invariants": [
+        "W2"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W3",
+      "invariants": [
+        "W3"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W4",
+      "invariants": [
+        "W4"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W5",
+      "invariants": [
+        "W5"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W6",
+      "invariants": [
+        "W6"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W7",
+      "invariants": [
+        "W7"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W8",
+      "invariants": [
+        "W8"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W9",
+      "invariants": [
+        "W9"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W10",
+      "invariants": [
+        "W10"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W11",
+      "invariants": [
+        "W11"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W12",
+      "invariants": [
+        "W12"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W13",
+      "invariants": [
+        "W13"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W14",
+      "invariants": [
+        "W14"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W15",
+      "invariants": [
+        "W15"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W16",
+      "invariants": [
+        "W16"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W17",
+      "invariants": [
+        "W17"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W18",
+      "invariants": [
+        "W18"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W19",
+      "invariants": [
+        "W19"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W20",
+      "invariants": [
+        "W20"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W21",
+      "invariants": [
+        "W21"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W22",
+      "invariants": [
+        "W22"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W23",
+      "invariants": [
+        "W23"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W24",
+      "invariants": [
+        "W24"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W25",
+      "invariants": [
+        "W25"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W26",
+      "invariants": [
+        "W26"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W27",
+      "invariants": [
+        "W27"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W28",
+      "invariants": [
+        "W28"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W29",
+      "invariants": [
+        "W29"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W30",
+      "invariants": [
+        "W30"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W31",
+      "invariants": [
+        "W31"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W32",
+      "invariants": [
+        "W32"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W33",
+      "invariants": [
+        "W33"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W34",
+      "invariants": [
+        "W34"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W35",
+      "invariants": [
+        "W35"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W36",
+      "invariants": [
+        "W36"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W37",
+      "invariants": [
+        "W37"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W38",
+      "invariants": [
+        "W38"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W39",
+      "invariants": [
+        "W39"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W40",
+      "invariants": [
+        "W40"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W41",
+      "invariants": [
+        "W41"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W42",
+      "invariants": [
+        "W42"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W43",
+      "invariants": [
+        "W43"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W44",
+      "invariants": [
+        "W44"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W45",
+      "invariants": [
+        "W45"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W46",
+      "invariants": [
+        "W46"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W47",
+      "invariants": [
+        "W47"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W48",
+      "invariants": [
+        "W48"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W49",
+      "invariants": [
+        "W49"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W50",
+      "invariants": [
+        "W50"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W51",
+      "invariants": [
+        "W51"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W52",
+      "invariants": [
+        "W52"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W53",
+      "invariants": [
+        "W53"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W54",
+      "invariants": [
+        "W54"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W55",
+      "invariants": [
+        "W55"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W56",
+      "invariants": [
+        "W56"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W57",
+      "invariants": [
+        "W57"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W58",
+      "invariants": [
+        "W58"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    },
+    {
+      "id": "WI-SKELETON-W59",
+      "invariants": [
+        "W59"
+      ],
+      "status": "unimplemented",
+      "kind": "runtime",
+      "result": null
+    }
+  ],
+  "store_scenarios": [
+    {
+      "id": "STORE-EMPTY",
+      "input": "empty directory",
+      "expected": "initialize",
+      "unchanged_on_rejection": false,
+      "status": "unimplemented"
+    },
+    {
+      "id": "STORE-VALID",
+      "input": "valid target manifest",
+      "expected": "open",
+      "unchanged_on_rejection": false,
+      "status": "unimplemented"
+    },
+    {
+      "id": "STORE-PRE-CONTRACT",
+      "input": "nonempty directory without target manifest",
+      "expected": "reject",
+      "unchanged_on_rejection": true,
+      "status": "unimplemented"
+    },
+    {
+      "id": "STORE-UNKNOWN",
+      "input": "target manifest with unknown schema",
+      "expected": "reject",
+      "unchanged_on_rejection": true,
+      "status": "unimplemented"
+    }
+  ],
+  "store_fixture": "conformance/wi-fabric-2/store-scenarios.json",
+  "store_fixture_sha256": "57954a1042fd7845c4ecf72aa0f0524f7fb8f456d49ee9e501370add7658009d"
+}

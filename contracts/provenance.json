@@ -1,0 +1,41 @@
+{
+  "version": 1,
+  "imports": {
+    "contracts/stack.yaml": {
+      "source": "constitutional-stack-foundational-contracts.yaml",
+      "sha256": "de11587dcbfecde5a33fcb9a193a97a5c0b38a227d4dfb0dad8cffd4bf627302",
+      "classification": "verbatim-normative-import"
+    },
+    "contracts/aq-baseline.lock.json": {
+      "source": "aq-baseline.lock.json",
+      "sha256": "1907d0a157628511c2419f84fd6b7820e09c160699505ee986cc46f3bcf78c7a",
+      "classification": "verbatim-normative-import"
+    },
+    "contracts/aq-assumptions.yaml": {
+      "source": "wi-fabric-2-aq-assumption-ledger-foundational.yaml",
+      "sha256": "943d9f263afeee5c56cc6c65a3c6dfca6fca8c871ff070aed2cd0c77f1437415",
+      "classification": "verbatim-normative-import"
+    },
+    "contracts/sources/worldinterface-v2-foundational-design.md": {
+      "source": "worldinterface-v2-foundational-design.md",
+      "sha256": "45e8ad3e5cc9618cbb951c0062cbd5daa49e7f57a0955d38e1172f6603e7b4bb",
+      "classification": "verbatim-normative-import"
+    },
+    "contracts/sources/wi-fabric-2-foundational-implementation-plan.md": {
+      "source": "wi-fabric-2-foundational-implementation-plan.md",
+      "sha256": "32564920d4cb1fa43fcecf996ef7897aa38b5c70fe4c04ca89adbedde86e608e",
+      "classification": "verbatim-normative-import"
+    },
+    "contracts/sources/AQ-BASELINE-ALIGNMENT.md": {
+      "source": "AQ-BASELINE-ALIGNMENT.md",
+      "sha256": "cd013232a0a9cbca2c625d31c3fc75e053f7948d37b8a6de2f08ff5cdc7e4656",
+      "classification": "verbatim-normative-import"
+    },
+    "contracts/sources/aq-baseline-integration-acceptance-matrix.yaml": {
+      "source": "aq-baseline-integration-acceptance-matrix.yaml",
+      "sha256": "3ed55cff70cbc603e6a44591b0f73aabf58b19d81cff28cf95baa08429ad6f4a",
+      "classification": "verbatim-normative-import"
+    }
+  },
+  "authority": "Accepted WI-01 design and controller plan bundle; source amendments require operator review."
+}

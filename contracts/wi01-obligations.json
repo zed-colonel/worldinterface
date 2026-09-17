@@ -1,0 +1,23 @@
+{
+  "scope": "wi/WI-01/implementation",
+  "maturity": "independent",
+  "parent_completion_claim": false,
+  "assigned_aq_baseline_cases": [],
+  "obligations": [
+    {"id": "WI01-BASELINE", "check": "baseline check", "evidence": "frozen tag/source hashes plus fixtures/pre-wi-fabric-2/observations/recovery-summary.json", "limits": "historical registry AQ 0.1.0/0.1.1; original four failures retained; no current integration"},
+    {"id": "WI01-INVENTORY", "check": "inventory check", "evidence": "inventory/current.json and dispositions.json; deterministic syntax extraction and rejection tests"},
+    {"id": "WI01-CONTRACTS", "check": "contracts check", "evidence": "W1-W59 exact source comparison, canonical stack ownership and fresh schema declarations"},
+    {"id": "WI01-PROVENANCE", "check": "provenance check", "evidence": "verbatim source imports, AQ lock and pending assumption-ledger statuses"},
+    {"id": "WI01-FIXTURES", "check": "fixtures check", "evidence": "immutable byte hashes, provenance classifications, historical measurements and coding evidence", "limits": "EXO execution revision/toolchain and standalone Aya input unavailable"},
+    {"id": "WI01-CONFORMANCE", "check": "conformance check", "evidence": "manifest/schema, unimplemented runtime slots, fresh-store inputs and rejection tests", "limits": "no runtime pass; no assigned AQ cases"},
+    {"id": "WI01-ADR-ISSUES-PUBLICATION", "check": "docs check", "evidence": "20 operator-owned queued ADRs, four WI-02 drafts, contribution/templates, separate publication schemas and tests", "limits": "ADR acceptance, issue filing and publication are operator/controller actions"},
+    {"id": "WI01-CLEAN-BREAK", "check": "clean-break check", "evidence": "staged deletion, domain ownership, dependency direction and archive-isolation mutation tests", "limits": "trusted controller milestone inputs; no gate advancement by checker"}
+  ],
+  "authority_review": {
+    "runtime_lease_changes": false,
+    "runtime_isolation_changes": false,
+    "authority_changes": false,
+    "review": "Development-only checker, no runtime imports or dependency changes. Archive access confined to development tooling. Controller retains integration and milestone authority; operator retains ADR/publication decisions. Synthetic tests are not conformance evidence. Independent source review remains a controller step."
+  },
+  "verification_phases": {"candidate": "collect on exact clean commit", "merged": "controller-owned; not performed here", "post_rebase": "required after any rebase; no rebase performed here"}
+}

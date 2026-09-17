@@ -1,0 +1,162 @@
+[
+  {
+    "id": "WI-ADR-001",
+    "decision": "Protocol version envelope, canonical serialization, hash input, unknown-field rules",
+    "due": "WI-02",
+    "owner": "operator",
+    "status": "queued",
+    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4"
+  },
+  {
+    "id": "WI-ADR-002",
+    "decision": "Identifier generation and stable client-request idempotency mapping",
+    "due": "WI-02",
+    "owner": "operator",
+    "status": "queued",
+    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4"
+  },
+  {
+    "id": "WI-ADR-003",
+    "decision": "Fresh store topology, SQLite transaction boundaries, backup/restore contract",
+    "due": "WI-02",
+    "owner": "operator",
+    "status": "queued",
+    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4"
+  },
+  {
+    "id": "WI-ADR-004",
+    "decision": "Principal authentication, actor binding, accountable-principal derivation",
+    "due": "WI-04",
+    "owner": "operator",
+    "status": "queued",
+    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4"
+  },
+  {
+    "id": "WI-ADR-005",
+    "decision": "Canonical resource URI grammar and resolver registry",
+    "due": "WI-04",
+    "owner": "operator",
+    "status": "queued",
+    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4"
+  },
+  {
+    "id": "WI-ADR-006",
+    "decision": "Authorization grammar, attenuation rules, decision explanation schema",
+    "due": "WI-04",
+    "owner": "operator",
+    "status": "queued",
+    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4"
+  },
+  {
+    "id": "WI-ADR-007",
+    "decision": "Effect state machine, commit-point vocabulary, `Uncertain`, and terminal outcomes",
+    "due": "WI-04",
+    "owner": "operator",
+    "status": "queued",
+    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4"
+  },
+  {
+    "id": "WI-ADR-008",
+    "decision": "Boundary receipt canonical form, content hashing, signing profile, and key rotation",
+    "due": "WI-05",
+    "owner": "operator",
+    "status": "queued",
+    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4"
+  },
+  {
+    "id": "WI-ADR-009",
+    "decision": "ContextStore versus artifact-store responsibility and publication atomicity",
+    "due": "WI-05",
+    "owner": "operator",
+    "status": "queued",
+    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4"
+  },
+  {
+    "id": "WI-ADR-010",
+    "decision": "Connector resolve/invoke/reconcile SPI and idempotency classes",
+    "due": "WI-06",
+    "owner": "operator",
+    "status": "queued",
+    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4"
+  },
+  {
+    "id": "WI-ADR-011",
+    "decision": "HTTP redirect, DNS, credential, SSRF, and replay policy",
+    "due": "WI-06",
+    "owner": "operator",
+    "status": "queued",
+    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4"
+  },
+  {
+    "id": "WI-ADR-012",
+    "decision": "Ingress provider identity, deduplication, ordering, gap evidence, and retention",
+    "due": "WI-03",
+    "owner": "operator",
+    "status": "queued",
+    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4"
+  },
+  {
+    "id": "WI-ADR-013",
+    "decision": "Subscriber delivery acknowledgment, retry, dead-letter, and privacy policy",
+    "due": "WI-03",
+    "owner": "operator",
+    "status": "queued",
+    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4"
+  },
+  {
+    "id": "WI-ADR-014",
+    "decision": "Common `ExecutionPlan`, plan hash, transform determinism, and Flow versioning",
+    "due": "WI-07",
+    "owner": "operator",
+    "status": "queued",
+    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4"
+  },
+  {
+    "id": "WI-ADR-015",
+    "decision": "Flow wait/timer lowering to `AQ-CONT-1`",
+    "due": "WI-08",
+    "owner": "operator",
+    "status": "queued",
+    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4"
+  },
+  {
+    "id": "WI-ADR-016",
+    "decision": "Agent Host transport, run credential, authoritative process-managed-proof-1 profile, executable/image representation, supported controls, artifact exchange and external-provider seam",
+    "due": "WI-09; definition clauses before dependent provider admission/evidence work",
+    "owner": "operator",
+    "status": "queued",
+    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4"
+  },
+  {
+    "id": "WI-ADR-017",
+    "decision": "Capability admission checklist and connector quarantine",
+    "due": "WI-10",
+    "owner": "operator",
+    "status": "queued",
+    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4"
+  },
+  {
+    "id": "WI-ADR-018",
+    "decision": "Daemon authentication profiles, tenancy, organizational grants, and secret brokerage",
+    "due": "WI-11",
+    "owner": "operator",
+    "status": "queued",
+    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4"
+  },
+  {
+    "id": "WI-ADR-019",
+    "decision": "External identifier/identity-binding SPI, historical key state, and disclosure profiles",
+    "due": "WI-12",
+    "owner": "operator",
+    "status": "queued",
+    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4"
+  },
+  {
+    "id": "WI-ADR-020",
+    "decision": "Proof-bundle composition, issuer/executor/witness roles, and transparency publication",
+    "due": "WI-12",
+    "owner": "operator",
+    "status": "queued",
+    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4"
+  }
+]

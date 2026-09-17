@@ -1,0 +1,15 @@
+{
+  "target": {
+    "contract": "AQ-CONT-1",
+    "implementation_commit": "29e096c4f06985d1a9bd9d5fe5a3a6a5db8a6860",
+    "git_tree": "1c0c85dd700bd9d0c75de223dada911ffeadbb5b",
+    "archive_sha256": "f91f496f22772e8dda044b0cf2cf05cf2eafa9f86d6f0c7e0061b46e3926ffb1",
+    "source_tree_sha256": "a6a8f87272d76e94e69e10d8bcf0992296d1bf8e28ff3d9222374c3b8cdcc34e",
+    "conformance_revision": 16
+  },
+  "binding_source": "Controller accepted WI-01 design, recovery-summary.json; commit is controller asserted, archive ZIP not independently verified.",
+  "execution_status": "not-run",
+  "actual_checker_aq_dependencies": [],
+  "historical_development_input": "97c9dc26c19c697dbfb204ed503e82c5f053394f",
+  "historical_runtime_aq": "registry crates 0.1.0/0.1.1; see frozen Cargo.lock; not target conformance"
+}
