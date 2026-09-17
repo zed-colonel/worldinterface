@@ -16,6 +16,8 @@ run_cargo() {
     cargo --config "$CRAFTINGTABLE_CARGO_CONFIG" "$@"
   fi
 }
+rustc --version --verbose
+rustfmt --version
 rustfmt --check --edition 2021 tools/wi-contract-check/src/*.rs tools/wi-contract-check/tests/*.rs
 run_cargo clippy --locked --manifest-path "$manifest" --all-targets -- -D warnings
 run_cargo build --locked --manifest-path "$manifest"
