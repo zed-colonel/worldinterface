@@ -36,4 +36,5 @@ plans/
 dev-output/
 
 # ── Local scripts ───────────────────────────────────────────
-scripts/
+scripts/*
+!scripts/check-wi-contract.sh

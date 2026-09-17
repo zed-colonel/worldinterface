@@ -1,0 +1,1301 @@
+{
+  "capabilities": [
+    {
+      "name": "code.apply_patch",
+      "display_name": "Code Apply Patch",
+      "description": "Applies a unified diff patch to a file. Supports multi-hunk patches with context validation. Can create new files. Returns a summary of changes applied. Respects .gitignore.",
+      "category": "code",
+      "input_schema": {
+        "properties": {
+          "file_path": {
+            "description": "The absolute path to the file to patch",
+            "type": "string"
+          },
+          "patch": {
+            "description": "Unified diff content with @@ hunk headers. Context lines (space prefix) are validated against the file. Supports multiple hunks.",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file_path",
+          "patch"
+        ],
+        "type": "object"
+      },
+      "output_schema": {
+        "properties": {
+          "created": {
+            "type": "boolean"
+          },
+          "diff": {
+            "properties": {
+              "lines_added": {
+                "type": "integer"
+              },
+              "lines_removed": {
+                "type": "integer"
+              },
+              "unified": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "file_path": {
+            "type": "string"
+          },
+          "hunks_applied": {
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "idempotent": false,
+      "side_effects": true,
+      "is_read_only": false,
+      "is_mutating": true,
+      "is_concurrency_safe": false,
+      "requires_read_before_write": true
+    },
+    {
+      "name": "code.edit",
+      "display_name": "Code Edit",
+      "description": "Performs targeted string replacement in a file. The old_string must match exactly once (unless replace_all is true). Returns a unified diff of the change. Respects .gitignore.",
+      "category": "code",
+      "input_schema": {
+        "properties": {
+          "file_path": {
+            "description": "The absolute path to the file to modify",
+            "type": "string"
+          },
+          "new_string": {
+            "description": "The replacement text",
+            "type": "string"
+          },
+          "old_string": {
+            "description": "The exact text to find and replace",
+            "type": "string"
+          },
+          "replace_all": {
+            "default": false,
+            "description": "Replace all occurrences (default: false)",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "file_path",
+          "old_string",
+          "new_string"
+        ],
+        "type": "object"
+      },
+      "output_schema": {
+        "properties": {
+          "diff": {
+            "properties": {
+              "lines_added": {
+                "type": "integer"
+              },
+              "lines_removed": {
+                "type": "integer"
+              },
+              "unified": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "file_path": {
+            "type": "string"
+          },
+          "replacements_made": {
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "idempotent": false,
+      "side_effects": true,
+      "is_read_only": false,
+      "is_mutating": true,
+      "is_concurrency_safe": false,
+      "requires_read_before_write": true
+    },
+    {
+      "name": "code.git_diff",
+      "display_name": "Code Git Diff",
+      "description": "Produces structured diff output from git state. Supports unstaged, staged, and committed (between refs) modes.",
+      "category": "code",
+      "input_schema": {
+        "properties": {
+          "file_path": {
+            "description": "Optional: scope diff to a single file (relative to repo root)",
+            "type": "string"
+          },
+          "from_ref": {
+            "description": "Starting ref for committed mode (e.g., HEAD~3, main)",
+            "type": "string"
+          },
+          "mode": {
+            "description": "Diff mode: unstaged (default), staged, or committed",
+            "enum": [
+              "unstaged",
+              "staged",
+              "committed"
+            ],
+            "type": "string"
+          },
+          "path": {
+            "description": "Path to the git repository root",
+            "type": "string"
+          },
+          "to_ref": {
+            "description": "Ending ref for committed mode (e.g., HEAD)",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "type": "object"
+      },
+      "output_schema": {
+        "properties": {
+          "files": {
+            "type": "array"
+          },
+          "mode": {
+            "type": "string"
+          },
+          "total_added": {
+            "type": "integer"
+          },
+          "total_files": {
+            "type": "integer"
+          },
+          "total_removed": {
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "idempotent": true,
+      "side_effects": false,
+      "is_read_only": true,
+      "is_mutating": false,
+      "is_concurrency_safe": true,
+      "requires_read_before_write": false
+    },
+    {
+      "name": "code.glob",
+      "display_name": "Code Glob",
+      "description": "Finds files matching a glob pattern, sorted by modification time (most recent first). Respects .gitignore. Supports standard glob syntax: *, **, ?, {a,b}, [abc].",
+      "category": "code",
+      "input_schema": {
+        "properties": {
+          "path": {
+            "description": "Directory to search in. Defaults to current working directory",
+            "type": "string"
+          },
+          "pattern": {
+            "description": "Glob pattern to match files (e.g., '**/*.rs', 'src/**/*.ts')",
+            "type": "string"
+          }
+        },
+        "required": [
+          "pattern"
+        ],
+        "type": "object"
+      },
+      "output_schema": {
+        "properties": {
+          "files": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "total_matches": {
+            "type": "integer"
+          },
+          "truncated": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "idempotent": true,
+      "side_effects": false,
+      "is_read_only": true,
+      "is_mutating": false,
+      "is_concurrency_safe": true,
+      "requires_read_before_write": false
+    },
+    {
+      "name": "code.grep",
+      "display_name": "Code Grep",
+      "description": "Searches file contents using regex patterns. Supports multiple output modes (matching lines, file paths, counts), glob-based file filtering, context lines, and case-insensitive matching. Respects .gitignore.",
+      "category": "code",
+      "input_schema": {
+        "properties": {
+          "case_insensitive": {
+            "description": "Enable case-insensitive matching. Default: false",
+            "type": "boolean"
+          },
+          "context": {
+            "description": "Number of lines before and after each match (content mode only). Overridden by context_before or context_after when specified.",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "context_after": {
+            "description": "Number of lines to show after each match (content mode only)",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "context_before": {
+            "description": "Number of lines to show before each match (content mode only)",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "glob": {
+            "description": "File pattern filter (e.g., '*.rs', '*.{ts,tsx}')",
+            "type": "string"
+          },
+          "max_results": {
+            "description": "Maximum number of matching lines/files to return. Default: 250",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "output_mode": {
+            "description": "Output format. Default: files_with_matches",
+            "enum": [
+              "content",
+              "files_with_matches",
+              "count"
+            ],
+            "type": "string"
+          },
+          "path": {
+            "description": "Directory to search in. Defaults to current working directory",
+            "type": "string"
+          },
+          "pattern": {
+            "description": "Regex pattern to search for in file contents",
+            "type": "string"
+          }
+        },
+        "required": [
+          "pattern"
+        ],
+        "type": "object"
+      },
+      "output_schema": {
+        "properties": {
+          "content": {
+            "type": "string"
+          },
+          "files_searched": {
+            "type": "integer"
+          },
+          "total_matches": {
+            "type": "integer"
+          },
+          "truncated": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "idempotent": true,
+      "side_effects": false,
+      "is_read_only": true,
+      "is_mutating": false,
+      "is_concurrency_safe": true,
+      "requires_read_before_write": false
+    },
+    {
+      "name": "code.impls",
+      "display_name": "Code Impls",
+      "description": "Finds impl blocks for a Rust type or trait inside a workspace.",
+      "category": "code",
+      "input_schema": {
+        "properties": {
+          "kind_hint": {
+            "type": "string"
+          },
+          "limit": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "path": {
+            "description": "Absolute workspace root",
+            "type": "string"
+          },
+          "path_hint": {
+            "type": "string"
+          },
+          "query": {
+            "type": "string"
+          },
+          "symbol_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "type": "object"
+      },
+      "output_schema": {
+        "properties": {
+          "content": {
+            "type": "string"
+          },
+          "impls": {
+            "type": "array"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "workspace_root": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "idempotent": true,
+      "side_effects": false,
+      "is_read_only": true,
+      "is_mutating": false,
+      "is_concurrency_safe": true,
+      "requires_read_before_write": false
+    },
+    {
+      "name": "code.ls",
+      "display_name": "Code List Directory",
+      "description": "Lists directory contents with type indicators, respecting .gitignore. Supports depth control and entry limits for navigating large directories.",
+      "category": "code",
+      "input_schema": {
+        "properties": {
+          "depth": {
+            "description": "Maximum recursion depth. Default: 2",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "max_entries": {
+            "description": "Maximum number of entries to return. Default: 200",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "path": {
+            "description": "The absolute path to the directory to list",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "type": "object"
+      },
+      "output_schema": {
+        "properties": {
+          "content": {
+            "type": "string"
+          },
+          "total_entries": {
+            "type": "integer"
+          },
+          "truncated": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "idempotent": true,
+      "side_effects": false,
+      "is_read_only": true,
+      "is_mutating": false,
+      "is_concurrency_safe": true,
+      "requires_read_before_write": false
+    },
+    {
+      "name": "code.read",
+      "display_name": "Code Read",
+      "description": "Reads file contents with line numbers, supporting windowed reads for navigating large files. Respects .gitignore.",
+      "category": "code",
+      "input_schema": {
+        "properties": {
+          "file_path": {
+            "description": "The absolute path to the file to read",
+            "type": "string"
+          },
+          "limit": {
+            "description": "Maximum number of lines to return. Default: 2000",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "offset": {
+            "description": "Line number to start reading from (1-based). Default: 1",
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "file_path"
+        ],
+        "type": "object"
+      },
+      "output_schema": {
+        "properties": {
+          "content": {
+            "type": "string"
+          },
+          "end_line": {
+            "type": "integer"
+          },
+          "file_size_bytes": {
+            "type": "integer"
+          },
+          "start_line": {
+            "type": "integer"
+          },
+          "total_lines": {
+            "type": "integer"
+          },
+          "truncated": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "idempotent": true,
+      "side_effects": false,
+      "is_read_only": true,
+      "is_mutating": false,
+      "is_concurrency_safe": true,
+      "requires_read_before_write": false
+    },
+    {
+      "name": "code.read_symbol",
+      "display_name": "Code Read Symbol",
+      "description": "Reads the exact source span for a resolved symbol or impl block from a Rust workspace.",
+      "category": "code",
+      "input_schema": {
+        "properties": {
+          "include_body": {
+            "description": "Whether to include the full symbol body. Default: true",
+            "type": "boolean"
+          },
+          "kind_hint": {
+            "type": "string"
+          },
+          "path": {
+            "description": "Absolute workspace root",
+            "type": "string"
+          },
+          "path_hint": {
+            "type": "string"
+          },
+          "query": {
+            "description": "Fallback symbol query when symbol_id is not provided",
+            "type": "string"
+          },
+          "symbol_id": {
+            "description": "Symbol id returned by code.symbol",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "type": "object"
+      },
+      "output_schema": {
+        "properties": {
+          "content": {
+            "type": "string"
+          },
+          "file_path": {
+            "type": "string"
+          },
+          "range": {
+            "type": "object"
+          },
+          "symbol": {
+            "type": "object"
+          },
+          "workspace_root": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "idempotent": true,
+      "side_effects": false,
+      "is_read_only": true,
+      "is_mutating": false,
+      "is_concurrency_safe": true,
+      "requires_read_before_write": false
+    },
+    {
+      "name": "code.references",
+      "display_name": "Code References",
+      "description": "Finds semantic/reference-like occurrences for a symbol across a Rust workspace.",
+      "category": "code",
+      "input_schema": {
+        "properties": {
+          "include_tests": {
+            "description": "Include test files and tests/ modules. Default: true",
+            "type": "boolean"
+          },
+          "kind_hint": {
+            "type": "string"
+          },
+          "limit": {
+            "minimum": 1,
+            "type": "integer"
+          },
+          "path": {
+            "description": "Absolute workspace root",
+            "type": "string"
+          },
+          "path_hint": {
+            "type": "string"
+          },
+          "query": {
+            "type": "string"
+          },
+          "symbol_id": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "type": "object"
+      },
+      "output_schema": {
+        "properties": {
+          "content": {
+            "type": "string"
+          },
+          "references": {
+            "type": "array"
+          },
+          "summary": {
+            "type": "string"
+          },
+          "truncated": {
+            "type": "boolean"
+          },
+          "workspace_root": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "idempotent": true,
+      "side_effects": false,
+      "is_read_only": true,
+      "is_mutating": false,
+      "is_concurrency_safe": true,
+      "requires_read_before_write": false
+    },
+    {
+      "name": "code.symbol",
+      "display_name": "Code Symbol",
+      "description": "Finds functions, methods, structs, enums, traits, impl blocks, and modules in a Rust workspace using semantic symbol lookup.",
+      "category": "code",
+      "input_schema": {
+        "properties": {
+          "kind_hint": {
+            "description": "Optional symbol kind hint",
+            "type": "string"
+          },
+          "limit": {
+            "description": "Maximum matches to return. Default: 8",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "path": {
+            "description": "Absolute workspace root",
+            "type": "string"
+          },
+          "path_hint": {
+            "description": "Optional absolute path or module/path hint",
+            "type": "string"
+          },
+          "query": {
+            "description": "Symbol name or semantic query",
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "query"
+        ],
+        "type": "object"
+      },
+      "output_schema": {
+        "properties": {
+          "content": {
+            "type": "string"
+          },
+          "matches": {
+            "type": "array"
+          },
+          "workspace_root": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "idempotent": true,
+      "side_effects": false,
+      "is_read_only": true,
+      "is_mutating": false,
+      "is_concurrency_safe": true,
+      "requires_read_before_write": false
+    },
+    {
+      "name": "code.test",
+      "display_name": "Code Test",
+      "description": "Runs a project test command from a workspace directory. If no command is supplied, infers a conventional test command from project files such as Cargo.toml, package.json, pyproject.toml, or go.mod.",
+      "category": "code",
+      "input_schema": {
+        "properties": {
+          "args": {
+            "description": "Arguments for the test binary. Ignored when command is omitted or 'auto'.",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "command": {
+            "description": "Optional test binary. Use 'auto' or omit to infer. Supported examples: cargo, npm, pnpm, yarn, python, pytest, go, mvn, gradle, ./gradlew",
+            "type": "string"
+          },
+          "env": {
+            "description": "Optional string environment variables to add to the test process.",
+            "type": "object"
+          },
+          "path": {
+            "description": "Workspace or package directory in which to run tests",
+            "type": "string"
+          },
+          "timeout_ms": {
+            "description": "Timeout in milliseconds. Default 300000, capped at 900000.",
+            "minimum": 1,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "type": "object"
+      },
+      "output_schema": {
+        "properties": {
+          "args": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "command": {
+            "type": "string"
+          },
+          "command_line": {
+            "type": "string"
+          },
+          "exit_code": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "passed": {
+            "type": "boolean"
+          },
+          "path": {
+            "type": "string"
+          },
+          "stderr": {
+            "type": "string"
+          },
+          "stderr_truncated": {
+            "type": "boolean"
+          },
+          "stdout": {
+            "type": "string"
+          },
+          "stdout_truncated": {
+            "type": "boolean"
+          },
+          "timed_out": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "idempotent": false,
+      "side_effects": true,
+      "is_read_only": false,
+      "is_mutating": false,
+      "is_concurrency_safe": false,
+      "requires_read_before_write": false
+    },
+    {
+      "name": "code.write",
+      "display_name": "Code Write",
+      "description": "Writes content to a file, creating it if it doesn't exist or overwriting if it does. Returns a unified diff for overwrites. Respects .gitignore.",
+      "category": "code",
+      "input_schema": {
+        "properties": {
+          "content": {
+            "description": "The content to write to the file",
+            "type": "string"
+          },
+          "create_dirs": {
+            "default": false,
+            "description": "Create parent directories if they don't exist (default: false)",
+            "type": "boolean"
+          },
+          "file_path": {
+            "description": "The absolute path to the file to write (must be absolute, not relative)",
+            "type": "string"
+          }
+        },
+        "required": [
+          "file_path",
+          "content"
+        ],
+        "type": "object"
+      },
+      "output_schema": {
+        "properties": {
+          "bytes_written": {
+            "type": "integer"
+          },
+          "created": {
+            "type": "boolean"
+          },
+          "diff": {
+            "properties": {
+              "lines_added": {
+                "type": "integer"
+              },
+              "lines_removed": {
+                "type": "integer"
+              },
+              "unified": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          },
+          "file_path": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "idempotent": true,
+      "side_effects": true,
+      "is_read_only": false,
+      "is_mutating": true,
+      "is_concurrency_safe": false,
+      "requires_read_before_write": true
+    },
+    {
+      "name": "delay",
+      "display_name": "Delay",
+      "description": "Waits for a specified duration.",
+      "category": "delay",
+      "input_schema": {
+        "properties": {
+          "duration_ms": {
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "duration_ms"
+        ],
+        "type": "object"
+      },
+      "output_schema": {
+        "properties": {
+          "slept_ms": {
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "idempotent": true,
+      "side_effects": false,
+      "is_read_only": true,
+      "is_mutating": false,
+      "is_concurrency_safe": true,
+      "requires_read_before_write": false
+    },
+    {
+      "name": "fs.read",
+      "display_name": "File Read",
+      "description": "Reads file contents from the local filesystem.",
+      "category": "file_system",
+      "input_schema": {
+        "properties": {
+          "path": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "path"
+        ],
+        "type": "object"
+      },
+      "output_schema": {
+        "properties": {
+          "content": {
+            "type": "string"
+          },
+          "size": {
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "idempotent": true,
+      "side_effects": false,
+      "is_read_only": true,
+      "is_mutating": false,
+      "is_concurrency_safe": true,
+      "requires_read_before_write": false
+    },
+    {
+      "name": "fs.write",
+      "display_name": "File Write",
+      "description": "Writes content to the local filesystem with idempotency enforcement.",
+      "category": "file_system",
+      "input_schema": {
+        "properties": {
+          "content": {
+            "type": "string"
+          },
+          "mode": {
+            "default": "create",
+            "enum": [
+              "create",
+              "overwrite",
+              "append"
+            ],
+            "type": "string"
+          },
+          "path": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "path",
+          "content"
+        ],
+        "type": "object"
+      },
+      "output_schema": {
+        "properties": {
+          "bytes_written": {
+            "type": "integer"
+          },
+          "path": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "idempotent": true,
+      "side_effects": true,
+      "is_read_only": false,
+      "is_mutating": true,
+      "is_concurrency_safe": false,
+      "requires_read_before_write": false
+    },
+    {
+      "name": "http.request",
+      "display_name": "HTTP Request",
+      "description": "Makes an HTTP request to an external URL.",
+      "category": "http",
+      "input_schema": {
+        "properties": {
+          "body": {},
+          "headers": {
+            "type": "object"
+          },
+          "method": {
+            "enum": [
+              "GET",
+              "POST",
+              "PUT",
+              "DELETE",
+              "PATCH",
+              "HEAD"
+            ],
+            "type": "string"
+          },
+          "timeout_ms": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "url": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "url"
+        ],
+        "type": "object"
+      },
+      "output_schema": {
+        "properties": {
+          "body": {
+            "type": "string"
+          },
+          "headers": {
+            "type": "object"
+          },
+          "status": {
+            "type": "integer"
+          }
+        },
+        "type": "object"
+      },
+      "idempotent": false,
+      "side_effects": true,
+      "is_read_only": false,
+      "is_mutating": true,
+      "is_concurrency_safe": true,
+      "requires_read_before_write": false
+    },
+    {
+      "name": "repo.context",
+      "display_name": "Repo Context",
+      "description": "Builds a compact, line-grounded repository context pack for a coding task. It combines likely files, symbols, optional regex patterns, and context windows around matches. Respects .gitignore.",
+      "category": "code",
+      "input_schema": {
+        "properties": {
+          "case_insensitive": {
+            "description": "Whether regex matching is case-insensitive. Default: true",
+            "type": "boolean"
+          },
+          "context": {
+            "description": "Number of lines before and after each match. Default: 2, max: 8",
+            "minimum": 0,
+            "type": "integer"
+          },
+          "include_tests": {
+            "description": "Whether test files and tests/ directories should be considered. Default: true",
+            "type": "boolean"
+          },
+          "limit": {
+            "description": "Maximum number of files to return. Default: 6, max: 20",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "max_matches_per_file": {
+            "description": "Maximum rendered matches per returned file. Default: 5, max: 20",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "path": {
+            "description": "Absolute repository/workspace directory. Defaults to current working directory",
+            "type": "string"
+          },
+          "patterns": {
+            "description": "Optional regex patterns to search for. If omitted, patterns are derived from query and symbols",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "query": {
+            "description": "Natural-language task text or localization query",
+            "type": "string"
+          },
+          "symbols": {
+            "description": "Identifiers, type names, function names, modules, or filenames to prioritize",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "target_paths": {
+            "description": "Optional absolute or workspace-relative files/directories to inspect first",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "output_schema": {
+        "properties": {
+          "content": {
+            "type": "string"
+          },
+          "files": {
+            "type": "array"
+          },
+          "patterns": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "scanned_files": {
+            "type": "integer"
+          },
+          "truncated_scan": {
+            "type": "boolean"
+          },
+          "workspace_root": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "idempotent": true,
+      "side_effects": false,
+      "is_read_only": true,
+      "is_mutating": false,
+      "is_concurrency_safe": true,
+      "requires_read_before_write": false
+    },
+    {
+      "name": "repo.locate",
+      "display_name": "Repo Locate",
+      "description": "Ranks likely files, modules, manifests, and packages for a coding task based on task text and symbols. Returns absolute candidate paths plus Rust package/test hints when a Cargo workspace is detected. Respects .gitignore.",
+      "category": "code",
+      "input_schema": {
+        "properties": {
+          "include_tests": {
+            "description": "Whether test files and tests/ directories should be considered. Default: true",
+            "type": "boolean"
+          },
+          "limit": {
+            "description": "Maximum number of ranked candidates to return. Default: 8",
+            "minimum": 1,
+            "type": "integer"
+          },
+          "path": {
+            "description": "Absolute directory to search. Defaults to current working directory",
+            "type": "string"
+          },
+          "query": {
+            "description": "Natural-language task text or concise localization query",
+            "type": "string"
+          },
+          "symbols": {
+            "description": "Optional identifiers, filenames, module names, or paths to prioritize",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          }
+        },
+        "type": "object"
+      },
+      "output_schema": {
+        "properties": {
+          "candidates": {
+            "items": {
+              "properties": {
+                "kind": {
+                  "type": "string"
+                },
+                "package": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "path": {
+                  "type": "string"
+                },
+                "score": {
+                  "type": "integer"
+                },
+                "test_target_hint": {
+                  "type": [
+                    "string",
+                    "null"
+                  ]
+                },
+                "why": {
+                  "items": {
+                    "type": "string"
+                  },
+                  "type": "array"
+                }
+              },
+              "type": "object"
+            },
+            "type": "array"
+          },
+          "content": {
+            "type": "string"
+          },
+          "scanned_files": {
+            "type": "integer"
+          },
+          "truncated_scan": {
+            "type": "boolean"
+          },
+          "workspace_root": {
+            "type": "string"
+          },
+          "workspace_type": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "idempotent": true,
+      "side_effects": false,
+      "is_read_only": true,
+      "is_mutating": false,
+      "is_concurrency_safe": true,
+      "requires_read_before_write": false
+    },
+    {
+      "name": "sandbox.exec",
+      "display_name": "Sandbox Execute",
+      "description": "Executes a command in the isolated sandbox at /sandbox. Use for code experimentation, data processing, and safe testing. Available runtimes: python3 (with venv support), shell utilities (curl, jq, git). Constraints: 60s max timeout, 256KB output limit, no /data access. The command is a binary path (e.g. \"python3\") with separate args.",
+      "category": "sandbox",
+      "input_schema": {
+        "properties": {
+          "args": {
+            "description": "Arguments to the command. For python: [\"-c\", \"print('hello')\"]",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "command": {
+            "description": "Binary path to execute (e.g. \"python3\", \"curl\"). No shell expansion.",
+            "type": "string"
+          },
+          "env": {
+            "type": "object"
+          },
+          "timeout_ms": {
+            "maximum": 60000,
+            "minimum": 0,
+            "type": "integer"
+          }
+        },
+        "required": [
+          "command"
+        ],
+        "type": "object"
+      },
+      "output_schema": {
+        "properties": {
+          "exit_code": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "stderr": {
+            "type": "string"
+          },
+          "stdout": {
+            "type": "string"
+          },
+          "timed_out": {
+            "type": "boolean"
+          },
+          "truncated": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "idempotent": false,
+      "side_effects": true,
+      "is_read_only": false,
+      "is_mutating": true,
+      "is_concurrency_safe": false,
+      "requires_read_before_write": false
+    },
+    {
+      "name": "shell.exec",
+      "display_name": "Shell Execute",
+      "description": "Executes a command in the host container environment. By default, 'command' is a binary path (e.g. \"echo\") with separate 'args'. Set shell:true to pass a full shell string to /bin/sh -c.",
+      "category": "shell",
+      "input_schema": {
+        "properties": {
+          "args": {
+            "description": "Arguments passed to the binary (ignored when shell:true)",
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "command": {
+            "description": "Binary path (default) or shell string (if shell:true). Example: \"ls\" or \"echo hello && date\"",
+            "type": "string"
+          },
+          "env": {
+            "type": "object"
+          },
+          "shell": {
+            "description": "If true, command is passed to /bin/sh -c (enables pipes, expansion). Default: false",
+            "type": "boolean"
+          },
+          "timeout_ms": {
+            "minimum": 0,
+            "type": "integer"
+          },
+          "working_dir": {
+            "type": "string"
+          }
+        },
+        "required": [
+          "command"
+        ],
+        "type": "object"
+      },
+      "output_schema": {
+        "properties": {
+          "exit_code": {
+            "type": [
+              "integer",
+              "null"
+            ]
+          },
+          "stderr": {
+            "type": "string"
+          },
+          "stdout": {
+            "type": "string"
+          },
+          "timed_out": {
+            "type": "boolean"
+          },
+          "truncated": {
+            "type": "boolean"
+          }
+        },
+        "type": "object"
+      },
+      "idempotent": false,
+      "side_effects": true,
+      "is_read_only": false,
+      "is_mutating": true,
+      "is_concurrency_safe": false,
+      "requires_read_before_write": false
+    }
+  ]
+}

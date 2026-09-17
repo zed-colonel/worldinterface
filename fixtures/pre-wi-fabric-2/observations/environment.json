@@ -1,0 +1,76 @@
+{
+  "commands": [
+    {
+      "args": [
+        "git",
+        "--version"
+      ],
+      "exit_code": 0,
+      "stdout": "git version 2.55.0\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "rustc",
+        "--version",
+        "--verbose"
+      ],
+      "exit_code": 0,
+      "stdout": "rustc 1.86.0 (05f9846f8 2025-03-31)\nbinary: rustc\ncommit-hash: 05f9846f893b09a1be1fc8560e33fc3c815cfecb\ncommit-date: 2025-03-31\nhost: x86_64-unknown-linux-gnu\nrelease: 1.86.0\nLLVM version: 19.1.7\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "uname",
+        "-a"
+      ],
+      "exit_code": 0,
+      "stdout": "Linux omarchy-workstation 7.2.5-3-omarchy #1 SMP PREEMPT_DYNAMIC Mon, 14 Sep 2026 19:55:01 +0000 x86_64 GNU/Linux\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "git",
+        "config",
+        "--show-origin",
+        "--get-regexp",
+        "^diff\\."
+      ],
+      "exit_code": 0,
+      "stdout": "file:/home/keith/.config/git/config\tdiff.algorithm histogram\nfile:/home/keith/.config/git/config\tdiff.colormoved plain\nfile:/home/keith/.config/git/config\tdiff.mnemonicprefix true\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "git",
+        "rev-parse",
+        "HEAD",
+        "refs/tags/worldinterface/pre-wi-fabric-2^{}"
+      ],
+      "exit_code": 0,
+      "stdout": "f48df82e98203fa94c86eecae60425205c3e00e9\nf48df82e98203fa94c86eecae60425205c3e00e9\n",
+      "stderr": ""
+    },
+    {
+      "args": [
+        "git",
+        "status",
+        "--porcelain"
+      ],
+      "exit_code": 0,
+      "stdout": "",
+      "stderr": ""
+    }
+  ],
+  "controlled_test_environment": {
+    "GIT_CONFIG_COUNT": "1",
+    "GIT_CONFIG_KEY_0": "diff.mnemonicPrefix",
+    "GIT_CONFIG_VALUE_0": "false"
+  },
+  "initial_test_environment": "inherited; global diff.mnemonicprefix=true",
+  "no_source_or_lockfile_changes": true,
+  "Cargo.lock_sha256": "5357485f559259e630e297d3a5e086f3d64757b680ef5b5fafaa7c6d712067ab",
+  "Cargo.toml_sha256": "163bd62929b92bc4c7dce1c67039f39143002dee746c7af67cbfebdee7ca9757",
+  "rust-toolchain.toml_sha256": "bf22a6bd08945cfed9b5bdd0c1990dfeb65cf397983cce0dde1cc33b68e3d625",
+  "cpu_count": 16
+}

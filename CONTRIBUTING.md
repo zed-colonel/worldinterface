@@ -93,3 +93,35 @@ See `world-interface-v1.0-invariant-boundaries-policy.md` for the full specifica
 
 By contributing, you agree that your contributions will be licensed under the
 Apache License, Version 2.0 that covers this project.
+
+## WI-FABRIC-2 development contract
+
+Target feature work uses the single `wi-fabric-2` integration branch. The
+experimental baseline is frozen at `worldinterface/pre-wi-fabric-2`; extract
+historical evidence without changing its semantics. Only the controller/operator
+integrates reviewed source branches. Publication and repository administration
+follow [publication staging](docs/release/publication-staging.md).
+
+Every PR records maturity (Independent, Assumption-bound, Contract-blocked or
+Integration-only), invariants, evidence and exact upstream identities. Use the PR
+and upstream-requirement templates. Changes to connectors update the complete
+inventory and dispositions. Pure state changes require property tests, durable
+changes replay tests, and external/cross-store changes crash tests. WI-01 changes
+only development contracts; it does not implement new runtime recovery.
+
+Run `scripts/check-wi-contract.sh` using the supplied controller Cargo launcher and
+explicit `CRAFTINGTABLE_CARGO_CONFIG`. Keep `CARGO_TARGET_DIR` and verification
+artifacts outside the checkout. Local CI is
+`ct-act -W .github/workflows/wi-contract.yml -j contract`. Controller `ct-check`
+retains repository check evidence. Historical runtime characterization is separate
+from these independent checks; no current AQ integration is claimed.
+
+Generated inventory is reviewable source; regenerate with
+`wi-contract-check inventory generate > inventory/current.json`, then review every
+changed disposition in `inventory/dispositions.json`. Do not auto-accept target
+ownership or ADR decisions. Milestone advancement is controller-owned: externally
+supplied `WI_MILESTONE_STATE` requires `WI_APPROVED_MILESTONE_SHA256` and a
+set of unique approved milestone IDs including WI-01 entry. Each rule activates
+only when its own milestone is present; WI-04 and WI-05 need no WI-03 entry.
+Scheduling, dependency admission and rollback protection remain controller-owned.
+The checked-in state admits WI-01 only and asserts no completed milestone. Do not weaken policy files to make deletion gates pass.

@@ -1,0 +1,903 @@
+{
+  "kind": "wi01-historical-exo-benchmark-archive",
+  "collected_at": "2026-09-17T18:15:28.903872+00:00",
+  "source_root": "/home/keith/src/exoskeleton/benchmarks",
+  "operator_designated_baseline_commit": "1bcbb757a7885ce1f911ac948bfc2269c9209075",
+  "baseline_tag": "exoskeleton/pre-exo-v3",
+  "discovery": "Path.rglob filesystem traversal including ignored files; exclude target and .git directories",
+  "file_count": 90,
+  "total_bytes": 1927197,
+  "file_manifest_sha256": "073d7519ac150ece6ae1cec5be58b4c7f797a132f9bf72215cd6daa58d40e66d",
+  "files": [
+    {
+      "path": "bench-vessel.toml",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/bench-vessel.toml",
+      "bytes": 1507,
+      "sha256": "16c375ae561b6ecc2d2876d6a96b3d1a7b4d745db96f70d2fe222f55126af79e",
+      "tracked_at_frozen_commit": true,
+      "historical_execution_commit": null,
+      "frozen_commit": "1bcbb757a7885ce1f911ac948bfc2269c9209075",
+      "frozen_blob_sha256": "16c375ae561b6ecc2d2876d6a96b3d1a7b4d745db96f70d2fe222f55126af79e",
+      "matches_frozen_blob": true
+    },
+    {
+      "path": "repos/sample-rust/.gitignore",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/repos/sample-rust/.gitignore",
+      "bytes": 19,
+      "sha256": "12cc0f91b51fedf41ae1670d1624ee1d78a284bdb101645b60a06a12de16c069",
+      "tracked_at_frozen_commit": true,
+      "historical_execution_commit": null,
+      "frozen_commit": "1bcbb757a7885ce1f911ac948bfc2269c9209075",
+      "frozen_blob_sha256": "12cc0f91b51fedf41ae1670d1624ee1d78a284bdb101645b60a06a12de16c069",
+      "matches_frozen_blob": true
+    },
+    {
+      "path": "repos/sample-rust/Cargo.lock",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/repos/sample-rust/Cargo.lock",
+      "bytes": 155,
+      "sha256": "05c88a19f6c1a4bd2a4f0d92e280e80827f001080d82c84b8a18426a00a3f1bc",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "repos/sample-rust/Cargo.toml",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/repos/sample-rust/Cargo.toml",
+      "bytes": 79,
+      "sha256": "f7a6fdad07f316a2c3168b5c0dd9af42cb5bb10c8ba0cd325cd9dc33f067ca21",
+      "tracked_at_frozen_commit": true,
+      "historical_execution_commit": null,
+      "frozen_commit": "1bcbb757a7885ce1f911ac948bfc2269c9209075",
+      "frozen_blob_sha256": "f7a6fdad07f316a2c3168b5c0dd9af42cb5bb10c8ba0cd325cd9dc33f067ca21",
+      "matches_frozen_blob": true
+    },
+    {
+      "path": "repos/sample-rust/src/lib.rs",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/repos/sample-rust/src/lib.rs",
+      "bytes": 1219,
+      "sha256": "4f6a07ed71fc95baaa7243cb58588a956f3905730ad5201d751ad914a9bb2722",
+      "tracked_at_frozen_commit": true,
+      "historical_execution_commit": null,
+      "frozen_commit": "1bcbb757a7885ce1f911ac948bfc2269c9209075",
+      "frozen_blob_sha256": "4f6a07ed71fc95baaa7243cb58588a956f3905730ad5201d751ad914a9bb2722",
+      "matches_frozen_blob": true
+    },
+    {
+      "path": "results/.gitignore",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/.gitignore",
+      "bytes": 14,
+      "sha256": "240a3e0d37d2e86b614063f5347eb02d4f99ca6c254de6b82871ff8d95532a7d",
+      "tracked_at_frozen_commit": true,
+      "historical_execution_commit": null,
+      "frozen_commit": "1bcbb757a7885ce1f911ac948bfc2269c9209075",
+      "frozen_blob_sha256": "240a3e0d37d2e86b614063f5347eb02d4f99ca6c254de6b82871ff8d95532a7d",
+      "matches_frozen_blob": true
+    },
+    {
+      "path": "results/code-test-exact-patch-no-repeat-test-swe-aya-774-16ticks-20260429.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/code-test-exact-patch-no-repeat-test-swe-aya-774-16ticks-20260429.json",
+      "bytes": 39025,
+      "sha256": "e25dae165a44101dcb7b91e839aa4e9241ebefb0880f5bef5da47cd507b7710a",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/code-test-known-aya-patch-swe-aya-774-16ticks-20260429.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/code-test-known-aya-patch-swe-aya-774-16ticks-20260429.json",
+      "bytes": 32835,
+      "sha256": "af3b7ca824b45137b90e316203e07a2b95b54be32bd597e6ec0c401510364064",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/code-test-multipatch-swe-aya-774-16ticks-20260428.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/code-test-multipatch-swe-aya-774-16ticks-20260428.json",
+      "bytes": 33973,
+      "sha256": "1cb7e6712e1ded379668d41ded4a3b234dad725c0ee680f587c6a03f1abf5e0c",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/code-test-noproposal-easy03-20260428.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/code-test-noproposal-easy03-20260428.json",
+      "bytes": 7137,
+      "sha256": "145d4f7c8b368c52f7301a91a7769898b4ec7e3abdbfa538a61a1387a29e0ba4",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/code-test-noproposal-easy03-20260429.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/code-test-noproposal-easy03-20260429.json",
+      "bytes": 9148,
+      "sha256": "904189a27c5de504598208770da40755f541f50b319e92611f822120e945718f",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/code-test-policy-easy-suite-20260429.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/code-test-policy-easy-suite-20260429.json",
+      "bytes": 26463,
+      "sha256": "81d56326cca17c64524d8452f636b430b6b6346c832c4a6076a04c1285acffa5",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/code-test-policy-scoped-swe-aya-774-12ticks-20260429.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/code-test-policy-scoped-swe-aya-774-12ticks-20260429.json",
+      "bytes": 1397,
+      "sha256": "1dd595f758bb29ae4eaed3a45629d59b9b85641bcefee3f4b2a43fe086eb0b0d",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/code-test-policy-scoped2-swe-aya-774-8ticks-20260429.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/code-test-policy-scoped2-swe-aya-774-8ticks-20260429.json",
+      "bytes": 1397,
+      "sha256": "6c2bbe485d8f18e98da1d11035f4aacdecfb4aba46f97b51b86e274bbdba8d6c",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/code-test-policy-scoped3-swe-aya-774-8ticks-20260429.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/code-test-policy-scoped3-swe-aya-774-8ticks-20260429.json",
+      "bytes": 1397,
+      "sha256": "10e9b9f726e9ccbd5b3274736baf4536c222bde476ba219ca5e5787b72b50556",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/code-test-policy-swe-aya-774-16ticks-20260429.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/code-test-policy-swe-aya-774-16ticks-20260429.json",
+      "bytes": 1398,
+      "sha256": "1a2c0941a6cfcafa0a0bec592e57f0f1979672c02687e75f5dd04f540e555565",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/code-test-preferred-easy-20260428.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/code-test-preferred-easy-20260428.json",
+      "bytes": 25584,
+      "sha256": "1f00734207c285a2a0e3cb17347c6eeab08d0999667f9f8d16313499b25f963a",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/code-test-ready-aya-patch-swe-aya-774-16ticks-20260429.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/code-test-ready-aya-patch-swe-aya-774-16ticks-20260429.json",
+      "bytes": 34765,
+      "sha256": "90aa4c83c089dfe10941e65a7f95dc8ecd14e955871a8f9b7550778667394b6a",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/code-test-targeted-f2p-swe-aya-774-12ticks-20260429.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/code-test-targeted-f2p-swe-aya-774-12ticks-20260429.json",
+      "bytes": 27976,
+      "sha256": "bf5f06553827d1796015cd9cb8bc06a0e6e0ec9ddcb1f55d505bdba6b10daa17",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/code-test-upgrade-swe-aya-774-16ticks-20260429.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/code-test-upgrade-swe-aya-774-16ticks-20260429.json",
+      "bytes": 32895,
+      "sha256": "5bd810fdecfdf20db5992437c5f71085bfbe91fca6fb8e75f1281965a6deb7ff",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/code-test-verification-easy-20260428.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/code-test-verification-easy-20260428.json",
+      "bytes": 25705,
+      "sha256": "27115af6a1126aed2f7d9a6dc8dfbcfb95cdaf02e3d22254e46f72d8a3f38d52",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/coding-thread-inspectpass-easy02-20260420.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/coding-thread-inspectpass-easy02-20260420.json",
+      "bytes": 8085,
+      "sha256": "107e142495ed524a2022fe37335277e9f1bd54543f1c704a6f156d4911f496c2",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/coding-thread-inspectpass-swe-aya-774-10ticks-20260420.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/coding-thread-inspectpass-swe-aya-774-10ticks-20260420.json",
+      "bytes": 27200,
+      "sha256": "192d5b5dd18adb5d405dc72e18f2df85c595081a56093aee0e9274650ca4758a",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/coding-thread-stallfix-easy02-20260420.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/coding-thread-stallfix-easy02-20260420.json",
+      "bytes": 8068,
+      "sha256": "b42f38ef7f7a2e1fc0b427c84bc6d6e0f7833de46943710ed935310ca6796370",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/coding-thread-stallfix-swe-aya-774-10ticks-20260420.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/coding-thread-stallfix-swe-aya-774-10ticks-20260420.json",
+      "bytes": 26828,
+      "sha256": "bdf554f33c322ab6565bd685238bc5278c8dae0acda011161649dbd15f8e916b",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/edit-candidate-commitment-easy-20260428.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/edit-candidate-commitment-easy-20260428.json",
+      "bytes": 25806,
+      "sha256": "02885e77d90c78590dd8b69d7d18624952663f97647ab30e3fbe6bdf83e0c14a",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/edit-candidate-commitment-swe-aya-774-16ticks-20260428.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/edit-candidate-commitment-swe-aya-774-16ticks-20260428.json",
+      "bytes": 32256,
+      "sha256": "349347a4e99b9252752e822fb1c9ab78c93fe64642517fc41e66e8ab3ec0e0fb",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/edit-candidate-macro-edit-verify-swe-aya-774-16ticks-20260428.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/edit-candidate-macro-edit-verify-swe-aya-774-16ticks-20260428.json",
+      "bytes": 32238,
+      "sha256": "2489d865efb182f87c90cd99bd1eb261266981eea5bc18c7c5490e179d404d54",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/edit-candidate-pathhint-swe-aya-774-16ticks-20260428.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/edit-candidate-pathhint-swe-aya-774-16ticks-20260428.json",
+      "bytes": 27610,
+      "sha256": "208c71f73cb5aced3b70695edd455cdd8a2d9e672b5cf07b32080135e3bdbad8",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/final-governor-repo-context-easy-20260428.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/final-governor-repo-context-easy-20260428.json",
+      "bytes": 24834,
+      "sha256": "2ac1a05b9efb97764953ef57b09ed3aa4253790c19f107979f7bb67691caed87",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/final-governor-repo-context-swe-aya-774-16ticks-20260428.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/final-governor-repo-context-swe-aya-774-16ticks-20260428.json",
+      "bytes": 31304,
+      "sha256": "bf041313d0808c5cec7ec8c95111be8200d9801e880756f9d31f3c4c89ce280a",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/final-governor-repo-context-swe-aya-774-16ticks-rerun-20260428.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/final-governor-repo-context-swe-aya-774-16ticks-rerun-20260428.json",
+      "bytes": 32025,
+      "sha256": "516b94833809e83cb1cdd97b7cf72d7f89ebe4e6f2c636466f1498be51ff3b96",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/harmonized-exec-thread-1.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/harmonized-exec-thread-1.json",
+      "bytes": 23233,
+      "sha256": "3710118b037a1e088907c8d1d6e0b07c13f785af964b3608b7b50963d8bf078a",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/harmonized-exec-thread-10.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/harmonized-exec-thread-10.json",
+      "bytes": 20694,
+      "sha256": "786d3fc599b69b274255ab0d4c8a727698519d4444f41ed06a4fa9d16bfc9ec6",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/harmonized-exec-thread-2.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/harmonized-exec-thread-2.json",
+      "bytes": 32455,
+      "sha256": "b0e00b25212578c62217a5631a9bd9f7cfbc6a90840d03fd627e285b8cc71474",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/harmonized-exec-thread-3.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/harmonized-exec-thread-3.json",
+      "bytes": 24383,
+      "sha256": "ed6933623056727e075ac9c700e2e5f207bd3e1465f512684e618bd8e77e7c43",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/harmonized-exec-thread-4.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/harmonized-exec-thread-4.json",
+      "bytes": 33195,
+      "sha256": "d1292851b6669f638abe931f61f311e772cf3a5df06c99ee14f723039a2297cd",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/harmonized-exec-thread-5.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/harmonized-exec-thread-5.json",
+      "bytes": 41356,
+      "sha256": "9359fe1b1da98ce2b8aa05736e0c1be1bb305600671b49ea21090cbe86b05032",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/harmonized-exec-thread-6.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/harmonized-exec-thread-6.json",
+      "bytes": 23666,
+      "sha256": "7c49b7d6464dabf5d3ee5be77682ee0f1b38e5a1ffbc3eacb705bf169cbb2a99",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/harmonized-exec-thread-7.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/harmonized-exec-thread-7.json",
+      "bytes": 32121,
+      "sha256": "24614346933a6ce11b3f4b9d487e9ff50c8a85b753dca6ae1fa9b871569010b7",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/harmonized-exec-thread-8.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/harmonized-exec-thread-8.json",
+      "bytes": 28701,
+      "sha256": "d123e36225167481f42c00cd5f2bdd4b6c6409ebd0e8fa7cfc226737925cf37d",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/harmonized-exec-thread-9.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/harmonized-exec-thread-9.json",
+      "bytes": 26189,
+      "sha256": "4cd57ede7ee08cfee42c3d6ec5e02ff64c60580ee435a4163d1c62da975b84a9",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/harmonized-swe-smoke-1.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/harmonized-swe-smoke-1.json",
+      "bytes": 19111,
+      "sha256": "629fc4b323a7466edff19035576465e287a9dac031277b2e6843e1ae8f927f5e",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/harmonized-swe-smoke-aya-10ticks.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/harmonized-swe-smoke-aya-10ticks.json",
+      "bytes": 23403,
+      "sha256": "54153859415bde50d11993be4e313cf88a3fbe07572cc6e2e83c3bb3862a15ab",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/inspect-edit-policy-easy-suite-20260428.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/inspect-edit-policy-easy-suite-20260428.json",
+      "bytes": 24393,
+      "sha256": "71c07abb5538c6c426ffeec91f64c228e5262d9a005838f3996070785d75ba99",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/inspect-edit-policy-swe-aya-774-10ticks-20260428.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/inspect-edit-policy-swe-aya-774-10ticks-20260428.json",
+      "bytes": 27156,
+      "sha256": "a882be4bad2f3a46a1ea0dc3ec0bfbf86fd79840955d48dd94f5ad1035a5701c",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/inspect-edit-policy10-swe-aya-774-16ticks-20260428.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/inspect-edit-policy10-swe-aya-774-16ticks-20260428.json",
+      "bytes": 33145,
+      "sha256": "c58cb514dc4c62e5c3714d7b232fb9979d5a52d37cfe0fd07349f45cba2e0aa2",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/inspect-edit-policy11-swe-aya-774-16ticks-20260428.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/inspect-edit-policy11-swe-aya-774-16ticks-20260428.json",
+      "bytes": 32246,
+      "sha256": "a687dac31f266817e80f0678dcb58ea3fafa741f939e35eb39b5e68dda0bab80",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/inspect-edit-policy2-swe-aya-774-10ticks-20260428.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/inspect-edit-policy2-swe-aya-774-10ticks-20260428.json",
+      "bytes": 26793,
+      "sha256": "77ee686ae4f14c8a81f504e5b1af9bf8804a5f32382eda9030f1dcc81a8b4e17",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/inspect-edit-policy3-swe-aya-774-10ticks-20260428.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/inspect-edit-policy3-swe-aya-774-10ticks-20260428.json",
+      "bytes": 27079,
+      "sha256": "2c62b020d6374dea7649dbab3c3d217dcbb225d4a640881a2739f62778c2496e",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/inspect-edit-policy4-swe-aya-774-10ticks-20260428.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/inspect-edit-policy4-swe-aya-774-10ticks-20260428.json",
+      "bytes": 26252,
+      "sha256": "2a20585d923cbae589ae8beb8bfd50dd85622ad54596e23e9a3ddae50773a3da",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/inspect-edit-policy5-swe-aya-774-10ticks-20260428.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/inspect-edit-policy5-swe-aya-774-10ticks-20260428.json",
+      "bytes": 27327,
+      "sha256": "18c2bd3d7998e72e6d75031b237d7f646d472364a11e02252247f9915bb366f0",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/inspect-edit-policy6-swe-aya-774-10ticks-20260428.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/inspect-edit-policy6-swe-aya-774-10ticks-20260428.json",
+      "bytes": 25892,
+      "sha256": "3d218cf4b5ce6a6d32152e920e159bb429ca31da108dc287ec9c604f4a6db856",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/inspect-edit-policy7-swe-aya-774-12ticks-20260428.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/inspect-edit-policy7-swe-aya-774-12ticks-20260428.json",
+      "bytes": 28758,
+      "sha256": "f8af883bc9b77dc62d17cf28ed294538b80aa868b996fcd8327db7ff30189650",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/inspect-edit-policy8-swe-aya-774-12ticks-20260428.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/inspect-edit-policy8-swe-aya-774-12ticks-20260428.json",
+      "bytes": 28510,
+      "sha256": "bfe4562df06cd58c43792a6629b80f305db19e2701a39d394eebcb41bb119a9a",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/inspect-edit-policy9-swe-aya-774-16ticks-20260428.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/inspect-edit-policy9-swe-aya-774-16ticks-20260428.json",
+      "bytes": 32554,
+      "sha256": "ebd66f53c2ba60d0bbc33a70ae98a2226ca90fb80b3a59d53e65666d4ff3bbd0",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/phase1-baseline-easy-20260417.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/phase1-baseline-easy-20260417.json",
+      "bytes": 41907,
+      "sha256": "dc30783084e62ea5895b797ea99b233304268d85059fbf7c5c06115971e0fe43",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/phase1-baseline-swe-aya-774-10ticks-20260417.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/phase1-baseline-swe-aya-774-10ticks-20260417.json",
+      "bytes": 26539,
+      "sha256": "f0f7a9622e755be6d08da5d51755039473839afd1db09f14d26c878a890e4473",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/phase2-repo-locate-easy-20260417.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/phase2-repo-locate-easy-20260417.json",
+      "bytes": 40985,
+      "sha256": "b1a4611197d97e8def6cff1a79b4ce6fcd80f0b88ceaa0683041b2722812ea9e",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/phase2-repo-locate-easy01-check-2-20260417.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/phase2-repo-locate-easy01-check-2-20260417.json",
+      "bytes": 11480,
+      "sha256": "2be6a8221424083b1e57274ba42f5a42252a6d1261c4d5b7eed0b2461248cf9c",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/phase2-repo-locate-easy01-check-20260417.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/phase2-repo-locate-easy01-check-20260417.json",
+      "bytes": 10441,
+      "sha256": "e93c30cafb2f5230a52ef32986a780d808b84bdc6785a96f28dc7c3b20514d1e",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/phase2-repo-locate-swe-aya-774-10ticks-20260417.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/phase2-repo-locate-swe-aya-774-10ticks-20260417.json",
+      "bytes": 26464,
+      "sha256": "8132b361ab7fc81da7063ab64e001b8102aa89cc3f0d0940e57d99b94debb3e4",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/phase2-repo-locate-swe-aya-774-10ticks-fix1-20260417.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/phase2-repo-locate-swe-aya-774-10ticks-fix1-20260417.json",
+      "bytes": 26773,
+      "sha256": "336ece3ff38673f0992e11e16f59d2cf3aae2979014d5188f5f7fea3050ac7b4",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/phase2-repo-locate-swe-aya-774-10ticks-fix2-20260417.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/phase2-repo-locate-swe-aya-774-10ticks-fix2-20260417.json",
+      "bytes": 25393,
+      "sha256": "d186685d845e0c90988b6e5a2da4d21eac6f02340795724c2d4f66f64cf04d36",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/policy-abstraction-easy-20260427.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/policy-abstraction-easy-20260427.json",
+      "bytes": 2423,
+      "sha256": "ccc480018899b0d0b61398323488916923e35da74ce808c1c3bb419849feb9fc",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/policy-abstraction-easy-net-20260427.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/policy-abstraction-easy-net-20260427.json",
+      "bytes": 26660,
+      "sha256": "bd74c31bd85d518ede884f7885e500ccd81e68e5023dde6fd36f42d18b10aeb9",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/policy-abstraction-swe-aya-774-10ticks-20260427.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/policy-abstraction-swe-aya-774-10ticks-20260427.json",
+      "bytes": 27212,
+      "sha256": "549bd01ccdc8cd8f3c5c466654b6c1ecb6864c719f97b53447d949fff0c69909",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/semantic-nav-easy-20260420.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/semantic-nav-easy-20260420.json",
+      "bytes": 28441,
+      "sha256": "82262df94ff71ea515e3c39225444b716b3a55b00baaaca91b7a4d3c780d0bd2",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/semantic-nav-smoke-easy02-20260420.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/semantic-nav-smoke-easy02-20260420.json",
+      "bytes": 9648,
+      "sha256": "fa3eb8938a5663282327833f23802e9cfccbfa9aeb5d99a1b743de0d09826ca6",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/semantic-nav-swe-aya-774-10ticks-20260420.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/semantic-nav-swe-aya-774-10ticks-20260420.json",
+      "bytes": 26779,
+      "sha256": "ba7351608610cfdb78fb96ba026aba495eb726f7b6e5c99d212fbc190cbddb4f",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/semantic-policy-easy01-20260420.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/semantic-policy-easy01-20260420.json",
+      "bytes": 9415,
+      "sha256": "5ef281a23e604206dd2eec43d280c18f424568fa173e8cd9e56f06c7cab103ea",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/semantic-policy-easy01-v2-20260420.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/semantic-policy-easy01-v2-20260420.json",
+      "bytes": 9725,
+      "sha256": "8125e94c393c156a2358fac26c7fab8f32a4dc843fb55f21f573da2740bb3cd2",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/semantic-policy-easy02-20260420.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/semantic-policy-easy02-20260420.json",
+      "bytes": 9011,
+      "sha256": "0732334fbdc64a8f6a10d5e87e3fd91b80c65a1f5ba1e80916885da7a8ccea5d",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/semantic-policy-swe-aya-774-10ticks-20260420.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/semantic-policy-swe-aya-774-10ticks-20260420.json",
+      "bytes": 27484,
+      "sha256": "f1da16d2a308d5a348662442727eb7dbba7c1bb014a4a59b4136637d5689c422",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/semantic-policy2-easy01-20260420.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/semantic-policy2-easy01-20260420.json",
+      "bytes": 8501,
+      "sha256": "a1faf048c558ab85e3b40661e99a82f4f26bf60d3324e65e1814c37516cfb460",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/semantic-policy2-easy02-20260420.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/semantic-policy2-easy02-20260420.json",
+      "bytes": 9310,
+      "sha256": "68ef915c7bea0b4227f29d993a1d1fa6cedbf33e6637d94d6286fd5f42824abd",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/semantic-policy2-swe-aya-774-10ticks-20260420.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/semantic-policy2-swe-aya-774-10ticks-20260420.json",
+      "bytes": 27401,
+      "sha256": "5cc76e7eab5e02e64c686653885f95afae9eb47c4c782647662db2fb909192d8",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/semantic-policy3-easy01-20260421.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/semantic-policy3-easy01-20260421.json",
+      "bytes": 9010,
+      "sha256": "01481202026d87947955f742c405e1e324e663316d4234c07db2db455718ff86",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/semantic-policy3-easy02-20260421.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/semantic-policy3-easy02-20260421.json",
+      "bytes": 9719,
+      "sha256": "8fe720615701990bc936a576803c3484dd19619e15115c588517b2621502b186",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/semantic-policy3-swe-aya-774-10ticks-20260421.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/semantic-policy3-swe-aya-774-10ticks-20260421.json",
+      "bytes": 27414,
+      "sha256": "391a358b2f5fb92ab8c31b81c1ed4d0fef7d8b16098beed9c5131d1019bdc4b8",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/semantic-policy4-swe-aya-774-10ticks-20260422.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/semantic-policy4-swe-aya-774-10ticks-20260422.json",
+      "bytes": 26100,
+      "sha256": "4eae27da4fcb21bea6d1dac8b36708c53acf1a47219972d150a5f6d705fa389c",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/semantic-policy5-swe-aya-774-10ticks-20260425.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/semantic-policy5-swe-aya-774-10ticks-20260425.json",
+      "bytes": 28009,
+      "sha256": "721895f39efa982b55fa44cfd6e0d97493057fbe12be7aad97209dce5dd63aa4",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/semantic-policy6-swe-aya-774-10ticks-20260425.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/semantic-policy6-swe-aya-774-10ticks-20260425.json",
+      "bytes": 26384,
+      "sha256": "4779162fb3efabd6e7f23a44206e4e5bff4fa66c257d875241797e8767ff87b5",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/semantic-policy7-swe-aya-774-10ticks-20260425.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/semantic-policy7-swe-aya-774-10ticks-20260425.json",
+      "bytes": 27399,
+      "sha256": "7c0eae7ac792a2c7de94e2fb55a8d440ddf6697ea74ba1308212bcb19a824abc",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/thread-refactor-easy-20260420.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/thread-refactor-easy-20260420.json",
+      "bytes": 38961,
+      "sha256": "106547a7a68438fa4df4e8f47517e7fb6790722ccd46a9ff1324a53fda994743",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/thread-refactor-swe-aya-774-10ticks-20260420.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/thread-refactor-swe-aya-774-10ticks-20260420.json",
+      "bytes": 26803,
+      "sha256": "a3c2a656d8e359c23773251092c37bc1307e5c5aa4e3a8cc53e6f7124ca53287",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "results/v0.1.json",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/results/v0.1.json",
+      "bytes": 25077,
+      "sha256": "dd7d0cdc20da23810ade90cfbc90517c0b831e225e1a17571012c98432136982",
+      "tracked_at_frozen_commit": false,
+      "historical_execution_commit": null
+    },
+    {
+      "path": "tasks/easy-01-add-test.toml",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/tasks/easy-01-add-test.toml",
+      "bytes": 527,
+      "sha256": "cef2cb4db4a37a83ec43c294a9aeac27badd8c50450323c7b8d27e355cb8b568",
+      "tracked_at_frozen_commit": true,
+      "historical_execution_commit": null,
+      "frozen_commit": "1bcbb757a7885ce1f911ac948bfc2269c9209075",
+      "frozen_blob_sha256": "cef2cb4db4a37a83ec43c294a9aeac27badd8c50450323c7b8d27e355cb8b568",
+      "matches_frozen_blob": true
+    },
+    {
+      "path": "tasks/easy-02-fix-typo.toml",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/tasks/easy-02-fix-typo.toml",
+      "bytes": 430,
+      "sha256": "ce151330c0e61b5e983de740db575d9640348b0f8d822c920e42c64d4b5a32f3",
+      "tracked_at_frozen_commit": true,
+      "historical_execution_commit": null,
+      "frozen_commit": "1bcbb757a7885ce1f911ac948bfc2269c9209075",
+      "frozen_blob_sha256": "ce151330c0e61b5e983de740db575d9640348b0f8d822c920e42c64d4b5a32f3",
+      "matches_frozen_blob": true
+    },
+    {
+      "path": "tasks/easy-03-add-doc-comment.toml",
+      "source_path": "/home/keith/src/exoskeleton/benchmarks/tasks/easy-03-add-doc-comment.toml",
+      "bytes": 418,
+      "sha256": "9b3a64e4e0d04e31a7d815e737f93836db05c34407c4f853affbf4d25f47af9d",
+      "tracked_at_frozen_commit": true,
+      "historical_execution_commit": null,
+      "frozen_commit": "1bcbb757a7885ce1f911ac948bfc2269c9209075",
+      "frozen_blob_sha256": "9b3a64e4e0d04e31a7d815e737f93836db05c34407c4f853affbf4d25f47af9d",
+      "matches_frozen_blob": true
+    }
+  ],
+  "commands": [
+    {
+      "argv": [
+        "git",
+        "-C",
+        "/home/keith/src/exoskeleton",
+        "rev-parse",
+        "HEAD",
+        "refs/tags/exoskeleton/pre-exo-v3^{}"
+      ],
+      "exit_code": 0,
+      "stdout": "1bcbb757a7885ce1f911ac948bfc2269c9209075\n1bcbb757a7885ce1f911ac948bfc2269c9209075\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "/mnt/workhorse/craftingtable/worktrees/worldinterface/wi-01-187d142f",
+        "rev-parse",
+        "HEAD",
+        "refs/tags/worldinterface/pre-wi-fabric-2^{}"
+      ],
+      "exit_code": 0,
+      "stdout": "f48df82e98203fa94c86eecae60425205c3e00e9\nf48df82e98203fa94c86eecae60425205c3e00e9\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "/home/keith/src/exoskeleton",
+        "ls-tree",
+        "-r",
+        "--name-only",
+        "1bcbb757a7885ce1f911ac948bfc2269c9209075",
+        "benchmarks"
+      ],
+      "exit_code": 0,
+      "stdout": "benchmarks/bench-vessel.toml\nbenchmarks/repos/sample-rust/.gitignore\nbenchmarks/repos/sample-rust/Cargo.toml\nbenchmarks/repos/sample-rust/src/lib.rs\nbenchmarks/results/.gitignore\nbenchmarks/tasks/easy-01-add-test.toml\nbenchmarks/tasks/easy-02-fix-typo.toml\nbenchmarks/tasks/easy-03-add-doc-comment.toml\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "/home/keith/src/exoskeleton",
+        "show",
+        "1bcbb757a7885ce1f911ac948bfc2269c9209075:benchmarks/bench-vessel.toml"
+      ],
+      "exit_code": 0,
+      "stdout": "# Benchmark vessel configuration template.\n#\n# Usage: exo bench --config benchmarks/bench-vessel.toml --suite benchmarks/tasks/\n#\n# LLM Backend:\n#   Set ANTHROPIC_PLATFORM_API_KEY in your environment for frontier mode.\n#   Or configure [llm.local] for local model testing.\n\n[vessel]\nmission = \"Benchmark runner - resolve coding tasks accurately and efficiently\"\ndata_dir = \"/tmp/exo-bench-template\"\nmaster_loop_interval_secs = 1\n\n# --- LLM Backend (choose one) ---\n\n# Frontier (Anthropic Claude)\n[llm.frontier]\nprovider = \"anthropic\"\nmodel = \"claude-sonnet-4-20250514\"\napi_key_env = \"ANTHROPIC_PLATFORM_API_KEY\"\n\n# Local (Ollama) \u2014 uncomment to use instead of frontier\n# [llm.local]\n# endpoint = \"http://localhost:11434\"\n# model = \"llama3.2:latest\"\n# api_format = \"ollama\"\n\n[llm]\ndefault_backend = \"frontier\"\nmax_output_tokens = 4096\ntimeout_secs = 120\n\n# --- Coding Session ---\n[coding_thread]\nenabled = true\n\n# --- Engine Timing ---\n[cognitive]\ntick_interval_ms = 50\n\n# --- Tool Policy ---\n[tool_policy]\ndefault = \"allow\"\n\n# --- Threads (disable non-essential to save tokens) ---\n[threads]\nthreat_monitor_enabled = false\nmeta_cognition_enabled = false\ncreative_synthesis_enabled = false\ninitiative_enabled = false\n# Disabled for benchmarks: these threads consume tokens but don't improve\n# single-session task pass rate. Self-critique evaluates after the tick\n# (benefits future ticks only), memory consolidation is long-term learning.\nself_critique_enabled = false\nmemory_consolidation_enabled = false\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "/home/keith/src/exoskeleton",
+        "show",
+        "1bcbb757a7885ce1f911ac948bfc2269c9209075:benchmarks/repos/sample-rust/.gitignore"
+      ],
+      "exit_code": 0,
+      "stdout": "target/\nCargo.lock\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "/home/keith/src/exoskeleton",
+        "show",
+        "1bcbb757a7885ce1f911ac948bfc2269c9209075:benchmarks/repos/sample-rust/Cargo.toml"
+      ],
+      "exit_code": 0,
+      "stdout": "[package]\nname = \"sample-rust\"\nversion = \"0.1.0\"\nedition = \"2021\"\n\n[workspace]\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "/home/keith/src/exoskeleton",
+        "show",
+        "1bcbb757a7885ce1f911ac948bfc2269c9209075:benchmarks/repos/sample-rust/src/lib.rs"
+      ],
+      "exit_code": 0,
+      "stdout": "/// Parse a key=value config line into (key, value).\n///\n/// Returns None if the line is empty, a comment, or malformed.\npub fn parse_config_line(line: &str) -> Option<(&str, &str)> {\n    let line = line.trim();\n    if line.is_empty() || line.starts_with('#') {\n        return None;\n    }\n    let (key, value) = line.split_once('=')?;\n    Some((key.trim(), value.trim()))\n}\n\n/// Calculate the averge of a slice of numbers.\n///\n/// Returns 0.0 for an empty slice.\npub fn calculate_averge(numbers: &[f64]) -> f64 {\n    if numbers.is_empty() {\n        return 0.0;\n    }\n    let sum: f64 = numbers.iter().sum();\n    sum / numbers.len() as f64\n}\n\n/// Format a greeting message.\npub fn greet(name: &str) -> String {\n    format!(\"Hello, {}!\", name)\n}\n\n#[cfg(test)]\nmod tests {\n    use super::*;\n\n    #[test]\n    fn parse_config_basic() {\n        assert_eq!(parse_config_line(\"key = value\"), Some((\"key\", \"value\")));\n    }\n\n    #[test]\n    fn parse_config_comment() {\n        assert_eq!(parse_config_line(\"# comment\"), None);\n    }\n\n    #[test]\n    fn parse_config_empty() {\n        assert_eq!(parse_config_line(\"\"), None);\n    }\n\n    #[test]\n    fn greet_basic() {\n        assert_eq!(greet(\"World\"), \"Hello, World!\");\n    }\n}\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "/home/keith/src/exoskeleton",
+        "show",
+        "1bcbb757a7885ce1f911ac948bfc2269c9209075:benchmarks/results/.gitignore"
+      ],
+      "exit_code": 0,
+      "stdout": "*\n!.gitignore\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "/home/keith/src/exoskeleton",
+        "show",
+        "1bcbb757a7885ce1f911ac948bfc2269c9209075:benchmarks/tasks/easy-01-add-test.toml"
+      ],
+      "exit_code": 0,
+      "stdout": "[task]\nname = \"easy-01-add-test\"\nrepo_path = \"../repos/sample-rust\"\nprompt = \"\"\"Add a unit test for the parse_config_line function that tests parsing\na line with no spaces around the equals sign, e.g., 'key=value'.\nThe test should be called test_parse_config_no_spaces and verify\nthat parse_config_line(\"key=value\") returns Some((\"key\", \"value\")).\"\"\"\ntimeout_secs = 600\nmax_ticks = 20\n\n[verify]\ncommand = \"grep -q 'test_parse_config_no_spaces' src/lib.rs && cargo test test_parse_config_no_spaces --lib\"\nexpected_exit_code = 0\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "/home/keith/src/exoskeleton",
+        "show",
+        "1bcbb757a7885ce1f911ac948bfc2269c9209075:benchmarks/tasks/easy-02-fix-typo.toml"
+      ],
+      "exit_code": 0,
+      "stdout": "[task]\nname = \"easy-02-fix-typo\"\nrepo_path = \"../repos/sample-rust\"\nprompt = \"\"\"The function calculate_averge in src/lib.rs has a typo in its name.\nRename it to calculate_average. Update the function name and its doc comment\nto use the correct spelling. Also update any references to the old name.\"\"\"\ntimeout_secs = 300\nmax_ticks = 15\n\n[verify]\ncommand = \"cargo test --lib && ! grep -q 'averge' src/lib.rs\"\nexpected_exit_code = 0\n",
+      "stderr": ""
+    },
+    {
+      "argv": [
+        "git",
+        "-C",
+        "/home/keith/src/exoskeleton",
+        "show",
+        "1bcbb757a7885ce1f911ac948bfc2269c9209075:benchmarks/tasks/easy-03-add-doc-comment.toml"
+      ],
+      "exit_code": 0,
+      "stdout": "[task]\nname = \"easy-03-add-doc-comment\"\nrepo_path = \"../repos/sample-rust\"\nprompt = \"\"\"Add a module-level doc comment to src/lib.rs describing this crate\nas a utility library for configuration parsing, math helpers, and\nstring formatting. The doc comment should use //! syntax at the top of the file.\"\"\"\ntimeout_secs = 300\nmax_ticks = 15\n\n[verify]\ncommand = \"head -1 src/lib.rs | grep -q '//!'\"\nexpected_exit_code = 0\n",
+      "stderr": ""
+    }
+  ],
+  "limitations": [
+    "Copied historical evidence only; no benchmark executed in this run.",
+    "Frozen source commit is verified only for tracked matching blobs. Ignored results and sample Cargo.lock are separate byte snapshots, not content proven to be in that Git commit.",
+    "Result reports do not establish the EXO/WI/AQ implementation revisions or environment used for each historical run. Do not substitute collection checkout HEAD for an execution revision.",
+    "Aya result records are available; no standalone Aya task fixture is present in this benchmark directory.",
+    "Result fields are retained as recorded; no pass or causal improvement claim is independently reproduced."
+  ]
+}

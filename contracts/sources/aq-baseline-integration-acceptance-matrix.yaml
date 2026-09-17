@@ -1,0 +1,295 @@
+schema_version: 1
+profile: AQ-BASELINE-ALIGNMENT-1
+owner: WI
+source_lock: aq-baseline.lock.json
+status: planned-not-run
+cases:
+- id: AB-WI-001
+  title: Exact source identity and feature profile
+  owner_pr: WI-02
+  capability_gate: WI-AQ-G1
+  status: planned-not-run
+  pass_criterion: Bind complete AQ tree, crate versions, conformance revision 16, build features and store
+    lineage; reject a historical commit as implementation evidence.
+  source_paths:
+  - README.md
+  - conformance/aq-cont-1/manifest.yaml
+  - docs/data-dir-format-v1.0.md
+  runtime_evidence_required: true
+- id: AB-WI-002
+  title: Stable task identity and lost admission acknowledgment
+  owner_pr: WI-04
+  capability_gate: WI-AQ-G2
+  status: planned-not-run
+  pass_criterion: Persist AdmissionKey and the entire unchanged EnsureTaskRequest including TaskId before submission.
+    Retry after injected lost acknowledgment and prove one task; a fresh TaskId on the same key conflicts.
+    Host control is reauthorized.
+  source_paths:
+  - crates/actionqueue-core/src/admission.rs
+  - crates/actionqueue-runtime/src/control.rs
+  runtime_evidence_required: true
+- id: AB-WI-003
+  title: Canonical admission v2 conflicts
+  owner_pr: WI-04
+  capability_gate: WI-AQ-G2
+  status: planned-not-run
+  pass_criterion: Use the public request digest/canonical v2 vectors, including child lifecycle. Change each
+    digest-bearing field and observe conflict; do not supply an independent digest to high-level ensure_task.
+  source_paths:
+  - docs/adrs/AQ-ADR-002-admission-canonicalization.md
+  - crates/actionqueue-core/src/admission.rs
+  runtime_evidence_required: true
+- id: AB-WI-004
+  title: Task-only acknowledgment and run discovery
+  owner_pr: WI-04
+  capability_gate: WI-AQ-G2
+  status: planned-not-run
+  pass_criterion: Created and AlreadyExists expose sequence, TaskId, AdmissionKey and digest, not RunIds. Discover
+    runs through authorized pagination; restart after stale_cursor. Persist observed run mappings without treating
+    first page as exhaustive.
+  source_paths:
+  - crates/actionqueue-core/src/admission.rs
+  - docs/aq-12-apis.md
+  runtime_evidence_required: true
+- id: AB-WI-005
+  title: Bounded graph and child transactions
+  owner_pr: WI-07
+  capability_gate: WI-AQ-G4
+  status: planned-not-run
+  pass_criterion: Exercise bounds and rejection beyond 64 initial runs, dependencies, children and wait targets,
+    32 emitted signals, depth 8. Do not claim a whole unbounded Flow is one admission transaction. Check compound
+    child/wait atomicity.
+  source_paths:
+  - crates/actionqueue-core/src/limits.rs
+  - crates/actionqueue-core/src/disposition.rs
+  runtime_evidence_required: true
+- id: AB-WI-006
+  title: One wait and exact signal matching
+  owner_pr: WI-03
+  capability_gate: WI-AQ-G3
+  status: planned-not-run
+  pass_criterion: One active wait per run; one exact namespace/kind/tenant filter or a children target. Reject
+    principal, wildcard, payload predicate and multi-filter assumptions. Lower multiple event meanings through
+    a domain-normalized stream or explicit child coordination.
+  source_paths:
+  - crates/actionqueue-core/src/continuation/wait.rs
+  - crates/actionqueue-core/src/continuation/signal.rs
+  runtime_evidence_required: true
+- id: AB-WI-007
+  title: Signal identity and trusted ingress
+  owner_pr: WI-03
+  capability_gate: WI-AQ-G3
+  status: planned-not-run
+  pass_criterion: AdmitSignalRequest carries producer identity/content; SignalIngressContext supplies tenant,
+    receipt time and control. Repeating same (tenant, SignalId) and canonical producer content deduplicates;
+    changed content conflicts; no separate dedup_key.
+  source_paths:
+  - crates/actionqueue-core/src/continuation/signal_admission.rs
+  runtime_evidence_required: true
+- id: AB-WI-008
+  title: Early event outbox and retained matching
+  owner_pr: WI-08
+  capability_gate: WI-AQ-G3
+  status: planned-not-run
+  pass_criterion: Atomically persist authoritative domain event and its AQ wake outbox obligation regardless
+    of current Awaiting state. Inject signal-before-wait/crash/duplicate delivery. Use correlated AnyRetained
+    for early events and prove no lost wake; one signal may fan out to several waits.
+  source_paths:
+  - crates/actionqueue-core/src/continuation/wait.rs
+  - crates/actionqueue-core/src/continuation/signal.rs
+  runtime_evidence_required: true
+- id: AB-WI-009
+  title: Signal sequence versus WAL cursor
+  owner_pr: WI-03
+  capability_gate: WI-AQ-G3
+  status: planned-not-run
+  pass_criterion: Keep typed SignalSequence separate from mutation WAL sequence and timestamps. After accepts
+    only strictly later signal sequence; test interleaved nonsignal WAL operations. After handling a retained
+    signal, persist/advance the processed SignalSequence or a fresh correlation generation; re-arming must
+    not repeatedly select the same old signal.
+  source_paths:
+  - crates/actionqueue-core/src/continuation/wait.rs
+  - crates/actionqueue-core/src/continuation/signal_admission.rs
+  runtime_evidence_required: true
+- id: AB-WI-010
+  title: Deadline and signal resolution race
+  owner_pr: WI-07
+  capability_gate: WI-AQ-G3
+  status: planned-not-run
+  pass_criterion: Test inclusive epoch-second deadline, signal/deadline race in both committed orders, retained-signal
+    reconciliation and ResumeWithTimeout/FailRun/CancelRun. Assert one durable winner, not wall-clock timeout
+    precedence.
+  source_paths:
+  - crates/actionqueue-core/src/continuation/wait.rs
+  - docs/aq-06-continuations.md
+  runtime_evidence_required: true
+- id: AB-WI-011
+  title: Resume redelivery and business idempotency
+  owner_pr: WI-08
+  capability_gate: WI-AQ-G3
+  status: planned-not-run
+  pass_criterion: Initial, Retry and Recovery may deliver the same resume context again. Persist domain acceptance/deduplication
+    and reload authoritative state. Cover signal, children, deadline, control and administrative wake shapes;
+    business effect is not exactly-once merely because a wait resolved once.
+  source_paths:
+  - crates/actionqueue-core/src/continuation/resume.rs
+  runtime_evidence_required: true
+- id: AB-WI-012
+  title: Disposition algebra and invalid proposal
+  owner_pr: WI-06
+  capability_gate: WI-AQ-G4
+  status: planned-not-run
+  pass_criterion: 'Exercise allowed subordinate effects by status: Complete has no checkpoint/wait/children;
+    Awaiting has required wait and no output; Suspended has no signals/children/wait/output. Invalid local
+    proposal becomes minimal terminal failure with no leaked effects.'
+  source_paths:
+  - crates/actionqueue-core/src/disposition.rs
+  - crates/actionqueue-runtime/src/disposition.rs
+  runtime_evidence_required: true
+- id: AB-WI-013
+  title: Children termination versus domain success
+  owner_pr: WI-07
+  capability_gate: WI-AQ-G4
+  status: planned-not-run
+  pass_criterion: Distinguish required/detached child closure and cancellation. Failed/cancelled required children
+    can satisfy terminal closure. A task terminal-success projection is not proof every run or domain acceptance
+    succeeded. Assert authoritative WI/EXO acceptance separately.
+  source_paths:
+  - docs/aq-06-continuations.md
+  - crates/actionqueue-core/src/disposition.rs
+  runtime_evidence_required: true
+- id: AB-WI-014
+  title: Capacity failure and remote fence behavior
+  owner_pr: WI-06
+  capability_gate: WI-AQ-G4
+  status: planned-not-run
+  pass_criterion: At active-wait capacity, local invalid Awaiting closes with wait_capacity and discards all
+    subordinate effects; remote rejection preserves active ownership/fence for correction. Uncertain writes/stale
+    ownership are not fallback. Test limits lowered to zero with existing waits still resolvable.
+  source_paths:
+  - crates/actionqueue-runtime/src/disposition.rs
+  - crates/actionqueue-core/src/limits.rs
+  runtime_evidence_required: true
+- id: AB-WI-015
+  title: Causal bounds and cross-store provenance
+  owner_pr: WI-02
+  capability_gate: WI-AQ-G1
+  status: planned-not-run
+  pass_criterion: Use bounded opaque causal references only. Do not grant authority via opaque refs. Children
+    preserve AQ-owned ancestry and permitted overrides. Between independent WI and EXO queues use external_ref,
+    not foreign Task/Run/Attempt typed local links.
+  source_paths:
+  - crates/actionqueue-core/src/causal.rs
+  - crates/actionqueue-core/src/control.rs
+  runtime_evidence_required: true
+- id: AB-WI-016
+  title: Payload and artifact ownership
+  owner_pr: WI-02
+  capability_gate: WI-AQ-G1
+  status: planned-not-run
+  pass_criterion: TaskPayload is opaque bounded bytes, not a DataRef field. Put a small application-owned locator
+    envelope in task bytes for large data; use DataRef only at actual DataRef APIs. AQ does not fetch blobs.
+    Test domain authorization, integrity verification, missing blob and backup consistency.
+  source_paths:
+  - crates/actionqueue-core/src/task/task_spec.rs
+  - crates/actionqueue-core/src/data_ref.rs
+  - crates/actionqueue-core/src/limits.rs
+  runtime_evidence_required: true
+- id: AB-WI-017
+  title: Authorization and redacted inspection
+  owner_pr: WI-11
+  capability_gate: WI-AQ-G4
+  status: planned-not-run
+  pass_criterion: Trusted HostControlContext is host-created, not deserialized from caller authority. Reauthorize
+    duplicate mutations; verify scoped lookup and redaction. Opaque ref disclosure needs request plus trusted
+    policy; page size/count/byte limits and stale cursor handling are bounded.
+  source_paths:
+  - crates/actionqueue-core/src/control.rs
+  - crates/actionqueue-runtime/src/control.rs
+  - docs/aq-12-apis.md
+  runtime_evidence_required: true
+- id: AB-WI-018
+  title: Embedded dispatch and versioned remote protocol
+  owner_pr: WI-11
+  capability_gate: WI-AQ-G4
+  status: planned-not-run
+  pass_criterion: Run actual embedded application handlers; daemon hosting alone does not dispatch them. Keep
+    HTTP /api/v2 distinct from remote actor protocol 1 and its result revision/fence. Base continuation/DAG/children
+    do not require workflow; cron does. Do not mark remote parity passed from embedded proof.
+  source_paths:
+  - docs/aq-12-apis.md
+  - crates/actionqueue-actor/src/protocol.rs
+  - Cargo.toml
+  runtime_evidence_required: true
+- id: AB-WI-019
+  title: Two stores and complete offline restore
+  owner_pr: WI-11
+  capability_gate: WI-AQ-G1
+  status: planned-not-run
+  pass_criterion: Use independent AQ stores for WI effects and EXO cognition, one writer each, no cross-WAL
+    transaction. Test pinned fresh formats and immutable store feature profile; restore offline from manifest
+    plus complete WAL and matching artifacts, not snapshot alone. No third host-supervisor queue.
+  source_paths:
+  - docs/data-dir-format-v1.0.md
+  runtime_evidence_required: true
+- id: AB-WI-020
+  title: Terminal cancellation and external uncertainty
+  owner_pr: WI-06
+  capability_gate: WI-AQ-G4
+  status: planned-not-run
+  pass_criterion: Cancel of already succeeded/failed work is append-free AlreadyTerminal 409; repeated cancel
+    of an already-canceled target acknowledges without appending; do not use completed-prerequisite cancellation
+    as a late cascade. Queue cancellation alone does not prove worker termination or undo an external effect.
+    Reconcile domain receipts and uncertainty.
+  source_paths:
+  - docs/aq-12-apis.md
+  - crates/actionqueue-runtime/src/control.rs
+  runtime_evidence_required: true
+- id: AB-WI-021
+  title: Concurrency key lifetime while awaiting
+  owner_pr: WI-09
+  capability_gate: WI-AQ-G3
+  status: planned-not-run
+  pass_criterion: Default Awaiting releases execution concurrency key; explicit Hold retains it; released keys
+    must be reacquired before running. Bound process-worker lifetimes independently until termination/result
+    cleanup is confirmed. Test no accidental oversubscription on resume.
+  source_paths:
+  - docs/aq-06-continuations.md
+  runtime_evidence_required: true
+- id: AB-WI-022
+  title: Retention and backpressure
+  owner_pr: WI-03
+  capability_gate: WI-AQ-G3
+  status: planned-not-run
+  pass_criterion: Retirement stops matching but does not compact the full retained WAL or reclaim resident
+    signal content. Exercise admission backpressure, active-wait/store/tenant limits and operational capacity
+    alarms; no unsupported pruning or compaction promise.
+  source_paths:
+  - docs/data-dir-format-v1.0.md
+  - crates/actionqueue-core/src/limits.rs
+  runtime_evidence_required: true
+- id: AB-WI-023
+  title: Uncertain mutation recovery
+  owner_pr: WI-06
+  capability_gate: WI-AQ-G4
+  status: planned-not-run
+  pass_criterion: Inject uncertain mutation outcome/503 and restart. Treat a lost acknowledgment as possibly
+    committed; recover then retry stable identity. AQ completion/failure is not an authoritative external-effect
+    receipt or independent acceptance.
+  source_paths:
+  - docs/aq-12-apis.md
+  - crates/actionqueue-runtime/src/control.rs
+  runtime_evidence_required: true
+- id: AB-WI-024
+  title: Actual consumer conformance and release separation
+  owner_pr: WI-13
+  capability_gate: WI-AQ-G5
+  status: planned-not-run
+  pass_criterion: Run the real consumer against exact AQ source/build/conformance pins and record authenticated
+    evidence. AQ reference/independent-outbox adapters do not certify WI or EXO. WI G5 requires exact RC evidence;
+    EXO G5 additionally requires verified AQ publication. Neither source presence nor Python planning tests
+    satisfies this case.
+  source_paths:
+  - docs/releases/0.2.0.md
+  - conformance/aq-cont-1/manifest.yaml
+  runtime_evidence_required: true

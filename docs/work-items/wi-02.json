@@ -1,0 +1,94 @@
+[
+  {
+    "id": "WI-02-01",
+    "title": "Protocol vocabulary, canonical envelopes and identifiers",
+    "maturity": "independent",
+    "source": "implementation plan WI-02",
+    "depends_on": [
+      "WI-01"
+    ],
+    "adrs": [
+      "WI-ADR-001",
+      "WI-ADR-002"
+    ],
+    "invariants": [
+      "W4",
+      "W5",
+      "W51"
+    ],
+    "acceptance": [
+      "Golden serialization and digest fixtures",
+      "Stable request IDs; matching duplicates idempotent, conflicting payload rejected",
+      "No mandatory Flow/node/step identity"
+    ],
+    "status": "draft-not-filed"
+  },
+  {
+    "id": "WI-02-02",
+    "title": "Pure domain state machines and read models",
+    "maturity": "independent",
+    "source": "implementation plan WI-02",
+    "depends_on": [
+      "WI-01"
+    ],
+    "adrs": [
+      "WI-ADR-001"
+    ],
+    "invariants": [
+      "W3",
+      "W13",
+      "W26"
+    ],
+    "acceptance": [
+      "Legal/illegal transition property tests for ingress, delivery, effects, uncertainty, reconciliation and proof",
+      "Read models distinct from mutation commands"
+    ],
+    "status": "draft-not-filed"
+  },
+  {
+    "id": "WI-02-03",
+    "title": "Fresh store manifests, repositories and source-domain outboxes",
+    "maturity": "independent",
+    "source": "implementation plan WI-02",
+    "depends_on": [
+      "WI-01"
+    ],
+    "adrs": [
+      "WI-ADR-003"
+    ],
+    "invariants": [
+      "W3",
+      "W26",
+      "W52"
+    ],
+    "acceptance": [
+      "Empty initialization and valid reopen",
+      "Pre-contract and unknown schema rejection without modification before database open",
+      "Rollback leaves no partial authoritative record/outbox pair",
+      "Fabric, Flow, optional Platform and ContextStore fresh schema 1"
+    ],
+    "status": "draft-not-filed"
+  },
+  {
+    "id": "WI-02-04",
+    "title": "AQ reference wrapper interfaces",
+    "maturity": "assumption-bound",
+    "source": "implementation plan WI-02",
+    "depends_on": [
+      "WI-01"
+    ],
+    "adrs": [
+      "WI-ADR-002"
+    ],
+    "invariants": [
+      "W2",
+      "W15"
+    ],
+    "acceptance": [
+      "Local wrapper traits only; no old AQ API calls",
+      "Final wrappers reconcile at WI-AQ-G1 with exact implementation and conformance pin",
+      "Profile-bound worker/resource and executable/configuration identity per WI-WORKER-EXECUTION-1"
+    ],
+    "status": "draft-not-filed"
+  }
+]

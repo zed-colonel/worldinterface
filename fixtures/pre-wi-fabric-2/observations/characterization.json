@@ -1,0 +1,91 @@
+{
+  "kind": "historical-characterization",
+  "current_runtime_conformance": false,
+  "binary_sha256": "b4a10355065c5bac837c0640a009287e5607a6fead0e093927999d4685d2e351",
+  "script_sha256": "4ae5059870d44b44178a0f89413e0cb4bb232f343a245885f6993447c21f1946",
+  "kernel": "Linux-7.2.5-3-omarchy-x86_64-with-glibc2.44",
+  "config": {
+    "bind_address": "127.0.0.1:40917",
+    "aq_data_dir": "/mnt/workhorse/craftingtable/runs/b41d9796-e3e5-46d4-88f9-c53ef331262a/scratch/historical-characterization/aq",
+    "context_store_path": "/mnt/workhorse/craftingtable/runs/b41d9796-e3e5-46d4-88f9-c53ef331262a/scratch/historical-characterization/context.db",
+    "tick_interval_ms": 50,
+    "dispatch_concurrency": 4,
+    "lease_timeout_secs": 300,
+    "shutdown_timeout_secs": 10
+  },
+  "method": "single debug build, loopback HTTP, 20 sequential direct delay(0) calls and 10 sequential one-node delay(0) flows; 10ms completion polling; no warmup; workspace tests may run concurrently; not a coding benchmark or release performance claim",
+  "command": [
+    "/mnt/workhorse/craftingtable/runs/b41d9796-e3e5-46d4-88f9-c53ef331262a/scratch/historical-target/debug/wi",
+    "serve",
+    "--config",
+    "/mnt/workhorse/craftingtable/runs/b41d9796-e3e5-46d4-88f9-c53ef331262a/scratch/historical-characterization/daemon.toml"
+  ],
+  "startup_to_health_ms": 204.3366510042688,
+  "capability_count": 21,
+  "catalog_cli_exit": 0,
+  "storage_before": {
+    "context.db-shm": 32768,
+    "context.db": 4096,
+    "context.db-wal": 24752,
+    "aq/wal/actionqueue.wal": 0
+  },
+  "direct_ms": [
+    375.2868900046451,
+    345.1759699964896,
+    519.5509760014829,
+    1279.0861429966753,
+    205.4979349995847,
+    556.8889499991201,
+    194.32760800555116,
+    203.04704699810827,
+    195.28916999843204,
+    200.9857049997663,
+    197.14286900125444,
+    202.19976999942446,
+    195.63175000075717,
+    304.64439800562104,
+    545.8360029952019,
+    204.5581950005726,
+    199.12162899709074,
+    213.60362899577012,
+    201.03472100163344,
+    180.69686200033175
+  ],
+  "direct_serial_ops_per_sec": 3.0676699366679894,
+  "flow_ms": [
+    200.1225499989232,
+    201.2336160041741,
+    199.257560998376,
+    199.7233070069342,
+    202.9221150005469,
+    197.53373399726115,
+    204.50682599766878,
+    201.1827560054371,
+    198.60069100104738,
+    201.43843600089895
+  ],
+  "flow_serial_ops_per_sec": 4.983749011131421,
+  "storage_running": {
+    "context.db-shm": 32768,
+    "context.db": 4096,
+    "context.db-wal": 716912,
+    "aq/wal/actionqueue.wal": 65519
+  },
+  "success": true,
+  "daemon_exit": 0,
+  "storage_after_shutdown": {
+    "context.db": 45056,
+    "aq/wal/actionqueue.wal": 65519
+  },
+  "artifacts": {
+    "health.json": "d37208a9be5dfe712a7ee54fdce2f1b0a006ec021754f2c3b70e2d55d6fb585e",
+    "capabilities-cli.log": "271e3a7c05384c62839902d2477fe525e9a46f5277f51811f5a8baff6e44b65f",
+    "characterize.py": "4ae5059870d44b44178a0f89413e0cb4bb232f343a245885f6993447c21f1946",
+    "direct-outputs.json": "bce6ad58fda614e871075af037aac745d55ce7d275d5a465beb3ad404cddb47a",
+    "flow-outputs-and-receipts.json": "ed78d49c6c29e3f5f513ff32036e79a3a0517afb7ad347359ab74e31502ca43c",
+    "daemon.log": "0ac13ba1b3f015ea14fd0abadd98d225fe2a3cb3f6329ca7e19bf2dbba460e58",
+    "catalog.json": "9673f26875e4ef034b9a93804fc349a84deb8f49167374139e5e2e62565ac15b",
+    "measurement-flowspec.json": "6418dbf843361c7ae5d409e7fada353ed63356b3be7d17a4728523ee3bec9a8e",
+    "characterization-config.json": "ba4d76a7c832da0fc3ce07d262cbc24f7b5454a4568435b32ff7d3183460975d"
+  }
+}

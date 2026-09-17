@@ -1,0 +1,218 @@
+{
+  "kind": "wi01-design-recovery-inspection",
+  "created_at": "2026-09-17T07:43:57.398959+00:00",
+  "source_changes": false,
+  "slice_or_parent_accepted": false,
+  "head_and_tag": {
+    "command": [
+      "git",
+      "rev-parse",
+      "HEAD",
+      "refs/tags/worldinterface/pre-wi-fabric-2^{}"
+    ],
+    "exit_code": 0,
+    "stdout": "f48df82e98203fa94c86eecae60425205c3e00e9\nf48df82e98203fa94c86eecae60425205c3e00e9\n",
+    "stderr": ""
+  },
+  "final_status": {
+    "command": [
+      "git",
+      "status",
+      "--porcelain"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": ""
+  },
+  "manifest_verification": {
+    "dependencies/manifest.json": {
+      "sha256": "9391254c03850bdf2737622fc04f0b4cee372b9a0ee926492462f72d5d97c3ad",
+      "file_count": 571,
+      "mismatches": []
+    },
+    "historical-evidence/manifest.json": {
+      "sha256": "b12791c2d03a288d3284c425277a22d3d674ed9ca428111fa400429a73d81484",
+      "file_count": 747,
+      "mismatches": []
+    }
+  },
+  "aq_tree_sha256": "a6a8f87272d76e94e69e10d8bcf0992296d1bf8e28ff3d9222374c3b8cdcc34e",
+  "controller_current_aq_commit": "29e096c4f06985d1a9bd9d5fe5a3a6a5db8a6860",
+  "controller_current_aq_git_tree": "1c0c85dd700bd9d0c75de223dada911ffeadbb5b",
+  "aq_conformance_revision": 16,
+  "commit_identity_source": "design-recovery/context.json runtime pins; unpacked source has no Git metadata; not independently checked against remote",
+  "archive_zip_independently_verified": false,
+  "historical_commands": [
+    {
+      "args": [
+        "build",
+        "--workspace",
+        "--locked"
+      ],
+      "startedAt": "2026-09-17T07:36:07.570Z",
+      "finishedAt": "2026-09-17T07:36:18.871Z",
+      "success": false,
+      "exitCode": 101,
+      "diagnostic": "spawnSync /home/keith/.cargo/bin/cargo EPERM",
+      "logPath": "/mnt/workhorse/craftingtable/runs/b41d9796-e3e5-46d4-88f9-c53ef331262a/historical-evidence/1789630567570-2.log",
+      "logDigest": "9f862e8f81a11bc3014f09a2f8e219834c783d7ecb9b3a5005591b7a1e7dcfc7"
+    },
+    {
+      "args": [
+        "build",
+        "--workspace",
+        "--locked"
+      ],
+      "startedAt": "2026-09-17T07:36:54.715Z",
+      "finishedAt": "2026-09-17T07:38:14.302Z",
+      "success": true,
+      "exitCode": 0,
+      "diagnostic": "",
+      "logPath": "/mnt/workhorse/craftingtable/runs/b41d9796-e3e5-46d4-88f9-c53ef331262a/historical-evidence/1789630614715-1169065.log",
+      "logDigest": "02e40f8d94ae0700470dc3619ee352807f3edfc0552a759050ca163cef906fdf"
+    },
+    {
+      "args": [
+        "test",
+        "--workspace",
+        "--locked",
+        "--no-fail-fast",
+        "--",
+        "--test-threads=1"
+      ],
+      "startedAt": "2026-09-17T07:39:03.694Z",
+      "finishedAt": "2026-09-17T07:40:31.133Z",
+      "success": false,
+      "exitCode": 101,
+      "diagnostic": "",
+      "logPath": "/mnt/workhorse/craftingtable/runs/b41d9796-e3e5-46d4-88f9-c53ef331262a/historical-evidence/1789630743694-1233202.log",
+      "logDigest": "98f2cec388755d29352ef259d6b4ec66352b50a4f5c508c9f906586fdbf99164"
+    },
+    {
+      "args": [
+        "test",
+        "--workspace",
+        "--locked",
+        "--no-fail-fast",
+        "--",
+        "--test-threads=1"
+      ],
+      "startedAt": "2026-09-17T07:42:14.804Z",
+      "finishedAt": "2026-09-17T07:42:47.385Z",
+      "success": true,
+      "exitCode": 0,
+      "diagnostic": "",
+      "logPath": "/mnt/workhorse/craftingtable/runs/b41d9796-e3e5-46d4-88f9-c53ef331262a/historical-evidence/1789630934805-1309492.log",
+      "logDigest": "f9eb016ec5adb45865803f7d7ef9dae94da81716054ab2132b3e717058b0a52b"
+    }
+  ],
+  "historical_resolved_aq": [
+    {
+      "name": "actionqueue-budget",
+      "version": "0.1.0",
+      "source": "registry+https://github.com/rust-lang/crates.io-index"
+    },
+    {
+      "name": "actionqueue-core",
+      "version": "0.1.0",
+      "source": "registry+https://github.com/rust-lang/crates.io-index"
+    },
+    {
+      "name": "actionqueue-engine",
+      "version": "0.1.0",
+      "source": "registry+https://github.com/rust-lang/crates.io-index"
+    },
+    {
+      "name": "actionqueue-executor-local",
+      "version": "0.1.1",
+      "source": "registry+https://github.com/rust-lang/crates.io-index"
+    },
+    {
+      "name": "actionqueue-runtime",
+      "version": "0.1.1",
+      "source": "registry+https://github.com/rust-lang/crates.io-index"
+    },
+    {
+      "name": "actionqueue-storage",
+      "version": "0.1.0",
+      "source": "registry+https://github.com/rust-lang/crates.io-index"
+    },
+    {
+      "name": "actionqueue-workflow",
+      "version": "0.1.0",
+      "source": "registry+https://github.com/rust-lang/crates.io-index"
+    }
+  ],
+  "tests": [
+    {
+      "log": "/mnt/workhorse/craftingtable/runs/b41d9796-e3e5-46d4-88f9-c53ef331262a/historical-evidence/workspace-test-console.log",
+      "sha256": "e2fe3e2bdc93a26d19eb92046c8ac339d446c3d149145bc19d9233a93a9e90cc",
+      "passed": 755,
+      "failed": 4,
+      "ignored": 0,
+      "environment": "inherited"
+    },
+    {
+      "log": "/mnt/workhorse/craftingtable/runs/b41d9796-e3e5-46d4-88f9-c53ef331262a/historical-evidence/workspace-test-fixed-prefix-console.log",
+      "sha256": "3b59c5bba76961909c27ccc97674601f1f40ad1d43cb0e31b727391aaa2c8eca",
+      "passed": 759,
+      "failed": 0,
+      "ignored": 0,
+      "environment": {
+        "GIT_CONFIG_COUNT": "1",
+        "GIT_CONFIG_KEY_0": "diff.mnemonicPrefix",
+        "GIT_CONFIG_VALUE_0": "false"
+      }
+    }
+  ],
+  "known_failure": "Historical git diff parser assumes a/ and b/ prefixes; inherited diff.mnemonicprefix=true gives 4 failures; process-local false rerun passed. Original failure evidence retained.",
+  "candidate_probes": [
+    {
+      "command": "/mnt/workhorse/craftingtable/runs/b41d9796-e3e5-46d4-88f9-c53ef331262a/dependencies/bin/cargo build --workspace --locked --offline",
+      "exit_code": 1,
+      "log": "/mnt/workhorse/craftingtable/runs/b41d9796-e3e5-46d4-88f9-c53ef331262a/scratch/verification/candidate-build.log",
+      "sha256": "df948e33ed1e0acab97fea9e51a957969d29c68fc3ea4be379cad8e19bded0ed",
+      "stage": "dependency resolution; rusqlite absent from offline cache"
+    },
+    {
+      "command": "/mnt/workhorse/craftingtable/runs/b41d9796-e3e5-46d4-88f9-c53ef331262a/dependencies/bin/cargo build --workspace --locked",
+      "exit_code": 1,
+      "log": "/mnt/workhorse/craftingtable/runs/b41d9796-e3e5-46d4-88f9-c53ef331262a/scratch/verification/candidate-build-online.log",
+      "sha256": "d1dcc3b6a6f138f37661b105dd743981f671bd2ec6599ff2754a92817b93ab20",
+      "stage": "dependency resolution; incompatible AQ 0.1.x requirements/0.2.0 patches; lock update required"
+    }
+  ],
+  "current_runtime_build_receipt_present": false,
+  "historical_measurements": {
+    "path": "/mnt/workhorse/craftingtable/runs/b41d9796-e3e5-46d4-88f9-c53ef331262a/historical-evidence/characterization.json",
+    "sha256": "85d4c171b9c294667e99f8bd8731af6fa1e05e75446687de24cedd6100876446",
+    "startup_ms": 204.3366510042688,
+    "direct_median_ms": 203.80262099934043,
+    "flow_median_ms": 200.65265300218016,
+    "direct_serial_ops_per_sec": 3.0676699366679894,
+    "flow_serial_ops_per_sec": 4.983749011131421,
+    "catalog_count": 21,
+    "daemon_exit": 0,
+    "limitations": "single debug build, loopback HTTP, 20 sequential direct delay(0) calls and 10 sequential one-node delay(0) flows; 10ms completion polling; no warmup; workspace tests may run concurrently; not a coding benchmark or release performance claim"
+  },
+  "missing_evidence": [
+    "Remote tag publication and branch protection: gh read-only probes exit 4, no authentication available; not evidence of absence",
+    "Named WI-ADR-001 through WI-ADR-020 decision owners",
+    "Hosted CI provisioning/publication mechanism for current AQ pin",
+    "No historical coding-benchmark corpus or Cargo bench targets located in supplied WI tree; no operator attachments",
+    "WASM integration: feature gated and no compiled .wasm files supplied; default test binary ran 0 cases",
+    "Current-runtime compilation/tests and controller build receipts; candidate/merged/post-rebase implementation evidence not produced"
+  ],
+  "no_new_aq_cases_assigned": true,
+  "all_started_sessions_collected": true,
+  "provenance_inputs": {
+    "handoff/manifest.json": "a764e6e3234ebe834d273599306dd007279b787a86ca5b67125b0476a9a4fd33",
+    "handoff/0000-conversation.md": "56469f384767cba96e05cd6c94005f9b9afa5cdef3e1095f5d430005b7045011",
+    "handoff/0000-final.md": "d6378ae4d08b03a9ffcb1e1d91291fb239c27e8fe149f76dc9b7c43aee404d33",
+    "design-recovery/context.json": "ba02ec0362eb0d453b3dbaf47ed63323987b9e22199e818a7b65b317f3919aac",
+    "design-recovery/manifest.json": "784f0ae0c0e6c23cb0504ed006f49912e13fa8d302a7178667883bff695ad152",
+    "plan/aq-baseline.lock.json": "1907d0a157628511c2419f84fd6b7820e09c160699505ee986cc46f3bcf78c7a",
+    "plan/wi-fabric-2-foundational-implementation-plan.md": "32564920d4cb1fa43fcecf996ef7897aa38b5c70fe4c04ca89adbedde86e608e",
+    "plan/craftingtable-scope-evidence.json": "1fdf26124cb55475a646a7408991402ec497d2816bed2dc93312d59e9cd464f0"
+  }
+}

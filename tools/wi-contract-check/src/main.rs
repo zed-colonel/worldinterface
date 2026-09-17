@@ -1,0 +1,76 @@
+use serde_json::json;
+use std::{env, path::PathBuf};
+use wi_contract_check::{contracts, evidence, finding, inventory, policy, read, Finding, Result};
+fn run() -> Result<bool> {
+    let root = env::var_os("WI_REPO_ROOT").map(PathBuf::from).unwrap_or(env::current_dir()?);
+    let args: Vec<_> = env::args().skip(1).collect();
+    if args.as_slice() == ["inventory", "generate"] {
+        println!("{}", serde_json::to_string_pretty(&inventory::generate(&root)?)?);
+        return Ok(true);
+    }
+    type Check = fn(&std::path::Path) -> Result<Vec<Finding>>;
+    let commands: [(&str, Check); 8] = [
+        ("baseline", contracts::baseline),
+        ("inventory", inventory::check),
+        ("contracts", contracts::contracts),
+        ("fixtures", contracts::fixtures),
+        ("provenance", contracts::provenance),
+        ("conformance", contracts::conformance),
+        ("docs", contracts::docs),
+        ("clean-break", policy::check),
+    ];
+    if args.len() == 3
+        && args[1] == "check"
+        && ["evidence", "publication"].contains(&args[0].as_str())
+    {
+        let p = PathBuf::from(&args[2]);
+        let v = read(&p)?;
+        let base = p.parent().unwrap();
+        if args[0] == "evidence" {
+            evidence::runtime(&root, &v, base)?
+        } else {
+            evidence::publication(&root, &v, base)?
+        }
+        println!(
+            "{}",
+            json!({"scope":args[0],"status":"validated","runtime_execution_claim":false})
+        );
+        return Ok(true);
+    }
+    if args.len() != 2 || args[1] != "check" {
+        return Err("usage: wi-contract-check {inventory generate|<inventory|contracts|fixtures|provenance|conformance|docs|clean-break|all> check|<evidence|publication> check FILE}".into());
+    }
+    let mut ok = true;
+    let mut matched = false;
+    for (scope, check) in commands {
+        if args[0] == scope || args[0] == "all" {
+            matched = true;
+            let findings = match check(&root) {
+                Ok(f) => f,
+                Err(e) => vec![finding("CHECK-INVALID", scope, scope, "WI-01", &e.to_string())],
+            };
+            ok &= findings.is_empty();
+            println!(
+                "{}",
+                json!({"scope":scope,"status":if findings.is_empty(){"passed"}else{"failed"},"evidence_class":"independent-checker","runtime_conformance":false,"findings":findings})
+            );
+        }
+    }
+    if !matched {
+        return Err("unknown command".into());
+    }
+    Ok(ok)
+}
+fn main() {
+    match run() {
+        Ok(true) => {}
+        Ok(false) => std::process::exit(1),
+        Err(e) => {
+            eprintln!(
+                "{}",
+                json!(finding("CHECK-INVALID", "command", "command", "WI-01", &e.to_string()))
+            );
+            std::process::exit(1)
+        }
+    }
+}

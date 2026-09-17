@@ -1,0 +1,13 @@
+[connector]
+name = "json.validate"
+version = "0.1.0"
+description = "Validates a JSON document against a JSON Schema."
+
+# No capabilities needed — pure computation
+[capabilities]
+
+[resources]
+# Conservative defaults — schema validation is typically fast
+max_fuel = 100_000_000
+timeout_ms = 5000
+max_memory_bytes = 33_554_432

@@ -1,0 +1,385 @@
+{
+  "contract": "WI-FABRIC-2",
+  "stack": "STACK-2026-07-25-FOUNDATIONAL-2",
+  "conformance_revision": 1,
+  "maturity": "independent",
+  "invariants": [
+    {
+      "id": "W1",
+      "title": "WorldInterface mediates accountable crossings",
+      "text": "The admission question is not whether an operation is useful to an agent. It is whether the operation crosses a governed boundary whose authority, consequence, ambiguity, sensitivity, or evidentiary value merits Fabric mediation.",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W1"
+    },
+    {
+      "id": "W2",
+      "title": "ActionQueue remains the sole durable task executor",
+      "text": "Fabric and Flow compile work into ActionQueue lifecycle semantics rather than maintaining an independent retry or lease engine.",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W2"
+    },
+    {
+      "id": "W3",
+      "title": "Intent is durable before consequential dispatch",
+      "text": "Every accountable effect has a stable intent identity and authorization record before a connector is invoked.",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W3"
+    },
+    {
+      "id": "W4",
+      "title": "Every boundary crossing has direction-appropriate attribution",
+      "text": "Egress receipts identify the accountable principal, requester, delegation lineage, purpose, authorizing grant, executor, and approval where applicable. Ingress receipts identify the authorized binding principal and subscriber, connector, canonical source, externally asserted origin and audience, transport assurance, and delivery lineage. Neither direction flattens distinct actors into one ambiguous “who.”",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W4"
+    },
+    {
+      "id": "W5",
+      "title": "The caller cannot self-assert privileged identity",
+      "text": "Agency is established through authenticated credentials and server-side resolution, not trusted arbitrary payload fields.",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W5"
+    },
+    {
+      "id": "W6",
+      "title": "Resource resolution precedes authorization",
+      "text": "Policy evaluates canonical resources and normalized effect semantics, not unresolved paths, hostnames, connector names, or prose descriptions.",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W6"
+    },
+    {
+      "id": "W7",
+      "title": "Authority only attenuates",
+      "text": "A flow node, delegated run, connector, or child grant may narrow parent authority but cannot enlarge it.",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W7"
+    },
+    {
+      "id": "W8",
+      "title": "A Flow cannot manufacture authority",
+      "text": "Presence of a connector node in a FlowSpec is not a grant. Every node receives the intersection of principal, flow, run, node, and runtime constraints.",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W8"
+    },
+    {
+      "id": "W9",
+      "title": "Workflow execution is not accountability",
+      "text": "A workflow run is a requester or orchestration actor. The accountable principal is the human, Vessel, service, or organization whose authority and purpose the workflow serves.",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W9"
+    },
+    {
+      "id": "W10",
+      "title": "Receipt, trace, and telemetry remain distinct",
+      "text": "Boundary receipts prove accountable crossings. Workflow traces explain deterministic orchestration. Telemetry records implementation-level detail.",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W10"
+    },
+    {
+      "id": "W11",
+      "title": "Internal runtime I/O is not recursively receipted",
+      "text": "Writes to WorldInterface's own WALs, databases, logs, or indexes are implementation mechanics represented by domain and execution records.",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W11"
+    },
+    {
+      "id": "W12",
+      "title": "Unknown consequential effects fail closed",
+      "text": "A connector lacking declared effect class, resource semantics, idempotency behavior, and authorization grammar cannot execute as harmless by default.",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W12"
+    },
+    {
+      "id": "W13",
+      "title": "Ambiguous outcome is first-class",
+      "text": "A connector or runtime crash after possible external commit yields `Uncertain`, not ordinary failure eligible for blind retry.",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W13"
+    },
+    {
+      "id": "W14",
+      "title": "Idempotency claims are explicit and testable",
+      "text": "A connector declares whether an operation is pure, idempotent, externally keyed, compensatable, reconcilable, or non-repeatable. Fabric does not infer this from `is_read_only` alone.",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W14"
+    },
+    {
+      "id": "W15",
+      "title": "Connectors do not own authorization policy",
+      "text": "A connector declares structural semantics and enforces the effective envelope at execution. Operator or platform policy decides what is allowed.",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W15"
+    },
+    {
+      "id": "W16",
+      "title": "Specialist technique stays out of Fabric ontology",
+      "text": "Code search, compiler orchestration, CAD traversal, and similar domain operations belong in specialist runtimes unless they independently satisfy the accountable-capability admission test.",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W16"
+    },
+    {
+      "id": "W17",
+      "title": "Sandbox grants are accountable capabilities",
+      "text": "Fabric may authorize and receipt the creation of a broad but bounded environment without receiving a receipt for every internal operation.",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W17"
+    },
+    {
+      "id": "W18",
+      "title": "WASM is an isolation mechanism, not the definition of a capability",
+      "text": "A capability may be implemented by WASM, native code, a remote service, or a managed worker. Protocol semantics remain the same.",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W18"
+    },
+    {
+      "id": "W19",
+      "title": "Direct and Flow paths converge",
+      "text": "Both direct `EffectIntent` and compiled FlowSpec use the same execution, authorization, receipt, and reconciliation core.",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W19"
+    },
+    {
+      "id": "W20",
+      "title": "Embedded and centralized semantics match",
+      "text": "Deployment changes authentication, tenancy, and operations—not the meaning of an ingress binding, observation, delivery, effect, or receipt.",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W20"
+    },
+    {
+      "id": "W21",
+      "title": "Sensitive content is minimized",
+      "text": "Receipts use hashes, metadata, and protected artifact references instead of copying secrets or full payloads unless retention policy explicitly requires it.",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W21"
+    },
+    {
+      "id": "W22",
+      "title": "Historical semantics are versioned",
+      "text": "Protocol, resolver, connector, authorization, flow compiler, receipt, and reconciliation versions are retained for replay and audit.",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W22"
+    },
+    {
+      "id": "W23",
+      "title": "Pure transforms cannot perform hidden I/O",
+      "text": "A Flow transform is deterministic over declared inputs. Any boundary access must be an explicit capability node.",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W23"
+    },
+    {
+      "id": "W24",
+      "title": "Completion follows durable output publication",
+      "text": "A task or flow node is complete only after required context/artifact writes and receipt commitments have succeeded under the declared transaction protocol.",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W24"
+    },
+    {
+      "id": "W25",
+      "title": "Platform policy is not a code fork",
+      "text": "Organizations, tenants, authentication, quotas, and shared administration surround the same Fabric kernel used by embedded clients.",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W25"
+    },
+    {
+      "id": "W26",
+      "title": "Accountable ingress is durable before downstream wake",
+      "text": "A provider event, callback, stream message, or inbound communication is authenticated as far as the transport permits, deduplicated, and stored as a `BoundaryObservation` before WorldInterface notifies an owning application.",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W26"
+    },
+    {
+      "id": "W27",
+      "title": "External identity assertions are not trusted principal identity",
+      "text": "Provider account IDs, display names, email headers, user-supplied actor fields, and channel nicknames are retained as assertions with assurance metadata. They are not silently promoted into verified principals.",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W27"
+    },
+    {
+      "id": "W28",
+      "title": "Ingress provenance and semantic truth are separate",
+      "text": "A receipt can prove that provider P delivered content C through channel H. It does not prove C is accurate, benevolent, authorized as an instruction, or semantically part of a particular Exoskeleton conversation.",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W28"
+    },
+    {
+      "id": "W29",
+      "title": "Generated content is not delivery",
+      "text": "Outbound communication advances only through explicit effect and provider-delivery states. Application-local generation, storage, or selection cannot produce a WorldInterface delivery receipt.",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W29"
+    },
+    {
+      "id": "W30",
+      "title": "Communication semantics remain application-owned",
+      "text": "Fabric preserves boundary metadata and executes authorized delivery. It does not own conversation grouping, response obligations, relationship state, communicative meaning, or epistemic acceptance.",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W30"
+    },
+    {
+      "id": "W31",
+      "title": "Ingress and egress share provenance but not one state machine",
+      "text": "Both directions use verified transport, agency, content references, receipts, and causal references, but inbound observations and outbound effects retain distinct lifecycle records.\n\n---",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W31"
+    },
+    {
+      "id": "W32",
+      "title": "Portable identity is protocol-pluggable",
+      "text": "Fabric depends on an identity-resolution and signing interface, not on EntityID, a DID method, a blockchain, one certificate authority, or one custody model.",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W32"
+    },
+    {
+      "id": "W33",
+      "title": "External identifier is not local principal or unique entityhood",
+      "text": "An `ExternalIdentifier` can be bound to a local `PrincipalId` only through a verified, versioned `IdentityBinding`. The identifier format does not determine `PrincipalKind`, personhood, uniqueness, consciousness, or organizational status.",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W33"
+    },
+    {
+      "id": "W34",
+      "title": "Signature proves provenance, not semantic truth",
+      "text": "A valid signature establishes that the holder of an applicable verification method signed a canonical statement. It does not establish that the statement, claimed effect, reputation judgment, or completion assertion is true.",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W34"
+    },
+    {
+      "id": "W35",
+      "title": "Key state is time-versioned",
+      "text": "Authorization and proof verification record the identifier state, verification method, algorithm, validity interval, revocation status, and resolution evidence used at the relevant time. Current key state cannot be used blindly to reinterpret historical signatures.",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W35"
+    },
+    {
+      "id": "W36",
+      "title": "Root key custody is outside ordinary execution",
+      "text": "Models, faculties, delegated agents, connectors, and sandbox processes do not receive root identity keys. Signing occurs through a constrained signing provider or hardware-backed custody boundary and is separately authorized.",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W36"
+    },
+    {
+      "id": "W37",
+      "title": "Actor, sponsor, and witness remain distinct",
+      "text": "Economic sponsorship, fee payment, bonded stake, or infrastructure subsidy does not change who authored or requested an action. Witness or counterparty evidence does not make the witness the accountable principal.",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W37"
+    },
+    {
+      "id": "W38",
+      "title": "Publication is policy-controlled and does not imply completeness",
+      "text": "A proof may remain local, be disclosed directly, be selectively presented, be batch-anchored, or be publicly registered. Published evidence proves only what the publication protocol establishes; it does not imply that omitted history does not exist.",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W38"
+    },
+    {
+      "id": "W39",
+      "title": "Trust attestations are evidence, not global reputation",
+      "text": "Fabric may verify and transport signed contextual attestations. It does not collapse them into one authoritative score or require recipients to adopt the issuer's judgment.",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W39"
+    },
+    {
+      "id": "W40",
+      "title": "Bonds are optional accountable effects",
+      "text": "A bonded commitment may be created, funded, resolved, released, or disputed through semantic capabilities. The bond is an external manifestation of terms and stake; it does not replace an application's internal commitment state or remove the need for a resolver policy.",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W40"
+    },
+    {
+      "id": "W41",
+      "title": "Endogenous origin does not widen authority",
+      "text": "An effect serving a Vessel mission, self-adopted goal, initiative decision, or interest follows the same resource resolution, authorization, approval, execution, and receipt path as externally requested work.",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W41"
+    },
+    {
+      "id": "W42",
+      "title": "WorldInterface does not own narrative identity",
+      "text": "Signed proof history and boundary receipts may become evidence for an Exoskeleton narrative, but Fabric does not decide what a principal's life, relationship, or collective history means.",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W42"
+    },
+    {
+      "id": "W43",
+      "title": "Cryptographic algorithms are agile and profiled",
+      "text": "Identifiers and statements name versioned cryptographic suites through an algorithm registry. No foundational schema permanently embeds one signature algorithm, chain, or post-quantum transition strategy.",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W43"
+    },
+    {
+      "id": "W44",
+      "title": "External commissioning cannot create or rewrite Vessel genesis",
+      "text": "WorldInterface may perform bounded commissioning effects only after an owning domain has durably created the internal identity and origin record. External identifier creation, principal registration, ingress binding, or credential provisioning never becomes internal Vessel genesis.",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W44"
+    },
+    {
+      "id": "W45",
+      "title": "Acting capacity is explicit and roles do not ambiently union authority",
+      "text": "A consequential request identifies the role or delegated capacity under which it is made when policy requires one. Multiple role attestations cannot silently combine into a broader effective grant.",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W45"
+    },
+    {
+      "id": "W46",
+      "title": "Information-use permission is distinct from access permission",
+      "text": "Authorization to read or receive information does not automatically authorize retention, derivation, redistribution, disclosure, proof publication, or unrelated reuse. Boundary-relevant use obligations are enforced and receipted separately.",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W46"
+    },
+    {
+      "id": "W47",
+      "title": "Lifecycle and developmental operations are accountable effects",
+      "text": "Principal registration, identity rotation, candidate publication, runtime activation, rollback, quarantine, restore, migration, and retirement-related operations use ordinary intent-first admission, exact authorization, receipts, and reconciliation.",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W47"
+    },
+    {
+      "id": "W48",
+      "title": "Candidate artifacts are not active runtime",
+      "text": "A candidate build, model, faculty, constitution, schema, or policy remains a versioned artifact until a separately authorized activation transition succeeds.",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W48"
+    },
+    {
+      "id": "W49",
+      "title": "Activation and rollback require an authorized lifecycle supervisor",
+      "text": "Ordinary cognition, delegates, workers, and candidates do not possess ambient authority to replace the active runtime. Activation and rollback are performed by a bounded external supervisor or deployment authority.",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W49"
+    },
+    {
+      "id": "W50",
+      "title": "Provenance and evaluation evidence are not acceptance",
+      "text": "Build provenance, test reports, trial receipts, signatures, and provider evidence establish particular facts. They do not by themselves establish that a candidate is better, safe, identity-preserving, or approved.",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W50"
+    },
+    {
+      "id": "W51",
+      "title": "Schema and policy semantics are versioned",
+      "text": "Effect classes, resource schemas, role attestations, information-use envelopes, capability descriptors, policy dependencies, and receipt profiles cannot be redefined in place. Historical decisions pin exact semantic versions.",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W51"
+    },
+    {
+      "id": "W52",
+      "title": "Restore, migration, succession, and fork remain distinguishable",
+      "text": "Boundary operations preserve which lifecycle claim is being made. WorldInterface does not flatten all copied or reactivated state into a generic restore event.",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W52"
+    },
+    {
+      "id": "W53",
+      "title": "Role and stewardship attestations are evidence, not internal identity or trust",
+      "text": "WorldInterface may verify an external role, sponsorship, or stewardship statement. It does not infer the Vessel's internal role semantics, Purpose Charter, relationship trust, or continuity from that statement.",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W53"
+    },
+    {
+      "id": "W54",
+      "title": "Self-improvement origin does not widen authority",
+      "text": "A request described as maintenance, self-improvement, recovery, or mission-aligned follows the same exact resource, acting-capacity, approval, and policy path as any other consequential effect.",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W54"
+    },
+    {
+      "id": "W55",
+      "title": "Temporal provenance is not semantic truth",
+      "text": "Boundary records distinguish provider occurrence time, observation time, receipt time, admission time, dispatch time, and reconciliation time. A timestamp or ordering claim preserves provenance and assurance but does not establish semantic truth.",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W55"
+    },
+    {
+      "id": "W56",
+      "title": "Developmental correlation is attribution, not authorization or priority",
+      "text": "Campaign, intervention-arm, evaluation-plan, task-distribution, or component-fingerprint references may be preserved as bounded causal context. They cannot authenticate a principal, widen a grant, alter connector eligibility, set scheduler priority, increase budget, bypass approval, or activate a candidate.",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W56"
+    },
+    {
+      "id": "W57",
+      "title": "Boundary evidence is not task quality or improvement acceptance",
+      "text": "A succeeded effect, completed trial, received observation, receipt, proof bundle, or reconciled outcome records a boundary fact. It does not determine correctness, select a winning intervention, diagnose a binding constraint, establish continuity, or accept an improvement.",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W57"
+    },
+    {
+      "id": "W58",
+      "title": "Experimental work follows the ordinary boundary contract",
+      "text": "Research, evaluation, benchmark, trial, maintenance, or self-improvement labels never weaken authentication, acting-capacity, canonical resource resolution, information-use, approval, final authorization, idempotency, uncertainty, reconciliation, or receipt requirements.",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W58"
+    },
+    {
+      "id": "W59",
+      "title": "Comparative evidence preserves material execution differences",
+      "text": "When WorldInterface participates in a controlled comparison, records pin or explicitly qualify the behaviorally relevant resource, resolver, registry, policy, grant, approval, information-use, connector, environment, artifact, timing, resource, outcome, and uncertainty evidence. Material differences are never hidden behind a generic experimental-success result.",
+      "source": "contracts/sources/worldinterface-v2-foundational-design.md#W59"
+    }
+  ],
+  "removed_concepts": [
+    "signal.await",
+    "signal.emit",
+    "SignalRegistry",
+    "blocking delay connector",
+    "coding-specific Fabric connectors",
+    "old receipt path",
+    "anonymous compatibility principal"
+  ],
+  "fresh_store": {
+    "contract": "WI-FABRIC-2",
+    "fabric_schema": 1,
+    "context_schema": 1,
+    "flow_schema": 1,
+    "platform_schema": 1,
+    "platform_optional": true,
+    "pre_contract_migration": false
+  },
+  "dependency_direction": [
+    "AQ-CONT-1",
+    "WI-FABRIC-2",
+    "EXO-V3"
+  ]
+}

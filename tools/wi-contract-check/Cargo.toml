@@ -1,0 +1,22 @@
+[package]
+name = "wi-contract-check"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+# Deliberately independent of the legacy production workspace and AQ adapters.
+[workspace]
+
+[dependencies]
+proc-macro2 = "=1.0.106"
+quote = "=1.0.45"
+regex = "=1.12.3"
+serde = { version = "=1.0.228", features = ["derive"] }
+serde_json = "=1.0.149"
+serde_yaml = "=0.9.34"
+sha2 = "=0.10.9"
+syn = { version = "=2.0.117", features = ["full", "visit", "extra-traits"] }
+toml = "=0.8.23"
+
+[dev-dependencies]
+tempfile = "=3.26.0"

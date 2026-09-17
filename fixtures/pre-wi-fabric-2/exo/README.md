@@ -1,0 +1,11 @@
+# Historical EXO coding evidence for WI-01
+
+Collected by the WI-01 design recovery; no benchmark was rerun.
+
+The operator designated /home/keith/src/exoskeleton/benchmarks. Filesystem discovery included ignored files and excluded target/ and .git/. The archive contains 90 files (81 result JSONs), totaling 1,927,197 bytes. All eight tracked files match frozen EXO commit 1bcbb757a7885ce1f911ac948bfc2269c9209075 and its local exoskeleton/pre-exo-v3 tag. The untracked sample Cargo.lock and ignored result JSONs have independent byte identities; the frozen commit is not asserted as their execution revision.
+
+The easy task definitions add a unit test, correct a function-name typo, and add module documentation. Their original verification commands and sample repository are preserved. v0.1.json and code-test-policy-easy-suite-20260429.json each report all three tasks passing. phase1-baseline-swe-aya-774-10ticks-20260417.json and code-test-upgrade-swe-aya-774-16ticks-20260429.json report Aya failure with verification exit 101 and MaxTicks. Use each report's timestamp, not its filename date. No report includes a source revision/toolchain identity, and the directory has no standalone Aya input fixture. Preserve these evidence gaps; do not reconstruct or rerun them as historical facts.
+
+These traces illustrate the approved plan's diagnosis (implementation plan sections 1.2, 1.4, 1.5; foundational design section 2.3 and W16): a coding workflow expanded the global boundary catalog from file search/read/edit and shell tests into repo.locate, semantic code.impls/code.read_symbol, and code.test. Successful individual tool calls do not establish task correctness. The target disposition moves technique into specialist workers/sandboxes or independent exported-result verification while Fabric retains workspace grants, artifact boundaries, sensitive effects and semantic publication. These examples document that motivation; they do not prove causal improvement or future specialist effectiveness.
+
+manifest.json records exact source paths, frozen-blob comparisons, commands and SHA-256 hashes. files.sha256 hashes the copied bytes; results-summary.json extracts reported facts without assigning new scores. All copied artifacts are inert evidence; no target runtime may depend on them.
