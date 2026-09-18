@@ -1,4 +1,15 @@
-# Idempotency Guide
+# Idempotency Guide — historical experimental baseline
+
+The original guide below is retained as historical guidance for the frozen
+`worldinterface/pre-wi-fabric-2` baseline. Its `run_id` mandates and safety claims
+are inactive for WI-FABRIC-2 and are not current conformance evidence. Target work
+follows the [active contribution contract](../CONTRIBUTING.md#wi-fabric-2-development-contract):
+ActionQueue `RunId` is queue replay identity, and using it as provider idempotency
+identity requires an explicit mapping record. Public-maintenance reinstatement of
+historical guidance follows the operator-approved transition described there,
+including reconciliation with the approved release's identity contract.
+
+## Original baseline guide (historical-only)
 
 WorldInterface guarantees that connector invocations are idempotent: re-executing
 the same operation with the same `run_id` produces no duplicate side effects.
