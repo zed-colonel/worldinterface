@@ -1,3 +1,10 @@
+> WI-FABRIC-2 disposition: the examples below describe the retained historical
+> runtime API. They are not admitted target capabilities. Review each physical
+> manifest location in `inventory/connector-disposition.json`; streaming sources
+> belong at ingress, transforms must be deterministic and I/O-free, and semantic
+> effects require the [target admission checklist](connector-development.md).
+> Updating or removing runtime examples waits for verified replacements.
+
 # WASM Connector Development Guide
 
 How to build, test, and deploy WASM connectors for WorldInterface.

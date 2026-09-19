@@ -26,3 +26,8 @@ diff, then update dispositions individually. `inventory check` rejects missing,
 duplicate, stale and incomplete assignments. Pure transforms remain deterministic
 and I/O-free; coding technique goes to specialists; optional semantic WASM
 connectors still require capability admission. There is no legacy-only category.
+
+WI-10 adds `connector-disposition.json`: exhaustive family references, source
+hashes, selective removal surfaces and replacement requirements. `catalog check`
+validates this plan independently of removal readiness. Removal is blocked until
+verified replacements exist. See [connector development](../docs/connector-development.md).

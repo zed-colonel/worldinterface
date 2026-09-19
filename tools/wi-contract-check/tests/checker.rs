@@ -128,6 +128,12 @@ fn all_deletion_rules_activate_only_at_approved_milestones() {
             8,
         ),
         ("CB-CODING", "crates/a/src/lib.rs", "mod code_test;", 10),
+        (
+            "CB-CODING-HELPERS",
+            "crates/worldinterface-connector/src/connectors/code_common.rs",
+            "fn helper() {}",
+            10,
+        ),
         ("CB-COMPAT-PRINCIPAL", "crates/a/src/lib.rs", "struct AnonymousPrincipal;", 4),
         ("CB-FIRE-FORGET", "crates/a/src/lib.rs", "struct TaskSubmissionPort;", 7),
         (

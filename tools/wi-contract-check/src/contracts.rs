@@ -308,6 +308,49 @@ pub fn conformance(root: &Path) -> Result<Vec<Finding>> {
     }
     Ok(f)
 }
+/// Recorded operator guidance, pinned independently from mutable queue status.
+/// Scoped acceptance never satisfies a full-checkpoint request.
+pub fn adr_coverage(root: &Path, id: &str, scope: &str, phase: &str, full: bool) -> Result<bool> {
+    let bytes = fs::read(root.join("docs/adr/approvals.json"))?;
+    if hash(&bytes) != "7dbd5ec176c47321d6777da11385f50430e5fc4794227d40303ef630fe8c0967" {
+        return Ok(false);
+    }
+    let v: Value = serde_json::from_slice(&bytes)?;
+    let Some(record) =
+        v["records"].as_array().and_then(|rs| rs.iter().find(|r| r["checkpoint"] == id))
+    else {
+        return Ok(false);
+    };
+    if record["approval"]["outcome"] != "accepted" {
+        return Ok(false);
+    }
+    if record["decision"]["coverage"] == "full" {
+        return Ok(true);
+    }
+    Ok(!full
+        && record["decision"]["consumers"]
+            .as_array()
+            .is_some_and(|cs| cs.iter().any(|c| c["sliceId"] == scope && c["phase"] == phase)))
+}
+fn adr_status_matches(root: &Path, id: &str, r: &Value) -> Result<bool> {
+    let (status, approval, packet) = match id {
+        "WI-ADR-016" => (
+            "accepted-clauses",
+            "2e15ca00-a081-4f2c-8430-bc81b2f27ec9",
+            "cafcb369dfeb14acbd6407ffd740da96d1d4de8f642243a1704128b05c89acc4",
+        ),
+        "WI-ADR-017" => (
+            "accepted",
+            "01f46a00-49ae-4244-ae29-ea95cc6413c3",
+            "0ed0ac6f51edbcd7f66f5c2f2affaff97ad7000aefb3e761639e550e380d3f4a",
+        ),
+        _ => return Ok(r["status"] == "queued" && r.get("approval_id").is_none()),
+    };
+    Ok(r["status"] == status
+        && r["approval_id"] == approval
+        && r["decision_packet_digest"] == packet
+        && adr_coverage(root, id, "wi/WI-10/domain", "start", id == "WI-ADR-017")?)
+}
 pub fn docs(root: &Path) -> Result<Vec<Finding>> {
     let plan = fs::read_to_string(root.join(PLAN))?;
     let queue = read(&root.join("docs/adr/queue.json"))?;
@@ -327,7 +370,7 @@ pub fn docs(root: &Path) -> Result<Vec<Finding>> {
             || r["decision"] != row[2]
             || r["due"] != row[3]
             || r["owner"] != "operator"
-            || r["status"] != "queued"
+            || !adr_status_matches(root, id, r)?
         {
             f.push(finding(
                 "ADR-QUEUE",
@@ -341,7 +384,7 @@ pub fn docs(root: &Path) -> Result<Vec<Finding>> {
         if !stub.contains(row[2])
             || !stub.contains(row[3])
             || !stub.contains("Owner: operator")
-            || !stub.contains("Status: queued")
+            || !stub.contains(&format!("Status: {}\n", r["status"].as_str().unwrap_or("invalid")))
         {
             f.push(finding(
                 "ADR-STUB",

@@ -100,6 +100,18 @@
       "disposition": "delete active legacy path by WI-07"
     },
     {
+      "id": "CB-CODING-HELPERS",
+      "activate_at": "WI-10",
+      "pattern": "\\S",
+      "paths": [
+        "crates/worldinterface-connector/src/connectors/code_common.rs",
+        "crates/worldinterface-connector/src/connectors/code_fuzzy.rs",
+        "crates/worldinterface-connector/src/connectors/gitignore_check.rs"
+      ],
+      "source": "implementation plan §1.4; WI-10",
+      "disposition": "remove orphan helper source as well as exported coding names after verified specialist replacement"
+    },
+    {
       "id": "CB-CODING-SEMANTIC",
       "activate_at": "WI-10",
       "pattern": "\\S",

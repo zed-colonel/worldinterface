@@ -1,0 +1,217 @@
+{
+  "version": 1,
+  "runtime_pass_asserted": false,
+  "admission_criteria": [
+    "trust_boundary",
+    "durable_consequence",
+    "ambiguity",
+    "sensitive_authority",
+    "independent_evidence",
+    "semantic_governance"
+  ],
+  "descriptor_requirements": [
+    "effect_class",
+    "resource_grammar",
+    "resolver",
+    "operation_schema",
+    "input_artifact_profile",
+    "output_artifact_profile",
+    "idempotency_class",
+    "provider_key_mapping",
+    "commit_evidence",
+    "reconciliation",
+    "retry_boundaries",
+    "isolation",
+    "secrets",
+    "time_limit",
+    "memory_limit",
+    "output_limit",
+    "receipt_evidence_profile",
+    "privacy",
+    "retention"
+  ],
+  "appendix_questions": [
+    "trust_boundary",
+    "accountable_principal",
+    "canonical_resource",
+    "shared_durable_sensitive_external",
+    "ambiguous_commit",
+    "idempotency_reconciliation",
+    "semantic_governance",
+    "sandbox_alternative",
+    "useful_receipt",
+    "policy_grammar",
+    "isolation",
+    "historical_versions",
+    "external_identifier_binding",
+    "historical_key_purpose",
+    "proof_meaning",
+    "distinct_roles",
+    "disclosure_completeness",
+    "optional_adapter"
+  ],
+  "candidates": [
+    {
+      "operation": "filesystem.read",
+      "status": "pending",
+      "owner_scope": "wi/WI-10/integration",
+      "rationale": "Pending full descriptor, exact authorization, idempotency, reconciliation and independent admission/conformance evidence."
+    },
+    {
+      "operation": "filesystem.write",
+      "status": "pending",
+      "owner_scope": "wi/WI-10/integration",
+      "rationale": "Pending full descriptor, exact authorization, idempotency, reconciliation and independent admission/conformance evidence."
+    },
+    {
+      "operation": "filesystem.enumerate",
+      "status": "deferred",
+      "owner_scope": "wi/WI-10/integration",
+      "rationale": "Deferred until canonical resource semantics and receipt value justify frequency and mediation cost."
+    },
+    {
+      "operation": "http.request",
+      "status": "pending",
+      "owner_scope": "wi/WI-10/integration",
+      "rationale": "Pending full descriptor, exact authorization, idempotency, reconciliation and independent admission/conformance evidence."
+    },
+    {
+      "operation": "artifact.import",
+      "status": "pending",
+      "owner_scope": "wi/WI-10/integration",
+      "rationale": "Pending full descriptor, exact authorization, idempotency, reconciliation and independent admission/conformance evidence."
+    },
+    {
+      "operation": "artifact.export",
+      "status": "pending",
+      "owner_scope": "wi/WI-10/integration",
+      "rationale": "Pending full descriptor, exact authorization, idempotency, reconciliation and independent admission/conformance evidence."
+    },
+    {
+      "operation": "process.execute",
+      "status": "pending",
+      "owner_scope": "wi/WI-10/process-catalog",
+      "rationale": "Pending concrete bounded process admission; no raw command/deployment-shell authority."
+    },
+    {
+      "operation": "message.send",
+      "status": "pending",
+      "owner_scope": "wi/WI-10/integration",
+      "rationale": "Pending full descriptor, exact authorization, idempotency, reconciliation and independent admission/conformance evidence."
+    },
+    {
+      "operation": "sandbox.provision",
+      "status": "pending",
+      "owner_scope": "wi/WI-09",
+      "rationale": "Pending qualified lifecycle replacement and WI-09 evidence; bounded reviewed-process proof does not establish independent isolation."
+    },
+    {
+      "operation": "sandbox.inspect",
+      "status": "pending",
+      "owner_scope": "wi/WI-09",
+      "rationale": "Pending qualified lifecycle replacement and WI-09 evidence; bounded reviewed-process proof does not establish independent isolation."
+    },
+    {
+      "operation": "sandbox.release",
+      "status": "pending",
+      "owner_scope": "wi/WI-09",
+      "rationale": "Pending qualified lifecycle replacement and WI-09 evidence; bounded reviewed-process proof does not establish independent isolation."
+    },
+    {
+      "operation": "worker.start",
+      "status": "pending",
+      "owner_scope": "wi/WI-09",
+      "rationale": "Pending qualified lifecycle replacement and WI-09 evidence; bounded reviewed-process proof does not establish independent isolation."
+    },
+    {
+      "operation": "worker.inspect",
+      "status": "pending",
+      "owner_scope": "wi/WI-09",
+      "rationale": "Pending qualified lifecycle replacement and WI-09 evidence; bounded reviewed-process proof does not establish independent isolation."
+    },
+    {
+      "operation": "worker.collect",
+      "status": "pending",
+      "owner_scope": "wi/WI-09",
+      "rationale": "Pending qualified lifecycle replacement and WI-09 evidence; bounded reviewed-process proof does not establish independent isolation."
+    },
+    {
+      "operation": "worker.terminate",
+      "status": "pending",
+      "owner_scope": "wi/WI-09",
+      "rationale": "Pending qualified lifecycle replacement and WI-09 evidence; bounded reviewed-process proof does not establish independent isolation."
+    },
+    {
+      "operation": "candidate.build",
+      "status": "pending",
+      "owner_scope": "separately-governed-foundational-lifecycle",
+      "rationale": "Foundational design \u00a725.12 minimum lifecycle seam; separately governed pending entry. Candidate output cannot activate itself; exact lifecycle authority and external acceptance remain required."
+    },
+    {
+      "operation": "runtime.activate",
+      "status": "pending",
+      "owner_scope": "separately-governed-foundational-lifecycle",
+      "rationale": "Foundational design \u00a725.12 minimum lifecycle seam; separately governed pending entry. Candidate output cannot activate itself; exact lifecycle authority and external acceptance remain required."
+    },
+    {
+      "operation": "runtime.rollback",
+      "status": "pending",
+      "owner_scope": "separately-governed-foundational-lifecycle",
+      "rationale": "Foundational design \u00a725.12 minimum lifecycle seam; separately governed pending entry. Candidate output cannot activate itself; exact lifecycle authority and external acceptance remain required."
+    },
+    {
+      "operation": "runtime.checkpoint",
+      "status": "pending",
+      "owner_scope": "separately-governed-foundational-lifecycle",
+      "rationale": "Foundational design \u00a725.12 minimum lifecycle seam; separately governed pending entry. Candidate output cannot activate itself; exact lifecycle authority and external acceptance remain required."
+    },
+    {
+      "operation": "principal.register",
+      "status": "pending",
+      "owner_scope": "separately-governed-foundational-lifecycle",
+      "rationale": "Foundational design \u00a725.12 minimum lifecycle seam; separately governed pending entry. Candidate output cannot activate itself; exact lifecycle authority and external acceptance remain required."
+    },
+    {
+      "operation": "principal.bind",
+      "status": "pending",
+      "owner_scope": "separately-governed-foundational-lifecycle",
+      "rationale": "Foundational design \u00a725.12 minimum lifecycle seam; separately governed pending entry. Candidate output cannot activate itself; exact lifecycle authority and external acceptance remain required."
+    },
+    {
+      "operation": "identity.issue-delegation",
+      "status": "pending",
+      "owner_scope": "separately-governed-foundational-lifecycle",
+      "rationale": "Foundational design \u00a725.12 minimum lifecycle seam; separately governed pending entry. Candidate output cannot activate itself; exact lifecycle authority and external acceptance remain required."
+    },
+    {
+      "operation": "identity.rotate",
+      "status": "pending",
+      "owner_scope": "separately-governed-foundational-lifecycle",
+      "rationale": "Foundational design \u00a725.12 minimum lifecycle seam; separately governed pending entry. Candidate output cannot activate itself; exact lifecycle authority and external acceptance remain required."
+    },
+    {
+      "operation": "identity.revoke",
+      "status": "pending",
+      "owner_scope": "separately-governed-foundational-lifecycle",
+      "rationale": "Foundational design \u00a725.12 minimum lifecycle seam; separately governed pending entry. Candidate output cannot activate itself; exact lifecycle authority and external acceptance remain required."
+    },
+    {
+      "operation": "artifact.publish",
+      "status": "pending",
+      "owner_scope": "separately-governed-foundational-lifecycle",
+      "rationale": "Foundational design \u00a725.12 minimum lifecycle seam; separately governed pending entry. Candidate output cannot activate itself; exact lifecycle authority and external acceptance remain required."
+    },
+    {
+      "operation": "information.disclose",
+      "status": "pending",
+      "owner_scope": "separately-governed-foundational-lifecycle",
+      "rationale": "Foundational design \u00a725.12 minimum lifecycle seam; separately governed pending entry. Candidate output cannot activate itself; exact lifecycle authority and external acceptance remain required."
+    }
+  ],
+  "denied": [
+    "arbitrary-deployment-shell",
+    "coding-specific-fabric-vocabulary",
+    "unqualified-ordinary-use",
+    "implicit-hostile-code-or-vm-assurance"
+  ]
+}

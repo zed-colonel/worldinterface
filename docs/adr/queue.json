@@ -124,16 +124,20 @@
     "decision": "Agent Host transport, run credential, authoritative process-managed-proof-1 profile, executable/image representation, supported controls, artifact exchange and external-provider seam",
     "due": "WI-09; definition clauses before dependent provider admission/evidence work",
     "owner": "operator",
-    "status": "queued",
-    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4"
+    "status": "accepted-clauses",
+    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4",
+    "approval_id": "2e15ca00-a081-4f2c-8430-bc81b2f27ec9",
+    "decision_packet_digest": "cafcb369dfeb14acbd6407ffd740da96d1d4de8f642243a1704128b05c89acc4"
   },
   {
     "id": "WI-ADR-017",
     "decision": "Capability admission checklist and connector quarantine",
     "due": "WI-10",
     "owner": "operator",
-    "status": "queued",
-    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4"
+    "status": "accepted",
+    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4",
+    "approval_id": "01f46a00-49ae-4244-ae29-ea95cc6413c3",
+    "decision_packet_digest": "0ed0ac6f51edbcd7f66f5c2f2affaff97ad7000aefb3e761639e550e380d3f4a"
   },
   {
     "id": "WI-ADR-018",

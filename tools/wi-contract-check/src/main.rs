@@ -1,6 +1,8 @@
 use serde_json::json;
 use std::{env, path::PathBuf};
-use wi_contract_check::{contracts, evidence, finding, inventory, policy, read, Finding, Result};
+use wi_contract_check::{
+    catalog, contracts, evidence, finding, inventory, policy, read, Finding, Result,
+};
 fn run() -> Result<bool> {
     let root = env::var_os("WI_REPO_ROOT").map(PathBuf::from).unwrap_or(env::current_dir()?);
     let args: Vec<_> = env::args().skip(1).collect();
@@ -9,7 +11,8 @@ fn run() -> Result<bool> {
         return Ok(true);
     }
     type Check = fn(&std::path::Path) -> Result<Vec<Finding>>;
-    let commands: [(&str, Check); 8] = [
+    let commands: [(&str, Check); 9] = [
+        ("catalog", catalog::check),
         ("baseline", contracts::baseline),
         ("inventory", inventory::check),
         ("contracts", contracts::contracts),
@@ -38,7 +41,7 @@ fn run() -> Result<bool> {
         return Ok(true);
     }
     if args.len() != 2 || args[1] != "check" {
-        return Err("usage: wi-contract-check {inventory generate|<inventory|contracts|fixtures|provenance|conformance|docs|clean-break|all> check|<evidence|publication> check FILE}".into());
+        return Err("usage: wi-contract-check {inventory generate|<catalog|inventory|contracts|fixtures|provenance|conformance|docs|clean-break|all> check|<evidence|publication> check FILE}".into());
     }
     let mut ok = true;
     let mut matched = false;
@@ -52,7 +55,7 @@ fn run() -> Result<bool> {
             ok &= findings.is_empty();
             println!(
                 "{}",
-                json!({"scope":scope,"status":if findings.is_empty(){"passed"}else{"failed"},"evidence_class":"independent-checker","runtime_conformance":false,"findings":findings})
+                json!({"scope":scope,"status":if findings.is_empty(){"passed"}else{"failed"},"evidence_class":"independent-checker","runtime_conformance":false,"runtime_pass_asserted":false,"removal_readiness":if scope == "catalog" { Some("blocked-pending-verified-replacements") } else { None },"findings":findings})
             );
         }
     }
