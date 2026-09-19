@@ -1103,6 +1103,11 @@
           "treatment": "Audit dependencies/features after replacement; remove only newly unused declarations and regenerate lock through Cargo."
         },
         {
+          "path": "README.md",
+          "source_sha256": "46ebcc814a4f9d489ed729c21282ac7e6e350971d40447c388b78d34e4fdad3f",
+          "treatment": "Selectively update connector references after verified replacement; retain unrelated documentation and historical guidance."
+        },
+        {
           "path": "crates/worldinterface-cli/src/main.rs",
           "source_sha256": "5077543a7ca7ff1a17a81f8db04291889da50faef0c031b1e39964ef2f3335e3",
           "treatment": "Remove or rebuild family-specific source, exports, schemas, tests and examples after verified replacement; preserve unrelated shared code."
@@ -3232,6 +3237,16 @@
           "treatment": "Audit dependencies/features after replacement; remove only newly unused declarations and regenerate lock through Cargo."
         },
         {
+          "path": "README.md",
+          "source_sha256": "46ebcc814a4f9d489ed729c21282ac7e6e350971d40447c388b78d34e4fdad3f",
+          "treatment": "Selectively update connector references after verified replacement; retain unrelated documentation and historical guidance."
+        },
+        {
+          "path": "SECURITY.md",
+          "source_sha256": "4957f68905d71af729f5eefc038e400d1dee6f00653e933685474498e5e45437",
+          "treatment": "Selectively update connector references after verified replacement; retain unrelated documentation and historical guidance."
+        },
+        {
           "path": "crates/worldinterface-connector/Cargo.toml",
           "source_sha256": "f5461ff2e1d031370f8cb905758869bb60fef2dec4191153852fdb9ad6fb6888",
           "treatment": "Audit dependencies/features after replacement; remove only newly unused declarations and regenerate lock through Cargo."
@@ -3340,6 +3355,16 @@
           "path": "Cargo.toml",
           "source_sha256": "163bd62929b92bc4c7dce1c67039f39143002dee746c7af67cbfebdee7ca9757",
           "treatment": "Audit dependencies/features after replacement; remove only newly unused declarations and regenerate lock through Cargo."
+        },
+        {
+          "path": "README.md",
+          "source_sha256": "46ebcc814a4f9d489ed729c21282ac7e6e350971d40447c388b78d34e4fdad3f",
+          "treatment": "Selectively update connector references after verified replacement; retain unrelated documentation and historical guidance."
+        },
+        {
+          "path": "SECURITY.md",
+          "source_sha256": "4957f68905d71af729f5eefc038e400d1dee6f00653e933685474498e5e45437",
+          "treatment": "Selectively update connector references after verified replacement; retain unrelated documentation and historical guidance."
         },
         {
           "path": "crates/worldinterface-connector/Cargo.toml",
@@ -3598,6 +3623,16 @@
           "path": "Cargo.toml",
           "source_sha256": "163bd62929b92bc4c7dce1c67039f39143002dee746c7af67cbfebdee7ca9757",
           "treatment": "Audit dependencies/features after replacement; remove only newly unused declarations and regenerate lock through Cargo."
+        },
+        {
+          "path": "README.md",
+          "source_sha256": "46ebcc814a4f9d489ed729c21282ac7e6e350971d40447c388b78d34e4fdad3f",
+          "treatment": "Selectively update connector references after verified replacement; retain unrelated documentation and historical guidance."
+        },
+        {
+          "path": "SECURITY.md",
+          "source_sha256": "4957f68905d71af729f5eefc038e400d1dee6f00653e933685474498e5e45437",
+          "treatment": "Selectively update connector references after verified replacement; retain unrelated documentation and historical guidance."
         },
         {
           "path": "crates/worldinterface-cli/src/output.rs",
@@ -4850,6 +4885,11 @@
           "treatment": "Audit dependencies/features after replacement; remove only newly unused declarations and regenerate lock through Cargo."
         },
         {
+          "path": "README.md",
+          "source_sha256": "46ebcc814a4f9d489ed729c21282ac7e6e350971d40447c388b78d34e4fdad3f",
+          "treatment": "Selectively update connector references after verified replacement; retain unrelated documentation and historical guidance."
+        },
+        {
           "path": "crates/worldinterface-connector/Cargo.toml",
           "source_sha256": "f5461ff2e1d031370f8cb905758869bb60fef2dec4191153852fdb9ad6fb6888",
           "treatment": "Audit dependencies/features after replacement; remove only newly unused declarations and regenerate lock through Cargo."
@@ -5086,6 +5126,11 @@
           "path": "Cargo.toml",
           "source_sha256": "163bd62929b92bc4c7dce1c67039f39143002dee746c7af67cbfebdee7ca9757",
           "treatment": "Audit dependencies/features after replacement; remove only newly unused declarations and regenerate lock through Cargo."
+        },
+        {
+          "path": "README.md",
+          "source_sha256": "46ebcc814a4f9d489ed729c21282ac7e6e350971d40447c388b78d34e4fdad3f",
+          "treatment": "Selectively update connector references after verified replacement; retain unrelated documentation and historical guidance."
         },
         {
           "path": "crates/worldinterface-connector/Cargo.toml",

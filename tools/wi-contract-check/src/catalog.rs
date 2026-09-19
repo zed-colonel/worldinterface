@@ -202,9 +202,22 @@ pub fn destination_for(id: &str) -> Destination {
     }
 }
 /// All source/schema/test/example/manifest locations are included, plus documentation
-/// references and Cargo dependency declarations. Shared files require selective edits.
+/// references (including root Markdown) and Cargo dependency declarations. Shared
+/// files require selective edits. Frozen imports/fixtures remain outside this scan.
 fn surface_sources(root: &Path) -> Result<BTreeMap<String, String>> {
     let mut sources = BTreeMap::new();
+    for entry in fs::read_dir(root)? {
+        let entry = entry?;
+        let path = entry.path();
+        if path.extension().is_some_and(|ext| ext.eq_ignore_ascii_case("md")) {
+            if entry.file_type()?.is_symlink() {
+                return Err(format!("symlink requires explicit review: {}", path.display()).into());
+            }
+            if entry.file_type()?.is_file() {
+                sources.insert(relative(root, &path), fs::read_to_string(path)?);
+            }
+        }
+    }
     for dir in ["crates", "examples", "docs"] {
         for p in files(&root.join(dir))? {
             let rel = relative(root, &p);
@@ -218,6 +231,7 @@ fn surface_sources(root: &Path) -> Result<BTreeMap<String, String>> {
     }
     Ok(sources)
 }
+
 fn surface_paths(
     root: &Path,
     items: &[&inventory::Item],
@@ -1044,4 +1058,38 @@ pub fn check(root: &Path) -> Result<Vec<Finding>> {
     f.extend(validate_obligations(root, &o)?);
     f.extend(validate_forbidden_coverage(root, &d)?);
     Ok(f)
+}
+
+#[cfg(test)]
+mod surface_tests {
+    use super::*;
+
+    #[test]
+    fn root_documentation_is_discovered_without_scanning_frozen_evidence() {
+        let temp = tempfile::TempDir::new().unwrap();
+        for path in [
+            "README.md",
+            "CONNECTORS.MD",
+            "docs/current.md",
+            "docs/adr/historical.md",
+            "docs/connector-development.md",
+            "contracts/sources/README.md",
+            "fixtures/pre-wi-fabric-2/README.md",
+            "plans/historical.md",
+        ] {
+            let path = temp.path().join(path);
+            fs::create_dir_all(path.parent().unwrap()).unwrap();
+            fs::write(path, "shell.exec sandbox.exec").unwrap();
+        }
+        let sources = surface_sources(temp.path()).unwrap();
+        assert_eq!(
+            sources.keys().map(String::as_str).collect::<Vec<_>>(),
+            ["CONNECTORS.MD", "README.md", "docs/current.md"]
+        );
+        for family in ["shell-exec", "sandbox-exec"] {
+            let paths = surface_paths(temp.path(), &[], family, &sources);
+            assert!(paths.contains("README.md"));
+            assert!(paths.contains("CONNECTORS.MD"));
+        }
+    }
 }

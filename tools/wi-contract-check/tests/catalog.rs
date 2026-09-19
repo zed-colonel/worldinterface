@@ -186,6 +186,34 @@ fn surface_mutations_fail() {
     assert!(!validate_forbidden_coverage(&root, &d).unwrap().is_empty());
 }
 #[test]
+fn root_readme_disposition_cannot_be_omitted_or_stale() {
+    let root = root();
+    let items = items();
+    let base = plan();
+    assert!(validate_disposition(&root, &items, &base).unwrap().is_empty());
+    for id in ["shell-exec", "sandbox-exec"] {
+        for mutation in 0..3 {
+            let mut changed = base.clone();
+            let family = changed.families.iter_mut().find(|f| f.id == id).unwrap();
+            let index = family.surfaces.iter().position(|s| s.path == "README.md").unwrap();
+            match mutation {
+                0 => {
+                    family.surfaces.remove(index);
+                }
+                1 => family.surfaces[index].source_sha256 = hash("stale README"),
+                _ => family.surfaces[index].treatment.clear(),
+            }
+            assert!(
+                validate_disposition(&root, &items, &changed)
+                    .unwrap()
+                    .iter()
+                    .any(|f| f.rule == "CAT-SURFACE" && f.item == id),
+                "{id} mutation {mutation}"
+            );
+        }
+    }
+}
+#[test]
 fn removal_requires_exact_independent_evidence() {
     let q = qualification();
     let b = q.binding.clone();

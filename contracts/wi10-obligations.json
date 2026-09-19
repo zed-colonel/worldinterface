@@ -27,7 +27,8 @@
       "tests": [
         "removal_requires_exact_independent_evidence",
         "surface_mutations_fail",
-        "orphan_helpers_stay_forbidden_only_at_controller_milestone"
+        "orphan_helpers_stay_forbidden_only_at_controller_milestone",
+        "root_readme_disposition_cannot_be_omitted_or_stale"
       ],
       "follow_on": "Verified replacements, WI-06/WI-09 acceptance and runtime removal remain pending integration."
     },
