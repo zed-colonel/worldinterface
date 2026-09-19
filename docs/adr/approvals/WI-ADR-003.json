@@ -1,0 +1,36 @@
+{
+  "submissionId": "36852fc7-e61e-4025-80d8-429c86d6e446",
+  "checkpoint": "WI-ADR-003",
+  "definitionId": "0ebcb7cf-9686-4bc1-9b9d-bb85a1d0b4c9",
+  "bindingRevision": 4,
+  "decision": {
+    "coverage": "full",
+    "proposal": "Choose separate schema-version-1 Fabric, Flow, ContextStore and optional Platform databases under one manifest-controlled root. This is an explicit choice among the layouts permitted by the plan. Validate root/store manifests before SQLite opening; require schema/profile/instance consistency and reject incomplete or unsupported initialization without modifying it. Commit authoritative records, projections, request mappings and the source-owned outbox atomically within each owning database, with expected revisions and uniqueness constraints. Preserve append-only history and deterministic replay. Publish durable artifact bytes before advertising references. Use exclusive offline backup/restore covering manifests, database and required WAL state, and referenced artifacts; validate the complete restore before publication. AQ-coordinated backup and runtime recovery remain integration work. Implementation and fault-injection/backup tests remain required.",
+    "sourceReferences": "wi-fabric-2-foundational-implementation-plan.md \u00a7\u00a72.2\u20132.5, \u00a74 ADR-003, WI-02 and \u00a78; attached WI-02 investigation, Recommended ADR resolutions \u2192 ADR-003.",
+    "retainedObligations": "",
+    "consumers": [],
+    "kind": "architecture-decision-v1",
+    "bindingDigest": "8cae5ff3253d493fce0527aa42381a551c40014440ab3d05270ae8d822d11295"
+  },
+  "approval": {
+    "submissionId": "36852fc7-e61e-4025-80d8-429c86d6e446",
+    "outcome": "accepted",
+    "rationale": "I concur with the research and rationale for the recommended approach.",
+    "id": "d49b9e8a-f1b0-436f-b173-8e6333a37e7a",
+    "workspaceId": "6bf6915a-6cd0-47cc-b853-fcbc04f02f3d",
+    "decidedAt": "2026-09-19T22:33:09.369Z",
+    "decidedByUserId": "0698a39b-dda2-4870-8f3f-97ef94784ae9"
+  },
+  "sourceRunId": "39ec70c3-07ce-4aff-88eb-ca9009f4d553",
+  "sourceRunDigest": "f2bf64d17776a53ceb97004ab1f0e14329a09b7f7dd39adbc21264827ac19b3e",
+  "artifacts": [
+    {
+      "name": "decision-review-packet",
+      "digest": "ae671a803b3b051caf9d142f98355777dfeb54abea3d051e782bdad57bebccfd"
+    },
+    {
+      "name": "source-design-proposal-not-approval",
+      "digest": "f2bf64d17776a53ceb97004ab1f0e14329a09b7f7dd39adbc21264827ac19b3e"
+    }
+  ]
+}

@@ -146,7 +146,9 @@
     "CommitmentAdmission",
     "RelationshipTrust"
   ],
-  "unconditional_forbidden_dependency_patterns": ["exoskeleton"],
+  "unconditional_forbidden_dependency_patterns": [
+    "exoskeleton"
+  ],
   "forbidden_dependency_patterns": [
     "entityid",
     "entity-id",
@@ -162,7 +164,9 @@
   ],
   "foundation_packages": [
     "worldinterface-protocol",
-    "worldinterface-capability"
+    "worldinterface-capability",
+    "worldinterface-domain",
+    "worldinterface-storage"
   ],
   "foundation_forbidden_packages": [
     "worldinterface-runtime",
@@ -174,7 +178,9 @@
     "worldinterface-daemon",
     "worldinterface-host",
     "worldinterface-embedded",
-    "worldinterface-connector"
+    "worldinterface-connector",
+    "worldinterface-core",
+    "worldinterface-contextstore"
   ],
   "source": "implementation plan WI-01, \u00a712.3; stack WI-FABRIC-2 must_not_own"
 }

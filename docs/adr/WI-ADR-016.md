@@ -25,3 +25,8 @@ Alternatives: ordinary admission from declarations alone, self-promotion after e
 Invariant impact: exact resource/authority and evidence distinctions are preserved; no runtime or controller gate is activated.
 
 Verification: offline mutation and WP-007 definition tests are specified in `contracts/wi10-obligations.json`. Approval is operator guidance, not a test result. Full runtime qualification requires independent future evidence.
+
+WI-02 exact decision and provenance: [per-decision approval](approvals/WI-ADR-016.json),
+SHA-256 `a32ba0a9c38340cfa3be18e9e6fa19b20172fb4d33e42b55d81307c9a84fcca8`.
+WP-002 definition checks and retained integration gates are documented in the
+[domain contract](../../conformance/wi-fabric-2/domain/README.md).

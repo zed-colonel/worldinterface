@@ -452,7 +452,7 @@ pub fn dependencies(root: &Path, policy: &Value) -> Result<Vec<Finding>> {
     }
     // Workspace dependency aliases resolve at their declaring root.
     fn walk(
-        env: (&Path, &Value, &Value, &Value),
+        env: (&Path, &Value),
         p: &Path,
         v: &Value,
         foundation: bool,
@@ -460,7 +460,25 @@ pub fn dependencies(root: &Path, policy: &Value) -> Result<Vec<Finding>> {
         seen: &mut BTreeSet<(PathBuf, bool, bool, String)>,
         f: &mut Vec<Finding>,
     ) -> Result<()> {
-        let (root, ws, policy, lock) = env;
+        let (root, policy) = env;
+        // A path dependency can cross workspace boundaries; resolve each declaration
+        // against its own workspace, including during recursive traversal.
+        let workspace_root = p
+            .parent()
+            .unwrap()
+            .ancestors()
+            .find(|dir| {
+                dir.starts_with(root)
+                    && dir.join("Cargo.toml").exists()
+                    && read(&dir.join("Cargo.toml")).is_ok_and(|v| v["workspace"].is_object())
+            })
+            .unwrap_or(root);
+        let ws = read(&workspace_root.join("Cargo.toml"))?;
+        let lock = if workspace_root.join("Cargo.lock").exists() {
+            read(&workspace_root.join("Cargo.lock"))?
+        } else {
+            serde_json::json!({"package":[]})
+        };
         if !seen.insert((
             p.to_path_buf(),
             foundation,
@@ -472,7 +490,7 @@ pub fn dependencies(root: &Path, policy: &Value) -> Result<Vec<Finding>> {
         let path = relative(root, p);
         for (alias, decl) in dep_tables(v) {
             let (d, base) = if decl["workspace"] == true {
-                (&ws["workspace"]["dependencies"][alias], root)
+                (&ws["workspace"]["dependencies"][alias], workspace_root)
             } else {
                 (decl, p.parent().unwrap())
             };
@@ -512,7 +530,7 @@ pub fn dependencies(root: &Path, policy: &Value) -> Result<Vec<Finding>> {
             if direction || prohibited {
                 f.push(finding("DEP-DOMAIN",&path,name,"stack dependency direction; §12.3","remove domain dependency; optional identity adapters belong outside protocol/capability"))
             }
-            if d["path"].is_null() && root.join("Cargo.lock").exists() {
+            if d["path"].is_null() && lock["package"].is_array() {
                 let mut pending = vec![name.to_string()];
                 let mut visited = BTreeSet::new();
                 while let Some(package) = pending.pop() {
@@ -523,7 +541,7 @@ pub fn dependencies(root: &Path, policy: &Value) -> Result<Vec<Finding>> {
                     if bad {
                         f.push(finding("DEP-LOCK-REACHABILITY",&path,&package,"stack dependency direction; §12.3","locked transitive dependency reaches prohibited domain; review feature graph before admission"));
                     }
-                    for pkg in array(lock, "package")?.iter().filter(|x| x["name"] == package) {
+                    for pkg in array(&lock, "package")?.iter().filter(|x| x["name"] == package) {
                         if let Some(deps) = pkg["dependencies"].as_array() {
                             for dep in deps {
                                 if let Some(n) =
@@ -590,15 +608,10 @@ pub fn dependencies(root: &Path, policy: &Value) -> Result<Vec<Finding>> {
         }
         Ok(())
     }
-    let lock = if root.join("Cargo.lock").exists() {
-        read(&root.join("Cargo.lock"))?
-    } else {
-        serde_json::json!({"package":[]})
-    };
     for (p, v) in &manifests {
         let foundation =
             array(policy, "foundation_packages")?.iter().any(|x| x == &v["package"]["name"]);
-        walk((&root, &ws, policy, &lock), p, v, foundation, true, &mut BTreeSet::new(), &mut f)?;
+        walk((&root, policy), p, v, foundation, true, &mut BTreeSet::new(), &mut f)?;
         let build = v["package"]["build"]
             .as_str()
             .map(|b| p.parent().unwrap().join(b))

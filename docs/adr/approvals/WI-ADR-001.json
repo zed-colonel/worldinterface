@@ -1,0 +1,36 @@
+{
+  "submissionId": "c85a9177-e5ef-4663-86d7-f0e4623a785b",
+  "checkpoint": "WI-ADR-001",
+  "definitionId": "0ebcb7cf-9686-4bc1-9b9d-bb85a1d0b4c9",
+  "bindingRevision": 4,
+  "decision": {
+    "coverage": "full",
+    "proposal": "Adopt the canonical JSON profile recommended in the attached WI-02 design investigation: a typed, versioned envelope identifying the contract, canonical profile, record kind, schema version and body; UTF-8 with deterministic key ordering, preserved array order and Unicode content, and a specified escaping convention; absent optional fields omitted and null rejected unless permitted; bounded integers and schema-defined decimal strings; UTC timestamps with nine fractional digits; rejection of duplicate keys, unknown fields, unsupported versions and invalid representations before hashing. Use domain-separated SHA-256 over canonical envelopes excluding their own derived digest/identity and signatures, and hash artifact contents as exact bytes. Specify exact hash inputs and golden bytes/digests for idempotency, authorization binding and receipts. Routine encoding details within this profile must be documented and fixture-tested during implementation. Detailed effect lifecycle semantics remain ADR-007 and final receipt/signing decisions remain ADR-008. This decision does not claim implementation or verification completion.",
+    "sourceReferences": "wi-fabric-2-foundational-implementation-plan.md \u00a7\u00a72.2\u20132.5, \u00a74 ADR allocation, WI-02 and \u00a78; attached WI-02 investigation, Recommended ADR resolutions \u2192 ADR-001.",
+    "retainedObligations": "",
+    "consumers": [],
+    "kind": "architecture-decision-v1",
+    "bindingDigest": "8cae5ff3253d493fce0527aa42381a551c40014440ab3d05270ae8d822d11295"
+  },
+  "approval": {
+    "submissionId": "c85a9177-e5ef-4663-86d7-f0e4623a785b",
+    "outcome": "accepted",
+    "rationale": "I, as operator agree with the recommendation and approve this decision.",
+    "id": "e4f66a95-3338-4c6e-8990-9b64e7a85dbf",
+    "workspaceId": "6bf6915a-6cd0-47cc-b853-fcbc04f02f3d",
+    "decidedAt": "2026-09-19T22:20:04.952Z",
+    "decidedByUserId": "0698a39b-dda2-4870-8f3f-97ef94784ae9"
+  },
+  "sourceRunId": "39ec70c3-07ce-4aff-88eb-ca9009f4d553",
+  "sourceRunDigest": "f2bf64d17776a53ceb97004ab1f0e14329a09b7f7dd39adbc21264827ac19b3e",
+  "artifacts": [
+    {
+      "name": "decision-review-packet",
+      "digest": "841b999094a578a98b10f3f6e10ce36eb7732c7b2fe981eaf312eb9b3c1232dd"
+    },
+    {
+      "name": "source-design-proposal-not-approval",
+      "digest": "f2bf64d17776a53ceb97004ab1f0e14329a09b7f7dd39adbc21264827ac19b3e"
+    }
+  ]
+}

@@ -1,0 +1,103 @@
+{
+  "scope": "wi/WI-02/domain",
+  "case": "WP-002",
+  "upstream_conformance": false,
+  "obligations": [
+    {
+      "id": "canonical",
+      "command": "cargo test -p worldinterface-protocol",
+      "checks": [
+        "all_record_hash_inputs_match_independent_golden_bytes",
+        "every_supplied_field_is_hash_sensitive_or_rejected",
+        "strict_input_rejects_duplicates_unknown_versions_nulls_and_numbers",
+        "encoding_preserves_unicode_arrays_and_has_exact_escape_rules",
+        "canonical_identifiers_timestamps_and_reference_bounds"
+      ]
+    },
+    {
+      "id": "pure-state",
+      "command": "cargo test -p worldinterface-domain",
+      "checks": [
+        "exhaustive_legal_and_illegal_transition_matrix",
+        "generated_sequences_match_independent_model_and_replay",
+        "identity_clock_and_revision_are_explicit_inputs",
+        "queue_ports_have_only_test_composition"
+      ]
+    },
+    {
+      "id": "admission",
+      "command": "cargo test -p worldinterface-storage",
+      "checks": [
+        "identical_and_conflicting_admission_scope_and_restart_stability",
+        "concurrent_equal_admissions_and_revision_writers_have_one_winner"
+      ]
+    },
+    {
+      "id": "fresh-stores-query-replay",
+      "command": "cargo test -p worldinterface-storage",
+      "checks": [
+        "fresh_stores_all_records_query_reopen_and_deterministic_rebuild",
+        "unsupported_incomplete_precontract_and_corrupt_stores_reject_without_changes",
+        "interrupted_initialization_never_opens",
+        "projections_can_be_repaired_from_history_without_provider_calls"
+      ]
+    },
+    {
+      "id": "atomicity",
+      "command": "cargo test -p worldinterface-storage",
+      "checks": [
+        "every_transaction_fault_rolls_back_records_outbox_history_and_projection",
+        "admission_rolls_back_when_outbox_key_conflicts"
+      ]
+    },
+    {
+      "id": "artifact-backup-restore",
+      "command": "cargo test -p worldinterface-storage",
+      "checks": [
+        "interrupted_publication_leaves_only_unreferenced_bytes",
+        "artifacts_scope_integrity_offline_exclusion_and_complete_restore",
+        "backup_cannot_recursively_copy_itself"
+      ]
+    },
+    {
+      "id": "WP-002",
+      "command": "cargo test -p worldinterface-protocol wp002",
+      "checks": [
+        "wp002_process_image_and_enclosing_evidence_are_distinct",
+        "wp002_existing_seams_bind_process_configuration_and_control_artifacts"
+      ],
+      "evidence_class": "definition-review",
+      "independent_review": "pending",
+      "runtime_pass_asserted": false
+    },
+    {
+      "id": "isolation",
+      "command": "scripts/check-wi-domain.sh; scripts/check-wi-contract.sh",
+      "checks": [
+        "resolved all-features target dependency graph",
+        "all physical source routes and declarations",
+        "no production Queue port implementation",
+        "no legacy reader dependency",
+        "no process/network authority or activation wiring"
+      ]
+    },
+    {
+      "id": "capability",
+      "command": "cargo test -p worldinterface-capability",
+      "checks": [
+        "attenuation_requires_exact_resource_versions_and_operations"
+      ]
+    },
+    {
+      "id": "policy-adr-inventory",
+      "command": "scripts/check-wi-contract.sh",
+      "checks": [
+        "ADR approval hashes and clause coverage",
+        "separate workspace dependency locks",
+        "source inventory/dispositions",
+        "inherited eight contract categories"
+      ]
+    }
+  ],
+  "cargo_manifest": "crates/worldinterface-foundation/Cargo.toml"
+}

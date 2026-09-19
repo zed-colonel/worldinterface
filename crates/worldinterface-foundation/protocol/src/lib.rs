@@ -1,0 +1,8 @@
+//! Data contracts only. Deserialization never grants executable authority.
+mod canonical;
+mod identity;
+mod records;
+pub use canonical::*;
+pub use identity::*;
+pub use records::*;
+pub type Result<T> = std::result::Result<T, String>;
