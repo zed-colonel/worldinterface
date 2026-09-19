@@ -39,7 +39,9 @@
         "fresh_stores_all_records_query_reopen_and_deterministic_rebuild",
         "unsupported_incomplete_precontract_and_corrupt_stores_reject_without_changes",
         "interrupted_initialization_never_opens",
-        "projections_can_be_repaired_from_history_without_provider_calls"
+        "projections_can_be_repaired_from_history_without_provider_calls",
+        "database_swaps_reject_open_backup_and_restore_without_changes",
+        "database_identity_is_immutable_and_binds_every_manifest_field"
       ]
     },
     {
@@ -64,7 +66,8 @@
       "command": "cargo test -p worldinterface-protocol wp002",
       "checks": [
         "wp002_process_image_and_enclosing_evidence_are_distinct",
-        "wp002_existing_seams_bind_process_configuration_and_control_artifacts"
+        "wp002_existing_seams_bind_process_configuration_and_control_artifacts",
+        "wp002_rejects_mismatched_profile_and_resolver_bindings"
       ],
       "evidence_class": "definition-review",
       "independent_review": "pending",

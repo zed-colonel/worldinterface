@@ -286,14 +286,14 @@
           "causal_refs-ref"
         ],
         "versions": {
-          "resolver": "resolver-ref",
+          "resolver": "resolver_version-ref",
           "capability_descriptor": "c9a20cfd19ca18f5409faf833cc02859d1b47d8e94545bf517b9050668cec177",
           "policy": "policy-ref",
           "grant_versions": [
             "cf55c1c0ebea895239c8c198de87beb06e20c1611c9d2aabd5342538aa3aee8c"
           ],
           "connector_profile": "f40866a91b5eb53e17dac9892593a2c51511aa016a0c760305ee092c06ae18cc",
-          "provider_profile": "3de22ef1eb90f2dd5c4634e76774f1d36e967694afb8f856946ea20507e28b84"
+          "provider_profile": "ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73"
         }
       }
     }

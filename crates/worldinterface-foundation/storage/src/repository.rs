@@ -9,6 +9,10 @@ use worldinterface_protocol::{
 
 pub(crate) const SCHEMA: &str = "
 PRAGMA user_version=1; PRAGMA journal_mode=DELETE; PRAGMA synchronous=FULL;
+CREATE TABLE store_identity(singleton INTEGER PRIMARY KEY CHECK(singleton=1), manifest BLOB NOT NULL);
+CREATE TRIGGER identity_no_insert BEFORE INSERT ON store_identity WHEN EXISTS(SELECT 1 FROM store_identity) BEGIN SELECT RAISE(ABORT,'immutable identity'); END;
+CREATE TRIGGER identity_no_update BEFORE UPDATE ON store_identity BEGIN SELECT RAISE(ABORT,'immutable identity'); END;
+CREATE TRIGGER identity_no_delete BEFORE DELETE ON store_identity BEGIN SELECT RAISE(ABORT,'immutable identity'); END;
 CREATE TABLE history(seq INTEGER PRIMARY KEY, entity TEXT NOT NULL, revision INTEGER NOT NULL, batch BLOB NOT NULL, digest TEXT NOT NULL, UNIQUE(entity,revision));
 CREATE TRIGGER history_no_update BEFORE UPDATE ON history BEGIN SELECT RAISE(ABORT,'append only'); END;
 CREATE TRIGGER history_no_delete BEFORE DELETE ON history BEGIN SELECT RAISE(ABORT,'append only'); END;

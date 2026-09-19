@@ -67,7 +67,12 @@ manifests bind contract, schema 1, instance, creation time, feature profile
 required; Platform is optional. All manifests and expected members are checked
 before SQLite opens. Unsupported, pre-contract and incomplete roots reject
 without migration or modification. Initialization publishes the root completion
-manifest only after databases and per-store manifests are synced.
+manifest only after databases and per-store manifests are synced. Each database
+contains one immutable canonical copy of its complete store manifest, binding
+instance, store kind, contract, schema and profiles. Open and subsequent repository
+connections compare these bytes with the validated manifest before exposing data.
+Missing identities and swapped databases reject without repair or migration;
+backup/restore applies the same validation before publishing a destination.
 
 Each database has append-only batch history, immutable canonical records,
 rebuildable projections, atomic scoped request mappings and source-owned
@@ -117,7 +122,9 @@ locks are outside the offline API contract. Symlink store members are rejected.
 | Binding | Receipt EvidenceRef binds controls; controls and normalized input bind manifest bytes |
 
 Positive and negative applicability tests and configuration mutation checks verify
-this mapping. ControlEvidence is a typed evidence-artifact schema, not a new worker
+this mapping. Receipt dependency versions must match the selected manifest
+profile-definition digest and ResolvedEffect resolver version; independent negative
+cases reject each mismatch. ControlEvidence is a typed evidence-artifact schema, not a new worker
 message family. A demonstrated wire gap still requires a narrow amendment before
 adapter freeze. No such gap has been established by these definition fixtures.
 

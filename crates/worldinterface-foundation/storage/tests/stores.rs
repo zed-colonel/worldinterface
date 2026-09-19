@@ -342,3 +342,111 @@ fn backup_cannot_recursively_copy_itself() {
     assert!(StoreRoot::backup_offline(&p, p.join("backup")).is_err());
     assert_eq!(before, snapshot(&p));
 }
+
+// F-001: a valid database from a different lineage or logical store is not this store.
+fn assert_identity_rejected_unchanged(path: &Path, temp: &Path) {
+    let before = snapshot(path);
+    let error = StoreRoot::open_existing(path).err().expect("identity must reject");
+    assert!(error.to_string().contains("database identity"), "{error}");
+    assert_eq!(before, snapshot(path));
+    for restore in [false, true] {
+        let destination = temp.join(if restore { "bad-restore" } else { "bad-backup" });
+        let result = if restore {
+            StoreRoot::restore_offline(path, &destination)
+        } else {
+            StoreRoot::backup_offline(path, &destination)
+        };
+        assert!(result.is_err());
+        assert!(!destination.exists());
+        assert_eq!(before, snapshot(path));
+    }
+}
+
+#[test]
+fn database_swaps_reject_open_backup_and_restore_without_changes() {
+    let kinds = [StoreKind::Fabric, StoreKind::Flow, StoreKind::Context, StoreKind::Platform];
+    for foreign_instance in [false, true] {
+        for source_kind in kinds {
+            for destination_kind in kinds {
+                if !foreign_instance && source_kind == destination_kind {
+                    continue;
+                }
+                let t = tempfile::tempdir().unwrap();
+                let source = t.path().join("source");
+                let destination = t.path().join("destination");
+                let root = StoreRoot::create_empty(&source, profile(true)).unwrap();
+                let id = EntityId::generate();
+                admit(&root.repository(source_kind).unwrap(), scope(), submission(), &id).unwrap();
+                drop(root);
+                if foreign_instance {
+                    drop(StoreRoot::create_empty(&destination, profile(true)).unwrap());
+                } else {
+                    StoreRoot::backup_offline(&source, &destination).unwrap();
+                }
+                fs::copy(
+                    source.join(format!("{}.sqlite", source_kind.name())),
+                    destination.join(format!("{}.sqlite", destination_kind.name())),
+                )
+                .unwrap();
+                assert_identity_rejected_unchanged(&destination, t.path());
+            }
+        }
+    }
+}
+
+#[test]
+fn database_identity_is_immutable_and_binds_every_manifest_field() {
+    for field in [
+        "contract",
+        "schema",
+        "canonical_profile",
+        "feature_profile",
+        "profile",
+        "stores",
+        "complete",
+        "kind",
+        "missing",
+    ] {
+        let t = tempfile::tempdir().unwrap();
+        let p = t.path().join("root");
+        drop(StoreRoot::create_empty(&p, profile(true)).unwrap());
+        let c = rusqlite::Connection::open(p.join("fabric.sqlite")).unwrap();
+        let before = snapshot(&p);
+        for sql in [
+            "UPDATE store_identity SET manifest=x'00'",
+            "DELETE FROM store_identity",
+            "INSERT OR REPLACE INTO store_identity VALUES(1,x'00')",
+            "INSERT INTO store_identity VALUES(2,x'00')",
+        ] {
+            assert!(c.execute_batch(sql).is_err(), "{sql}");
+        }
+        assert_eq!(before, snapshot(&p));
+        // Simulate damaged identity bytes while preserving the expected schema/triggers.
+        let trigger_name =
+            if field == "missing" { "identity_no_delete" } else { "identity_no_update" };
+        let trigger: String = c
+            .query_row("SELECT sql FROM sqlite_master WHERE name=?1", [trigger_name], |r| r.get(0))
+            .unwrap();
+        c.execute_batch(&format!("DROP TRIGGER {trigger_name}")).unwrap();
+        if field == "missing" {
+            c.execute("DELETE FROM store_identity", []).unwrap();
+        } else {
+            let bytes: Vec<u8> =
+                c.query_row("SELECT manifest FROM store_identity", [], |r| r.get(0)).unwrap();
+            let mut identity: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+            if field == "kind" {
+                identity["kind"] = "flow".into();
+            } else {
+                identity["root"].as_object_mut().unwrap().remove(field);
+            }
+            c.execute(
+                "UPDATE store_identity SET manifest=?1",
+                [canonical_data(&identity).unwrap()],
+            )
+            .unwrap();
+        }
+        c.execute_batch(&trigger).unwrap();
+        drop(c);
+        assert_identity_rejected_unchanged(&p, t.path());
+    }
+}

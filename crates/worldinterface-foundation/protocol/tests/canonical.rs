@@ -162,8 +162,7 @@ fn wp002_process_image_and_enclosing_evidence_are_distinct() {
     assert!(Envelope::parse(&serde_json::to_vec(&e).unwrap()).is_err());
 }
 
-#[test]
-fn wp002_existing_seams_bind_process_configuration_and_control_artifacts() {
+fn wp002_fixture() -> Value {
     let fixture: Value = serde_json::from_slice(
         &std::fs::read(concat!(
             env!("CARGO_MANIFEST_DIR"),
@@ -172,6 +171,45 @@ fn wp002_existing_seams_bind_process_configuration_and_control_artifacts() {
         .unwrap(),
     )
     .unwrap();
+    fixture
+}
+
+fn wp002_version_bindings(fixture: &Value) -> std::result::Result<(), &'static str> {
+    let parse = |name: &str| Envelope::parse(&serde_json::to_vec(&fixture[name]).unwrap()).unwrap();
+    let Record::ImmutableArtifactManifest(m) = parse("manifest").record else {
+        panic!("manifest fixture")
+    };
+    let Record::ResolvedEffect(r) = parse("resolved").record else { panic!("resolved fixture") };
+    let Record::BoundaryReceipt(b) = parse("receipt").record else { panic!("receipt fixture") };
+    if b.versions.provider_profile != m.profile_definition.content {
+        return Err("provider profile binding mismatch");
+    }
+    if b.versions.resolver != r.resolver_version {
+        return Err("resolver binding mismatch");
+    }
+    Ok(())
+}
+
+#[test]
+fn wp002_rejects_mismatched_profile_and_resolver_bindings() {
+    for (field, value, error) in [
+        (
+            "provider_profile",
+            ContentHash::of(b"other profile").as_str().to_string(),
+            "provider profile binding mismatch",
+        ),
+        ("resolver", "other-resolver".to_string(), "resolver binding mismatch"),
+    ] {
+        let mut fixture = wp002_fixture();
+        fixture["receipt"]["record"]["body"]["versions"][field] = value.into();
+        assert_eq!(wp002_version_bindings(&fixture), Err(error));
+    }
+}
+
+#[test]
+fn wp002_existing_seams_bind_process_configuration_and_control_artifacts() {
+    let fixture = wp002_fixture();
+    assert_eq!(wp002_version_bindings(&fixture), Ok(()));
     let envelope =
         |name: &str| Envelope::parse(&serde_json::to_vec(&fixture[name]).unwrap()).unwrap();
     let manifest = envelope("manifest");

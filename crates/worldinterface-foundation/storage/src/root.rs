@@ -124,15 +124,14 @@ impl StoreRoot {
         write_new(&path.join("lock"), b"")?;
         fs::create_dir(path.join("artifacts"))?;
         for (i, kind) in manifest.stores.iter().enumerate() {
+            let identity = canonical_data(&StoreManifest { root: manifest.clone(), kind: *kind })
+                .map_err(invalid)?;
             let conn = Connection::open(path.join(format!("{}.sqlite", kind.name())))?;
             conn.execute_batch(SCHEMA)?;
+            conn.execute("INSERT INTO store_identity VALUES(1,?1)", [&identity])?;
             drop(conn);
             File::open(path.join(format!("{}.sqlite", kind.name())))?.sync_all()?;
-            write_new(
-                &path.join(format!("{}.json", kind.name())),
-                &canonical_data(&StoreManifest { root: manifest.clone(), kind: *kind })
-                    .map_err(invalid)?,
-            )?;
+            write_new(&path.join(format!("{}.json", kind.name())), &identity)?;
             if interrupt_after == Some(i) {
                 return Err(invalid("injected initialization interruption"));
             }
@@ -208,6 +207,7 @@ impl StoreRoot {
             if version != 1 || mode != "delete" || integrity != "ok" {
                 return Err(invalid("unsupported or corrupt database"));
             }
+            root.validate_identity(&c, *kind)?;
             crate::repository::validate_database(&c)?;
         }
         root.validate_artifacts()?;
@@ -219,12 +219,25 @@ impl StoreRoot {
     pub(crate) fn db_path(&self, kind: StoreKind) -> PathBuf {
         self.path.join(format!("{}.sqlite", kind.name()))
     }
+    fn validate_identity(&self, c: &Connection, kind: StoreKind) -> Result<()> {
+        let mut query = c.prepare("SELECT singleton,manifest FROM store_identity")?;
+        let identities = query
+            .query_map([], |row| Ok((row.get::<_, i64>(0)?, row.get::<_, Vec<u8>>(1)?)))?
+            .collect::<rusqlite::Result<Vec<_>>>()?;
+        let expected = canonical_data(&StoreManifest { root: self.manifest.clone(), kind })
+            .map_err(invalid)?;
+        if identities != vec![(1, expected)] {
+            return Err(invalid("database identity differs from store manifest"));
+        }
+        Ok(())
+    }
     pub(crate) fn connect(&self, kind: StoreKind) -> Result<Connection> {
         if !self.manifest.stores.contains(&kind) {
             return Err(invalid("store is not enabled"));
         }
         let c = Connection::open_with_flags(self.db_path(kind), OpenFlags::SQLITE_OPEN_READ_WRITE)?;
         c.busy_timeout(std::time::Duration::from_secs(5))?;
+        self.validate_identity(&c, kind)?;
         c.execute_batch("PRAGMA synchronous=FULL; PRAGMA foreign_keys=ON;")?;
         Ok(c)
     }
