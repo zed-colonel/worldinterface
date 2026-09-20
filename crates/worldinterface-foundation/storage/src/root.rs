@@ -66,6 +66,10 @@ fn kinds(platform: bool) -> Vec<StoreKind> {
     }
     v
 }
+fn parent_dir(path: &Path) -> Option<&Path> {
+    // A single relative component has an empty parent, which denotes the current directory.
+    path.parent().map(|parent| if parent.as_os_str().is_empty() { Path::new(".") } else { parent })
+}
 pub(crate) fn sync_dir(p: &Path) -> Result<()> {
     File::open(p)?.sync_all()?;
     Ok(())
@@ -142,7 +146,7 @@ impl StoreRoot {
         write_new(&path.join("manifest.pending"), &canonical_data(&manifest).map_err(invalid)?)?;
         fs::rename(path.join("manifest.pending"), path.join("manifest.json"))?;
         sync_dir(path)?;
-        if let Some(parent) = path.parent() {
+        if let Some(parent) = parent_dir(path) {
             sync_dir(parent)?;
         }
         Self::open_existing(path)
@@ -247,7 +251,7 @@ impl StoreRoot {
         if dest.exists() {
             return Err(invalid("backup destination exists"));
         }
-        let parent = dest.parent().ok_or_else(|| invalid("backup parent required"))?;
+        let parent = parent_dir(dest).ok_or_else(|| invalid("backup parent required"))?;
         if parent.canonicalize()?.starts_with(source.path.canonicalize()?) {
             return Err(invalid("backup destination must be outside the source root"));
         }

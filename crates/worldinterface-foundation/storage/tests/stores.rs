@@ -79,6 +79,61 @@ fn snapshot(path: &Path) -> BTreeMap<String, Vec<u8>> {
     out
 }
 #[test]
+fn single_component_relative_store_paths() {
+    const MODE: &str = "WI_STORE_RELATIVE_PATH_TEST";
+    let Ok(mode) = std::env::var(MODE) else {
+        // Each child starts in external scratch; never change the parallel test runner's cwd.
+        let mut failures = Vec::new();
+        for mode in ["create", "backup", "restore"] {
+            let t = tempfile::tempdir().unwrap();
+            let output = std::process::Command::new(std::env::current_exe().unwrap())
+                .args(["--exact", "single_component_relative_store_paths", "--nocapture"])
+                .env(MODE, mode)
+                .current_dir(t.path())
+                .output()
+                .unwrap();
+            if !output.status.success() {
+                failures.push(format!(
+                    "{mode}: {}\n{}",
+                    String::from_utf8_lossy(&output.stdout),
+                    String::from_utf8_lossy(&output.stderr)
+                ));
+            }
+        }
+        assert!(failures.is_empty(), "{}", failures.join("\n"));
+        return;
+    };
+    // Seed backup/restore independently so a create regression cannot mask either path.
+    let source = if mode == "create" { "data" } else { "./data" };
+    let expected_profile = profile(true);
+    let root = StoreRoot::create_empty(source, expected_profile.clone()).unwrap();
+    let id = EntityId::generate();
+    admit(&root.repository(StoreKind::Fabric).unwrap(), scope(), submission(), &id).unwrap();
+    drop(root);
+    let before = snapshot(Path::new(source));
+    let destination = match mode.as_str() {
+        "create" => "data",
+        "backup" => {
+            StoreRoot::backup_offline("data", "backup").unwrap();
+            "backup"
+        }
+        "restore" => {
+            StoreRoot::backup_offline("data", "./backup").unwrap();
+            StoreRoot::restore_offline("backup", "restored").unwrap();
+            "restored"
+        }
+        _ => panic!("unexpected test mode"),
+    };
+    let reopened = StoreRoot::open_existing(destination).unwrap();
+    assert_eq!(reopened.profile(), &expected_profile);
+    let repo = reopened.repository(StoreKind::Fabric).unwrap();
+    assert_eq!(repo.history(&id, 0, 10).unwrap().len(), 1);
+    assert_eq!(repo.outbox(false, None, 10).unwrap().len(), 1);
+    drop(reopened);
+    assert_eq!(before, snapshot(Path::new(destination)));
+    assert_eq!(before, snapshot(Path::new(source)));
+}
+#[test]
 fn fresh_stores_all_records_query_reopen_and_deterministic_rebuild() {
     for platform in [false, true] {
         let t = tempfile::tempdir().unwrap();

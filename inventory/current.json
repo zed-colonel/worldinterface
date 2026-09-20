@@ -5944,7 +5944,7 @@
     "kind": "enum",
     "path": "crates/worldinterface-foundation/storage/src/root.rs",
     "name": "StoreKind",
-    "source_sha256": "2f3ed877a9b7e1c14a18942d0860b88ffcc7e65f68032cc8b4c4ab64e5ba5179",
+    "source_sha256": "72cdaf512642c170842da17f3217a4ad0d18377b27b6569a30257134d263d074",
     "conditions": [],
     "registration_sites": []
   },
@@ -5953,7 +5953,7 @@
     "kind": "module",
     "path": "crates/worldinterface-foundation/storage/src/root.rs",
     "name": "tests",
-    "source_sha256": "2f3ed877a9b7e1c14a18942d0860b88ffcc7e65f68032cc8b4c4ab64e5ba5179",
+    "source_sha256": "72cdaf512642c170842da17f3217a4ad0d18377b27b6569a30257134d263d074",
     "conditions": [
       "# [cfg (test)]"
     ],
@@ -5964,7 +5964,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-foundation/storage/src/root.rs",
     "name": "crates/worldinterface-foundation/storage/src/root.rs",
-    "source_sha256": "2f3ed877a9b7e1c14a18942d0860b88ffcc7e65f68032cc8b4c4ab64e5ba5179",
+    "source_sha256": "72cdaf512642c170842da17f3217a4ad0d18377b27b6569a30257134d263d074",
     "conditions": [],
     "registration_sites": []
   },
@@ -5973,7 +5973,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/storage/src/root.rs",
     "name": "Manifest",
-    "source_sha256": "2f3ed877a9b7e1c14a18942d0860b88ffcc7e65f68032cc8b4c4ab64e5ba5179",
+    "source_sha256": "72cdaf512642c170842da17f3217a4ad0d18377b27b6569a30257134d263d074",
     "conditions": [],
     "registration_sites": []
   },
@@ -5982,7 +5982,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/storage/src/root.rs",
     "name": "StoreManifest",
-    "source_sha256": "2f3ed877a9b7e1c14a18942d0860b88ffcc7e65f68032cc8b4c4ab64e5ba5179",
+    "source_sha256": "72cdaf512642c170842da17f3217a4ad0d18377b27b6569a30257134d263d074",
     "conditions": [],
     "registration_sites": []
   },
@@ -5991,7 +5991,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/storage/src/root.rs",
     "name": "StoreProfile",
-    "source_sha256": "2f3ed877a9b7e1c14a18942d0860b88ffcc7e65f68032cc8b4c4ab64e5ba5179",
+    "source_sha256": "72cdaf512642c170842da17f3217a4ad0d18377b27b6569a30257134d263d074",
     "conditions": [],
     "registration_sites": []
   },
@@ -6000,7 +6000,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/storage/src/root.rs",
     "name": "StoreRoot",
-    "source_sha256": "2f3ed877a9b7e1c14a18942d0860b88ffcc7e65f68032cc8b4c4ab64e5ba5179",
+    "source_sha256": "72cdaf512642c170842da17f3217a4ad0d18377b27b6569a30257134d263d074",
     "conditions": [],
     "registration_sites": []
   },
@@ -6009,7 +6009,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-foundation/storage/tests/stores.rs",
     "name": "crates/worldinterface-foundation/storage/tests/stores.rs",
-    "source_sha256": "cee264bd234d1cba03d5662275a2b56719e4715c4357b25096176425f0a4515e",
+    "source_sha256": "039e3dc101a270331019e3f4d85fad57ee36ea72b21d29bcd7848c54a241ed0a",
     "conditions": [],
     "registration_sites": []
   },
