@@ -78,7 +78,7 @@ fn inventory_is_complete_and_deterministic() {
     assert_eq!(a, b);
     for (k, n) in [
         ("workspace-crate", 10),
-        ("auxiliary-crate", 10),
+        ("auxiliary-crate", 11),
         ("foundation-crate", 4),
         ("connector", 25),
         ("wasm-manifest", 15),
