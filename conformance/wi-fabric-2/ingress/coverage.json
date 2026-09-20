@@ -107,6 +107,36 @@
       "id": "provider_cannot_disclose_another_sources_artifact_within_same_tenant",
       "test": "provider_cannot_disclose_another_sources_artifact_within_same_tenant",
       "package": "worldinterface-ingress"
+    },
+    {
+      "id": "nested_attestations_enforce_scope_availability_and_release_on_both_transports",
+      "test": "nested_attestations_enforce_scope_availability_and_release_on_both_transports",
+      "package": "worldinterface-ingress"
+    },
+    {
+      "id": "quarantined_content_alias_is_denied_until_release",
+      "test": "quarantined_content_alias_is_denied_until_release",
+      "package": "worldinterface-ingress"
+    },
+    {
+      "id": "content_window_duplicate_preserves_conflicting_committed_offset",
+      "test": "content_window_duplicate_preserves_conflicting_committed_offset",
+      "package": "worldinterface-ingress"
+    },
+    {
+      "id": "generated_ingress_binding_versions_match_model_and_replay",
+      "test": "generated_ingress_binding_versions_match_model_and_replay",
+      "package": "worldinterface-ingress"
+    },
+    {
+      "id": "generated_ingress_dedup_offsets_match_independent_model_and_replay",
+      "test": "generated_ingress_dedup_offsets_match_independent_model_and_replay",
+      "package": "worldinterface-ingress"
+    },
+    {
+      "id": "generated_ingress_delivery_closure_tokens_expiration_and_replay",
+      "test": "generated_ingress_delivery_closure_tokens_expiration_and_replay",
+      "package": "worldinterface-ingress"
     }
   ],
   "checks": [

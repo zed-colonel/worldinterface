@@ -5,7 +5,7 @@ use crate::{error, Result};
 use hmac::{Hmac, Mac};
 use sha2::Sha256;
 use worldinterface_domain::ingress::{
-    provider_artifact_scope, validate_attachments, validate_profile,
+    provider_artifact_scope, validate_attachments, validate_event_references, validate_profile,
 };
 use worldinterface_protocol::*;
 
@@ -63,5 +63,6 @@ fn parse(bytes: &[u8], profile: &ProviderProfile, now: u64) -> Result<ProviderEv
         return Err(error("offset outside profile"));
     }
     validate_attachments(profile, &event).map_err(error)?;
+    validate_event_references(profile, &event).map_err(error)?;
     Ok(event)
 }

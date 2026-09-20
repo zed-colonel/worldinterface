@@ -109,6 +109,48 @@ pub fn validate_attachments(p: &ProviderProfile, event: &ProviderEvent) -> Resul
     }
     Ok(())
 }
+/// All typed evidence in a provider profile, including nested role attestations.
+pub fn profile_evidence(profile: &ObservationProfile) -> Vec<&EvidenceRef> {
+    match profile {
+        ObservationProfile::Ordinary => vec![],
+        ObservationProfile::Commissioning { evidence } => vec![evidence],
+        ObservationProfile::RoleStewardship { capacity, evidence } => {
+            let mut refs = vec![evidence];
+            refs.extend(capacity.attestation_ref.iter());
+            refs
+        }
+    }
+}
+/// Tenant evidence is governed by the tenant boundary. Provider-scoped attestations
+/// must also be declared as attachments, so their trusted quarantine disposition applies.
+pub fn validate_event_references(p: &ProviderProfile, event: &ProviderEvent) -> Result<()> {
+    let provider_scope = provider_artifact_scope(&p.scope)?;
+    if event.content.scope != provider_scope
+        || event.attachments.iter().any(|a| a.artifact.scope != provider_scope)
+    {
+        return Err("artifact scope".into());
+    }
+    for (index, evidence) in profile_evidence(&event.profile).iter().enumerate() {
+        if evidence.artifact.scope != p.scope.tenant
+            && !(index > 0
+                && evidence.artifact.scope == provider_scope
+                && event.attachments.iter().any(|a| a.artifact == evidence.artifact))
+        {
+            return Err("profile evidence scope or undeclared attestation".into());
+        }
+    }
+    Ok(())
+}
+/// Apply quarantine to a reference wherever it appears, including aliases in content
+/// or nested profiles and quarantines recorded by earlier observations.
+pub fn artifact_disclosable(state: &IngressState, artifact: &ArtifactRef) -> bool {
+    state.admissions.values().flat_map(|a| &a.event.attachments).all(|a| {
+        &a.artifact != artifact
+            || a.quarantine
+                .as_ref()
+                .is_none_or(|q| state.releases.iter().any(|(r, k, _)| r == artifact && k == q))
+    })
+}
 pub fn validate_policy(p: &DeliveryPolicy) -> Result<()> {
     if p.max_attempts == 0
         || p.max_attempts > 100
@@ -235,6 +277,7 @@ pub fn apply_ingress(
             let a = admission.as_ref();
             validate_profile(&a.profile)?;
             validate_attachments(&a.profile, &a.event)?;
+            validate_event_references(&a.profile, &a.event)?;
             if &a.event.scope.tenant != tenant
                 || a.event.scope != a.profile.scope
                 || a.identity != provider_identity(&a.profile, &a.event, &a.observation.id)?
@@ -242,14 +285,15 @@ pub fn apply_ingress(
             {
                 return Err("invalid provider identity".into());
             }
-            if let Some(old) = s.admissions.get(&a.identity).or_else(|| {
-                s.admissions.values().find(|old| {
-                    a.event.offset.is_some()
-                        && old.event.offset == a.event.offset
-                        && old.profile.scope == a.profile.scope
-                        && old.producer_digest != a.producer_digest
-                })
-            }) {
+            // Offset occupancy is independent of content identity. A content-window
+            // retransmission must not hide conflicting reuse of a committed position.
+            let offset_conflict = s.admissions.values().find(|old| {
+                a.event.offset.is_some()
+                    && old.event.offset == a.event.offset
+                    && old.profile.scope == a.profile.scope
+                    && old.producer_digest != a.producer_digest
+            });
+            if let Some(old) = offset_conflict.or_else(|| s.admissions.get(&a.identity)) {
                 if old.producer_digest == a.producer_digest {
                     return Ok((
                         state.clone(),

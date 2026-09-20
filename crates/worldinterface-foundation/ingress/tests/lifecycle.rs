@@ -134,6 +134,13 @@ fn http(e: &ProviderEvent, p: &ProviderProfile) -> ValidatedProviderEvent {
     validate_http(&body, &sign(&body), &credentials(p), 1000).unwrap()
 }
 fn stream(e: &ProviderEvent, p: &ProviderProfile, reconnect: u64) -> ValidatedProviderEvent {
+    try_stream(e, p, reconnect).unwrap()
+}
+fn try_stream(
+    e: &ProviderEvent,
+    p: &ProviderProfile,
+    reconnect: u64,
+) -> worldinterface_ingress::Result<ValidatedProviderEvent> {
     let h = SessionHandshake {
         session: r("session-1"),
         scope: p.scope.clone(),
@@ -144,7 +151,7 @@ fn stream(e: &ProviderEvent, p: &ProviderProfile, reconnect: u64) -> ValidatedPr
     let session = StreamSession::authenticate(&bytes, &sign(&bytes), credentials(p), 1000).unwrap();
     let bytes = canonical_data(e).unwrap();
     let signed = canonical_data(&(h.session, bytes.as_slice())).unwrap();
-    session.validate_stream(&bytes, &sign(&signed), 1000).unwrap()
+    session.validate_stream(&bytes, &sign(&signed), 1000)
 }
 fn ids(n: usize) -> AdmissionIds {
     AdmissionIds {
@@ -778,4 +785,483 @@ fn provider_cannot_disclose_another_sources_artifact_within_same_tenant() {
         .admit_provider_event(valid, vec![s.version.clone()], ids(1), 1000)
         .is_err());
     assert!(s.state().admissions.is_empty());
+}
+
+// F-001: exercise both public transport paths and the persisted disclosure boundary.
+#[test]
+fn nested_attestations_enforce_scope_availability_and_release_on_both_transports() {
+    for streaming in [false, true] {
+        let s = Setup::new();
+        let i = Ingress::new(&s.root);
+        let validate = |event: &ProviderEvent| {
+            if streaming {
+                try_stream(event, &s.b.profile, 0)
+            } else {
+                let body = canonical_data(event).unwrap();
+                validate_http(&body, &sign(&body), &credentials(&s.b.profile), 1000)
+            }
+        };
+        let mut event = s.event("attestation", 0);
+        let provider_scope = provider_artifact_scope(&s.b.profile.scope).unwrap();
+        let artifact = s.root.publish(provider_scope.clone(), b"attestation").unwrap();
+        let evidence = |artifact: ArtifactRef| EvidenceRef { artifact, schema: r("role-v1") };
+        let role = |attestation| ObservationProfile::RoleStewardship {
+            capacity: ActingCapacityRef {
+                principal_ref: s.b.principal.clone(),
+                assignment_ref: r("role"),
+                organization_ref: None,
+                attestation_ref: Some(evidence(attestation)),
+            },
+            evidence: s.b.authorization.clone(),
+        };
+        let mut foreign_provider = s.b.profile.scope.clone();
+        foreign_provider.account = r("other-account");
+        for scope in
+            [r("other-tenant"), provider_artifact_scope(&foreign_provider).unwrap(), provider_scope]
+        {
+            let reference = s.root.publish(scope, b"undeclared").unwrap();
+            event.profile = role(reference);
+            assert!(validate(&event).is_err());
+            assert!(s.state().admissions.is_empty());
+        }
+        // A valid tenant scope is insufficient if the referenced bytes are absent.
+        let mut missing = s.b.authorization.artifact.clone();
+        missing.content = ContentHash::of(b"not-published");
+        event.profile = role(missing);
+        assert!(i
+            .admit_provider_event(validate(&event).unwrap(), vec![s.version.clone()], ids(1), 1000)
+            .is_err());
+        assert!(s.state().admissions.is_empty());
+        event.profile = role(artifact.clone());
+        event.attachments.push(GovernedAttachment {
+            artifact: artifact.clone(),
+            quarantine: Some(r("quarantine-1")),
+        });
+        let id = delivery(
+            i.admit_provider_event(
+                validate(&event).unwrap(),
+                vec![s.version.clone()],
+                ids(1),
+                1000,
+            )
+            .unwrap(),
+        );
+        let before = s.state();
+        let view = i.inspect_delivery(&s.subscriber(), &id, 1000).unwrap();
+        assert!(view.attachments.is_empty());
+        let ObservationProfile::RoleStewardship { capacity, .. } = view.profile else { panic!() };
+        assert!(capacity.attestation_ref.is_none());
+        let issued = i
+            .claim_due_delivery(&s.subscriber(), &id, DeliveryToken::generate(), 1000)
+            .unwrap()
+            .unwrap();
+        let ObservationProfile::RoleStewardship { capacity, .. } = issued.view.profile else {
+            panic!()
+        };
+        assert!(capacity.attestation_ref.is_none());
+        assert_eq!(s.state().admissions, before.admissions); // redaction never rewrites evidence
+        assert!(i
+            .release_attachment(
+                &s.b.profile.scope.tenant,
+                artifact.clone(),
+                r("wrong-policy"),
+                s.b.authorization.clone(),
+                1000
+            )
+            .is_err());
+        assert!(i.inspect_delivery(&s.subscriber(), &id, 1000).unwrap().attachments.is_empty());
+        i.release_attachment(
+            &s.b.profile.scope.tenant,
+            artifact.clone(),
+            r("quarantine-1"),
+            s.b.authorization.clone(),
+            1000,
+        )
+        .unwrap();
+        let view = i.inspect_delivery(&s.subscriber(), &id, 1000).unwrap();
+        assert_eq!(view.profile, event.profile);
+        assert_eq!(view.attachments, vec![artifact]);
+        s.root.repository(StoreKind::Fabric).unwrap().rebuild().unwrap();
+        assert_eq!(i.inspect_delivery(&s.subscriber(), &id, 1000).unwrap(), view);
+    }
+}
+
+#[test]
+fn quarantined_content_alias_is_denied_until_release() {
+    let s = Setup::new();
+    let mut e = s.event("alias", 0);
+    e.attachments.push(GovernedAttachment {
+        artifact: e.content.clone(),
+        quarantine: Some(r("quarantine-1")),
+    });
+    let id = delivery(s.admit(&e, 1000));
+    let i = Ingress::new(&s.root);
+    assert!(i.inspect_delivery(&s.subscriber(), &id, 1000).is_err());
+    // Omitting the attachment from another event does not clear its quarantine.
+    e.event_id = Some(r("alias-again"));
+    e.offset = Some(1);
+    e.attachments.clear();
+    let second = delivery(s.admit(&e, 1000));
+    assert!(i.inspect_delivery(&s.subscriber(), &second, 1000).is_err());
+    i.release_attachment(
+        &s.b.profile.scope.tenant,
+        e.content.clone(),
+        r("quarantine-1"),
+        s.b.authorization.clone(),
+        1000,
+    )
+    .unwrap();
+    assert_eq!(i.inspect_delivery(&s.subscriber(), &second, 1000).unwrap().content, e.content);
+}
+
+// F-002: a duplicate content identity cannot override occupied-position evidence.
+#[test]
+fn content_window_duplicate_preserves_conflicting_committed_offset() {
+    let mut b = fixture();
+    b.profile.identity = IdentityStrategy::ContentWindow { window_ms: 1000 };
+    let s = Setup::with(b);
+    let a = s.event("a", 0);
+    let original = delivery(s.admit(&a, 1000));
+    let mut b = s.event("b", 1);
+    b.asserted_sender = r("different-content");
+    s.admit(&b, 1000);
+    let before = s.state();
+    let mut collision = a.clone();
+    collision.offset = Some(1);
+    assert_eq!(s.admit(&collision, 1000), IngressResult::Conflict);
+    let after = s.state();
+    assert_eq!(after.admissions, before.admissions);
+    assert_eq!(after.deliveries, before.deliveries);
+    assert_eq!(after.conflicts.len(), 1);
+    assert_eq!(contiguous(&after, &s.b.profile), 2);
+    assert_eq!(s.admit(&collision, 1000), IngressResult::Conflict);
+    assert_eq!(s.state(), after);
+    for offset in [0, 2] {
+        let mut retry = a.clone();
+        retry.offset = Some(offset);
+        assert!(matches!(
+            s.admit(&retry, 1000),
+            IngressResult::Admitted { duplicate: true, contiguous_next: 2, .. }
+        ));
+        assert_eq!(delivery(s.admit(&retry, 1000)), original);
+        assert_eq!(s.state(), after);
+    }
+    s.root.repository(StoreKind::Fabric).unwrap().rebuild().unwrap();
+    let reopened = StoreRoot::open_existing(s.temp.path().join("root")).unwrap();
+    assert_eq!(reopened.ingress_snapshot(&s.b.profile.scope.tenant).unwrap(), after);
+}
+
+// F-003: generated commands exercise apply_ingress directly. Models use small
+// integer keys and lifecycle facts, not the reducer's identity or transition logic.
+mod generated {
+    use super::*;
+    use proptest::prelude::*;
+    use std::collections::{BTreeMap, BTreeSet};
+
+    fn runner() -> proptest::test_runner::TestRunner {
+        proptest::test_runner::TestRunner::new(ProptestConfig {
+            cases: 256,
+            failure_persistence: None,
+            ..ProptestConfig::default()
+        })
+    }
+    fn replay(
+        initial: &IngressState,
+        tenant: &OpaqueRef,
+        commands: &[(u64, IngressCommand)],
+        expected: &IngressState,
+    ) {
+        let bytes = canonical_collection(&commands).unwrap();
+        let decoded: Vec<(u64, IngressCommand)> = serde_json::from_slice(&bytes).unwrap();
+        let mut actual = initial.clone();
+        for (now, command) in decoded {
+            actual = apply_ingress(&actual, tenant, now, &command).unwrap().0;
+        }
+        assert_eq!(&actual, expected);
+    }
+    #[test]
+    fn generated_ingress_binding_versions_match_model_and_replay() {
+        let b = fixture();
+        let tenant = b.profile.scope.tenant.clone();
+        runner()
+            .run(&prop::collection::vec((0u8..4, any::<bool>()), 1..100), |choices| {
+                let initial = IngressState::default();
+                let bind = IngressCommand::Bind { binding: Box::new(b.clone()) };
+                let mut state = apply_ingress(&initial, &tenant, 1000, &bind).unwrap().0;
+                let mut commands = vec![(1000, bind)];
+                let (mut revision, mut status) = (1, BindingStatus::Active);
+                for (choice, stale) in choices {
+                    let before = state.clone();
+                    let next =
+                        [BindingStatus::Active, BindingStatus::Suspended, BindingStatus::Revoked]
+                            [choice as usize % 3]
+                            .clone();
+                    let command = if choice == 3 {
+                        IngressCommand::Bind { binding: Box::new(b.clone()) }
+                    } else {
+                        IngressCommand::ChangeBinding {
+                            id: b.id.clone(),
+                            expected: if stale { revision - 1 } else { revision },
+                            status: next.clone(),
+                        }
+                    };
+                    let allowed = choice == 3
+                        || (!stale && status != BindingStatus::Revoked && status != next);
+                    let result = apply_ingress(&state, &tenant, 1000, &command);
+                    prop_assert_eq!(result.is_ok(), allowed);
+                    if let Ok((new, result)) = result {
+                        if choice == 3 {
+                            prop_assert_eq!(
+                                result,
+                                IngressResult::Binding(BindingVersion {
+                                    id: b.id.clone(),
+                                    revision
+                                })
+                            );
+                            prop_assert_eq!(&new, &before);
+                        } else {
+                            revision += 1;
+                            status = next;
+                        }
+                        state = new;
+                        commands.push((1000, command));
+                    }
+                    prop_assert_eq!(state.bindings[&b.id].revision, revision);
+                    prop_assert_eq!(&state.bindings[&b.id].status, &status);
+                    prop_assert_eq!(state.bindings.len(), 1);
+                }
+                replay(&initial, &tenant, &commands, &state);
+                Ok(())
+            })
+            .unwrap();
+    }
+
+    #[test]
+    fn generated_ingress_dedup_offsets_match_independent_model_and_replay() {
+        let mut b = fixture();
+        b.profile.identity = IdentityStrategy::ContentWindow { window_ms: 1000 };
+        let setup = Setup::with(b);
+        setup.admit(&setup.event("template", 0), 1000);
+        let template = setup.state().admissions.into_values().next().unwrap();
+        let tenant = setup.b.profile.scope.tenant.clone();
+        let initial = apply_ingress(
+            &IngressState::default(),
+            &tenant,
+            1000,
+            &IngressCommand::Bind { binding: Box::new(setup.b.clone()) },
+        )
+        .unwrap()
+        .0;
+        runner()
+            .run(&prop::collection::vec((0u8..8, 0u64..8), 1..100), |choices| {
+                let mut state = initial.clone();
+                let mut commands = vec![];
+                // Content -> first admitted observation; position -> committed content.
+                let mut contents: BTreeMap<u8, (ObservationId, Vec<DeliveryId>)> = BTreeMap::new();
+                let mut positions = BTreeMap::new();
+                let mut conflicts = BTreeSet::new();
+                for (step, (content, offset)) in choices.into_iter().enumerate() {
+                    let mut a = template.clone();
+                    a.event.asserted_sender = r(&format!("content-{content}"));
+                    a.event.offset = Some(offset);
+                    a.observation.id =
+                        format!("00000000-0000-4000-8000-{:012x}", step + 100).try_into().unwrap();
+                    a.receipt.id =
+                        format!("00000000-0000-4000-8000-{:012x}", step + 200).try_into().unwrap();
+                    a.deliveries = vec![format!("00000000-0000-4000-8000-{:012x}", step + 300)
+                        .try_into()
+                        .unwrap()];
+                    a.identity =
+                        provider_identity(&a.profile, &a.event, &a.observation.id).unwrap();
+                    a.producer_digest = producer_digest(&a.profile, &a.event).unwrap();
+                    a.observation.deduplication_key = r(a.identity.as_str());
+                    a.observation.asserted_sender = a.event.asserted_sender.clone();
+                    if let ReceiptBody::Ingress(receipt) = &mut a.receipt.body {
+                        receipt.observation_id = a.observation.id.clone();
+                        receipt.observation_digest =
+                            Envelope::new(Record::BoundaryObservation(a.observation.clone()))
+                                .digest()
+                                .unwrap();
+                    }
+                    let before = state.clone();
+                    let command = IngressCommand::Admit { admission: Box::new(a.clone()) };
+                    let (new, result) = apply_ingress(&state, &tenant, 1000, &command).unwrap();
+                    if let Some(old) = positions.get(&offset).filter(|old| **old != content) {
+                        conflicts.insert((*old, content));
+                        prop_assert_eq!(result, IngressResult::Conflict);
+                        prop_assert_eq!(&new.admissions, &before.admissions);
+                        prop_assert_eq!(&new.deliveries, &before.deliveries);
+                    } else if let Some((observation, deliveries)) = contents.get(&content) {
+                        let mut next = 0;
+                        while positions.contains_key(&next) {
+                            next += 1;
+                        }
+                        prop_assert_eq!(
+                            result,
+                            IngressResult::Admitted {
+                                observation: observation.clone(),
+                                deliveries: deliveries.clone(),
+                                duplicate: true,
+                                contiguous_next: next
+                            }
+                        );
+                        prop_assert_eq!(&new, &before);
+                    } else {
+                        contents.insert(content, (a.observation.id.clone(), a.deliveries.clone()));
+                        positions.insert(offset, content);
+                        prop_assert!(
+                            matches!(result, IngressResult::Admitted { duplicate: false, .. }),
+                            "new content must be admitted"
+                        );
+                    }
+                    state = new;
+                    commands.push((1000, command));
+                    prop_assert_eq!(state.admissions.len(), contents.len());
+                    prop_assert_eq!(state.deliveries.len(), contents.len());
+                    prop_assert_eq!(state.conflicts.len(), conflicts.len());
+                    let mut next = 0;
+                    while positions.contains_key(&next) {
+                        next += 1;
+                    }
+                    prop_assert_eq!(contiguous(&state, &setup.b.profile), next);
+                }
+                replay(&initial, &tenant, &commands, &state);
+                Ok(())
+            })
+            .unwrap();
+    }
+
+    #[test]
+    fn generated_ingress_delivery_closure_tokens_expiration_and_replay() {
+        let mut b = fixture();
+        b.policy.retention_ms = 60;
+        let setup = Setup::with(b);
+        let id = delivery(setup.admit(&setup.event("template", 0), 1000));
+        let initial = setup.state();
+        let tenant = setup.b.profile.scope.tenant.clone();
+        runner()
+            .run(&prop::collection::vec((0u8..12, 0u64..10, any::<bool>()), 1..100), |choices| {
+                let mut state = initial.clone();
+                let mut commands = vec![];
+                let mut now = 1000;
+                let mut tokens = Vec::new();
+                let mut statuses = Vec::new();
+                let mut next_due = 1000;
+                let mut closed = DeliveryState::Pending;
+                let mut invalidated = false;
+                let mut acknowledged_at = None;
+                for (step, (choice, delta, wrong)) in choices.into_iter().enumerate() {
+                    now += delta;
+                    let token = ContentHash::of(format!("token-{step}").as_bytes());
+                    let subscriber =
+                        if wrong { setup.b.principal.clone() } else { setup.b.subscriber.clone() };
+                    let (command, allowed) = match choice {
+                        0..=4 => (
+                            IngressCommand::Claim {
+                                id: id.clone(),
+                                subscriber,
+                                token_digest: token.clone(),
+                            },
+                            !wrong
+                                && !invalidated
+                                && now < 1060
+                                && closed == DeliveryState::Pending
+                                && now >= next_due,
+                        ),
+                        5..=8 => (
+                            IngressCommand::Acknowledge {
+                                id: id.clone(),
+                                subscriber,
+                                token_digest: tokens.first().unwrap_or(&token).clone(),
+                            },
+                            !wrong
+                                && !invalidated
+                                && now < 1060
+                                && !tokens.is_empty()
+                                && closed != DeliveryState::Expired,
+                        ),
+                        9 => (IngressCommand::InvalidateToken { id: id.clone() }, true),
+                        10 => (IngressCommand::Expire { id: id.clone() }, now >= 1060),
+                        _ => (
+                            IngressCommand::Finish {
+                                id: id.clone(),
+                                attempt: 1,
+                                succeeded: !wrong,
+                            },
+                            !tokens.is_empty()
+                                && (statuses[0] == AttemptStatus::Issued
+                                    || statuses[0]
+                                        == if wrong {
+                                            AttemptStatus::WakeFailed
+                                        } else {
+                                            AttemptStatus::WakeSucceeded
+                                        }),
+                        ),
+                    };
+                    let before = state.clone();
+                    let result = apply_ingress(&state, &tenant, now, &command);
+                    prop_assert_eq!(result.is_ok(), allowed);
+                    if let Ok((new, result)) = result {
+                        match choice {
+                            0..=4 => {
+                                if tokens.len() == 2 {
+                                    closed = DeliveryState::DeadLetter;
+                                } else {
+                                    tokens.push(token);
+                                    statuses.push(AttemptStatus::Issued);
+                                    next_due = now + 15;
+                                }
+                            }
+                            5..=8 => {
+                                let at = *acknowledged_at.get_or_insert(now);
+                                closed = DeliveryState::Acknowledged;
+                                prop_assert_eq!(
+                                    result,
+                                    IngressResult::Acknowledged(DeliveryAcknowledgment {
+                                        delivery: id.clone(),
+                                        subscriber: setup.b.subscriber.clone(),
+                                        acknowledged_at_ms: at,
+                                        attempt: 1
+                                    })
+                                );
+                            }
+                            9 => invalidated = true,
+                            10 => {
+                                invalidated = true;
+                                if closed != DeliveryState::Acknowledged {
+                                    closed = DeliveryState::Expired;
+                                }
+                            }
+                            _ => {
+                                statuses[0] = if wrong {
+                                    AttemptStatus::WakeFailed
+                                } else {
+                                    AttemptStatus::WakeSucceeded
+                                }
+                            }
+                        }
+                        state = new;
+                        commands.push((now, command));
+                    } else {
+                        prop_assert_eq!(&state, &before);
+                    }
+                    let d = &state.deliveries[&id];
+                    prop_assert_eq!(&d.state, &closed);
+                    prop_assert_eq!(d.token_invalidated, invalidated);
+                    prop_assert_eq!(d.attempts.len(), tokens.len());
+                    prop_assert_eq!(
+                        d.acknowledgment.as_ref().map(|ack| ack.acknowledged_at_ms),
+                        acknowledged_at
+                    );
+                    prop_assert_eq!(
+                        d.attempts.iter().map(|a| a.status.clone()).collect::<Vec<_>>(),
+                        statuses.clone()
+                    );
+                    prop_assert_eq!(&state.admissions, &initial.admissions);
+                }
+                replay(&initial, &tenant, &commands, &state);
+                Ok(())
+            })
+            .unwrap();
+    }
 }

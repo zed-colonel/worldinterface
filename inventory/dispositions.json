@@ -6487,5 +6487,12 @@
     "target": "ingress-domain",
     "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
     "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/ingress/tests/lifecycle.rs::::module:generated",
+    "disposition": "test-evidence",
+    "target": "ingress-domain",
+    "rationale": "Test-only generated ingress command sequences and independent lifecycle models; no runtime composition",
+    "source": "CONTRIBUTING.md pure state property-test requirement; WI-03/domain F-003"
   }
 ]

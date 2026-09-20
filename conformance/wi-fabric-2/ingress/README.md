@@ -44,7 +44,8 @@ this approximation intentionally does not advance cursor state on a suppressed
 retransmission. Non-deduplicable profiles allocate an observation identity for
 each arrival. Equal identity/content recovers the original observation/deliveries;
 conflicts preserve protected hashes and cannot replace or wake. Reuse of an
-already committed offset with different producer content also records conflict.
+already committed offset with different producer content also records conflict,
+even when a content-window identity matches a different earlier observation.
 Binding revision and arrival time do not alter provider identity. First admission
 captures every active matching binding in ID order. Retransmission never enrolls
 a later subscription.
@@ -67,6 +68,13 @@ its exact quarantine policy on every attachment; provider assertions cannot remo
 it. Subscriber inspection omits quarantined references until matching, separately
 authorized release evidence is durably recorded. Typed commissioning and
 role/stewardship references describe evidence only, never lifecycle authority.
+Every typed profile reference, including the nested role attestation, is checked
+for scope and durable availability. Profile evidence uses the tenant namespace;
+a provider-scoped attestation must be a declared attachment with the trusted
+profile's disposition. Foreign and undeclared references fail validation.
+Delivery views redact an unreleased optional attestation without rewriting stored
+evidence. Required content aliases of quarantined attachments deny the view until
+release. These checks include quarantine recorded by other admitted observations.
 
 ## Delivery and inspection contract
 
@@ -113,3 +121,16 @@ Implementation grouping follows existing layering: pure commands/reducers in
 and admission/delivery facade plus nested validators in the new ingress crate.
 This avoids parallel public append APIs; the design's four logical transaction
 boundaries are retained inside the shared journal mechanism.
+
+## Review remediation coverage
+
+F-001 is covered by HTTP and streaming nested-reference regressions (foreign tenant,
+foreign provider, undeclared attachment, unavailable evidence, quarantine, wrong
+release, authorized release and replay), plus content-alias disclosure checks.
+F-002 is covered by content-window/occupied-offset collision, legitimate duplicate,
+unchanged observation/outbox and persisted conflict replay checks.
+F-003 is covered by three property tests, each running 256 generated command
+sequences against `apply_ingress`. Independent models track binding revisions,
+content and position occupancy, closure, retry attempts, token invalidation and
+expiration; serialized command replay must recover the same state. These are
+local domain assertions, not upstream integration results.

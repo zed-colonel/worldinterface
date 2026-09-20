@@ -175,15 +175,9 @@ impl<'a> Ingress<'a> {
         for a in &event.attachments {
             self.root.read_artifact(&a.artifact)?;
         }
-        match &event.profile {
-            ObservationProfile::Ordinary => {}
-            ObservationProfile::Commissioning { evidence }
-            | ObservationProfile::RoleStewardship { evidence, .. } => {
-                if evidence.artifact.scope != profile.scope.tenant {
-                    return Err(error("profile evidence scope"));
-                }
-                self.root.read_artifact(&evidence.artifact)?;
-            }
+        validate_event_references(&profile, &event).map_err(error)?;
+        for evidence in profile_evidence(&event.profile) {
+            self.root.read_artifact(&evidence.artifact)?;
         }
         let identity = provider_identity(&profile, &event, &ids.observation).map_err(error)?;
         let binding_id = expected.first().ok_or_else(|| error("no binding capture"))?.id.clone();
@@ -449,17 +443,30 @@ fn view(
         .values()
         .find(|a| a.observation.id == d.observation)
         .ok_or_else(|| error("missing observation"))?;
+    validate_event_references(&a.profile, &a.event).map_err(error)?;
+    // Required fields cannot be redacted without changing the view's meaning.
+    if !artifact_disclosable(s, &a.event.content)
+        || profile_evidence(&a.event.profile)
+            .first()
+            .is_some_and(|e| !artifact_disclosable(s, &e.artifact))
+        || a.receipt.evidence.iter().any(|e| !artifact_disclosable(s, &e.artifact))
+    {
+        return Err(error("required delivery reference quarantined"));
+    }
     let attachments = a
         .event
         .attachments
         .iter()
-        .filter(|v| {
-            v.quarantine
-                .as_ref()
-                .is_none_or(|q| s.releases.iter().any(|(r, k, _)| r == &v.artifact && k == q))
-        })
+        .filter(|v| artifact_disclosable(s, &v.artifact))
         .map(|v| v.artifact.clone())
         .collect();
+    let mut profile = a.event.profile.clone();
+    if let ObservationProfile::RoleStewardship { capacity, .. } = &mut profile {
+        if capacity.attestation_ref.as_ref().is_some_and(|e| !artifact_disclosable(s, &e.artifact))
+        {
+            capacity.attestation_ref = None;
+        }
+    }
     Ok(DeliveryView {
         id: d.id.clone(),
         observation: d.observation.clone(),
@@ -476,7 +483,7 @@ fn view(
         receipt: a.receipt.clone(),
         ordering: a.ordering.clone(),
         provenance: a.provenance.clone(),
-        profile: a.event.profile.clone(),
+        profile,
         information_use: a.event.information_use.clone(),
     })
 }
