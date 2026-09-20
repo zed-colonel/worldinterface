@@ -43,9 +43,9 @@ inventory and dispositions. Pure state changes require property tests, durable
 changes replay tests, and external/cross-store changes crash tests. WI-01 changes
 only development contracts; it does not implement new runtime recovery.
 
-Run `scripts/check-wi-contract.sh` using the supplied controller Cargo launcher and
-explicit `CRAFTINGTABLE_CARGO_CONFIG`. Keep `CARGO_TARGET_DIR` and verification
-artifacts outside the checkout. Local CI is
+Run `ct-check -- scripts/check-wi-contract.sh` using the supplied controller Cargo
+launcher natively; CI uses explicit `CRAFTINGTABLE_CARGO_CONFIG`. Keep
+`CARGO_TARGET_DIR` and verification artifacts outside the checkout. Local CI is
 `ct-act -W .github/workflows/wi-contract.yml -j contract`. Controller `ct-check`
 retains repository check evidence. Historical runtime characterization is separate
 from these independent checks; no current AQ integration is claimed.
@@ -69,11 +69,13 @@ Cargo launcher. Run `ct-check -- scripts/check-wi-domain.sh`,
 workflow with `ct-act -W .github/workflows/wi-<scope>.yml -j <scope>`.
 Set the supplied manifest/config paths and `CRAFTINGTABLE_VERIFICATION_MODE` for
 native scripts. CI receives them from the controller and uses explicit Cargo
-configuration. The current-upstream-build launcher requires an AQ-resolved graph;
-native foundation/checker commands therefore need an operator-approved
-explicit-config exception or a controller launcher supporting AQ-free scoped checks.
-Do not add artificial AQ dependencies to make those checks qualify as integration.
-CI can run the independent manifests with the supplied explicit Cargo config.
+configuration. The updated controller launcher supports AQ-free foundation/checker
+graphs and records them as supplementary checks, including in
+`current-upstream-build` mode. Use that launcher through `ct-check` normally;
+no native explicit-config bypass or artificial AQ dependency is needed.
+Supplementary receipts do not satisfy the current-upstream requirement: integration
+must still produce a successful controller Cargo build/test receipt against the
+exact supplied AQ pins. CI logs supplement those native receipts.
 
 Keep evidence outside build caches. Candidate case results require independent
 review before WI-AQ-G1 acceptance; repeat verification at the actual merged or

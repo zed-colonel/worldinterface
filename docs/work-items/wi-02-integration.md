@@ -49,10 +49,13 @@ execution/replay, cross-store ancestry, authorization/integrity, fresh lineage,
 and killed-process storage/publication tests. `scripts/check-wi-integration.sh`
 checks the exact supplied AQ files, resolved versions/features and production graph.
 Domain/checker checks run through `ct-check`; all three scoped jobs run through
-`ct-act`. The current-upstream-build launcher rejects AQ-free native manifests. Selecting
-nonmember packages also cannot run their dev-dependency tests. An explicit-config
-exception for native foundation/checker checks is requested from the operator; CI
-uses its already-authorized explicit config. No artificial AQ dependency is added.
+`ct-act`. Following the recorded operator decision of 2026-09-20, use the updated
+controller Cargo launcher for native foundation/checker manifests as well as
+integration. It records AQ-free graphs as supplementary checks in
+`current-upstream-build` mode, preserving foundation isolation without an
+explicit-config bypass or artificial AQ dependency. Supplementary receipts do not
+replace the required successful integration build/test against the current exact
+AQ pins. Select Rust 1.89.0; CI continues to use the supplied explicit Cargo config.
 
 The conformance package registers AB-WI-001/015/016 independently of unrelated
 unimplemented W1–W59 skeleton cases. Source-record SHA-256 uses the controller's
