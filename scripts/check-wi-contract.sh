@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+export RUSTUP_TOOLCHAIN=1.89.0
 cd "$(dirname "$0")/.."
 : "${CRAFTINGTABLE_CARGO_CONFIG:?controller Cargo config is required}"
 : "${CRAFTINGTABLE_DEPENDENCY_MANIFEST:?controller dependency manifest is required}"

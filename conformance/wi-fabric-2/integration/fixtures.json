@@ -1,0 +1,21 @@
+{
+  "version": 1,
+  "source_record_convention": "SHA-256 of recursively key-sorted compact JSON, arrays in source order (controller canonicalSourceRecord)",
+  "cases": {
+    "AB-WI-001": {
+      "source_record_sha256": "abeefc555e395a4dc1242d30e3537bd89541f271410a91e9589bef3267ac4ebf",
+      "test_filter": "ab_wi_001"
+    },
+    "AB-WI-015": {
+      "source_record_sha256": "468730e76d4f44c133ceb65ff48b4efda113d03b1be3026ac4c58727e5dee6d1",
+      "test_filter": "ab_wi_015"
+    },
+    "AB-WI-016": {
+      "source_record_sha256": "e9aae8a4df1330cd2ed265aef210847f82adf0bb7444a69cb689a9aeb8843a01",
+      "test_filter": "ab_wi_016"
+    }
+  },
+  "assets": {
+    "locator.json": "5efacaa74617b8fa2231579a1a0c0711d725f7bb97f86cd219222ac488e9b7d3"
+  }
+}

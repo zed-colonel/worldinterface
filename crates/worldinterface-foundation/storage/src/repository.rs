@@ -141,6 +141,8 @@ fn apply(c: &Connection, b: &Batch, fault: Option<&str>) -> Result<()> {
             ],
         )?;
     }
+    #[cfg(test)]
+    crate::crash::checkpoint("after-records");
     if fault == Some("records") {
         return Err(invalid("injected after records"));
     }
@@ -185,6 +187,8 @@ fn apply(c: &Connection, b: &Batch, fault: Option<&str>) -> Result<()> {
             return Err(invalid("unknown or already acknowledged outbox"));
         }
     }
+    #[cfg(test)]
+    crate::crash::checkpoint("after-outbox");
     if fault == Some("outbox") {
         return Err(invalid("injected after outbox"));
     }
@@ -197,6 +201,8 @@ fn append(c: &mut Connection, b: &Batch, fault: Option<&str>) -> Result<()> {
     let tx = c.transaction_with_behavior(TransactionBehavior::Immediate)?;
     append_in(&tx, b, fault)?;
     tx.commit()?;
+    #[cfg(test)]
+    crate::crash::checkpoint("after-commit");
     Ok(())
 }
 fn append_in(c: &Connection, b: &Batch, fault: Option<&str>) -> Result<()> {
@@ -248,6 +254,8 @@ impl Repository<'_> {
         batch.outbox.push(outbox);
         append_in(&tx, &batch, None)?;
         tx.commit()?;
+        #[cfg(test)]
+        crate::crash::checkpoint("after-commit");
         Ok(entity)
     }
     pub fn projection(&self, entity: &EntityId) -> Result<Option<Projection>> {
@@ -313,6 +321,8 @@ impl Repository<'_> {
         tx.execute_batch("DELETE FROM projections; DELETE FROM records; DELETE FROM admissions; DELETE FROM outbox;")?;
         replay_into(&tx, &tx)?;
         tx.commit()?;
+        #[cfg(test)]
+        crate::crash::checkpoint("after-commit");
         Ok(())
     }
 }

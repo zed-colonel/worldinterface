@@ -58,6 +58,7 @@ pub struct StoreRoot {
     pub(crate) path: PathBuf,
     manifest: Manifest,
     _lock: File,
+    pub(crate) exclusive: bool,
 }
 fn kinds(platform: bool) -> Vec<StoreKind> {
     let mut v = vec![StoreKind::Fabric, StoreKind::Flow, StoreKind::Context];
@@ -94,6 +95,21 @@ fn reject_links(path: &Path) -> Result<()> {
         }
     }
     Ok(())
+}
+fn copy_dir(src: &Path, dst: &Path) -> Result<()> {
+    for e in fs::read_dir(src)? {
+        let e = e?;
+        let target = dst.join(e.file_name());
+        if e.file_type()?.is_dir() {
+            fs::create_dir(&target)?;
+            copy_dir(&e.path(), &target)?;
+        } else if e.file_type()?.is_file() {
+            write_new(&target, &fs::read(e.path())?)?;
+        } else {
+            return Err(invalid("non-regular store member"));
+        }
+    }
+    sync_dir(dst)
 }
 impl StoreRoot {
     pub fn create_empty(path: impl AsRef<Path>, profile: StoreProfile) -> Result<Self> {
@@ -136,6 +152,8 @@ impl StoreRoot {
             drop(conn);
             File::open(path.join(format!("{}.sqlite", kind.name())))?.sync_all()?;
             write_new(&path.join(format!("{}.json", kind.name())), &identity)?;
+            #[cfg(test)]
+            crate::crash::checkpoint("initialization-store");
             if interrupt_after == Some(i) {
                 return Err(invalid("injected initialization interruption"));
             }
@@ -144,6 +162,8 @@ impl StoreRoot {
         fs::remove_file(path.join("initializing"))?;
         // Root manifest is the completion marker and is published only after all stores.
         write_new(&path.join("manifest.pending"), &canonical_data(&manifest).map_err(invalid)?)?;
+        #[cfg(test)]
+        crate::crash::checkpoint("initialization-publish");
         fs::rename(path.join("manifest.pending"), path.join("manifest.json"))?;
         sync_dir(path)?;
         if let Some(parent) = parent_dir(path) {
@@ -154,10 +174,26 @@ impl StoreRoot {
     pub fn open_existing(path: impl AsRef<Path>) -> Result<Self> {
         Self::open(path.as_ref(), false)
     }
+    /// Holds exclusive maintenance ownership until dropped. No repository writer can coexist.
+    pub fn open_maintenance(path: impl AsRef<Path>) -> Result<Self> {
+        Self::open(path.as_ref(), true)
+    }
+    /// Enforces a containing bundle's identity before any original recovery writes.
+    pub fn open_for_instance(
+        path: impl AsRef<Path>,
+        instance: &InstanceId,
+        maintenance: bool,
+    ) -> Result<Self> {
+        Self::open_checked(path.as_ref(), maintenance, Some(instance))
+    }
     fn open(path: &Path, exclusive: bool) -> Result<Self> {
+        Self::open_checked(path, exclusive, None)
+    }
+    fn open_checked(path: &Path, exclusive: bool, instance: Option<&InstanceId>) -> Result<Self> {
         reject_links(path)?;
         let manifest: Manifest = read_manifest(&path.join("manifest.json"))?;
-        if manifest.contract != CONTRACT
+        if instance.is_some_and(|id| id != &manifest.profile.instance)
+            || manifest.contract != CONTRACT
             || manifest.schema != 1
             || manifest.canonical_profile != CANONICAL_PROFILE
             || manifest.feature_profile != "local-domain-1"
@@ -179,12 +215,13 @@ impl StoreRoot {
         }
         let allowed: Vec<_> = ["manifest.json".to_string(), "lock".into(), "artifacts".into()]
             .into_iter()
-            .chain(
-                manifest
-                    .stores
-                    .iter()
-                    .flat_map(|k| [format!("{}.json", k.name()), format!("{}.sqlite", k.name())]),
-            )
+            .chain(manifest.stores.iter().flat_map(|k| {
+                [
+                    format!("{}.json", k.name()),
+                    format!("{}.sqlite", k.name()),
+                    format!("{}.sqlite-journal", k.name()),
+                ]
+            }))
             .collect();
         for entry in fs::read_dir(path)? {
             let entry = entry?;
@@ -195,13 +232,67 @@ impl StoreRoot {
         if !path.join("artifacts").is_dir() || !path.join("lock").is_file() {
             return Err(invalid("incomplete artifact or lock store"));
         }
+        let journals: Vec<_> = manifest
+            .stores
+            .iter()
+            .filter_map(|k| {
+                let p = path.join(format!("{}.sqlite-journal", k.name()));
+                p.exists().then_some(p)
+            })
+            .collect();
         let lock = File::open(path.join("lock"))?;
-        if exclusive {
+        if exclusive || !journals.is_empty() {
             FileExt::try_lock_exclusive(&lock)?;
         } else {
             FileExt::try_lock_shared(&lock)?;
         }
-        let root = Self { path: path.to_path_buf(), manifest, _lock: lock };
+        let root = Self { path: path.to_path_buf(), manifest, _lock: lock, exclusive };
+        if !journals.is_empty() {
+            // SQLite alone interprets/replays journals. First recover an isolated copy,
+            // then validate the entire root (including embedded identities/artifacts).
+            // No original SQLite descriptor is opened for mutation before this succeeds.
+            let private = tempfile::tempdir()?;
+            copy_dir(path, private.path())?;
+            for journal in &journals {
+                let bytes = fs::read(journal)?;
+                if bytes.len() < 512
+                    || (bytes[..8] != [0xd9, 0xd5, 0x05, 0xf9, 0x20, 0xa1, 0x63, 0xd7]
+                        && bytes[..8] != [0; 8])
+                {
+                    return Err(invalid("malformed rollback journal"));
+                }
+            }
+            for kind in &root.manifest.stores {
+                let db = private.path().join(format!("{}.sqlite", kind.name()));
+                let c = Connection::open_with_flags(&db, OpenFlags::SQLITE_OPEN_READ_WRITE)?;
+                c.query_row("SELECT count(*) FROM sqlite_schema", [], |r| r.get::<_, i64>(0))?;
+                drop(c);
+                // An uncommitted journal with a zero header is non-hot. SQLite ignores
+                // it; removing it in the private copy permits ordinary validation.
+                let journal = db.with_extension("sqlite-journal");
+                if journal.exists() {
+                    fs::remove_file(journal)?;
+                }
+            }
+            drop(Self::open(private.path(), true)?);
+            for kind in &root.manifest.stores {
+                let c = Connection::open_with_flags(
+                    root.db_path(*kind),
+                    OpenFlags::SQLITE_OPEN_READ_WRITE,
+                )?;
+                c.query_row("SELECT count(*) FROM sqlite_schema", [], |r| r.get::<_, i64>(0))?;
+                drop(c);
+            }
+            for journal in journals {
+                if journal.exists() {
+                    fs::remove_file(journal)?;
+                }
+            }
+            sync_dir(path)?;
+            if !exclusive {
+                FileExt::lock_shared(&root._lock)?;
+            }
+        }
         for kind in &root.manifest.stores {
             let c =
                 Connection::open_with_flags(root.db_path(*kind), OpenFlags::SQLITE_OPEN_READ_ONLY)?;
@@ -236,6 +327,9 @@ impl StoreRoot {
         Ok(())
     }
     pub(crate) fn connect(&self, kind: StoreKind) -> Result<Connection> {
+        if self.exclusive {
+            return Err(invalid("maintenance handles cannot write"));
+        }
         if !self.manifest.stores.contains(&kind) {
             return Err(invalid("store is not enabled"));
         }
@@ -243,10 +337,20 @@ impl StoreRoot {
         c.busy_timeout(std::time::Duration::from_secs(5))?;
         self.validate_identity(&c, kind)?;
         c.execute_batch("PRAGMA synchronous=FULL; PRAGMA foreign_keys=ON;")?;
+        #[cfg(test)]
+        crate::crash::prepare(&c);
         Ok(c)
     }
     pub fn backup_offline(source: impl AsRef<Path>, destination: impl AsRef<Path>) -> Result<()> {
         let source = Self::open(source.as_ref(), true)?;
+        source.backup_to(destination)
+    }
+    /// Copies while retaining the caller's exclusive maintenance lock.
+    pub fn backup_to(&self, destination: impl AsRef<Path>) -> Result<()> {
+        if !self.exclusive {
+            return Err(invalid("backup requires exclusive maintenance ownership"));
+        }
+        let source = self;
         let dest = destination.as_ref();
         if dest.exists() {
             return Err(invalid("backup destination exists"));
@@ -257,23 +361,12 @@ impl StoreRoot {
         }
         let staging = parent.join(format!(".wi-backup-{}", InstanceId::generate().as_str()));
         fs::create_dir(&staging)?;
-        fn copy_dir(src: &Path, dst: &Path) -> Result<()> {
-            for e in fs::read_dir(src)? {
-                let e = e?;
-                let target = dst.join(e.file_name());
-                if e.file_type()?.is_dir() {
-                    fs::create_dir(&target)?;
-                    copy_dir(&e.path(), &target)?;
-                } else {
-                    write_new(&target, &fs::read(e.path())?)?;
-                }
-            }
-            sync_dir(dst)
-        }
         let result = (|| {
             copy_dir(&source.path, &staging)?;
             drop(Self::open(&staging, true)?);
             // create_dir is a no-clobber reservation; rename is only into our empty directory.
+            #[cfg(test)]
+            crate::crash::checkpoint("backup-publish");
             fs::create_dir(dest)?;
             fs::rename(&staging, dest)?;
             sync_dir(parent)

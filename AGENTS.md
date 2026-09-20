@@ -30,6 +30,12 @@ and embedded host surfaces.
 
 ## Verification
 
+- Active WI-02 integration: run `scripts/check-wi-integration.sh` through
+  `ct-check`, and `wi-integration.yml` through `ct-act`. Run domain and contract
+  checks as well. Select Rust 1.89.0. Foundation remains an independent AQ-free
+  workspace. The current-upstream-build launcher rejects AQ-free native checks;
+  use the scoped CI jobs with the supplied explicit Cargo config, and retain the
+  native-check conflict until the operator approves an explicit-config exception.
 - Active WI-FABRIC-2 domain slice: run `scripts/check-wi-domain.sh` and
   `scripts/check-wi-contract.sh` through the supplied `ct-check`; run the
   `wi-domain.yml` domain job through `ct-act`. Use the controller Cargo launcher

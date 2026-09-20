@@ -1,0 +1,52 @@
+# WI-02 G1 integration
+
+The production runtime is `crates/worldinterface-runtime`, an independent Cargo
+workspace using AQ 0.2.0 at commit 29e096c4f06985d1a9bd9d5fe5a3a6a5db8a6860,
+tree 1c0c85dd700bd9d0c75de223dada911ffeadbb5b, conformance revision 16.
+`contracts/aq-integration-target.json` retains the archive/source-tree identities;
+`aq-consumer-reconciliation.json` records WI-AQ-012/015 mappings. The historical
+archive lock and imported plans remain historical evidence, not current receipts.
+
+`QueueReferences` obtains both store identity and projection from one locked AQ
+read session. It validates local task/run/attempt ancestry and encodes foreign
+provenance only as `external_ref`. AQ constructs child inheritance. The version-1
+`TaskInputLocator` is canonical JSON in task bytes, capped at 4096 bytes. WI record
+digests remain separate from AQ CanonicalAdmissionV2. `ArtifactResolver` requires
+an injected trusted authorization implementation and host-authenticated context;
+artifact possession and attribution are not grants.
+
+`StoreBundle` stages WI and AQ initialization, validates both, then publishes a
+completion manifest and directory. Offline backup holds an exclusive bundle lock,
+exclusive WI maintenance handle and retained shared AQ offline session across all
+copies. WI handles cannot write while in maintenance mode; AQ writers are excluded
+by AQ's own lock. AQ backup/restore retains its complete required WAL and eligible
+snapshot. All advertised WI blobs and G1 AQ task-input/output references validate
+before publication. G3/G4 must extend artifact closure for their signal/checkpoint
+adapters before adding those APIs. Unknown external schemes remain owned by their
+resolvers; this boundary does not fetch them.
+
+SQLite DELETE/FULL recovery requires exclusive ownership. It validates root and
+store manifests, recovers a private copy using SQLite, and validates every database
+identity and artifact before opening the original databases for recovery. A failed
+preflight leaves the source unchanged. Filesystem roots are trusted host-owned
+storage; this is not protection against a hostile same-OS-identity process rewriting
+files or bypassing advisory locks. Test-only subprocess barriers are compiled only
+for unit tests, not exposed by the production library.
+
+The source PR tests include canonical vectors, state properties, admission conflicts
+and concurrency, atomic record/outbox/replay, WP-002 definitions, real AQ child
+execution/replay, cross-store ancestry, authorization/integrity, fresh lineage,
+and killed-process storage/publication tests. `scripts/check-wi-integration.sh`
+checks the exact supplied AQ files, resolved versions/features and production graph.
+Domain/checker checks run through `ct-check`; all three scoped jobs run through
+`ct-act`. The current-upstream-build launcher rejects AQ-free native manifests. Selecting
+nonmember packages also cannot run their dev-dependency tests. An explicit-config
+exception for native foundation/checker checks is requested from the operator; CI
+uses its already-authorized explicit config. No artificial AQ dependency is added.
+
+The conformance package registers AB-WI-001/015/016 independently of unrelated
+unimplemented W1–W59 skeleton cases. Source-record SHA-256 uses the controller's
+recursively sorted compact JSON convention over the imported baseline row; test
+source, fixture, environment, build and result hashes remain separate. Result
+artifacts and reviews are external. No checked-in manifest claims a passing review,
+merged revision, parent acceptance, worker-provider qualification or remote release.

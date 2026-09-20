@@ -1,7 +1,21 @@
-# WI-FABRIC-2 conformance skeleton, revision 1
+# WI-FABRIC-2 conformance package, revision 1
 
-This package defines coverage slots, not passing runtime tests. All runtime cases and fresh-store scenarios remain unimplemented. WI-02 owns store behavior; later slices replace skeleton slots with executable cases and independently reviewed evidence. No AQ baseline case is assigned to WI-01.
+The package is partially implemented. AB-WI-001, AB-WI-015 and AB-WI-016 register
+WI-02 G1 consumer tests under `crates/worldinterface-runtime`. The unrelated
+W1–W59 skeleton slots and historical store scenario inputs remain unimplemented;
+they are coverage obligations, not passing runtime evidence. Foundation source
+PR tests and WP-002 definitions remain registered separately in `domain/`.
 
-The standalone checker validates package structure, source fidelity and evidence rejection. Its unit tests are checker tests, never current AQ/WI runtime conformance. Fixture versions are immutable; see the archive README. Additive coverage increments package revision; semantic change requires operator amendment.
+`integration/fixtures.json` binds case filters and the locator golden vector.
+Each baseline source hash binds the imported case using recursively sorted
+compact JSON. Runtime receipts separately bind current AQ identity, consumer
+revision, executable source, fixtures, resolved package/features, toolchain,
+environment, logs, nonempty case results and independent review. The checker
+rejects planned cases, stale pins, altered artifacts and self-review.
 
-Runtime evidence must identify the exact consumer commit, upstream archive/tree/build/conformance, fixture and source-record digests, toolchain/environment, command, test-run and results, reviewer, and phase. Candidate, merged, and post-rebase evidence are separate. Historical dependency identities and planned cases cannot establish a target pass. Use `wi-contract-check evidence check RECEIPT.json` to validate execution receipts. No fixture runner is supplied until target implementations exist.
+Implementation registration does not assert passing independently accepted case
+receipts. Preserve those external artifacts with the exact candidate revision;
+rerun after integration/rebase. WI-AQ-G1 and parent acceptance remain controller
+obligations. Native integration uses the pinned launcher; the AQ-free native
+foundation/checker launcher conflict is documented in the WI-02 integration work
+item. All scoped CI jobs use the controller's explicit Cargo configuration.

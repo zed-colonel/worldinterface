@@ -2,6 +2,9 @@
 //! Task payload locators and admission identities must be persisted before calling.
 use worldinterface_protocol::{ContentHash, OpaqueRef};
 
+/// Domain planning summary only, not a durable AQ EnsureTaskRequest.
+/// G2 must persist the full stable request (spec, dependencies, causal context,
+/// admission key and task identity) before submission; this type cannot do so.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct QueueAdmission {
     pub task: OpaqueRef,

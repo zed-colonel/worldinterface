@@ -194,6 +194,22 @@
         "receipt"
       ],
       "additionalProperties": false
+    },
+    "executable_case_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "integration_fixture_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "resolved_packages_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "producer": {
+      "type": "string",
+      "minLength": 1
     }
   },
   "required": [
@@ -212,7 +228,11 @@
     "test_run_id",
     "command",
     "results",
-    "independent_review"
+    "independent_review",
+    "executable_case_sha256",
+    "integration_fixture_sha256",
+    "resolved_packages_sha256",
+    "producer"
   ],
   "additionalProperties": false,
   "$schema": "https://json-schema.org/draft/2020-12/schema"

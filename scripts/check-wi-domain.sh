@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+export RUSTUP_TOOLCHAIN=1.89.0
 cd "$(dirname "$0")/.."
 : "${CRAFTINGTABLE_CARGO_CONFIG:?controller Cargo config is required}"
 : "${CRAFTINGTABLE_DEPENDENCY_MANIFEST:?controller dependency manifest is required}"
@@ -20,9 +21,9 @@ export PROPTEST_DISABLE_FAILURE_PERSISTENCE=1
 rustc --version --verbose
 rustfmt --version
 rustfmt --check --edition 2021 crates/worldinterface-foundation/*/src/*.rs crates/worldinterface-foundation/*/tests/*.rs
-run_cargo clippy --locked --manifest-path "$manifest" --workspace --all-targets --all-features -- -D warnings
-run_cargo build --locked --manifest-path "$manifest" --workspace --all-features
-run_cargo test --locked --manifest-path "$manifest" --workspace --all-features
+run_cargo clippy --locked --manifest-path "$manifest" --all-targets --all-features -- -D warnings
+run_cargo build --locked --manifest-path "$manifest" --all-features
+run_cargo test --locked --manifest-path "$manifest" --all-features
 metadata="$(mktemp "$TMPDIR/wi-domain-metadata.XXXXXX")"
 trap 'rm -f "$metadata"' EXIT
 run_cargo metadata --locked --manifest-path "$manifest" --all-features --format-version 1 > "$metadata"
