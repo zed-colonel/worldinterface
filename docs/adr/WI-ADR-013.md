@@ -8,7 +8,7 @@ Due: WI-03
 
 Source: implementation plan §4.
 
-Decision and acceptance evidence: pending operator review. No encoding or implementation choice is accepted by this stub.
+Decision and acceptance evidence: see the recorded [operator approval](approvals/WI-ADR-013.json).
 
 Full operator approval: `c9a7a523-d5ef-4864-a68c-5af00f926930`, binding revision 4.
 
