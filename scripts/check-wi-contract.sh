@@ -16,7 +16,12 @@ run_cargo() {
     cargo "$@"
   else
     # act's Rust installation must explicitly consume the mounted controller pins.
-    cargo --config "$CRAFTINGTABLE_CARGO_CONFIG" "$@"
+    if [[ "$1" == clippy ]]; then
+      shift
+      cargo --config "$CRAFTINGTABLE_CARGO_CONFIG" clippy --config "$CRAFTINGTABLE_CARGO_CONFIG" "$@"
+    else
+      cargo --config "$CRAFTINGTABLE_CARGO_CONFIG" "$@"
+    fi
   fi
 }
 rustc --version --verbose

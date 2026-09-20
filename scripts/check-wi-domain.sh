@@ -14,7 +14,12 @@ run_cargo() {
   if [[ "$(command -v cargo)" == "$controller_cargo" ]]; then
     cargo "$@"
   else
-    cargo --config "$CRAFTINGTABLE_CARGO_CONFIG" "$@"
+    if [[ "$1" == clippy ]]; then
+      shift
+      cargo --config "$CRAFTINGTABLE_CARGO_CONFIG" clippy --config "$CRAFTINGTABLE_CARGO_CONFIG" "$@"
+    else
+      cargo --config "$CRAFTINGTABLE_CARGO_CONFIG" "$@"
+    fi
   fi
 }
 export PROPTEST_DISABLE_FAILURE_PERSISTENCE=1

@@ -12,7 +12,15 @@ manifest=crates/worldinterface-runtime/Cargo.toml
 controller_cargo="$(dirname "$CRAFTINGTABLE_DEPENDENCY_MANIFEST")/bin/cargo"
 run_cargo() {
   if [[ "$(command -v cargo)" == "$controller_cargo" ]]; then cargo "$@"
-  else cargo --config "$CRAFTINGTABLE_CARGO_CONFIG" "$@"; fi
+  else
+    if [[ "$1" == clippy ]]; then
+      shift
+      # Cargo's external Clippy subcommand needs the config forwarded explicitly.
+      cargo --config "$CRAFTINGTABLE_CARGO_CONFIG" clippy --config "$CRAFTINGTABLE_CARGO_CONFIG" "$@"
+    else
+      cargo --config "$CRAFTINGTABLE_CARGO_CONFIG" "$@"
+    fi
+  fi
 }
 rustc --version --verbose
 rustfmt --check --edition 2021 crates/worldinterface-runtime/src/*.rs crates/worldinterface-runtime/tests/*.rs
