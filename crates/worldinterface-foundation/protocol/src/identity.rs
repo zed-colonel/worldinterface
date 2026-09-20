@@ -569,3 +569,11 @@ impl From<Timestamp> for String {
         v.0
     }
 }
+
+impl Timestamp {
+    pub fn epoch_millis(&self) -> Result<u64> {
+        let time =
+            chrono::DateTime::parse_from_rfc3339(self.as_str()).map_err(|e| e.to_string())?;
+        u64::try_from(time.timestamp_millis()).map_err(|_| "pre-epoch timestamp".into())
+    }
+}

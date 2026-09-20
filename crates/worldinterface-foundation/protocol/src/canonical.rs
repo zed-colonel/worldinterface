@@ -56,6 +56,14 @@ impl Envelope {
 
 /// Deterministic encoding for local manifests/events; not a public record hash API.
 pub fn canonical_data<T: Serialize>(value: &T) -> Result<Vec<u8>> {
+    canonical_bounded(value, MAX_RECORD_BYTES)
+}
+
+/// Internal collection encoding, bounded separately from the unchanged wire record bound.
+pub fn canonical_collection<T: Serialize>(value: &T) -> Result<Vec<u8>> {
+    canonical_bounded(value, 16 * 1024 * 1024)
+}
+fn canonical_bounded<T: Serialize>(value: &T, limit: usize) -> Result<Vec<u8>> {
     let v = serde_json::to_value(value).map_err(|e| e.to_string())?;
     validate_value(&v)?;
     // Sort explicitly: downstream serde_json feature unification must not change bytes.
@@ -90,7 +98,7 @@ pub fn canonical_data<T: Serialize>(value: &T) -> Result<Vec<u8>> {
     }
     let mut bytes = Vec::new();
     encode(&v, &mut bytes);
-    if bytes.len() > MAX_RECORD_BYTES {
+    if bytes.len() > limit {
         return Err("record exceeds size bound".into());
     }
     Ok(bytes)
@@ -174,7 +182,14 @@ impl<'de> Deserialize<'de> for Unique {
     }
 }
 pub fn strict_json(bytes: &[u8]) -> Result<Value> {
-    if bytes.len() > MAX_RECORD_BYTES {
+    strict_bounded(bytes, MAX_RECORD_BYTES)
+}
+/// Decode only trusted internal collection envelopes, never transport or public records.
+pub fn strict_collection(bytes: &[u8]) -> Result<Value> {
+    strict_bounded(bytes, 16 * 1024 * 1024)
+}
+fn strict_bounded(bytes: &[u8], limit: usize) -> Result<Value> {
+    if bytes.len() > limit {
         return Err("record exceeds size bound".into());
     }
     let Unique(v) = serde_json::from_slice(bytes).map_err(|e| e.to_string())?;

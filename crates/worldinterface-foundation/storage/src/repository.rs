@@ -310,8 +310,9 @@ impl Repository<'_> {
     pub fn rebuild(&self) -> Result<()> {
         let mut c = self.root.connect(self.kind)?;
         let tx = c.transaction_with_behavior(TransactionBehavior::Immediate)?;
-        tx.execute_batch("DELETE FROM projections; DELETE FROM records; DELETE FROM admissions; DELETE FROM outbox;")?;
+        tx.execute_batch("DELETE FROM projections; DELETE FROM records; DELETE FROM admissions; DELETE FROM outbox; DELETE FROM ingress_state;")?;
         replay_into(&tx, &tx)?;
+        crate::ingress::replay(&tx, &tx)?;
         tx.commit()?;
         Ok(())
     }
@@ -347,8 +348,10 @@ pub(crate) fn validate_database(c: &Connection) -> Result<()> {
     c.execute_batch("BEGIN")?;
     let expected = Connection::open_in_memory()?;
     expected.execute_batch(SCHEMA)?;
+    expected.execute_batch(crate::ingress::SCHEMA)?;
     replay_into(c, &expected)?;
-    for query in ["SELECT entity,revision,state FROM projections ORDER BY entity", "SELECT entity,digest,canonical FROM records ORDER BY seq", "SELECT scope,principal,class,request,digest,entity FROM admissions ORDER BY scope,principal,class,request", "SELECT key,entity,payload,delivered FROM outbox ORDER BY key"] {
+    crate::ingress::replay(c, &expected)?;
+    for query in ["SELECT tenant,state FROM ingress_state ORDER BY tenant", "SELECT entity,revision,state FROM projections ORDER BY entity", "SELECT entity,digest,canonical FROM records ORDER BY seq", "SELECT scope,principal,class,request,digest,entity FROM admissions ORDER BY scope,principal,class,request", "SELECT key,entity,payload,delivered FROM outbox ORDER BY key"] {
   fn values(c: &Connection, sql: &str) -> Result<Vec<Vec<rusqlite::types::Value>>> {
    let mut q=c.prepare(sql)?; let n=q.column_count();
    let rows=q.query_map([],|r|(0..n).map(|i|r.get(i)).collect::<rusqlite::Result<Vec<_>>>())?;
@@ -378,6 +381,7 @@ mod tests {
         for fault in ["records", "outbox", "history"] {
             let mut c = Connection::open_in_memory().unwrap();
             c.execute_batch(SCHEMA).unwrap();
+            c.execute_batch(crate::ingress::SCHEMA).unwrap();
             let entity = EntityId::generate();
             let mut b = Batch::new(entity.clone(), Machine::Effect, 0);
             b.events.push(Event {

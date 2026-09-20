@@ -104,16 +104,24 @@
     "decision": "Ingress provider identity, deduplication, ordering, gap evidence, and retention",
     "due": "WI-03",
     "owner": "operator",
-    "status": "queued",
-    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4"
+    "status": "accepted",
+    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4",
+    "coverage": "full",
+    "approval_id": "8569ea7a-84b7-45f6-9ef2-39515c2fac96",
+    "approval_file": "docs/adr/approvals/WI-ADR-012.json",
+    "approval_sha256": "2be10eb17b6770127cdb8fb12b655243230d73da8884044a866a633a6d51ef8b"
   },
   {
     "id": "WI-ADR-013",
     "decision": "Subscriber delivery acknowledgment, retry, dead-letter, and privacy policy",
     "due": "WI-03",
     "owner": "operator",
-    "status": "queued",
-    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4"
+    "status": "accepted",
+    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4",
+    "coverage": "full",
+    "approval_id": "c9a7a523-d5ef-4864-a68c-5af00f926930",
+    "approval_file": "docs/adr/approvals/WI-ADR-013.json",
+    "approval_sha256": "5d6f0c215398cbaa01bce0bfd1639874736a2419a1fc75246a7471e9f8af9bcb"
   },
   {
     "id": "WI-ADR-014",

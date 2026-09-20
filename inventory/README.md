@@ -6,7 +6,7 @@ approved plan and are reviewable in this source PR; they do not accept ADRs or
 claim independent review has occurred. Regeneration never writes dispositions.
 
 The frozen-baseline counts below are retained for historical comparison. Current
-inventory additionally includes the four isolated foundation crates and every
+inventory additionally includes the five isolated foundation crates and every
 physical target Rust source, declaration and test. Foundation packages are marked
 `foundation-crate`; their dependency locks are inspected independently.
 
