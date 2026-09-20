@@ -16,7 +16,11 @@ an injected trusted authorization implementation and host-authenticated context;
 artifact possession and attribution are not grants.
 
 `StoreBundle` stages WI and AQ initialization, validates both, then publishes a
-completion manifest and directory. Offline backup holds an exclusive bundle lock,
+completion manifest and directory with atomic no-replace rename (no visible empty
+reservation). Unsupported filesystem operations fail closed. SIGKILL tests cover
+both sides of the rename for initialization, backup and restore, plus concurrent
+destination creation and foundation backup publication. Offline backup holds an
+exclusive bundle lock,
 exclusive WI maintenance handle and retained shared AQ offline session across all
 copies. WI handles cannot write while in maintenance mode; AQ writers are excluded
 by AQ's own lock. AQ backup/restore retains its complete required WAL and eligible
@@ -28,7 +32,13 @@ resolvers; this boundary does not fetch them.
 SQLite DELETE/FULL recovery requires exclusive ownership. It validates root and
 store manifests, recovers a private copy using SQLite, and validates every database
 identity and artifact before opening the original databases for recovery. A failed
-preflight leaves the source unchanged. Filesystem roots are trusted host-owned
+preflight leaves the source unchanged. Empty and interrupted zero-magic rollback
+headers are valid non-hot states; SQLite classifies them in the private copy before
+original cleanup. Linux syscall fault tests kill actual journal creation and
+partial header writes (1, 4, 7, 8, 28 and 511 bytes), then prove reopen and idempotent
+retry. Malformed magic, truncated hot headers and invalid recovered identities,
+schema, history or artifacts still reject without changing the original.
+Filesystem roots are trusted host-owned
 storage; this is not protection against a hostile same-OS-identity process rewriting
 files or bypassing advisory locks. Test-only subprocess barriers are compiled only
 for unit tests, not exposed by the production library.

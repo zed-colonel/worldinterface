@@ -23,7 +23,7 @@ run_cargo() {
   fi
 }
 rustc --version --verbose
-rustfmt --check --edition 2021 crates/worldinterface-runtime/src/*.rs crates/worldinterface-runtime/tests/*.rs
+rustfmt --check --edition 2021 crates/worldinterface-runtime/src/*.rs crates/worldinterface-runtime/tests/*.rs crates/worldinterface-runtime/tests/support/*.rs
 run_cargo clippy --locked --manifest-path "$manifest" --all-targets -- -D warnings
 run_cargo build --locked --manifest-path "$manifest"
 run_cargo test --locked --manifest-path "$manifest"

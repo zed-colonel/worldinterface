@@ -60,6 +60,28 @@ only when its own milestone is present; WI-04 and WI-05 need no WI-03 entry.
 Scheduling, dependency admission and rollback protection remain controller-owned.
 The checked-in state admits WI-01 only and asserts no completed milestone. Do not weaken policy files to make deletion gates pass.
 
+### WI-02 integration verification
+
+For the active integration slice, use Rust 1.89.0 and the supplied controller
+Cargo launcher. Run `ct-check -- scripts/check-wi-domain.sh`,
+`ct-check -- scripts/check-wi-contract.sh`, and
+`ct-check -- scripts/check-wi-integration.sh`; run each corresponding scoped
+workflow with `ct-act -W .github/workflows/wi-<scope>.yml -j <scope>`.
+Set the supplied manifest/config paths and `CRAFTINGTABLE_VERIFICATION_MODE` for
+native scripts. CI receives them from the controller and uses explicit Cargo
+configuration. The current-upstream-build launcher requires an AQ-resolved graph;
+native foundation/checker commands therefore need an operator-approved
+explicit-config exception or a controller launcher supporting AQ-free scoped checks.
+Do not add artificial AQ dependencies to make those checks qualify as integration.
+CI can run the independent manifests with the supplied explicit Cargo config.
+
+Keep evidence outside build caches. Candidate case results require independent
+review before WI-AQ-G1 acceptance; repeat verification at the actual merged or
+rebased revision. Repository policy version 1 (adopted 2026-09-18) governs local
+integration and freeze controls. The operator owns remote protections before
+first publication and final release approval. Historical public maintenance and
+release obligations below remain due at their recorded milestones.
+
 ## License
 
 By contributing, you agree that your contributions will be licensed under the
@@ -166,25 +188,3 @@ See `world-interface-v1.0-invariant-boundaries-policy.md` for the full specifica
 2. Make your changes, ensuring all tests pass
 3. Run `cargo fmt --all` and `cargo clippy` before committing
 4. Open a pull request against `main` with a clear description of the change
-
-### WI-02 integration verification
-
-For the active integration slice, use Rust 1.89.0 and the supplied controller
-Cargo launcher. Run `ct-check -- scripts/check-wi-domain.sh`,
-`ct-check -- scripts/check-wi-contract.sh`, and
-`ct-check -- scripts/check-wi-integration.sh`; run each corresponding scoped
-workflow with `ct-act -W .github/workflows/wi-<scope>.yml -j <scope>`.
-Set the supplied manifest/config paths and `CRAFTINGTABLE_VERIFICATION_MODE` for
-native scripts. CI receives them from the controller and uses explicit Cargo
-configuration. The current-upstream-build launcher requires an AQ-resolved graph;
-native foundation/checker commands therefore need an operator-approved
-explicit-config exception or a controller launcher supporting AQ-free scoped checks.
-Do not add artificial AQ dependencies to make those checks qualify as integration.
-CI can run the independent manifests with the supplied explicit Cargo config.
-
-Keep evidence outside build caches. Candidate case results require independent
-review before WI-AQ-G1 acceptance; repeat verification at the actual merged or
-rebased revision. Repository policy version 1 (adopted 2026-09-18) governs local
-integration and freeze controls. The operator owns remote protections before
-first publication and final release approval. Historical public maintenance and
-release obligations above remain due at their recorded milestones.

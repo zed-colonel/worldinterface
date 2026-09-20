@@ -42,7 +42,10 @@ fn submit(root: &StoreRoot) -> EntityId {
         .admit(
             AdmissionScope {
                 deployment_tenant: "tenant".to_string().try_into().unwrap(),
-                authenticated_principal: PrincipalId::generate(),
+                authenticated_principal: "12345678-1234-4234-8234-123456789def"
+                    .to_string()
+                    .try_into()
+                    .unwrap(),
             },
             submission(),
             id.clone(),
@@ -70,7 +73,7 @@ fn child() {
     let point = std::env::var("WI_CRASH_POINT").unwrap();
     if point.starts_with("initialization") {
         let _ = StoreRoot::create_empty(path, profile());
-    } else if point == "backup-publish" {
+    } else if point.starts_with("backup-") {
         StoreRoot::backup_offline(path, path.with_extension("backup")).unwrap();
     } else {
         let root = StoreRoot::open_existing(path).unwrap();
@@ -83,15 +86,21 @@ fn child() {
     panic!("child did not reach requested barrier");
 }
 fn kill_at(path: &Path, point: &str) {
+    kill_at_with_preload(path, point, None);
+}
+fn kill_at_with_preload(path: &Path, point: &str, preload: Option<&Path>) {
     let ready = path.with_extension("ready");
-    let mut child = Command::new(std::env::current_exe().unwrap())
+    let mut command = Command::new(std::env::current_exe().unwrap());
+    command
         .args(["--exact", "crash::child", "--nocapture"])
         .env("WI_CRASH_ROOT", path)
         .env("WI_CRASH_POINT", point)
         .env("WI_CRASH_READY", &ready)
-        .stdout(Stdio::null())
-        .spawn()
-        .unwrap();
+        .stdout(Stdio::null());
+    if let Some(preload) = preload {
+        command.env("LD_PRELOAD", preload);
+    }
+    let mut child = command.spawn().unwrap();
     let deadline = Instant::now() + Duration::from_secs(10);
     while !ready.exists() && Instant::now() < deadline {
         if let Some(status) = child.try_wait().unwrap() {
@@ -114,6 +123,7 @@ fn killed_transactions_artifacts_and_publication_recover_atomically() {
         "after-commit",
         "artifact-durable",
         "backup-publish",
+        "backup-renamed",
     ] {
         let t = tempfile::tempdir().unwrap();
         let path = t.path().join("root");
@@ -127,6 +137,10 @@ fn killed_transactions_artifacts_and_publication_recover_atomically() {
         }
         if point == "backup-publish" {
             assert!(!path.with_extension("backup").exists());
+            StoreRoot::backup_offline(&path, path.with_extension("backup")).unwrap();
+        }
+        if point.starts_with("backup-") {
+            drop(StoreRoot::open_existing(path.with_extension("backup")).unwrap());
         }
         if point == "after-outbox" {
             let journal = fs::read(path.join("fabric.sqlite-journal")).unwrap();
@@ -167,5 +181,93 @@ fn killed_transactions_artifacts_and_publication_recover_atomically() {
             assert!(root.read_artifact(&a).is_err());
             assert_eq!(root.publish(a.scope.clone(), b"bytes").unwrap(), a);
         }
+    }
+}
+
+#[cfg(target_os = "linux")]
+#[test]
+fn killed_journal_creation_and_partial_headers_reopen_and_retry() {
+    let build = tempfile::tempdir().unwrap();
+    let library = build.path().join("journal-fault.so");
+    let source = Path::new(env!("CARGO_MANIFEST_DIR")).join("tests/support/journal-fault.c");
+    assert!(Command::new("cc")
+        .args(["-shared", "-fPIC", "-Wall", "-Wextra", "-Werror"])
+        .arg(source)
+        .args(["-ldl", "-o"])
+        .arg(&library)
+        .status()
+        .unwrap()
+        .success());
+    for size in [0, 1, 4, 7, 8, 28, 511] {
+        let t = tempfile::tempdir().unwrap();
+        let path = t.path().join("root");
+        drop(StoreRoot::create_empty(&path, profile()).unwrap());
+        let original = fs::read(path.join("fabric.sqlite")).unwrap();
+        let point = if size == 0 {
+            "journal-created".to_string()
+        } else {
+            format!("journal-header-{size}")
+        };
+        kill_at_with_preload(&path, &point, Some(&library));
+        let journal = path.join("fabric.sqlite-journal");
+        assert_eq!(fs::metadata(&journal).unwrap().len(), size);
+        assert_eq!(fs::read(path.join("fabric.sqlite")).unwrap(), original);
+        let root = StoreRoot::open_existing(&path).unwrap();
+        assert!(!journal.exists());
+        let count: i64 = root
+            .connect(StoreKind::Fabric)
+            .unwrap()
+            .query_row("SELECT count(*) FROM outbox", [], |r| r.get(0))
+            .unwrap();
+        assert_eq!(count, 0);
+        let id = submit(&root);
+        assert_eq!(submit(&root), id);
+        drop(root);
+        let root = StoreRoot::open_existing(&path).unwrap();
+        let outbox = root.repository(StoreKind::Fabric).unwrap().outbox(true, None, 10).unwrap();
+        assert_eq!(outbox.len(), 1);
+        assert_eq!(outbox[0].entity, id);
+    }
+}
+
+#[test]
+fn malformed_journals_and_invalid_recovery_copies_leave_original_untouched() {
+    for damage in ["foreign-magic", "truncated-hot", "identity", "schema", "history", "artifact"] {
+        let t = tempfile::tempdir().unwrap();
+        let path = t.path().join("root");
+        let root = StoreRoot::create_empty(&path, profile()).unwrap();
+        submit(&root);
+        let artifact = root.publish("tenant".to_string().try_into().unwrap(), b"bytes").unwrap();
+        let c = root.connect(StoreKind::Fabric).unwrap();
+        // Corrupt persisted contents without changing the expected schema/triggers.
+        c.set_db_config(rusqlite::config::DbConfig::SQLITE_DBCONFIG_ENABLE_TRIGGER, false).unwrap();
+        match damage {
+            "identity" => {
+                c.execute("UPDATE store_identity SET manifest=x'00'", []).unwrap();
+            }
+            "schema" => {
+                c.execute_batch("PRAGMA user_version=999").unwrap();
+            }
+            "history" => {
+                c.execute("DELETE FROM history", []).unwrap();
+            }
+            "artifact" => {
+                fs::write(path.join("artifacts").join(artifact.content.as_str()), b"bad").unwrap();
+            }
+            _ => {}
+        }
+        drop(c);
+        drop(root);
+        let journal = path.join("fabric.sqlite-journal");
+        let bytes: &[u8] = match damage {
+            "foreign-magic" => b"not a SQLite journal",
+            "truncated-hot" => &[0xd9, 0xd5, 0x05, 0xf9, 0x20, 0xa1, 0x63, 0xd7],
+            _ => &[],
+        };
+        fs::write(&journal, bytes).unwrap();
+        let db = fs::read(path.join("fabric.sqlite")).unwrap();
+        assert!(StoreRoot::open_existing(&path).is_err(), "{damage}");
+        assert_eq!(fs::read(&journal).unwrap(), bytes, "{damage}");
+        assert_eq!(fs::read(path.join("fabric.sqlite")).unwrap(), db, "{damage}");
     }
 }

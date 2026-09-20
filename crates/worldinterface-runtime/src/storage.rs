@@ -9,7 +9,7 @@ use std::{
     path::Path,
 };
 use worldinterface_protocol::{canonical_data, strict_json, InstanceId};
-use worldinterface_storage::{StoreProfile, StoreRoot};
+use worldinterface_storage::{publish_directory, StoreProfile, StoreRoot};
 
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -55,9 +55,10 @@ fn publish(staging: tempfile::TempDir, dest: &Path) -> Result<()> {
     }
     sync(staging.path())?;
     #[cfg(test)]
-    crate::crash::checkpoint();
-    fs::create_dir(dest)?;
-    fs::rename(staging.path(), dest)?;
+    crate::crash::checkpoint("before-rename");
+    publish_directory(staging.path(), dest)?;
+    #[cfg(test)]
+    crate::crash::checkpoint("after-rename");
     sync(dest.parent().filter(|p| !p.as_os_str().is_empty()).unwrap_or(Path::new(".")))
 }
 fn staging(dest: &Path) -> Result<tempfile::TempDir> {

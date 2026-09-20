@@ -71,6 +71,21 @@ fn parent_dir(path: &Path) -> Option<&Path> {
     // A single relative component has an empty parent, which denotes the current directory.
     path.parent().map(|parent| if parent.as_os_str().is_empty() { Path::new(".") } else { parent })
 }
+/// Atomically publishes a completed directory without replacing any destination.
+///
+/// The staging directory must share the destination filesystem. Unsupported
+/// no-replace operations fail closed; there is no check-then-rename fallback.
+/// Callers must sync the staged contents before this call and the parent after it.
+pub fn publish_directory(staging: &Path, destination: &Path) -> Result<()> {
+    rustix::fs::renameat_with(
+        rustix::fs::CWD,
+        staging,
+        rustix::fs::CWD,
+        destination,
+        rustix::fs::RenameFlags::NOREPLACE,
+    )?;
+    Ok(())
+}
 pub(crate) fn sync_dir(p: &Path) -> Result<()> {
     File::open(p)?.sync_all()?;
     Ok(())
@@ -255,10 +270,15 @@ impl StoreRoot {
             copy_dir(path, private.path())?;
             for journal in &journals {
                 let bytes = fs::read(journal)?;
-                if bytes.len() < 512
-                    || (bytes[..8] != [0xd9, 0xd5, 0x05, 0xf9, 0x20, 0xa1, 0x63, 0xd7]
-                        && bytes[..8] != [0; 8])
-                {
+                // SQLite initially creates an empty journal, then writes a header
+                // whose magic stays zero until the rollback pages are durable.
+                // A killed creation/header write is a valid non-hot state. Reject
+                // foreign magic (and truncated hot headers), but let SQLite decide
+                // whether accepted journals need replay in the private copy.
+                let prefix = &bytes[..bytes.len().min(8)];
+                let zero_magic = prefix.iter().all(|b| *b == 0);
+                let hot_magic = prefix == [0xd9, 0xd5, 0x05, 0xf9, 0x20, 0xa1, 0x63, 0xd7];
+                if !(zero_magic || hot_magic && bytes.len() >= 512) {
                     return Err(invalid("malformed rollback journal"));
                 }
             }
@@ -364,11 +384,12 @@ impl StoreRoot {
         let result = (|| {
             copy_dir(&source.path, &staging)?;
             drop(Self::open(&staging, true)?);
-            // create_dir is a no-clobber reservation; rename is only into our empty directory.
+            // Publish the complete directory without a visible reservation window.
             #[cfg(test)]
             crate::crash::checkpoint("backup-publish");
-            fs::create_dir(dest)?;
-            fs::rename(&staging, dest)?;
+            publish_directory(&staging, dest)?;
+            #[cfg(test)]
+            crate::crash::checkpoint("backup-renamed");
             sync_dir(parent)
         })();
         if result.is_err() {
@@ -383,6 +404,34 @@ impl StoreRoot {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn publication_never_replaces_any_existing_destination() {
+        for kind in ["empty-directory", "directory", "file", "symlink"] {
+            let t = tempfile::tempdir().unwrap();
+            let stage = t.path().join("stage");
+            fs::create_dir(&stage).unwrap();
+            fs::write(stage.join("complete"), b"data").unwrap();
+            let dest = t.path().join("destination");
+            match kind {
+                "empty-directory" => fs::create_dir(&dest).unwrap(),
+                "directory" => {
+                    fs::create_dir(&dest).unwrap();
+                    fs::write(dest.join("unrelated"), b"keep").unwrap();
+                }
+                "file" => fs::write(&dest, b"keep").unwrap(),
+                "symlink" => std::os::unix::fs::symlink(t.path().join("absent"), &dest).unwrap(),
+                _ => unreachable!(),
+            }
+            use std::os::unix::fs::MetadataExt;
+            let inode = fs::symlink_metadata(&dest).unwrap().ino();
+            assert!(publish_directory(&stage, &dest).is_err(), "{kind}");
+            assert_eq!(fs::symlink_metadata(&dest).unwrap().ino(), inode, "{kind}");
+            assert_eq!(fs::read(stage.join("complete")).unwrap(), b"data");
+            if kind == "directory" {
+                assert_eq!(fs::read(dest.join("unrelated")).unwrap(), b"keep");
+            }
+        }
+    }
     #[test]
     fn interrupted_initialization_never_opens() {
         let t = tempfile::tempdir().unwrap();

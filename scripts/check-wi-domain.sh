@@ -25,7 +25,7 @@ run_cargo() {
 export PROPTEST_DISABLE_FAILURE_PERSISTENCE=1
 rustc --version --verbose
 rustfmt --version
-rustfmt --check --edition 2021 crates/worldinterface-foundation/*/src/*.rs crates/worldinterface-foundation/*/tests/*.rs
+rustfmt --check --edition 2021 crates/worldinterface-foundation/*/src/*.rs crates/worldinterface-foundation/*/tests/*.rs crates/worldinterface-foundation/storage/tests/support/*.rs
 run_cargo clippy --locked --manifest-path "$manifest" --all-targets --all-features -- -D warnings
 run_cargo build --locked --manifest-path "$manifest" --all-features
 run_cargo test --locked --manifest-path "$manifest" --all-features
