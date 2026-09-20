@@ -8,3 +8,5 @@ pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error + Send + S
 pub(crate) fn invalid(s: impl Into<String>) -> Box<dyn std::error::Error + Send + Sync> {
     std::io::Error::new(std::io::ErrorKind::InvalidData, s.into()).into()
 }
+
+mod ingress;

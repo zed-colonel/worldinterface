@@ -429,6 +429,11 @@ pub struct ControlEvidence {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "kind", content = "body", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Record {
+    IngressBinding(Box<IngressBinding>),
+    ObservationDelivery(Box<ObservationDelivery>),
+    DeliveryAttempt(DeliveryAttempt),
+    DeliveryAcknowledgment(DeliveryAcknowledgment),
+    IngressAdmission(Box<IngressAdmission>),
     EffectSubmission(EffectSubmission),
     IngressBindingSubmission(IngressBindingSubmission),
     AgencyContext(AgencyContext),

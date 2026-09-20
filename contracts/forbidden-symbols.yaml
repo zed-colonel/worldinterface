@@ -166,7 +166,8 @@
     "worldinterface-protocol",
     "worldinterface-capability",
     "worldinterface-domain",
-    "worldinterface-storage"
+    "worldinterface-storage",
+    "worldinterface-ingress"
   ],
   "foundation_forbidden_packages": [
     "worldinterface-runtime",

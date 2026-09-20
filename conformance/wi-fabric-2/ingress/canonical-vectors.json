@@ -1,0 +1,161 @@
+[
+  {
+    "envelope": {
+      "contract": "WI-FABRIC-2",
+      "canonical_profile": "wi-json-1",
+      "schema": 1,
+      "record": {
+        "kind": "ingress_binding",
+        "body": {
+          "id": "00000000-0000-4000-8000-000000000001",
+          "revision": 1,
+          "principal": "00000000-0000-4000-8000-000000000002",
+          "submission": {
+            "client_request_id": "request-1",
+            "source": {
+              "namespace": "provider",
+              "selector": "channel"
+            },
+            "subscriber": "subscriber-endpoint",
+            "event_scope": "messages",
+            "delivery_policy": "delivery-v1",
+            "requested_authority_refs": []
+          },
+          "subscriber": "00000000-0000-4000-8000-000000000003",
+          "profile": {
+            "version": "provider-v1",
+            "scope": {
+              "tenant": "tenant-a",
+              "account": "account-a",
+              "source": {
+                "namespace": "provider",
+                "resource": "channel",
+                "version": "1"
+              },
+              "namespace": "messages"
+            },
+            "identity": "stable_id",
+            "replay_window_ms": 100000,
+            "max_body_bytes": 16384,
+            "max_attachments": 8,
+            "capacity": 100,
+            "first_offset": 0,
+            "attachment_policy": {
+              "quarantine_all": {
+                "policy": "quarantine-1"
+              }
+            }
+          },
+          "policy": {
+            "version": "delivery-v1",
+            "max_attempts": 2,
+            "acknowledgment_timeout_ms": 10,
+            "backoff_ms": 5,
+            "retention_ms": 1000,
+            "physical_erasure": false
+          },
+          "resolver_version": "resolver-v1",
+          "authorization": {
+            "artifact": {
+              "scope": "tenant-a",
+              "content": "cbb82ebec6051b780ad26655ee48b5b42658c4ac49438888aac829e82195584f",
+              "size": 13
+            },
+            "schema": "binding-authorization-v1"
+          },
+          "authentication_requirement": "exact-byte-hmac",
+          "expires_at_ms": 1000000,
+          "status": "active"
+        }
+      }
+    },
+    "canonical": "{\"canonical_profile\":\"wi-json-1\",\"contract\":\"WI-FABRIC-2\",\"record\":{\"body\":{\"authentication_requirement\":\"exact-byte-hmac\",\"authorization\":{\"artifact\":{\"content\":\"cbb82ebec6051b780ad26655ee48b5b42658c4ac49438888aac829e82195584f\",\"scope\":\"tenant-a\",\"size\":13},\"schema\":\"binding-authorization-v1\"},\"expires_at_ms\":1000000,\"id\":\"00000000-0000-4000-8000-000000000001\",\"policy\":{\"acknowledgment_timeout_ms\":10,\"backoff_ms\":5,\"max_attempts\":2,\"physical_erasure\":false,\"retention_ms\":1000,\"version\":\"delivery-v1\"},\"principal\":\"00000000-0000-4000-8000-000000000002\",\"profile\":{\"attachment_policy\":{\"quarantine_all\":{\"policy\":\"quarantine-1\"}},\"capacity\":100,\"first_offset\":0,\"identity\":\"stable_id\",\"max_attachments\":8,\"max_body_bytes\":16384,\"replay_window_ms\":100000,\"scope\":{\"account\":\"account-a\",\"namespace\":\"messages\",\"source\":{\"namespace\":\"provider\",\"resource\":\"channel\",\"version\":\"1\"},\"tenant\":\"tenant-a\"},\"version\":\"provider-v1\"},\"resolver_version\":\"resolver-v1\",\"revision\":1,\"status\":\"active\",\"submission\":{\"client_request_id\":\"request-1\",\"delivery_policy\":\"delivery-v1\",\"event_scope\":\"messages\",\"requested_authority_refs\":[],\"source\":{\"namespace\":\"provider\",\"selector\":\"channel\"},\"subscriber\":\"subscriber-endpoint\"},\"subscriber\":\"00000000-0000-4000-8000-000000000003\"},\"kind\":\"ingress_binding\"},\"schema\":1}",
+    "digest": "2d04d392719dc23822042be2059c34427614c6aff8fe55b76a86af04f987966c"
+  },
+  {
+    "envelope": {
+      "contract": "WI-FABRIC-2",
+      "canonical_profile": "wi-json-1",
+      "schema": 1,
+      "record": {
+        "kind": "delivery_attempt",
+        "body": {
+          "number": 1,
+          "issued_at_ms": 1000,
+          "next_attempt_ms": 1015,
+          "token_digest": "0000000000000000000000000000000000000000000000000000000000000000",
+          "status": "issued"
+        }
+      }
+    },
+    "canonical": "{\"canonical_profile\":\"wi-json-1\",\"contract\":\"WI-FABRIC-2\",\"record\":{\"body\":{\"issued_at_ms\":1000,\"next_attempt_ms\":1015,\"number\":1,\"status\":\"issued\",\"token_digest\":\"0000000000000000000000000000000000000000000000000000000000000000\"},\"kind\":\"delivery_attempt\"},\"schema\":1}",
+    "digest": "2e8de69d8eb2df7eec17f514cae5f802c292f6c9843c9266d895afc33ae4f728"
+  },
+  {
+    "envelope": {
+      "contract": "WI-FABRIC-2",
+      "canonical_profile": "wi-json-1",
+      "schema": 1,
+      "record": {
+        "kind": "delivery_acknowledgment",
+        "body": {
+          "delivery": "00000000-0000-4000-8000-000000000004",
+          "subscriber": "00000000-0000-4000-8000-000000000003",
+          "acknowledged_at_ms": 1001,
+          "attempt": 1
+        }
+      }
+    },
+    "canonical": "{\"canonical_profile\":\"wi-json-1\",\"contract\":\"WI-FABRIC-2\",\"record\":{\"body\":{\"acknowledged_at_ms\":1001,\"attempt\":1,\"delivery\":\"00000000-0000-4000-8000-000000000004\",\"subscriber\":\"00000000-0000-4000-8000-000000000003\"},\"kind\":\"delivery_acknowledgment\"},\"schema\":1}",
+    "digest": "ae2901cef248c820557231088e138667ab2c02bb41cd1287785e7ec353ce2cf1"
+  },
+  {
+    "envelope": {
+      "contract": "WI-FABRIC-2",
+      "canonical_profile": "wi-json-1",
+      "schema": 1,
+      "record": {
+        "kind": "observation_delivery",
+        "body": {
+          "id": "00000000-0000-4000-8000-000000000004",
+          "observation": "00000000-0000-4000-8000-000000000005",
+          "binding": {
+            "id": "00000000-0000-4000-8000-000000000001",
+            "revision": 1
+          },
+          "subscriber": "00000000-0000-4000-8000-000000000003",
+          "policy": {
+            "version": "delivery-v1",
+            "max_attempts": 2,
+            "acknowledgment_timeout_ms": 10,
+            "backoff_ms": 5,
+            "retention_ms": 1000,
+            "physical_erasure": false
+          },
+          "expires_at_ms": 2000,
+          "state": "acknowledged",
+          "attempts": [
+            {
+              "number": 1,
+              "issued_at_ms": 1000,
+              "next_attempt_ms": 1015,
+              "token_digest": "0000000000000000000000000000000000000000000000000000000000000000",
+              "status": "issued"
+            }
+          ],
+          "acknowledgment": {
+            "delivery": "00000000-0000-4000-8000-000000000004",
+            "subscriber": "00000000-0000-4000-8000-000000000003",
+            "acknowledged_at_ms": 1001,
+            "attempt": 1
+          },
+          "token_invalidated": false,
+          "wake_key": "ingress-wake:00000000-0000-4000-8000-000000000004",
+          "locator": "delivery:00000000-0000-4000-8000-000000000004"
+        }
+      }
+    },
+    "canonical": "{\"canonical_profile\":\"wi-json-1\",\"contract\":\"WI-FABRIC-2\",\"record\":{\"body\":{\"acknowledgment\":{\"acknowledged_at_ms\":1001,\"attempt\":1,\"delivery\":\"00000000-0000-4000-8000-000000000004\",\"subscriber\":\"00000000-0000-4000-8000-000000000003\"},\"attempts\":[{\"issued_at_ms\":1000,\"next_attempt_ms\":1015,\"number\":1,\"status\":\"issued\",\"token_digest\":\"0000000000000000000000000000000000000000000000000000000000000000\"}],\"binding\":{\"id\":\"00000000-0000-4000-8000-000000000001\",\"revision\":1},\"expires_at_ms\":2000,\"id\":\"00000000-0000-4000-8000-000000000004\",\"locator\":\"delivery:00000000-0000-4000-8000-000000000004\",\"observation\":\"00000000-0000-4000-8000-000000000005\",\"policy\":{\"acknowledgment_timeout_ms\":10,\"backoff_ms\":5,\"max_attempts\":2,\"physical_erasure\":false,\"retention_ms\":1000,\"version\":\"delivery-v1\"},\"state\":\"acknowledged\",\"subscriber\":\"00000000-0000-4000-8000-000000000003\",\"token_invalidated\":false,\"wake_key\":\"ingress-wake:00000000-0000-4000-8000-000000000004\"},\"kind\":\"observation_delivery\"},\"schema\":1}",
+    "digest": "396697c9335e140f966461ef93c886381ddeb82f090e3f32c5276f325a1116f9"
+  }
+]

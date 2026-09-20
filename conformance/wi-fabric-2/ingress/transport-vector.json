@@ -1,0 +1,8 @@
+{
+  "generator": "Python standard library hmac SHA-256; fixed public test key 07 repeated 32 times",
+  "body": "{\"asserted_audience\":[],\"asserted_sender\":\"asserted\",\"attachments\":[],\"content\":{\"content\":\"ab530a13e45914982b79f9b7e3fba994cfd1f3fb22f71cea1afbf02b460c6d1d\",\"scope\":\"ingress:5e5df66294595e7939e9f30e264b6575c536969d126566b91db323cda170145d\",\"size\":7},\"event_id\":\"provider-1\",\"information_use\":{\"allowed_audiences\":[\"00000000-0000-4000-8000-000000000003\"],\"purpose_refs\":[\"observe\"],\"redistribution\":\"prohibited\",\"source_obligation_refs\":[]},\"offset\":0,\"produced_at_ms\":1000,\"profile\":\"ordinary\",\"scope\":{\"account\":\"account-a\",\"namespace\":\"messages\",\"source\":{\"namespace\":\"provider\",\"resource\":\"channel\",\"version\":\"1\"},\"tenant\":\"tenant-a\"}}",
+  "http_signature": "fbce011334aa7a750dd66353d66f624d084b03519cb7a208191b16807d87bcd1",
+  "session": "{\"expires_at_ms\":2000,\"reconnect_from\":0,\"scope\":{\"account\":\"account-a\",\"namespace\":\"messages\",\"source\":{\"namespace\":\"provider\",\"resource\":\"channel\",\"version\":\"1\"},\"tenant\":\"tenant-a\"},\"session\":\"session-1\"}",
+  "session_signature": "a641b866e4c14be7faa22dcc9c90014886f80d38cf8773fbc698f0f0958f7a79",
+  "frame_signature": "2c5e72d60a385756dda59a10a51adae3aa7032337677a6352212151d55179685"
+}

@@ -6088,5 +6088,411 @@
     "target": "worldinterface-protocol",
     "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
     "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/ingress.rs::::enum:IngressCommand",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/ingress.rs::::enum:IngressResult",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/ingress.rs::::source-module:crates/worldinterface-foundation/domain/src/ingress.rs",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/ingress.rs::::struct:IngressState",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/ingress.rs::::type:Result",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/lib.rs::::module:ingress",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/ingress/Cargo.toml::foundation-crate:worldinterface-ingress",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/ingress/src/lib.rs::::module:transport",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/ingress/src/lib.rs::::source-module:crates/worldinterface-foundation/ingress/src/lib.rs",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/ingress/src/lib.rs::::struct:AdmissionIds",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/ingress/src/lib.rs::::struct:AuthenticatedScope",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/ingress/src/lib.rs::::struct:BindingGrant",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/ingress/src/lib.rs::::struct:DeliveryToken",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/ingress/src/lib.rs::::struct:DeliveryView",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/ingress/src/lib.rs::::struct:Ingress",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/ingress/src/lib.rs::::struct:IssuedDelivery",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/ingress/src/lib.rs::::trait:BindingAuthority",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/ingress/src/lib.rs::::type:Result",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/ingress/src/transport/http.rs::::source-module:crates/worldinterface-foundation/ingress/src/transport/http.rs",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/ingress/src/transport/mod.rs::::module:http",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/ingress/src/transport/mod.rs::::module:streaming",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/ingress/src/transport/mod.rs::::source-module:crates/worldinterface-foundation/ingress/src/transport/mod.rs",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/ingress/src/transport/mod.rs::::struct:ProviderCredentials",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/ingress/src/transport/mod.rs::::struct:ValidatedProviderEvent",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/ingress/src/transport/streaming.rs::::source-module:crates/worldinterface-foundation/ingress/src/transport/streaming.rs",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/ingress/src/transport/streaming.rs::::struct:SessionHandshake",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/ingress/src/transport/streaming.rs::::struct:StreamSession",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/ingress/tests/lifecycle.rs::::source-module:crates/worldinterface-foundation/ingress/tests/lifecycle.rs",
+    "disposition": "test-evidence",
+    "target": "ingress-domain",
+    "rationale": "Independent WI-03 transaction, transport and delivery conformance",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/ingress/tests/lifecycle.rs::::struct:Authority",
+    "disposition": "test-evidence",
+    "target": "ingress-domain",
+    "rationale": "Independent WI-03 transaction, transport and delivery conformance",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/ingress/tests/lifecycle.rs::::struct:MockWake",
+    "disposition": "test-evidence",
+    "target": "ingress-domain",
+    "rationale": "Independent WI-03 transaction, transport and delivery conformance",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/ingress/tests/lifecycle.rs::::struct:Setup",
+    "disposition": "test-evidence",
+    "target": "ingress-domain",
+    "rationale": "Independent WI-03 transaction, transport and delivery conformance",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::enum:AttachmentPolicy",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::enum:AttemptStatus",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::enum:BindingStatus",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::enum:DeliveryState",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::enum:IdentityStrategy",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::enum:ObservationProfile",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::source-module:crates/worldinterface-foundation/protocol/src/ingress.rs",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::struct:BindingVersion",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::struct:DeliveryAcknowledgment",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::struct:DeliveryAttempt",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::struct:DeliveryPolicy",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::struct:GovernedAttachment",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::struct:IngressAdmission",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::struct:IngressBinding",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::struct:ObservationDelivery",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::struct:OrderingEvidence",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::struct:ProviderEvent",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::struct:ProviderProfile",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::struct:ProviderScope",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::struct:TransportProvenance",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/lib.rs::::module:ingress",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/tests/ingress.rs::::source-module:crates/worldinterface-foundation/protocol/tests/ingress.rs",
+    "disposition": "test-evidence",
+    "target": "ingress-domain",
+    "rationale": "Independent WI-03 transaction, transport and delivery conformance",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/ingress.rs::::module:tests@10d1b0eff34c",
+    "disposition": "test-evidence",
+    "target": "ingress-domain",
+    "rationale": "Independent WI-03 transaction, transport and delivery conformance",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/ingress.rs::::source-module:crates/worldinterface-foundation/storage/src/ingress.rs",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/ingress.rs::::struct:Entry",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/lib.rs::::module:ingress",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/ingress/tests/lifecycle.rs::::module:generated",
+    "disposition": "test-evidence",
+    "target": "ingress-domain",
+    "rationale": "Test-only generated ingress command sequences and independent lifecycle models; no runtime composition",
+    "source": "CONTRIBUTING.md pure state property-test requirement; WI-03/domain F-003"
   }
 ]

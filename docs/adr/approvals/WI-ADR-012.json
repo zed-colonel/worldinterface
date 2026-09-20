@@ -1,0 +1,36 @@
+{
+  "submissionId": "5110b8df-21dc-49d8-a60f-82fff91ffea3",
+  "checkpoint": "WI-ADR-012",
+  "definitionId": "0ebcb7cf-9686-4bc1-9b9d-bb85a1d0b4c9",
+  "bindingRevision": 4,
+  "decision": {
+    "coverage": "full",
+    "proposal": "Please adopt the proposed provider identity, deduplication, fan-out, ordering, replay, and retention policy above",
+    "sourceReferences": "docs/adr/WI-ADR-012.md; implementation plan \u00a74 and WI-03; foundational design \u00a7\u00a77.8\u20137.10",
+    "retainedObligations": "",
+    "consumers": [],
+    "kind": "architecture-decision-v1",
+    "bindingDigest": "8cae5ff3253d493fce0527aa42381a551c40014440ab3d05270ae8d822d11295"
+  },
+  "approval": {
+    "submissionId": "5110b8df-21dc-49d8-a60f-82fff91ffea3",
+    "outcome": "accepted",
+    "rationale": "I approve this decision.",
+    "id": "8569ea7a-84b7-45f6-9ef2-39515c2fac96",
+    "workspaceId": "6bf6915a-6cd0-47cc-b853-fcbc04f02f3d",
+    "decidedAt": "2026-09-20T05:01:06.548Z",
+    "decidedByUserId": "0698a39b-dda2-4870-8f3f-97ef94784ae9"
+  },
+  "sourceRunId": "f7746052-d789-4241-8151-c4b0c8ea0070",
+  "sourceRunDigest": "752a0ef945c6146feb8de94a4474d93d97dc19ba2e3571a2058b10218b077616",
+  "artifacts": [
+    {
+      "name": "decision-review-packet",
+      "digest": "7e647002c06f5474eb44164182a801d2df85c10b70c13bc42ce5b10ebf58adb7"
+    },
+    {
+      "name": "source-design-proposal-not-approval",
+      "digest": "752a0ef945c6146feb8de94a4474d93d97dc19ba2e3571a2058b10218b077616"
+    }
+  ]
+}

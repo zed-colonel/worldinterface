@@ -1,4 +1,4 @@
-name: WI protocol and store domain
+name: WI protocol, store and ingress domain
 on:
   push:
     branches: [wi-fabric-2]
@@ -15,7 +15,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           fetch-depth: 0
-      - name: Verify independent WI-02 domain obligations
+      - name: Verify independent WI-02 and WI-03 domain obligations
         shell: bash
         run: |
           set -euo pipefail

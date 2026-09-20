@@ -6,3 +6,6 @@ pub use canonical::*;
 pub use identity::*;
 pub use records::*;
 pub type Result<T> = std::result::Result<T, String>;
+
+mod ingress;
+pub use ingress::*;
