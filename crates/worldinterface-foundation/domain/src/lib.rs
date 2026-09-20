@@ -180,3 +180,5 @@ pub fn replay(
 ) -> Result<State, TransitionError> {
     events.iter().try_fold(State::empty(entity, machine), |s, e| evolve(&s, e))
 }
+
+pub mod ingress;

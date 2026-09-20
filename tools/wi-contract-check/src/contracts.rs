@@ -341,6 +341,17 @@ pub fn conformance(root: &Path) -> Result<Vec<Finding>> {
 /// Recorded operator guidance, pinned independently from mutable queue status.
 /// Scoped acceptance never satisfies a full-checkpoint request.
 pub fn adr_coverage(root: &Path, id: &str, scope: &str, phase: &str, full: bool) -> Result<bool> {
+    let ingress_pin = match id {
+        "WI-ADR-012" => Some("2be10eb17b6770127cdb8fb12b655243230d73da8884044a866a633a6d51ef8b"),
+        "WI-ADR-013" => Some("5d6f0c215398cbaa01bce0bfd1639874736a2419a1fc75246a7471e9f8af9bcb"),
+        _ => None,
+    };
+    if let Some(pin) = ingress_pin {
+        let bytes = fs::read(root.join(format!("docs/adr/approvals/{id}.json")))?;
+        return Ok(hash(&bytes) == pin
+            && hash(&fs::read(root.join("docs/adr/approvals/ingress-proposal.md"))?)
+                == "752a0ef945c6146feb8de94a4474d93d97dc19ba2e3571a2058b10218b077616");
+    }
     let bytes = fs::read(root.join("docs/adr/approvals.json"))?;
     if hash(&bytes) != "7dbd5ec176c47321d6777da11385f50430e5fc4794227d40303ef630fe8c0967" {
         return Ok(false);
@@ -412,6 +423,16 @@ pub fn docs(root: &Path) -> Result<Vec<Finding>> {
                 "full",
                 "1912ba6bcb31f0c4a32053fb5d6b0156458db1d5496ca92018881afee241de18",
             )),
+            "WI-ADR-013" => Some((
+                "accepted",
+                "full",
+                "5d6f0c215398cbaa01bce0bfd1639874736a2419a1fc75246a7471e9f8af9bcb",
+            )),
+            "WI-ADR-012" => Some((
+                "accepted",
+                "full",
+                "2be10eb17b6770127cdb8fb12b655243230d73da8884044a866a633a6d51ef8b",
+            )),
             "WI-ADR-016" => Some((
                 "accepted-clauses",
                 "clauses",
@@ -440,7 +461,10 @@ pub fn docs(root: &Path) -> Result<Vec<Finding>> {
             || r["decision"] != row[2]
             || r["due"] != row[3]
             || r["owner"] != "operator"
-            || if matches!(id, "WI-ADR-001" | "WI-ADR-002" | "WI-ADR-003") {
+            || if matches!(
+                id,
+                "WI-ADR-001" | "WI-ADR-002" | "WI-ADR-003" | "WI-ADR-012" | "WI-ADR-013"
+            ) {
                 r["status"] != status
             } else {
                 !adr_status_matches(root, id, r)?
@@ -468,6 +492,17 @@ pub fn docs(root: &Path) -> Result<Vec<Finding>> {
                 "stub disagrees with queue",
             ))
         }
+    }
+    if hash(&fs::read(root.join("docs/adr/approvals/ingress-proposal.md"))?)
+        != "752a0ef945c6146feb8de94a4474d93d97dc19ba2e3571a2058b10218b077616"
+    {
+        f.push(finding(
+            "ADR-APPROVAL",
+            "docs/adr/approvals/ingress-proposal.md",
+            "WI-ADR-012/013",
+            "bound operator proposal",
+            "approved proposal bytes changed",
+        ));
     }
     let issues = read(&root.join("docs/work-items/wi-02.json"))?;
     let rows = issues.as_array().ok_or("WI-02 drafts missing")?;

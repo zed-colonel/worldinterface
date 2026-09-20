@@ -12,11 +12,12 @@ allowed = {
     "worldinterface-protocol": set(),
     "worldinterface-capability": {"worldinterface-protocol"},
     "worldinterface-domain": {"worldinterface-protocol"},
+    "worldinterface-ingress": {"worldinterface-protocol", "worldinterface-domain", "worldinterface-storage"},
     "worldinterface-storage": {"worldinterface-protocol", "worldinterface-domain"},
 }
 packages = {p["id"]: p for p in meta["packages"]}
 # Integration verification resolves the shared consumer graph. Inspect every
-# reachable dependency from the four foundation roots, including optional/dev edges.
+# reachable dependency from all foundation roots, including optional/dev edges.
 nodes = {n["id"]: n for n in meta["resolve"]["nodes"]}
 pending = [p["id"] for p in packages.values() if p["name"] in allowed]
 assert len(pending) == len(allowed)
@@ -47,8 +48,20 @@ for p in (root / "crates/worldinterface-foundation").rglob("*.rs"):
     assert "worldinterface_core" not in s and "worldinterface_contextstore" not in s, str(p)
     if p.relative_to(root / "crates/worldinterface-foundation").parts[0] in ("protocol", "capability", "domain"):
         assert not re.search(r"std\s*::\s*(?:fs|thread)|SystemTime\s*::\s*now|Utc\s*::\s*now", s), str(p)
+coverage = json.loads((root / "conformance/wi-fabric-2/ingress/coverage.json").read_text())
+assert coverage["scope"] == "wi/WI-03/domain" and coverage["upstream_conformance"] is False
+seen = set()
+for obligation in coverage["obligations"]:
+    name = obligation["test"]
+    assert name not in seen, "duplicate ingress coverage"
+    seen.add(name)
+    package = obligation["package"]
+    directory = root / ("tools/wi-contract-check" if package == "wi-contract-check"
+                        else "crates/worldinterface-foundation/" + package.removeprefix("worldinterface-"))
+    assert any(re.search(r"#\[test\]\s*fn\s+" + re.escape(name) + r"\s*\(", p.read_text())
+               for p in directory.rglob("*.rs")), name
 fixture_dir = root / "conformance/wi-fabric-2/domain"
-print(json.dumps({"scope": "wi/WI-02/domain", "isolation": "passed", "aq_packages": [],
+print(json.dumps({"scopes": ["wi/WI-02/domain", "wi/WI-03/domain"], "isolation": "passed", "aq_packages": [],
                   "production_adapter": False, "runtime_conformance": False,
-                  "fixtures": {p.name: hashlib.sha256(p.read_bytes()).hexdigest()
-                               for p in sorted(fixture_dir.glob("*.json"))}}, sort_keys=True))
+                  "fixtures": {str(p.relative_to(fixture_dir.parent)): hashlib.sha256(p.read_bytes()).hexdigest()
+                               for p in sorted(fixture_dir.parent.glob("*/**/*.json"))}}, sort_keys=True))

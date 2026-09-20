@@ -25,10 +25,12 @@ run_cargo() {
 export PROPTEST_DISABLE_FAILURE_PERSISTENCE=1
 rustc --version --verbose
 rustfmt --version
-rustfmt --check --edition 2021 crates/worldinterface-foundation/*/src/*.rs crates/worldinterface-foundation/*/tests/*.rs crates/worldinterface-foundation/storage/tests/support/*.rs
-run_cargo clippy --locked --manifest-path "$manifest" --all-targets --all-features -- -D warnings
-run_cargo build --locked --manifest-path "$manifest" --all-features
-run_cargo test --locked --manifest-path "$manifest" --all-features
+mapfile -t rust_sources < <(find crates/worldinterface-foundation -type f -name "*.rs" | sort)
+test "${#rust_sources[@]}" -gt 0
+rustfmt --check --edition 2021 "${rust_sources[@]}"
+run_cargo clippy --locked --manifest-path "$manifest" --workspace --all-targets --all-features -- -D warnings
+run_cargo build --locked --manifest-path "$manifest" --workspace --all-features
+run_cargo test --locked --manifest-path "$manifest" --workspace --all-features
 metadata="$(mktemp "$TMPDIR/wi-domain-metadata.XXXXXX")"
 trap 'rm -f "$metadata"' EXIT
 run_cargo metadata --locked --manifest-path "$manifest" --all-features --format-version 1 > "$metadata"

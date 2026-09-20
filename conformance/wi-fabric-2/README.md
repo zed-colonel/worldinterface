@@ -16,6 +16,12 @@ rejects planned cases, stale pins, altered artifacts and self-review.
 Implementation registration does not assert passing independently accepted case
 receipts. Preserve those external artifacts with the exact candidate revision;
 rerun after integration/rebase. WI-AQ-G1 and parent acceptance remain controller
-obligations. Native integration uses the pinned launcher; the AQ-free native
-foundation/checker launcher conflict is documented in the WI-02 integration work
-item. All scoped CI jobs use the controller's explicit Cargo configuration.
+obligations. Native checks use the controller Cargo launcher, which records
+AQ-free foundation/checker graphs as supplementary checks. Integration still
+requires a separate successful build/test receipt against the exact AQ pins.
+All scoped CI jobs use the controller's explicit Cargo configuration.
+
+WI-02/domain and WI-03/domain supply independent local fixtures in `domain/`
+and `ingress/`. They preserve unrelated runtime skeleton slots and do not satisfy
+AQ cases. Candidate, merged, and post-rebase evidence are separate. Use
+`wi-contract-check evidence check RECEIPT.json` to validate execution receipts.

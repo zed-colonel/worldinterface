@@ -151,7 +151,7 @@ impl StoreRoot {
             contract: CONTRACT.into(),
             schema: 1,
             canonical_profile: CANONICAL_PROFILE.into(),
-            feature_profile: "local-domain-1".into(),
+            feature_profile: "local-ingress-1".into(),
             stores: kinds(profile.platform),
             profile,
             complete: true,
@@ -163,6 +163,7 @@ impl StoreRoot {
                 .map_err(invalid)?;
             let conn = Connection::open(path.join(format!("{}.sqlite", kind.name())))?;
             conn.execute_batch(SCHEMA)?;
+            conn.execute_batch(crate::ingress::SCHEMA)?;
             conn.execute("INSERT INTO store_identity VALUES(1,?1)", [&identity])?;
             drop(conn);
             File::open(path.join(format!("{}.sqlite", kind.name())))?.sync_all()?;
@@ -211,7 +212,7 @@ impl StoreRoot {
             || manifest.contract != CONTRACT
             || manifest.schema != 1
             || manifest.canonical_profile != CANONICAL_PROFILE
-            || manifest.feature_profile != "local-domain-1"
+            || manifest.feature_profile != "local-ingress-1"
             || !manifest.complete
             || manifest.stores != kinds(manifest.profile.platform)
             || path.join("initializing").exists()

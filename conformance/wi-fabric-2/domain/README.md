@@ -63,7 +63,8 @@ reducers, not final ADR-007 effect semantics or ADR-008 signing approval.
 
 `StoreRoot` requires an empty directory for creation. Root and per-database
 manifests bind contract, schema 1, instance, creation time, feature profile
-`local-domain-1` and canonical profile. Fabric, Flow and Context databases are
+`local-ingress-1` and canonical profile (WI-03 supersedes the earlier development
+profile `local-domain-1`, which is rejected unchanged). Fabric, Flow and Context databases are
 required; Platform is optional. All manifests and expected members are checked
 before SQLite opens. Unsupported, pre-contract and incomplete roots reject
 without migration or modification. Initialization publishes the root completion

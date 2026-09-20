@@ -9,6 +9,8 @@ pub(crate) fn invalid(s: impl Into<String>) -> Box<dyn std::error::Error + Send 
     std::io::Error::new(std::io::ErrorKind::InvalidData, s.into()).into()
 }
 
+mod ingress;
+
 #[cfg(test)]
 #[path = "../tests/support/crash.rs"]
 mod crash;
