@@ -1,0 +1,142 @@
+{
+  "version": 1,
+  "runtime_pass_asserted": false,
+  "source_digests": {
+    "worker-assumptions": "65bd7ca0b4fc1c4d116157b9ee05ac575e3da6bba0618dc35284303c5cd92d05",
+    "aq-assumptions": "943d9f263afeee5c56cc6c65a3c6dfca6fca8c871ff070aed2cd0c77f1437415",
+    "worker-acceptance": "9c11d92d056b0411ed4af00a8f076182d95c500acd6e360f42a3a0bdd8aec2eb",
+    "worker-profile": "9f597cffb7117dc679e9f001c25c7d54f2a6157f6ead563b0c7cbd11f45a04f9",
+    "repository-policy": "8c9e0115b93a3ddbcd882a9f02d0fef4f645742fe50c4cf3e5fed98a111c4b17",
+    "operator-decisions": "e8f6f9024f646602f44a41daeaddda9b9d6d2fc5201cee7506b91d4f004dacdb",
+    "scope-evidence": "ab756c06a40ad38c4ce21283ee25bab50ae48fe6301fdb3c2ab3333ff325cb83",
+    "WI-ADR-016": "cafcb369dfeb14acbd6407ffd740da96d1d4de8f642243a1704128b05c89acc4",
+    "WI-ADR-017": "0ed0ac6f51edbcd7f66f5c2f2affaff97ad7000aefb3e761639e550e380d3f4a"
+  },
+  "obligations": [
+    {
+      "id": "inventory",
+      "source": "WI-10/domain binding revision 4; implementation plan \u00a71.4/\u00a710; WI-ADR-016/017; WP-007",
+      "tests": [
+        "inventory_mutations_fail"
+      ],
+      "follow_on": "Current connector/helper/manifest coverage; integration must refresh exact replacements."
+    },
+    {
+      "id": "deletion-plan",
+      "source": "WI-10/domain binding revision 4; implementation plan \u00a71.4/\u00a710; WI-ADR-016/017; WP-007",
+      "tests": [
+        "removal_requires_exact_independent_evidence",
+        "surface_mutations_fail",
+        "orphan_helpers_stay_forbidden_only_at_controller_milestone",
+        "root_readme_disposition_cannot_be_omitted_or_stale"
+      ],
+      "follow_on": "Verified replacements, WI-06/WI-09 acceptance and runtime removal remain pending integration."
+    },
+    {
+      "id": "admission",
+      "source": "WI-10/domain binding revision 4; implementation plan \u00a71.4/\u00a710; WI-ADR-016/017; WP-007",
+      "tests": [
+        "admission_checklist_is_complete",
+        "catalog_mutations_fail",
+        "contradictory_or_substituted_descriptors_block_registration"
+      ],
+      "follow_on": "Concrete descriptor/conformance review and actual catalog admission remain pending integration/process-catalog."
+    },
+    {
+      "id": "WP-007",
+      "source": "WI-10/domain binding revision 4; implementation plan \u00a71.4/\u00a710; WI-ADR-016/017; WP-007",
+      "tests": [
+        "wp007_unqualified_and_evaluation_table",
+        "qualification_drift_and_revocation",
+        "quarantine_and_discovery"
+      ],
+      "follow_on": "Definition review only; runtime_pass_asserted false. Real provider qualification and current AQ integration remain pending WI-09."
+    },
+    {
+      "id": "sandbox",
+      "source": "WI-10/domain binding revision 4; implementation plan \u00a71.4/\u00a710; WI-ADR-016/017; WP-007",
+      "tests": [
+        "sandbox_and_mapping_mutations_fail"
+      ],
+      "follow_on": "Standalone specialist package/image, five verifier implementations and search/edit/test/export replacement fixture remain pending integration."
+    },
+    {
+      "id": "isolation",
+      "source": "WI-10/domain binding revision 4; implementation plan \u00a71.4/\u00a710; WI-ADR-016/017; WP-007",
+      "tests": [
+        "production_cannot_reach_domain_tooling"
+      ],
+      "follow_on": "No production AQ/WI adapter or authority path; real isolation qualification remains outside this slice."
+    },
+    {
+      "id": "ADR-coverage",
+      "source": "WI-10/domain binding revision 4; implementation plan \u00a71.4/\u00a710; WI-ADR-016/017; WP-007",
+      "tests": [
+        "adr_clause_coverage_cannot_expand"
+      ],
+      "follow_on": "Full WI-ADR-016 retained for its other consumers. Exact-candidate independent review, controller merge, actual-target post-rebase tests and parent acceptance remain pending."
+    }
+  ],
+  "assumptions": [
+    {
+      "id": "WP-A01",
+      "status": "pending",
+      "applicability": "Definition mapping and assertion boundaries apply here; actual producer evidence remains with WI-02.",
+      "evidence_owner": "WI-02",
+      "retained_evidence": "Reviewed field mapping; explicit wire amendment if needed before adapter freeze."
+    },
+    {
+      "id": "WP-A02",
+      "status": "pending",
+      "applicability": "Definition mapping and assertion boundaries apply here; actual producer evidence remains with WI-04.",
+      "evidence_owner": "WI-04",
+      "retained_evidence": "Unsupported mandatory controls fail before launch; drift forces reauthorization."
+    },
+    {
+      "id": "WP-A03",
+      "status": "pending",
+      "applicability": "Definition mapping and assertion boundaries apply here; actual producer evidence remains with WI-09.",
+      "evidence_owner": "WI-09",
+      "retained_evidence": "Crash matrix and ownership evidence; ambiguity quarantines before replacement."
+    },
+    {
+      "id": "WP-A04",
+      "status": "pending",
+      "applicability": "Definition mapping and assertion boundaries apply here; actual producer evidence remains with WI-09.",
+      "evidence_owner": "WI-09",
+      "retained_evidence": "Actual provider tests; unimplemented guarantees are unavailable."
+    },
+    {
+      "id": "WP-A05",
+      "status": "pending",
+      "applicability": "Definition mapping and assertion boundaries apply here; actual producer evidence remains with WI-09.",
+      "evidence_owner": "WI-09",
+      "retained_evidence": "WI-owned no-shared-filesystem seam fixture; not remote qualification."
+    },
+    {
+      "id": "WP-A06",
+      "status": "pending",
+      "applicability": "Definition mapping and assertion boundaries apply here; actual producer evidence remains with WI-05.",
+      "evidence_owner": "WI-05",
+      "retained_evidence": "No outer-Kata-to-child-VM inference; source and missing evidence retained."
+    },
+    {
+      "id": "WP-A07",
+      "status": "pending",
+      "applicability": "Definition mapping and assertion boundaries apply here; actual producer evidence remains with WI-11.",
+      "evidence_owner": "WI-11",
+      "retained_evidence": "Real embedded harness with exact AQ pins; broad parent remains open."
+    },
+    {
+      "id": "WP-A08",
+      "status": "pending",
+      "applicability": "Definition mapping and assertion boundaries apply here; actual producer evidence remains with WI-06.",
+      "evidence_owner": "WI-06",
+      "retained_evidence": "External result store plus authenticated inspect; no guest-dependent recovery."
+    }
+  ],
+  "predecessor_receipt": "648a94bc-0aae-48bb-b7f4-b1cd879f7b94",
+  "predecessor_revision": "8f2783963701dc60988f367ed53484a6ec3a7b00",
+  "policy_revision": 1,
+  "scope_binding_digest": "51563f70c37bd7ca696f22833ec81d37acfa4918ba380dec679198c0a4f36cff"
+}

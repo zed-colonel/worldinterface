@@ -15,7 +15,7 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           fetch-depth: 0
-      - name: Verify independent WI-01 obligations
+      - name: Verify WI-01 contracts and WI-10 offline domain obligations
         shell: bash
         run: |
           set -euo pipefail

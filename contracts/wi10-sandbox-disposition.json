@@ -1,0 +1,164 @@
+{
+  "version": 1,
+  "runtime_pass_asserted": false,
+  "package_destination": "standalone-specialist-package-outside-worldinterface-dependencies",
+  "contents": [
+    "search-read",
+    "edit-write-patch",
+    "semantic-analysis",
+    "repository-context",
+    "test-execution",
+    "git-diff-ignore",
+    "artifact-export"
+  ],
+  "replacement_fixture": [
+    "search",
+    "edit",
+    "test",
+    "artifact-export",
+    "no-fabric-coding-connectors",
+    "reviewed-executable-and-dependencies",
+    "non-sensitive-inputs",
+    "independent-results-review"
+  ],
+  "unavailable_assurances": [
+    "hostile-code",
+    "independent-worker-vm",
+    "kata-qualification",
+    "filesystem-confinement",
+    "network-confinement",
+    "cpu-memory-process-count-unless-enforced"
+  ],
+  "verifiers": [
+    {
+      "id": "changed-path-scope",
+      "inputs": [
+        "changed-path-manifest",
+        "authorized-path-scope"
+      ],
+      "output": "bounded-findings-with-input-digests-and-verifier-version",
+      "max_input_bytes": 16777216,
+      "max_output_bytes": 65536,
+      "external_io": false,
+      "executes_tests": false
+    },
+    {
+      "id": "artifact-schema",
+      "inputs": [
+        "artifact-bytes",
+        "versioned-schema"
+      ],
+      "output": "bounded-findings-with-input-digests-and-verifier-version",
+      "max_input_bytes": 16777216,
+      "max_output_bytes": 65536,
+      "external_io": false,
+      "executes_tests": false
+    },
+    {
+      "id": "test-report",
+      "inputs": [
+        "exported-test-report",
+        "expected-suite-manifest"
+      ],
+      "output": "bounded-findings-with-input-digests-and-verifier-version",
+      "max_input_bytes": 16777216,
+      "max_output_bytes": 65536,
+      "external_io": false,
+      "executes_tests": false
+    },
+    {
+      "id": "secret-scan",
+      "inputs": [
+        "exported-artifact-bytes",
+        "reviewed-secret-rules"
+      ],
+      "output": "bounded-findings-with-input-digests-and-verifier-version",
+      "max_input_bytes": 16777216,
+      "max_output_bytes": 65536,
+      "external_io": false,
+      "executes_tests": false
+    },
+    {
+      "id": "patch-metadata",
+      "inputs": [
+        "patch-manifest",
+        "base-and-result-digests"
+      ],
+      "output": "bounded-findings-with-input-digests-and-verifier-version",
+      "max_input_bytes": 16777216,
+      "max_output_bytes": 65536,
+      "external_io": false,
+      "executes_tests": false
+    }
+  ],
+  "mapping": {
+    "version": 1,
+    "requested_profile_selector": "worker-profile:process-managed-proof-1",
+    "effect_input_ref": {
+      "schema": "EffectInputRef/reviewed-inputs",
+      "version": 1,
+      "digest": "cddffa0b5b888db0d6b7c0036f6843d1e42122d9535360954919b8582125bc05",
+      "max_bytes": 65536
+    },
+    "resolved_effect_manifest": {
+      "schema": "ResolvedEffect/typed-immutable-process-manifest",
+      "version": 1,
+      "digest": "8638c021220bf1ec6dc79a941625c129eaff2d743153224661078aad1af7403b",
+      "max_bytes": 65536
+    },
+    "evidence_ref": {
+      "schema": "EvidenceRef/process-controls",
+      "version": 1,
+      "digest": "0b8df0858e96b24c1675c34609a50893778b30bf65686aced1fe0854502fc302",
+      "max_bytes": 65536
+    },
+    "selected": {
+      "descriptor": "3a3aadc636e197b155cfca15313614df5e6a8319a1d3bec457e29159edeb4abe",
+      "profile": "d11e81bc8942960c211bce52582136c6852e1131625828cefe5c9b5412062d07",
+      "adapter": "35ed6e41cf955cbbd9d2a6f1f2b822e196887fc4dbf43392d367a89d39cc9499",
+      "executable": "b6267737f212a6e0045bbdce0da114876d1f9dc6cb6f572623ce6c76f4705f1f",
+      "dependencies": "55cacce7ee769d021a7f3bd8f9d9b8a98b0ba226f4430b26e9360d91ff7f2de7",
+      "configuration": "f7465b05cdfc1219e1614f620e9f51b0d5dea3f867cd0bc23c51b70b78fdd000",
+      "environment": "ed803ebaf5e6802cca2132164095a8cd8e61b613c53b7f8de1d7c1e37aa6dc12",
+      "fixtures": "bd5c65cf151f1d183902fa0970b92aeb51e3ffbee17c1efdc9c8334a354bee70"
+    },
+    "image": {
+      "kind": "NotApplicable"
+    },
+    "provider_ref": "provider:synthetic",
+    "run_ref": "run:synthetic",
+    "resource_ref": "resource:synthetic",
+    "enclosing_instance_evidence": null,
+    "requested_controls": [
+      {
+        "control": "wall-time-ms",
+        "value": 1000
+      },
+      {
+        "control": "output-bytes",
+        "value": 65536
+      }
+    ],
+    "advertised_controls": [
+      {
+        "control": "wall-time-ms",
+        "value": 2000
+      },
+      {
+        "control": "output-bytes",
+        "value": 65536
+      },
+      {
+        "control": "reviewed-inputs",
+        "value": "858e13bb7a30479750416d47dd3a9e6c03e9ff9199c45341a21a3fe64b29b9cf"
+      }
+    ],
+    "applied_controls": [
+      {
+        "control": "wall-time-ms",
+        "value": 1000
+      }
+    ],
+    "observed_controls": []
+  }
+}
