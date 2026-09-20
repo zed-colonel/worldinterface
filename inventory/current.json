@@ -7048,7 +7048,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-runtime/tests/integration.rs",
     "name": "crates/worldinterface-runtime/tests/integration.rs",
-    "source_sha256": "0eca44404cff94d3184fc43e48a47ce7d4f9ce076eef81c5f48478e3e5afc7ab",
+    "source_sha256": "f7fd15e7b859de9105868664f62c289d37c89347a7fa4214a153b2f9603cc75b",
     "conditions": [],
     "registration_sites": []
   },
@@ -7057,7 +7057,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/integration.rs",
     "name": "AuthenticatedSession",
-    "source_sha256": "0eca44404cff94d3184fc43e48a47ce7d4f9ce076eef81c5f48478e3e5afc7ab",
+    "source_sha256": "f7fd15e7b859de9105868664f62c289d37c89347a7fa4214a153b2f9603cc75b",
     "conditions": [],
     "registration_sites": []
   },
@@ -7066,7 +7066,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/integration.rs",
     "name": "Complete",
-    "source_sha256": "0eca44404cff94d3184fc43e48a47ce7d4f9ce076eef81c5f48478e3e5afc7ab",
+    "source_sha256": "f7fd15e7b859de9105868664f62c289d37c89347a7fa4214a153b2f9603cc75b",
     "conditions": [],
     "registration_sites": []
   },
@@ -7075,7 +7075,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/integration.rs",
     "name": "Handler",
-    "source_sha256": "0eca44404cff94d3184fc43e48a47ce7d4f9ce076eef81c5f48478e3e5afc7ab",
+    "source_sha256": "f7fd15e7b859de9105868664f62c289d37c89347a7fa4214a153b2f9603cc75b",
     "conditions": [],
     "registration_sites": []
   },
@@ -7084,7 +7084,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/integration.rs",
     "name": "Policy",
-    "source_sha256": "0eca44404cff94d3184fc43e48a47ce7d4f9ce076eef81c5f48478e3e5afc7ab",
+    "source_sha256": "f7fd15e7b859de9105868664f62c289d37c89347a7fa4214a153b2f9603cc75b",
     "conditions": [],
     "registration_sites": []
   },

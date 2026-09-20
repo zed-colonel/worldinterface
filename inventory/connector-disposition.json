@@ -3476,27 +3476,27 @@
         },
         {
           "id": "crates/worldinterface-runtime/tests/integration.rs::::source-module:crates/worldinterface-runtime/tests/integration.rs",
-          "source_sha256": "0eca44404cff94d3184fc43e48a47ce7d4f9ce076eef81c5f48478e3e5afc7ab",
+          "source_sha256": "f7fd15e7b859de9105868664f62c289d37c89347a7fa4214a153b2f9603cc75b",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/integration.rs::::struct:AuthenticatedSession",
-          "source_sha256": "0eca44404cff94d3184fc43e48a47ce7d4f9ce076eef81c5f48478e3e5afc7ab",
+          "source_sha256": "f7fd15e7b859de9105868664f62c289d37c89347a7fa4214a153b2f9603cc75b",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/integration.rs::::struct:Complete",
-          "source_sha256": "0eca44404cff94d3184fc43e48a47ce7d4f9ce076eef81c5f48478e3e5afc7ab",
+          "source_sha256": "f7fd15e7b859de9105868664f62c289d37c89347a7fa4214a153b2f9603cc75b",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/integration.rs::::struct:Handler",
-          "source_sha256": "0eca44404cff94d3184fc43e48a47ce7d4f9ce076eef81c5f48478e3e5afc7ab",
+          "source_sha256": "f7fd15e7b859de9105868664f62c289d37c89347a7fa4214a153b2f9603cc75b",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/integration.rs::::struct:Policy",
-          "source_sha256": "0eca44404cff94d3184fc43e48a47ce7d4f9ce076eef81c5f48478e3e5afc7ab",
+          "source_sha256": "f7fd15e7b859de9105868664f62c289d37c89347a7fa4214a153b2f9603cc75b",
           "registration_sites": []
         },
         {
@@ -4059,7 +4059,7 @@
         {
           "path": "crates/worldinterface-runtime/tests/integration.rs",
           "treatment": "Retain target integration source and tests; audit shared declarations before any later selective removal.",
-          "source_sha256": "0eca44404cff94d3184fc43e48a47ce7d4f9ce076eef81c5f48478e3e5afc7ab"
+          "source_sha256": "f7fd15e7b859de9105868664f62c289d37c89347a7fa4214a153b2f9603cc75b"
         },
         {
           "path": "crates/worldinterface-runtime/tests/support/crash.rs",
