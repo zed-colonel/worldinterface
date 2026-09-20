@@ -10,3 +10,8 @@ approval IDs and packet digests. The checker pins that evidence independently of
 queue status. Adding acceptance requires a new operator record and a reviewed
 pin update; editing a status cannot manufacture controller acceptance. These
 records establish design authority only, never implementation or test success.
+
+WI-02 additionally imports exact supplied approvals under `approvals/`: ADR-001/002/003
+are accepted in full. The per-decision ADR-016 record preserves the same clause
+approval as `approvals.json`; both forms are pinned and checked. The shared queue
+uses `accepted-clauses` for ADR-016, retaining all later obligations.

@@ -4,24 +4,36 @@
     "decision": "Protocol version envelope, canonical serialization, hash input, unknown-field rules",
     "due": "WI-02",
     "owner": "operator",
-    "status": "queued",
-    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4"
+    "status": "accepted",
+    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4",
+    "approval_file": "docs/adr/approvals/WI-ADR-001.json",
+    "approval_sha256": "ffc652dc4aeb0af4708da435a3836d48e4f34bccd0759cd5df10bb5fcb83e099",
+    "approval_id": "e4f66a95-3338-4c6e-8990-9b64e7a85dbf",
+    "coverage": "full"
   },
   {
     "id": "WI-ADR-002",
     "decision": "Identifier generation and stable client-request idempotency mapping",
     "due": "WI-02",
     "owner": "operator",
-    "status": "queued",
-    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4"
+    "status": "accepted",
+    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4",
+    "approval_file": "docs/adr/approvals/WI-ADR-002.json",
+    "approval_sha256": "90fc2c3a245ecc3e2f007a284aa54b82a24858409e7b8b8353643bd138cfb326",
+    "approval_id": "1063789c-3852-46a4-9140-3fedeb689c54",
+    "coverage": "full"
   },
   {
     "id": "WI-ADR-003",
     "decision": "Fresh store topology, SQLite transaction boundaries, backup/restore contract",
     "due": "WI-02",
     "owner": "operator",
-    "status": "queued",
-    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4"
+    "status": "accepted",
+    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4",
+    "approval_file": "docs/adr/approvals/WI-ADR-003.json",
+    "approval_sha256": "1912ba6bcb31f0c4a32053fb5d6b0156458db1d5496ca92018881afee241de18",
+    "approval_id": "d49b9e8a-f1b0-436f-b173-8e6333a37e7a",
+    "coverage": "full"
   },
   {
     "id": "WI-ADR-004",
@@ -127,7 +139,10 @@
     "status": "accepted-clauses",
     "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4",
     "approval_id": "2e15ca00-a081-4f2c-8430-bc81b2f27ec9",
-    "decision_packet_digest": "cafcb369dfeb14acbd6407ffd740da96d1d4de8f642243a1704128b05c89acc4"
+    "decision_packet_digest": "cafcb369dfeb14acbd6407ffd740da96d1d4de8f642243a1704128b05c89acc4",
+    "approval_file": "docs/adr/approvals/WI-ADR-016.json",
+    "approval_sha256": "a32ba0a9c38340cfa3be18e9e6fa19b20172fb4d33e42b55d81307c9a84fcca8",
+    "coverage": "clauses"
   },
   {
     "id": "WI-ADR-017",

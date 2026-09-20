@@ -1,0 +1,72 @@
+{
+  "scope": {
+    "kind": "slice",
+    "definitionId": "0ebcb7cf-9686-4bc1-9b9d-bb85a1d0b4c9",
+    "bindingRevision": 4,
+    "sourceId": "wi/WI-02/domain"
+  },
+  "policy_revision": {
+    "version": 1,
+    "branchSettingsVersion": 1,
+    "adoptedAt": "2026-09-18T00:41:03.548Z",
+    "controlMode": "controller-local"
+  },
+  "source_sha256": {
+    "craftingtable-repository-policy.json": "f0e4aaf3df5ebe629a8c5a4137995afe3bd013ade3b8d5f45297c4678a460280",
+    "craftingtable-operator-decisions.json": "1d8500c86e1343d8f331f7e7887418060862726046a74416636484cc954a3997",
+    "craftingtable-scope-evidence.json": "b7f3cdec2ee327adaab8eca7feb1e5c53fef721b53aea33e873180e8e3380869",
+    "wi-fabric-2-foundational-implementation-plan.md": "32564920d4cb1fa43fcecf996ef7897aa38b5c70fe4c04ca89adbedde86e608e",
+    "worldinterface-v2-foundational-design.md": "45e8ad3e5cc9618cbb951c0062cbd5daa49e7f57a0955d38e1172f6603e7b4bb",
+    "wi-fabric-2-worker-execution-profile.md": "9f597cffb7117dc679e9f001c25c7d54f2a6157f6ead563b0c7cbd11f45a04f9",
+    "wi-fabric-2-worker-execution-acceptance-matrix.yaml": "9c11d92d056b0411ed4af00a8f076182d95c500acd6e360f42a3a0bdd8aec2eb",
+    "wi-fabric-2-aq-assumption-ledger-foundational.yaml": "943d9f263afeee5c56cc6c65a3c6dfca6fca8c871ff070aed2cd0c77f1437415",
+    "wi-fabric-2-worker-boundary-assumption-ledger.yaml": "65bd7ca0b4fc1c4d116157b9ee05ac575e3da6bba0618dc35284303c5cd92d05",
+    "aq-baseline.lock.json": "1907d0a157628511c2419f84fd6b7820e09c160699505ee986cc46f3bcf78c7a"
+  },
+  "adr_approval_ids": [
+    "2e15ca00-a081-4f2c-8430-bc81b2f27ec9",
+    "d49b9e8a-f1b0-436f-b173-8e6333a37e7a",
+    "1063789c-3852-46a4-9140-3fedeb689c54",
+    "e4f66a95-3338-4c6e-8990-9b64e7a85dbf"
+  ],
+  "predecessor_receipts": [
+    "648a94bc-0aae-48bb-b7f4-b1cd879f7b94",
+    "36bdd5cb-3638-4300-9be0-9b355b237af3"
+  ],
+  "initial_observation": {
+    "head": "8f2783963701dc60988f367ed53484a6ec3a7b00",
+    "tree": "84033488e409fe33892224f434a4909d1a883310",
+    "target": "8f2783963701dc60988f367ed53484a6ec3a7b00",
+    "clean": true,
+    "main": "f48df82e98203fa94c86eecae60425205c3e00e9",
+    "freeze_tag": "f48df82e98203fa94c86eecae60425205c3e00e9",
+    "ref_match_proves_enforcement": false
+  },
+  "assumptions": [
+    {
+      "id": "WI-AQ-012",
+      "gate": "WI-AQ-G1",
+      "status": "consumer-evidence-pending"
+    },
+    {
+      "id": "WI-AQ-015",
+      "gate": "WI-AQ-G1",
+      "status": "consumer-evidence-pending"
+    },
+    {
+      "id": "WP-A01",
+      "gate": "before-adapter-freeze",
+      "status": "independent-mapping-review-pending"
+    }
+  ],
+  "retained": [
+    "actual-merged-tree-and-post-rebase-verification",
+    "AB-WI-001",
+    "AB-WI-015",
+    "AB-WI-016",
+    "WI-02/integration",
+    "parent-acceptance",
+    "remote-protection-before-publication-and-final-release"
+  ],
+  "test_success_asserted": false
+}

@@ -1,0 +1,36 @@
+{
+  "submissionId": "87a76c56-b24a-4c58-bbad-4ea68f01bddb",
+  "checkpoint": "WI-ADR-002",
+  "definitionId": "0ebcb7cf-9686-4bc1-9b9d-bb85a1d0b4c9",
+  "bindingRevision": 4,
+  "decision": {
+    "coverage": "full",
+    "proposal": "Adopt server-generated UUIDv4 entity identities and content-addressed immutable evidence as recommended in the attached WI-02 investigation. Generate IDs outside pure reducers, persist them once and reuse them on retries. Keep artifact content identity separate from scoped access references. The unique admission namespace consists of deployment/tenant scope, authenticated submitting principal, submission class and ClientRequestId. Persist canonical submission digest and resulting domain identity atomically. Caller-claimed accountable identity is request content and cannot select the trusted admission namespace. Equal concurrent requests recover one identity; changed content under the same admission key fails without mutation. Implementation must test concurrent admission, conflicting reuse and restart stability. This decision grants no new authorization endpoint and claims no passing implementation evidence.",
+    "sourceReferences": "wi-fabric-2-foundational-implementation-plan.md \u00a7\u00a72.2\u20132.5, \u00a74 ADR-002, WI-02 and \u00a78; attached WI-02 investigation, Recommended ADR resolutions \u2192 ADR-002.",
+    "retainedObligations": "",
+    "consumers": [],
+    "kind": "architecture-decision-v1",
+    "bindingDigest": "8cae5ff3253d493fce0527aa42381a551c40014440ab3d05270ae8d822d11295"
+  },
+  "approval": {
+    "submissionId": "87a76c56-b24a-4c58-bbad-4ea68f01bddb",
+    "outcome": "accepted",
+    "rationale": "I think the proposed approach is sound and should settle WI-ADR-002",
+    "id": "1063789c-3852-46a4-9140-3fedeb689c54",
+    "workspaceId": "6bf6915a-6cd0-47cc-b853-fcbc04f02f3d",
+    "decidedAt": "2026-09-19T22:27:11.622Z",
+    "decidedByUserId": "0698a39b-dda2-4870-8f3f-97ef94784ae9"
+  },
+  "sourceRunId": "39ec70c3-07ce-4aff-88eb-ca9009f4d553",
+  "sourceRunDigest": "f2bf64d17776a53ceb97004ab1f0e14329a09b7f7dd39adbc21264827ac19b3e",
+  "artifacts": [
+    {
+      "name": "decision-review-packet",
+      "digest": "3b27667fff997474cbb8248bbe0f1371e39ae5caef7e01d7c6247743ecefd9f5"
+    },
+    {
+      "name": "source-design-proposal-not-approval",
+      "digest": "f2bf64d17776a53ceb97004ab1f0e14329a09b7f7dd39adbc21264827ac19b3e"
+    }
+  ]
+}

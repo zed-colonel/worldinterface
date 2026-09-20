@@ -244,7 +244,9 @@ pub fn generate(root: &Path) -> Result<Vec<Item>> {
             } else if p.file_name().unwrap() == "Cargo.toml" {
                 let v = read(&p)?;
                 if let Some(name) = v["package"]["name"].as_str() {
-                    let kind = if members.contains(relative(root, p.parent().unwrap()).as_str()) {
+                    let kind = if path.starts_with("crates/worldinterface-foundation/") {
+                        "foundation-crate"
+                    } else if members.contains(relative(root, p.parent().unwrap()).as_str()) {
                         "workspace-crate"
                     } else {
                         "auxiliary-crate"

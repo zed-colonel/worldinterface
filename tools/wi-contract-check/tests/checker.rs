@@ -78,6 +78,7 @@ fn inventory_is_complete_and_deterministic() {
     for (k, n) in [
         ("workspace-crate", 10),
         ("auxiliary-crate", 10),
+        ("foundation-crate", 4),
         ("connector", 25),
         ("wasm-manifest", 15),
         ("generated-id", 4),
@@ -636,4 +637,55 @@ fn optional_local_and_locked_transitive_exo_routes_are_rejected() {
             rejected
         );
     }
+}
+
+#[test]
+fn adr_clause_approval_cannot_be_promoted_or_rewritten() {
+    let t = contract_repo();
+    let mut q = read(&t.path().join("docs/adr/queue.json")).unwrap();
+    q[15]["status"] = json!("accepted");
+    q[15]["coverage"] = json!("full");
+    data(t.path(), "docs/adr/queue.json", &q);
+    let findings = contracts::docs(t.path()).unwrap();
+    assert!(findings.iter().any(|f| f.rule == "ADR-QUEUE"));
+    assert!(findings.iter().any(|f| f.rule == "ADR-APPROVAL"));
+    let p = "docs/adr/approvals/WI-ADR-016.json";
+    let mut a = read(&t.path().join(p)).unwrap();
+    a["decision"]["retainedObligations"] = json!("");
+    data(t.path(), p, &a);
+    assert!(contracts::docs(t.path()).unwrap().iter().any(|f| f.rule == "ADR-APPROVAL"));
+}
+#[test]
+fn isolated_workspace_uses_its_own_transitive_lock() {
+    let t = tiny_repo();
+    write(t.path(), "crates/foundation/Cargo.toml", "[workspace]\nmembers=['protocol']\n");
+    write(
+        t.path(),
+        "crates/foundation/protocol/Cargo.toml",
+        "[package]\nname='worldinterface-protocol'\nversion='0.2.0'\n[dependencies]\nfacade='1'\n",
+    );
+    write(t.path(), "crates/foundation/protocol/src/lib.rs", "pub struct Safe;");
+    write(t.path(), "crates/foundation/Cargo.lock", "version=4\n[[package]]\nname='facade'\nversion='1.0.0'\ndependencies=['exoskeleton 1.0.0']\n[[package]]\nname='exoskeleton'\nversion='1.0.0'\n");
+    assert!(policy::dependencies(t.path(), &pol())
+        .unwrap()
+        .iter()
+        .any(|f| f.rule == "DEP-LOCK-REACHABILITY"));
+}
+
+#[test]
+fn path_dependency_resolves_its_own_workspace_inheritance() {
+    let t = tiny_repo();
+    write(
+        t.path(),
+        "Cargo.toml",
+        "[workspace]\nmembers=['crates/a']\n[workspace.dependencies]\nserde='1'\n",
+    );
+    write(
+        t.path(),
+        "crates/a/Cargo.toml",
+        "[package]\nname='a'\nversion='1.0.0'\n[dependencies]\nserde.workspace=true\n",
+    );
+    write(t.path(), "examples/separate/Cargo.toml", "[workspace]\n[package]\nname='separate'\nversion='1.0.0'\n[dependencies]\na={path='../../crates/a'}\n");
+    write(t.path(), "examples/separate/src/lib.rs", "pub struct Safe;");
+    assert!(policy::dependencies(t.path(), &pol()).unwrap().is_empty());
 }

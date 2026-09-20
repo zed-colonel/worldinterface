@@ -38,3 +38,5 @@ dev-output/
 # ── Local scripts ───────────────────────────────────────────
 scripts/*
 !scripts/check-wi-contract.sh
+!scripts/check-wi-domain.sh
+!scripts/check-wi-domain-isolation.py

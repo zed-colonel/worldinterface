@@ -366,11 +366,55 @@ pub fn docs(root: &Path) -> Result<Vec<Finding>> {
     }
     for (row, r) in expected.iter().zip(records) {
         let id = row[1].trim_matches('`');
+        let approved = match id {
+            "WI-ADR-001" => Some((
+                "accepted",
+                "full",
+                "ffc652dc4aeb0af4708da435a3836d48e4f34bccd0759cd5df10bb5fcb83e099",
+            )),
+            "WI-ADR-002" => Some((
+                "accepted",
+                "full",
+                "90fc2c3a245ecc3e2f007a284aa54b82a24858409e7b8b8353643bd138cfb326",
+            )),
+            "WI-ADR-003" => Some((
+                "accepted",
+                "full",
+                "1912ba6bcb31f0c4a32053fb5d6b0156458db1d5496ca92018881afee241de18",
+            )),
+            "WI-ADR-016" => Some((
+                "accepted-clauses",
+                "clauses",
+                "a32ba0a9c38340cfa3be18e9e6fa19b20172fb4d33e42b55d81307c9a84fcca8",
+            )),
+            _ => None,
+        };
+        let status = approved.map_or("queued", |(status, _, _)| status);
+        if let Some((_, coverage, digest)) = approved {
+            let path = format!("docs/adr/approvals/{id}.json");
+            let bytes = fs::read(root.join(&path))?;
+            let approval: Value = serde_json::from_slice(&bytes)?;
+            if hash(&bytes) != digest
+                || r["approval_sha256"] != digest
+                || r["approval_file"] != path
+                || r["coverage"] != coverage
+                || approval["checkpoint"] != id
+                || approval["decision"]["coverage"] != coverage
+                || approval["approval"]["outcome"] != "accepted"
+                || r["approval_id"] != approval["approval"]["id"]
+            {
+                f.push(finding("ADR-APPROVAL", &path, id, "supplied operator approvals, binding revision 4", "approval provenance or coverage changed; full and clause acceptance are distinct"));
+            }
+        }
         if r["id"] != id
             || r["decision"] != row[2]
             || r["due"] != row[3]
             || r["owner"] != "operator"
-            || !adr_status_matches(root, id, r)?
+            || if matches!(id, "WI-ADR-001" | "WI-ADR-002" | "WI-ADR-003") {
+                r["status"] != status
+            } else {
+                !adr_status_matches(root, id, r)?
+            }
         {
             f.push(finding(
                 "ADR-QUEUE",

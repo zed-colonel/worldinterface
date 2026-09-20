@@ -30,7 +30,16 @@ and embedded host surfaces.
 
 ## Verification
 
-- Default validation from the repo root:
+- Active WI-FABRIC-2 domain slice: run `scripts/check-wi-domain.sh` and
+  `scripts/check-wi-contract.sh` through the supplied `ct-check`; run the
+  `wi-domain.yml` domain job through `ct-act`. Use the controller Cargo launcher
+  natively and its explicit Cargo config inside CI. Foundation is an independent
+  workspace at `crates/worldinterface-foundation`; never resolve the historical
+  runtime to satisfy a scoped check. These checks do not prove AQ integration.
+- Historical whole-workspace guidance below is retained for runtime changes and
+  future public maintenance. Reinstate it for the supported complete workspace
+  before public maintenance; scoped development does not waive release checks.
+- Historical default validation from the repo root:
   - `cargo build --workspace`
   - `cargo test --workspace`
 - For daemon and CLI changes, smoke the primary surfaces:

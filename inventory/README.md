@@ -5,7 +5,12 @@ one source-backed target treatment per item. These assignments implement the
 approved plan and are reviewable in this source PR; they do not accept ADRs or
 claim independent review has occurred. Regeneration never writes dispositions.
 
-Coverage includes all ten workspace crates, ten auxiliary example/test crates,
+The frozen-baseline counts below are retained for historical comparison. Current
+inventory additionally includes the four isolated foundation crates and every
+physical target Rust source, declaration and test. Foundation packages are marked
+`foundation-crate`; their dependency locks are inspected independently.
+
+Baseline coverage includes all ten workspace crates, ten auxiliary example/test crates,
 all physical Rust modules and nested declarations regardless of feature cfg,
 macro-generated IDs, connector implementations, registration call sites and all
 15 checked-in WASM manifest locations. Repeated manifest locations are retained.
