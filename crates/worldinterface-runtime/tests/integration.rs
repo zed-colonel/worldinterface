@@ -339,3 +339,104 @@ fn backup_retains_both_store_locks_and_rejects_missing_references() {
     assert!(StoreBundle::restore(&t.path().join("backup"), &t.path().join("restore")).is_err());
     assert!(!t.path().join("restore").exists());
 }
+
+#[test]
+fn ab_wi_016_nested_destinations_leave_source_unchanged() {
+    use std::{collections::BTreeMap, fs, path::Path};
+    fn snapshot(root: &Path) -> BTreeMap<std::path::PathBuf, Option<Vec<u8>>> {
+        fn visit(
+            root: &Path,
+            path: &Path,
+            entries: &mut BTreeMap<std::path::PathBuf, Option<Vec<u8>>>,
+        ) {
+            for entry in fs::read_dir(path).unwrap() {
+                let path = entry.unwrap().path();
+                let key = path.strip_prefix(root).unwrap().to_path_buf();
+                if path.is_dir() {
+                    entries.insert(key, None);
+                    visit(root, &path, entries);
+                } else {
+                    entries.insert(key, Some(fs::read(path).unwrap()));
+                }
+            }
+        }
+        let mut entries = BTreeMap::new();
+        visit(root, root, &mut entries);
+        entries
+    }
+    let t = tempfile::tempdir().unwrap();
+    let source = t.path().join("source");
+    let backup = t.path().join("backup");
+    let bundle = StoreBundle::initialize(&source, profile()).unwrap();
+    let reference =
+        bundle.wi().publish("tenant".to_string().try_into().unwrap(), b"retained").unwrap();
+    drop(bundle);
+    StoreBundle::backup(&source, &backup).unwrap();
+    let before = snapshot(&backup);
+    let mut destinations = vec![backup.join("nested"), backup.join("wi/artifacts/nested")];
+    #[cfg(unix)]
+    {
+        let alias = t.path().join("alias");
+        std::os::unix::fs::symlink(&backup, &alias).unwrap();
+        destinations.push(alias.join("nested"));
+        destinations.push(alias.join("wi/artifacts/nested"));
+    }
+    for destination in destinations {
+        for operation in [StoreBundle::backup, StoreBundle::restore] {
+            assert_eq!(
+                operation(&backup, &destination).unwrap_err().to_string(),
+                "destination inside source"
+            );
+            assert_eq!(
+                snapshot(&backup),
+                before,
+                "rejection must leave no staging or source changes"
+            );
+            let reopened = StoreBundle::open(&backup).unwrap();
+            assert_eq!(reopened.wi().read_artifact(&reference).unwrap(), b"retained");
+        }
+    }
+    let restored = t.path().join("restored");
+    StoreBundle::restore(&backup, &restored).unwrap();
+    assert_eq!(snapshot(&backup), before);
+    assert_eq!(
+        StoreBundle::open(&restored).unwrap().wi().read_artifact(&reference).unwrap(),
+        b"retained"
+    );
+}
+
+#[test]
+fn ab_wi_016_single_component_relative_destinations() {
+    use std::{path::Path, process::Command};
+    const CHILD: &str = "WI_RELATIVE_DESTINATION_CHILD";
+    if std::env::var_os(CHILD).is_some() {
+        let source = Path::new("source");
+        let bundle = StoreBundle::initialize(source, profile()).unwrap();
+        let reference =
+            bundle.wi().publish("tenant".to_string().try_into().unwrap(), b"relative").unwrap();
+        drop(bundle);
+        StoreBundle::backup(source, Path::new("backup")).unwrap();
+        StoreBundle::restore(Path::new("backup"), Path::new("restored")).unwrap();
+        for path in ["source", "backup", "restored"] {
+            assert_eq!(
+                StoreBundle::open(Path::new(path)).unwrap().wi().read_artifact(&reference).unwrap(),
+                b"relative"
+            );
+        }
+        return;
+    }
+    // Set cwd only in the child: parallel tests must never change process-global cwd.
+    let t = tempfile::tempdir().unwrap();
+    let output = Command::new(std::env::current_exe().unwrap())
+        .args(["--exact", "ab_wi_016_single_component_relative_destinations", "--nocapture"])
+        .env(CHILD, "1")
+        .current_dir(t.path())
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "{}\n{}",
+        String::from_utf8_lossy(&output.stdout),
+        String::from_utf8_lossy(&output.stderr)
+    );
+}

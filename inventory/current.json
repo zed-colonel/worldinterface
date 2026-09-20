@@ -7021,7 +7021,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-runtime/src/storage.rs",
     "name": "crates/worldinterface-runtime/src/storage.rs",
-    "source_sha256": "02bec189d4610c88cfefcf0b50ff6c0a9a0f04fcb6034db167be2025b76cdab9",
+    "source_sha256": "db00a65dc33ec482c3073334eaf748d6345ffc1f499731cceacea6d3fd9e8fad",
     "conditions": [],
     "registration_sites": []
   },
@@ -7030,7 +7030,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/src/storage.rs",
     "name": "BundleManifest",
-    "source_sha256": "02bec189d4610c88cfefcf0b50ff6c0a9a0f04fcb6034db167be2025b76cdab9",
+    "source_sha256": "db00a65dc33ec482c3073334eaf748d6345ffc1f499731cceacea6d3fd9e8fad",
     "conditions": [],
     "registration_sites": []
   },
@@ -7039,7 +7039,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/src/storage.rs",
     "name": "StoreBundle",
-    "source_sha256": "02bec189d4610c88cfefcf0b50ff6c0a9a0f04fcb6034db167be2025b76cdab9",
+    "source_sha256": "db00a65dc33ec482c3073334eaf748d6345ffc1f499731cceacea6d3fd9e8fad",
     "conditions": [],
     "registration_sites": []
   },

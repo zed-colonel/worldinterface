@@ -20,7 +20,9 @@
       "required_tests": [
         "ab_wi_016_authorization_and_integrity",
         "ab_wi_015_016_real_child_execution_replay_and_foreign_provenance",
-        "backup_retains_both_store_locks_and_rejects_missing_references"
+        "backup_retains_both_store_locks_and_rejects_missing_references",
+        "ab_wi_016_nested_destinations_leave_source_unchanged",
+        "ab_wi_016_single_component_relative_destinations"
       ]
     }
   },

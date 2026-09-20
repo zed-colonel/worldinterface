@@ -3461,17 +3461,17 @@
         },
         {
           "id": "crates/worldinterface-runtime/src/storage.rs::::source-module:crates/worldinterface-runtime/src/storage.rs",
-          "source_sha256": "02bec189d4610c88cfefcf0b50ff6c0a9a0f04fcb6034db167be2025b76cdab9",
+          "source_sha256": "db00a65dc33ec482c3073334eaf748d6345ffc1f499731cceacea6d3fd9e8fad",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/storage.rs::::struct:BundleManifest",
-          "source_sha256": "02bec189d4610c88cfefcf0b50ff6c0a9a0f04fcb6034db167be2025b76cdab9",
+          "source_sha256": "db00a65dc33ec482c3073334eaf748d6345ffc1f499731cceacea6d3fd9e8fad",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/storage.rs::::struct:StoreBundle",
-          "source_sha256": "02bec189d4610c88cfefcf0b50ff6c0a9a0f04fcb6034db167be2025b76cdab9",
+          "source_sha256": "db00a65dc33ec482c3073334eaf748d6345ffc1f499731cceacea6d3fd9e8fad",
           "registration_sites": []
         },
         {
@@ -4054,7 +4054,7 @@
         {
           "path": "crates/worldinterface-runtime/src/storage.rs",
           "treatment": "Retain target integration source and tests; audit shared declarations before any later selective removal.",
-          "source_sha256": "02bec189d4610c88cfefcf0b50ff6c0a9a0f04fcb6034db167be2025b76cdab9"
+          "source_sha256": "db00a65dc33ec482c3073334eaf748d6345ffc1f499731cceacea6d3fd9e8fad"
         },
         {
           "path": "crates/worldinterface-runtime/tests/integration.rs",

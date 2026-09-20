@@ -29,6 +29,16 @@ fn sync(path: &Path) -> Result<()> {
     File::open(path)?.sync_all()?;
     Ok(())
 }
+fn destination_parent(destination: &Path) -> &Path {
+    destination.parent().filter(|p| !p.as_os_str().is_empty()).unwrap_or(Path::new("."))
+}
+fn require_independent_destination(source: &Path, destination: &Path) -> Result<()> {
+    // Resolve aliases before any store recovery or staging can change the source.
+    if destination_parent(destination).canonicalize()?.starts_with(source.canonicalize()?) {
+        return Err("destination inside source".into());
+    }
+    Ok(())
+}
 fn validate(path: &Path) -> Result<BundleManifest> {
     for e in fs::read_dir(path)? {
         let e = e?;
@@ -59,15 +69,13 @@ fn publish(staging: tempfile::TempDir, dest: &Path) -> Result<()> {
     publish_directory(staging.path(), dest)?;
     #[cfg(test)]
     crate::crash::checkpoint("after-rename");
-    sync(dest.parent().filter(|p| !p.as_os_str().is_empty()).unwrap_or(Path::new(".")))
+    sync(destination_parent(dest))
 }
 fn staging(dest: &Path) -> Result<tempfile::TempDir> {
     if dest.exists() {
         return Err("destination exists".into());
     }
-    Ok(tempfile::Builder::new().prefix(".wi-bundle-").tempdir_in(
-        dest.parent().filter(|p| !p.as_os_str().is_empty()).unwrap_or(Path::new(".")),
-    )?)
+    Ok(tempfile::Builder::new().prefix(".wi-bundle-").tempdir_in(destination_parent(dest))?)
 }
 /// Owns a WI root and the shared bundle lock. AQ runtimes opened with `aq_path`
 /// retain their own exclusive writer lock. Offline maintenance acquires all locks
@@ -118,6 +126,7 @@ impl StoreBundle {
         self.path.join("aq")
     }
     pub fn backup(source: &Path, destination: &Path) -> Result<()> {
+        require_independent_destination(source, destination)?;
         let manifest = validate(source)?;
         let lock = File::open(source.join("bundle.lock"))?;
         FileExt::try_lock_exclusive(&lock)?;
@@ -128,10 +137,6 @@ impl StoreBundle {
         if wi.profile().instance != manifest.wi {
             return Err("WI bundle identity mismatch".into());
         }
-        let parent = destination.parent().unwrap_or(Path::new("."));
-        if parent.canonicalize()?.starts_with(source.canonicalize()?) {
-            return Err("backup inside source".into());
-        }
         let stage = staging(destination)?;
         wi.backup_to(stage.path().join("wi"))?;
         store::backup_store(aq.root(), &stage.path().join("aq"))?;
@@ -141,6 +146,7 @@ impl StoreBundle {
         publish(stage, destination)
     }
     pub fn restore(backup: &Path, destination: &Path) -> Result<()> {
+        require_independent_destination(backup, destination)?;
         let manifest = validate(backup)?;
         let lock = File::open(backup.join("bundle.lock"))?;
         FileExt::try_lock_exclusive(&lock)?;
