@@ -30,8 +30,10 @@ rolls back and applies backpressure. There is no silent tombstone eviction or
 unsupported physical-erasure promise. Artifact bytes must be durably published
 before admission. Failed admission may leave an unreferenced artifact, which is
 safe recoverable garbage. Offline backup/restore covers the complete store root.
-Hot-journal recovery after an OS/process kill remains a runtime integration task;
-these fixtures inject transaction failures and restart at committed boundaries.
+These ingress fixtures inject transaction failures and restart at committed
+boundaries. Shared storage also has the WI-02 integration hot-journal recovery
+and killed-process tests; see [integration coverage](../../../docs/work-items/wi-02-integration.md).
+Those tests do not establish AQ wake integration for ingress.
 
 ## Provider and transport contract
 

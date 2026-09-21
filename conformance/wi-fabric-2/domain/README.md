@@ -91,8 +91,14 @@ hashes, and compares all projections with deterministic in-memory replay.
 `rebuild` repairs derived rows for an already-open maintenance repository without
 provider calls. External damage is rejected on open. Journal mode is deliberately
 SQLite DELETE with synchronous FULL: this profile has no WAL sidecars to omit.
-Unexpected WAL, rollback-journal or incomplete files fail closed; automatic hot
-journal/runtime crash recovery and coordinated AQ backup are integration work.
+Unexpected WAL, incomplete files and malformed or unsupported rollback journals
+fail closed. Valid interrupted rollback journals undergo SQLite recovery and full
+store validation in a private copy under exclusive ownership before the original
+is recovered or cleaned up; failed preflight leaves the original unchanged.
+[WI-02 integration](../../../docs/work-items/wi-02-integration.md) implements this
+recovery and coordinated WI/AQ offline backup, with killed-process tests covering
+journal creation, partial headers and atomic publication. This coverage does not
+establish AQ wake integration or advance controller acceptance gates.
 
 Artifacts are bounded to 16 MiB in this local profile. Files are synced and
 published without replacement before scoped availability rows commit. Interrupted
@@ -143,9 +149,12 @@ Remote protection/publication remains operator-owned, due before first remote
 publication and final release approval. `source-evidence.json` records hashes of
 supplied policy, approvals, prerequisite receipts and assumptions, not test results.
 ADR-001/002/003 are fully approved; ADR-016 has only the supplied early clauses.
-WI-AQ-012, WI-AQ-015 and WP-A01 remain open for their named milestones. The target
+WI-02 integration records the WI-AQ-012/015 mappings; their acceptance and WP-A01
+remain subject to their named milestones. The target
 AQ pin is 29e096c4f06985d1a9bd9d5fe5a3a6a5db8a6860, conformance revision 16;
-prepared historical AQ 97c9dc26 is unused development input. AB-WI-001/015/016,
-production adapters, runtime recovery, independent WP-002 review, actual merged
+prepared historical AQ 97c9dc26 is unused development input. Implemented G1 adapters,
+runtime recovery and AB-WI-001/015/016 tests are documented in the linked integration
+coverage. Independent case acceptance, independent WP-002 review, actual merged
 tree/post-rebase checks, integration-slice verification and parent acceptance
-remain separate controller-owned obligations. Nothing here advances those gates.
+remain separate controller-owned obligations. Later production adapters, including
+AQ wake integration, retain their own gates. Nothing here advances those gates.

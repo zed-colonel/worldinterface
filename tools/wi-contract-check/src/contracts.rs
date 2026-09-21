@@ -180,7 +180,8 @@ pub fn contracts(root: &Path) -> Result<Vec<Finding>> {
     if pin["target"]["archive_sha256"] != lock["archive_sha256"]
         || pin["target"]["source_tree_sha256"] != lock["source_tree_sha256"]
         || pin["target"]["conformance_revision"] != lock["conformance_package_revision"]
-        || pin["execution_status"] != "not-run"
+        || !["not-run", "candidate-evidence-external"]
+            .contains(&pin["execution_status"].as_str().unwrap_or(""))
         || pin["actual_checker_aq_dependencies"] != json!([])
     {
         f.push(finding(
@@ -221,7 +222,24 @@ pub fn conformance(root: &Path) -> Result<Vec<Finding>> {
     let mut ids = BTreeSet::new();
     let mut inv = BTreeSet::new();
     for c in array(&m, "cases")? {
-        if !ids.insert(string(c, "id")?) || c["status"] != "unimplemented" || !c["result"].is_null()
+        let baseline = array(&m, "assigned_aq_baseline_cases")?.contains(&c["id"]);
+        if baseline {
+            let original = read(
+                &root.join("contracts/sources/aq-baseline-integration-acceptance-matrix.yaml"),
+            )?;
+            let source = array(&original, "cases")?
+                .iter()
+                .find(|r| r["id"] == c["id"])
+                .ok_or("unknown source case")?;
+            if c["source_record_sha256"] != hash(serde_json::to_vec(source)?)
+                || !root.join(string(c, "test_source")?).is_file()
+            {
+                return Err("baseline source/test binding mismatch".into());
+            }
+        }
+        if !ids.insert(string(c, "id")?)
+            || (!baseline && c["status"] != "unimplemented")
+            || !c["result"].is_null()
         {
             f.push(finding(
                 "CONFORMANCE-PLANNED",
@@ -243,6 +261,18 @@ pub fn conformance(root: &Path) -> Result<Vec<Finding>> {
             DESIGN,
             "coverage skeleton must cover precisely W1-W59",
         ))
+    }
+    let assigned: BTreeSet<_> =
+        array(&m, "assigned_aq_baseline_cases")?.iter().map(|v| v.as_str().unwrap_or("")).collect();
+    if assigned != BTreeSet::from(["AB-WI-001", "AB-WI-015", "AB-WI-016"])
+        || !assigned.iter().all(|id| ids.contains(id))
+    {
+        return Err("assigned G1 cases must be registered exactly".into());
+    }
+    if m["integration_fixture_sha256"]
+        != hash(fs::read(root.join(string(&m, "integration_fixture")?))?)
+    {
+        return Err("integration fixture changed".into());
     }
     let store_path = root.join(string(&m, "store_fixture")?);
     let store = read(&store_path)?;

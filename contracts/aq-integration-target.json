@@ -8,8 +8,10 @@
     "conformance_revision": 16
   },
   "binding_source": "Controller accepted WI-01 design, recovery-summary.json; commit is controller asserted, archive ZIP not independently verified.",
-  "execution_status": "not-run",
+  "execution_status": "candidate-evidence-external",
   "actual_checker_aq_dependencies": [],
   "historical_development_input": "97c9dc26c19c697dbfb204ed503e82c5f053394f",
-  "historical_runtime_aq": "registry crates 0.1.0/0.1.1; see frozen Cargo.lock; not target conformance"
+  "historical_runtime_aq": "registry crates 0.1.0/0.1.1; see frozen Cargo.lock; not target conformance",
+  "consumer_manifest": "crates/worldinterface-runtime/Cargo.toml",
+  "consumer_reconciliation": "contracts/aq-consumer-reconciliation.json"
 }

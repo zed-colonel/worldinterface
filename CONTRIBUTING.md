@@ -43,9 +43,9 @@ inventory and dispositions. Pure state changes require property tests, durable
 changes replay tests, and external/cross-store changes crash tests. WI-01 changes
 only development contracts; it does not implement new runtime recovery.
 
-Run `scripts/check-wi-contract.sh` using the supplied controller Cargo launcher and
-explicit `CRAFTINGTABLE_CARGO_CONFIG`. Keep `CARGO_TARGET_DIR` and verification
-artifacts outside the checkout. Local CI is
+Run `ct-check -- scripts/check-wi-contract.sh` using the supplied controller Cargo
+launcher natively; CI uses explicit `CRAFTINGTABLE_CARGO_CONFIG`. Keep
+`CARGO_TARGET_DIR` and verification artifacts outside the checkout. Local CI is
 `ct-act -W .github/workflows/wi-contract.yml -j contract`. Controller `ct-check`
 retains repository check evidence. Historical runtime characterization is separate
 from these independent checks; no current AQ integration is claimed.
@@ -59,6 +59,30 @@ set of unique approved milestone IDs including WI-01 entry. Each rule activates
 only when its own milestone is present; WI-04 and WI-05 need no WI-03 entry.
 Scheduling, dependency admission and rollback protection remain controller-owned.
 The checked-in state admits WI-01 only and asserts no completed milestone. Do not weaken policy files to make deletion gates pass.
+
+### WI-02 integration verification
+
+For the active integration slice, use Rust 1.89.0 and the supplied controller
+Cargo launcher. Run `ct-check -- scripts/check-wi-domain.sh`,
+`ct-check -- scripts/check-wi-contract.sh`, and
+`ct-check -- scripts/check-wi-integration.sh`; run each corresponding scoped
+workflow with `ct-act -W .github/workflows/wi-<scope>.yml -j <scope>`.
+Set the supplied manifest/config paths and `CRAFTINGTABLE_VERIFICATION_MODE` for
+native scripts. CI receives them from the controller and uses explicit Cargo
+configuration. The updated controller launcher supports AQ-free foundation/checker
+graphs and records them as supplementary checks, including in
+`current-upstream-build` mode. Use that launcher through `ct-check` normally;
+no native explicit-config bypass or artificial AQ dependency is needed.
+Supplementary receipts do not satisfy the current-upstream requirement: integration
+must still produce a successful controller Cargo build/test receipt against the
+exact supplied AQ pins. CI logs supplement those native receipts.
+
+Keep evidence outside build caches. Candidate case results require independent
+review before WI-AQ-G1 acceptance; repeat verification at the actual merged or
+rebased revision. Repository policy version 1 (adopted 2026-09-18) governs local
+integration and freeze controls. The operator owns remote protections before
+first publication and final release approval. Historical public maintenance and
+release obligations below remain due at their recorded milestones.
 
 ## License
 

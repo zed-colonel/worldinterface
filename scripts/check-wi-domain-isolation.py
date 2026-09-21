@@ -16,7 +16,18 @@ allowed = {
     "worldinterface-storage": {"worldinterface-protocol", "worldinterface-domain"},
 }
 packages = {p["id"]: p for p in meta["packages"]}
-assert {packages[p]["name"] for p in meta["workspace_members"]} == set(allowed)
+# Integration verification resolves the shared consumer graph. Inspect every
+# reachable dependency from all foundation roots, including optional/dev edges.
+nodes = {n["id"]: n for n in meta["resolve"]["nodes"]}
+pending = [p["id"] for p in packages.values() if p["name"] in allowed]
+assert len(pending) == len(allowed)
+reachable = set()
+while pending:
+    key = pending.pop()
+    if key in reachable: continue
+    reachable.add(key)
+    pending.extend(d["pkg"] for d in nodes[key]["deps"])
+packages = {k: v for k, v in packages.items() if k in reachable}
 for p in packages.values():
     name = p["name"]
     assert not name.startswith("actionqueue"), name

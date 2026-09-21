@@ -1,5 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
+export RUSTUP_TOOLCHAIN=1.89.0
 cd "$(dirname "$0")/.."
 : "${CRAFTINGTABLE_CARGO_CONFIG:?controller Cargo config is required}"
 : "${CRAFTINGTABLE_DEPENDENCY_MANIFEST:?controller dependency manifest is required}"
@@ -15,7 +16,12 @@ run_cargo() {
     cargo "$@"
   else
     # act's Rust installation must explicitly consume the mounted controller pins.
-    cargo --config "$CRAFTINGTABLE_CARGO_CONFIG" "$@"
+    if [[ "$1" == clippy ]]; then
+      shift
+      cargo --config "$CRAFTINGTABLE_CARGO_CONFIG" clippy --config "$CRAFTINGTABLE_CARGO_CONFIG" "$@"
+    else
+      cargo --config "$CRAFTINGTABLE_CARGO_CONFIG" "$@"
+    fi
   fi
 }
 rustc --version --verbose

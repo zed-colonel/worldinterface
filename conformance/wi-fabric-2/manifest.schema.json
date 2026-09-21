@@ -9,7 +9,10 @@
       "minimum": 1
     },
     "status": {
-      "const": "skeleton"
+      "enum": [
+        "skeleton",
+        "partial"
+      ]
     },
     "upstream_target": {
       "type": "object",
@@ -50,7 +53,10 @@
     },
     "assigned_aq_baseline_cases": {
       "type": "array",
-      "maxItems": 0
+      "items": {
+        "type": "string",
+        "minLength": 1
+      }
     },
     "fixture_manifest": {
       "type": "string",
@@ -89,6 +95,14 @@
           },
           "result": {
             "type": "null"
+          },
+          "source_record_sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "test_source": {
+            "type": "string",
+            "minLength": 1
           }
         },
         "required": [
@@ -143,6 +157,14 @@
       "const": "conformance/wi-fabric-2/store-scenarios.json"
     },
     "store_fixture_sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "integration_fixture": {
+      "type": "string",
+      "minLength": 1
+    },
+    "integration_fixture_sha256": {
       "type": "string",
       "pattern": "^[a-f0-9]{64}$"
     }

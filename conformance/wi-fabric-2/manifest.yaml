@@ -1,7 +1,7 @@
 {
   "contract": "WI-FABRIC-2",
   "package_revision": 1,
-  "status": "skeleton",
+  "status": "partial",
   "upstream_target": {
     "contract": "AQ-CONT-1",
     "implementation_commit": "29e096c4f06985d1a9bd9d5fe5a3a6a5db8a6860",
@@ -10,7 +10,11 @@
     "source_tree_sha256": "a6a8f87272d76e94e69e10d8bcf0992296d1bf8e28ff3d9222374c3b8cdcc34e",
     "conformance_revision": 16
   },
-  "assigned_aq_baseline_cases": [],
+  "assigned_aq_baseline_cases": [
+    "AB-WI-001",
+    "AB-WI-015",
+    "AB-WI-016"
+  ],
   "fixture_manifest": "fixtures/pre-wi-fabric-2/manifest.json",
   "fixture_manifest_sha256": "a03984aacf7c7b15f5d38ad5840958cbb784da02acaaa1d96f6bd054bb10882c",
   "cases": [
@@ -544,6 +548,39 @@
       "status": "unimplemented",
       "kind": "runtime",
       "result": null
+    },
+    {
+      "id": "AB-WI-001",
+      "invariants": [
+        "W1"
+      ],
+      "status": "implemented",
+      "kind": "runtime",
+      "result": null,
+      "source_record_sha256": "abeefc555e395a4dc1242d30e3537bd89541f271410a91e9589bef3267ac4ebf",
+      "test_source": "crates/worldinterface-runtime/tests/integration.rs"
+    },
+    {
+      "id": "AB-WI-015",
+      "invariants": [
+        "W1"
+      ],
+      "status": "implemented",
+      "kind": "runtime",
+      "result": null,
+      "source_record_sha256": "468730e76d4f44c133ceb65ff48b4efda113d03b1be3026ac4c58727e5dee6d1",
+      "test_source": "crates/worldinterface-runtime/tests/integration.rs"
+    },
+    {
+      "id": "AB-WI-016",
+      "invariants": [
+        "W1"
+      ],
+      "status": "implemented",
+      "kind": "runtime",
+      "result": null,
+      "source_record_sha256": "e9aae8a4df1330cd2ed265aef210847f82adf0bb7444a69cb689a9aeb8843a01",
+      "test_source": "crates/worldinterface-runtime/tests/integration.rs"
     }
   ],
   "store_scenarios": [
@@ -577,5 +614,7 @@
     }
   ],
   "store_fixture": "conformance/wi-fabric-2/store-scenarios.json",
-  "store_fixture_sha256": "57954a1042fd7845c4ecf72aa0f0524f7fb8f456d49ee9e501370add7658009d"
+  "store_fixture_sha256": "57954a1042fd7845c4ecf72aa0f0524f7fb8f456d49ee9e501370add7658009d",
+  "integration_fixture": "conformance/wi-fabric-2/integration/fixtures.json",
+  "integration_fixture_sha256": "e4acfd1d8b826c3277be873b3eac631176b98aa7a5d4b9328f62508780933cd0"
 }
