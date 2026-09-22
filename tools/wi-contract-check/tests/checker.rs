@@ -33,6 +33,7 @@ fn contract_repo() -> TempDir {
     let t = TempDir::new().unwrap();
     for d in [
         "contracts",
+        "crates/worldinterface-runtime",
         "conformance",
         "fixtures",
         "docs/adr",
@@ -77,7 +78,7 @@ fn inventory_is_complete_and_deterministic() {
     assert_eq!(a, b);
     for (k, n) in [
         ("workspace-crate", 10),
-        ("auxiliary-crate", 10),
+        ("auxiliary-crate", 11),
         ("foundation-crate", 6),
         ("connector", 25),
         ("wasm-manifest", 15),
@@ -389,7 +390,7 @@ fn wi02_drafts_require_acceptance_and_maturity() {
 fn runtime_receipt() -> Value {
     let m = read(&root().join("conformance/wi-fabric-2/manifest.yaml")).unwrap();
     let artifact = json!({"path":"synthetic.json","sha256":"a".repeat(64)});
-    json!({"schema_version":1,"kind":"runtime-conformance","phase":"candidate","case_id":"WI-SKELETON-W1","status":"passed","consumer_revision":"b".repeat(40),"upstream":m["upstream_target"],"upstream_build_receipt":artifact,"source_record_sha256":"c".repeat(64),"fixture_manifest_sha256":m["fixture_manifest_sha256"],"toolchain":"synthetic checker fixture only","environment_sha256":"d".repeat(64),"test_run_id":"synthetic-checker-test","command":{"argv":["synthetic"],"exit_code":0,"log":artifact},"results":[artifact],"independent_review":{"reviewer":"synthetic-reviewer","receipt":artifact}})
+    json!({"producer":"synthetic-producer","executable_case_sha256":"e".repeat(64),"integration_fixture_sha256":m["integration_fixture_sha256"],"resolved_packages_sha256":"f".repeat(64),"schema_version":1,"kind":"runtime-conformance","phase":"candidate","case_id":"WI-SKELETON-W1","status":"passed","consumer_revision":"b".repeat(40),"upstream":m["upstream_target"],"upstream_build_receipt":artifact,"source_record_sha256":"c".repeat(64),"fixture_manifest_sha256":m["fixture_manifest_sha256"],"toolchain":"synthetic checker fixture only","environment_sha256":"d".repeat(64),"test_run_id":"synthetic-checker-test","command":{"argv":["synthetic"],"exit_code":0,"log":artifact},"results":[artifact],"independent_review":{"reviewer":"synthetic-reviewer","receipt":artifact}})
 }
 #[test]
 fn execution_schema_requires_each_identity_and_result() {

@@ -169,6 +169,8 @@ impl StoreRoot {
             drop(conn);
             File::open(path.join(format!("{}.sqlite", kind.name())))?.sync_all()?;
             write_new(&path.join(format!("{}.json", kind.name())), &identity)?;
+            #[cfg(test)]
+            crate::crash::checkpoint("initialization-store");
             if interrupt_after == Some(i) {
                 return Err(invalid("injected initialization interruption"));
             }
@@ -177,6 +179,8 @@ impl StoreRoot {
         fs::remove_file(path.join("initializing"))?;
         // Root manifest is the completion marker and is published only after all stores.
         write_new(&path.join("manifest.pending"), &canonical_data(&manifest).map_err(invalid)?)?;
+        #[cfg(test)]
+        crate::crash::checkpoint("initialization-publish");
         fs::rename(path.join("manifest.pending"), path.join("manifest.json"))?;
         sync_dir(path)?;
         if let Some(parent) = parent_dir(path) {
@@ -356,6 +360,8 @@ impl StoreRoot {
         c.busy_timeout(std::time::Duration::from_secs(5))?;
         self.validate_identity(&c, kind)?;
         c.execute_batch("PRAGMA synchronous=FULL; PRAGMA foreign_keys=ON;")?;
+        #[cfg(test)]
+        crate::crash::prepare(&c);
         Ok(c)
     }
     pub fn backup_offline(source: impl AsRef<Path>, destination: impl AsRef<Path>) -> Result<()> {
@@ -382,7 +388,11 @@ impl StoreRoot {
             copy_dir(&source.path, &staging)?;
             drop(Self::open(&staging, true)?);
             // Publish the complete directory without a visible reservation window.
+            #[cfg(test)]
+            crate::crash::checkpoint("backup-publish");
             publish_directory(&staging, dest)?;
+            #[cfg(test)]
+            crate::crash::checkpoint("backup-renamed");
             sync_dir(parent)
         })();
         if result.is_err() {

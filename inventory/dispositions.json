@@ -3556,6 +3556,895 @@
     "source": "implementation plan \u00a71.1 and Appendix E"
   },
   {
+    "id": "crates/worldinterface-foundation/capability/Cargo.toml::foundation-crate:worldinterface-capability",
+    "disposition": "retain-align",
+    "target": "worldinterface-capability",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Structural capability/resource declarations without execution or policy."
+  },
+  {
+    "id": "crates/worldinterface-foundation/capability/src/lib.rs::::enum:Idempotency",
+    "disposition": "retain-align",
+    "target": "worldinterface-capability",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Structural capability/resource declarations without execution or policy."
+  },
+  {
+    "id": "crates/worldinterface-foundation/capability/src/lib.rs::::enum:Reconciliation",
+    "disposition": "retain-align",
+    "target": "worldinterface-capability",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Structural capability/resource declarations without execution or policy."
+  },
+  {
+    "id": "crates/worldinterface-foundation/capability/src/lib.rs::::source-module:crates/worldinterface-foundation/capability/src/lib.rs",
+    "disposition": "retain-align",
+    "target": "worldinterface-capability",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Structural capability/resource declarations without execution or policy."
+  },
+  {
+    "id": "crates/worldinterface-foundation/capability/src/lib.rs::::struct:CapabilityDescriptor",
+    "disposition": "retain-align",
+    "target": "worldinterface-capability",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Structural capability/resource declarations without execution or policy."
+  },
+  {
+    "id": "crates/worldinterface-foundation/capability/src/lib.rs::::struct:ResourceScope",
+    "disposition": "retain-align",
+    "target": "worldinterface-capability",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Structural capability/resource declarations without execution or policy."
+  },
+  {
+    "id": "crates/worldinterface-foundation/capability/tests/scope.rs::::source-module:crates/worldinterface-foundation/capability/tests/scope.rs",
+    "disposition": "test-evidence",
+    "target": "worldinterface-capability",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Local synthetic conformance fixture/test; no upstream integration claim."
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/Cargo.toml::foundation-crate:worldinterface-domain",
+    "disposition": "retain-align",
+    "target": "worldinterface-domain",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Pure reducer and named internal queue ports; no production adapters."
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/lib.rs::::enum:Action",
+    "disposition": "retain-align",
+    "target": "worldinterface-domain",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Pure reducer and named internal queue ports; no production adapters."
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/lib.rs::::enum:Machine",
+    "disposition": "retain-align",
+    "target": "worldinterface-domain",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Pure reducer and named internal queue ports; no production adapters."
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/lib.rs::::enum:Phase",
+    "disposition": "retain-align",
+    "target": "worldinterface-domain",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Pure reducer and named internal queue ports; no production adapters."
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/lib.rs::::enum:TransitionError",
+    "disposition": "retain-align",
+    "target": "worldinterface-domain",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Pure reducer and named internal queue ports; no production adapters."
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/lib.rs::::module:ports",
+    "disposition": "retain-align",
+    "target": "worldinterface-domain",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Pure reducer and named internal queue ports; no production adapters."
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/lib.rs::::source-module:crates/worldinterface-foundation/domain/src/lib.rs",
+    "disposition": "retain-align",
+    "target": "worldinterface-domain",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Pure reducer and named internal queue ports; no production adapters."
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/lib.rs::::struct:Event",
+    "disposition": "retain-align",
+    "target": "worldinterface-domain",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Pure reducer and named internal queue ports; no production adapters."
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/lib.rs::::struct:State",
+    "disposition": "retain-align",
+    "target": "worldinterface-domain",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Pure reducer and named internal queue ports; no production adapters."
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/ports.rs::::enum:AdmissionResult",
+    "disposition": "retain-align",
+    "target": "worldinterface-domain",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Pure reducer and named internal queue ports; no production adapters."
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/ports.rs::::enum:QueueStatus",
+    "disposition": "retain-align",
+    "target": "worldinterface-domain",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Pure reducer and named internal queue ports; no production adapters."
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/ports.rs::::source-module:crates/worldinterface-foundation/domain/src/ports.rs",
+    "disposition": "retain-align",
+    "target": "worldinterface-domain",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Pure reducer and named internal queue ports; no production adapters."
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/ports.rs::::struct:QueueAdmission",
+    "disposition": "retain-align",
+    "target": "worldinterface-domain",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Pure reducer and named internal queue ports; no production adapters."
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/ports.rs::::trait:QueueAdmissionPort",
+    "disposition": "retain-align",
+    "target": "worldinterface-domain",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Pure reducer and named internal queue ports; no production adapters."
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/ports.rs::::trait:QueueInspectionPort",
+    "disposition": "retain-align",
+    "target": "worldinterface-domain",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Pure reducer and named internal queue ports; no production adapters."
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/ports.rs::::trait:QueueWakePort",
+    "disposition": "retain-align",
+    "target": "worldinterface-domain",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Pure reducer and named internal queue ports; no production adapters."
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/tests/transitions.rs::::source-module:crates/worldinterface-foundation/domain/tests/transitions.rs",
+    "disposition": "test-evidence",
+    "target": "worldinterface-domain",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Local synthetic conformance fixture/test; no upstream integration claim."
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/tests/transitions.rs::queue_ports_have_only_test_composition::struct:Mock",
+    "disposition": "test-evidence",
+    "target": "worldinterface-domain",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Local synthetic conformance fixture/test; no upstream integration claim."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/Cargo.toml::foundation-crate:worldinterface-protocol",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/canonical.rs::::source-module:crates/worldinterface-foundation/protocol/src/canonical.rs",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/canonical.rs::::struct:Envelope",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/canonical.rs::::struct:Unique",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/canonical.rs::impl Unique::struct:V",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::source-module:crates/worldinterface-foundation/protocol/src/identity.rs",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:ActorId",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:AuthorizationId",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:CandidateId",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:ClientRequestId",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:ContentHash",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:DeliveryId",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:EffectIntentId",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:EntityId",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:IngressBindingId",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:InstanceId",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:ObservationId",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:OpaqueRef",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:PlanId",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:PrincipalId",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:ProofId",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:ReceiptId",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:ReconciliationId",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:SandboxId",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:Timestamp",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:WorkerId",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/lib.rs::::module:canonical",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/lib.rs::::module:identity",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/lib.rs::::module:records",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/lib.rs::::source-module:crates/worldinterface-foundation/protocol/src/lib.rs",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/lib.rs::::type:Result",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::enum:Decision",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::enum:EffectClass",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::enum:ExecutionOutcome",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::enum:ImageApplicability",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::enum:LifecycleOperation",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::enum:ProviderKind",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::enum:ReceiptBody",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::enum:ReconciliationResult",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::enum:Record",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::enum:RedistributionPolicy",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::source-module:crates/worldinterface-foundation/protocol/src/records.rs",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:ActingCapacityRef",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:AgencyContext",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:ArtifactRef",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:AuthorizationDecision",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:BoundaryObservation",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:BoundaryReceipt",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:BoundaryVersions",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:CandidateAcceptance",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:CandidateArtifact",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:CandidateVerification",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:CanonicalResourceRef",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:CommissioningSubmission",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:ComponentProvenance",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:ControlEvidence",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:ControlValues",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:EffectBudget",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:EffectInputRef",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:EffectIntent",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:EffectSubmission",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:EgressReceipt",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:EvidenceRef",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:ExecutionRecord",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:ImmutableArtifactManifest",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:InformationUseEnvelope",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:IngressBindingSubmission",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:IngressReceipt",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:LifecycleRecord",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:ReconciliationRecord",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:ResolvedEffect",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:ResourceSelector",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:TemporalProvenance",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:TimeEvidence",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/tests/canonical.rs::::source-module:crates/worldinterface-foundation/protocol/tests/canonical.rs",
+    "disposition": "test-evidence",
+    "target": "worldinterface-protocol",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Local synthetic conformance fixture/test; no upstream integration claim."
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/Cargo.toml::foundation-crate:worldinterface-storage",
+    "disposition": "retain-align",
+    "target": "worldinterface-storage",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Fresh local persistence and query/backup primitives; no legacy readers or external effects."
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/contextstore.rs::::module:tests@10d1b0eff34c",
+    "disposition": "test-evidence",
+    "target": "worldinterface-storage",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Local synthetic conformance fixture/test; no upstream integration claim."
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/contextstore.rs::::source-module:crates/worldinterface-foundation/storage/src/contextstore.rs",
+    "disposition": "retain-align",
+    "target": "worldinterface-storage",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Fresh local persistence and query/backup primitives; no legacy readers or external effects."
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/lib.rs::::module:contextstore",
+    "disposition": "retain-align",
+    "target": "worldinterface-storage",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Fresh local persistence and query/backup primitives; no legacy readers or external effects."
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/lib.rs::::module:crash@10d1b0eff34c",
+    "disposition": "retain-align",
+    "target": "WI-02 G1 runtime boundary and source evidence validation",
+    "source": "implementation plan WI-02, \u00a75.3; accepted WI-02 integration design",
+    "rationale": "AQ-owned queue authority, authenticated artifact resolution and validated store recovery; independent acceptance remains required."
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/lib.rs::::module:repository",
+    "disposition": "retain-align",
+    "target": "worldinterface-storage",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Fresh local persistence and query/backup primitives; no legacy readers or external effects."
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/lib.rs::::module:root",
+    "disposition": "retain-align",
+    "target": "worldinterface-storage",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Fresh local persistence and query/backup primitives; no legacy readers or external effects."
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/lib.rs::::source-module:crates/worldinterface-foundation/storage/src/lib.rs",
+    "disposition": "retain-align",
+    "target": "worldinterface-storage",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Fresh local persistence and query/backup primitives; no legacy readers or external effects."
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/lib.rs::::type:Result",
+    "disposition": "retain-align",
+    "target": "worldinterface-storage",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Fresh local persistence and query/backup primitives; no legacy readers or external effects."
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/repository.rs::::module:tests@10d1b0eff34c",
+    "disposition": "test-evidence",
+    "target": "worldinterface-storage",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Local synthetic conformance fixture/test; no upstream integration claim."
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/repository.rs::::source-module:crates/worldinterface-foundation/storage/src/repository.rs",
+    "disposition": "retain-align",
+    "target": "worldinterface-storage",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Fresh local persistence and query/backup primitives; no legacy readers or external effects."
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/repository.rs::::struct:Admission",
+    "disposition": "retain-align",
+    "target": "worldinterface-storage",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Fresh local persistence and query/backup primitives; no legacy readers or external effects."
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/repository.rs::::struct:AdmissionScope",
+    "disposition": "retain-align",
+    "target": "worldinterface-storage",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Fresh local persistence and query/backup primitives; no legacy readers or external effects."
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/repository.rs::::struct:Batch",
+    "disposition": "retain-align",
+    "target": "worldinterface-storage",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Fresh local persistence and query/backup primitives; no legacy readers or external effects."
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/repository.rs::::struct:HistoryEntry",
+    "disposition": "retain-align",
+    "target": "worldinterface-storage",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Fresh local persistence and query/backup primitives; no legacy readers or external effects."
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/repository.rs::::struct:OutboxEntry",
+    "disposition": "retain-align",
+    "target": "worldinterface-storage",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Fresh local persistence and query/backup primitives; no legacy readers or external effects."
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/repository.rs::::struct:Projection",
+    "disposition": "retain-align",
+    "target": "worldinterface-storage",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Fresh local persistence and query/backup primitives; no legacy readers or external effects."
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/repository.rs::::struct:Repository",
+    "disposition": "retain-align",
+    "target": "worldinterface-storage",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Fresh local persistence and query/backup primitives; no legacy readers or external effects."
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/root.rs::::enum:StoreKind",
+    "disposition": "retain-align",
+    "target": "worldinterface-storage",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Fresh local persistence and query/backup primitives; no legacy readers or external effects."
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/root.rs::::module:tests@10d1b0eff34c",
+    "disposition": "test-evidence",
+    "target": "worldinterface-storage",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Local synthetic conformance fixture/test; no upstream integration claim."
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/root.rs::::source-module:crates/worldinterface-foundation/storage/src/root.rs",
+    "disposition": "retain-align",
+    "target": "worldinterface-storage",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Fresh local persistence and query/backup primitives; no legacy readers or external effects."
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/root.rs::::struct:Manifest",
+    "disposition": "retain-align",
+    "target": "worldinterface-storage",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Fresh local persistence and query/backup primitives; no legacy readers or external effects."
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/root.rs::::struct:StoreManifest",
+    "disposition": "retain-align",
+    "target": "worldinterface-storage",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Fresh local persistence and query/backup primitives; no legacy readers or external effects."
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/root.rs::::struct:StoreProfile",
+    "disposition": "retain-align",
+    "target": "worldinterface-storage",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Fresh local persistence and query/backup primitives; no legacy readers or external effects."
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/root.rs::::struct:StoreRoot",
+    "disposition": "retain-align",
+    "target": "worldinterface-storage",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Fresh local persistence and query/backup primitives; no legacy readers or external effects."
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/tests/stores.rs::::source-module:crates/worldinterface-foundation/storage/tests/stores.rs",
+    "disposition": "test-evidence",
+    "target": "worldinterface-storage",
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
+    "rationale": "Local synthetic conformance fixture/test; no upstream integration claim."
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/tests/support/crash.rs::::source-module:crates/worldinterface-foundation/storage/tests/support/crash.rs",
+    "disposition": "test-evidence",
+    "target": "WI-02 G1 runtime boundary and source evidence validation",
+    "source": "implementation plan WI-02, \u00a75.3; accepted WI-02 integration design",
+    "rationale": "AQ-owned queue authority, authenticated artifact resolution and validated store recovery; independent acceptance remains required."
+  },
+  {
     "id": "crates/worldinterface-host/Cargo.toml::workspace-crate:worldinterface-host",
     "disposition": "rebuild",
     "target": "embedded / runtime",
@@ -4156,6 +5045,174 @@
     "target": "ingress",
     "rationale": "Authenticate and durably receipt provider observations",
     "source": "implementation plan \u00a71.1 and Appendix E"
+  },
+  {
+    "id": "crates/worldinterface-runtime/Cargo.toml::auxiliary-crate:worldinterface-runtime",
+    "disposition": "retain-align",
+    "target": "WI-02 G1 runtime boundary and source evidence validation",
+    "source": "implementation plan WI-02, \u00a75.3; accepted WI-02 integration design",
+    "rationale": "AQ-owned queue authority, authenticated artifact resolution and validated store recovery; independent acceptance remains required."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/aq_adapter.rs::::source-module:crates/worldinterface-runtime/src/aq_adapter.rs",
+    "disposition": "retain-align",
+    "target": "WI-02 G1 runtime boundary and source evidence validation",
+    "source": "implementation plan WI-02, \u00a75.3; accepted WI-02 integration design",
+    "rationale": "AQ-owned queue authority, authenticated artifact resolution and validated store recovery; independent acceptance remains required."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/aq_adapter.rs::::struct:QueueProvenance",
+    "disposition": "retain-align",
+    "target": "WI-02 G1 runtime boundary and source evidence validation",
+    "source": "implementation plan WI-02, \u00a75.3; accepted WI-02 integration design",
+    "rationale": "AQ-owned queue authority, authenticated artifact resolution and validated store recovery; independent acceptance remains required."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/aq_adapter.rs::::struct:QueueReferences",
+    "disposition": "retain-align",
+    "target": "WI-02 G1 runtime boundary and source evidence validation",
+    "source": "implementation plan WI-02, \u00a75.3; accepted WI-02 integration design",
+    "rationale": "AQ-owned queue authority, authenticated artifact resolution and validated store recovery; independent acceptance remains required."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/aq_adapter.rs::::struct:QueueStoreId",
+    "disposition": "retain-align",
+    "target": "WI-02 G1 runtime boundary and source evidence validation",
+    "source": "implementation plan WI-02, \u00a75.3; accepted WI-02 integration design",
+    "rationale": "AQ-owned queue authority, authenticated artifact resolution and validated store recovery; independent acceptance remains required."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/aq_adapter.rs::::struct:TaskInputLocator",
+    "disposition": "retain-align",
+    "target": "WI-02 G1 runtime boundary and source evidence validation",
+    "source": "implementation plan WI-02, \u00a75.3; accepted WI-02 integration design",
+    "rationale": "AQ-owned queue authority, authenticated artifact resolution and validated store recovery; independent acceptance remains required."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/artifact.rs::::source-module:crates/worldinterface-runtime/src/artifact.rs",
+    "disposition": "retain-align",
+    "target": "WI-02 G1 runtime boundary and source evidence validation",
+    "source": "implementation plan WI-02, \u00a75.3; accepted WI-02 integration design",
+    "rationale": "AQ-owned queue authority, authenticated artifact resolution and validated store recovery; independent acceptance remains required."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/artifact.rs::::struct:ArtifactResolver",
+    "disposition": "retain-align",
+    "target": "WI-02 G1 runtime boundary and source evidence validation",
+    "source": "implementation plan WI-02, \u00a75.3; accepted WI-02 integration design",
+    "rationale": "AQ-owned queue authority, authenticated artifact resolution and validated store recovery; independent acceptance remains required."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/artifact.rs::::trait:ArtifactAuthorization",
+    "disposition": "retain-align",
+    "target": "WI-02 G1 runtime boundary and source evidence validation",
+    "source": "implementation plan WI-02, \u00a75.3; accepted WI-02 integration design",
+    "rationale": "AQ-owned queue authority, authenticated artifact resolution and validated store recovery; independent acceptance remains required."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/lib.rs::::module:aq_adapter",
+    "disposition": "retain-align",
+    "target": "WI-02 G1 runtime boundary and source evidence validation",
+    "source": "implementation plan WI-02, \u00a75.3; accepted WI-02 integration design",
+    "rationale": "AQ-owned queue authority, authenticated artifact resolution and validated store recovery; independent acceptance remains required."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/lib.rs::::module:artifact",
+    "disposition": "retain-align",
+    "target": "WI-02 G1 runtime boundary and source evidence validation",
+    "source": "implementation plan WI-02, \u00a75.3; accepted WI-02 integration design",
+    "rationale": "AQ-owned queue authority, authenticated artifact resolution and validated store recovery; independent acceptance remains required."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/lib.rs::::module:crash@10d1b0eff34c",
+    "disposition": "retain-align",
+    "target": "WI-02 G1 runtime boundary and source evidence validation",
+    "source": "implementation plan WI-02, \u00a75.3; accepted WI-02 integration design",
+    "rationale": "AQ-owned queue authority, authenticated artifact resolution and validated store recovery; independent acceptance remains required."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/lib.rs::::module:storage",
+    "disposition": "retain-align",
+    "target": "WI-02 G1 runtime boundary and source evidence validation",
+    "source": "implementation plan WI-02, \u00a75.3; accepted WI-02 integration design",
+    "rationale": "AQ-owned queue authority, authenticated artifact resolution and validated store recovery; independent acceptance remains required."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/lib.rs::::source-module:crates/worldinterface-runtime/src/lib.rs",
+    "disposition": "retain-align",
+    "target": "WI-02 G1 runtime boundary and source evidence validation",
+    "source": "implementation plan WI-02, \u00a75.3; accepted WI-02 integration design",
+    "rationale": "AQ-owned queue authority, authenticated artifact resolution and validated store recovery; independent acceptance remains required."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/lib.rs::::type:Result",
+    "disposition": "retain-align",
+    "target": "WI-02 G1 runtime boundary and source evidence validation",
+    "source": "implementation plan WI-02, \u00a75.3; accepted WI-02 integration design",
+    "rationale": "AQ-owned queue authority, authenticated artifact resolution and validated store recovery; independent acceptance remains required."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/storage.rs::::source-module:crates/worldinterface-runtime/src/storage.rs",
+    "disposition": "retain-align",
+    "target": "WI-02 G1 runtime boundary and source evidence validation",
+    "source": "implementation plan WI-02, \u00a75.3; accepted WI-02 integration design",
+    "rationale": "AQ-owned queue authority, authenticated artifact resolution and validated store recovery; independent acceptance remains required."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/storage.rs::::struct:BundleManifest",
+    "disposition": "retain-align",
+    "target": "WI-02 G1 runtime boundary and source evidence validation",
+    "source": "implementation plan WI-02, \u00a75.3; accepted WI-02 integration design",
+    "rationale": "AQ-owned queue authority, authenticated artifact resolution and validated store recovery; independent acceptance remains required."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/storage.rs::::struct:StoreBundle",
+    "disposition": "retain-align",
+    "target": "WI-02 G1 runtime boundary and source evidence validation",
+    "source": "implementation plan WI-02, \u00a75.3; accepted WI-02 integration design",
+    "rationale": "AQ-owned queue authority, authenticated artifact resolution and validated store recovery; independent acceptance remains required."
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/integration.rs::::source-module:crates/worldinterface-runtime/tests/integration.rs",
+    "disposition": "test-evidence",
+    "target": "WI-02 G1 runtime boundary and source evidence validation",
+    "source": "implementation plan WI-02, \u00a75.3; accepted WI-02 integration design",
+    "rationale": "AQ-owned queue authority, authenticated artifact resolution and validated store recovery; independent acceptance remains required."
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/integration.rs::::struct:AuthenticatedSession",
+    "disposition": "test-evidence",
+    "target": "WI-02 G1 runtime boundary and source evidence validation",
+    "source": "implementation plan WI-02, \u00a75.3; accepted WI-02 integration design",
+    "rationale": "AQ-owned queue authority, authenticated artifact resolution and validated store recovery; independent acceptance remains required."
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/integration.rs::::struct:Complete",
+    "disposition": "test-evidence",
+    "target": "WI-02 G1 runtime boundary and source evidence validation",
+    "source": "implementation plan WI-02, \u00a75.3; accepted WI-02 integration design",
+    "rationale": "AQ-owned queue authority, authenticated artifact resolution and validated store recovery; independent acceptance remains required."
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/integration.rs::::struct:Handler",
+    "disposition": "test-evidence",
+    "target": "WI-02 G1 runtime boundary and source evidence validation",
+    "source": "implementation plan WI-02, \u00a75.3; accepted WI-02 integration design",
+    "rationale": "AQ-owned queue authority, authenticated artifact resolution and validated store recovery; independent acceptance remains required."
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/integration.rs::::struct:Policy",
+    "disposition": "test-evidence",
+    "target": "WI-02 G1 runtime boundary and source evidence validation",
+    "source": "implementation plan WI-02, \u00a75.3; accepted WI-02 integration design",
+    "rationale": "AQ-owned queue authority, authenticated artifact resolution and validated store recovery; independent acceptance remains required."
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/crash.rs::::source-module:crates/worldinterface-runtime/tests/support/crash.rs",
+    "disposition": "test-evidence",
+    "target": "WI-02 G1 runtime boundary and source evidence validation",
+    "source": "implementation plan WI-02, \u00a75.3; accepted WI-02 integration design",
+    "rationale": "AQ-owned queue authority, authenticated artifact resolution and validated store recovery; independent acceptance remains required."
   },
   {
     "id": "crates/worldinterface-wasm/Cargo.toml::workspace-crate:worldinterface-wasm",
@@ -5213,881 +6270,6 @@
     "target": "capability admission / WASM adapter",
     "rationale": "Each high-value semantic connector requires admission review before target retention",
     "source": "implementation plan \u00a71.1 and Appendix E"
-  },
-  {
-    "id": "crates/worldinterface-foundation/capability/Cargo.toml::foundation-crate:worldinterface-capability",
-    "disposition": "retain-align",
-    "target": "worldinterface-capability",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Structural capability/resource declarations without execution or policy."
-  },
-  {
-    "id": "crates/worldinterface-foundation/capability/src/lib.rs::::enum:Idempotency",
-    "disposition": "retain-align",
-    "target": "worldinterface-capability",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Structural capability/resource declarations without execution or policy."
-  },
-  {
-    "id": "crates/worldinterface-foundation/capability/src/lib.rs::::enum:Reconciliation",
-    "disposition": "retain-align",
-    "target": "worldinterface-capability",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Structural capability/resource declarations without execution or policy."
-  },
-  {
-    "id": "crates/worldinterface-foundation/capability/src/lib.rs::::source-module:crates/worldinterface-foundation/capability/src/lib.rs",
-    "disposition": "retain-align",
-    "target": "worldinterface-capability",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Structural capability/resource declarations without execution or policy."
-  },
-  {
-    "id": "crates/worldinterface-foundation/capability/src/lib.rs::::struct:CapabilityDescriptor",
-    "disposition": "retain-align",
-    "target": "worldinterface-capability",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Structural capability/resource declarations without execution or policy."
-  },
-  {
-    "id": "crates/worldinterface-foundation/capability/src/lib.rs::::struct:ResourceScope",
-    "disposition": "retain-align",
-    "target": "worldinterface-capability",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Structural capability/resource declarations without execution or policy."
-  },
-  {
-    "id": "crates/worldinterface-foundation/capability/tests/scope.rs::::source-module:crates/worldinterface-foundation/capability/tests/scope.rs",
-    "disposition": "test-evidence",
-    "target": "worldinterface-capability",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Local synthetic conformance fixture/test; no upstream integration claim."
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/Cargo.toml::foundation-crate:worldinterface-domain",
-    "disposition": "retain-align",
-    "target": "worldinterface-domain",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Pure reducer and named internal queue ports; no production adapters."
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/lib.rs::::enum:Action",
-    "disposition": "retain-align",
-    "target": "worldinterface-domain",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Pure reducer and named internal queue ports; no production adapters."
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/lib.rs::::enum:Machine",
-    "disposition": "retain-align",
-    "target": "worldinterface-domain",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Pure reducer and named internal queue ports; no production adapters."
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/lib.rs::::enum:Phase",
-    "disposition": "retain-align",
-    "target": "worldinterface-domain",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Pure reducer and named internal queue ports; no production adapters."
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/lib.rs::::enum:TransitionError",
-    "disposition": "retain-align",
-    "target": "worldinterface-domain",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Pure reducer and named internal queue ports; no production adapters."
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/lib.rs::::module:ports",
-    "disposition": "retain-align",
-    "target": "worldinterface-domain",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Pure reducer and named internal queue ports; no production adapters."
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/lib.rs::::source-module:crates/worldinterface-foundation/domain/src/lib.rs",
-    "disposition": "retain-align",
-    "target": "worldinterface-domain",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Pure reducer and named internal queue ports; no production adapters."
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/lib.rs::::struct:Event",
-    "disposition": "retain-align",
-    "target": "worldinterface-domain",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Pure reducer and named internal queue ports; no production adapters."
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/lib.rs::::struct:State",
-    "disposition": "retain-align",
-    "target": "worldinterface-domain",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Pure reducer and named internal queue ports; no production adapters."
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/ports.rs::::enum:AdmissionResult",
-    "disposition": "retain-align",
-    "target": "worldinterface-domain",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Pure reducer and named internal queue ports; no production adapters."
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/ports.rs::::enum:QueueStatus",
-    "disposition": "retain-align",
-    "target": "worldinterface-domain",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Pure reducer and named internal queue ports; no production adapters."
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/ports.rs::::source-module:crates/worldinterface-foundation/domain/src/ports.rs",
-    "disposition": "retain-align",
-    "target": "worldinterface-domain",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Pure reducer and named internal queue ports; no production adapters."
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/ports.rs::::struct:QueueAdmission",
-    "disposition": "retain-align",
-    "target": "worldinterface-domain",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Pure reducer and named internal queue ports; no production adapters."
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/ports.rs::::trait:QueueAdmissionPort",
-    "disposition": "retain-align",
-    "target": "worldinterface-domain",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Pure reducer and named internal queue ports; no production adapters."
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/ports.rs::::trait:QueueInspectionPort",
-    "disposition": "retain-align",
-    "target": "worldinterface-domain",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Pure reducer and named internal queue ports; no production adapters."
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/ports.rs::::trait:QueueWakePort",
-    "disposition": "retain-align",
-    "target": "worldinterface-domain",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Pure reducer and named internal queue ports; no production adapters."
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/tests/transitions.rs::::source-module:crates/worldinterface-foundation/domain/tests/transitions.rs",
-    "disposition": "test-evidence",
-    "target": "worldinterface-domain",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Local synthetic conformance fixture/test; no upstream integration claim."
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/tests/transitions.rs::queue_ports_have_only_test_composition::struct:Mock",
-    "disposition": "test-evidence",
-    "target": "worldinterface-domain",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Local synthetic conformance fixture/test; no upstream integration claim."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/Cargo.toml::foundation-crate:worldinterface-protocol",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/canonical.rs::::source-module:crates/worldinterface-foundation/protocol/src/canonical.rs",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/canonical.rs::::struct:Envelope",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/canonical.rs::::struct:Unique",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/canonical.rs::impl Unique::struct:V",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::source-module:crates/worldinterface-foundation/protocol/src/identity.rs",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:ActorId",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:AuthorizationId",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:CandidateId",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:ClientRequestId",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:ContentHash",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:DeliveryId",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:EffectIntentId",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:EntityId",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:IngressBindingId",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:InstanceId",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:ObservationId",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:OpaqueRef",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:PlanId",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:PrincipalId",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:ProofId",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:ReceiptId",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:ReconciliationId",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:SandboxId",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:Timestamp",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:WorkerId",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/lib.rs::::module:canonical",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/lib.rs::::module:identity",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/lib.rs::::module:records",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/lib.rs::::source-module:crates/worldinterface-foundation/protocol/src/lib.rs",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/lib.rs::::type:Result",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::enum:Decision",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::enum:EffectClass",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::enum:ExecutionOutcome",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::enum:ImageApplicability",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::enum:LifecycleOperation",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::enum:ProviderKind",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::enum:ReceiptBody",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::enum:ReconciliationResult",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::enum:Record",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::enum:RedistributionPolicy",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::source-module:crates/worldinterface-foundation/protocol/src/records.rs",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:ActingCapacityRef",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:AgencyContext",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:ArtifactRef",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:AuthorizationDecision",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:BoundaryObservation",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:BoundaryReceipt",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:CandidateAcceptance",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:CandidateArtifact",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:CandidateVerification",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:CanonicalResourceRef",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:CommissioningSubmission",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:ComponentProvenance",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:ControlEvidence",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:ControlValues",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:EffectInputRef",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:EffectIntent",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:EffectSubmission",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:EgressReceipt",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:EvidenceRef",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:ExecutionRecord",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:ImmutableArtifactManifest",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:InformationUseEnvelope",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:IngressBindingSubmission",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:IngressReceipt",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:LifecycleRecord",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:ReconciliationRecord",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:ResolvedEffect",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:ResourceSelector",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:TemporalProvenance",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/tests/canonical.rs::::source-module:crates/worldinterface-foundation/protocol/tests/canonical.rs",
-    "disposition": "test-evidence",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Local synthetic conformance fixture/test; no upstream integration claim."
-  },
-  {
-    "id": "crates/worldinterface-foundation/storage/Cargo.toml::foundation-crate:worldinterface-storage",
-    "disposition": "retain-align",
-    "target": "worldinterface-storage",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Fresh local persistence and query/backup primitives; no legacy readers or external effects."
-  },
-  {
-    "id": "crates/worldinterface-foundation/storage/src/contextstore.rs::::module:tests@10d1b0eff34c",
-    "disposition": "test-evidence",
-    "target": "worldinterface-storage",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Local synthetic conformance fixture/test; no upstream integration claim."
-  },
-  {
-    "id": "crates/worldinterface-foundation/storage/src/contextstore.rs::::source-module:crates/worldinterface-foundation/storage/src/contextstore.rs",
-    "disposition": "retain-align",
-    "target": "worldinterface-storage",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Fresh local persistence and query/backup primitives; no legacy readers or external effects."
-  },
-  {
-    "id": "crates/worldinterface-foundation/storage/src/lib.rs::::module:contextstore",
-    "disposition": "retain-align",
-    "target": "worldinterface-storage",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Fresh local persistence and query/backup primitives; no legacy readers or external effects."
-  },
-  {
-    "id": "crates/worldinterface-foundation/storage/src/lib.rs::::module:repository",
-    "disposition": "retain-align",
-    "target": "worldinterface-storage",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Fresh local persistence and query/backup primitives; no legacy readers or external effects."
-  },
-  {
-    "id": "crates/worldinterface-foundation/storage/src/lib.rs::::module:root",
-    "disposition": "retain-align",
-    "target": "worldinterface-storage",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Fresh local persistence and query/backup primitives; no legacy readers or external effects."
-  },
-  {
-    "id": "crates/worldinterface-foundation/storage/src/lib.rs::::source-module:crates/worldinterface-foundation/storage/src/lib.rs",
-    "disposition": "retain-align",
-    "target": "worldinterface-storage",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Fresh local persistence and query/backup primitives; no legacy readers or external effects."
-  },
-  {
-    "id": "crates/worldinterface-foundation/storage/src/lib.rs::::type:Result",
-    "disposition": "retain-align",
-    "target": "worldinterface-storage",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Fresh local persistence and query/backup primitives; no legacy readers or external effects."
-  },
-  {
-    "id": "crates/worldinterface-foundation/storage/src/repository.rs::::module:tests@10d1b0eff34c",
-    "disposition": "test-evidence",
-    "target": "worldinterface-storage",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Local synthetic conformance fixture/test; no upstream integration claim."
-  },
-  {
-    "id": "crates/worldinterface-foundation/storage/src/repository.rs::::source-module:crates/worldinterface-foundation/storage/src/repository.rs",
-    "disposition": "retain-align",
-    "target": "worldinterface-storage",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Fresh local persistence and query/backup primitives; no legacy readers or external effects."
-  },
-  {
-    "id": "crates/worldinterface-foundation/storage/src/repository.rs::::struct:Admission",
-    "disposition": "retain-align",
-    "target": "worldinterface-storage",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Fresh local persistence and query/backup primitives; no legacy readers or external effects."
-  },
-  {
-    "id": "crates/worldinterface-foundation/storage/src/repository.rs::::struct:AdmissionScope",
-    "disposition": "retain-align",
-    "target": "worldinterface-storage",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Fresh local persistence and query/backup primitives; no legacy readers or external effects."
-  },
-  {
-    "id": "crates/worldinterface-foundation/storage/src/repository.rs::::struct:Batch",
-    "disposition": "retain-align",
-    "target": "worldinterface-storage",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Fresh local persistence and query/backup primitives; no legacy readers or external effects."
-  },
-  {
-    "id": "crates/worldinterface-foundation/storage/src/repository.rs::::struct:HistoryEntry",
-    "disposition": "retain-align",
-    "target": "worldinterface-storage",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Fresh local persistence and query/backup primitives; no legacy readers or external effects."
-  },
-  {
-    "id": "crates/worldinterface-foundation/storage/src/repository.rs::::struct:OutboxEntry",
-    "disposition": "retain-align",
-    "target": "worldinterface-storage",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Fresh local persistence and query/backup primitives; no legacy readers or external effects."
-  },
-  {
-    "id": "crates/worldinterface-foundation/storage/src/repository.rs::::struct:Projection",
-    "disposition": "retain-align",
-    "target": "worldinterface-storage",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Fresh local persistence and query/backup primitives; no legacy readers or external effects."
-  },
-  {
-    "id": "crates/worldinterface-foundation/storage/src/repository.rs::::struct:Repository",
-    "disposition": "retain-align",
-    "target": "worldinterface-storage",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Fresh local persistence and query/backup primitives; no legacy readers or external effects."
-  },
-  {
-    "id": "crates/worldinterface-foundation/storage/src/root.rs::::enum:StoreKind",
-    "disposition": "retain-align",
-    "target": "worldinterface-storage",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Fresh local persistence and query/backup primitives; no legacy readers or external effects."
-  },
-  {
-    "id": "crates/worldinterface-foundation/storage/src/root.rs::::module:tests@10d1b0eff34c",
-    "disposition": "test-evidence",
-    "target": "worldinterface-storage",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Local synthetic conformance fixture/test; no upstream integration claim."
-  },
-  {
-    "id": "crates/worldinterface-foundation/storage/src/root.rs::::source-module:crates/worldinterface-foundation/storage/src/root.rs",
-    "disposition": "retain-align",
-    "target": "worldinterface-storage",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Fresh local persistence and query/backup primitives; no legacy readers or external effects."
-  },
-  {
-    "id": "crates/worldinterface-foundation/storage/src/root.rs::::struct:Manifest",
-    "disposition": "retain-align",
-    "target": "worldinterface-storage",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Fresh local persistence and query/backup primitives; no legacy readers or external effects."
-  },
-  {
-    "id": "crates/worldinterface-foundation/storage/src/root.rs::::struct:StoreManifest",
-    "disposition": "retain-align",
-    "target": "worldinterface-storage",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Fresh local persistence and query/backup primitives; no legacy readers or external effects."
-  },
-  {
-    "id": "crates/worldinterface-foundation/storage/src/root.rs::::struct:StoreProfile",
-    "disposition": "retain-align",
-    "target": "worldinterface-storage",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Fresh local persistence and query/backup primitives; no legacy readers or external effects."
-  },
-  {
-    "id": "crates/worldinterface-foundation/storage/src/root.rs::::struct:StoreRoot",
-    "disposition": "retain-align",
-    "target": "worldinterface-storage",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Fresh local persistence and query/backup primitives; no legacy readers or external effects."
-  },
-  {
-    "id": "crates/worldinterface-foundation/storage/tests/stores.rs::::source-module:crates/worldinterface-foundation/storage/tests/stores.rs",
-    "disposition": "test-evidence",
-    "target": "worldinterface-storage",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Local synthetic conformance fixture/test; no upstream integration claim."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:BoundaryVersions",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:EffectBudget",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/records.rs::::struct:TimeEvidence",
-    "disposition": "retain-align",
-    "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
   },
   {
     "id": "crates/worldinterface-foundation/domain/src/ingress.rs::::enum:IngressCommand",

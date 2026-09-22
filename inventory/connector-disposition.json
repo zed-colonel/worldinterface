@@ -49,7 +49,7 @@
         },
         {
           "path": "Cargo.toml",
-          "source_sha256": "530992d8ec3c9c9861bee0b78a34ec391d8959bdcff539ff768c19628183275e",
+          "source_sha256": "305949dd7860c60ea1952ecc6e52403d8dea2d91c34b78074888fcebfc2a28b5",
           "treatment": "Audit dependencies/features after replacement; remove only newly unused declarations and regenerate lock through Cargo."
         },
         {
@@ -98,7 +98,7 @@
         },
         {
           "path": "Cargo.toml",
-          "source_sha256": "530992d8ec3c9c9861bee0b78a34ec391d8959bdcff539ff768c19628183275e",
+          "source_sha256": "305949dd7860c60ea1952ecc6e52403d8dea2d91c34b78074888fcebfc2a28b5",
           "treatment": "Audit dependencies/features after replacement; remove only newly unused declarations and regenerate lock through Cargo."
         },
         {
@@ -184,7 +184,7 @@
         },
         {
           "path": "Cargo.toml",
-          "source_sha256": "530992d8ec3c9c9861bee0b78a34ec391d8959bdcff539ff768c19628183275e",
+          "source_sha256": "305949dd7860c60ea1952ecc6e52403d8dea2d91c34b78074888fcebfc2a28b5",
           "treatment": "Audit dependencies/features after replacement; remove only newly unused declarations and regenerate lock through Cargo."
         },
         {
@@ -258,7 +258,7 @@
         },
         {
           "path": "Cargo.toml",
-          "source_sha256": "530992d8ec3c9c9861bee0b78a34ec391d8959bdcff539ff768c19628183275e",
+          "source_sha256": "305949dd7860c60ea1952ecc6e52403d8dea2d91c34b78074888fcebfc2a28b5",
           "treatment": "Audit dependencies/features after replacement; remove only newly unused declarations and regenerate lock through Cargo."
         },
         {
@@ -329,7 +329,7 @@
         },
         {
           "path": "Cargo.toml",
-          "source_sha256": "530992d8ec3c9c9861bee0b78a34ec391d8959bdcff539ff768c19628183275e",
+          "source_sha256": "305949dd7860c60ea1952ecc6e52403d8dea2d91c34b78074888fcebfc2a28b5",
           "treatment": "Audit dependencies/features after replacement; remove only newly unused declarations and regenerate lock through Cargo."
         },
         {
@@ -395,7 +395,7 @@
         },
         {
           "path": "Cargo.toml",
-          "source_sha256": "530992d8ec3c9c9861bee0b78a34ec391d8959bdcff539ff768c19628183275e",
+          "source_sha256": "305949dd7860c60ea1952ecc6e52403d8dea2d91c34b78074888fcebfc2a28b5",
           "treatment": "Audit dependencies/features after replacement; remove only newly unused declarations and regenerate lock through Cargo."
         },
         {
@@ -466,7 +466,7 @@
         },
         {
           "path": "Cargo.toml",
-          "source_sha256": "530992d8ec3c9c9861bee0b78a34ec391d8959bdcff539ff768c19628183275e",
+          "source_sha256": "305949dd7860c60ea1952ecc6e52403d8dea2d91c34b78074888fcebfc2a28b5",
           "treatment": "Audit dependencies/features after replacement; remove only newly unused declarations and regenerate lock through Cargo."
         },
         {
@@ -527,7 +527,7 @@
         },
         {
           "path": "Cargo.toml",
-          "source_sha256": "530992d8ec3c9c9861bee0b78a34ec391d8959bdcff539ff768c19628183275e",
+          "source_sha256": "305949dd7860c60ea1952ecc6e52403d8dea2d91c34b78074888fcebfc2a28b5",
           "treatment": "Audit dependencies/features after replacement; remove only newly unused declarations and regenerate lock through Cargo."
         },
         {
@@ -603,7 +603,7 @@
         },
         {
           "path": "Cargo.toml",
-          "source_sha256": "530992d8ec3c9c9861bee0b78a34ec391d8959bdcff539ff768c19628183275e",
+          "source_sha256": "305949dd7860c60ea1952ecc6e52403d8dea2d91c34b78074888fcebfc2a28b5",
           "treatment": "Audit dependencies/features after replacement; remove only newly unused declarations and regenerate lock through Cargo."
         },
         {
@@ -669,7 +669,7 @@
         },
         {
           "path": "Cargo.toml",
-          "source_sha256": "530992d8ec3c9c9861bee0b78a34ec391d8959bdcff539ff768c19628183275e",
+          "source_sha256": "305949dd7860c60ea1952ecc6e52403d8dea2d91c34b78074888fcebfc2a28b5",
           "treatment": "Audit dependencies/features after replacement; remove only newly unused declarations and regenerate lock through Cargo."
         },
         {
@@ -740,7 +740,7 @@
         },
         {
           "path": "Cargo.toml",
-          "source_sha256": "530992d8ec3c9c9861bee0b78a34ec391d8959bdcff539ff768c19628183275e",
+          "source_sha256": "305949dd7860c60ea1952ecc6e52403d8dea2d91c34b78074888fcebfc2a28b5",
           "treatment": "Audit dependencies/features after replacement; remove only newly unused declarations and regenerate lock through Cargo."
         },
         {
@@ -806,7 +806,7 @@
         },
         {
           "path": "Cargo.toml",
-          "source_sha256": "530992d8ec3c9c9861bee0b78a34ec391d8959bdcff539ff768c19628183275e",
+          "source_sha256": "305949dd7860c60ea1952ecc6e52403d8dea2d91c34b78074888fcebfc2a28b5",
           "treatment": "Audit dependencies/features after replacement; remove only newly unused declarations and regenerate lock through Cargo."
         },
         {
@@ -877,7 +877,7 @@
         },
         {
           "path": "Cargo.toml",
-          "source_sha256": "530992d8ec3c9c9861bee0b78a34ec391d8959bdcff539ff768c19628183275e",
+          "source_sha256": "305949dd7860c60ea1952ecc6e52403d8dea2d91c34b78074888fcebfc2a28b5",
           "treatment": "Audit dependencies/features after replacement; remove only newly unused declarations and regenerate lock through Cargo."
         },
         {
@@ -958,7 +958,7 @@
         },
         {
           "path": "Cargo.toml",
-          "source_sha256": "530992d8ec3c9c9861bee0b78a34ec391d8959bdcff539ff768c19628183275e",
+          "source_sha256": "305949dd7860c60ea1952ecc6e52403d8dea2d91c34b78074888fcebfc2a28b5",
           "treatment": "Audit dependencies/features after replacement; remove only newly unused declarations and regenerate lock through Cargo."
         },
         {
@@ -1024,7 +1024,7 @@
         },
         {
           "path": "Cargo.toml",
-          "source_sha256": "530992d8ec3c9c9861bee0b78a34ec391d8959bdcff539ff768c19628183275e",
+          "source_sha256": "305949dd7860c60ea1952ecc6e52403d8dea2d91c34b78074888fcebfc2a28b5",
           "treatment": "Audit dependencies/features after replacement; remove only newly unused declarations and regenerate lock through Cargo."
         },
         {
@@ -1099,7 +1099,7 @@
         },
         {
           "path": "Cargo.toml",
-          "source_sha256": "530992d8ec3c9c9861bee0b78a34ec391d8959bdcff539ff768c19628183275e",
+          "source_sha256": "305949dd7860c60ea1952ecc6e52403d8dea2d91c34b78074888fcebfc2a28b5",
           "treatment": "Audit dependencies/features after replacement; remove only newly unused declarations and regenerate lock through Cargo."
         },
         {
@@ -2916,52 +2916,52 @@
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/ports.rs::::enum:AdmissionResult",
-          "source_sha256": "07777e0694b0b66bbca0fc6a84621ab1a2b47a7c92468c266c96f3b96db51ad2",
+          "source_sha256": "f4d0918f440927cd797f9a4c782afaa3ffd359547152a7c36fe26196376bf2b5",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/ports.rs::::enum:QueueStatus",
-          "source_sha256": "07777e0694b0b66bbca0fc6a84621ab1a2b47a7c92468c266c96f3b96db51ad2",
+          "source_sha256": "f4d0918f440927cd797f9a4c782afaa3ffd359547152a7c36fe26196376bf2b5",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/ports.rs::::source-module:crates/worldinterface-foundation/domain/src/ports.rs",
-          "source_sha256": "07777e0694b0b66bbca0fc6a84621ab1a2b47a7c92468c266c96f3b96db51ad2",
+          "source_sha256": "f4d0918f440927cd797f9a4c782afaa3ffd359547152a7c36fe26196376bf2b5",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/ports.rs::::struct:EffectAcknowledgment",
-          "source_sha256": "07777e0694b0b66bbca0fc6a84621ab1a2b47a7c92468c266c96f3b96db51ad2",
+          "source_sha256": "f4d0918f440927cd797f9a4c782afaa3ffd359547152a7c36fe26196376bf2b5",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/ports.rs::::struct:EffectAdmissionRequest",
-          "source_sha256": "07777e0694b0b66bbca0fc6a84621ab1a2b47a7c92468c266c96f3b96db51ad2",
+          "source_sha256": "f4d0918f440927cd797f9a4c782afaa3ffd359547152a7c36fe26196376bf2b5",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/ports.rs::::struct:QueueAdmission",
-          "source_sha256": "07777e0694b0b66bbca0fc6a84621ab1a2b47a7c92468c266c96f3b96db51ad2",
+          "source_sha256": "f4d0918f440927cd797f9a4c782afaa3ffd359547152a7c36fe26196376bf2b5",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/ports.rs::::trait:QueueAdmissionPort",
-          "source_sha256": "07777e0694b0b66bbca0fc6a84621ab1a2b47a7c92468c266c96f3b96db51ad2",
+          "source_sha256": "f4d0918f440927cd797f9a4c782afaa3ffd359547152a7c36fe26196376bf2b5",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/ports.rs::::trait:QueueInspectionPort",
-          "source_sha256": "07777e0694b0b66bbca0fc6a84621ab1a2b47a7c92468c266c96f3b96db51ad2",
+          "source_sha256": "f4d0918f440927cd797f9a4c782afaa3ffd359547152a7c36fe26196376bf2b5",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/ports.rs::::trait:QueueWakePort",
-          "source_sha256": "07777e0694b0b66bbca0fc6a84621ab1a2b47a7c92468c266c96f3b96db51ad2",
+          "source_sha256": "f4d0918f440927cd797f9a4c782afaa3ffd359547152a7c36fe26196376bf2b5",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/ports.rs::::trait:TestEffectAdmissionPort",
-          "source_sha256": "07777e0694b0b66bbca0fc6a84621ab1a2b47a7c92468c266c96f3b96db51ad2",
+          "source_sha256": "f4d0918f440927cd797f9a4c782afaa3ffd359547152a7c36fe26196376bf2b5",
           "registration_sites": []
         },
         {
@@ -3661,12 +3661,12 @@
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/contextstore.rs::::module:tests@10d1b0eff34c",
-          "source_sha256": "4374659fb7ce2b306ad1751b8e2a207ad83057a2bdffc8059f5f6ebb6f713168",
+          "source_sha256": "3ffcd4ed45b08b9425b1235011942447d0519458156d65bd1ff9a5f2fa82b84a",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/contextstore.rs::::source-module:crates/worldinterface-foundation/storage/src/contextstore.rs",
-          "source_sha256": "4374659fb7ce2b306ad1751b8e2a207ad83057a2bdffc8059f5f6ebb6f713168",
+          "source_sha256": "3ffcd4ed45b08b9425b1235011942447d0519458156d65bd1ff9a5f2fa82b84a",
           "registration_sites": []
         },
         {
@@ -3696,122 +3696,132 @@
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/lib.rs::::module:contextstore",
-          "source_sha256": "080783968bd531df994d27f4ee7904c22fc5e50cea3e3916a5eb9bc4aad232cb",
+          "source_sha256": "5d91d2493abde119e1e16b75672565b7b990185ebb2ac19e1a62be4e3e9d2436",
+          "registration_sites": []
+        },
+        {
+          "id": "crates/worldinterface-foundation/storage/src/lib.rs::::module:crash@10d1b0eff34c",
+          "source_sha256": "5d91d2493abde119e1e16b75672565b7b990185ebb2ac19e1a62be4e3e9d2436",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/lib.rs::::module:effect",
-          "source_sha256": "080783968bd531df994d27f4ee7904c22fc5e50cea3e3916a5eb9bc4aad232cb",
+          "source_sha256": "5d91d2493abde119e1e16b75672565b7b990185ebb2ac19e1a62be4e3e9d2436",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/lib.rs::::module:ingress",
-          "source_sha256": "080783968bd531df994d27f4ee7904c22fc5e50cea3e3916a5eb9bc4aad232cb",
+          "source_sha256": "5d91d2493abde119e1e16b75672565b7b990185ebb2ac19e1a62be4e3e9d2436",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/lib.rs::::module:repository",
-          "source_sha256": "080783968bd531df994d27f4ee7904c22fc5e50cea3e3916a5eb9bc4aad232cb",
+          "source_sha256": "5d91d2493abde119e1e16b75672565b7b990185ebb2ac19e1a62be4e3e9d2436",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/lib.rs::::module:root",
-          "source_sha256": "080783968bd531df994d27f4ee7904c22fc5e50cea3e3916a5eb9bc4aad232cb",
+          "source_sha256": "5d91d2493abde119e1e16b75672565b7b990185ebb2ac19e1a62be4e3e9d2436",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/lib.rs::::source-module:crates/worldinterface-foundation/storage/src/lib.rs",
-          "source_sha256": "080783968bd531df994d27f4ee7904c22fc5e50cea3e3916a5eb9bc4aad232cb",
+          "source_sha256": "5d91d2493abde119e1e16b75672565b7b990185ebb2ac19e1a62be4e3e9d2436",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/lib.rs::::type:Result",
-          "source_sha256": "080783968bd531df994d27f4ee7904c22fc5e50cea3e3916a5eb9bc4aad232cb",
+          "source_sha256": "5d91d2493abde119e1e16b75672565b7b990185ebb2ac19e1a62be4e3e9d2436",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/repository.rs::::module:tests@10d1b0eff34c",
-          "source_sha256": "611e59807a66fe7abb58d21e084ac8005fee25a0405080792b1f1e33a6b9ad1f",
+          "source_sha256": "c7175b7269de9ca6a764f35acda56fc87d1ec24147b050c9fc505c8697fe1121",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/repository.rs::::source-module:crates/worldinterface-foundation/storage/src/repository.rs",
-          "source_sha256": "611e59807a66fe7abb58d21e084ac8005fee25a0405080792b1f1e33a6b9ad1f",
+          "source_sha256": "c7175b7269de9ca6a764f35acda56fc87d1ec24147b050c9fc505c8697fe1121",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/repository.rs::::struct:Admission",
-          "source_sha256": "611e59807a66fe7abb58d21e084ac8005fee25a0405080792b1f1e33a6b9ad1f",
+          "source_sha256": "c7175b7269de9ca6a764f35acda56fc87d1ec24147b050c9fc505c8697fe1121",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/repository.rs::::struct:AdmissionScope",
-          "source_sha256": "611e59807a66fe7abb58d21e084ac8005fee25a0405080792b1f1e33a6b9ad1f",
+          "source_sha256": "c7175b7269de9ca6a764f35acda56fc87d1ec24147b050c9fc505c8697fe1121",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/repository.rs::::struct:Batch",
-          "source_sha256": "611e59807a66fe7abb58d21e084ac8005fee25a0405080792b1f1e33a6b9ad1f",
+          "source_sha256": "c7175b7269de9ca6a764f35acda56fc87d1ec24147b050c9fc505c8697fe1121",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/repository.rs::::struct:HistoryEntry",
-          "source_sha256": "611e59807a66fe7abb58d21e084ac8005fee25a0405080792b1f1e33a6b9ad1f",
+          "source_sha256": "c7175b7269de9ca6a764f35acda56fc87d1ec24147b050c9fc505c8697fe1121",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/repository.rs::::struct:OutboxEntry",
-          "source_sha256": "611e59807a66fe7abb58d21e084ac8005fee25a0405080792b1f1e33a6b9ad1f",
+          "source_sha256": "c7175b7269de9ca6a764f35acda56fc87d1ec24147b050c9fc505c8697fe1121",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/repository.rs::::struct:Projection",
-          "source_sha256": "611e59807a66fe7abb58d21e084ac8005fee25a0405080792b1f1e33a6b9ad1f",
+          "source_sha256": "c7175b7269de9ca6a764f35acda56fc87d1ec24147b050c9fc505c8697fe1121",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/repository.rs::::struct:Repository",
-          "source_sha256": "611e59807a66fe7abb58d21e084ac8005fee25a0405080792b1f1e33a6b9ad1f",
+          "source_sha256": "c7175b7269de9ca6a764f35acda56fc87d1ec24147b050c9fc505c8697fe1121",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/root.rs::::enum:StoreKind",
-          "source_sha256": "1e4b9277c5ef13f8b83922eb98c09ba706704c2b446bd397fb24c3af5f71f236",
+          "source_sha256": "50c73d743c31e7d0a0fc49c505b3780d192f87991a327c8d1f3575666e9cd8c9",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/root.rs::::module:tests@10d1b0eff34c",
-          "source_sha256": "1e4b9277c5ef13f8b83922eb98c09ba706704c2b446bd397fb24c3af5f71f236",
+          "source_sha256": "50c73d743c31e7d0a0fc49c505b3780d192f87991a327c8d1f3575666e9cd8c9",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/root.rs::::source-module:crates/worldinterface-foundation/storage/src/root.rs",
-          "source_sha256": "1e4b9277c5ef13f8b83922eb98c09ba706704c2b446bd397fb24c3af5f71f236",
+          "source_sha256": "50c73d743c31e7d0a0fc49c505b3780d192f87991a327c8d1f3575666e9cd8c9",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/root.rs::::struct:Manifest",
-          "source_sha256": "1e4b9277c5ef13f8b83922eb98c09ba706704c2b446bd397fb24c3af5f71f236",
+          "source_sha256": "50c73d743c31e7d0a0fc49c505b3780d192f87991a327c8d1f3575666e9cd8c9",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/root.rs::::struct:StoreManifest",
-          "source_sha256": "1e4b9277c5ef13f8b83922eb98c09ba706704c2b446bd397fb24c3af5f71f236",
+          "source_sha256": "50c73d743c31e7d0a0fc49c505b3780d192f87991a327c8d1f3575666e9cd8c9",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/root.rs::::struct:StoreProfile",
-          "source_sha256": "1e4b9277c5ef13f8b83922eb98c09ba706704c2b446bd397fb24c3af5f71f236",
+          "source_sha256": "50c73d743c31e7d0a0fc49c505b3780d192f87991a327c8d1f3575666e9cd8c9",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/root.rs::::struct:StoreRoot",
-          "source_sha256": "1e4b9277c5ef13f8b83922eb98c09ba706704c2b446bd397fb24c3af5f71f236",
+          "source_sha256": "50c73d743c31e7d0a0fc49c505b3780d192f87991a327c8d1f3575666e9cd8c9",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/tests/stores.rs::::source-module:crates/worldinterface-foundation/storage/tests/stores.rs",
           "source_sha256": "039e3dc101a270331019e3f4d85fad57ee36ea72b21d29bcd7848c54a241ed0a",
+          "registration_sites": []
+        },
+        {
+          "id": "crates/worldinterface-foundation/storage/tests/support/crash.rs::::source-module:crates/worldinterface-foundation/storage/tests/support/crash.rs",
+          "source_sha256": "675040e7f803c5cf8582be4624bfe0c848ba20774cef3ec4dfd46946cde66fe5",
           "registration_sites": []
         },
         {
@@ -3980,6 +3990,126 @@
           "registration_sites": []
         },
         {
+          "id": "crates/worldinterface-runtime/Cargo.toml::auxiliary-crate:worldinterface-runtime",
+          "source_sha256": "aacf3d4bb77f988a33eadcdcb10e22074cbc709d040fe912418f9181c5eff6f6",
+          "registration_sites": []
+        },
+        {
+          "id": "crates/worldinterface-runtime/src/aq_adapter.rs::::source-module:crates/worldinterface-runtime/src/aq_adapter.rs",
+          "source_sha256": "bfc80f93cef1e93630dd6b3c30b522e11eb9a9db36dd47141595b991a7c87c6b",
+          "registration_sites": []
+        },
+        {
+          "id": "crates/worldinterface-runtime/src/aq_adapter.rs::::struct:QueueProvenance",
+          "source_sha256": "bfc80f93cef1e93630dd6b3c30b522e11eb9a9db36dd47141595b991a7c87c6b",
+          "registration_sites": []
+        },
+        {
+          "id": "crates/worldinterface-runtime/src/aq_adapter.rs::::struct:QueueReferences",
+          "source_sha256": "bfc80f93cef1e93630dd6b3c30b522e11eb9a9db36dd47141595b991a7c87c6b",
+          "registration_sites": []
+        },
+        {
+          "id": "crates/worldinterface-runtime/src/aq_adapter.rs::::struct:QueueStoreId",
+          "source_sha256": "bfc80f93cef1e93630dd6b3c30b522e11eb9a9db36dd47141595b991a7c87c6b",
+          "registration_sites": []
+        },
+        {
+          "id": "crates/worldinterface-runtime/src/aq_adapter.rs::::struct:TaskInputLocator",
+          "source_sha256": "bfc80f93cef1e93630dd6b3c30b522e11eb9a9db36dd47141595b991a7c87c6b",
+          "registration_sites": []
+        },
+        {
+          "id": "crates/worldinterface-runtime/src/artifact.rs::::source-module:crates/worldinterface-runtime/src/artifact.rs",
+          "source_sha256": "1281142301411c549696621482e6b48385144ccf75ba82b5d4f33c2e4059479d",
+          "registration_sites": []
+        },
+        {
+          "id": "crates/worldinterface-runtime/src/artifact.rs::::struct:ArtifactResolver",
+          "source_sha256": "1281142301411c549696621482e6b48385144ccf75ba82b5d4f33c2e4059479d",
+          "registration_sites": []
+        },
+        {
+          "id": "crates/worldinterface-runtime/src/artifact.rs::::trait:ArtifactAuthorization",
+          "source_sha256": "1281142301411c549696621482e6b48385144ccf75ba82b5d4f33c2e4059479d",
+          "registration_sites": []
+        },
+        {
+          "id": "crates/worldinterface-runtime/src/lib.rs::::module:aq_adapter",
+          "source_sha256": "8a21a2b79b5a2ddee20ba0e1f2042f90a2af56f2c30b0139424eaafb4961f84c",
+          "registration_sites": []
+        },
+        {
+          "id": "crates/worldinterface-runtime/src/lib.rs::::module:artifact",
+          "source_sha256": "8a21a2b79b5a2ddee20ba0e1f2042f90a2af56f2c30b0139424eaafb4961f84c",
+          "registration_sites": []
+        },
+        {
+          "id": "crates/worldinterface-runtime/src/lib.rs::::module:crash@10d1b0eff34c",
+          "source_sha256": "8a21a2b79b5a2ddee20ba0e1f2042f90a2af56f2c30b0139424eaafb4961f84c",
+          "registration_sites": []
+        },
+        {
+          "id": "crates/worldinterface-runtime/src/lib.rs::::module:storage",
+          "source_sha256": "8a21a2b79b5a2ddee20ba0e1f2042f90a2af56f2c30b0139424eaafb4961f84c",
+          "registration_sites": []
+        },
+        {
+          "id": "crates/worldinterface-runtime/src/lib.rs::::source-module:crates/worldinterface-runtime/src/lib.rs",
+          "source_sha256": "8a21a2b79b5a2ddee20ba0e1f2042f90a2af56f2c30b0139424eaafb4961f84c",
+          "registration_sites": []
+        },
+        {
+          "id": "crates/worldinterface-runtime/src/lib.rs::::type:Result",
+          "source_sha256": "8a21a2b79b5a2ddee20ba0e1f2042f90a2af56f2c30b0139424eaafb4961f84c",
+          "registration_sites": []
+        },
+        {
+          "id": "crates/worldinterface-runtime/src/storage.rs::::source-module:crates/worldinterface-runtime/src/storage.rs",
+          "source_sha256": "db00a65dc33ec482c3073334eaf748d6345ffc1f499731cceacea6d3fd9e8fad",
+          "registration_sites": []
+        },
+        {
+          "id": "crates/worldinterface-runtime/src/storage.rs::::struct:BundleManifest",
+          "source_sha256": "db00a65dc33ec482c3073334eaf748d6345ffc1f499731cceacea6d3fd9e8fad",
+          "registration_sites": []
+        },
+        {
+          "id": "crates/worldinterface-runtime/src/storage.rs::::struct:StoreBundle",
+          "source_sha256": "db00a65dc33ec482c3073334eaf748d6345ffc1f499731cceacea6d3fd9e8fad",
+          "registration_sites": []
+        },
+        {
+          "id": "crates/worldinterface-runtime/tests/integration.rs::::source-module:crates/worldinterface-runtime/tests/integration.rs",
+          "source_sha256": "f7fd15e7b859de9105868664f62c289d37c89347a7fa4214a153b2f9603cc75b",
+          "registration_sites": []
+        },
+        {
+          "id": "crates/worldinterface-runtime/tests/integration.rs::::struct:AuthenticatedSession",
+          "source_sha256": "f7fd15e7b859de9105868664f62c289d37c89347a7fa4214a153b2f9603cc75b",
+          "registration_sites": []
+        },
+        {
+          "id": "crates/worldinterface-runtime/tests/integration.rs::::struct:Complete",
+          "source_sha256": "f7fd15e7b859de9105868664f62c289d37c89347a7fa4214a153b2f9603cc75b",
+          "registration_sites": []
+        },
+        {
+          "id": "crates/worldinterface-runtime/tests/integration.rs::::struct:Handler",
+          "source_sha256": "f7fd15e7b859de9105868664f62c289d37c89347a7fa4214a153b2f9603cc75b",
+          "registration_sites": []
+        },
+        {
+          "id": "crates/worldinterface-runtime/tests/integration.rs::::struct:Policy",
+          "source_sha256": "f7fd15e7b859de9105868664f62c289d37c89347a7fa4214a153b2f9603cc75b",
+          "registration_sites": []
+        },
+        {
+          "id": "crates/worldinterface-runtime/tests/support/crash.rs::::source-module:crates/worldinterface-runtime/tests/support/crash.rs",
+          "source_sha256": "ca683f7a5b0aba961b19863dbab51b02d891a782c6e4d40cbf159feb002dace9",
+          "registration_sites": []
+        },
+        {
           "id": "examples/agent-embedding/Cargo.toml::auxiliary-crate:agent-embedding-example",
           "source_sha256": "3b97e01c35d9273b6496c11eaf6fde592aece2f259b02c5b8e4079dfceb0f30e",
           "registration_sites": []
@@ -3998,7 +4128,7 @@
         },
         {
           "path": "Cargo.toml",
-          "source_sha256": "530992d8ec3c9c9861bee0b78a34ec391d8959bdcff539ff768c19628183275e",
+          "source_sha256": "305949dd7860c60ea1952ecc6e52403d8dea2d91c34b78074888fcebfc2a28b5",
           "treatment": "Audit dependencies/features after replacement; remove only newly unused declarations and regenerate lock through Cargo."
         },
         {
@@ -4403,7 +4533,7 @@
         },
         {
           "path": "crates/worldinterface-foundation/domain/src/ports.rs",
-          "source_sha256": "07777e0694b0b66bbca0fc6a84621ab1a2b47a7c92468c266c96f3b96db51ad2",
+          "source_sha256": "f4d0918f440927cd797f9a4c782afaa3ffd359547152a7c36fe26196376bf2b5",
           "treatment": "Retain target protocol, capability, state-machine and store infrastructure; preserve isolation from legacy connector removal."
         },
         {
@@ -4508,7 +4638,7 @@
         },
         {
           "path": "crates/worldinterface-foundation/storage/src/contextstore.rs",
-          "source_sha256": "4374659fb7ce2b306ad1751b8e2a207ad83057a2bdffc8059f5f6ebb6f713168",
+          "source_sha256": "3ffcd4ed45b08b9425b1235011942447d0519458156d65bd1ff9a5f2fa82b84a",
           "treatment": "Retain target protocol, capability, state-machine and store infrastructure; preserve isolation from legacy connector removal."
         },
         {
@@ -4523,23 +4653,28 @@
         },
         {
           "path": "crates/worldinterface-foundation/storage/src/lib.rs",
-          "source_sha256": "080783968bd531df994d27f4ee7904c22fc5e50cea3e3916a5eb9bc4aad232cb",
+          "source_sha256": "5d91d2493abde119e1e16b75672565b7b990185ebb2ac19e1a62be4e3e9d2436",
           "treatment": "Retain target protocol, capability, state-machine and store infrastructure; preserve isolation from legacy connector removal."
         },
         {
           "path": "crates/worldinterface-foundation/storage/src/repository.rs",
-          "source_sha256": "611e59807a66fe7abb58d21e084ac8005fee25a0405080792b1f1e33a6b9ad1f",
+          "source_sha256": "c7175b7269de9ca6a764f35acda56fc87d1ec24147b050c9fc505c8697fe1121",
           "treatment": "Retain target protocol, capability, state-machine and store infrastructure; preserve isolation from legacy connector removal."
         },
         {
           "path": "crates/worldinterface-foundation/storage/src/root.rs",
-          "source_sha256": "1e4b9277c5ef13f8b83922eb98c09ba706704c2b446bd397fb24c3af5f71f236",
+          "source_sha256": "50c73d743c31e7d0a0fc49c505b3780d192f87991a327c8d1f3575666e9cd8c9",
           "treatment": "Retain target protocol, capability, state-machine and store infrastructure; preserve isolation from legacy connector removal."
         },
         {
           "path": "crates/worldinterface-foundation/storage/tests/stores.rs",
           "source_sha256": "039e3dc101a270331019e3f4d85fad57ee36ea72b21d29bcd7848c54a241ed0a",
           "treatment": "Retain target protocol, capability, state-machine and store infrastructure; preserve isolation from legacy connector removal."
+        },
+        {
+          "path": "crates/worldinterface-foundation/storage/tests/support/crash.rs",
+          "treatment": "Retain target integration source and tests; audit shared declarations before any later selective removal.",
+          "source_sha256": "675040e7f803c5cf8582be4624bfe0c848ba20774cef3ec4dfd46946cde66fe5"
         },
         {
           "path": "crates/worldinterface-host/Cargo.toml",
@@ -4590,6 +4725,41 @@
           "path": "crates/worldinterface-host/tests/integration.rs",
           "source_sha256": "15aeef7e939f130ae6d67c36a7c6fef7f39485f2338bc8b27f31863c7682cfdb",
           "treatment": "Review shared exports, registration, schemas, tests and integration paths; selectively update references, retain unrelated Fabric support."
+        },
+        {
+          "path": "crates/worldinterface-runtime/Cargo.toml",
+          "treatment": "Retain target integration source and tests; audit shared declarations before any later selective removal.",
+          "source_sha256": "aacf3d4bb77f988a33eadcdcb10e22074cbc709d040fe912418f9181c5eff6f6"
+        },
+        {
+          "path": "crates/worldinterface-runtime/src/aq_adapter.rs",
+          "treatment": "Retain target integration source and tests; audit shared declarations before any later selective removal.",
+          "source_sha256": "bfc80f93cef1e93630dd6b3c30b522e11eb9a9db36dd47141595b991a7c87c6b"
+        },
+        {
+          "path": "crates/worldinterface-runtime/src/artifact.rs",
+          "treatment": "Retain target integration source and tests; audit shared declarations before any later selective removal.",
+          "source_sha256": "1281142301411c549696621482e6b48385144ccf75ba82b5d4f33c2e4059479d"
+        },
+        {
+          "path": "crates/worldinterface-runtime/src/lib.rs",
+          "treatment": "Retain target integration source and tests; audit shared declarations before any later selective removal.",
+          "source_sha256": "8a21a2b79b5a2ddee20ba0e1f2042f90a2af56f2c30b0139424eaafb4961f84c"
+        },
+        {
+          "path": "crates/worldinterface-runtime/src/storage.rs",
+          "treatment": "Retain target integration source and tests; audit shared declarations before any later selective removal.",
+          "source_sha256": "db00a65dc33ec482c3073334eaf748d6345ffc1f499731cceacea6d3fd9e8fad"
+        },
+        {
+          "path": "crates/worldinterface-runtime/tests/integration.rs",
+          "treatment": "Retain target integration source and tests; audit shared declarations before any later selective removal.",
+          "source_sha256": "f7fd15e7b859de9105868664f62c289d37c89347a7fa4214a153b2f9603cc75b"
+        },
+        {
+          "path": "crates/worldinterface-runtime/tests/support/crash.rs",
+          "treatment": "Retain target integration source and tests; audit shared declarations before any later selective removal.",
+          "source_sha256": "ca683f7a5b0aba961b19863dbab51b02d891a782c6e4d40cbf159feb002dace9"
         },
         {
           "path": "examples/agent-embedding/Cargo.toml",
@@ -4653,7 +4823,7 @@
         },
         {
           "path": "Cargo.toml",
-          "source_sha256": "530992d8ec3c9c9861bee0b78a34ec391d8959bdcff539ff768c19628183275e",
+          "source_sha256": "305949dd7860c60ea1952ecc6e52403d8dea2d91c34b78074888fcebfc2a28b5",
           "treatment": "Audit dependencies/features after replacement; remove only newly unused declarations and regenerate lock through Cargo."
         },
         {
@@ -4773,7 +4943,7 @@
         },
         {
           "path": "Cargo.toml",
-          "source_sha256": "530992d8ec3c9c9861bee0b78a34ec391d8959bdcff539ff768c19628183275e",
+          "source_sha256": "305949dd7860c60ea1952ecc6e52403d8dea2d91c34b78074888fcebfc2a28b5",
           "treatment": "Audit dependencies/features after replacement; remove only newly unused declarations and regenerate lock through Cargo."
         },
         {
@@ -4952,7 +5122,7 @@
         },
         {
           "path": "Cargo.toml",
-          "source_sha256": "530992d8ec3c9c9861bee0b78a34ec391d8959bdcff539ff768c19628183275e",
+          "source_sha256": "305949dd7860c60ea1952ecc6e52403d8dea2d91c34b78074888fcebfc2a28b5",
           "treatment": "Audit dependencies/features after replacement; remove only newly unused declarations and regenerate lock through Cargo."
         },
         {
@@ -5041,7 +5211,7 @@
         },
         {
           "path": "Cargo.toml",
-          "source_sha256": "530992d8ec3c9c9861bee0b78a34ec391d8959bdcff539ff768c19628183275e",
+          "source_sha256": "305949dd7860c60ea1952ecc6e52403d8dea2d91c34b78074888fcebfc2a28b5",
           "treatment": "Audit dependencies/features after replacement; remove only newly unused declarations and regenerate lock through Cargo."
         },
         {
@@ -5967,7 +6137,7 @@
         },
         {
           "path": "Cargo.toml",
-          "source_sha256": "530992d8ec3c9c9861bee0b78a34ec391d8959bdcff539ff768c19628183275e",
+          "source_sha256": "305949dd7860c60ea1952ecc6e52403d8dea2d91c34b78074888fcebfc2a28b5",
           "treatment": "Audit dependencies/features after replacement; remove only newly unused declarations and regenerate lock through Cargo."
         },
         {
@@ -6143,7 +6313,7 @@
         },
         {
           "path": "Cargo.toml",
-          "source_sha256": "530992d8ec3c9c9861bee0b78a34ec391d8959bdcff539ff768c19628183275e",
+          "source_sha256": "305949dd7860c60ea1952ecc6e52403d8dea2d91c34b78074888fcebfc2a28b5",
           "treatment": "Audit dependencies/features after replacement; remove only newly unused declarations and regenerate lock through Cargo."
         },
         {
@@ -6229,7 +6399,7 @@
         },
         {
           "path": "Cargo.toml",
-          "source_sha256": "530992d8ec3c9c9861bee0b78a34ec391d8959bdcff539ff768c19628183275e",
+          "source_sha256": "305949dd7860c60ea1952ecc6e52403d8dea2d91c34b78074888fcebfc2a28b5",
           "treatment": "Audit dependencies/features after replacement; remove only newly unused declarations and regenerate lock through Cargo."
         },
         {
@@ -6301,7 +6471,7 @@
         },
         {
           "path": "Cargo.toml",
-          "source_sha256": "530992d8ec3c9c9861bee0b78a34ec391d8959bdcff539ff768c19628183275e",
+          "source_sha256": "305949dd7860c60ea1952ecc6e52403d8dea2d91c34b78074888fcebfc2a28b5",
           "treatment": "Audit dependencies/features after replacement; remove only newly unused declarations and regenerate lock through Cargo."
         },
         {
@@ -6465,7 +6635,7 @@
         },
         {
           "path": "Cargo.toml",
-          "source_sha256": "530992d8ec3c9c9861bee0b78a34ec391d8959bdcff539ff768c19628183275e",
+          "source_sha256": "305949dd7860c60ea1952ecc6e52403d8dea2d91c34b78074888fcebfc2a28b5",
           "treatment": "Audit dependencies/features after replacement; remove only newly unused declarations and regenerate lock through Cargo."
         },
         {
@@ -6544,7 +6714,7 @@
         },
         {
           "path": "Cargo.toml",
-          "source_sha256": "530992d8ec3c9c9861bee0b78a34ec391d8959bdcff539ff768c19628183275e",
+          "source_sha256": "305949dd7860c60ea1952ecc6e52403d8dea2d91c34b78074888fcebfc2a28b5",
           "treatment": "Audit dependencies/features after replacement; remove only newly unused declarations and regenerate lock through Cargo."
         },
         {
@@ -6628,7 +6798,7 @@
         },
         {
           "path": "Cargo.toml",
-          "source_sha256": "530992d8ec3c9c9861bee0b78a34ec391d8959bdcff539ff768c19628183275e",
+          "source_sha256": "305949dd7860c60ea1952ecc6e52403d8dea2d91c34b78074888fcebfc2a28b5",
           "treatment": "Audit dependencies/features after replacement; remove only newly unused declarations and regenerate lock through Cargo."
         },
         {
@@ -6702,7 +6872,7 @@
         },
         {
           "path": "Cargo.toml",
-          "source_sha256": "530992d8ec3c9c9861bee0b78a34ec391d8959bdcff539ff768c19628183275e",
+          "source_sha256": "305949dd7860c60ea1952ecc6e52403d8dea2d91c34b78074888fcebfc2a28b5",
           "treatment": "Audit dependencies/features after replacement; remove only newly unused declarations and regenerate lock through Cargo."
         },
         {
@@ -6766,7 +6936,7 @@
         },
         {
           "path": "Cargo.toml",
-          "source_sha256": "530992d8ec3c9c9861bee0b78a34ec391d8959bdcff539ff768c19628183275e",
+          "source_sha256": "305949dd7860c60ea1952ecc6e52403d8dea2d91c34b78074888fcebfc2a28b5",
           "treatment": "Audit dependencies/features after replacement; remove only newly unused declarations and regenerate lock through Cargo."
         },
         {
@@ -7460,7 +7630,7 @@
         },
         {
           "path": "Cargo.toml",
-          "source_sha256": "530992d8ec3c9c9861bee0b78a34ec391d8959bdcff539ff768c19628183275e",
+          "source_sha256": "305949dd7860c60ea1952ecc6e52403d8dea2d91c34b78074888fcebfc2a28b5",
           "treatment": "Audit dependencies/features after replacement; remove only newly unused declarations and regenerate lock through Cargo."
         },
         {
@@ -7719,7 +7889,7 @@
         },
         {
           "path": "Cargo.toml",
-          "source_sha256": "530992d8ec3c9c9861bee0b78a34ec391d8959bdcff539ff768c19628183275e",
+          "source_sha256": "305949dd7860c60ea1952ecc6e52403d8dea2d91c34b78074888fcebfc2a28b5",
           "treatment": "Audit dependencies/features after replacement; remove only newly unused declarations and regenerate lock through Cargo."
         },
         {
@@ -7773,7 +7943,7 @@
         },
         {
           "path": "Cargo.toml",
-          "source_sha256": "530992d8ec3c9c9861bee0b78a34ec391d8959bdcff539ff768c19628183275e",
+          "source_sha256": "305949dd7860c60ea1952ecc6e52403d8dea2d91c34b78074888fcebfc2a28b5",
           "treatment": "Audit dependencies/features after replacement; remove only newly unused declarations and regenerate lock through Cargo."
         },
         {
@@ -7827,7 +7997,7 @@
         },
         {
           "path": "Cargo.toml",
-          "source_sha256": "530992d8ec3c9c9861bee0b78a34ec391d8959bdcff539ff768c19628183275e",
+          "source_sha256": "305949dd7860c60ea1952ecc6e52403d8dea2d91c34b78074888fcebfc2a28b5",
           "treatment": "Audit dependencies/features after replacement; remove only newly unused declarations and regenerate lock through Cargo."
         },
         {
@@ -7876,7 +8046,7 @@
         },
         {
           "path": "Cargo.toml",
-          "source_sha256": "530992d8ec3c9c9861bee0b78a34ec391d8959bdcff539ff768c19628183275e",
+          "source_sha256": "305949dd7860c60ea1952ecc6e52403d8dea2d91c34b78074888fcebfc2a28b5",
           "treatment": "Audit dependencies/features after replacement; remove only newly unused declarations and regenerate lock through Cargo."
         },
         {
@@ -7920,7 +8090,7 @@
         },
         {
           "path": "Cargo.toml",
-          "source_sha256": "530992d8ec3c9c9861bee0b78a34ec391d8959bdcff539ff768c19628183275e",
+          "source_sha256": "305949dd7860c60ea1952ecc6e52403d8dea2d91c34b78074888fcebfc2a28b5",
           "treatment": "Audit dependencies/features after replacement; remove only newly unused declarations and regenerate lock through Cargo."
         },
         {
@@ -7969,7 +8139,7 @@
         },
         {
           "path": "Cargo.toml",
-          "source_sha256": "530992d8ec3c9c9861bee0b78a34ec391d8959bdcff539ff768c19628183275e",
+          "source_sha256": "305949dd7860c60ea1952ecc6e52403d8dea2d91c34b78074888fcebfc2a28b5",
           "treatment": "Audit dependencies/features after replacement; remove only newly unused declarations and regenerate lock through Cargo."
         },
         {
@@ -8023,7 +8193,7 @@
         },
         {
           "path": "Cargo.toml",
-          "source_sha256": "530992d8ec3c9c9861bee0b78a34ec391d8959bdcff539ff768c19628183275e",
+          "source_sha256": "305949dd7860c60ea1952ecc6e52403d8dea2d91c34b78074888fcebfc2a28b5",
           "treatment": "Audit dependencies/features after replacement; remove only newly unused declarations and regenerate lock through Cargo."
         },
         {
@@ -8072,7 +8242,7 @@
         },
         {
           "path": "Cargo.toml",
-          "source_sha256": "530992d8ec3c9c9861bee0b78a34ec391d8959bdcff539ff768c19628183275e",
+          "source_sha256": "305949dd7860c60ea1952ecc6e52403d8dea2d91c34b78074888fcebfc2a28b5",
           "treatment": "Audit dependencies/features after replacement; remove only newly unused declarations and regenerate lock through Cargo."
         },
         {
@@ -8126,7 +8296,7 @@
         },
         {
           "path": "Cargo.toml",
-          "source_sha256": "530992d8ec3c9c9861bee0b78a34ec391d8959bdcff539ff768c19628183275e",
+          "source_sha256": "305949dd7860c60ea1952ecc6e52403d8dea2d91c34b78074888fcebfc2a28b5",
           "treatment": "Audit dependencies/features after replacement; remove only newly unused declarations and regenerate lock through Cargo."
         },
         {
@@ -8411,7 +8581,7 @@
         },
         {
           "path": "Cargo.toml",
-          "source_sha256": "530992d8ec3c9c9861bee0b78a34ec391d8959bdcff539ff768c19628183275e",
+          "source_sha256": "305949dd7860c60ea1952ecc6e52403d8dea2d91c34b78074888fcebfc2a28b5",
           "treatment": "Audit dependencies/features after replacement; remove only newly unused declarations and regenerate lock through Cargo."
         },
         {

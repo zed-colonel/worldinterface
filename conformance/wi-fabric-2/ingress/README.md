@@ -31,9 +31,12 @@ rolls back and applies backpressure. There is no silent tombstone eviction or
 unsupported physical-erasure promise. Artifact bytes must be durably published
 before admission. Failed admission may leave an unreferenced artifact, which is
 safe recoverable garbage. Offline backup/restore covers the complete store root.
-Journal recovery and maintenance safeguards from the newer integration target are
-preserved by WI-04. These ingress fixtures inject transaction failures and restart
-at committed boundaries; they do not establish fresh runtime crash conformance.
+Journal recovery and maintenance safeguards from WI-02 integration are preserved
+by WI-04. These ingress fixtures inject transaction failures and restart at
+committed boundaries. Shared storage also has WI-02 integration hot-journal
+recovery and killed-process tests; see [integration coverage](../../../docs/work-items/wi-02-integration.md).
+Those tests do not establish AQ wake integration for ingress or WI-04 runtime
+crash conformance.
 
 ## Provider and transport contract
 

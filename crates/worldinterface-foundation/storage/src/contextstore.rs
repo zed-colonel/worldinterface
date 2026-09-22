@@ -44,6 +44,8 @@ impl StoreRoot {
         }
         fs::remove_file(&pending)?;
         sync_dir(&dir)?;
+        #[cfg(test)]
+        crate::crash::checkpoint("artifact-durable");
         if interrupt {
             return Err(invalid("injected after durable bytes before advertisement"));
         }

@@ -98,7 +98,8 @@ pub fn validate(schema: &Value, v: &Value, path: &str) -> Result<()> {
 }
 pub fn artifact(base: &Path, v: &Value) -> Result<()> {
     let p = base.join(string(v, "path")?);
-    if hash(fs::read(&p)?) != string(v, "sha256")? {
+    let bytes = fs::read(&p)?;
+    if bytes.is_empty() || hash(&bytes) != string(v, "sha256")? {
         return Err(format!("artifact digest mismatch: {}", p.display()).into());
     }
     Ok(())
@@ -122,8 +123,22 @@ pub fn runtime(root: &Path, receipt: &Value, artifact_base: &Path) -> Result<()>
     if receipt["fixture_manifest_sha256"] != manifest["fixture_manifest_sha256"] {
         return Err("stale fixture identity".into());
     }
-    if receipt["source_record_sha256"] != hash(serde_json::to_vec(case)?) {
-        return Err("source record digest does not bind current case".into());
+    let imported =
+        read(&root.join("contracts/sources/aq-baseline-integration-acceptance-matrix.yaml"))?;
+    let source = array(&imported, "cases")?
+        .iter()
+        .find(|v| v["id"] == id)
+        .ok_or("missing imported source case")?;
+    if receipt["source_record_sha256"] != hash(serde_json::to_vec(source)?) {
+        return Err("source record digest does not bind imported case".into());
+    }
+    if receipt["executable_case_sha256"] != hash(fs::read(root.join(string(case, "test_source")?))?)
+        || receipt["integration_fixture_sha256"] != manifest["integration_fixture_sha256"]
+    {
+        return Err("stale executable/fixture binding".into());
+    }
+    if receipt["producer"] == receipt["independent_review"]["reviewer"] {
+        return Err("producer cannot independently review its own result".into());
     }
     artifact(artifact_base, &receipt["upstream_build_receipt"])?;
     artifact(artifact_base, &receipt["command"]["log"])?;
@@ -131,7 +146,16 @@ pub fn runtime(root: &Path, receipt: &Value, artifact_base: &Path) -> Result<()>
         return Err("failed command cannot establish passing runtime evidence".into());
     }
     for a in array(receipt, "results")? {
-        artifact(artifact_base, a)?
+        artifact(artifact_base, a)?;
+        let result = read(&artifact_base.join(string(a, "path")?))?;
+        if result["status"] != "passed" || result["tests_passed"].as_u64().unwrap_or(0) == 0 {
+            return Err("empty or nonpassing case results".into());
+        }
+        for key in ["case_id", "consumer_revision", "source_record_sha256", "test_run_id"] {
+            if result[key] != receipt[key] {
+                return Err(format!("result mismatch: {key}").into());
+            }
+        }
     }
     artifact(artifact_base, &receipt["independent_review"]["receipt"])?;
     // The upstream build receipt is an independent record, not just a digest-shaped field.
@@ -142,9 +166,57 @@ pub fn runtime(root: &Path, receipt: &Value, artifact_base: &Path) -> Result<()>
     {
         return Err("upstream build receipt identity/status mismatch".into());
     }
+    if build["resolved_packages_sha256"] != receipt["resolved_packages_sha256"]
+        || build["packages"].as_array().is_none_or(|v| v.is_empty())
+        || build["command"]["exit_code"] != 0
+    {
+        return Err("empty or mismatched AQ build receipt".into());
+    }
+    let expected = [
+        "actionqueue-core",
+        "actionqueue-storage",
+        "actionqueue-runtime",
+        "actionqueue-engine",
+        "actionqueue-workflow",
+        "actionqueue-executor-local",
+    ];
+    let mut names = std::collections::BTreeSet::new();
+    for package in array(&build, "packages")? {
+        let name = string(package, "name")?;
+        if !expected.contains(&name)
+            || !names.insert(name)
+            || package["version"] != "0.2.0"
+            || array(package, "features")?
+                .iter()
+                .any(|v| !["default", "serde"].contains(&v.as_str().unwrap_or("")))
+        {
+            return Err("unexpected AQ package/version/feature".into());
+        }
+    }
+    if names != expected.into_iter().collect() {
+        return Err("incomplete AQ build graph".into());
+    }
+    artifact(artifact_base, &build["command"]["log"])?;
+    if hash(serde_json::to_vec(&build["packages"])?) != string(receipt, "resolved_packages_sha256")?
+    {
+        return Err("resolved package/features digest mismatch".into());
+    }
     let review =
         read(&artifact_base.join(string(&receipt["independent_review"]["receipt"], "path")?))?;
-    for key in ["case_id", "consumer_revision", "source_record_sha256", "upstream", "test_run_id"] {
+    for key in [
+        "case_id",
+        "consumer_revision",
+        "source_record_sha256",
+        "upstream",
+        "test_run_id",
+        "executable_case_sha256",
+        "integration_fixture_sha256",
+        "resolved_packages_sha256",
+        "results",
+        "command",
+        "environment_sha256",
+        "toolchain",
+    ] {
         if review[key] != receipt[key] {
             return Err(format!("independent review missing/mismatching {key}").into());
         }

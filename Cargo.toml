@@ -13,6 +13,7 @@ members = [
     "crates/worldinterface-wasm",
 ]
 exclude = [
+    "crates/worldinterface-runtime",
     "crates/worldinterface-foundation",
     "examples/agent-embedding",
     "examples/wasm-connectors/json-validate",

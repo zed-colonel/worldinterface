@@ -22,8 +22,8 @@ jobs:
           : "${CRAFTINGTABLE_DEPENDENCY_MANIFEST:?controller provisioning required}"
           : "${CRAFTINGTABLE_CARGO_CONFIG:?controller Cargo config required}"
           : "${CRAFTINGTABLE_CI_ARTIFACTS_DIR:?external evidence directory required}"
-          : "${CRAFTINGTABLE_VERIFICATION_MODE:?scoped-checks mode required}"
-          test "$CRAFTINGTABLE_VERIFICATION_MODE" = scoped-checks
+          : "${CRAFTINGTABLE_VERIFICATION_MODE:?verification mode required}"
+          case "$CRAFTINGTABLE_VERIFICATION_MODE" in scoped-checks|current-upstream-build) ;; *) exit 1;; esac
           export CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$RUNNER_TEMP/wi-contract-target}"
           mkdir -p "$CRAFTINGTABLE_CI_ARTIFACTS_DIR"
           scripts/check-wi-contract.sh 2>&1 | tee "$CRAFTINGTABLE_CI_ARTIFACTS_DIR/wi-contract.log"

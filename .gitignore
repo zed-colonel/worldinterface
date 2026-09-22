@@ -40,3 +40,5 @@ scripts/*
 !scripts/check-wi-contract.sh
 !scripts/check-wi-domain.sh
 !scripts/check-wi-domain-isolation.py
+!scripts/check-wi-integration.sh
+!scripts/check-wi-integration.py
