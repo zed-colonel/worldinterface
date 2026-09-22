@@ -181,4 +181,8 @@ pub fn replay(
     events.iter().try_fold(State::empty(entity, machine), |s, e| evolve(&s, e))
 }
 
+pub mod agency;
+pub mod authorization;
+pub mod effect;
 pub mod ingress;
+pub mod resource;

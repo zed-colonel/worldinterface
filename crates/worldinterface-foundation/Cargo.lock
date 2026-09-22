@@ -747,6 +747,19 @@ dependencies = [
 ]
 
 [[package]]
+name = "worldinterface-egress"
+version = "0.2.0"
+dependencies = [
+ "proptest",
+ "rusqlite",
+ "serde_json",
+ "tempfile",
+ "worldinterface-domain",
+ "worldinterface-protocol",
+ "worldinterface-storage",
+]
+
+[[package]]
 name = "worldinterface-ingress"
 version = "0.2.0"
 dependencies = [
@@ -780,6 +793,7 @@ version = "0.2.0"
 dependencies = [
  "fs2",
  "rusqlite",
+ "rustix",
  "serde",
  "serde_json",
  "tempfile",

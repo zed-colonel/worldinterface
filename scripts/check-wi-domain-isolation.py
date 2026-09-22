@@ -13,6 +13,7 @@ allowed = {
     "worldinterface-capability": {"worldinterface-protocol"},
     "worldinterface-domain": {"worldinterface-protocol"},
     "worldinterface-ingress": {"worldinterface-protocol", "worldinterface-domain", "worldinterface-storage"},
+    "worldinterface-egress": {"worldinterface-protocol", "worldinterface-domain", "worldinterface-storage"},
     "worldinterface-storage": {"worldinterface-protocol", "worldinterface-domain"},
 }
 packages = {p["id"]: p for p in meta["packages"]}
@@ -33,6 +34,7 @@ for p in (root / "crates/worldinterface-foundation").rglob("*.rs"):
     # No process/network calls or production port implementations. Test mocks live in tests/.
     s = p.read_text()
     assert not re.search(r"\b(?:std\s*::\s*(?:process|net)|tokio|reqwest|axum|actionqueue)\s*::", s), str(p)
+    assert not re.search(r"impl\s+TestEffectAdmissionPort\s+for", s), str(p)
     assert not re.search(r"impl\s+Queue(?:Admission|Inspection|Wake)Port\s+for", s), str(p)
     assert "worldinterface_core" not in s and "worldinterface_contextstore" not in s, str(p)
     if p.relative_to(root / "crates/worldinterface-foundation").parts[0] in ("protocol", "capability", "domain"):
@@ -49,8 +51,17 @@ for obligation in coverage["obligations"]:
                         else "crates/worldinterface-foundation/" + package.removeprefix("worldinterface-"))
     assert any(re.search(r"#\[test\]\s*fn\s+" + re.escape(name) + r"\s*\(", p.read_text())
                for p in directory.rglob("*.rs")), name
+egress_coverage = json.loads((root / "conformance/wi-fabric-2/egress/coverage.json").read_text())
+assert egress_coverage["scope"] == "wi/WI-04/domain" and egress_coverage["upstream_conformance"] is False
+assert set(egress_coverage["assigned_cases"]) == {f"WP-{n:03}" for n in range(9, 15)}
+for case, tests in egress_coverage["assigned_cases"].items():
+    assert tests, case
+for obligation in egress_coverage["obligations"]:
+    directory = root / "crates/worldinterface-foundation" / obligation["package"].removeprefix("worldinterface-")
+    assert any(re.search(r"#\[test\]\s*fn\s+" + re.escape(obligation["test"]) + r"\s*\(", p.read_text())
+               for p in directory.rglob("*.rs")), obligation
 fixture_dir = root / "conformance/wi-fabric-2/domain"
-print(json.dumps({"scopes": ["wi/WI-02/domain", "wi/WI-03/domain"], "isolation": "passed", "aq_packages": [],
+print(json.dumps({"scopes": ["wi/WI-02/domain", "wi/WI-03/domain", "wi/WI-04/domain"], "isolation": "passed", "aq_packages": [],
                   "production_adapter": False, "runtime_conformance": False,
                   "fixtures": {str(p.relative_to(fixture_dir.parent)): hashlib.sha256(p.read_bytes()).hexdigest()
                                for p in sorted(fixture_dir.parent.glob("*/**/*.json"))}}, sort_keys=True))

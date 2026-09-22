@@ -20,8 +20,9 @@ on (tenant, revision), serialized mutation and reducer uniqueness enforce scoped
 provider and principal/request identities. This deliberately bounded local
 projection is not a production throughput claim.
 
-The manifest profile is `local-ingress-1`, schema 1. The previous development
-profile `local-domain-1` is rejected without modification. Separate Fabric, Flow,
+The current manifest profile is `local-egress-1`, schema 1, introduced by
+[WI-04](../egress/README.md). Previous development profiles `local-domain-1`
+and `local-ingress-1` are rejected without modification. Separate Fabric, Flow,
 Context and optional Platform stores remain intact. Wire records keep the 64 KiB
 canonical bound; local collection snapshots have a separate 16 MiB ceiling.
 Profile capacities also bound bindings, admission tombstones and conflict evidence;
@@ -30,8 +31,9 @@ rolls back and applies backpressure. There is no silent tombstone eviction or
 unsupported physical-erasure promise. Artifact bytes must be durably published
 before admission. Failed admission may leave an unreferenced artifact, which is
 safe recoverable garbage. Offline backup/restore covers the complete store root.
-Hot-journal recovery after an OS/process kill remains a runtime integration task;
-these fixtures inject transaction failures and restart at committed boundaries.
+Journal recovery and maintenance safeguards from the newer integration target are
+preserved by WI-04. These ingress fixtures inject transaction failures and restart
+at committed boundaries; they do not establish fresh runtime crash conformance.
 
 ## Provider and transport contract
 

@@ -18,6 +18,9 @@ impl StoreRoot {
         bytes: &[u8],
         interrupt: bool,
     ) -> Result<ArtifactRef> {
+        if self.exclusive {
+            return Err(invalid("maintenance handles cannot publish"));
+        }
         if bytes.len() > MAX_ARTIFACT_BYTES {
             return Err(invalid("artifact exceeds local profile bound"));
         }
@@ -54,7 +57,10 @@ impl StoreRoot {
         Ok(reference)
     }
     pub fn read_artifact(&self, reference: &ArtifactRef) -> Result<Vec<u8>> {
-        let c = self.connect(StoreKind::Context)?;
+        let c = Connection::open_with_flags(
+            self.db_path(StoreKind::Context),
+            OpenFlags::SQLITE_OPEN_READ_ONLY,
+        )?;
         let size: Option<u64> = c
             .query_row(
                 "SELECT size FROM artifacts WHERE scope=? AND content=?",

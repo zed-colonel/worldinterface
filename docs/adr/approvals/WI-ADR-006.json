@@ -1,0 +1,36 @@
+{
+  "submissionId": "a532a907-52fe-41f7-bc89-b8b4b89dbc84",
+  "checkpoint": "WI-ADR-006",
+  "definitionId": "0ebcb7cf-9686-4bc1-9b9d-bb85a1d0b4c9",
+  "bindingRevision": 4,
+  "decision": {
+    "coverage": "full",
+    "proposal": "Adopt a closed versioned typed authorization grammar with default denial and no executable predicates. Compute effective authority by intersecting authenticated principal authority, the explicitly selected acting capacity, each delegation bound, purpose and information-use constraints, exact resource policy, platform policy and required approval. Never union ambient roles or derive permission from descriptors, causal labels, signatures alone or caller assertions. Evaluate verified grant and approval evidence with expiry, revocation, issuer, scope, replay/use and separation-of-duty checks; cryptographic verification enters through trusted evidence interfaces. Produce Allow, Deny or NeedsApproval plus bounded stable reason codes and an attenuation trace; unavailable operations are explicit non-dispatchable results. Bind decisions to immutable intent/submission, agency, exact resolved resource and parameters, policy/grant/approval versions, connector/provider realization, evidence, expiry and logical-use limits through existing records and typed constraints artifacts. Required worker controls must be qualified and enforceable; profile exclusions cannot be waived by approval. Evaluation-only registrations cannot self-promote, and quarantine blocks new starts while preserving separately authorized cleanup. Persist use reservations atomically and distinguish identical retries from new uses. Revalidate before dispatch and invocation; drift requires explicit reevaluation, and material operation changes require a replacement intent. WI-04/domain issues no public executable authorization handle.",
+    "sourceReferences": "Imported map EXO-STACK-CONCURRENCY-DRAFT-1 0.3.0; exact plan binding 4; checkpoint WI-ADR-006.\n{\"source_id\":\"wi-plan\",\"section\":\"\u00a74 ADR queue\",\"start_line\":359,\"end_line\":359}\nwi-fabric-2-foundational-implementation-plan.md: \u00a74 WI-ADR-006, WI-04, \u00a7\u00a79.2\u20139.4\nworldinterface-v2-foundational-design.md: \u00a7\u00a76.6, 11.5, 11.8\u201311.12, 28.2\u201328.3\nwi-fabric-2-worker-execution-profile.md: \u00a7\u00a74, 10\nwi-fabric-2-worker-execution-acceptance-matrix.yaml: WP-009 through WP-014\ndocs/adr/approvals.json: WI-ADR-017\nAttached design run 65af2f75-2ad4-4933-9e77-7e3652243162; SHA-256 03663c1f068047ebc1e8aa189c8bffff2b930c581f71d896f55789796a38d23f.",
+    "retainedObligations": "",
+    "consumers": [],
+    "kind": "architecture-decision-v1",
+    "bindingDigest": "8cae5ff3253d493fce0527aa42381a551c40014440ab3d05270ae8d822d11295"
+  },
+  "approval": {
+    "submissionId": "a532a907-52fe-41f7-bc89-b8b4b89dbc84",
+    "outcome": "accepted",
+    "rationale": "Determinism is the name of the game here. Ambiguity is the enemy, so this decision matches my guiding philosophy.",
+    "id": "18f9998d-e0fd-4de5-ba37-168906cd5fe6",
+    "workspaceId": "6bf6915a-6cd0-47cc-b853-fcbc04f02f3d",
+    "decidedAt": "2026-09-21T20:51:26.863Z",
+    "decidedByUserId": "0698a39b-dda2-4870-8f3f-97ef94784ae9"
+  },
+  "sourceRunId": "65af2f75-2ad4-4933-9e77-7e3652243162",
+  "sourceRunDigest": "03663c1f068047ebc1e8aa189c8bffff2b930c581f71d896f55789796a38d23f",
+  "artifacts": [
+    {
+      "name": "decision-review-packet",
+      "digest": "976297a217e6df9525bb974580dfc0b88a78e58121ea894f9cf5678d98aa4b71"
+    },
+    {
+      "name": "source-design-proposal-not-approval",
+      "digest": "03663c1f068047ebc1e8aa189c8bffff2b930c581f71d896f55789796a38d23f"
+    }
+  ]
+}

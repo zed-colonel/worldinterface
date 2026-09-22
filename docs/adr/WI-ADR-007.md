@@ -1,11 +1,15 @@
 # WI-ADR-007: Effect state machine, commit-point vocabulary, `Uncertain`, and terminal outcomes
 
-Status: queued
+Status: accepted
 
 Owner: operator
 
 Due: WI-04
 
-Source: implementation plan §4.
+Source: implementation plan §4; controller scope binding revision 4.
 
-Decision and acceptance evidence: pending operator review. No encoding or implementation choice is accepted by this stub.
+Approval: `786dc165-698c-4397-90b2-14da7113cd31`, recorded 2026-09-21T22:12:16.663Z. Exact accepted decision and provenance: [approval record](approvals/WI-ADR-007.json), SHA-256 `885e1f5d78dd2c1076c60a9ed7f135f3f2f40de09675d75fb3b69b21ce45eb64`.
+
+WorldInterface shall retain coarse effect phases as derived summaries and require a complete typed, evidence-bound effect aggregate for authorization, execution, inspection and recovery decisions. Existing public record envelopes and outcome/reconciliation records remain the representation seams; this decision does not introduce a replacement public lifecycle protocol. Persist immutable EffectIntent in Submitted state and its non-dispatch-ready source outbox atomically before resolution-dependent or external dispatch effects. Append resolution, approval and authorization records without rewriting the submission. Only current exact authorization may prepare dispatch. Resolution failure, denial and safe pre-execution cancellation must be represented honestly without fabricating a resolved target or Running state. Define commit observations as NotAttempted, ProvenImpossible, Possible, Unknown, ConfirmedCommitted and ConfirmedNotCommitted, bound to the relevant intent, attempt, connector semantics and evidence. Possible or unknown external commit after timeout, cancellation or crash requires Uncertain and reconciliation; queue cancellation and missing acknowledgments prove no external non-commit. Succeeded requires evidence of the requested boundary outcome and durable required outputs and records. Failed or Canceled cannot conceal a possible external commit. Reconciliation appends ConfirmedCommitted, ConfirmedNotCommitted, StillUncertain or Escalated with evidence. The coarse Reconciled phase never independently means success; inspection must expose the detailed result. Missing or contradictory mandatory evidence fails closed. StillUncertain and Escalated never become success. Repeating the original effect after uncertainty requires provider evidence establishing non-commit, explicit policy permission and current exact authorization, following implementation-plan section 8.6; an idempotency classification alone is insufficient. Retry permission is distinct from execution and preserves immutable intent and recorded identity mappings. Material operation changes create linked replacement intents. Compensation is a separately authorized linked effect and does not erase the original outcome. Queue-admission uncertainty remains separate: recover and retry only the identical persisted request, validate acknowledgment identity, and discover runs separately. Domain outcomes remain distinct from AQ status, worker exit and application acceptance. Enforce transitions, evidence linkage, outbox changes and authorization-use accounting atomically, with versioned deterministic replay and no generic mutation bypass. WI-04/domain supplies the inactive pure model, persistence and test-only admission port. Production invocation, AQ integration, connector reconciliation and receipt publication remain their mapped implementation and verification work.
+
+This records approval, not implementation evidence. See the [inactive egress domain contract](../../conformance/wi-fabric-2/egress/README.md). WI-WORKER-G1, AQ integration, merged-target verification and parent acceptance remain independently due.

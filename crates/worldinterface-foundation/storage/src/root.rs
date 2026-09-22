@@ -58,6 +58,7 @@ pub struct StoreRoot {
     pub(crate) path: PathBuf,
     manifest: Manifest,
     _lock: File,
+    pub(crate) exclusive: bool,
 }
 fn kinds(platform: bool) -> Vec<StoreKind> {
     let mut v = vec![StoreKind::Fabric, StoreKind::Flow, StoreKind::Context];
@@ -69,6 +70,21 @@ fn kinds(platform: bool) -> Vec<StoreKind> {
 fn parent_dir(path: &Path) -> Option<&Path> {
     // A single relative component has an empty parent, which denotes the current directory.
     path.parent().map(|parent| if parent.as_os_str().is_empty() { Path::new(".") } else { parent })
+}
+/// Atomically publishes a completed directory without replacing any destination.
+///
+/// The staging directory must share the destination filesystem. Unsupported
+/// no-replace operations fail closed; there is no check-then-rename fallback.
+/// Callers must sync the staged contents before this call and the parent after it.
+pub fn publish_directory(staging: &Path, destination: &Path) -> Result<()> {
+    rustix::fs::renameat_with(
+        rustix::fs::CWD,
+        staging,
+        rustix::fs::CWD,
+        destination,
+        rustix::fs::RenameFlags::NOREPLACE,
+    )?;
+    Ok(())
 }
 pub(crate) fn sync_dir(p: &Path) -> Result<()> {
     File::open(p)?.sync_all()?;
@@ -95,6 +111,21 @@ fn reject_links(path: &Path) -> Result<()> {
     }
     Ok(())
 }
+fn copy_dir(src: &Path, dst: &Path) -> Result<()> {
+    for e in fs::read_dir(src)? {
+        let e = e?;
+        let target = dst.join(e.file_name());
+        if e.file_type()?.is_dir() {
+            fs::create_dir(&target)?;
+            copy_dir(&e.path(), &target)?;
+        } else if e.file_type()?.is_file() {
+            write_new(&target, &fs::read(e.path())?)?;
+        } else {
+            return Err(invalid("non-regular store member"));
+        }
+    }
+    sync_dir(dst)
+}
 impl StoreRoot {
     pub fn create_empty(path: impl AsRef<Path>, profile: StoreProfile) -> Result<Self> {
         Self::initialize(path.as_ref(), profile, None)
@@ -120,7 +151,7 @@ impl StoreRoot {
             contract: CONTRACT.into(),
             schema: 1,
             canonical_profile: CANONICAL_PROFILE.into(),
-            feature_profile: "local-ingress-1".into(),
+            feature_profile: "local-egress-1".into(),
             stores: kinds(profile.platform),
             profile,
             complete: true,
@@ -133,6 +164,7 @@ impl StoreRoot {
             let conn = Connection::open(path.join(format!("{}.sqlite", kind.name())))?;
             conn.execute_batch(SCHEMA)?;
             conn.execute_batch(crate::ingress::SCHEMA)?;
+            conn.execute_batch(crate::effect::SCHEMA)?;
             conn.execute("INSERT INTO store_identity VALUES(1,?1)", [&identity])?;
             drop(conn);
             File::open(path.join(format!("{}.sqlite", kind.name())))?.sync_all()?;
@@ -155,13 +187,29 @@ impl StoreRoot {
     pub fn open_existing(path: impl AsRef<Path>) -> Result<Self> {
         Self::open(path.as_ref(), false)
     }
+    /// Holds exclusive maintenance ownership until dropped. No repository writer can coexist.
+    pub fn open_maintenance(path: impl AsRef<Path>) -> Result<Self> {
+        Self::open(path.as_ref(), true)
+    }
+    /// Enforces a containing bundle's identity before any original recovery writes.
+    pub fn open_for_instance(
+        path: impl AsRef<Path>,
+        instance: &InstanceId,
+        maintenance: bool,
+    ) -> Result<Self> {
+        Self::open_checked(path.as_ref(), maintenance, Some(instance))
+    }
     fn open(path: &Path, exclusive: bool) -> Result<Self> {
+        Self::open_checked(path, exclusive, None)
+    }
+    fn open_checked(path: &Path, exclusive: bool, instance: Option<&InstanceId>) -> Result<Self> {
         reject_links(path)?;
         let manifest: Manifest = read_manifest(&path.join("manifest.json"))?;
-        if manifest.contract != CONTRACT
+        if instance.is_some_and(|id| id != &manifest.profile.instance)
+            || manifest.contract != CONTRACT
             || manifest.schema != 1
             || manifest.canonical_profile != CANONICAL_PROFILE
-            || manifest.feature_profile != "local-ingress-1"
+            || manifest.feature_profile != "local-egress-1"
             || !manifest.complete
             || manifest.stores != kinds(manifest.profile.platform)
             || path.join("initializing").exists()
@@ -180,12 +228,13 @@ impl StoreRoot {
         }
         let allowed: Vec<_> = ["manifest.json".to_string(), "lock".into(), "artifacts".into()]
             .into_iter()
-            .chain(
-                manifest
-                    .stores
-                    .iter()
-                    .flat_map(|k| [format!("{}.json", k.name()), format!("{}.sqlite", k.name())]),
-            )
+            .chain(manifest.stores.iter().flat_map(|k| {
+                [
+                    format!("{}.json", k.name()),
+                    format!("{}.sqlite", k.name()),
+                    format!("{}.sqlite-journal", k.name()),
+                ]
+            }))
             .collect();
         for entry in fs::read_dir(path)? {
             let entry = entry?;
@@ -196,13 +245,72 @@ impl StoreRoot {
         if !path.join("artifacts").is_dir() || !path.join("lock").is_file() {
             return Err(invalid("incomplete artifact or lock store"));
         }
+        let journals: Vec<_> = manifest
+            .stores
+            .iter()
+            .filter_map(|k| {
+                let p = path.join(format!("{}.sqlite-journal", k.name()));
+                p.exists().then_some(p)
+            })
+            .collect();
         let lock = File::open(path.join("lock"))?;
-        if exclusive {
+        if exclusive || !journals.is_empty() {
             FileExt::try_lock_exclusive(&lock)?;
         } else {
             FileExt::try_lock_shared(&lock)?;
         }
-        let root = Self { path: path.to_path_buf(), manifest, _lock: lock };
+        let root = Self { path: path.to_path_buf(), manifest, _lock: lock, exclusive };
+        if !journals.is_empty() {
+            // SQLite alone interprets/replays journals. First recover an isolated copy,
+            // then validate the entire root (including embedded identities/artifacts).
+            // No original SQLite descriptor is opened for mutation before this succeeds.
+            let private = tempfile::tempdir()?;
+            copy_dir(path, private.path())?;
+            for journal in &journals {
+                let bytes = fs::read(journal)?;
+                // SQLite initially creates an empty journal, then writes a header
+                // whose magic stays zero until the rollback pages are durable.
+                // A killed creation/header write is a valid non-hot state. Reject
+                // foreign magic (and truncated hot headers), but let SQLite decide
+                // whether accepted journals need replay in the private copy.
+                let prefix = &bytes[..bytes.len().min(8)];
+                let zero_magic = prefix.iter().all(|b| *b == 0);
+                let hot_magic = prefix == [0xd9, 0xd5, 0x05, 0xf9, 0x20, 0xa1, 0x63, 0xd7];
+                if !(zero_magic || hot_magic && bytes.len() >= 512) {
+                    return Err(invalid("malformed rollback journal"));
+                }
+            }
+            for kind in &root.manifest.stores {
+                let db = private.path().join(format!("{}.sqlite", kind.name()));
+                let c = Connection::open_with_flags(&db, OpenFlags::SQLITE_OPEN_READ_WRITE)?;
+                c.query_row("SELECT count(*) FROM sqlite_schema", [], |r| r.get::<_, i64>(0))?;
+                drop(c);
+                // An uncommitted journal with a zero header is non-hot. SQLite ignores
+                // it; removing it in the private copy permits ordinary validation.
+                let journal = db.with_extension("sqlite-journal");
+                if journal.exists() {
+                    fs::remove_file(journal)?;
+                }
+            }
+            drop(Self::open(private.path(), true)?);
+            for kind in &root.manifest.stores {
+                let c = Connection::open_with_flags(
+                    root.db_path(*kind),
+                    OpenFlags::SQLITE_OPEN_READ_WRITE,
+                )?;
+                c.query_row("SELECT count(*) FROM sqlite_schema", [], |r| r.get::<_, i64>(0))?;
+                drop(c);
+            }
+            for journal in journals {
+                if journal.exists() {
+                    fs::remove_file(journal)?;
+                }
+            }
+            sync_dir(path)?;
+            if !exclusive {
+                FileExt::lock_shared(&root._lock)?;
+            }
+        }
         for kind in &root.manifest.stores {
             let c =
                 Connection::open_with_flags(root.db_path(*kind), OpenFlags::SQLITE_OPEN_READ_ONLY)?;
@@ -216,6 +324,7 @@ impl StoreRoot {
             crate::repository::validate_database(&c)?;
         }
         root.validate_artifacts()?;
+        root.validate_effect_artifacts()?;
         Ok(root)
     }
     pub fn profile(&self) -> &StoreProfile {
@@ -237,6 +346,9 @@ impl StoreRoot {
         Ok(())
     }
     pub(crate) fn connect(&self, kind: StoreKind) -> Result<Connection> {
+        if self.exclusive {
+            return Err(invalid("maintenance handles cannot write"));
+        }
         if !self.manifest.stores.contains(&kind) {
             return Err(invalid("store is not enabled"));
         }
@@ -248,6 +360,14 @@ impl StoreRoot {
     }
     pub fn backup_offline(source: impl AsRef<Path>, destination: impl AsRef<Path>) -> Result<()> {
         let source = Self::open(source.as_ref(), true)?;
+        source.backup_to(destination)
+    }
+    /// Copies while retaining the caller's exclusive maintenance lock.
+    pub fn backup_to(&self, destination: impl AsRef<Path>) -> Result<()> {
+        if !self.exclusive {
+            return Err(invalid("backup requires exclusive maintenance ownership"));
+        }
+        let source = self;
         let dest = destination.as_ref();
         if dest.exists() {
             return Err(invalid("backup destination exists"));
@@ -258,25 +378,11 @@ impl StoreRoot {
         }
         let staging = parent.join(format!(".wi-backup-{}", InstanceId::generate().as_str()));
         fs::create_dir(&staging)?;
-        fn copy_dir(src: &Path, dst: &Path) -> Result<()> {
-            for e in fs::read_dir(src)? {
-                let e = e?;
-                let target = dst.join(e.file_name());
-                if e.file_type()?.is_dir() {
-                    fs::create_dir(&target)?;
-                    copy_dir(&e.path(), &target)?;
-                } else {
-                    write_new(&target, &fs::read(e.path())?)?;
-                }
-            }
-            sync_dir(dst)
-        }
         let result = (|| {
             copy_dir(&source.path, &staging)?;
             drop(Self::open(&staging, true)?);
-            // create_dir is a no-clobber reservation; rename is only into our empty directory.
-            fs::create_dir(dest)?;
-            fs::rename(&staging, dest)?;
+            // Publish the complete directory without a visible reservation window.
+            publish_directory(&staging, dest)?;
             sync_dir(parent)
         })();
         if result.is_err() {
@@ -291,6 +397,34 @@ impl StoreRoot {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn publication_never_replaces_any_existing_destination() {
+        for kind in ["empty-directory", "directory", "file", "symlink"] {
+            let t = tempfile::tempdir().unwrap();
+            let stage = t.path().join("stage");
+            fs::create_dir(&stage).unwrap();
+            fs::write(stage.join("complete"), b"data").unwrap();
+            let dest = t.path().join("destination");
+            match kind {
+                "empty-directory" => fs::create_dir(&dest).unwrap(),
+                "directory" => {
+                    fs::create_dir(&dest).unwrap();
+                    fs::write(dest.join("unrelated"), b"keep").unwrap();
+                }
+                "file" => fs::write(&dest, b"keep").unwrap(),
+                "symlink" => std::os::unix::fs::symlink(t.path().join("absent"), &dest).unwrap(),
+                _ => unreachable!(),
+            }
+            use std::os::unix::fs::MetadataExt;
+            let inode = fs::symlink_metadata(&dest).unwrap().ino();
+            assert!(publish_directory(&stage, &dest).is_err(), "{kind}");
+            assert_eq!(fs::symlink_metadata(&dest).unwrap().ino(), inode, "{kind}");
+            assert_eq!(fs::read(stage.join("complete")).unwrap(), b"data");
+            if kind == "directory" {
+                assert_eq!(fs::read(dest.join("unrelated")).unwrap(), b"keep");
+            }
+        }
+    }
     #[test]
     fn interrupted_initialization_never_opens() {
         let t = tempfile::tempdir().unwrap();

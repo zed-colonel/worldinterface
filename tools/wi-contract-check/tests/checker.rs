@@ -78,7 +78,7 @@ fn inventory_is_complete_and_deterministic() {
     for (k, n) in [
         ("workspace-crate", 10),
         ("auxiliary-crate", 10),
-        ("foundation-crate", 5),
+        ("foundation-crate", 6),
         ("connector", 25),
         ("wasm-manifest", 15),
         ("generated-id", 4),
@@ -719,4 +719,31 @@ fn ingress_approvals_bind_full_coverage_ids_revision_and_exact_proposal() {
     let t = contract_repo();
     write(t.path(), "docs/adr/approvals/ingress-proposal.md", "rewritten policy");
     assert!(contracts::docs(t.path()).unwrap().iter().any(|f| f.rule == "ADR-APPROVAL"));
+}
+
+#[test]
+fn egress_approvals_bind_full_operator_decisions_without_advancing_gates() {
+    assert!(contracts::docs(&root()).unwrap().is_empty());
+    for id in ["WI-ADR-004", "WI-ADR-005", "WI-ADR-006", "WI-ADR-007"] {
+        assert!(contracts::adr_coverage(&root(), id, "wi/WI-04/domain", "merge", true).unwrap());
+        for pointer in [
+            "/bindingRevision",
+            "/decision/coverage",
+            "/decision/proposal",
+            "/approval/id",
+            "/approval/outcome",
+        ] {
+            let t = contract_repo();
+            let path = format!("docs/adr/approvals/{id}.json");
+            let mut record = read(&t.path().join(&path)).unwrap();
+            *record.pointer_mut(pointer).unwrap() = json!("tampered");
+            data(t.path(), &path, &record);
+            assert!(
+                !contracts::adr_coverage(t.path(), id, "wi/WI-04/domain", "merge", true).unwrap()
+            );
+            assert!(contracts::docs(t.path()).unwrap().iter().any(|f| f.rule == "ADR-APPROVAL"));
+        }
+    }
+    assert!(!contracts::adr_coverage(&root(), "WI-WORKER-G1", "wi/WI-04/domain", "merge", true)
+        .unwrap());
 }
