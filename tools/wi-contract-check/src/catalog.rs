@@ -277,6 +277,11 @@ pub fn validate_disposition(
     let sources = surface_sources(root)?;
     let mut groups: BTreeMap<String, Vec<&inventory::Item>> = BTreeMap::new();
     for i in items {
+        // WI-09 adds target worker contracts; this WI-10 legacy connector
+        // removal plan inventories only the preexisting connector surfaces.
+        if i.path.starts_with("crates/worldinterface-foundation/worker/") {
+            continue;
+        }
         groups.entry(family_for(i)).or_default().push(i);
     }
     let mut seen = BTreeSet::new();

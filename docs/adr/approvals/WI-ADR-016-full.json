@@ -1,0 +1,36 @@
+{
+  "submissionId": "764c8c21-82aa-41c3-90c8-1295d514d4dc",
+  "checkpoint": "WI-ADR-016",
+  "definitionId": "0ebcb7cf-9686-4bc1-9b9d-bb85a1d0b4c9",
+  "bindingRevision": 4,
+  "decision": {
+    "coverage": "full",
+    "proposal": "Approve WorldInterface ownership of WI-WORKER-EXECUTION-1 and process-managed-proof-1 as a bounded reviewed-process functional proof. Exclude hostile-code containment, independent worker VM assurance, sensitive production inputs and credentials, and unreviewed generated executables. Preserve existing WI effect, resource, authorization, observation, receipt and artifact envelopes and canonical serialization. Encode worker requests, selected realization, non-secret credential bindings, requested/advertised/applied/observed controls and export manifests as strict bounded versioned artifacts through existing references; bind exact profile, adapter, executable, dependencies, configuration, inputs, grant and artifact scope, and represent image applicability and enclosing-instance evidence separately. Embedded WI uses a transport-independent Agent Host port. The eventual local process adapter uses a parent-created private Unix socketpair, deliberately passed descriptor, bounded versioned frames, separate logs, stable request/digest identity and asynchronous acceptance versus observation. Deliver an opaque unpredictable short-lived run credential over the private bootstrap channel, binding issuer, audience, principal, provider/run, permitted operations, artifact scope, resolved authorization digest, expiry and revocation generation; persist only its reference and non-secret bindings. It cannot widen a parent grant, assert root identity, cross runs, or confer deployment, supervisor or self-activation authority. Define provision, start, inspect, terminate, collect-artifacts and release; command/steer, checkpoint, suspend and resume remain unavailable until separately supported and qualified. Require finite wall-time/output limits, reviewed executable and inputs, allowlisted environment/descriptors, approved workspace/export roots and ownership-validated bounded cleanup in the eventual implementation. Unknown or unsupported mandatory controls deny eligibility; CPU, memory, process-count, filesystem, network and independent-VM guarantees require actual enforcement evidence. Keep PID, boot/birth identity, ownership nonce, process-tree identity and local paths private to the adapter; PID equality alone permits neither adoption nor termination. Preserve durable intent, authoritative WI events before AQ wake, and distinct start acknowledgment, observed running, stop request, confirmed exit, artifact publication and cleanup. Quarantine ambiguous ownership or exports; validate export ownership, bounds, link/path safety, integrity and required verifier findings before publication. Prove the portable seam with a WI-owned asynchronous test provider exposing no PID or shared path. Mediation labels and enclosing-instance provenance imply no additional containment, and worker completion or receipts never constitute application acceptance. WI-09/domain implements only inactive pure contracts and test-only composition; production adapters, live evaluation, enforcement and qualification remain separately gated. The operator-owned host supervisor is a separate capability from worker.start.",
+    "sourceReferences": "Imported map EXO-STACK-CONCURRENCY-DRAFT-1 0.3.0; exact plan binding 4; checkpoint WI-ADR-016.\n{\"source_id\":\"wi-plan\",\"section\":\"\u00a74 ADR queue\",\"start_line\":369,\"end_line\":369}\nwi-fabric-2-foundational-implementation-plan.md \u00a74 WI-ADR-016, WI-09, \u00a719.5, Appendix G\nwi-fabric-2-worker-execution-profile.md \u00a7\u00a72\u201310\nwi-fabric-2-worker-execution-profile.yaml: operation contract, admission, lifecycle, evidence, artifacts\ndocs/adr/approvals/WI-ADR-016.json: retainedObligations\ncraftingtable-scope-evidence.json: phaseReadiness.merge\nAttached source run 117cd918-ee13-449b-b188-5cb776613120; SHA-256 5afd65f64a34844454aed725130d44d45ea803d5cc405e43403ee242f02f5b77.",
+    "retainedObligations": "Retain exact-candidate and merged-tree verification, post-rebase checks, independent review, explicit live evaluation-only authorization, WI-WORKER-G1\u2013G5 at their milestones, AB-WI-021 and current AQ/WI integration gates, process-provider enforcement and crash evidence, separate supervisor and instance qualification, WI-06/WI-08 parent dependencies, all required WI-09 slices, broader isolation and release obligations.",
+    "consumers": [],
+    "kind": "architecture-decision-v1",
+    "bindingDigest": "8cae5ff3253d493fce0527aa42381a551c40014440ab3d05270ae8d822d11295"
+  },
+  "approval": {
+    "submissionId": "764c8c21-82aa-41c3-90c8-1295d514d4dc",
+    "outcome": "accepted",
+    "rationale": "I approve of this recommendation.",
+    "id": "10a13b9c-cbfc-4469-9e03-9011adbdd507",
+    "workspaceId": "6bf6915a-6cd0-47cc-b853-fcbc04f02f3d",
+    "decidedAt": "2026-09-24T01:05:27.620Z",
+    "decidedByUserId": "0698a39b-dda2-4870-8f3f-97ef94784ae9"
+  },
+  "sourceRunId": "117cd918-ee13-449b-b188-5cb776613120",
+  "sourceRunDigest": "5afd65f64a34844454aed725130d44d45ea803d5cc405e43403ee242f02f5b77",
+  "artifacts": [
+    {
+      "name": "decision-review-packet",
+      "digest": "e8b380e95823b73ad67cb0adf5c7cb1b681cbca4d3557df837f6f22001455aca"
+    },
+    {
+      "name": "source-design-proposal-not-approval",
+      "digest": "5afd65f64a34844454aed725130d44d45ea803d5cc405e43403ee242f02f5b77"
+    }
+  ]
+}

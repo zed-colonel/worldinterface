@@ -353,7 +353,7 @@ pub fn adr_coverage(root: &Path, id: &str, scope: &str, phase: &str, full: bool)
                 == "752a0ef945c6146feb8de94a4474d93d97dc19ba2e3571a2058b10218b077616");
     }
     let bytes = fs::read(root.join("docs/adr/approvals.json"))?;
-    if hash(&bytes) != "7dbd5ec176c47321d6777da11385f50430e5fc4794227d40303ef630fe8c0967" {
+    if hash(&bytes) != "80d06ce11cfdf319d7611c3d8bc093c086e29ab68d482fdff200cc5fa5156c90" {
         return Ok(false);
     }
     let v: Value = serde_json::from_slice(&bytes)?;
@@ -376,9 +376,9 @@ pub fn adr_coverage(root: &Path, id: &str, scope: &str, phase: &str, full: bool)
 fn adr_status_matches(root: &Path, id: &str, r: &Value) -> Result<bool> {
     let (status, approval, packet) = match id {
         "WI-ADR-016" => (
-            "accepted-clauses",
-            "2e15ca00-a081-4f2c-8430-bc81b2f27ec9",
-            "cafcb369dfeb14acbd6407ffd740da96d1d4de8f642243a1704128b05c89acc4",
+            "accepted",
+            "10a13b9c-cbfc-4469-9e03-9011adbdd507",
+            "e8b380e95823b73ad67cb0adf5c7cb1b681cbca4d3557df837f6f22001455aca",
         ),
         "WI-ADR-017" => (
             "accepted",
@@ -434,18 +434,26 @@ pub fn docs(root: &Path) -> Result<Vec<Finding>> {
                 "2be10eb17b6770127cdb8fb12b655243230d73da8884044a866a633a6d51ef8b",
             )),
             "WI-ADR-016" => Some((
-                "accepted-clauses",
-                "clauses",
-                "a32ba0a9c38340cfa3be18e9e6fa19b20172fb4d33e42b55d81307c9a84fcca8",
+                "accepted",
+                "full",
+                "b25fea0d6571e51bfbd60d370a2c5fad7b30b664b05ba80c425ac2616cf7d9cf",
             )),
             _ => None,
         };
         let status = approved.map_or("queued", |(status, _, _)| status);
         if let Some((_, coverage, digest)) = approved {
-            let path = format!("docs/adr/approvals/{id}.json");
+            let path = if id == "WI-ADR-016" {
+                "docs/adr/approvals/WI-ADR-016-full.json".to_string()
+            } else {
+                format!("docs/adr/approvals/{id}.json")
+            };
             let bytes = fs::read(root.join(&path))?;
             let approval: Value = serde_json::from_slice(&bytes)?;
-            if hash(&bytes) != digest
+            let historical_intact = id != "WI-ADR-016"
+                || hash(&fs::read(root.join("docs/adr/approvals/WI-ADR-016.json"))?)
+                    == "a32ba0a9c38340cfa3be18e9e6fa19b20172fb4d33e42b55d81307c9a84fcca8";
+            if !historical_intact
+                || hash(&bytes) != digest
                 || r["approval_sha256"] != digest
                 || r["approval_file"] != path
                 || r["coverage"] != coverage
