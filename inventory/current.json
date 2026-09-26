@@ -6643,7 +6643,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-foundation/worker/src/credential.rs",
     "name": "crates/worldinterface-foundation/worker/src/credential.rs",
-    "source_sha256": "331fbbaa3e5307d916770727c6e851a156b91eb0a3df87267d12aef5c19aacec",
+    "source_sha256": "eb658ff1fa90d8e0599f34e4d66b04da42487ce0edfd6a67d19ed79730e8d138",
     "conditions": [],
     "registration_sites": []
   },
@@ -6652,7 +6652,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/worker/src/credential.rs",
     "name": "CredentialBindingV1",
-    "source_sha256": "331fbbaa3e5307d916770727c6e851a156b91eb0a3df87267d12aef5c19aacec",
+    "source_sha256": "eb658ff1fa90d8e0599f34e4d66b04da42487ce0edfd6a67d19ed79730e8d138",
     "conditions": [],
     "registration_sites": []
   },
@@ -6661,7 +6661,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/worker/src/credential.rs",
     "name": "CredentialExpectation",
-    "source_sha256": "331fbbaa3e5307d916770727c6e851a156b91eb0a3df87267d12aef5c19aacec",
+    "source_sha256": "eb658ff1fa90d8e0599f34e4d66b04da42487ce0edfd6a67d19ed79730e8d138",
     "conditions": [],
     "registration_sites": []
   },
@@ -6987,7 +6987,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-foundation/worker/tests/contract.rs",
     "name": "crates/worldinterface-foundation/worker/tests/contract.rs",
-    "source_sha256": "2b6505997190c8e22ea05103d44f18ba659bf498b4a0f8eebe052c48a9c72a56",
+    "source_sha256": "2f9cfd5d486277410c23b7b3c6bd0837d2a46408dbcaf4580d9ddbf5f48e793c",
     "conditions": [],
     "registration_sites": []
   },
@@ -6996,7 +6996,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/worker/tests/contract.rs",
     "name": "Noop",
-    "source_sha256": "2b6505997190c8e22ea05103d44f18ba659bf498b4a0f8eebe052c48a9c72a56",
+    "source_sha256": "2f9cfd5d486277410c23b7b3c6bd0837d2a46408dbcaf4580d9ddbf5f48e793c",
     "conditions": [],
     "registration_sites": []
   },
@@ -7005,7 +7005,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/worker/tests/contract.rs",
     "name": "Scripted",
-    "source_sha256": "2b6505997190c8e22ea05103d44f18ba659bf498b4a0f8eebe052c48a9c72a56",
+    "source_sha256": "2f9cfd5d486277410c23b7b3c6bd0837d2a46408dbcaf4580d9ddbf5f48e793c",
     "conditions": [],
     "registration_sites": []
   },

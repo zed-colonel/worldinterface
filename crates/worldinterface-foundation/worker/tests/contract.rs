@@ -453,6 +453,52 @@ fn credential_identity_is_bound_to_trusted_context() {
 }
 
 #[test]
+fn credential_artifact_scope_rejects_invalid_references() {
+    let binding = CredentialBindingV1 {
+        schema: 1,
+        reference: "credential".into(),
+        issuer: "wi".into(),
+        audience: "agent-host".into(),
+        principal: "alice".into(),
+        provider: "provider".into(),
+        run: "run".into(),
+        operations: vec![Operation::CollectArtifacts],
+        artifact_scope: vec!["result".into(), "x".repeat(256)],
+        authorization_digest: hash("auth"),
+        expires_unix_ms: 100,
+        revocation_generation: 1,
+    };
+    let auth = hash("auth");
+    let expected = CredentialExpectation {
+        issuer: "wi",
+        audience: "agent-host",
+        principal: "alice",
+        provider: "provider",
+        run: "run",
+        authorization_digest: &auth,
+    };
+    let decoded: CredentialBindingV1 = decode(&encode(&binding).unwrap()).unwrap();
+    for allowed in ["result", binding.artifact_scope[1].as_str()] {
+        decoded.permits(&expected, Operation::CollectArtifacts, Some(allowed), 99, 1).unwrap();
+    }
+    assert!(decoded.permits(&expected, Operation::CollectArtifacts, Some("other"), 99, 1).is_err());
+
+    for invalid in ["".to_string(), "line\nbreak".into(), "x".repeat(257)] {
+        let mut changed = binding.clone();
+        changed.artifact_scope.push(invalid.clone());
+        let decoded: CredentialBindingV1 = decode(&encode(&changed).unwrap()).unwrap();
+        assert!(
+            decoded.permits(&expected, Operation::CollectArtifacts, Some(&invalid), 99, 1).is_err(),
+            "invalid scope entry {invalid:?}"
+        );
+        assert!(
+            decoded.permits(&expected, Operation::CollectArtifacts, Some("result"), 99, 1).is_err(),
+            "all scope entries must be valid"
+        );
+    }
+}
+
+#[test]
 fn export_destinations_are_unambiguous() {
     let make = |reference: &str, relative_name: &str| ExportV1 {
         reference: reference.into(),

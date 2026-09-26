@@ -68,6 +68,9 @@ impl CredentialBindingV1 {
         if self.operations.len() > 6 || self.artifact_scope.len() > 64 {
             return Err("credential scope exceeds bound".into());
         }
+        for reference in &self.artifact_scope {
+            nonempty(reference)?;
+        }
         Ok(())
     }
 }
