@@ -77,14 +77,15 @@ impl ControlEvidenceV1 {
             }
         }
         for c in &self.requested {
-            if c.mandatory
-                && (!matches!(c.state, ControlState::Supported(_))
-                    || !self
-                        .applied
-                        .iter()
-                        .any(|a| a.kind == c.kind && matches!(a.state, ControlState::Supported(_))))
-            {
-                return Err("mandatory control unavailable".into());
+            let applied = self.applied.iter().find(|a| a.kind == c.kind);
+            match (&c.state, applied.map(|a| &a.state)) {
+                (ControlState::Supported(requested), Some(ControlState::Supported(actual)))
+                    if actual <= requested => {}
+                (ControlState::Supported(_), Some(ControlState::Supported(_))) => {
+                    return Err("applied control exceeds requested limit".into());
+                }
+                _ if c.mandatory => return Err("mandatory control unavailable".into()),
+                _ => {}
             }
         }
         Ok(())

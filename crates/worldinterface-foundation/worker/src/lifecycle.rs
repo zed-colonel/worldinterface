@@ -1,5 +1,6 @@
 use crate::{mapping::Operation, nonempty, Result};
 use serde::{Deserialize, Serialize};
+use std::collections::BTreeMap;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
@@ -34,19 +35,25 @@ pub struct Lifecycle {
     pub phase: Phase,
     pub sequence: u64,
     pub last_event: Option<String>,
+    // Event identities remain bound to their facts after later observations arrive.
+    accepted: BTreeMap<String, (u64, Fact)>,
 }
 impl Default for Lifecycle {
     fn default() -> Self {
-        Self { phase: Phase::New, sequence: 0, last_event: None }
+        Self { phase: Phase::New, sequence: 0, last_event: None, accepted: BTreeMap::new() }
     }
 }
 impl Lifecycle {
     pub fn apply(&mut self, sequence: u64, event: &str, fact: Fact) -> Result<()> {
         nonempty(event)?;
-        if self.last_event.as_deref() == Some(event) && self.sequence == sequence {
-            return Ok(());
+        if let Some(previous) = self.accepted.get(event) {
+            return if *previous == (sequence, fact) {
+                Ok(())
+            } else {
+                Err("conflicting worker event identity".into())
+            };
         }
-        if sequence != self.sequence + 1 {
+        if self.sequence.checked_add(1) != Some(sequence) {
             return Err("reordered or duplicate worker observation".into());
         }
         let next = match (self.phase, fact) {
@@ -57,7 +64,10 @@ impl Lifecycle {
             (Phase::StartIntent, Fact::Accepted(Operation::Start)) => Phase::StartAccepted,
             (Phase::StartAccepted, Fact::Running) => Phase::Running,
             (Phase::Running, Fact::StopRequested) => Phase::StopRequested,
-            (Phase::StopRequested, Fact::Exited) => Phase::Exited,
+            (
+                Phase::StartIntent | Phase::StartAccepted | Phase::Running | Phase::StopRequested,
+                Fact::Exited,
+            ) => Phase::Exited,
             (Phase::Exited, Fact::ArtifactsPublished) => Phase::ArtifactsPublished,
             (Phase::ArtifactsPublished, Fact::Accepted(Operation::Release)) => {
                 Phase::ReleaseAccepted
@@ -68,6 +78,7 @@ impl Lifecycle {
         self.phase = next;
         self.sequence = sequence;
         self.last_event = Some(event.into());
+        self.accepted.insert(event.into(), (sequence, fact));
         Ok(())
     }
 }

@@ -80,6 +80,12 @@ impl WorkerRequestV1 {
         }
         Ok(())
     }
+
+    /// Digest the validated canonical request, including its identity and every binding.
+    pub fn digest(&self) -> Result<ContentHash> {
+        self.validate()?;
+        Ok(ContentHash::of(&crate::encode(self)?))
+    }
 }
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -96,9 +102,9 @@ pub struct ResolvedWorkerV1 {
     pub controls_digest: ContentHash,
 }
 impl ResolvedWorkerV1 {
-    pub fn validate_for(&self, request: &WorkerRequestV1, digest: &ContentHash) -> Result<()> {
+    pub fn validate_for(&self, request: &WorkerRequestV1) -> Result<()> {
         if self.schema != 1
-            || &self.request_digest != digest
+            || self.request_digest != request.digest()?
             || self.provider != request.provider
             || self.run != request.run
             || self.controls_digest != request.controls_digest

@@ -41,9 +41,9 @@ impl ProfileBinding {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum Mediation {
-    Embedded,
-    Delegated,
-    External,
+    FullyMediated,
+    SandboxedNative,
+    Hybrid,
 }
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]

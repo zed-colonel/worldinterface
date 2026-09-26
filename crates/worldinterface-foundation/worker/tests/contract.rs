@@ -49,7 +49,7 @@ fn wp_001_profile_and_binding_drift() {
     weak = r.clone();
     weak.profile.definition_sha256 = hash("weakened").as_str().into();
     assert!(weak.validate().is_err());
-    let d = hash("request-content");
+    let d = r.digest().unwrap();
     let resolved = ResolvedWorkerV1 {
         schema: 1,
         request_digest: d.clone(),
@@ -62,8 +62,23 @@ fn wp_001_profile_and_binding_drift() {
         authorization_digest: hash("authorization"),
         controls_digest: r.controls_digest.clone(),
     };
-    resolved.validate_for(&r, &d).unwrap();
-    assert!(resolved.validate_for(&r, &hash("changed-content")).is_err());
+    resolved.validate_for(&r).unwrap();
+    for changed_request in [
+        WorkerRequestV1 { input_digest: hash("changed-input"), ..r.clone() },
+        WorkerRequestV1 { operation: Operation::Inspect, ..r.clone() },
+        WorkerRequestV1 { request: "different-request".into(), ..r.clone() },
+        WorkerRequestV1 {
+            profile: {
+                let mut p = r.profile.clone();
+                p.definition_sha256 = hash("wrong-profile").as_str().into();
+                p
+            },
+            ..r.clone()
+        },
+        WorkerRequestV1 { controls_digest: hash("different-controls"), ..r.clone() },
+    ] {
+        assert!(resolved.validate_for(&changed_request).is_err());
+    }
     let mut changed = resolved;
     changed.configuration_digest = hash("changed-config");
     assert_ne!(encode(&changed).unwrap(), encode(&r).unwrap());
@@ -71,7 +86,7 @@ fn wp_001_profile_and_binding_drift() {
 #[test]
 fn wp_003_independent_vm_cannot_inherit_enclosing_kata() {
     let a = Assurance {
-        mediation: Mediation::Embedded,
+        mediation: Mediation::FullyMediated,
         enclosing_instance: Some("kata-instance".into()),
         independent_worker_vm_required: true,
         hostile_code_containment_required: false,
@@ -80,14 +95,27 @@ fn wp_003_independent_vm_cannot_inherit_enclosing_kata() {
 }
 #[test]
 fn wp_008_mediation_does_not_elevate_containment() {
-    for mediation in [Mediation::Embedded, Mediation::Delegated, Mediation::External] {
+    for mediation in [Mediation::FullyMediated, Mediation::SandboxedNative, Mediation::Hybrid] {
+        let encoded = encode(&mediation).unwrap();
+        assert_eq!(decode::<Mediation>(&encoded).unwrap(), mediation);
         let a = Assurance {
-            mediation,
+            mediation: mediation.clone(),
             enclosing_instance: Some("kata-instance".into()),
             independent_worker_vm_required: false,
+            hostile_code_containment_required: false,
+        };
+        a.validate().unwrap();
+        let a = Assurance { independent_worker_vm_required: true, ..a };
+        assert!(a.validate().is_err());
+        let a = Assurance {
+            independent_worker_vm_required: false,
             hostile_code_containment_required: true,
+            ..a
         };
         assert!(a.validate().is_err());
+    }
+    for legacy in ["embedded", "delegated", "external"] {
+        assert!(decode::<Mediation>(format!("\"{legacy}\"").as_bytes()).is_err());
     }
 }
 struct Scripted;
@@ -210,8 +238,89 @@ fn wp_005_lifecycle_and_unavailable_operations() {
     }
     assert_eq!(life.phase, Phase::Released);
     assert!(life.apply(9, "reordered", Fact::Running).is_err());
-    life.apply(11, "uncertain", Fact::Uncertain).unwrap();
-    assert_eq!(life.phase, Phase::Quarantined);
+    assert!(life.apply(11, "late-running", Fact::Running).is_err());
+}
+
+#[test]
+fn control_limits_cannot_weaken_requested_bounds() {
+    for kind in [ControlKind::WallTimeMs, ControlKind::OutputBytes] {
+        for (actual, eligible) in [(99, true), (100, true), (101, false)] {
+            let requested = Control {
+                kind: kind.clone(),
+                mandatory: true,
+                state: ControlState::Supported(100),
+            };
+            let mut evidence = ControlEvidenceV1 {
+                schema: 1,
+                provider: "provider".into(),
+                run: "run".into(),
+                requested: vec![requested],
+                advertised: vec![],
+                applied: vec![
+                    Control {
+                        kind: ControlKind::WallTimeMs,
+                        mandatory: true,
+                        state: ControlState::Supported(100),
+                    },
+                    Control {
+                        kind: ControlKind::OutputBytes,
+                        mandatory: true,
+                        state: ControlState::Supported(100),
+                    },
+                ],
+                observed: vec![],
+            };
+            evidence.applied.iter_mut().find(|c| c.kind == kind).unwrap().state =
+                ControlState::Supported(actual);
+            assert_eq!(evidence.validate().is_ok(), eligible, "{kind:?} at {actual}");
+        }
+    }
+}
+
+#[test]
+fn confirmed_exit_and_event_identity_cover_completion_and_races() {
+    for exit_after in
+        [Phase::StartIntent, Phase::StartAccepted, Phase::Running, Phase::StopRequested]
+    {
+        let mut life = Lifecycle::default();
+        let facts = [
+            Fact::Accepted(Operation::Provision),
+            Fact::Provisioned,
+            Fact::StartIntent,
+            Fact::Accepted(Operation::Start),
+            Fact::Running,
+            Fact::StopRequested,
+        ];
+        let count = match exit_after {
+            Phase::StartIntent => 3,
+            Phase::StartAccepted => 4,
+            Phase::Running => 5,
+            Phase::StopRequested => 6,
+            _ => unreachable!(),
+        };
+        for (index, fact) in facts[..count].iter().copied().enumerate() {
+            life.apply(index as u64 + 1, &format!("event-{index}"), fact).unwrap();
+        }
+        let exit_sequence = count as u64 + 1;
+        life.apply(exit_sequence, "exit", Fact::Exited).unwrap();
+        assert_eq!(life.phase, Phase::Exited);
+        life.apply(exit_sequence, "exit", Fact::Exited).unwrap();
+        assert!(life.apply(exit_sequence, "exit", Fact::Uncertain).is_err());
+        assert!(life.apply(exit_sequence + 1, "exit", Fact::Exited).is_err());
+        assert!(life.apply(exit_sequence + 1, "late-running", Fact::Running).is_err());
+        assert!(life.apply(exit_sequence + 1, "late-stop", Fact::StopRequested).is_err());
+        life.apply(exit_sequence + 1, "artifacts", Fact::ArtifactsPublished).unwrap();
+        life.apply(exit_sequence + 2, "release-accepted", Fact::Accepted(Operation::Release))
+            .unwrap();
+        life.apply(exit_sequence + 3, "released", Fact::Released).unwrap();
+        assert_eq!(life.phase, Phase::Released);
+        life.apply(1, "event-0", Fact::Accepted(Operation::Provision)).unwrap();
+        assert!(life.apply(1, "event-0", Fact::Uncertain).is_err());
+    }
+    let mut ambiguous = Lifecycle::default();
+    ambiguous.apply(1, "unknown", Fact::Uncertain).unwrap();
+    assert_eq!(ambiguous.phase, Phase::Quarantined);
+    assert!(ambiguous.apply(2, "replacement", Fact::StartIntent).is_err());
 }
 #[test]
 fn wp_006_aq_free_portable_contract_and_strict_codec() {
