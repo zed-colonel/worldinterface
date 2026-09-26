@@ -329,6 +329,40 @@ fn unsupported_incomplete_precontract_and_corrupt_stores_reject_without_changes(
     }
 }
 #[test]
+fn wal_mode_without_sidecars_rejects_without_changing_any_store_member() {
+    for kind in [StoreKind::Fabric, StoreKind::Flow, StoreKind::Context, StoreKind::Platform] {
+        let t = tempfile::tempdir().unwrap();
+        let p = t.path().join("root");
+        let store_profile = profile(true);
+        drop(StoreRoot::create_empty(&p, store_profile.clone()).unwrap());
+        let db = p.join(format!("{}.sqlite", kind.name()));
+        let c = rusqlite::Connection::open(&db).unwrap();
+        let mode: String = c.query_row("PRAGMA journal_mode=WAL", [], |row| row.get(0)).unwrap();
+        assert_eq!(mode, "wal");
+        drop(c);
+        assert!(!p.join(format!("{}.sqlite-wal", kind.name())).exists());
+        assert!(!p.join(format!("{}.sqlite-shm", kind.name())).exists());
+        let before = snapshot(&p);
+
+        let backup = t.path().join("backup");
+        let restore = t.path().join("restore");
+        assert!(StoreRoot::open_existing(&p).is_err(), "{kind:?}: open");
+        assert_eq!(before, snapshot(&p), "{kind:?}: open");
+        assert!(StoreRoot::open_maintenance(&p).is_err(), "{kind:?}: maintenance");
+        assert_eq!(before, snapshot(&p), "{kind:?}: maintenance");
+        for maintenance in [false, true] {
+            assert!(StoreRoot::open_for_instance(&p, &store_profile.instance, maintenance).is_err());
+            assert_eq!(before, snapshot(&p), "{kind:?}: instance {maintenance}");
+        }
+        assert!(StoreRoot::backup_offline(&p, &backup).is_err(), "{kind:?}: backup");
+        assert!(!backup.exists());
+        assert_eq!(before, snapshot(&p), "{kind:?}: backup");
+        assert!(StoreRoot::restore_offline(&p, &restore).is_err(), "{kind:?}: restore");
+        assert!(!restore.exists());
+        assert_eq!(before, snapshot(&p), "{kind:?}: restore");
+    }
+}
+#[test]
 fn artifacts_scope_integrity_offline_exclusion_and_complete_restore() {
     let t = tempfile::tempdir().unwrap();
     let p = t.path().join("root");
