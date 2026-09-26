@@ -79,9 +79,15 @@ fn wp_001_profile_and_binding_drift() {
     ] {
         assert!(resolved.validate_for(&changed_request).is_err());
     }
-    let mut changed = resolved;
-    changed.configuration_digest = hash("changed-config");
-    assert_ne!(encode(&changed).unwrap(), encode(&r).unwrap());
+    let baseline = encode(&resolved).unwrap();
+    for changed in [
+        ResolvedWorkerV1 { adapter_digest: hash("changed-adapter"), ..resolved.clone() },
+        ResolvedWorkerV1 { executable_digest: hash("changed-executable"), ..resolved.clone() },
+        ResolvedWorkerV1 { dependencies_digest: hash("changed-dependencies"), ..resolved.clone() },
+        ResolvedWorkerV1 { configuration_digest: hash("changed-config"), ..resolved.clone() },
+    ] {
+        assert_ne!(encode(&changed).unwrap(), baseline);
+    }
 }
 #[test]
 fn wp_003_independent_vm_cannot_inherit_enclosing_kata() {
@@ -116,6 +122,32 @@ fn wp_008_mediation_does_not_elevate_containment() {
     }
     for legacy in ["embedded", "delegated", "external"] {
         assert!(decode::<Mediation>(format!("\"{legacy}\"").as_bytes()).is_err());
+    }
+}
+#[test]
+fn wp_006_assurance_roundtrips_standalone_and_enclosing_evidence() {
+    for mediation in [Mediation::FullyMediated, Mediation::SandboxedNative, Mediation::Hybrid] {
+        for enclosing_instance in [None, Some("kata-instance".into())] {
+            let assurance = Assurance {
+                mediation: mediation.clone(),
+                enclosing_instance,
+                independent_worker_vm_required: false,
+                hostile_code_containment_required: false,
+            };
+            assurance.validate().unwrap();
+            let encoded = encode(&assurance).unwrap();
+            assert_eq!(decode::<Assurance>(&encoded).unwrap(), assurance);
+            assert_eq!(
+                encoded.windows(b"enclosing_instance".len()).any(|w| w == b"enclosing_instance"),
+                assurance.enclosing_instance.is_some()
+            );
+            for denied in [
+                Assurance { independent_worker_vm_required: true, ..assurance.clone() },
+                Assurance { hostile_code_containment_required: true, ..assurance.clone() },
+            ] {
+                assert!(denied.validate().is_err());
+            }
+        }
     }
 }
 struct Scripted;
@@ -448,6 +480,45 @@ fn export_destinations_are_unambiguous() {
         assert!(validate(&manifest).is_err(), "reverse {name}");
         manifest.exports.reverse();
     }
+}
+
+#[test]
+fn export_verifier_findings_are_bounded_and_well_formed() {
+    let mut manifest = ExportManifestV1 {
+        schema: 1,
+        provider: "provider".into(),
+        run: "run".into(),
+        owner: "alice".into(),
+        exports: vec![ExportV1 {
+            reference: "result".into(),
+            relative_name: "out/result".into(),
+            digest: hash("result"),
+            size: 6,
+            required_verifiers: vec!["verifier-0".into()],
+            passed_verifiers: (0..16).map(|i| format!("verifier-{i}")).collect(),
+        }],
+    };
+    let validate =
+        |m: &ExportManifestV1| m.validate("provider", "run", "alice", &["result".into()]);
+    validate(&manifest).unwrap();
+    let bytes = encode(&manifest).unwrap();
+    let decoded = decode::<ExportManifestV1>(&bytes).unwrap();
+    validate(&decoded).unwrap();
+
+    manifest.exports[0].passed_verifiers.push("verifier-16".into());
+    assert!(validate(&manifest).is_err());
+    manifest.exports[0].passed_verifiers.pop();
+    for invalid in ["", "line\nbreak", "\u{0000}"] {
+        manifest.exports[0].passed_verifiers[1] = invalid.into();
+        assert!(validate(&manifest).is_err(), "{invalid:?}");
+    }
+    manifest.exports[0].passed_verifiers[1] = "verifier-0".into();
+    assert!(validate(&manifest).is_err(), "duplicate passed verifier");
+    manifest.exports[0].passed_verifiers[1] = "verifier-1".into();
+    manifest.exports[0].required_verifiers.push("verifier-0".into());
+    assert!(validate(&manifest).is_err(), "duplicate required verifier");
+    manifest.exports[0].required_verifiers[1] = "missing-verifier".into();
+    assert!(validate(&manifest).is_err(), "required verifier did not pass");
 }
 
 #[test]

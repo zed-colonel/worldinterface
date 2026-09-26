@@ -49,6 +49,7 @@ pub enum Mediation {
 #[serde(deny_unknown_fields)]
 pub struct Assurance {
     pub mediation: Mediation,
+    #[serde(skip_serializing_if = "Option::is_none", default)]
     pub enclosing_instance: Option<String>,
     pub independent_worker_vm_required: bool,
     pub hostile_code_containment_required: bool,

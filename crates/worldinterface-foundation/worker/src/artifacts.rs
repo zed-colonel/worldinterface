@@ -48,7 +48,13 @@ impl ExportManifestV1 {
                     .split('/')
                     .any(|p| p.is_empty() || p == "." || p == ".." || p.contains('\\'))
                 || e.required_verifiers.len() > 16
+                || e.passed_verifiers.len() > 16
                 || e.required_verifiers.iter().any(|v| nonempty(v).is_err())
+                || e.passed_verifiers.iter().any(|v| nonempty(v).is_err())
+                || e.required_verifiers.iter().collect::<std::collections::BTreeSet<_>>().len()
+                    != e.required_verifiers.len()
+                || e.passed_verifiers.iter().collect::<std::collections::BTreeSet<_>>().len()
+                    != e.passed_verifiers.len()
                 || !e.required_verifiers.iter().all(|v| e.passed_verifiers.contains(v))
             {
                 return Err("unsafe or unverified export".into());
