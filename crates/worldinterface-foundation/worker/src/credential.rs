@@ -19,21 +19,34 @@ pub struct CredentialBindingV1 {
     pub expires_unix_ms: u64,
     pub revocation_generation: u64,
 }
+/// Values obtained from WI's trusted authorization and transport context, never
+/// from the worker's credential artifact or request body.
+#[derive(Clone, Copy)]
+pub struct CredentialExpectation<'a> {
+    pub issuer: &'a str,
+    pub audience: &'a str,
+    pub principal: &'a str,
+    pub provider: &'a str,
+    pub run: &'a str,
+    pub authorization_digest: &'a ContentHash,
+}
 impl CredentialBindingV1 {
     pub fn permits(
         &self,
-        provider: &str,
-        run: &str,
+        expected: &CredentialExpectation<'_>,
         operation: Operation,
         artifact: Option<&str>,
-        authorization: &ContentHash,
         now_ms: u64,
         generation: u64,
     ) -> Result<()> {
         if self.schema != 1
-            || self.provider != provider
-            || self.run != run
-            || &self.authorization_digest != authorization
+            || self.issuer != expected.issuer
+            || self.audience != expected.audience
+            || self.principal != expected.principal
+            || self.principal == "root"
+            || self.provider != expected.provider
+            || self.run != expected.run
+            || &self.authorization_digest != expected.authorization_digest
             || now_ms >= self.expires_unix_ms
             || generation != self.revocation_generation
             || !self.operations.contains(&operation)

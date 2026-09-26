@@ -35,6 +35,7 @@ impl ExportManifestV1 {
             nonempty(s)?;
         }
         let mut seen = std::collections::BTreeSet::new();
+        let mut destinations: Vec<&str> = Vec::new();
         for e in &self.exports {
             nonempty(&e.reference)?;
             if !scope.contains(&e.reference)
@@ -52,6 +53,20 @@ impl ExportManifestV1 {
             {
                 return Err("unsafe or unverified export".into());
             }
+            // Each export names a file. A duplicate destination or a file used
+            // as another export's parent has no unambiguous file-tree meaning.
+            if destinations.iter().any(|previous| {
+                *previous == e.relative_name
+                    || e.relative_name
+                        .strip_prefix(previous)
+                        .is_some_and(|rest| rest.starts_with('/'))
+                    || previous
+                        .strip_prefix(&e.relative_name)
+                        .is_some_and(|rest| rest.starts_with('/'))
+            }) {
+                return Err("conflicting export destination".into());
+            }
+            destinations.push(&e.relative_name);
         }
         Ok(())
     }

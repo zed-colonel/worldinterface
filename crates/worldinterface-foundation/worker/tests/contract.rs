@@ -319,7 +319,8 @@ fn confirmed_exit_and_event_identity_cover_completion_and_races() {
     }
     let mut ambiguous = Lifecycle::default();
     ambiguous.apply(1, "unknown", Fact::Uncertain).unwrap();
-    assert_eq!(ambiguous.phase, Phase::Quarantined);
+    assert_eq!(ambiguous.phase, Phase::New);
+    assert!(ambiguous.quarantined);
     assert!(ambiguous.apply(2, "replacement", Fact::StartIntent).is_err());
 }
 #[test]
@@ -361,12 +362,153 @@ fn wp_006_aq_free_portable_contract_and_strict_codec() {
         expires_unix_ms: 100,
         revocation_generation: 2,
     };
-    cred.permits(&r.provider, &r.run, Operation::Inspect, Some("result"), &hash("auth"), 99, 2)
-        .unwrap();
-    assert!(cred
-        .permits(&r.provider, "other", Operation::Inspect, None, &hash("auth"), 99, 2)
-        .is_err());
-    assert!(cred
-        .permits(&r.provider, &r.run, Operation::Inspect, None, &hash("auth"), 100, 2)
-        .is_err());
+    let authorization = hash("auth");
+    let expected = CredentialExpectation {
+        issuer: "wi",
+        audience: "agent-host",
+        principal: "principal",
+        provider: &r.provider,
+        run: &r.run,
+        authorization_digest: &authorization,
+    };
+    cred.permits(&expected, Operation::Inspect, Some("result"), 99, 2).unwrap();
+    let wrong_run = CredentialExpectation { run: "other", ..expected };
+    assert!(cred.permits(&wrong_run, Operation::Inspect, None, 99, 2).is_err());
+    assert!(cred.permits(&expected, Operation::Inspect, None, 100, 2).is_err());
+}
+
+#[test]
+fn credential_identity_is_bound_to_trusted_context() {
+    let binding = CredentialBindingV1 {
+        schema: 1,
+        reference: "credential".into(),
+        issuer: "wi".into(),
+        audience: "agent-host".into(),
+        principal: "alice".into(),
+        provider: "provider".into(),
+        run: "run".into(),
+        operations: vec![Operation::Inspect],
+        artifact_scope: vec![],
+        authorization_digest: hash("auth"),
+        expires_unix_ms: 100,
+        revocation_generation: 1,
+    };
+    let auth = hash("auth");
+    let expected = CredentialExpectation {
+        issuer: "wi",
+        audience: "agent-host",
+        principal: "alice",
+        provider: "provider",
+        run: "run",
+        authorization_digest: &auth,
+    };
+    binding.permits(&expected, Operation::Inspect, None, 99, 1).unwrap();
+    for (field, value) in
+        [("issuer", "other"), ("audience", "operator-supervisor"), ("principal", "root")]
+    {
+        let mut changed = binding.clone();
+        match field {
+            "issuer" => changed.issuer = value.into(),
+            "audience" => changed.audience = value.into(),
+            _ => changed.principal = value.into(),
+        }
+        assert!(changed.permits(&expected, Operation::Inspect, None, 99, 1).is_err(), "{field}");
+    }
+    let root_expected = CredentialExpectation { principal: "root", ..expected };
+    let mut root_binding = binding;
+    root_binding.principal = "root".into();
+    assert!(root_binding.permits(&root_expected, Operation::Inspect, None, 99, 1).is_err());
+}
+
+#[test]
+fn export_destinations_are_unambiguous() {
+    let make = |reference: &str, relative_name: &str| ExportV1 {
+        reference: reference.into(),
+        relative_name: relative_name.into(),
+        digest: hash(reference),
+        size: 1,
+        required_verifiers: vec![],
+        passed_verifiers: vec![],
+    };
+    let mut manifest = ExportManifestV1 {
+        schema: 1,
+        provider: "provider".into(),
+        run: "run".into(),
+        owner: "alice".into(),
+        exports: vec![make("one", "out/result"), make("two", "out/other")],
+    };
+    let validate = |m: &ExportManifestV1| {
+        m.validate("provider", "run", "alice", &["one".into(), "two".into()])
+    };
+    validate(&manifest).unwrap();
+    for name in ["out/result", "out/result/child", "out"] {
+        manifest.exports[1].relative_name = name.into();
+        assert!(validate(&manifest).is_err(), "{name}");
+        manifest.exports.reverse();
+        assert!(validate(&manifest).is_err(), "reverse {name}");
+        manifest.exports.reverse();
+    }
+}
+
+#[test]
+fn quarantine_requires_authorized_reconciliation_and_allows_cleanup() {
+    for (prefix, outcome) in [
+        (3, ReconciliationOutcome::NoProcess),
+        (4, ReconciliationOutcome::OwnedProcess),
+        (5, ReconciliationOutcome::OwnedProcess),
+        (6, ReconciliationOutcome::NoProcess),
+    ] {
+        let mut life = Lifecycle::default();
+        let facts = [
+            Fact::Accepted(Operation::Provision),
+            Fact::Provisioned,
+            Fact::StartIntent,
+            Fact::Accepted(Operation::Start),
+            Fact::Running,
+            Fact::Exited,
+        ];
+        for (index, fact) in facts[..prefix].iter().copied().enumerate() {
+            life.apply(index as u64 + 1, &format!("event-{index}"), fact).unwrap();
+        }
+        let mut n = prefix as u64 + 1;
+        life.apply(n, "uncertain", Fact::Uncertain).unwrap();
+        assert!(life.quarantined);
+        n += 1;
+        for fact in [Fact::StartIntent, Fact::StopRequested, Fact::Exited, Fact::ArtifactsPublished]
+        {
+            assert!(life.apply(n, "blocked", fact).is_err());
+        }
+        let auth = hash("auth");
+        let ownership = hash("ownership-evidence");
+        let expected = ReconciliationBinding {
+            provider: "provider",
+            run: "run",
+            authorization_digest: &auth,
+            ownership_evidence_digest: &ownership,
+            outcome,
+        };
+        let wrong = ReconciliationBinding { run: "other", ..expected };
+        assert!(life.reconcile(n, "reconciled", &wrong, &expected).is_err());
+        life.reconcile(n, "reconciled", &expected, &expected).unwrap();
+        life.reconcile(n, "reconciled", &expected, &expected).unwrap();
+        assert!(life.reconcile(n, "reconciled", &expected, &wrong).is_err());
+        assert!(life.apply(n, "reconciled", Fact::Exited).is_err());
+        if outcome == ReconciliationOutcome::NoProcess {
+            assert_eq!(life.phase, if prefix == 6 { Phase::Exited } else { Phase::NoProcess });
+        }
+        n += 1;
+        assert!(life.apply(n, "restart", Fact::StartIntent).is_err());
+        assert!(life.apply(n, "publish", Fact::ArtifactsPublished).is_err());
+        if outcome == ReconciliationOutcome::OwnedProcess {
+            life.apply(n, "stop", Fact::StopRequested).unwrap();
+            n += 1;
+            life.apply(n, "exit", Fact::Exited).unwrap();
+            n += 1;
+        }
+        life.apply(n, "release-accepted", Fact::Accepted(Operation::Release)).unwrap();
+        n += 1;
+        life.apply(n, "released", Fact::Released).unwrap();
+        assert_eq!(life.phase, Phase::Released);
+        assert!(life.quarantined);
+    }
 }

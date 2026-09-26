@@ -6755,6 +6755,13 @@
     "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
   },
   {
+    "id": "crates/worldinterface-foundation/worker/src/credential.rs::::struct:CredentialExpectation",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
     "id": "crates/worldinterface-foundation/worker/src/lib.rs::::module:artifacts",
     "disposition": "retain-align",
     "target": "worldinterface-worker",
@@ -6825,6 +6832,13 @@
     "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
   },
   {
+    "id": "crates/worldinterface-foundation/worker/src/lifecycle.rs::::enum:AcceptedEvent",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
     "id": "crates/worldinterface-foundation/worker/src/lifecycle.rs::::enum:Fact",
     "disposition": "retain-align",
     "target": "worldinterface-worker",
@@ -6839,6 +6853,13 @@
     "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
   },
   {
+    "id": "crates/worldinterface-foundation/worker/src/lifecycle.rs::::enum:ReconciliationOutcome",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
     "id": "crates/worldinterface-foundation/worker/src/lifecycle.rs::::source-module:crates/worldinterface-foundation/worker/src/lifecycle.rs",
     "disposition": "retain-align",
     "target": "worldinterface-worker",
@@ -6847,6 +6868,13 @@
   },
   {
     "id": "crates/worldinterface-foundation/worker/src/lifecycle.rs::::struct:Lifecycle",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/lifecycle.rs::::struct:ReconciliationBinding",
     "disposition": "retain-align",
     "target": "worldinterface-worker",
     "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
