@@ -1,0 +1,36 @@
+{
+  "scope": "wi/WI-09/domain",
+  "upstream_conformance": false,
+  "cases": [
+    {
+      "id": "WP-001",
+      "test": "wp_001_profile_and_binding_drift",
+      "package": "worldinterface-worker"
+    },
+    {
+      "id": "WP-003",
+      "test": "wp_003_independent_vm_cannot_inherit_enclosing_kata",
+      "package": "worldinterface-worker"
+    },
+    {
+      "id": "WP-004",
+      "test": "wp_004_opaque_consumer_artifacts_and_controls",
+      "package": "worldinterface-worker"
+    },
+    {
+      "id": "WP-005",
+      "test": "wp_005_lifecycle_and_unavailable_operations",
+      "package": "worldinterface-worker"
+    },
+    {
+      "id": "WP-006",
+      "test": "wp_006_aq_free_portable_contract_and_strict_codec",
+      "package": "worldinterface-worker"
+    },
+    {
+      "id": "WP-008",
+      "test": "wp_008_mediation_does_not_elevate_containment",
+      "package": "worldinterface-worker"
+    }
+  ]
+}

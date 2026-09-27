@@ -12,7 +12,7 @@ manifest=tools/wi-contract-check/Cargo.toml
 controller_cargo="$(dirname "$CRAFTINGTABLE_DEPENDENCY_MANIFEST")/bin/cargo"
 run_cargo() {
   if [[ "$(command -v cargo)" == "$controller_cargo" ]]; then
-    # The session launcher injects pins and rejects all explicit --config arguments.
+    # The session launcher injects pins and records this AQ-free graph as supplementary.
     cargo "$@"
   else
     # act's Rust installation must explicitly consume the mounted controller pins.

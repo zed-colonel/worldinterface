@@ -789,6 +789,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "worldinterface-worker"
+version = "0.2.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "worldinterface-capability",
+ "worldinterface-protocol",
+]
+
+[[package]]
 name = "zerocopy"
 version = "0.8.57"
 source = "registry+https://github.com/rust-lang/crates.io-index"

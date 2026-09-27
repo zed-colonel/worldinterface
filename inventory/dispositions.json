@@ -6676,5 +6676,355 @@
     "target": "ingress-domain",
     "rationale": "Test-only generated ingress command sequences and independent lifecycle models; no runtime composition",
     "source": "CONTRIBUTING.md pure state property-test requirement; WI-03/domain F-003"
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/Cargo.toml::foundation-crate:worldinterface-worker",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/artifacts.rs::::source-module:crates/worldinterface-foundation/worker/src/artifacts.rs",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/artifacts.rs::::struct:ExportManifestV1",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/artifacts.rs::::struct:ExportV1",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/controls.rs::::enum:ControlKind",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/controls.rs::::enum:ControlState",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/controls.rs::::source-module:crates/worldinterface-foundation/worker/src/controls.rs",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/controls.rs::::struct:Control",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/controls.rs::::struct:ControlEvidenceV1",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/credential.rs::::source-module:crates/worldinterface-foundation/worker/src/credential.rs",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/credential.rs::::struct:CredentialBindingV1",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/credential.rs::::struct:CredentialExpectation",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/lib.rs::::module:artifacts",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/lib.rs::::module:controls",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/lib.rs::::module:credential",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/lib.rs::::module:lifecycle",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/lib.rs::::module:mapping",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/lib.rs::::module:ports",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/lib.rs::::module:process_state",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/lib.rs::::module:profile",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/lib.rs::::source-module:crates/worldinterface-foundation/worker/src/lib.rs",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/lib.rs::::type:Result",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/lifecycle.rs::::enum:AcceptedEvent",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/lifecycle.rs::::enum:Fact",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/lifecycle.rs::::enum:Phase",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/lifecycle.rs::::enum:ReconciliationOutcome",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/lifecycle.rs::::source-module:crates/worldinterface-foundation/worker/src/lifecycle.rs",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/lifecycle.rs::::struct:Lifecycle",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/lifecycle.rs::::struct:ReconciliationBinding",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/mapping.rs::::enum:Operation",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/mapping.rs::::source-module:crates/worldinterface-foundation/worker/src/mapping.rs",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/mapping.rs::::struct:ResolvedWorkerV1",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/mapping.rs::::struct:WorkerRequestV1",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/ports.rs::::enum:Acknowledgment",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/ports.rs::::source-module:crates/worldinterface-foundation/worker/src/ports.rs",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/ports.rs::::struct:Observation",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/ports.rs::::trait:WorkerPort",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/ports.rs::::type:PortFuture",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/process_state.rs::::enum:Ownership",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/process_state.rs::::module:tests@10d1b0eff34c",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/process_state.rs::::source-module:crates/worldinterface-foundation/worker/src/process_state.rs",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/process_state.rs::::struct:ProcessIdentity",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/profile.rs::::enum:Mediation",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/profile.rs::::source-module:crates/worldinterface-foundation/worker/src/profile.rs",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/profile.rs::::struct:Assurance",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/profile.rs::::struct:ProfileBinding",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/tests/contract.rs::::source-module:crates/worldinterface-foundation/worker/tests/contract.rs",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/tests/contract.rs::::struct:Noop",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/tests/contract.rs::::struct:Scripted",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/ports.rs::::enum:ObservationKind",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
   }
 ]

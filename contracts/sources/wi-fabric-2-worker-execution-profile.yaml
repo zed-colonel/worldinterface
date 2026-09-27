@@ -1,0 +1,314 @@
+schema_version: 1
+kind: worker_execution_planning_profile
+document: WI-FABRIC-2 bounded embedded worker-provider contract
+profile_id: WI-WORKER-EXECUTION-1
+provider_profile_id: process-managed-proof-1
+owner_repository: zed-colonel/worldinterface
+plan_revision: WI-PLAN-5
+base_contract: WI-FABRIC-2
+date: '2026-09-12'
+status: planned-not-qualified
+authority:
+  definition_owner: WI / Agent Host
+  consumer: Exoskeleton or another application
+  consumer_may_tighten_restrictions: true
+  consumer_may_weaken_restrictions: false
+  wire_contract_changed: false
+  field_mapping_requires_review: WI-ADR-016
+  new_actionqueue_primitives: []
+  public_runtime_orchestration_api_added: false
+provider:
+  realization: reviewed-local-process
+  managed_through_worldinterface: true
+  implementation_location: Agent Host adapter behind WI
+  independent_worker_vm: false
+  hostile_code_containment_claim: false
+  enclosing_instance_required_runtime: null
+  kata_host_required_for_provider_conformance: false
+  host_or_platform_management_socket_access: false
+  arbitrary_engine_flags_accepted: false
+  local_pid_or_host_path_required_by_consumer: false
+  external_provider_required_now: false
+  external_provider_seam_required: true
+  new_scheduler: false
+admission:
+  reviewed_executables_only: true
+  approved_nonsensitive_inputs_only: true
+  arbitrary_generated_executables_allowed: false
+  production_credentials_allowed: false
+  sensitive_production_data_allowed: false
+  unreviewed_executable_candidates_allowed: false
+  silent_downgrade_allowed: false
+  unknown_mandatory_control_action: deny-before-launch
+  unsupported_operation_action: unavailable-with-no-side-effect
+  qualification_evidence_required: true
+  caller_profile_claim_authoritative: false
+  approval_cannot_override_missing_enforcement: true
+  profile_selection_bound_to_authorization: true
+  provider_change_requires_reauthorization: true
+  forbid_inherited_authority:
+  - vessel-root
+  - operator-supervisor
+  - deployment
+  - organization-admin
+  network_restrictions_inferred_from_workdir: false
+operation_contract:
+  required:
+  - provision
+  - start
+  - inspect
+  - terminate
+  - collect_artifacts
+  - release
+  optional_until_qualified:
+  - command
+  - checkpoint
+  - suspend
+  - resume
+  provision_meaning: Create or bind an authorized workspace/run allocation, not an independent VM.
+  process_memory_restore_claim: false
+  checkpoint_kind: explicitly-admitted-application-artifact-only
+  unqualified_optional_operation_available: false
+  terminal_exit_is_task_acceptance: false
+lifecycle:
+  durable_intent_before_start: true
+  stable_run_identity_not_pid: true
+  pid_reuse_safe_ownership_required: true
+  unconditional_duplicate_start_allowed: false
+  creation_ack_ambiguity_action: reconcile-owned-process-or-quarantine-before-replacement
+  event_durable_before_wake: true
+  deduplicate_events: true
+  late_cancel_and_event_races_required: true
+  bounded_output_and_walltime: true
+  process_tree_cleanup_required: true
+  termination_request_is_confirmed_exit: false
+  cleanup_failure_reported: true
+  no_deliberate_sensitive_descriptor_inheritance: true
+  recovery_uses_existing_aq_wi_semantics: true
+evidence:
+  separate_enclosing_instance_from_worker: true
+  enclosing_kata_implies_worker_vm: false
+  worker_report_is_host_attestation: false
+  missing_evidence_remains_unknown: true
+  receipt_is_task_quality_or_acceptance: false
+  requested_advertised_enforced_observed_distinct: true
+  required_binding_fields:
+  - worker-profile-id-and-definition-digest
+  - provider-adapter-version
+  - approved-executable-and-configuration-digests
+  - principal-and-run-resource
+  - authorization-policy-and-grant
+  - actual-controls-and-limitations
+  - input-output-artifact-digests
+  - AQ-WI-implementation-and-conformance-pins
+  - host-or-instance-evidence-reference-with-source-and-trust
+  - test-fixtures-and-reviewer-identity
+  requalification_triggers:
+  - profile-definition-change
+  - adapter-or-executable-change
+  - policy-or-control-change
+  - AQ-WI-pin-change
+  - material-environment-change
+  bounded_structured_profile_no_freeform_metadata_map: true
+artifacts:
+  opaque_refs_required: true
+  consumer_direct_local_path_access_required: false
+  export_scope_validation_required: true
+  quarantine_on_invalid_export: true
+  worker_self_acceptance_allowed: false
+host_lifecycle_adapter:
+  owner: WI boundary adapter to operator-owned supervisor
+  required_for_process_provider_proof: false
+  required_for_claimed_host_lifecycle_support: true
+  containerd_client_in_fabric_core_required: false
+  bounded_operations_only: true
+  guest_engine_socket_allowed: false
+  results_queryable_outside_stopped_guest: true
+  recovery_depends_on_failed_guest: false
+  supervisor_owns_platform_runtime_access: true
+  candidate_owns_activation_credentials: false
+milestones:
+  embedded_worker_proof:
+    id: WI-EMBEDDED-WORKER-PROOF-1
+    requires_checkpoints:
+    - WI-WORKER-G1
+    - WI-WORKER-G2
+    - WI-WORKER-G3
+    - WI-WORKER-G4
+    requires_real_embedded_aq_wi: true
+    requires_exoskeleton_implementation: false
+    requires_platform_services: false
+    requires_kata_host: false
+    requires_external_worker_provider: false
+    requires_digicorp: false
+    marks_parent_prs_accepted: false
+    satisfies_full_release_or_stronger_isolation: false
+    test_consumer_owner: WI conformance harness
+  host_lifecycle_support:
+    requires_checkpoints:
+    - WI-WORKER-G5
+    separate_from_worker_proof: true
+  full_release:
+    existing_gate_meanings_preserved: true
+    scope_reduction_requires_separate_review: true
+checkpoint_semantics:
+  states_initially_planned: true
+  evidence_from_partial_pr_slices_allowed: true
+  parent_acceptance_not_own_checkpoint_prerequisite: true
+  work_owner_ids_are_attribution_not_parent_dependencies: true
+  existing_upstream_gates_preserved: true
+  no_runtime_pass_inferred_from_plan_or_stub: true
+  concurrency_map_requires_reviewed_rebinding: true
+future_not_prerequisites:
+- external-worker-provisioning
+- platform-WI
+- platform-AQ
+- DigiCorp
+- Kubernetes
+- containerd-client-in-WI
+- fleet-placement
+- confidential-computing
+- global-budget-coordination
+checkpoints:
+- id: WI-WORKER-G1
+  title: Provider definition and representation
+  criterion: WI-ADR-016 and referenced authorization/evidence ADR clauses reviewed; limitations, field mapping and
+    operation capability contract frozen.
+  status: planned
+  evidence_owners:
+  - WI-02
+  - WI-09
+  - WI-10
+  requires_checkpoints: []
+  required_aq_gates_for_real_integration: []
+  requires_completed_parent_prs: []
+  requires_completed_exo_prs: []
+  cases:
+  - WP-001
+  - WP-002
+  - WP-003
+  - WP-004
+  - WP-005
+  - WP-006
+  - WP-007
+  - WP-008
+- id: WI-WORKER-G2
+  title: Qualified-profile admission and truthful evidence
+  criterion: Exact-profile admission, unsupported-control denials and worker/instance evidence separation proven
+    in producer fixtures.
+  status: planned
+  evidence_owners:
+  - WI-04
+  - WI-05
+  requires_checkpoints:
+  - WI-WORKER-G1
+  required_aq_gates_for_real_integration: []
+  requires_completed_parent_prs: []
+  requires_completed_exo_prs: []
+  cases:
+  - WP-009
+  - WP-010
+  - WP-011
+  - WP-012
+  - WP-013
+  - WP-014
+  - WP-015
+  - WP-016
+- id: WI-WORKER-G3
+  title: Real process lifecycle and crash convergence
+  criterion: Reviewed processes supervised via real WI/AQ; idempotent start, process ownership, event durability
+    and termination/recovery proved.
+  status: planned
+  evidence_owners:
+  - WI-06
+  - WI-08
+  - WI-09
+  requires_checkpoints:
+  - WI-WORKER-G1
+  - WI-WORKER-G2
+  required_aq_gates_for_real_integration:
+  - WI-AQ-G1
+  - WI-AQ-G2
+  - WI-AQ-G3
+  - WI-AQ-G4
+  requires_completed_parent_prs: []
+  requires_completed_exo_prs: []
+  cases:
+  - WP-017
+  - WP-018
+  - WP-019
+  - WP-020
+  - WP-021
+  - WP-022
+  - WP-023
+  - WP-024
+  - WP-025
+  - WP-026
+- id: WI-WORKER-G4
+  title: Embedded provider proof and portable handoff
+  criterion: WI-owned embedded harness, artifacts and external-provider seam pass without EXO/platform/Kata dependency
+    or inflated assurance claims.
+  status: planned
+  evidence_owners:
+  - WI-09
+  - WI-10
+  - WI-11
+  - WI-13
+  - WI-14
+  requires_checkpoints:
+  - WI-WORKER-G3
+  required_aq_gates_for_real_integration:
+  - WI-AQ-G1
+  - WI-AQ-G2
+  - WI-AQ-G3
+  - WI-AQ-G4
+  requires_completed_parent_prs: []
+  requires_completed_exo_prs: []
+  cases:
+  - WP-027
+  - WP-028
+  - WP-029
+  - WP-030
+  - WP-031
+  - WP-032
+  - WP-033
+  - WP-034
+- id: WI-WORKER-G5
+  title: Bounded external supervisor boundary
+  criterion: Authenticated lifecycle adapter and results survive target shutdown; real instance qualification remains
+    EXO-owned.
+  status: planned
+  evidence_owners:
+  - WI-06
+  - WI-08
+  - WI-11
+  - WI-13
+  requires_checkpoints:
+  - WI-WORKER-G1
+  - WI-WORKER-G2
+  required_aq_gates_for_real_integration:
+  - WI-AQ-G1
+  - WI-AQ-G2
+  - WI-AQ-G3
+  - WI-AQ-G4
+  requires_completed_parent_prs: []
+  requires_completed_exo_prs: []
+  cases:
+  - WP-035
+  - WP-036
+  - WP-037
+  - WP-038
+  - WP-039
+  - WP-040
+qualification_evaluation:
+  purpose: produce-provider-conformance-evidence-not-enable-ordinary-use
+  explicit_operator_approval_required: true
+  registration_state: evaluation-only
+  ordinary_admission_enabled: false
+  may_run_only_reviewed_fixture_cases: true
+  requires_prior_completed_provider_qualification: false
+  non_sensitive_test_environment_required: true
+  profile_exclusions_and_ordinary_authorization_still_apply: true
+  may_waive_missing_mandatory_enforcement: false
+  may_self_promote_to_qualified: false
+  qualification_reviewer_separate_from_candidate: true

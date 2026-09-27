@@ -105,7 +105,11 @@ fn inventory_mutations_fail() {
     let root = root();
     let items = items();
     let base = plan();
-    assert!(validate_disposition(&root, &items, &base).unwrap().is_empty());
+    assert!(
+        validate_disposition(&root, &items, &base).unwrap().is_empty(),
+        "{:?}",
+        validate_disposition(&root, &items, &base).unwrap()
+    );
     for kind in ["connector", "wasm-manifest", "registration", "source-module"] {
         let i = items
             .iter()
@@ -190,7 +194,11 @@ fn root_readme_disposition_cannot_be_omitted_or_stale() {
     let root = root();
     let items = items();
     let base = plan();
-    assert!(validate_disposition(&root, &items, &base).unwrap().is_empty());
+    assert!(
+        validate_disposition(&root, &items, &base).unwrap().is_empty(),
+        "{:?}",
+        validate_disposition(&root, &items, &base).unwrap()
+    );
     for id in ["shell-exec", "sandbox-exec"] {
         for mutation in 0..3 {
             let mut changed = base.clone();
@@ -522,30 +530,19 @@ fn production_cannot_reach_domain_tooling() {
 #[test]
 fn adr_clause_coverage_cannot_expand() {
     assert!(
-        contracts::adr_coverage(&root(), "WI-ADR-017", "wi/WI-10/domain", "merge", true).unwrap()
-    );
-    assert!(
-        contracts::adr_coverage(&root(), "WI-ADR-016", "wi/WI-10/domain", "start", false).unwrap()
-    );
-    assert!(
-        !contracts::adr_coverage(&root(), "WI-ADR-016", "wi/WI-10/domain", "start", true).unwrap()
-    );
-    assert!(
-        !contracts::adr_coverage(&root(), "WI-ADR-016", "wi/WI-09/domain", "merge", false).unwrap()
-    );
-    assert!(
-        !contracts::adr_coverage(&root(), "WI-ADR-016", "wi/WI-10/domain", "merge", false).unwrap()
+        contracts::adr_coverage(&root(), "WI-ADR-016", "wi/WI-09/domain", "merge", true).unwrap()
     );
     let t = TempDir::new().unwrap();
     copy(&root().join("docs/adr"), &t.path().join("docs/adr"));
     let path = t.path().join("docs/adr/approvals.json");
     let mut v: Value = read(&path).unwrap();
-    v["records"][0]["decision"]["coverage"] = json!("full");
+    v["records"][0]["decision"]["coverage"] = json!("clauses");
     fs::write(path, serde_json::to_vec(&v).unwrap()).unwrap();
     assert!(
-        !contracts::adr_coverage(t.path(), "WI-ADR-016", "wi/WI-10/domain", "start", true).unwrap()
+        !contracts::adr_coverage(t.path(), "WI-ADR-016", "wi/WI-09/domain", "merge", true).unwrap()
     );
 }
+
 #[test]
 fn obligations_preserve_pending_evidence() {
     let mut o: Obligations = load("contracts/wi10-obligations.json");

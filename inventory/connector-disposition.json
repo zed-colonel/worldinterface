@@ -4173,7 +4173,7 @@
         },
         {
           "path": "crates/worldinterface-foundation/Cargo.toml",
-          "source_sha256": "24d8909a181057b635b241ea6f3e251b0b9035f1934a6ce73ddfa2fe8ed9fe50",
+          "source_sha256": "7fd835e97c1c37aaa185a50fe249c599ebf689d00d7fa7084962efc2da2fdbf5",
           "treatment": "Retain target protocol, capability, state-machine and store infrastructure; preserve isolation from legacy connector removal."
         },
         {
