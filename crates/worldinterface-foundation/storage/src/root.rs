@@ -4,7 +4,7 @@ use rusqlite::{Connection, OpenFlags};
 use serde::{Deserialize, Serialize};
 use std::{
     fs::{self, File, OpenOptions},
-    io::Write,
+    io::{Read, Write},
     path::{Path, PathBuf},
 };
 use worldinterface_protocol::{
@@ -125,6 +125,17 @@ fn copy_dir(src: &Path, dst: &Path) -> Result<()> {
         }
     }
     sync_dir(dst)
+}
+/// Inspect the SQLite file format before giving SQLite a descriptor for the
+/// original store. Even a read-only SQLite open can create WAL/SHM sidecars
+/// when the database header selects WAL mode.
+fn require_rollback_mode(path: &Path) -> Result<()> {
+    let mut header = [0u8; 20];
+    File::open(path)?.read_exact(&mut header)?;
+    if &header[..16] != b"SQLite format 3\0" || header[18] != 1 || header[19] != 1 {
+        return Err(invalid("unsupported SQLite database header or journal mode"));
+    }
+    Ok(())
 }
 impl StoreRoot {
     pub fn create_empty(path: impl AsRef<Path>, profile: StoreProfile) -> Result<Self> {
@@ -264,6 +275,12 @@ impl StoreRoot {
             FileExt::try_lock_shared(&lock)?;
         }
         let root = Self { path: path.to_path_buf(), manifest, _lock: lock, exclusive };
+        // Check every source header before SQLite opens any source database,
+        // including on maintenance/backup paths. Journal recovery still runs
+        // on a private copy first, so a valid hot journal remains recoverable.
+        for kind in &root.manifest.stores {
+            require_rollback_mode(&root.db_path(*kind))?;
+        }
         if !journals.is_empty() {
             // SQLite alone interprets/replays journals. First recover an isolated copy,
             // then validate the entire root (including embedded identities/artifacts).

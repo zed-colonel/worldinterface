@@ -15,6 +15,7 @@ allowed = {
     "worldinterface-ingress": {"worldinterface-protocol", "worldinterface-domain", "worldinterface-storage"},
     "worldinterface-egress": {"worldinterface-protocol", "worldinterface-domain", "worldinterface-storage"},
     "worldinterface-storage": {"worldinterface-protocol", "worldinterface-domain"},
+    "worldinterface-worker": {"worldinterface-protocol", "worldinterface-capability"},
 }
 packages = {p["id"]: p for p in meta["packages"]}
 # Integration verification resolves the shared consumer graph. Inspect every
@@ -47,6 +48,8 @@ for p in (root / "crates/worldinterface-foundation").rglob("*.rs"):
     assert not re.search(r"\b(?:std\s*::\s*(?:process|net)|tokio|reqwest|axum|actionqueue)\s*::", s), str(p)
     assert not re.search(r"impl\s+TestEffectAdmissionPort\s+for", s), str(p)
     assert not re.search(r"impl\s+Queue(?:Admission|Inspection|Wake)Port\s+for", s), str(p)
+    if "worker/src" in str(p):
+        assert not re.search(r"impl\s+WorkerPort\s+for|std\s*::\s*(?:fs|thread|process|net)", s), str(p)
     assert "worldinterface_core" not in s and "worldinterface_contextstore" not in s, str(p)
     if p.relative_to(root / "crates/worldinterface-foundation").parts[0] in ("protocol", "capability", "domain"):
         assert not re.search(r"std\s*::\s*(?:fs|thread)|SystemTime\s*::\s*now|Utc\s*::\s*now", s), str(p)
@@ -72,7 +75,14 @@ for obligation in egress_coverage["obligations"]:
     assert any(re.search(r"#\[test\]\s*fn\s+" + re.escape(obligation["test"]) + r"\s*\(", p.read_text())
                for p in directory.rglob("*.rs")), obligation
 fixture_dir = root / "conformance/wi-fabric-2/domain"
-print(json.dumps({"scopes": ["wi/WI-02/domain", "wi/WI-03/domain", "wi/WI-04/domain"], "isolation": "passed", "aq_packages": [],
+worker_coverage = json.loads((root / "conformance/wi-fabric-2/worker/coverage.json").read_text())
+assert worker_coverage["scope"] == "wi/WI-09/domain" and worker_coverage["upstream_conformance"] is False
+assert {c["id"] for c in worker_coverage["cases"]} == {"WP-001", "WP-003", "WP-004", "WP-005", "WP-006", "WP-008"}
+for case in worker_coverage["cases"]:
+    assert case["package"] == "worldinterface-worker"
+    assert any(re.search(r"#\[test\]\s*fn\s+" + re.escape(case["test"]) + r"\s*\(", p.read_text())
+               for p in (root / "crates/worldinterface-foundation/worker/tests").rglob("*.rs")), case
+print(json.dumps({"scopes": ["wi/WI-02/domain", "wi/WI-03/domain", "wi/WI-04/domain", "wi/WI-09/domain"], "isolation": "passed", "aq_packages": [],
                   "production_adapter": False, "runtime_conformance": False,
                   "fixtures": {str(p.relative_to(fixture_dir.parent)): hashlib.sha256(p.read_bytes()).hexdigest()
                                for p in sorted(fixture_dir.parent.glob("*/**/*.json"))}}, sort_keys=True))

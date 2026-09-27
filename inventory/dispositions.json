@@ -3612,6 +3612,314 @@
     "rationale": "Pure reducer and named internal queue ports; no production adapters."
   },
   {
+    "id": "crates/worldinterface-foundation/domain/src/agency.rs::::source-module:crates/worldinterface-foundation/domain/src/agency.rs",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/agency.rs::::struct:AgencyRecord",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/agency.rs::::struct:AuthenticatedCaller",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/agency.rs::::struct:Binding",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/agency.rs::::struct:Delegation",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/agency.rs::::type:Authority",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/agency.rs::::type:Result",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/authorization.rs::::enum:Credential",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/authorization.rs::::enum:Enforcement",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/authorization.rs::::enum:InputClass",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/authorization.rs::::enum:Reason",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/authorization.rs::::source-module:crates/worldinterface-foundation/domain/src/authorization.rs",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/authorization.rs::::struct:Approval",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/authorization.rs::::struct:Attenuation",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/authorization.rs::::struct:AuthorizationEvaluation",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/authorization.rs::::struct:AuthorizationSnapshot",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/authorization.rs::::struct:FixtureQualification",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/authorization.rs::::struct:Grant",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/authorization.rs::::struct:Policy",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/authorization.rs::::struct:RequiredControl",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/authorization.rs::::struct:UseLimit",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/authorization.rs::::struct:VerifiedSnapshot",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/authorization.rs::::struct:WorkerRealization",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/effect.rs::::enum:CommitObservation",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/effect.rs::::enum:EffectAction",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/effect.rs::::enum:JournalAction",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/effect.rs::::enum:LinkKind",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/effect.rs::::source-module:crates/worldinterface-foundation/domain/src/effect.rs",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/effect.rs::::struct:Dispatch",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/effect.rs::::struct:EffectAggregate",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/effect.rs::::struct:EffectState",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/effect.rs::::struct:EffectView",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/effect.rs::::struct:Entry",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/effect.rs::::struct:IntentLink",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/effect.rs::::struct:OutcomeEvidence",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/effect.rs::::struct:ReconciliationEvidence",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/effect.rs::::struct:ValidatedEffectCommand",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/effect.rs::::struct:VerifiedOutcome",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/effect.rs::::struct:VerifiedReconciliation",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/ingress.rs::::enum:IngressCommand",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/ingress.rs::::enum:IngressResult",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/ingress.rs::::source-module:crates/worldinterface-foundation/domain/src/ingress.rs",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/ingress.rs::::struct:IngressState",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/ingress.rs::::type:Result",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
     "id": "crates/worldinterface-foundation/domain/src/lib.rs::::enum:Action",
     "disposition": "retain-align",
     "target": "worldinterface-domain",
@@ -3640,11 +3948,46 @@
     "rationale": "Pure reducer and named internal queue ports; no production adapters."
   },
   {
+    "id": "crates/worldinterface-foundation/domain/src/lib.rs::::module:agency",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/lib.rs::::module:authorization",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/lib.rs::::module:effect",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/lib.rs::::module:ingress",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
     "id": "crates/worldinterface-foundation/domain/src/lib.rs::::module:ports",
     "disposition": "retain-align",
     "target": "worldinterface-domain",
     "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
     "rationale": "Pure reducer and named internal queue ports; no production adapters."
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/lib.rs::::module:resource",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
   },
   {
     "id": "crates/worldinterface-foundation/domain/src/lib.rs::::source-module:crates/worldinterface-foundation/domain/src/lib.rs",
@@ -3689,6 +4032,20 @@
     "rationale": "Pure reducer and named internal queue ports; no production adapters."
   },
   {
+    "id": "crates/worldinterface-foundation/domain/src/ports.rs::::struct:EffectAcknowledgment",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/ports.rs::::struct:EffectAdmissionRequest",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
     "id": "crates/worldinterface-foundation/domain/src/ports.rs::::struct:QueueAdmission",
     "disposition": "retain-align",
     "target": "worldinterface-domain",
@@ -3717,6 +4074,62 @@
     "rationale": "Pure reducer and named internal queue ports; no production adapters."
   },
   {
+    "id": "crates/worldinterface-foundation/domain/src/ports.rs::::trait:TestEffectAdmissionPort",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/resource.rs::::enum:Target",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/resource.rs::::source-module:crates/worldinterface-foundation/domain/src/resource.rs",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/resource.rs::::struct:ResolutionFact",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/resource.rs::::struct:ResolutionRecord",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/resource.rs::::struct:ResolverEntry",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/resource.rs::::struct:ResolverSnapshot",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/resource.rs::::struct:TargetDocument",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
     "id": "crates/worldinterface-foundation/domain/tests/transitions.rs::::source-module:crates/worldinterface-foundation/domain/tests/transitions.rs",
     "disposition": "test-evidence",
     "target": "worldinterface-domain",
@@ -3729,6 +4142,230 @@
     "target": "worldinterface-domain",
     "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
     "rationale": "Local synthetic conformance fixture/test; no upstream integration claim."
+  },
+  {
+    "id": "crates/worldinterface-foundation/egress/Cargo.toml::foundation-crate:worldinterface-egress",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/egress/src/lib.rs::::source-module:crates/worldinterface-foundation/egress/src/lib.rs",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/egress/src/lib.rs::::struct:Egress",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/egress/tests/domain.rs::::reviewed-generator:proptest:fc2b2b8767972e02b0510cc5b226266fc8211d6d47dd8f319d5d3b5014771bc0",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/egress/tests/domain.rs::::source-module:crates/worldinterface-foundation/egress/tests/domain.rs",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/egress/tests/domain.rs::::struct:Queue",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/ingress/Cargo.toml::foundation-crate:worldinterface-ingress",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/ingress/src/lib.rs::::module:transport",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/ingress/src/lib.rs::::source-module:crates/worldinterface-foundation/ingress/src/lib.rs",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/ingress/src/lib.rs::::struct:AdmissionIds",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/ingress/src/lib.rs::::struct:AuthenticatedScope",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/ingress/src/lib.rs::::struct:BindingGrant",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/ingress/src/lib.rs::::struct:DeliveryToken",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/ingress/src/lib.rs::::struct:DeliveryView",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/ingress/src/lib.rs::::struct:Ingress",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/ingress/src/lib.rs::::struct:IssuedDelivery",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/ingress/src/lib.rs::::trait:BindingAuthority",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/ingress/src/lib.rs::::type:Result",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/ingress/src/transport/http.rs::::source-module:crates/worldinterface-foundation/ingress/src/transport/http.rs",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/ingress/src/transport/mod.rs::::module:http",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/ingress/src/transport/mod.rs::::module:streaming",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/ingress/src/transport/mod.rs::::source-module:crates/worldinterface-foundation/ingress/src/transport/mod.rs",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/ingress/src/transport/mod.rs::::struct:ProviderCredentials",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/ingress/src/transport/mod.rs::::struct:ValidatedProviderEvent",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/ingress/src/transport/streaming.rs::::source-module:crates/worldinterface-foundation/ingress/src/transport/streaming.rs",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/ingress/src/transport/streaming.rs::::struct:SessionHandshake",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/ingress/src/transport/streaming.rs::::struct:StreamSession",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/ingress/tests/lifecycle.rs::::module:generated",
+    "disposition": "test-evidence",
+    "target": "ingress-domain",
+    "rationale": "Test-only generated ingress command sequences and independent lifecycle models; no runtime composition",
+    "source": "CONTRIBUTING.md pure state property-test requirement; WI-03/domain F-003"
+  },
+  {
+    "id": "crates/worldinterface-foundation/ingress/tests/lifecycle.rs::::source-module:crates/worldinterface-foundation/ingress/tests/lifecycle.rs",
+    "disposition": "test-evidence",
+    "target": "ingress-domain",
+    "rationale": "Independent WI-03 transaction, transport and delivery conformance",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/ingress/tests/lifecycle.rs::::struct:Authority",
+    "disposition": "test-evidence",
+    "target": "ingress-domain",
+    "rationale": "Independent WI-03 transaction, transport and delivery conformance",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/ingress/tests/lifecycle.rs::::struct:MockWake",
+    "disposition": "test-evidence",
+    "target": "ingress-domain",
+    "rationale": "Independent WI-03 transaction, transport and delivery conformance",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/ingress/tests/lifecycle.rs::::struct:Setup",
+    "disposition": "test-evidence",
+    "target": "ingress-domain",
+    "rationale": "Independent WI-03 transaction, transport and delivery conformance",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
   },
   {
     "id": "crates/worldinterface-foundation/protocol/Cargo.toml::foundation-crate:worldinterface-protocol",
@@ -3913,6 +4550,146 @@
     "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
   },
   {
+    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::enum:AttachmentPolicy",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::enum:AttemptStatus",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::enum:BindingStatus",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::enum:DeliveryState",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::enum:IdentityStrategy",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::enum:ObservationProfile",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::source-module:crates/worldinterface-foundation/protocol/src/ingress.rs",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::struct:BindingVersion",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::struct:DeliveryAcknowledgment",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::struct:DeliveryAttempt",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::struct:DeliveryPolicy",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::struct:GovernedAttachment",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::struct:IngressAdmission",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::struct:IngressBinding",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::struct:ObservationDelivery",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::struct:OrderingEvidence",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::struct:ProviderEvent",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::struct:ProviderProfile",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::struct:ProviderScope",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::struct:TransportProvenance",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
     "id": "crates/worldinterface-foundation/protocol/src/lib.rs::::module:canonical",
     "disposition": "retain-align",
     "target": "worldinterface-protocol",
@@ -3925,6 +4702,13 @@
     "target": "worldinterface-protocol",
     "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
     "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/lib.rs::::module:ingress",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
   },
   {
     "id": "crates/worldinterface-foundation/protocol/src/lib.rs::::module:records",
@@ -4256,6 +5040,13 @@
     "rationale": "Local synthetic conformance fixture/test; no upstream integration claim."
   },
   {
+    "id": "crates/worldinterface-foundation/protocol/tests/ingress.rs::::source-module:crates/worldinterface-foundation/protocol/tests/ingress.rs",
+    "disposition": "test-evidence",
+    "target": "ingress-domain",
+    "rationale": "Independent WI-03 transaction, transport and delivery conformance",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
     "id": "crates/worldinterface-foundation/storage/Cargo.toml::foundation-crate:worldinterface-storage",
     "disposition": "retain-align",
     "target": "worldinterface-storage",
@@ -4277,6 +5068,41 @@
     "rationale": "Fresh local persistence and query/backup primitives; no legacy readers or external effects."
   },
   {
+    "id": "crates/worldinterface-foundation/storage/src/effect.rs::::module:tests@10d1b0eff34c",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/effect.rs::::source-module:crates/worldinterface-foundation/storage/src/effect.rs",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/ingress.rs::::module:tests@10d1b0eff34c",
+    "disposition": "test-evidence",
+    "target": "ingress-domain",
+    "rationale": "Independent WI-03 transaction, transport and delivery conformance",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/ingress.rs::::source-module:crates/worldinterface-foundation/storage/src/ingress.rs",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/ingress.rs::::struct:Entry",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
     "id": "crates/worldinterface-foundation/storage/src/lib.rs::::module:contextstore",
     "disposition": "retain-align",
     "target": "worldinterface-storage",
@@ -4289,6 +5115,20 @@
     "target": "WI-02 G1 runtime boundary and source evidence validation",
     "source": "implementation plan WI-02, \u00a75.3; accepted WI-02 integration design",
     "rationale": "AQ-owned queue authority, authenticated artifact resolution and validated store recovery; independent acceptance remains required."
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/lib.rs::::module:effect",
+    "disposition": "retain-align",
+    "target": "egress-domain",
+    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/lib.rs::::module:ingress",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
   },
   {
     "id": "crates/worldinterface-foundation/storage/src/lib.rs::::module:repository",
@@ -4443,6 +5283,356 @@
     "target": "WI-02 G1 runtime boundary and source evidence validation",
     "source": "implementation plan WI-02, \u00a75.3; accepted WI-02 integration design",
     "rationale": "AQ-owned queue authority, authenticated artifact resolution and validated store recovery; independent acceptance remains required."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/Cargo.toml::foundation-crate:worldinterface-worker",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/artifacts.rs::::source-module:crates/worldinterface-foundation/worker/src/artifacts.rs",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/artifacts.rs::::struct:ExportManifestV1",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/artifacts.rs::::struct:ExportV1",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/controls.rs::::enum:ControlKind",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/controls.rs::::enum:ControlState",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/controls.rs::::source-module:crates/worldinterface-foundation/worker/src/controls.rs",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/controls.rs::::struct:Control",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/controls.rs::::struct:ControlEvidenceV1",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/credential.rs::::source-module:crates/worldinterface-foundation/worker/src/credential.rs",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/credential.rs::::struct:CredentialBindingV1",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/credential.rs::::struct:CredentialExpectation",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/lib.rs::::module:artifacts",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/lib.rs::::module:controls",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/lib.rs::::module:credential",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/lib.rs::::module:lifecycle",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/lib.rs::::module:mapping",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/lib.rs::::module:ports",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/lib.rs::::module:process_state",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/lib.rs::::module:profile",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/lib.rs::::source-module:crates/worldinterface-foundation/worker/src/lib.rs",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/lib.rs::::type:Result",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/lifecycle.rs::::enum:AcceptedEvent",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/lifecycle.rs::::enum:Fact",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/lifecycle.rs::::enum:Phase",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/lifecycle.rs::::enum:ReconciliationOutcome",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/lifecycle.rs::::source-module:crates/worldinterface-foundation/worker/src/lifecycle.rs",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/lifecycle.rs::::struct:Lifecycle",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/lifecycle.rs::::struct:ReconciliationBinding",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/mapping.rs::::enum:Operation",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/mapping.rs::::source-module:crates/worldinterface-foundation/worker/src/mapping.rs",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/mapping.rs::::struct:ResolvedWorkerV1",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/mapping.rs::::struct:WorkerRequestV1",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/ports.rs::::enum:Acknowledgment",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/ports.rs::::enum:ObservationKind",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/ports.rs::::source-module:crates/worldinterface-foundation/worker/src/ports.rs",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/ports.rs::::struct:Observation",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/ports.rs::::trait:WorkerPort",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/ports.rs::::type:PortFuture",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/process_state.rs::::enum:Ownership",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/process_state.rs::::module:tests@10d1b0eff34c",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/process_state.rs::::source-module:crates/worldinterface-foundation/worker/src/process_state.rs",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/process_state.rs::::struct:ProcessIdentity",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/profile.rs::::enum:Mediation",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/profile.rs::::source-module:crates/worldinterface-foundation/worker/src/profile.rs",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/profile.rs::::struct:Assurance",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/profile.rs::::struct:ProfileBinding",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/tests/contract.rs::::source-module:crates/worldinterface-foundation/worker/tests/contract.rs",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/tests/contract.rs::::struct:Noop",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/tests/contract.rs::::struct:Scripted",
+    "disposition": "retain-align",
+    "target": "worldinterface-worker",
+    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
+    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
   },
   {
     "id": "crates/worldinterface-host/Cargo.toml::workspace-crate:worldinterface-host",
@@ -6270,845 +7460,5 @@
     "target": "capability admission / WASM adapter",
     "rationale": "Each high-value semantic connector requires admission review before target retention",
     "source": "implementation plan \u00a71.1 and Appendix E"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/ingress.rs::::enum:IngressCommand",
-    "disposition": "retain-align",
-    "target": "ingress-domain",
-    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/ingress.rs::::enum:IngressResult",
-    "disposition": "retain-align",
-    "target": "ingress-domain",
-    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/ingress.rs::::source-module:crates/worldinterface-foundation/domain/src/ingress.rs",
-    "disposition": "retain-align",
-    "target": "ingress-domain",
-    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/ingress.rs::::struct:IngressState",
-    "disposition": "retain-align",
-    "target": "ingress-domain",
-    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/ingress.rs::::type:Result",
-    "disposition": "retain-align",
-    "target": "ingress-domain",
-    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/lib.rs::::module:ingress",
-    "disposition": "retain-align",
-    "target": "ingress-domain",
-    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/ingress/Cargo.toml::foundation-crate:worldinterface-ingress",
-    "disposition": "retain-align",
-    "target": "ingress-domain",
-    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/ingress/src/lib.rs::::module:transport",
-    "disposition": "retain-align",
-    "target": "ingress-domain",
-    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/ingress/src/lib.rs::::source-module:crates/worldinterface-foundation/ingress/src/lib.rs",
-    "disposition": "retain-align",
-    "target": "ingress-domain",
-    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/ingress/src/lib.rs::::struct:AdmissionIds",
-    "disposition": "retain-align",
-    "target": "ingress-domain",
-    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/ingress/src/lib.rs::::struct:AuthenticatedScope",
-    "disposition": "retain-align",
-    "target": "ingress-domain",
-    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/ingress/src/lib.rs::::struct:BindingGrant",
-    "disposition": "retain-align",
-    "target": "ingress-domain",
-    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/ingress/src/lib.rs::::struct:DeliveryToken",
-    "disposition": "retain-align",
-    "target": "ingress-domain",
-    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/ingress/src/lib.rs::::struct:DeliveryView",
-    "disposition": "retain-align",
-    "target": "ingress-domain",
-    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/ingress/src/lib.rs::::struct:Ingress",
-    "disposition": "retain-align",
-    "target": "ingress-domain",
-    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/ingress/src/lib.rs::::struct:IssuedDelivery",
-    "disposition": "retain-align",
-    "target": "ingress-domain",
-    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/ingress/src/lib.rs::::trait:BindingAuthority",
-    "disposition": "retain-align",
-    "target": "ingress-domain",
-    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/ingress/src/lib.rs::::type:Result",
-    "disposition": "retain-align",
-    "target": "ingress-domain",
-    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/ingress/src/transport/http.rs::::source-module:crates/worldinterface-foundation/ingress/src/transport/http.rs",
-    "disposition": "retain-align",
-    "target": "ingress-domain",
-    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/ingress/src/transport/mod.rs::::module:http",
-    "disposition": "retain-align",
-    "target": "ingress-domain",
-    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/ingress/src/transport/mod.rs::::module:streaming",
-    "disposition": "retain-align",
-    "target": "ingress-domain",
-    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/ingress/src/transport/mod.rs::::source-module:crates/worldinterface-foundation/ingress/src/transport/mod.rs",
-    "disposition": "retain-align",
-    "target": "ingress-domain",
-    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/ingress/src/transport/mod.rs::::struct:ProviderCredentials",
-    "disposition": "retain-align",
-    "target": "ingress-domain",
-    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/ingress/src/transport/mod.rs::::struct:ValidatedProviderEvent",
-    "disposition": "retain-align",
-    "target": "ingress-domain",
-    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/ingress/src/transport/streaming.rs::::source-module:crates/worldinterface-foundation/ingress/src/transport/streaming.rs",
-    "disposition": "retain-align",
-    "target": "ingress-domain",
-    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/ingress/src/transport/streaming.rs::::struct:SessionHandshake",
-    "disposition": "retain-align",
-    "target": "ingress-domain",
-    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/ingress/src/transport/streaming.rs::::struct:StreamSession",
-    "disposition": "retain-align",
-    "target": "ingress-domain",
-    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/ingress/tests/lifecycle.rs::::source-module:crates/worldinterface-foundation/ingress/tests/lifecycle.rs",
-    "disposition": "test-evidence",
-    "target": "ingress-domain",
-    "rationale": "Independent WI-03 transaction, transport and delivery conformance",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/ingress/tests/lifecycle.rs::::struct:Authority",
-    "disposition": "test-evidence",
-    "target": "ingress-domain",
-    "rationale": "Independent WI-03 transaction, transport and delivery conformance",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/ingress/tests/lifecycle.rs::::struct:MockWake",
-    "disposition": "test-evidence",
-    "target": "ingress-domain",
-    "rationale": "Independent WI-03 transaction, transport and delivery conformance",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/ingress/tests/lifecycle.rs::::struct:Setup",
-    "disposition": "test-evidence",
-    "target": "ingress-domain",
-    "rationale": "Independent WI-03 transaction, transport and delivery conformance",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::enum:AttachmentPolicy",
-    "disposition": "retain-align",
-    "target": "ingress-domain",
-    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::enum:AttemptStatus",
-    "disposition": "retain-align",
-    "target": "ingress-domain",
-    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::enum:BindingStatus",
-    "disposition": "retain-align",
-    "target": "ingress-domain",
-    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::enum:DeliveryState",
-    "disposition": "retain-align",
-    "target": "ingress-domain",
-    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::enum:IdentityStrategy",
-    "disposition": "retain-align",
-    "target": "ingress-domain",
-    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::enum:ObservationProfile",
-    "disposition": "retain-align",
-    "target": "ingress-domain",
-    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::source-module:crates/worldinterface-foundation/protocol/src/ingress.rs",
-    "disposition": "retain-align",
-    "target": "ingress-domain",
-    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::struct:BindingVersion",
-    "disposition": "retain-align",
-    "target": "ingress-domain",
-    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::struct:DeliveryAcknowledgment",
-    "disposition": "retain-align",
-    "target": "ingress-domain",
-    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::struct:DeliveryAttempt",
-    "disposition": "retain-align",
-    "target": "ingress-domain",
-    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::struct:DeliveryPolicy",
-    "disposition": "retain-align",
-    "target": "ingress-domain",
-    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::struct:GovernedAttachment",
-    "disposition": "retain-align",
-    "target": "ingress-domain",
-    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::struct:IngressAdmission",
-    "disposition": "retain-align",
-    "target": "ingress-domain",
-    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::struct:IngressBinding",
-    "disposition": "retain-align",
-    "target": "ingress-domain",
-    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::struct:ObservationDelivery",
-    "disposition": "retain-align",
-    "target": "ingress-domain",
-    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::struct:OrderingEvidence",
-    "disposition": "retain-align",
-    "target": "ingress-domain",
-    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::struct:ProviderEvent",
-    "disposition": "retain-align",
-    "target": "ingress-domain",
-    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::struct:ProviderProfile",
-    "disposition": "retain-align",
-    "target": "ingress-domain",
-    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::struct:ProviderScope",
-    "disposition": "retain-align",
-    "target": "ingress-domain",
-    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::struct:TransportProvenance",
-    "disposition": "retain-align",
-    "target": "ingress-domain",
-    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/lib.rs::::module:ingress",
-    "disposition": "retain-align",
-    "target": "ingress-domain",
-    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/tests/ingress.rs::::source-module:crates/worldinterface-foundation/protocol/tests/ingress.rs",
-    "disposition": "test-evidence",
-    "target": "ingress-domain",
-    "rationale": "Independent WI-03 transaction, transport and delivery conformance",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/storage/src/ingress.rs::::module:tests@10d1b0eff34c",
-    "disposition": "test-evidence",
-    "target": "ingress-domain",
-    "rationale": "Independent WI-03 transaction, transport and delivery conformance",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/storage/src/ingress.rs::::source-module:crates/worldinterface-foundation/storage/src/ingress.rs",
-    "disposition": "retain-align",
-    "target": "ingress-domain",
-    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/storage/src/ingress.rs::::struct:Entry",
-    "disposition": "retain-align",
-    "target": "ingress-domain",
-    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/storage/src/lib.rs::::module:ingress",
-    "disposition": "retain-align",
-    "target": "ingress-domain",
-    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/ingress/tests/lifecycle.rs::::module:generated",
-    "disposition": "test-evidence",
-    "target": "ingress-domain",
-    "rationale": "Test-only generated ingress command sequences and independent lifecycle models; no runtime composition",
-    "source": "CONTRIBUTING.md pure state property-test requirement; WI-03/domain F-003"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/agency.rs::::source-module:crates/worldinterface-foundation/domain/src/agency.rs",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/agency.rs::::struct:AgencyRecord",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/agency.rs::::struct:AuthenticatedCaller",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/agency.rs::::struct:Binding",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/agency.rs::::struct:Delegation",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/agency.rs::::type:Authority",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/agency.rs::::type:Result",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/authorization.rs::::enum:Credential",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/authorization.rs::::enum:Enforcement",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/authorization.rs::::enum:InputClass",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/authorization.rs::::enum:Reason",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/authorization.rs::::source-module:crates/worldinterface-foundation/domain/src/authorization.rs",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/authorization.rs::::struct:Approval",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/authorization.rs::::struct:Attenuation",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/authorization.rs::::struct:AuthorizationEvaluation",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/authorization.rs::::struct:AuthorizationSnapshot",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/authorization.rs::::struct:FixtureQualification",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/authorization.rs::::struct:Grant",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/authorization.rs::::struct:Policy",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/authorization.rs::::struct:RequiredControl",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/authorization.rs::::struct:UseLimit",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/authorization.rs::::struct:VerifiedSnapshot",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/authorization.rs::::struct:WorkerRealization",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/effect.rs::::enum:CommitObservation",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/effect.rs::::enum:EffectAction",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/effect.rs::::enum:JournalAction",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/effect.rs::::enum:LinkKind",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/effect.rs::::source-module:crates/worldinterface-foundation/domain/src/effect.rs",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/effect.rs::::struct:Dispatch",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/effect.rs::::struct:EffectAggregate",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/effect.rs::::struct:EffectState",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/effect.rs::::struct:EffectView",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/effect.rs::::struct:Entry",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/effect.rs::::struct:IntentLink",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/effect.rs::::struct:OutcomeEvidence",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/effect.rs::::struct:ReconciliationEvidence",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/effect.rs::::struct:ValidatedEffectCommand",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/effect.rs::::struct:VerifiedOutcome",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/effect.rs::::struct:VerifiedReconciliation",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/lib.rs::::module:agency",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/lib.rs::::module:authorization",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/lib.rs::::module:effect",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/lib.rs::::module:resource",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/ports.rs::::struct:EffectAcknowledgment",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/ports.rs::::struct:EffectAdmissionRequest",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/ports.rs::::trait:TestEffectAdmissionPort",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/resource.rs::::enum:Target",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/resource.rs::::source-module:crates/worldinterface-foundation/domain/src/resource.rs",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/resource.rs::::struct:ResolutionFact",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/resource.rs::::struct:ResolutionRecord",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/resource.rs::::struct:ResolverEntry",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/resource.rs::::struct:ResolverSnapshot",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/resource.rs::::struct:TargetDocument",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/egress/Cargo.toml::foundation-crate:worldinterface-egress",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/egress/src/lib.rs::::source-module:crates/worldinterface-foundation/egress/src/lib.rs",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/egress/src/lib.rs::::struct:Egress",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/egress/tests/domain.rs::::reviewed-generator:proptest:fc2b2b8767972e02b0510cc5b226266fc8211d6d47dd8f319d5d3b5014771bc0",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/egress/tests/domain.rs::::source-module:crates/worldinterface-foundation/egress/tests/domain.rs",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/egress/tests/domain.rs::::struct:Queue",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/storage/src/effect.rs::::module:tests@10d1b0eff34c",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/storage/src/effect.rs::::source-module:crates/worldinterface-foundation/storage/src/effect.rs",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/storage/src/lib.rs::::module:effect",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
   }
 ]

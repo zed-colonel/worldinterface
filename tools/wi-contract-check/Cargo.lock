@@ -435,44 +435,44 @@ checksum = "29666d0abbfad1e3dc4dcf6144730dd3a3ab225bbbdac83319345b1b44ccfc1b"
 
 [[patch.unused]]
 name = "actionqueue-actor"
-version = "0.1.2"
+version = "0.2.0"
 
 [[patch.unused]]
 name = "actionqueue-budget"
-version = "0.1.2"
+version = "0.2.0"
 
 [[patch.unused]]
 name = "actionqueue-cli"
-version = "0.1.2"
+version = "0.2.0"
 
 [[patch.unused]]
 name = "actionqueue-core"
-version = "0.1.2"
+version = "0.2.0"
 
 [[patch.unused]]
 name = "actionqueue-daemon"
-version = "0.1.2"
+version = "0.2.0"
 
 [[patch.unused]]
 name = "actionqueue-engine"
-version = "0.1.2"
+version = "0.2.0"
 
 [[patch.unused]]
 name = "actionqueue-executor-local"
-version = "0.1.2"
+version = "0.2.0"
 
 [[patch.unused]]
 name = "actionqueue-platform"
-version = "0.1.2"
+version = "0.2.0"
 
 [[patch.unused]]
 name = "actionqueue-runtime"
-version = "0.1.2"
+version = "0.2.0"
 
 [[patch.unused]]
 name = "actionqueue-storage"
-version = "0.1.2"
+version = "0.2.0"
 
 [[patch.unused]]
 name = "actionqueue-workflow"
-version = "0.1.2"
+version = "0.2.0"

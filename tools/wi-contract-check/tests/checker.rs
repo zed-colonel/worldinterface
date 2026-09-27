@@ -79,7 +79,7 @@ fn inventory_is_complete_and_deterministic() {
     for (k, n) in [
         ("workspace-crate", 10),
         ("auxiliary-crate", 11),
-        ("foundation-crate", 6),
+        ("foundation-crate", 7),
         ("connector", 25),
         ("wasm-manifest", 15),
         ("generated-id", 4),
@@ -363,7 +363,11 @@ fn fresh_store_skeleton_has_no_runtime_passes() {
 #[test]
 fn adr_owner_and_deadline_cannot_drift() {
     let t = contract_repo();
-    assert!(contracts::docs(t.path()).unwrap().is_empty());
+    assert!(
+        contracts::docs(t.path()).unwrap().is_empty(),
+        "{:?}",
+        contracts::docs(t.path()).unwrap()
+    );
     let p = "docs/adr/queue.json";
     let mut q = read(&t.path().join(p)).unwrap();
     q[15]["owner"] = json!("unassigned");
@@ -644,8 +648,8 @@ fn optional_local_and_locked_transitive_exo_routes_are_rejected() {
 fn adr_clause_approval_cannot_be_promoted_or_rewritten() {
     let t = contract_repo();
     let mut q = read(&t.path().join("docs/adr/queue.json")).unwrap();
-    q[15]["status"] = json!("accepted");
-    q[15]["coverage"] = json!("full");
+    q[15]["status"] = json!("queued");
+    q[15]["coverage"] = json!("clauses");
     data(t.path(), "docs/adr/queue.json", &q);
     let findings = contracts::docs(t.path()).unwrap();
     assert!(findings.iter().any(|f| f.rule == "ADR-QUEUE"));
@@ -693,7 +697,11 @@ fn path_dependency_resolves_its_own_workspace_inheritance() {
 
 #[test]
 fn ingress_approvals_bind_full_coverage_ids_revision_and_exact_proposal() {
-    assert!(contracts::docs(&root()).unwrap().is_empty());
+    assert!(
+        contracts::docs(&root()).unwrap().is_empty(),
+        "{:?}",
+        contracts::docs(&root()).unwrap()
+    );
     for id in ["WI-ADR-012", "WI-ADR-013"] {
         assert!(contracts::adr_coverage(&root(), id, "wi/WI-03/domain", "merge", true).unwrap());
         for pointer in [

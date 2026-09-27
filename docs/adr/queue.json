@@ -160,13 +160,13 @@
     "decision": "Agent Host transport, run credential, authoritative process-managed-proof-1 profile, executable/image representation, supported controls, artifact exchange and external-provider seam",
     "due": "WI-09; definition clauses before dependent provider admission/evidence work",
     "owner": "operator",
-    "status": "accepted-clauses",
+    "status": "accepted",
     "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4",
-    "approval_id": "2e15ca00-a081-4f2c-8430-bc81b2f27ec9",
-    "decision_packet_digest": "cafcb369dfeb14acbd6407ffd740da96d1d4de8f642243a1704128b05c89acc4",
-    "approval_file": "docs/adr/approvals/WI-ADR-016.json",
-    "approval_sha256": "a32ba0a9c38340cfa3be18e9e6fa19b20172fb4d33e42b55d81307c9a84fcca8",
-    "coverage": "clauses"
+    "approval_id": "10a13b9c-cbfc-4469-9e03-9011adbdd507",
+    "decision_packet_digest": "e8b380e95823b73ad67cb0adf5c7cb1b681cbca4d3557df837f6f22001455aca",
+    "approval_file": "docs/adr/approvals/WI-ADR-016-full.json",
+    "approval_sha256": "b25fea0d6571e51bfbd60d370a2c5fad7b30b664b05ba80c425ac2616cf7d9cf",
+    "coverage": "full"
   },
   {
     "id": "WI-ADR-017",

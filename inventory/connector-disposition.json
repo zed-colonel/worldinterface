@@ -3781,42 +3781,42 @@
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/root.rs::::enum:StoreKind",
-          "source_sha256": "50c73d743c31e7d0a0fc49c505b3780d192f87991a327c8d1f3575666e9cd8c9",
+          "source_sha256": "f457bc2455693e84b1109785cd1afcb5901a1d70df144a204fa676c7add6d629",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/root.rs::::module:tests@10d1b0eff34c",
-          "source_sha256": "50c73d743c31e7d0a0fc49c505b3780d192f87991a327c8d1f3575666e9cd8c9",
+          "source_sha256": "f457bc2455693e84b1109785cd1afcb5901a1d70df144a204fa676c7add6d629",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/root.rs::::source-module:crates/worldinterface-foundation/storage/src/root.rs",
-          "source_sha256": "50c73d743c31e7d0a0fc49c505b3780d192f87991a327c8d1f3575666e9cd8c9",
+          "source_sha256": "f457bc2455693e84b1109785cd1afcb5901a1d70df144a204fa676c7add6d629",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/root.rs::::struct:Manifest",
-          "source_sha256": "50c73d743c31e7d0a0fc49c505b3780d192f87991a327c8d1f3575666e9cd8c9",
+          "source_sha256": "f457bc2455693e84b1109785cd1afcb5901a1d70df144a204fa676c7add6d629",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/root.rs::::struct:StoreManifest",
-          "source_sha256": "50c73d743c31e7d0a0fc49c505b3780d192f87991a327c8d1f3575666e9cd8c9",
+          "source_sha256": "f457bc2455693e84b1109785cd1afcb5901a1d70df144a204fa676c7add6d629",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/root.rs::::struct:StoreProfile",
-          "source_sha256": "50c73d743c31e7d0a0fc49c505b3780d192f87991a327c8d1f3575666e9cd8c9",
+          "source_sha256": "f457bc2455693e84b1109785cd1afcb5901a1d70df144a204fa676c7add6d629",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/root.rs::::struct:StoreRoot",
-          "source_sha256": "50c73d743c31e7d0a0fc49c505b3780d192f87991a327c8d1f3575666e9cd8c9",
+          "source_sha256": "f457bc2455693e84b1109785cd1afcb5901a1d70df144a204fa676c7add6d629",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/tests/stores.rs::::source-module:crates/worldinterface-foundation/storage/tests/stores.rs",
-          "source_sha256": "039e3dc101a270331019e3f4d85fad57ee36ea72b21d29bcd7848c54a241ed0a",
+          "source_sha256": "37dcdd1d877561e7e2231b4278a0f6ffda70f7bcbb7e626c9316def44eebbc2f",
           "registration_sites": []
         },
         {
@@ -4483,7 +4483,7 @@
         },
         {
           "path": "crates/worldinterface-foundation/Cargo.toml",
-          "source_sha256": "3924ef5df834dc70128a3ae30b48a0861e62b3eb985d917d9ca3787a07846e2e",
+          "source_sha256": "68b5908280cbcb0461d2c522833ed0e1b3c73522a69325c39f8e62511814c245",
           "treatment": "Retain target protocol, capability, state-machine and store infrastructure; preserve isolation from legacy connector removal."
         },
         {
@@ -4663,12 +4663,12 @@
         },
         {
           "path": "crates/worldinterface-foundation/storage/src/root.rs",
-          "source_sha256": "50c73d743c31e7d0a0fc49c505b3780d192f87991a327c8d1f3575666e9cd8c9",
+          "source_sha256": "f457bc2455693e84b1109785cd1afcb5901a1d70df144a204fa676c7add6d629",
           "treatment": "Retain target protocol, capability, state-machine and store infrastructure; preserve isolation from legacy connector removal."
         },
         {
           "path": "crates/worldinterface-foundation/storage/tests/stores.rs",
-          "source_sha256": "039e3dc101a270331019e3f4d85fad57ee36ea72b21d29bcd7848c54a241ed0a",
+          "source_sha256": "37dcdd1d877561e7e2231b4278a0f6ffda70f7bcbb7e626c9316def44eebbc2f",
           "treatment": "Retain target protocol, capability, state-machine and store infrastructure; preserve isolation from legacy connector removal."
         },
         {

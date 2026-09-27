@@ -1,0 +1,19 @@
+{
+  "schema": 1,
+  "golden_request": "{\"controls_digest\":\"1e2135d1b50f14d3d3d6cbe24a4294bcb9e4d5d3c28eb1ce4980ff2a17c5d3b6\",\"input_digest\":\"46a7c28ef485a05a65d663e53a57b09ab61a08cb1de2c74694e10cab4052c1b9\",\"operation\":\"start\",\"profile\":{\"decision_approval\":\"10a13b9c-cbfc-4469-9e03-9011adbdd507\",\"definition_sha256\":\"6523baf56d14dafa4b199c7493dc030461cc061754c180b4c83006308e633986\",\"hostile_code_containment\":false,\"independent_worker_vm\":false,\"nonsensitive_inputs\":true,\"profile_id\":\"process-managed-proof-1\",\"reviewed_executable\":true,\"schema\":1},\"provider\":\"provider-opaque\",\"request\":\"request-opaque\",\"run\":\"run-opaque\",\"schema\":1}",
+  "request_sha256": "67d1641c375fcb83fe8c44eaf2557aa5c993f1c15afa76e72abea616e9fc46d5",
+  "reject": [
+    {
+      "name": "duplicate-key",
+      "bytes": "{\"schema\":1,\"schema\":1}"
+    },
+    {
+      "name": "unknown-field",
+      "bytes": "{\"controls_digest\":\"1e2135d1b50f14d3d3d6cbe24a4294bcb9e4d5d3c28eb1ce4980ff2a17c5d3b6\",\"input_digest\":\"46a7c28ef485a05a65d663e53a57b09ab61a08cb1de2c74694e10cab4052c1b9\",\"operation\":\"start\",\"profile\":{\"decision_approval\":\"10a13b9c-cbfc-4469-9e03-9011adbdd507\",\"definition_sha256\":\"6523baf56d14dafa4b199c7493dc030461cc061754c180b4c83006308e633986\",\"hostile_code_containment\":false,\"independent_worker_vm\":false,\"nonsensitive_inputs\":true,\"profile_id\":\"process-managed-proof-1\",\"reviewed_executable\":true,\"schema\":1},\"provider\":\"provider-opaque\",\"request\":\"request-opaque\",\"run\":\"run-opaque\",\"schema\":1,\"unexpected\":1}"
+    },
+    {
+      "name": "weakened-same-id",
+      "bytes": "{\"controls_digest\":\"1e2135d1b50f14d3d3d6cbe24a4294bcb9e4d5d3c28eb1ce4980ff2a17c5d3b6\",\"input_digest\":\"46a7c28ef485a05a65d663e53a57b09ab61a08cb1de2c74694e10cab4052c1b9\",\"operation\":\"start\",\"profile\":{\"decision_approval\":\"10a13b9c-cbfc-4469-9e03-9011adbdd507\",\"definition_sha256\":\"6523baf56d14dafa4b199c7493dc030461cc061754c180b4c83006308e633986\",\"hostile_code_containment\":false,\"independent_worker_vm\":true,\"nonsensitive_inputs\":true,\"profile_id\":\"process-managed-proof-1\",\"reviewed_executable\":true,\"schema\":1},\"provider\":\"provider-opaque\",\"request\":\"request-opaque\",\"run\":\"run-opaque\",\"schema\":1}"
+    }
+  ]
+}
