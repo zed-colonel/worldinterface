@@ -40,40 +40,60 @@
     "decision": "Principal authentication, actor binding, accountable-principal derivation",
     "due": "WI-04",
     "owner": "operator",
-    "status": "queued",
-    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4"
+    "status": "accepted",
+    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4",
+    "approval_file": "docs/adr/approvals/WI-ADR-004.json",
+    "approval_sha256": "f0a51df2e5c8bc2321fee3b98337cfeb2a388253486c7462a0f81ccbf8e2f29e",
+    "approval_id": "e31d8d22-208c-4ba8-9b7a-fcfa6695fc2e",
+    "coverage": "full"
   },
   {
     "id": "WI-ADR-005",
     "decision": "Canonical resource URI grammar and resolver registry",
     "due": "WI-04",
     "owner": "operator",
-    "status": "queued",
-    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4"
+    "status": "accepted",
+    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4",
+    "approval_file": "docs/adr/approvals/WI-ADR-005.json",
+    "approval_sha256": "2471be57c19a1540b8caa03164d0e1817c317c19fa24916c7a60afae43f8c659",
+    "approval_id": "18a3a800-fcb5-421a-a717-3f6556cbf0af",
+    "coverage": "full"
   },
   {
     "id": "WI-ADR-006",
     "decision": "Authorization grammar, attenuation rules, decision explanation schema",
     "due": "WI-04",
     "owner": "operator",
-    "status": "queued",
-    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4"
+    "status": "accepted",
+    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4",
+    "approval_file": "docs/adr/approvals/WI-ADR-006.json",
+    "approval_sha256": "2a826c9234ab0aebf218f95b679f13fbbca6036762e21c9ade1f771586f0b4c0",
+    "approval_id": "18f9998d-e0fd-4de5-ba37-168906cd5fe6",
+    "coverage": "full"
   },
   {
     "id": "WI-ADR-007",
     "decision": "Effect state machine, commit-point vocabulary, `Uncertain`, and terminal outcomes",
     "due": "WI-04",
     "owner": "operator",
-    "status": "queued",
-    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4"
+    "status": "accepted",
+    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4",
+    "approval_file": "docs/adr/approvals/WI-ADR-007.json",
+    "approval_sha256": "885e1f5d78dd2c1076c60a9ed7f135f3f2f40de09675d75fb3b69b21ce45eb64",
+    "approval_id": "786dc165-698c-4397-90b2-14da7113cd31",
+    "coverage": "full"
   },
   {
     "id": "WI-ADR-008",
     "decision": "Boundary receipt canonical form, content hashing, signing profile, and key rotation",
     "due": "WI-05",
     "owner": "operator",
-    "status": "queued",
-    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4"
+    "status": "accepted",
+    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4",
+    "coverage": "full",
+    "approval_file": "docs/adr/approvals/WI-ADR-008.json",
+    "approval_sha256": "81c1e9d516c944c77988c40c0720c0baf4e7844acd95498b60fb085591d73141",
+    "approval_id": "6702bed5-5dbb-4943-989d-24bef2c865b6"
   },
   {
     "id": "WI-ADR-009",
@@ -88,8 +108,12 @@
     "decision": "Connector resolve/invoke/reconcile SPI and idempotency classes",
     "due": "WI-06",
     "owner": "operator",
-    "status": "queued",
-    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4"
+    "status": "accepted",
+    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4",
+    "coverage": "full",
+    "approval_file": "docs/adr/approvals/WI-ADR-010.json",
+    "approval_sha256": "858084bb5a3cc73d4b77be4839f507a44a4b9fc2d1f24629bd1be808955339f0",
+    "approval_id": "0dae9353-3319-4740-9798-c005f6a32253"
   },
   {
     "id": "WI-ADR-011",

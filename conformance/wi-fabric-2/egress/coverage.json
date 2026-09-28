@@ -1,0 +1,167 @@
+{
+  "scope": "wi/WI-04/domain",
+  "upstream_conformance": false,
+  "assigned_cases": {
+    "WP-009": [
+      "wp009_exact_fixture_durable_intent_and_admission"
+    ],
+    "WP-010": [
+      "wp010_unreviewed_executable_cannot_be_waived"
+    ],
+    "WP-011": [
+      "wp011_protected_credentials_and_cross_run_denied",
+      "wp011_test_credential_is_exact_and_short_lived"
+    ],
+    "WP-012": [
+      "wp012_each_unmet_control_names_requirement_and_never_dispatches"
+    ],
+    "WP-013": [
+      "wp013_unsupported_operation_is_unavailable"
+    ],
+    "WP-014": [
+      "wp014_every_snapshot_binding_drift_requires_reevaluation"
+    ]
+  },
+  "obligations": [
+    {
+      "test": "wp009_exact_fixture_durable_intent_and_admission",
+      "package": "worldinterface-egress"
+    },
+    {
+      "test": "wp010_unreviewed_executable_cannot_be_waived",
+      "package": "worldinterface-egress"
+    },
+    {
+      "test": "wp011_protected_credentials_and_cross_run_denied",
+      "package": "worldinterface-egress"
+    },
+    {
+      "test": "wp011_test_credential_is_exact_and_short_lived",
+      "package": "worldinterface-egress"
+    },
+    {
+      "test": "wp012_each_unmet_control_names_requirement_and_never_dispatches",
+      "package": "worldinterface-egress"
+    },
+    {
+      "test": "wp013_unsupported_operation_is_unavailable",
+      "package": "worldinterface-egress"
+    },
+    {
+      "test": "wp014_every_snapshot_binding_drift_requires_reevaluation",
+      "package": "worldinterface-egress"
+    },
+    {
+      "test": "ordinary_provider_cannot_reuse_fixture_proof",
+      "package": "worldinterface-egress"
+    },
+    {
+      "test": "agency_forgery_ambiguity_expiry_revocation_and_attenuation",
+      "package": "worldinterface-egress"
+    },
+    {
+      "test": "delegation_endpoints_cycles_and_widening_fail_closed",
+      "package": "worldinterface-egress"
+    },
+    {
+      "test": "resolution_failures_are_durable_without_running",
+      "package": "worldinterface-egress"
+    },
+    {
+      "test": "canonical_resource_grammar_and_namespace_specific_bounds",
+      "package": "worldinterface-egress"
+    },
+    {
+      "test": "identical_request_recovery_conflicts_and_scoped_inspection",
+      "package": "worldinterface-egress"
+    },
+    {
+      "test": "lost_ack_reopens_identical_request_without_extra_use",
+      "package": "worldinterface-egress"
+    },
+    {
+      "test": "forged_acknowledgments_cannot_complete_outbox",
+      "package": "worldinterface-egress"
+    },
+    {
+      "test": "concurrent_submissions_and_logical_use_races",
+      "package": "worldinterface-egress"
+    },
+    {
+      "test": "commit_evidence_rejects_false_success_failure_and_missing_publication",
+      "package": "worldinterface-egress"
+    },
+    {
+      "test": "successful_boundary_requires_durable_output_evidence",
+      "package": "worldinterface-egress"
+    },
+    {
+      "test": "uncertainty_reconciliation_and_retry_require_noncommit_policy_and_authority",
+      "package": "worldinterface-egress"
+    },
+    {
+      "test": "reconciliation_cannot_change_confirmed_commit_or_skip_evidence",
+      "package": "worldinterface-egress"
+    },
+    {
+      "test": "cancellation_before_dispatch_and_after_handoff_are_distinct",
+      "package": "worldinterface-egress"
+    },
+    {
+      "test": "compensation_is_a_separate_intent_without_inherited_authority",
+      "package": "worldinterface-egress"
+    },
+    {
+      "test": "approval_and_separation_of_duties_are_bound_to_exact_inputs",
+      "package": "worldinterface-egress"
+    },
+    {
+      "test": "backup_rebuild_replay_and_generic_bypass_integrity",
+      "package": "worldinterface-egress"
+    },
+    {
+      "test": "unsupported_store_profile_is_rejected_without_upgrade",
+      "package": "worldinterface-egress"
+    },
+    {
+      "test": "removing_authority_never_increases_allowed_demands",
+      "package": "worldinterface-egress"
+    },
+    {
+      "test": "deterministic_command_replay_preserves_state_and_rejects_stale_commands",
+      "package": "worldinterface-egress"
+    },
+    {
+      "test": "unknown_control_and_revoked_qualification_fail_closed",
+      "package": "worldinterface-egress"
+    },
+    {
+      "test": "resolution_attests_symlinks_dns_redirects_and_exact_audience",
+      "package": "worldinterface-egress"
+    },
+    {
+      "test": "purpose_candidate_and_lifecycle_labels_never_supply_authority",
+      "package": "worldinterface-egress"
+    },
+    {
+      "test": "inspection_rejects_missing_and_contradictory_evidence",
+      "package": "worldinterface-egress"
+    },
+    {
+      "test": "unpublished_output_cannot_be_marked_successful_or_survive_reopen",
+      "package": "worldinterface-egress"
+    },
+    {
+      "test": "concurrent_conflicting_requests_commit_only_one_intent",
+      "package": "worldinterface-egress"
+    },
+    {
+      "test": "profile_change_requires_explicit_exact_reevaluation",
+      "package": "worldinterface-egress"
+    },
+    {
+      "test": "effect_journal_faults_roll_back_every_projection",
+      "package": "worldinterface-storage"
+    }
+  ]
+}

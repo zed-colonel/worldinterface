@@ -57,14 +57,14 @@ with a separate detailed reconciliation record: confirmed committed, confirmed
 not committed, still uncertain or escalated. Only confirmed-not-committed can
 record an explicit retry permission; it does not itself reexecute an effect.
 Proof publication records publication, not truth. These are the local foundation
-reducers, not final ADR-007 effect semantics or ADR-008 signing approval.
+historical reducers. Guarded ADR-007 semantics now live in the [WI-04 egress journal](../egress/README.md); ADR-008 signing remains separate.
 
 ## Local store profile
 
 `StoreRoot` requires an empty directory for creation. Root and per-database
 manifests bind contract, schema 1, instance, creation time, feature profile
-`local-ingress-1` and canonical profile (WI-03 supersedes the earlier development
-profile `local-domain-1`, which is rejected unchanged). Fabric, Flow and Context databases are
+`local-egress-1` and canonical profile (WI-04 supersedes development profiles
+`local-domain-1` and `local-ingress-1`, both rejected unchanged). Fabric, Flow and Context databases are
 required; Platform is optional. All manifests and expected members are checked
 before SQLite opens. Unsupported, pre-contract and incomplete roots reject
 without migration or modification. Initialization publishes the root completion

@@ -1,0 +1,36 @@
+{
+  "submissionId": "b5357543-d667-4ccb-82a0-3c0832dd80a0",
+  "checkpoint": "WI-ADR-007",
+  "definitionId": "0ebcb7cf-9686-4bc1-9b9d-bb85a1d0b4c9",
+  "bindingRevision": 4,
+  "decision": {
+    "coverage": "full",
+    "proposal": "WorldInterface shall retain coarse effect phases as derived summaries and require a complete typed, evidence-bound effect aggregate for authorization, execution, inspection and recovery decisions. Existing public record envelopes and outcome/reconciliation records remain the representation seams; this decision does not introduce a replacement public lifecycle protocol. Persist immutable EffectIntent in Submitted state and its non-dispatch-ready source outbox atomically before resolution-dependent or external dispatch effects. Append resolution, approval and authorization records without rewriting the submission. Only current exact authorization may prepare dispatch. Resolution failure, denial and safe pre-execution cancellation must be represented honestly without fabricating a resolved target or Running state. Define commit observations as NotAttempted, ProvenImpossible, Possible, Unknown, ConfirmedCommitted and ConfirmedNotCommitted, bound to the relevant intent, attempt, connector semantics and evidence. Possible or unknown external commit after timeout, cancellation or crash requires Uncertain and reconciliation; queue cancellation and missing acknowledgments prove no external non-commit. Succeeded requires evidence of the requested boundary outcome and durable required outputs and records. Failed or Canceled cannot conceal a possible external commit. Reconciliation appends ConfirmedCommitted, ConfirmedNotCommitted, StillUncertain or Escalated with evidence. The coarse Reconciled phase never independently means success; inspection must expose the detailed result. Missing or contradictory mandatory evidence fails closed. StillUncertain and Escalated never become success. Repeating the original effect after uncertainty requires provider evidence establishing non-commit, explicit policy permission and current exact authorization, following implementation-plan section 8.6; an idempotency classification alone is insufficient. Retry permission is distinct from execution and preserves immutable intent and recorded identity mappings. Material operation changes create linked replacement intents. Compensation is a separately authorized linked effect and does not erase the original outcome. Queue-admission uncertainty remains separate: recover and retry only the identical persisted request, validate acknowledgment identity, and discover runs separately. Domain outcomes remain distinct from AQ status, worker exit and application acceptance. Enforce transitions, evidence linkage, outbox changes and authorization-use accounting atomically, with versioned deterministic replay and no generic mutation bypass. WI-04/domain supplies the inactive pure model, persistence and test-only admission port. Production invocation, AQ integration, connector reconciliation and receipt publication remain their mapped implementation and verification work.",
+    "sourceReferences": "Imported map EXO-STACK-CONCURRENCY-DRAFT-1 0.3.0; exact plan binding 4; checkpoint WI-ADR-007.\n{\"source_id\":\"wi-plan\",\"section\":\"\u00a74 ADR queue\",\"start_line\":360,\"end_line\":360}\nwi-fabric-2-foundational-implementation-plan.md: \u00a74 ADR-007, WI-04, \u00a7\u00a78.4\u20138.6, 8.9, 9.1\u20139.4, 19.4\nworldinterface-v2-foundational-design.md: \u00a7\u00a76.4, 6.8, 12.1\u201312.9\nAQ-BASELINE-ALIGNMENT.md: \u00a7\u00a71, 3, 5\u20136\nconstitutional-stack-foundational-contracts.yaml: intent-before-dispatch and uncertainty-first-class\ndocs/adr/WI-ADR-001.md: lifecycle semantics reserved to ADR-007\ndocs/adr/WI-ADR-003.md: atomic history, projections and outboxes\ncrates/worldinterface-foundation/domain/src/lib.rs: Phase and evolve\ncrates/worldinterface-foundation/protocol/src/records.rs: ExecutionOutcome, ExecutionRecord, ReconciliationRecord, ReconciliationResult\nplan/craftingtable-operator-decisions.json: designRecovery for run 8b7fc57b-2368-4e69-86d3-31bf131c5bcb\nAttached design run 8b7fc57b-2368-4e69-86d3-31bf131c5bcb; SHA-256 f03685a146c2dbdf137b44300c1c271cc8aea93b82d0d30005a34e5152dd2023.",
+    "retainedObligations": "",
+    "consumers": [],
+    "kind": "architecture-decision-v1",
+    "bindingDigest": "8cae5ff3253d493fce0527aa42381a551c40014440ab3d05270ae8d822d11295"
+  },
+  "approval": {
+    "submissionId": "b5357543-d667-4ccb-82a0-3c0832dd80a0",
+    "outcome": "accepted",
+    "rationale": "After consideration, I agree with the recommendation to keep the coarse effect phases with a complete typed, evidence-bound effect aggregate.",
+    "id": "786dc165-698c-4397-90b2-14da7113cd31",
+    "workspaceId": "6bf6915a-6cd0-47cc-b853-fcbc04f02f3d",
+    "decidedAt": "2026-09-21T22:12:16.663Z",
+    "decidedByUserId": "0698a39b-dda2-4870-8f3f-97ef94784ae9"
+  },
+  "sourceRunId": "8b7fc57b-2368-4e69-86d3-31bf131c5bcb",
+  "sourceRunDigest": "f03685a146c2dbdf137b44300c1c271cc8aea93b82d0d30005a34e5152dd2023",
+  "artifacts": [
+    {
+      "name": "decision-review-packet",
+      "digest": "7d8814bef2cf3f4d7e8577f84d3e113136150b3b3504bdfe49210dcee1528877"
+    },
+    {
+      "name": "source-design-proposal-not-approval",
+      "digest": "f03685a146c2dbdf137b44300c1c271cc8aea93b82d0d30005a34e5152dd2023"
+    }
+  ]
+}

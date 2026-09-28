@@ -1,0 +1,36 @@
+{
+  "submissionId": "751fa25b-ef51-41c4-a1cd-b9288b2aeb36",
+  "checkpoint": "WI-ADR-010",
+  "definitionId": "0ebcb7cf-9686-4bc1-9b9d-bb85a1d0b4c9",
+  "bindingRevision": 4,
+  "decision": {
+    "coverage": "full",
+    "proposal": "Adopt a versioned capability and connector contract with typed resolve, invoke, and reconcile operations. Resolve an unresolved request against a pinned resource registry snapshot before final authorization; invoke only the exact resolved effect under its bound authorization envelope; reconcile a persisted intent after possible external commit. Express preparation, commit observation, and meaningful cancellation as explicit phases or typed results. Fabric owns authorization, durable outcome classification, receipts, and reconciliation scheduling; connectors provide bounded execution and evidence and cannot widen authority. Every admitted descriptor declares effect class, resource grammar, schemas, isolation and secret requirements, idempotency class, provider-key mapping, commit observation, retry boundaries, reconciliation support, and evidence profile; missing or contradictory declarations fail registration. Classify operations as pure/read-only, naturally idempotent, externally keyed, compensatable, non-repeatable, or unknown; compensation or reconciliation alone never makes an effect repeatable, and unknown consequential connectors cannot register. Derive and record provider replay keys from stable effect or operation identity, never ActionQueue AttemptId. Distinguish pre-dispatch failure, confirmed non-commit, confirmed commit, terminal provider failure, and possible commit. Persist possible commit as Uncertain and reconcile it without blind re-invocation; a later invocation requires evidence of non-commit and explicit policy permission. Bind connector implementation version and descriptor hash to authorization and receipts. ActionQueue remains the sole durable executor, with Fabric transaction and AQ attempt recovery handled across their separate stores.",
+    "sourceReferences": "Imported map EXO-STACK-CONCURRENCY-DRAFT-1 0.3.0; exact plan binding 4; checkpoint WI-ADR-010.\n{\"source_id\":\"wi-plan\",\"section\":\"§4 ADR queue\",\"start_line\":363,\"end_line\":363}\nwi-fabric-2-foundational-implementation-plan.md: §§0.2, 8.5–8.6, WI-06\nworldinterface-v2-foundational-design.md: §§9.1–9.3, 10.3–10.4, 12.2–12.7\ndecision-preparation/context.json: checkpoint, existingApprovedProposals\nAttached source run ad8db1c6-ddb2-4099-885b-dff31615ce21; SHA-256 5ea21afb096e4983da80f3f376ac7b58320ad374c73e40a393dced75a56a2c61.",
+    "retainedObligations": "Implement the contract at the mapped work-item and slice gates, qualify providers, run WI-06 conformance and crash/recovery tests against exact AQ pins, complete review and integration, and satisfy separate release and remote-publication obligations. Full architecture approval is not implementation acceptance or passing test evidence.",
+    "consumers": [],
+    "kind": "architecture-decision-v1",
+    "bindingDigest": "8cae5ff3253d493fce0527aa42381a551c40014440ab3d05270ae8d822d11295"
+  },
+  "approval": {
+    "submissionId": "751fa25b-ef51-41c4-a1cd-b9288b2aeb36",
+    "outcome": "accepted",
+    "rationale": "I approve of the recommended decision.",
+    "id": "0dae9353-3319-4740-9798-c005f6a32253",
+    "workspaceId": "6bf6915a-6cd0-47cc-b853-fcbc04f02f3d",
+    "decidedAt": "2026-09-24T01:32:29.668Z",
+    "decidedByUserId": "0698a39b-dda2-4870-8f3f-97ef94784ae9"
+  },
+  "sourceRunId": "ad8db1c6-ddb2-4099-885b-dff31615ce21",
+  "sourceRunDigest": "5ea21afb096e4983da80f3f376ac7b58320ad374c73e40a393dced75a56a2c61",
+  "artifacts": [
+    {
+      "name": "decision-review-packet",
+      "digest": "5b9a68a9925b995982df94743aab3d00d407913e65243ace7515efa6e1159df3"
+    },
+    {
+      "name": "source-design-proposal-not-approval",
+      "digest": "5ea21afb096e4983da80f3f376ac7b58320ad374c73e40a393dced75a56a2c61"
+    }
+  ]
+}

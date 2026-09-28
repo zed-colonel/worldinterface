@@ -11,6 +11,8 @@ pub(crate) fn invalid(s: impl Into<String>) -> Box<dyn std::error::Error + Send 
 
 mod ingress;
 
+mod effect;
+
 #[cfg(test)]
 #[path = "../tests/support/crash.rs"]
 mod crash;

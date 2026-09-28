@@ -20,8 +20,9 @@ on (tenant, revision), serialized mutation and reducer uniqueness enforce scoped
 provider and principal/request identities. This deliberately bounded local
 projection is not a production throughput claim.
 
-The manifest profile is `local-ingress-1`, schema 1. The previous development
-profile `local-domain-1` is rejected without modification. Separate Fabric, Flow,
+The current manifest profile is `local-egress-1`, schema 1, introduced by
+[WI-04](../egress/README.md). Previous development profiles `local-domain-1`
+and `local-ingress-1` are rejected without modification. Separate Fabric, Flow,
 Context and optional Platform stores remain intact. Wire records keep the 64 KiB
 canonical bound; local collection snapshots have a separate 16 MiB ceiling.
 Profile capacities also bound bindings, admission tombstones and conflict evidence;
@@ -30,10 +31,12 @@ rolls back and applies backpressure. There is no silent tombstone eviction or
 unsupported physical-erasure promise. Artifact bytes must be durably published
 before admission. Failed admission may leave an unreferenced artifact, which is
 safe recoverable garbage. Offline backup/restore covers the complete store root.
-These ingress fixtures inject transaction failures and restart at committed
-boundaries. Shared storage also has the WI-02 integration hot-journal recovery
-and killed-process tests; see [integration coverage](../../../docs/work-items/wi-02-integration.md).
-Those tests do not establish AQ wake integration for ingress.
+Journal recovery and maintenance safeguards from WI-02 integration are preserved
+by WI-04. These ingress fixtures inject transaction failures and restart at
+committed boundaries. Shared storage also has WI-02 integration hot-journal
+recovery and killed-process tests; see [integration coverage](../../../docs/work-items/wi-02-integration.md).
+Those tests do not establish AQ wake integration for ingress or WI-04 runtime
+crash conformance.
 
 ## Provider and transport contract
 

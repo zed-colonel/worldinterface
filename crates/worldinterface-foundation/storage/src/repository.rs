@@ -199,6 +199,7 @@ fn apply(c: &Connection, b: &Batch, fault: Option<&str>) -> Result<()> {
 }
 fn append(c: &mut Connection, b: &Batch, fault: Option<&str>) -> Result<()> {
     let tx = c.transaction_with_behavior(TransactionBehavior::Immediate)?;
+    crate::effect::reject_generic(&tx, b)?;
     append_in(&tx, b, fault)?;
     tx.commit()?;
     #[cfg(test)]
@@ -224,7 +225,8 @@ fn append_in(c: &Connection, b: &Batch, fault: Option<&str>) -> Result<()> {
 }
 impl Repository<'_> {
     pub fn append(&self, batch: &Batch) -> Result<()> {
-        append(&mut self.root.connect(self.kind)?, batch, None)
+        let mut c = self.root.connect(self.kind)?;
+        append(&mut c, batch, None)
     }
     /// Caller supplies trusted transport scope separately. No scope is taken from claims.
     pub fn admit(
@@ -252,6 +254,7 @@ impl Repository<'_> {
         batch.records.push(submission);
         batch.events.push(event);
         batch.outbox.push(outbox);
+        crate::effect::reject_generic(&tx, &batch)?;
         append_in(&tx, &batch, None)?;
         tx.commit()?;
         #[cfg(test)]
@@ -318,9 +321,10 @@ impl Repository<'_> {
     pub fn rebuild(&self) -> Result<()> {
         let mut c = self.root.connect(self.kind)?;
         let tx = c.transaction_with_behavior(TransactionBehavior::Immediate)?;
-        tx.execute_batch("DELETE FROM projections; DELETE FROM records; DELETE FROM admissions; DELETE FROM outbox; DELETE FROM ingress_state;")?;
+        tx.execute_batch("DELETE FROM projections; DELETE FROM records; DELETE FROM admissions; DELETE FROM outbox; DELETE FROM ingress_state; DELETE FROM effect_state; DELETE FROM effect_outbox;")?;
         replay_into(&tx, &tx)?;
         crate::ingress::replay(&tx, &tx)?;
+        crate::effect::replay(&tx, &tx)?;
         tx.commit()?;
         #[cfg(test)]
         crate::crash::checkpoint("after-commit");
@@ -359,9 +363,11 @@ pub(crate) fn validate_database(c: &Connection) -> Result<()> {
     let expected = Connection::open_in_memory()?;
     expected.execute_batch(SCHEMA)?;
     expected.execute_batch(crate::ingress::SCHEMA)?;
+    expected.execute_batch(crate::effect::SCHEMA)?;
     replay_into(c, &expected)?;
     crate::ingress::replay(c, &expected)?;
-    for query in ["SELECT tenant,state FROM ingress_state ORDER BY tenant", "SELECT entity,revision,state FROM projections ORDER BY entity", "SELECT entity,digest,canonical FROM records ORDER BY seq", "SELECT scope,principal,class,request,digest,entity FROM admissions ORDER BY scope,principal,class,request", "SELECT key,entity,payload,delivered FROM outbox ORDER BY key"] {
+    crate::effect::replay(c, &expected)?;
+    for query in ["SELECT tenant,state FROM effect_state ORDER BY tenant", "SELECT tenant,intent,dispatch FROM effect_outbox ORDER BY tenant,intent", "SELECT tenant,state FROM ingress_state ORDER BY tenant", "SELECT entity,revision,state FROM projections ORDER BY entity", "SELECT entity,digest,canonical FROM records ORDER BY seq", "SELECT scope,principal,class,request,digest,entity FROM admissions ORDER BY scope,principal,class,request", "SELECT key,entity,payload,delivered FROM outbox ORDER BY key"] {
   fn values(c: &Connection, sql: &str) -> Result<Vec<Vec<rusqlite::types::Value>>> {
    let mut q=c.prepare(sql)?; let n=q.column_count();
    let rows=q.query_map([],|r|(0..n).map(|i|r.get(i)).collect::<rusqlite::Result<Vec<_>>>())?;
@@ -392,6 +398,7 @@ mod tests {
             let mut c = Connection::open_in_memory().unwrap();
             c.execute_batch(SCHEMA).unwrap();
             c.execute_batch(crate::ingress::SCHEMA).unwrap();
+            c.execute_batch(crate::effect::SCHEMA).unwrap();
             let entity = EntityId::generate();
             let mut b = Batch::new(entity.clone(), Machine::Effect, 0);
             b.events.push(Event {

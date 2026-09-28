@@ -2,6 +2,8 @@
 
 The operator owns every decision in queue.json. Queued is not accepted. Preserve the source subjects and deadlines; WI-ADR-016 definition clauses precede dependent provider admission/evidence work. Each accepted ADR must record rationale, alternatives, invariant impact, verification, decision owner and approval record. Recommendations alone cannot accept an ADR.
 
+WI-ADR-008 and WI-ADR-010 have full accepted decisions and operator approvals mirrored from `craftingtable-scope-evidence.json` under `checkpoints[WI-WORKER-G1].decisions`. Their immutable records are in `approvals/`, pinned by SHA-256 in `queue.json` and the contract checker. WI-05 must implement and verify receipt and publication behavior; WI-06 must implement and verify connector and recovery behavior; WI-12 retains optional signing-provider and key-lifecycle work. The approvals do not establish implementation, provider qualification, WI-WORKER-G1 acceptance, runtime evidence, or parent acceptance.
+
 WI-ADR-017 and WI-ADR-016 are fully accepted under recorded operator approvals.
 ADR-016's earlier clause approval remains separately pinned; the full approval is a
 new record, not a rewrite of its historical coverage. The checker pins both

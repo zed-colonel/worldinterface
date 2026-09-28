@@ -340,7 +340,22 @@ pub fn conformance(root: &Path) -> Result<Vec<Finding>> {
 }
 /// Recorded operator guidance, pinned independently from mutable queue status.
 /// Scoped acceptance never satisfies a full-checkpoint request.
+fn egress_approval_pin(id: &str) -> Option<&'static str> {
+    match id {
+        "WI-ADR-004" => Some("f0a51df2e5c8bc2321fee3b98337cfeb2a388253486c7462a0f81ccbf8e2f29e"),
+        "WI-ADR-005" => Some("2471be57c19a1540b8caa03164d0e1817c317c19fa24916c7a60afae43f8c659"),
+        "WI-ADR-006" => Some("2a826c9234ab0aebf218f95b679f13fbbca6036762e21c9ade1f771586f0b4c0"),
+        "WI-ADR-007" => Some("885e1f5d78dd2c1076c60a9ed7f135f3f2f40de09675d75fb3b69b21ce45eb64"),
+        "WI-ADR-008" => Some("81c1e9d516c944c77988c40c0720c0baf4e7844acd95498b60fb085591d73141"),
+        "WI-ADR-010" => Some("858084bb5a3cc73d4b77be4839f507a44a4b9fc2d1f24629bd1be808955339f0"),
+        _ => None,
+    }
+}
 pub fn adr_coverage(root: &Path, id: &str, scope: &str, phase: &str, full: bool) -> Result<bool> {
+    if let Some(pin) = egress_approval_pin(id) {
+        let bytes = fs::read(root.join(format!("docs/adr/approvals/{id}.json")))?;
+        return Ok(hash(&bytes) == pin);
+    }
     let ingress_pin = match id {
         "WI-ADR-012" => Some("2be10eb17b6770127cdb8fb12b655243230d73da8884044a866a633a6d51ef8b"),
         "WI-ADR-013" => Some("5d6f0c215398cbaa01bce0bfd1639874736a2419a1fc75246a7471e9f8af9bcb"),
@@ -408,6 +423,9 @@ pub fn docs(root: &Path) -> Result<Vec<Finding>> {
     for (row, r) in expected.iter().zip(records) {
         let id = row[1].trim_matches('`');
         let approved = match id {
+            id if egress_approval_pin(id).is_some() => {
+                Some(("accepted", "full", egress_approval_pin(id).unwrap()))
+            }
             "WI-ADR-001" => Some((
                 "accepted",
                 "full",
@@ -471,7 +489,17 @@ pub fn docs(root: &Path) -> Result<Vec<Finding>> {
             || r["owner"] != "operator"
             || if matches!(
                 id,
-                "WI-ADR-001" | "WI-ADR-002" | "WI-ADR-003" | "WI-ADR-012" | "WI-ADR-013"
+                "WI-ADR-001"
+                    | "WI-ADR-002"
+                    | "WI-ADR-003"
+                    | "WI-ADR-004"
+                    | "WI-ADR-005"
+                    | "WI-ADR-006"
+                    | "WI-ADR-007"
+                    | "WI-ADR-008"
+                    | "WI-ADR-010"
+                    | "WI-ADR-012"
+                    | "WI-ADR-013"
             ) {
                 r["status"] != status
             } else {
