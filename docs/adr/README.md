@@ -2,7 +2,7 @@
 
 The operator owns every decision in queue.json. Queued is not accepted. Preserve the source subjects and deadlines; WI-ADR-016 definition clauses precede dependent provider admission/evidence work. Each accepted ADR must record rationale, alternatives, invariant impact, verification, decision owner and approval record. Recommendations alone cannot accept an ADR.
 
-`controller-accepted-reference-artifact-pending` means the supplied controller ledger references an accepted checkpoint submission, but this repository has not received the approved decision body. It is neither a new approval nor clause-review evidence. WI-ADR-008 and WI-ADR-010 have this status for WI-WORKER-G1; their owning WI-05 and WI-06 scopes must mirror and reconcile the immutable decisions before their clauses can be independently reviewed. Do not infer decision coverage or runtime authority from the reference alone.
+WI-ADR-008 and WI-ADR-010 have full accepted decisions and operator approvals mirrored from `craftingtable-scope-evidence.json` under `checkpoints[WI-WORKER-G1].decisions`. Their immutable records are in `approvals/`, pinned by SHA-256 in `queue.json` and the contract checker. WI-05 must implement and verify receipt and publication behavior; WI-06 must implement and verify connector and recovery behavior; WI-12 retains optional signing-provider and key-lifecycle work. The approvals do not establish implementation, provider qualification, WI-WORKER-G1 acceptance, runtime evidence, or parent acceptance.
 
 WI-ADR-017 and WI-ADR-016 are fully accepted under recorded operator approvals.
 ADR-016's earlier clause approval remains separately pinned; the full approval is a

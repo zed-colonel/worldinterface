@@ -88,11 +88,12 @@
     "decision": "Boundary receipt canonical form, content hashing, signing profile, and key rotation",
     "due": "WI-05",
     "owner": "operator",
-    "status": "controller-accepted-reference-artifact-pending",
+    "status": "accepted",
     "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4",
-    "accepted_evidence_submission_id": "8560d4ab-66bf-45f0-a6f5-dbdb48b6221c",
-    "evidence_source": "craftingtable-scope-evidence.json checkpoints[WI-WORKER-G1].prerequisites",
-    "coverage": "unverified; approved decision artifact not supplied"
+    "coverage": "full",
+    "approval_file": "docs/adr/approvals/WI-ADR-008.json",
+    "approval_sha256": "81c1e9d516c944c77988c40c0720c0baf4e7844acd95498b60fb085591d73141",
+    "approval_id": "6702bed5-5dbb-4943-989d-24bef2c865b6"
   },
   {
     "id": "WI-ADR-009",
@@ -107,11 +108,12 @@
     "decision": "Connector resolve/invoke/reconcile SPI and idempotency classes",
     "due": "WI-06",
     "owner": "operator",
-    "status": "controller-accepted-reference-artifact-pending",
+    "status": "accepted",
     "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4",
-    "accepted_evidence_submission_id": "751fa25b-ef51-41c4-a1cd-b9288b2aeb36",
-    "evidence_source": "craftingtable-scope-evidence.json checkpoints[WI-WORKER-G1].prerequisites",
-    "coverage": "unverified; approved decision artifact not supplied"
+    "coverage": "full",
+    "approval_file": "docs/adr/approvals/WI-ADR-010.json",
+    "approval_sha256": "858084bb5a3cc73d4b77be4839f507a44a4b9fc2d1f24629bd1be808955339f0",
+    "approval_id": "0dae9353-3319-4740-9798-c005f6a32253"
   },
   {
     "id": "WI-ADR-011",
