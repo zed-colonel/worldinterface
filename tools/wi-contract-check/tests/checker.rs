@@ -379,6 +379,18 @@ fn adr_owner_and_deadline_cannot_drift() {
     );
 }
 #[test]
+fn unmirrored_adr_reference_cannot_claim_approval_or_change_submission() {
+    let t = contract_repo();
+    let p = "docs/adr/queue.json";
+    let mut q = read(&t.path().join(p)).unwrap();
+    q[7]["accepted_evidence_submission_id"] = json!("different-submission");
+    q[9]["approval_id"] = json!("invented-approval");
+    data(t.path(), p, &q);
+    let findings = contracts::docs(t.path()).unwrap();
+    assert!(findings.iter().any(|f| f.rule == "ADR-QUEUE" && f.item == "WI-ADR-008"));
+    assert!(findings.iter().any(|f| f.rule == "ADR-QUEUE" && f.item == "WI-ADR-010"));
+}
+#[test]
 fn wi02_drafts_require_acceptance_and_maturity() {
     let t = contract_repo();
     let p = "docs/work-items/wi-02.json";

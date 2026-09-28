@@ -88,8 +88,11 @@
     "decision": "Boundary receipt canonical form, content hashing, signing profile, and key rotation",
     "due": "WI-05",
     "owner": "operator",
-    "status": "queued",
-    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4"
+    "status": "controller-accepted-reference-artifact-pending",
+    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4",
+    "accepted_evidence_submission_id": "8560d4ab-66bf-45f0-a6f5-dbdb48b6221c",
+    "evidence_source": "craftingtable-scope-evidence.json checkpoints[WI-WORKER-G1].prerequisites",
+    "coverage": "unverified; approved decision artifact not supplied"
   },
   {
     "id": "WI-ADR-009",
@@ -104,8 +107,11 @@
     "decision": "Connector resolve/invoke/reconcile SPI and idempotency classes",
     "due": "WI-06",
     "owner": "operator",
-    "status": "queued",
-    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4"
+    "status": "controller-accepted-reference-artifact-pending",
+    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4",
+    "accepted_evidence_submission_id": "751fa25b-ef51-41c4-a1cd-b9288b2aeb36",
+    "evidence_source": "craftingtable-scope-evidence.json checkpoints[WI-WORKER-G1].prerequisites",
+    "coverage": "unverified; approved decision artifact not supplied"
   },
   {
     "id": "WI-ADR-011",

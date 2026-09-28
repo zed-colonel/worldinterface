@@ -387,6 +387,22 @@ pub fn adr_coverage(root: &Path, id: &str, scope: &str, phase: &str, full: bool)
             .is_some_and(|cs| cs.iter().any(|c| c["sliceId"] == scope && c["phase"] == phase)))
 }
 fn adr_status_matches(root: &Path, id: &str, r: &Value) -> Result<bool> {
+    if let Some(submission_id) = match id {
+        "WI-ADR-008" => Some("8560d4ab-66bf-45f0-a6f5-dbdb48b6221c"),
+        "WI-ADR-010" => Some("751fa25b-ef51-41c4-a1cd-b9288b2aeb36"),
+        _ => None,
+    } {
+        // The controller ledger records an accepted prerequisite reference, not
+        // the decision body. Keep it distinct from a mirrored ADR approval.
+        return Ok(r["status"] == "controller-accepted-reference-artifact-pending"
+            && r["accepted_evidence_submission_id"] == submission_id
+            && r["evidence_source"]
+                == "craftingtable-scope-evidence.json checkpoints[WI-WORKER-G1].prerequisites"
+            && r["coverage"] == "unverified; approved decision artifact not supplied"
+            && r.get("approval_id").is_none()
+            && r.get("approval_file").is_none()
+            && r.get("approval_sha256").is_none());
+    }
     let (status, approval, packet) = match id {
         "WI-ADR-016" => (
             "accepted",
