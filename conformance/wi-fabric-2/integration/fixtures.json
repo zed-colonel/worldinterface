@@ -24,10 +24,33 @@
         "ab_wi_016_nested_destinations_leave_source_unchanged",
         "ab_wi_016_single_component_relative_destinations"
       ]
+    },
+    "AB-WI-002": {
+      "source_record_sha256": "0a25734a2d94cee7d2ad8d51dfcc1ce679a0f85b384b0d5a43a582906b25bd0b",
+      "required_tests": [
+        "ab_wi_002_003_004_persist_retry_ack_and_discover",
+        "ab_wi_002_subprocess_crash_cuts"
+      ]
+    },
+    "AB-WI-003": {
+      "source_record_sha256": "40a722ec7d187a8c3aeccfd9f595ae97353a6d58cd4b1ebb93b7ebb4162c120d",
+      "required_tests": [
+        "ab_wi_002_003_004_persist_retry_ack_and_discover",
+        "ab_wi_003_public_v2_vectors_and_digest_field_boundaries"
+      ]
+    },
+    "AB-WI-004": {
+      "source_record_sha256": "9e878d392ef66cfd0567dced1c21d308e6eb6ea021569b3fa2f26312a98d9690",
+      "required_tests": [
+        "ab_wi_002_003_004_persist_retry_ack_and_discover",
+        "run_discovery::tests::stale_cursor_restarts_and_partial_page_is_not_complete"
+      ]
     }
   },
   "assets": {
-    "locator.json": "5efacaa74617b8fa2231579a1a0c0711d725f7bb97f86cd219222ac488e9b7d3"
+    "locator.json": "5efacaa74617b8fa2231579a1a0c0711d725f7bb97f86cd219222ac488e9b7d3",
+    "aq-admission-v1-vector.json": "cfc905ca4cb36beafa7d5b0a945afeb002f61acf853913651c0bbc819c293463",
+    "aq-admission-v2-vector.json": "4d8560caa03753a6d991db09944eff806ae505a5c6f254e980c25fbb592f6f86"
   },
   "command": [
     "cargo",

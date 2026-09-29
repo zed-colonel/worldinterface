@@ -60,7 +60,7 @@ only when its own milestone is present; WI-04 and WI-05 need no WI-03 entry.
 Scheduling, dependency admission and rollback protection remain controller-owned.
 The checked-in state admits WI-01 only and asserts no completed milestone. Do not weaken policy files to make deletion gates pass.
 
-### WI-02 integration verification
+### WI-04 integration verification
 
 For the active integration slice, use Rust 1.89.0 and the supplied controller
 Cargo launcher. Run `ct-check -- scripts/check-wi-domain.sh`,
@@ -78,7 +78,7 @@ must still produce a successful controller Cargo build/test receipt against the
 exact supplied AQ pins. CI logs supplement those native receipts.
 
 Keep evidence outside build caches. Candidate case results require independent
-review before WI-AQ-G1 acceptance; repeat verification at the actual merged or
+review before WI-AQ-G2 acceptance; repeat verification at the actual merged or
 rebased revision. Repository policy version 1 (adopted 2026-09-18) governs local
 integration and freeze controls. The operator owns remote protections before
 first publication and final release approval. Historical public maintenance and

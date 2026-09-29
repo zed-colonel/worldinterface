@@ -30,7 +30,7 @@ and embedded host surfaces.
 
 ## Verification
 
-- Active WI-02 integration: run `scripts/check-wi-integration.sh` through
+- Active WI-04 integration: run `scripts/check-wi-integration.sh` through
   `ct-check`, and `wi-integration.yml` through `ct-act`. Run domain and contract
   checks as well. Select Rust 1.89.0. Foundation remains an independent AQ-free
   workspace. Use the updated controller Cargo launcher for all native checks:

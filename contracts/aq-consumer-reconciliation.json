@@ -1,5 +1,5 @@
 {
-  "scope": "wi/WI-02/integration",
+  "scope": "wi/WI-04/integration",
   "status": "candidate-implementation-independent-review-pending",
   "upstream": {
     "contract": "AQ-CONT-1",
@@ -11,7 +11,10 @@
   },
   "assumptions": {
     "WI-AQ-012": "QueueReferences binds ancestry to a recovered same-store session. Foreign claims encode only external_ref. AQ owns child inheritance and permits only CausalOverride fields. References never authorize reads.",
-    "WI-AQ-015": "TaskInputLocator version 1 encodes a scoped artifact in task bytes. ExternalDataRef is used separately at output APIs. Runtime authorizes before ContextStore integrity/read. Bundle backup retains WI/AQ offline locks and validates artifact closure."
+    "WI-AQ-015": "TaskInputLocator version 1 encodes a scoped artifact in task bytes. ExternalDataRef is used separately at output APIs. Runtime authorizes before ContextStore integrity/read. Bundle backup retains WI/AQ offline locks and validates artifact closure.",
+    "WI-AQ-001": "Production binding persists the complete EnsureTaskRequest with a preallocated task UUID. High-level ensure_task computes CanonicalAdmissionV2.",
+    "WI-AQ-002": "The same persisted key/request retries after uncertain acknowledgment; changed task or canonical meaning conflicts.",
+    "WI-AQ-004": "AQ task acknowledgment closes delivery. Authorized paginated inspection discovers run mappings separately."
   },
-  "later_owners": "G2 durable EnsureTaskRequest persistence; G3 wake/signal adapters; G4 executor/continuation integration remain with existing owners."
+  "later_owners": "G3 wake/signal adapters and G4 executor/continuation integration retain their mapped owners."
 }

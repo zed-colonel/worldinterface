@@ -753,6 +753,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "worldinterface-egress"
+version = "0.2.0"
+dependencies = [
+ "worldinterface-domain",
+ "worldinterface-protocol",
+ "worldinterface-storage",
+]
+
+[[package]]
 name = "worldinterface-protocol"
 version = "0.2.0"
 dependencies = [
@@ -779,6 +788,8 @@ dependencies = [
  "tempfile",
  "tokio",
  "uuid",
+ "worldinterface-domain",
+ "worldinterface-egress",
  "worldinterface-protocol",
  "worldinterface-storage",
 ]
