@@ -54,6 +54,12 @@ fn host() -> HostControlContext {
     }
 }
 fn setup(path: &Path) -> (Arc<StoreBundle>, IngressBinding, DeliveryId) {
+    setup_with_timeout(path, 1_000)
+}
+fn setup_with_timeout(
+    path: &Path,
+    acknowledgment_timeout_ms: u64,
+) -> (Arc<StoreBundle>, IngressBinding, DeliveryId) {
     let bundle = Arc::new(
         StoreBundle::initialize(
             path,
@@ -71,7 +77,7 @@ fn setup(path: &Path) -> (Arc<StoreBundle>, IngressBinding, DeliveryId) {
     let current = now();
     binding.expires_at_ms = current + 1_000_000;
     binding.policy.retention_ms = 1_000_000;
-    binding.policy.acknowledgment_timeout_ms = 1_000;
+    binding.policy.acknowledgment_timeout_ms = acknowledgment_timeout_ms;
     binding.policy.backoff_ms = 1_000;
     let root = bundle.wi();
     root.publish(binding.profile.scope.tenant.clone(), b"authorization").unwrap();
@@ -248,7 +254,7 @@ impl SubscriberTransport for DurableStop {
 #[tokio::test]
 async fn process_death_after_subscriber_storage_redelivers_same_id() {
     if let Some(path) = std::env::var_os("WI_RECOVERY_CHILD_BUNDLE") {
-        let (bundle, binding, _) = setup(Path::new(&path));
+        let (bundle, binding, _) = setup_with_timeout(Path::new(&path), 10_000);
         let stop: Arc<dyn SubscriberTransport> =
             Arc::new(DurableStop(std::env::var_os("WI_RECOVERY_CHILD_READY").unwrap().into()));
         let mut aq = ActionQueueEngine::new(
@@ -312,7 +318,19 @@ async fn process_death_after_subscriber_storage_redelivers_same_id() {
     .unwrap()
     .with_host(host());
     let service = IngressRuntime::new(bundle.wi(), tenant.clone());
-    let deadline = std::time::Instant::now() + Duration::from_secs(12);
+    let task = TaskId::from_uuid(uuid::Uuid::parse_str(id.as_str()).unwrap());
+    let run = aq.projection().run_ids_for_task(task)[0];
+    let wait_deadline = std::time::Instant::now() + Duration::from_secs(8);
+    while aq.get_run(run).unwrap().state != actionqueue_core::run::state::RunState::Awaiting
+        && std::time::Instant::now() < wait_deadline
+    {
+        let _ = aq.run_until_idle().await.unwrap();
+        tokio::time::sleep(Duration::from_millis(250)).await;
+    }
+    assert_eq!(aq.get_run(run).unwrap().state, actionqueue_core::run::state::RunState::Awaiting);
+    assert!(recorder.0.lock().unwrap().is_empty());
+    assert_eq!(bundle.wi().ingress_snapshot(&tenant).unwrap().deliveries[&id].attempts.len(), 1);
+    let deadline = std::time::Instant::now() + Duration::from_secs(16);
     while recorder.0.lock().unwrap().is_empty() && std::time::Instant::now() < deadline {
         service
             .dispatch_pending(&mut BoundAqIngress::new(&mut aq, tenant.clone()), 10, now())

@@ -529,20 +529,25 @@ impl IngressDeliveryHandler {
         }
         let now =
             std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH)?.as_millis() as u64;
-        if let Some(issued) =
-            IngressRuntime::new(root, self.tenant.clone()).claim(&subscriber, &id, now)?
-        {
-            let succeeded = transport.deliver(&issued).is_ok();
-            let finished_at = std::time::SystemTime::now()
-                .duration_since(std::time::UNIX_EPOCH)?
-                .as_millis() as u64;
-            Ingress::new(root).record_wake(
-                &self.tenant,
-                id.clone(),
-                issued.attempt,
-                succeeded,
-                finished_at,
-            )?;
+        // Recovery can resume an issued delivery before WI's retry time.
+        // Reestablish its acknowledgment wait without failing another AQ attempt
+        // or issuing a second subscriber token early.
+        if delivery.attempts.last().is_none_or(|a| now >= a.next_attempt_ms) {
+            if let Some(issued) =
+                IngressRuntime::new(root, self.tenant.clone()).claim(&subscriber, &id, now)?
+            {
+                let succeeded = transport.deliver(&issued).is_ok();
+                let finished_at = std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)?
+                    .as_millis() as u64;
+                Ingress::new(root).record_wake(
+                    &self.tenant,
+                    id.clone(),
+                    issued.attempt,
+                    succeeded,
+                    finished_at,
+                )?;
+            }
         }
         let state = root.ingress_snapshot(&self.tenant)?;
         let delivery = state.deliveries.get(&id).ok_or("missing delivery after claim")?;
