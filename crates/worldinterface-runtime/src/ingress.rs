@@ -1,4 +1,6 @@
 //! Production composition for the verified ingress journal and pinned AQ admission API.
+pub mod http;
+pub mod streaming;
 use crate::Result;
 use actionqueue_core::{
     admission::EnsureTaskRequest,
@@ -13,7 +15,7 @@ use actionqueue_core::{
 };
 use actionqueue_executor_local::handler::{ExecutorContext, ExecutorHandler};
 use actionqueue_runtime::engine::BootstrappedEngine;
-use std::{collections::BTreeMap, sync::Arc};
+use std::{collections::BTreeMap, io::Read, sync::Arc};
 use worldinterface_domain::ingress::{AcknowledgmentSignal, IngressResult, QueueObligation};
 use worldinterface_ingress::{
     transport::{
@@ -191,6 +193,15 @@ impl<'a> IngressRuntime<'a> {
             now,
         )
     }
+}
+
+fn read_bounded(mut source: impl Read, max_bytes: u32) -> Result<Vec<u8>> {
+    let mut bytes = Vec::new();
+    source.by_ref().take(u64::from(max_bytes) + 1).read_to_end(&mut bytes)?;
+    if bytes.len() > max_bytes as usize {
+        return Err("ingress body exceeds configured bound".into());
+    }
+    Ok(bytes)
 }
 
 fn queue_request(id: &DeliveryId) -> Result<QueueObligation> {

@@ -614,6 +614,25 @@ async fn ab_wi_007_commit_replay_identity_and_subscriber_ack() {
     );
     let duplicate = service.accept_http(&credential, &body, &sign(&body), current + 4).unwrap();
     assert!(matches!(duplicate, IngressResult::Admitted { duplicate: true, .. }));
+    assert!(matches!(
+        worldinterface_runtime::ingress::http::accept(
+            &service,
+            &credential,
+            std::io::Cursor::new(body.as_slice()),
+            &sign(&body),
+            current + 4,
+        )
+        .unwrap(),
+        IngressResult::Admitted { duplicate: true, .. }
+    ));
+    assert!(worldinterface_runtime::ingress::http::accept(
+        &service,
+        &credential,
+        std::io::Cursor::new(vec![0; credential.profile().max_body_bytes as usize + 1]),
+        &[0; 32],
+        current + 4,
+    )
+    .is_err());
     let handshake = SessionHandshake {
         session: "session-1".to_owned().try_into().unwrap(),
         scope: binding.profile.scope.clone(),
@@ -633,6 +652,25 @@ async fn ab_wi_007_commit_replay_identity_and_subscriber_ack() {
         service.accept_frame(&session, &body, &frame_signature, current + 4).unwrap(),
         IngressResult::Admitted { duplicate: true, .. }
     ));
+    assert!(matches!(
+        worldinterface_runtime::ingress::streaming::accept_frame(
+            &service,
+            &session,
+            std::io::Cursor::new(body.as_slice()),
+            &frame_signature,
+            current + 4,
+        )
+        .unwrap(),
+        IngressResult::Admitted { duplicate: true, contiguous_next: 1, .. }
+    ));
+    assert!(worldinterface_runtime::ingress::streaming::accept_frame(
+        &service,
+        &session,
+        std::io::Cursor::new(vec![0; session.profile().max_body_bytes as usize + 1]),
+        &[0; 32],
+        current + 4,
+    )
+    .is_err());
     assert_eq!(root.ingress_snapshot(&binding.profile.scope.tenant).unwrap().queue.len(), 1);
     aq.shutdown().unwrap();
     std::thread::sleep(std::time::Duration::from_millis(20));

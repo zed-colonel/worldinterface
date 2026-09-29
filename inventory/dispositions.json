@@ -7586,5 +7586,33 @@
     "target": "WI-03 typed AQ admission and wake outcomes",
     "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
     "rationale": "Keep conflict, capacity, uncertainty and durable identities distinct while replaying Fabric queue obligations; independent review remains due."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/ingress.rs::::module:http",
+    "disposition": "retain-align",
+    "target": "WI-03 bounded HTTP and streaming transport adapters",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Read exact signed bytes within provider limits before durable admission; streaming returns only the committed contiguous offset."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/ingress.rs::::module:streaming",
+    "disposition": "retain-align",
+    "target": "WI-03 bounded HTTP and streaming transport adapters",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Read exact signed bytes within provider limits before durable admission; streaming returns only the committed contiguous offset."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/ingress/http.rs::::source-module:crates/worldinterface-runtime/src/ingress/http.rs",
+    "disposition": "retain-align",
+    "target": "WI-03 bounded HTTP and streaming transport adapters",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Read exact signed bytes within provider limits before durable admission; streaming returns only the committed contiguous offset."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/ingress/streaming.rs::::source-module:crates/worldinterface-runtime/src/ingress/streaming.rs",
+    "disposition": "retain-align",
+    "target": "WI-03 bounded HTTP and streaming transport adapters",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Read exact signed bytes within provider limits before durable admission; streaming returns only the committed contiguous offset."
   }
 ]
