@@ -1,11 +1,11 @@
 //! Authenticated production effect facade. Host composition owns credentials and evidence stores.
 use crate::{
+    aq_adapter::QueueEngine,
     authority::{caller, verify_snapshot, Authentication, EvidenceAuthority, TrustedClock},
     resolution::ResourceObserver,
     Result,
 };
 use actionqueue_executor_local::handler::ExecutorHandler;
-use actionqueue_runtime::engine::BootstrappedEngine;
 use worldinterface_domain::{
     authorization::AuthorizationEvaluation,
     effect::{EffectAction, EffectView},
@@ -111,8 +111,7 @@ impl<A: Authentication, V: EvidenceAuthority, R: ResourceObserver, C: TrustedClo
     pub fn dispatch_pending<H: ExecutorHandler + 'static>(
         &self,
         session: &A::Session,
-        queue_store: uuid::Uuid,
-        engine: &mut BootstrappedEngine<H>,
+        queue: &mut QueueEngine<'_, H>,
         limit: usize,
     ) -> Result<DispatchReport> {
         let at = self.clock.now()?;
@@ -120,6 +119,9 @@ impl<A: Authentication, V: EvidenceAuthority, R: ResourceObserver, C: TrustedClo
             return Err("invalid dispatch bound".into());
         }
         let principal = caller(self.authentication, session)?;
+        if !std::ptr::eq(self.root, queue.wi()) {
+            return Err("effect service and queue bundle mismatch".into());
+        }
         let state = self.root.effect_snapshot(principal.tenant())?;
         let mut report = DispatchReport::default();
         for (id, effect) in state.effects.iter() {
@@ -154,23 +156,14 @@ impl<A: Authentication, V: EvidenceAuthority, R: ResourceObserver, C: TrustedClo
                 }
                 if effect.phase == worldinterface_domain::Phase::Authorized {
                     crate::admission::prepare(
-                        self.root,
+                        queue.bundle(),
                         &principal,
                         at.clone(),
                         id,
                         snapshot.clone(),
-                        queue_store,
                     )?;
                 }
-                crate::admission::deliver(
-                    self.root,
-                    &principal,
-                    at.clone(),
-                    id,
-                    snapshot,
-                    queue_store,
-                    engine,
-                )?;
+                crate::admission::deliver(queue, &principal, at.clone(), id, snapshot)?;
                 Ok(())
             })();
             if result.is_ok() {
@@ -185,20 +178,14 @@ impl<A: Authentication, V: EvidenceAuthority, R: ResourceObserver, C: TrustedClo
         &self,
         session: &A::Session,
         id: &EffectIntentId,
-        queue_store: uuid::Uuid,
-        engine: &BootstrappedEngine<H>,
+        queue: &QueueEngine<'_, H>,
         page_bound: usize,
     ) -> Result<crate::run_discovery::DiscoveryProgress> {
         let at = self.clock.now()?;
         let principal = caller(self.authentication, session)?;
-        crate::run_discovery::discover(
-            self.root,
-            &principal,
-            at,
-            id,
-            queue_store,
-            engine,
-            page_bound,
-        )
+        if !std::ptr::eq(self.root, queue.wi()) {
+            return Err("effect service and queue bundle mismatch".into());
+        }
+        crate::run_discovery::discover(queue, &principal, at, id, page_bound)
     }
 }

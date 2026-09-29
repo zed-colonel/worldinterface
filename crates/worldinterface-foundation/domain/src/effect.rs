@@ -90,6 +90,8 @@ pub struct ProductionAdmission {
     pub acknowledged_sequence: Option<u64>,
     #[serde(default)]
     pub observed_runs: Vec<OpaqueRef>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub discovery_cursor: Option<String>,
 }
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -275,6 +277,11 @@ pub enum EffectAction {
         id: EffectIntentId,
         run: OpaqueRef,
     },
+    AdvanceDiscovery {
+        id: EffectIntentId,
+        previous: Option<String>,
+        next: Option<String>,
+    },
     Acknowledge {
         id: EffectIntentId,
         acknowledgment: EffectAcknowledgment,
@@ -335,6 +342,13 @@ enum JournalAction {
         id: EffectIntentId,
         run: OpaqueRef,
     },
+    AdvanceDiscovery {
+        id: EffectIntentId,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        previous: Option<String>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        next: Option<String>,
+    },
     Acknowledge {
         id: EffectIntentId,
         acknowledgment: EffectAcknowledgment,
@@ -378,6 +392,9 @@ impl From<EffectAction> for JournalAction {
                 Self::AcknowledgeProduction { id, sequence }
             }
             EffectAction::ObserveRun { id, run } => Self::ObserveRun { id, run },
+            EffectAction::AdvanceDiscovery { id, previous, next } => {
+                Self::AdvanceDiscovery { id, previous, next }
+            }
             EffectAction::Start { id, snapshot, attempt } => {
                 Self::Start { id, snapshot: snapshot.0, attempt }
             }
@@ -565,6 +582,7 @@ fn apply(state: &EffectState, entry: &Entry) -> Result<(EffectState, EffectInten
         | JournalAction::PrepareProduction { id, .. }
         | JournalAction::AcknowledgeProduction { id, .. }
         | JournalAction::ObserveRun { id, .. }
+        | JournalAction::AdvanceDiscovery { id, .. }
         | JournalAction::Acknowledge { id, .. }
         | JournalAction::Start { id, .. }
         | JournalAction::Cancel { id }
@@ -678,6 +696,7 @@ fn apply(state: &EffectState, entry: &Entry) -> Result<(EffectState, EffectInten
                         || admission.admission_key != request.admission_key
                         || admission.acknowledged_sequence.is_some()
                         || !admission.observed_runs.is_empty()
+                        || admission.discovery_cursor.is_some()
                     {
                         return Err("invalid production admission binding".into());
                     }
@@ -716,6 +735,20 @@ fn apply(state: &EffectState, entry: &Entry) -> Result<(EffectState, EffectInten
             }
             a.observed_runs.push(run.clone());
             a.observed_runs.sort();
+        }
+        JournalAction::AdvanceDiscovery { previous, next, .. } => {
+            let a = e
+                .dispatches
+                .last_mut()
+                .and_then(|d| d.admission.as_mut())
+                .ok_or("missing production admission")?;
+            if a.acknowledged_sequence.is_none()
+                || a.discovery_cursor != *previous
+                || next.as_ref().is_some_and(|v| v.len() > 4096)
+            {
+                return Err("discovery cursor conflict".into());
+            }
+            a.discovery_cursor = next.clone();
         }
         JournalAction::Acknowledge { acknowledgment, .. } => {
             if e.phase != Phase::DispatchPending {

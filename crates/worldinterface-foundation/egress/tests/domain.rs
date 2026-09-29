@@ -324,7 +324,7 @@ fn ordinary_qualification_is_exact_and_revocable() {
     let (s, mut p) = fixture();
     p.fixture = None;
     let w = p.worker.as_mut().unwrap();
-    w.credential = Credential::Production;
+    w.credential = Credential::None;
     let q = OrdinaryQualification {
         realization: digest(w).unwrap(),
         tenant: opaque("tenant:fixture"),
@@ -345,6 +345,23 @@ fn ordinary_qualification_is_exact_and_revocable() {
     let id = submit(&r, &s, &p);
     resolve(&r, &id, &p);
     assert_eq!(evaluate(&r, &id, &p).phase, Phase::Authorized);
+    for (credential, input_class, expected) in [
+        (Credential::Production, InputClass::NonSensitive, Reason::Credential),
+        (Credential::None, InputClass::Protected, Reason::ProtectedInput),
+    ] {
+        let mut excluded = p.clone();
+        let worker = excluded.worker.as_mut().unwrap();
+        worker.credential = credential;
+        worker.input_class = input_class;
+        excluded.qualification.as_mut().unwrap().realization = digest(worker).unwrap();
+        let t = tempfile::tempdir().unwrap();
+        let r = root(&t);
+        let id = submit(&r, &s, &excluded);
+        resolve(&r, &id, &excluded);
+        let view = evaluate(&r, &id, &excluded);
+        assert_eq!(view.phase, Phase::Denied);
+        assert!(view.authorization.unwrap().reasons.contains(&expected));
+    }
     p.qualification.as_mut().unwrap().quarantined = true;
     let t = tempfile::tempdir().unwrap();
     let r = root(&t);

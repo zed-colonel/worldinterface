@@ -1,15 +1,11 @@
 //! Recoverable run mapping from the active AQ engine's authorized inspector.
-use crate::Result;
+use crate::{aq_adapter::QueueEngine, Result};
 use actionqueue_core::ids::{RunId, TaskId};
 use actionqueue_executor_local::handler::ExecutorHandler;
-use actionqueue_runtime::{
-    engine::BootstrappedEngine,
-    inspection::{InspectionError, Query},
-};
+use actionqueue_runtime::inspection::{InspectionError, Query};
 use worldinterface_domain::{agency::AuthenticatedCaller, effect::EffectAction};
 use worldinterface_egress::Egress;
 use worldinterface_protocol::{EffectIntentId, Timestamp};
-use worldinterface_storage::StoreRoot;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct DiscoveryProgress {
@@ -19,6 +15,7 @@ pub struct DiscoveryProgress {
 
 fn scan(
     task: TaskId,
+    initial: Option<String>,
     pages_limit: usize,
     mut fetch: impl FnMut(
         Option<String>,
@@ -27,14 +24,16 @@ fn scan(
         InspectionError,
     >,
     mut record: impl FnMut(RunId) -> Result<()>,
+    mut checkpoint: impl FnMut(Option<String>, Option<String>) -> Result<()>,
 ) -> Result<DiscoveryProgress> {
-    let mut cursor = None;
+    let mut cursor = initial;
     let mut count = 0;
     let mut restarts = 0;
     for _ in 0..pages_limit {
         let (items, next) = match fetch(cursor.clone()) {
             Ok(page) => page,
             Err(InspectionError::StaleCursor) if restarts < 2 => {
+                checkpoint(cursor.clone(), None)?;
                 cursor = None;
                 restarts += 1;
                 continue;
@@ -47,6 +46,7 @@ fn scan(
                 count += 1;
             }
         }
+        checkpoint(cursor, next.clone())?;
         cursor = next;
         if cursor.is_none() {
             return Ok(DiscoveryProgress { observed: count, complete: true });
@@ -56,14 +56,15 @@ fn scan(
 }
 
 pub fn discover<H: ExecutorHandler + 'static>(
-    root: &StoreRoot,
+    queue: &QueueEngine<'_, H>,
     caller: &AuthenticatedCaller,
     at: Timestamp,
     id: &EffectIntentId,
-    queue_store: uuid::Uuid,
-    engine: &BootstrappedEngine<H>,
     pages_limit: usize,
 ) -> Result<DiscoveryProgress> {
+    let root = queue.wi();
+    let queue_store = queue.store_id();
+    let engine = queue.engine();
     if pages_limit == 0 || pages_limit > 128 {
         return Err("invalid discovery page bound".into());
     }
@@ -79,11 +80,16 @@ pub fn discover<H: ExecutorHandler + 'static>(
     let task = admission.task.as_str().parse::<TaskId>()?;
     scan(
         task,
+        admission.discovery_cursor,
         pages_limit,
         |cursor| {
             let inspector = engine.inspector()?;
-            let page =
-                inspector.list_runs(&Query { cursor, limit: Some(32), ..Default::default() })?;
+            let page = inspector.list_runs(&Query {
+                cursor,
+                correlation_id: Some(format!("wi/effect/{}", id.as_str())),
+                limit: Some(32),
+                ..Default::default()
+            })?;
             Ok((page.items.into_iter().map(|r| (r.task_id, r.run_id)).collect(), page.next_cursor))
         },
         |run| {
@@ -91,6 +97,14 @@ pub fn discover<H: ExecutorHandler + 'static>(
                 caller,
                 at.clone(),
                 EffectAction::ObserveRun { id: id.clone(), run: run.to_string().try_into()? },
+            )?;
+            Ok(())
+        },
+        |previous, next| {
+            egress.apply(
+                caller,
+                at.clone(),
+                EffectAction::AdvanceDiscovery { id: id.clone(), previous, next },
             )?;
             Ok(())
         },
@@ -110,6 +124,7 @@ mod tests {
         let mut seen = std::collections::BTreeSet::new();
         let result = scan(
             task,
+            None,
             3,
             |cursor| {
                 calls += 1;
@@ -133,12 +148,14 @@ mod tests {
                 seen.insert(run);
                 Ok(())
             },
+            |_, _| Ok(()),
         )
         .unwrap();
         assert_eq!(result, DiscoveryProgress { observed: 2, complete: false });
         assert_eq!(seen.len(), 1);
         let result = scan(
             task,
+            None,
             2,
             |cursor| {
                 if cursor.is_none() {
@@ -151,6 +168,7 @@ mod tests {
                 seen.insert(run);
                 Ok(())
             },
+            |_, _| Ok(()),
         )
         .unwrap();
         assert_eq!(result, DiscoveryProgress { observed: 2, complete: true });

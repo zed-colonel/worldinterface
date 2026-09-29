@@ -4,11 +4,15 @@ use actionqueue_core::{
     causal::ControlMutationContext,
     control::{ControlScope, HostControlContext},
     disposition::AttemptDisposition,
-    ids::TaskId,
-    task::task_spec::TaskSpec,
+    ids::{AdmissionKey, CorrelationId, TaskId, TraceId},
+    task::{
+        constraints::TaskConstraints,
+        metadata::TaskMetadata,
+        run_policy::RunPolicy,
+        task_spec::{TaskPayload, TaskSpec},
+    },
 };
 use actionqueue_executor_local::handler::{ExecutorContext, ExecutorHandler};
-use actionqueue_runtime::{config::RuntimeConfig, engine::ActionQueueEngine};
 use worldinterface_domain::{
     agency::AuthenticatedCaller,
     authorization::{AuthorizationSnapshot, VerifiedSnapshot},
@@ -17,6 +21,7 @@ use worldinterface_domain::{
 };
 use worldinterface_egress::Egress;
 use worldinterface_protocol::{EffectSubmission, InstanceId, Timestamp};
+use worldinterface_runtime::aq_adapter::QueueEngine;
 use worldinterface_runtime::{admission, run_discovery, storage::StoreBundle};
 use worldinterface_storage::StoreProfile;
 
@@ -109,10 +114,21 @@ fn ab_wi_002_003_004_persist_retry_ack_and_discover() {
             EffectAction::Authorize { id: id.clone(), snapshot: verified(&snapshot) },
         )
         .unwrap();
-    let store =
-        actionqueue_storage::store::StoreManifest::read(&bundle.aq_path()).unwrap().store_id;
-    let binding =
-        admission::prepare(bundle.wi(), &subject, at(), &id, verified(&snapshot), store).unwrap();
+    let mut queue = QueueEngine::bootstrap(&bundle, Complete, host()).unwrap();
+    let prepared = std::thread::scope(|scope| {
+        let source = &bundle;
+        let actor = &subject;
+        let effect = &id;
+        let jobs: Vec<_> = (0..8)
+            .map(|_| {
+                let snapshot = verified(&snapshot);
+                scope.spawn(move || admission::prepare(source, actor, at(), effect, snapshot))
+            })
+            .collect();
+        jobs.into_iter().map(|job| job.join().unwrap().unwrap()).collect::<Vec<_>>()
+    });
+    assert!(prepared.iter().all(|item| item == &prepared[0]));
+    let binding = prepared[0].clone();
     let request = admission::load_request(bundle.wi(), &binding).unwrap();
     assert_eq!(request.task_spec().id().to_string(), binding.task.as_str());
     assert_eq!(
@@ -120,20 +136,13 @@ fn ab_wi_002_003_004_persist_retry_ack_and_discover() {
         binding.canonical_digest.as_str()
     );
     assert_eq!(
-        admission::prepare(bundle.wi(), &subject, at(), &id, verified(&snapshot), store).unwrap(),
+        admission::prepare(&bundle, &subject, at(), &id, verified(&snapshot)).unwrap(),
         binding
     );
     let prepared = bundle.wi().effect_snapshot(subject.tenant()).unwrap();
     assert_eq!(prepared.uses.values().sum::<u32>(), 1);
-    let mut engine = ActionQueueEngine::new(
-        RuntimeConfig { data_dir: bundle.aq_path(), ..Default::default() },
-        Complete,
-    )
-    .bootstrap()
-    .unwrap()
-    .with_host(host());
     // AQ commit without WI acknowledgment: retry uses the persisted request and returns AlreadyExists.
-    let first = engine.ensure_task(request.clone()).unwrap();
+    let first = queue.engine_mut().ensure_task(request.clone()).unwrap();
     assert!(first.is_created());
     let changed = EnsureTaskRequest::new(
         request.admission_key().clone(),
@@ -150,19 +159,30 @@ fn ab_wi_002_003_004_persist_retry_ack_and_discover() {
         request.control_context().cloned(),
     )
     .unwrap();
-    let unchanged = engine.projection().projection_digest().unwrap();
-    assert!(engine.ensure_task(changed).is_err());
-    assert_eq!(engine.projection().projection_digest().unwrap(), unchanged);
-    let retry = admission::deliver(
-        bundle.wi(),
-        &subject,
-        at(),
-        &id,
-        verified(&snapshot),
-        store,
-        &mut engine,
-    )
-    .unwrap();
+    let unchanged = queue.engine().projection().projection_digest().unwrap();
+    assert!(queue.engine_mut().ensure_task(changed).is_err());
+    assert_eq!(queue.engine().projection().projection_digest().unwrap(), unchanged);
+    let mut revoked = snapshot.clone();
+    revoked.grants[0].revoked = true;
+    assert!(admission::deliver(&mut queue, &subject, at(), &id, verified(&revoked)).is_err());
+    assert_eq!(queue.engine().projection().projection_digest().unwrap(), unchanged);
+    assert!(bundle.wi().effect_snapshot(subject.tenant()).unwrap().effects[&id].dispatches[0]
+        .admission
+        .as_ref()
+        .unwrap()
+        .acknowledged_sequence
+        .is_none());
+    let retry = std::thread::scope(|scope| {
+        let source = &bundle;
+        let actor = &subject;
+        let effect = &id;
+        let fresh = verified(&snapshot);
+        let competing = scope.spawn(move || admission::prepare(source, actor, at(), effect, fresh));
+        let result =
+            admission::deliver(&mut queue, &subject, at(), &id, verified(&snapshot)).unwrap();
+        assert_eq!(competing.join().unwrap().unwrap(), binding);
+        result
+    });
     assert!(!retry.is_created());
     assert_eq!(first.sequence(), retry.sequence());
     assert_eq!(first.task_id(), retry.task_id());
@@ -172,11 +192,82 @@ fn ab_wi_002_003_004_persist_retry_ack_and_discover() {
         state.effects[&id].dispatches[0].admission.as_ref().unwrap().acknowledged_sequence,
         Some(first.sequence())
     );
-    run_discovery::discover(bundle.wi(), &subject, at(), &id, store, &engine, 8).unwrap();
+    // The exact effect query still has to make progress when many visible runs
+    // share its correlation. Force the effect task beyond the first AQ page.
+    let correlation = CorrelationId::new(format!("wi/effect/{}", id.as_str())).unwrap();
+    for n in 1..=33_u64 {
+        let foreign_id: TaskId = format!("00000000-0000-4000-8000-{n:012x}").parse().unwrap();
+        let foreign = EnsureTaskRequest::new(
+            AdmissionKey::new(format!("unrelated/{n}")).unwrap(),
+            TaskSpec::new(
+                foreign_id,
+                TaskPayload::new(vec![n as u8]),
+                RunPolicy::Once,
+                TaskConstraints::default(),
+                TaskMetadata::default(),
+            )
+            .unwrap(),
+            vec![],
+            actionqueue_core::causal::CausalContext::new(
+                TraceId::new(format!("unrelated/{n}")).unwrap(),
+                correlation.clone(),
+            ),
+            None,
+        )
+        .unwrap();
+        queue.engine_mut().ensure_task(foreign).unwrap();
+    }
+    let first_page = run_discovery::discover(&queue, &subject, at(), &id, 1).unwrap();
+    assert!(!first_page.complete);
+    let cursor = bundle.wi().effect_snapshot(subject.tenant()).unwrap().effects[&id].dispatches[0]
+        .admission
+        .as_ref()
+        .unwrap()
+        .discovery_cursor
+        .clone();
+    assert!(cursor.is_some());
+    queue.shutdown().unwrap();
+    let mut queue = QueueEngine::bootstrap(&bundle, Complete, host()).unwrap();
+    // A queue revision invalidates AQ's cursor. The persisted cursor is cleared
+    // and the next bounded call restarts without losing already observed runs.
+    let extra = EnsureTaskRequest::new(
+        AdmissionKey::new("unrelated/stale").unwrap(),
+        TaskSpec::new(
+            TaskId::new(),
+            TaskPayload::new(vec![0]),
+            RunPolicy::Once,
+            TaskConstraints::default(),
+            TaskMetadata::default(),
+        )
+        .unwrap(),
+        vec![],
+        actionqueue_core::causal::CausalContext::new(
+            TraceId::new("unrelated/stale").unwrap(),
+            correlation,
+        ),
+        None,
+    )
+    .unwrap();
+    queue.engine_mut().ensure_task(extra).unwrap();
+    assert!(!run_discovery::discover(&queue, &subject, at(), &id, 1).unwrap().complete);
+    assert!(bundle.wi().effect_snapshot(subject.tenant()).unwrap().effects[&id].dispatches[0]
+        .admission
+        .as_ref()
+        .unwrap()
+        .discovery_cursor
+        .is_none());
+    let mut complete = false;
+    for _ in 0..4 {
+        complete = run_discovery::discover(&queue, &subject, at(), &id, 1).unwrap().complete;
+        if complete {
+            break;
+        }
+    }
+    assert!(complete);
     let state = bundle.wi().effect_snapshot(subject.tenant()).unwrap();
     assert_eq!(state.effects[&id].dispatches[0].admission.as_ref().unwrap().observed_runs.len(), 1);
     assert_eq!(state.effects[&id].phase, Phase::DispatchPending);
-    engine.shutdown().unwrap();
+    queue.shutdown().unwrap();
     drop(bundle);
     let reopened = StoreBundle::open(&temp.path().join("bundle")).unwrap();
     let recorded =
@@ -203,6 +294,24 @@ fn ab_wi_003_public_v2_vectors_and_digest_field_boundaries() {
         assert_eq!(hex::encode(canonical.bytes()), v2[policy]["canonical_hex"]);
         assert_eq!(hex::encode(parsed.digest().unwrap().hash().bytes()), v2[policy]["sha256"]);
         let baseline = parsed.digest().unwrap();
+        let temp = tempfile::tempdir().unwrap();
+        let bundle = StoreBundle::initialize(
+            &temp.path().join("bundle"),
+            StoreProfile { instance: InstanceId::generate(), created_at: at(), platform: false },
+        )
+        .unwrap();
+        let mut queue = QueueEngine::bootstrap(&bundle, Complete, host()).unwrap();
+        let mut admissible = request.clone();
+        admissible["task_spec"].as_object_mut().unwrap().remove("tenant_id");
+        admissible["task_spec"].as_object_mut().unwrap().remove("parent_task_id");
+        admissible["task_spec"].as_object_mut().unwrap().remove("child_lifecycle_policy");
+        admissible["dependencies"] = serde_json::json!([]);
+        let admissible_json = admissible;
+        let admissible: EnsureTaskRequest =
+            serde_json::from_value(admissible_json.clone()).unwrap();
+        let runtime_digest = admissible.digest().unwrap();
+        let admitted = queue.engine_mut().ensure_task(admissible).unwrap();
+        assert!(admitted.is_created());
         let mutations: Vec<(&str, serde_json::Value)> = vec![
             ("task_spec.id", serde_json::json!("00000000-0000-0000-0000-000000000009")),
             ("task_spec.payload.bytes", serde_json::json!([0, 1, 254])),
@@ -249,7 +358,7 @@ fn ab_wi_003_public_v2_vectors_and_digest_field_boundaries() {
             ("causal_context.origin_ref", serde_json::json!("changed")),
         ];
         for (path, replacement) in mutations {
-            let mut changed = request.clone();
+            let mut changed = admissible_json.clone();
             let mut node = &mut changed;
             let mut parts = path.split('.').peekable();
             while let Some(part) = parts.next() {
@@ -260,7 +369,29 @@ fn ab_wi_003_public_v2_vectors_and_digest_field_boundaries() {
                 }
             }
             let parsed: EnsureTaskRequest = serde_json::from_value(changed).unwrap();
-            assert_ne!(parsed.digest().unwrap(), baseline, "{path}");
+            assert_ne!(parsed.digest().unwrap(), runtime_digest, "{path}");
+            if path == "task_spec.tenant_id" {
+                // AQ scopes admission lookup by tenant before digest comparison.
+                assert!(queue.engine_mut().ensure_task(parsed).is_err(), "{path}");
+            } else {
+                let before = queue.engine().projection().projection_digest().unwrap();
+                assert!(
+                    matches!(
+                        queue.engine_mut().ensure_task(parsed),
+                        Err(actionqueue_runtime::control::ServiceError::Admission(
+                            actionqueue_runtime::admission::AdmissionError::Rejected(
+                                actionqueue_core::admission::AdmissionRejection::Conflict { .. }
+                            )
+                        ))
+                    ),
+                    "{path}"
+                );
+                assert_eq!(
+                    queue.engine().projection().projection_digest().unwrap(),
+                    before,
+                    "{path}"
+                );
+            }
         }
         let mut excluded = request.clone();
         excluded["admission_key"] = serde_json::json!("changed-key");
@@ -274,6 +405,129 @@ fn ab_wi_003_public_v2_vectors_and_digest_field_boundaries() {
         let parsed: EnsureTaskRequest = serde_json::from_value(reordered).unwrap();
         assert_eq!(parsed.digest().unwrap(), baseline, "metadata tags are normalized");
     }
+}
+
+#[test]
+fn ab_wi_003_required_and_detached_same_key_conflict() {
+    let v1: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../conformance/wi-fabric-2/integration/aq-admission-v1-vector.json"
+    ))
+    .unwrap();
+    let temp = tempfile::tempdir().unwrap();
+    let bundle = StoreBundle::initialize(
+        &temp.path().join("bundle"),
+        StoreProfile { instance: InstanceId::generate(), created_at: at(), platform: false },
+    )
+    .unwrap();
+    let mut queue = QueueEngine::bootstrap(&bundle, Complete, host()).unwrap();
+    let parent: TaskId = "00000000-0000-0000-0000-000000000002".parse().unwrap();
+    let parent_request = EnsureTaskRequest::new(
+        AdmissionKey::new("parent").unwrap(),
+        TaskSpec::new(
+            parent,
+            TaskPayload::new(vec![1]),
+            RunPolicy::Once,
+            TaskConstraints::default(),
+            TaskMetadata::default(),
+        )
+        .unwrap(),
+        vec![],
+        actionqueue_core::causal::CausalContext::new(
+            TraceId::new("parent").unwrap(),
+            CorrelationId::new("parent").unwrap(),
+        ),
+        None,
+    )
+    .unwrap();
+    queue.engine_mut().ensure_task(parent_request).unwrap();
+    let mut child = v1["request"].clone();
+    child["task_spec"].as_object_mut().unwrap().remove("tenant_id");
+    child["dependencies"] = serde_json::json!([]);
+    child["task_spec"]["child_lifecycle_policy"] = "Required".into();
+    let required: EnsureTaskRequest = serde_json::from_value(child.clone()).unwrap();
+    assert!(queue.engine_mut().ensure_task(required.clone()).unwrap().is_created());
+    let before = queue.engine().projection().projection_digest().unwrap();
+    child["task_spec"]["child_lifecycle_policy"] = "Detached".into();
+    let detached: EnsureTaskRequest = serde_json::from_value(child).unwrap();
+    assert_ne!(required.digest().unwrap(), detached.digest().unwrap());
+    assert!(matches!(
+        queue.engine_mut().ensure_task(detached),
+        Err(actionqueue_runtime::control::ServiceError::Admission(
+            actionqueue_runtime::admission::AdmissionError::Rejected(
+                actionqueue_core::admission::AdmissionRejection::Conflict { .. }
+            )
+        ))
+    ));
+    assert_eq!(queue.engine().projection().projection_digest().unwrap(), before);
+    queue.shutdown().unwrap();
+}
+
+#[test]
+fn wrong_queue_store_cannot_acknowledge_or_discover() {
+    let temp = tempfile::tempdir().unwrap();
+    let profile =
+        || StoreProfile { instance: InstanceId::generate(), created_at: at(), platform: false };
+    let source = StoreBundle::initialize(&temp.path().join("source"), profile()).unwrap();
+    let other = StoreBundle::initialize(&temp.path().join("other"), profile()).unwrap();
+    let (submission, snapshot) = fixture();
+    for name in [
+        "input",
+        "executable",
+        "dependency",
+        "configuration",
+        "profile-definition",
+        "adapter",
+        "resolution",
+        "grant",
+        "fixture-review",
+        "worker",
+    ] {
+        source
+            .wi()
+            .publish("tenant:fixture".to_owned().try_into().unwrap(), name.as_bytes())
+            .unwrap();
+    }
+    let subject = caller(&snapshot);
+    let egress = Egress::new(source.wi());
+    let id = egress
+        .apply(
+            &subject,
+            at(),
+            EffectAction::Submit {
+                id: worldinterface_protocol::EffectIntentId::generate(),
+                submission: Box::new(submission),
+                snapshot: verified(&snapshot),
+                link: None,
+            },
+        )
+        .unwrap();
+    egress
+        .apply(
+            &subject,
+            at(),
+            EffectAction::Resolve { id: id.clone(), snapshot: verified(&snapshot) },
+        )
+        .unwrap();
+    egress
+        .apply(
+            &subject,
+            at(),
+            EffectAction::Authorize { id: id.clone(), snapshot: verified(&snapshot) },
+        )
+        .unwrap();
+    let binding = admission::prepare(&source, &subject, at(), &id, verified(&snapshot)).unwrap();
+    let mut wrong = QueueEngine::bootstrap(&other, Complete, host()).unwrap();
+    assert_ne!(binding.queue_store.as_str(), wrong.store_id().to_string());
+    assert!(admission::deliver(&mut wrong, &subject, at(), &id, verified(&snapshot)).is_err());
+    assert!(run_discovery::discover(&wrong, &subject, at(), &id, 1).is_err());
+    assert_eq!(wrong.engine().projection().task_count(), 0);
+    assert!(source.wi().effect_snapshot(subject.tenant()).unwrap().effects[&id].dispatches[0]
+        .admission
+        .as_ref()
+        .unwrap()
+        .acknowledged_sequence
+        .is_none());
+    wrong.shutdown().unwrap();
 }
 
 #[test]
@@ -336,19 +590,13 @@ fn ab_wi_002_subprocess_crash_cuts() {
                 EffectAction::Authorize { id: id.clone(), snapshot: verified(&snapshot) },
             )
             .unwrap();
-        let store =
-            actionqueue_storage::store::StoreManifest::read(&bundle.aq_path()).unwrap().store_id;
+        let mut queue = QueueEngine::bootstrap(&bundle, Complete, host()).unwrap();
         let admission =
-            admission::prepare(bundle.wi(), &subject, at(), &id, verified(&snapshot), store)
-                .unwrap();
-        let mut engine = ActionQueueEngine::new(
-            RuntimeConfig { data_dir: bundle.aq_path(), ..Default::default() },
-            Complete,
-        )
-        .bootstrap()
-        .unwrap()
-        .with_host(host());
-        engine.ensure_task(admission::load_request(bundle.wi(), &admission).unwrap()).unwrap();
+            admission::prepare(&bundle, &subject, at(), &id, verified(&snapshot)).unwrap();
+        queue
+            .engine_mut()
+            .ensure_task(admission::load_request(bundle.wi(), &admission).unwrap())
+            .unwrap();
         // A hard process exit skips engine shutdown and WI acknowledgment.
         std::process::exit(0);
     }
@@ -385,35 +633,18 @@ fn ab_wi_002_subprocess_crash_cuts() {
                 )
                 .unwrap();
         }
-        let store =
-            actionqueue_storage::store::StoreManifest::read(&bundle.aq_path()).unwrap().store_id;
+        let mut queue = QueueEngine::bootstrap(&bundle, Complete, host()).unwrap();
         let admission =
-            admission::prepare(bundle.wi(), &subject, at(), &id, verified(&snapshot), store)
-                .unwrap();
-        let mut engine = ActionQueueEngine::new(
-            RuntimeConfig { data_dir: bundle.aq_path(), ..Default::default() },
-            Complete,
-        )
-        .bootstrap()
-        .unwrap()
-        .with_host(host());
-        let result = admission::deliver(
-            bundle.wi(),
-            &subject,
-            at(),
-            &id,
-            verified(&snapshot),
-            store,
-            &mut engine,
-        )
-        .unwrap();
+            admission::prepare(&bundle, &subject, at(), &id, verified(&snapshot)).unwrap();
+        let result =
+            admission::deliver(&mut queue, &subject, at(), &id, verified(&snapshot)).unwrap();
         assert_eq!(result.is_created(), cut == "after-intent");
-        assert_eq!(engine.projection().task_count(), 1);
+        assert_eq!(queue.engine().projection().task_count(), 1);
         assert_eq!(
-            engine.projection().tasks().next().unwrap().id().to_string(),
+            queue.engine().projection().tasks().next().unwrap().id().to_string(),
             admission.task.as_str()
         );
-        engine.shutdown().unwrap();
+        queue.shutdown().unwrap();
         assert_eq!(
             bundle.wi().effect_snapshot(subject.tenant()).unwrap().uses.values().sum::<u32>(),
             1

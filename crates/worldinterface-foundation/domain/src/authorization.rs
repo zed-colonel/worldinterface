@@ -229,7 +229,9 @@ fn worker_reason(
     if !w.reviewed_executable {
         return Ok(Some(Reason::Executable));
     }
-    if ordinary.is_none() && w.input_class != InputClass::NonSensitive {
+    // Qualification attests this selected profile; it cannot expand the profile's
+    // excluded input and credential classes.
+    if w.input_class != InputClass::NonSensitive {
         return Ok(Some(Reason::ProtectedInput));
     }
     let demand = digest(&intent.submission)?;
@@ -240,7 +242,6 @@ fn worker_reason(
                 && subject == &agency.binding.principal
                 && expires_at > now
                 && authority == &BTreeSet::from([demand]) => {}
-        Credential::Production if ordinary.is_some() => {}
         _ => return Ok(Some(Reason::Credential)),
     }
     if w.mandatory.is_empty() || w.mandatory.len() > 32 || w.controls.len() > 32 {

@@ -1,5 +1,9 @@
 //! Durable AQ admission. Only this module handles concrete queue request types.
-use crate::{aq_adapter::TaskInputLocator, Result};
+use crate::{
+    aq_adapter::{QueueEngine, TaskInputLocator},
+    storage::StoreBundle,
+    Result,
+};
 use actionqueue_core::{
     admission::{EnsureTaskOutcome, EnsureTaskRequest},
     bounded::OpaqueRef as AqOpaqueRef,
@@ -11,7 +15,6 @@ use actionqueue_core::{
     },
 };
 use actionqueue_executor_local::handler::ExecutorHandler;
-use actionqueue_runtime::engine::BootstrappedEngine;
 use worldinterface_domain::{
     agency::AuthenticatedCaller,
     authorization::VerifiedSnapshot,
@@ -43,13 +46,14 @@ fn decode_request(bytes: &[u8]) -> Result<EnsureTaskRequest> {
 /// Prepare exactly one complete request. The journal transaction also reserves authorization use.
 /// A losing concurrent preparer reloads the winner's immutable artifact.
 pub fn prepare(
-    root: &StoreRoot,
+    bundle: &StoreBundle,
     caller: &AuthenticatedCaller,
     at: Timestamp,
     id: &EffectIntentId,
     snapshot: VerifiedSnapshot,
-    queue_store: uuid::Uuid,
 ) -> Result<ProductionAdmission> {
+    let root = bundle.wi();
+    let queue_store = bundle.aq_store_id()?;
     let egress = Egress::new(root);
     let view = egress.inspect(caller, id)?;
     if let Some(existing) = view.dispatch.as_ref().and_then(|d| d.admission.as_ref()) {
@@ -104,6 +108,7 @@ pub fn prepare(
         canonical_digest: aq_digest(&request)?,
         acknowledged_sequence: None,
         observed_runs: vec![],
+        discovery_cursor: None,
     };
     match egress.apply(
         caller,
@@ -152,14 +157,13 @@ pub fn load_request(
 /// The host installs a current tenant-scoped control context on the engine before this call.
 /// An error or uncertain acknowledgment leaves the request pending for identical retry.
 pub fn deliver<H: ExecutorHandler + 'static>(
-    root: &StoreRoot,
+    queue: &mut QueueEngine<'_, H>,
     caller: &AuthenticatedCaller,
     at: Timestamp,
     id: &EffectIntentId,
     fresh: VerifiedSnapshot,
-    queue_store: uuid::Uuid,
-    engine: &mut BootstrappedEngine<H>,
 ) -> Result<EnsureTaskOutcome> {
+    let (root, engine, queue_store) = queue.parts_mut();
     let egress = Egress::new(root);
     // Reauthorization is mandatory even on duplicate AQ admission after a lost acknowledgment.
     egress.apply(

@@ -6272,6 +6272,13 @@
     "rationale": "AQ-owned queue authority, authenticated artifact resolution and validated store recovery; independent acceptance remains required."
   },
   {
+    "id": "crates/worldinterface-runtime/src/aq_adapter.rs::::struct:QueueEngine",
+    "disposition": "retain-align",
+    "target": "WI-04 G2 production admission",
+    "rationale": "Bundle-bound AQ engine and exact store identity; independent review remains required.",
+    "source": "implementation plan WI-04 \u00a79.3; accepted ADR-004\u2013007; AQ G2 source contracts"
+  },
+  {
     "id": "crates/worldinterface-runtime/src/aq_adapter.rs::::struct:QueueProvenance",
     "disposition": "retain-align",
     "target": "WI-02 G1 runtime boundary and source evidence validation",
@@ -6501,6 +6508,48 @@
     "target": "WI-02 G1 runtime boundary and source evidence validation",
     "source": "implementation plan WI-02, \u00a75.3; accepted WI-02 integration design",
     "rationale": "AQ-owned queue authority, authenticated artifact resolution and validated store recovery; independent acceptance remains required."
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/effect_service.rs::::source-module:crates/worldinterface-runtime/tests/effect_service.rs",
+    "disposition": "retain-align",
+    "target": "WI-04 G2 source tests",
+    "rationale": "Production facade and resource-boundary tests; independent review remains required.",
+    "source": "implementation plan WI-04 and Appendix A; accepted ADR-004\u2013007; AQ G2 source contracts"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/effect_service.rs::::struct:Auth",
+    "disposition": "retain-align",
+    "target": "WI-04 G2 source tests",
+    "rationale": "Production facade and resource-boundary tests; independent review remains required.",
+    "source": "implementation plan WI-04 and Appendix A; accepted ADR-004\u2013007; AQ G2 source contracts"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/effect_service.rs::::struct:Clock",
+    "disposition": "retain-align",
+    "target": "WI-04 G2 source tests",
+    "rationale": "Production facade and resource-boundary tests; independent review remains required.",
+    "source": "implementation plan WI-04 and Appendix A; accepted ADR-004\u2013007; AQ G2 source contracts"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/effect_service.rs::::struct:Complete",
+    "disposition": "retain-align",
+    "target": "WI-04 G2 source tests",
+    "rationale": "Production facade and resource-boundary tests; independent review remains required.",
+    "source": "implementation plan WI-04 and Appendix A; accepted ADR-004\u2013007; AQ G2 source contracts"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/effect_service.rs::::struct:Evidence",
+    "disposition": "retain-align",
+    "target": "WI-04 G2 source tests",
+    "rationale": "Production facade and resource-boundary tests; independent review remains required.",
+    "source": "implementation plan WI-04 and Appendix A; accepted ADR-004\u2013007; AQ G2 source contracts"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/effect_service.rs::::struct:Observer",
+    "disposition": "retain-align",
+    "target": "WI-04 G2 source tests",
+    "rationale": "Production facade and resource-boundary tests; independent review remains required.",
+    "source": "implementation plan WI-04 and Appendix A; accepted ADR-004\u2013007; AQ G2 source contracts"
   },
   {
     "id": "crates/worldinterface-runtime/tests/g2_admission.rs::::source-module:crates/worldinterface-runtime/tests/g2_admission.rs",
