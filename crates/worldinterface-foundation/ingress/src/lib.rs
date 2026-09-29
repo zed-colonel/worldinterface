@@ -331,34 +331,39 @@ impl<'a> Ingress<'a> {
         token: DeliveryToken,
         now: u64,
     ) -> Result<Option<IssuedDelivery>> {
-        let s = self.root.ingress_snapshot(&scope.tenant)?;
-        let mut view = view(&s, scope, id, now)?;
         let token_digest = token.digest(id, &scope.principal)?;
-        match self.root.ingress_transact(
-            &scope.tenant,
-            Some(s.revision),
-            now,
-            &IngressCommand::Claim {
-                id: id.clone(),
-                subscriber: scope.principal.clone(),
-                token_digest,
-            },
-        )? {
-            IngressResult::Attempt(a) => {
-                let d = &s.deliveries[id];
-                view.attempt_count += 1;
-                view.attempts.push((a.number, a.issued_at_ms, a.status.clone()));
-                Ok(Some(IssuedDelivery {
-                    view,
-                    token,
-                    attempt: a.number,
-                    wake_key: d.wake_key.clone(),
-                    locator: d.locator.clone(),
-                }))
+        for attempt in 0..8 {
+            let s = self.root.ingress_snapshot(&scope.tenant)?;
+            let mut view = view(&s, scope, id, now)?;
+            match self.root.ingress_transact(
+                &scope.tenant,
+                Some(s.revision),
+                now,
+                &IngressCommand::Claim {
+                    id: id.clone(),
+                    subscriber: scope.principal.clone(),
+                    token_digest: token_digest.clone(),
+                },
+            ) {
+                Ok(IngressResult::Attempt(a)) => {
+                    let d = &s.deliveries[id];
+                    view.attempt_count += 1;
+                    view.attempts.push((a.number, a.issued_at_ms, a.status.clone()));
+                    return Ok(Some(IssuedDelivery {
+                        view,
+                        token,
+                        attempt: a.number,
+                        wake_key: d.wake_key.clone(),
+                        locator: d.locator.clone(),
+                    }));
+                }
+                Ok(IngressResult::Updated) => return Ok(None),
+                Ok(_) => return Err(error("unexpected claim result")),
+                Err(e) if e.to_string() == "ingress revision conflict" && attempt < 7 => {}
+                Err(e) => return Err(e),
             }
-            IngressResult::Updated => Ok(None),
-            _ => Err(error("unexpected claim result")),
         }
+        unreachable!("bounded claim loop returns on its last attempt")
     }
     /// Trusted local dispatcher reports only wake transport outcome; this never acknowledges ingestion.
     pub fn record_wake(

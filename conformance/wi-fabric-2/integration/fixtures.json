@@ -34,7 +34,9 @@
     "AB-WI-007": {
       "source_record_sha256": "5e28dbfd281d310109931bdc6c6ab98a97b75b9c6bcc57a0f70433bad783a3b6",
       "required_tests": [
-        "ab_wi_007_commit_replay_identity_and_subscriber_ack"
+        "ab_wi_007_commit_replay_identity_and_subscriber_ack",
+        "captured_fanout_routes_each_delivery_to_its_trusted_subscriber",
+        "process_death_after_wi_commit_recovers_aq_obligation"
       ]
     },
     "AB-WI-009": {

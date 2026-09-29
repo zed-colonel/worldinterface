@@ -48,7 +48,8 @@ launcher natively; CI uses explicit `CRAFTINGTABLE_CARGO_CONFIG`. Keep
 `CARGO_TARGET_DIR` and verification artifacts outside the checkout. Local CI is
 `ct-act -W .github/workflows/wi-contract.yml -j contract`. Controller `ct-check`
 retains repository check evidence. Historical runtime characterization is separate
-from these independent checks; no current AQ integration is claimed.
+from these independent checks; exact-pin AQ integration requires its own native
+build and test receipt from `scripts/check-wi-integration.sh`.
 
 Generated inventory is reviewable source; regenerate with
 `wi-contract-check inventory generate > inventory/current.json`, then review every

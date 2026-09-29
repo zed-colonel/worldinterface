@@ -13,7 +13,7 @@ use actionqueue_core::{
 };
 use actionqueue_executor_local::handler::{ExecutorContext, ExecutorHandler};
 use actionqueue_runtime::engine::BootstrappedEngine;
-use std::sync::Arc;
+use std::{collections::BTreeMap, sync::Arc};
 use worldinterface_domain::ingress::{AcknowledgmentSignal, IngressResult, QueueObligation};
 use worldinterface_ingress::{
     transport::{
@@ -23,7 +23,7 @@ use worldinterface_ingress::{
 };
 use worldinterface_protocol::{
     BindingVersion, ContentHash, DeliveryAcknowledgment, DeliveryId, ObservationId, OpaqueRef,
-    ReceiptId,
+    PrincipalId, ReceiptId,
 };
 use worldinterface_storage::StoreRoot;
 
@@ -355,8 +355,8 @@ pub trait SubscriberTransport: Send + Sync {
 /// This handler reloads current Fabric state on every physical attempt.
 pub struct IngressDeliveryHandler {
     bundle: Arc<crate::storage::StoreBundle>,
-    subscriber: AuthenticatedScope,
-    transport: Arc<dyn SubscriberTransport>,
+    tenant: OpaqueRef,
+    subscribers: BTreeMap<PrincipalId, Arc<dyn SubscriberTransport>>,
 }
 impl IngressDeliveryHandler {
     pub fn new(
@@ -364,7 +364,15 @@ impl IngressDeliveryHandler {
         subscriber: AuthenticatedScope,
         transport: Arc<dyn SubscriberTransport>,
     ) -> Self {
-        Self { bundle, subscriber, transport }
+        Self::with_subscribers(bundle, subscriber.tenant, [(subscriber.principal, transport)])
+    }
+    /// Subscriber registrations come from trusted host configuration, never task input.
+    pub fn with_subscribers(
+        bundle: Arc<crate::storage::StoreBundle>,
+        tenant: OpaqueRef,
+        subscribers: impl IntoIterator<Item = (PrincipalId, Arc<dyn SubscriberTransport>)>,
+    ) -> Self {
+        Self { bundle, tenant, subscribers: subscribers.into_iter().collect() }
     }
     fn execute_delivery(
         &self,
@@ -385,11 +393,14 @@ impl IngressDeliveryHandler {
             .to_owned()
             .try_into()?;
         let root = self.bundle.wi();
-        let state = root.ingress_snapshot(&self.subscriber.tenant)?;
+        let state = root.ingress_snapshot(&self.tenant)?;
         let delivery = state.deliveries.get(&id).ok_or("unknown delivery task")?;
-        if delivery.subscriber != self.subscriber.principal {
-            return Err("subscriber task scope mismatch".into());
-        }
+        let transport =
+            self.subscribers.get(&delivery.subscriber).ok_or("unregistered subscriber")?;
+        let subscriber = AuthenticatedScope {
+            tenant: self.tenant.clone(),
+            principal: delivery.subscriber.clone(),
+        };
         if delivery.state == worldinterface_protocol::DeliveryState::Acknowledged
             || delivery.state == worldinterface_protocol::DeliveryState::Expired
             || delivery.state == worldinterface_protocol::DeliveryState::DeadLetter
@@ -423,21 +434,19 @@ impl IngressDeliveryHandler {
         }
         let now =
             std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH)?.as_millis() as u64;
-        if let Some(issued) = IngressRuntime::new(root, self.subscriber.tenant.clone()).claim(
-            &self.subscriber,
-            &id,
-            now,
-        )? {
-            let succeeded = self.transport.deliver(&issued).is_ok();
+        if let Some(issued) =
+            IngressRuntime::new(root, self.tenant.clone()).claim(&subscriber, &id, now)?
+        {
+            let succeeded = transport.deliver(&issued).is_ok();
             Ingress::new(root).record_wake(
-                &self.subscriber.tenant,
+                &self.tenant,
                 id.clone(),
                 issued.attempt,
                 succeeded,
                 now,
             )?;
         }
-        let state = root.ingress_snapshot(&self.subscriber.tenant)?;
+        let state = root.ingress_snapshot(&self.tenant)?;
         let delivery = state.deliveries.get(&id).ok_or("missing delivery after claim")?;
         if delivery.state == worldinterface_protocol::DeliveryState::Acknowledged
             || delivery.state == worldinterface_protocol::DeliveryState::DeadLetter
