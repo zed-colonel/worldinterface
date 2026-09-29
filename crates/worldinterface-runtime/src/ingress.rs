@@ -81,7 +81,8 @@ impl<'a> IngressRuntime<'a> {
             receipt: ReceiptId::generate(),
             deliveries: bindings.iter().map(|_| DeliveryId::generate()).collect(),
         };
-        let queue = ids.deliveries.iter().map(queue_request).collect::<Result<Vec<_>>>()?;
+        let queue =
+            ids.deliveries.iter().map(|id| queue_request(id, 0)).collect::<Result<Vec<_>>>()?;
         Ingress::new(self.root).admit_provider_event_queued(event, bindings, ids, queue, now)
     }
     /// Replays unchanged requests. A failed local acknowledgment is always treated as
@@ -102,12 +103,42 @@ impl<'a> IngressRuntime<'a> {
         let pending: Vec<_> = state
             .queue
             .values()
-            .filter(|q| q.signal_sequence.is_none())
-            .take(limit)
+            .filter(|q| {
+                q.signal_sequence.is_none()
+                    || state
+                        .deliveries
+                        .get(&q.delivery)
+                        .is_some_and(|d| d.state == worldinterface_protocol::DeliveryState::Pending)
+            })
             .cloned()
             .collect();
         let mut done = 0;
         for q in pending {
+            if done >= limit {
+                break;
+            }
+            let q = if q.signal_sequence.is_some() {
+                let task: EnsureTaskRequest = serde_json::from_slice(&q.task_request)?;
+                if !aq.delivery_task_terminal(task.task_spec().id())? {
+                    continue;
+                }
+                let next = queue_request(
+                    &q.delivery,
+                    q.generation.checked_add(1).ok_or("recovery generation overflow")?,
+                )?;
+                self.root.ingress_transact_fresh(
+                    &self.tenant,
+                    now,
+                    &worldinterface_domain::ingress::IngressCommand::RecoverQueue {
+                        id: q.delivery.clone(),
+                        expected_generation: q.generation,
+                        replacement: Box::new(next.clone()),
+                    },
+                )?;
+                next
+            } else {
+                q
+            };
             if ContentHash::of(&q.task_request) != q.task_digest
                 || ContentHash::of(&q.signal_request) != q.signal_digest
             {
@@ -117,9 +148,8 @@ impl<'a> IngressRuntime<'a> {
             let signal: AdmitSignalRequest = serde_json::from_slice(&q.signal_request)?;
             if !q.task_admitted {
                 let _ = aq.ensure_delivery_task(task)?;
-                self.root.ingress_transact(
+                self.root.ingress_transact_fresh(
                     &self.tenant,
-                    None,
                     now,
                     &worldinterface_domain::ingress::IngressCommand::RecordQueueTask {
                         id: q.delivery.clone(),
@@ -127,9 +157,8 @@ impl<'a> IngressRuntime<'a> {
                 )?;
             }
             let sequence = aq.admit_wake(signal)?.sequence;
-            self.root.ingress_transact(
+            self.root.ingress_transact_fresh(
                 &self.tenant,
-                None,
                 now,
                 &worldinterface_domain::ingress::IngressCommand::RecordQueueSignal {
                     id: q.delivery,
@@ -151,9 +180,8 @@ impl<'a> IngressRuntime<'a> {
             }
             let request: AdmitSignalRequest = serde_json::from_slice(&signal.request)?;
             let sequence = aq.admit_wake(request)?.sequence;
-            self.root.ingress_transact(
+            self.root.ingress_transact_fresh(
                 &self.tenant,
-                None,
                 now,
                 &worldinterface_domain::ingress::IngressCommand::RecordAcknowledgmentSignal {
                     id: signal.delivery,
@@ -204,8 +232,28 @@ fn read_bounded(mut source: impl Read, max_bytes: u32) -> Result<Vec<u8>> {
     Ok(bytes)
 }
 
-fn queue_request(id: &DeliveryId) -> Result<QueueObligation> {
-    let task_id = TaskId::from_uuid(uuid::Uuid::parse_str(id.as_str())?);
+pub(crate) fn delivery_task_id(id: &DeliveryId, generation: u32) -> Result<TaskId> {
+    if generation == 0 {
+        Ok(TaskId::from_uuid(uuid::Uuid::parse_str(id.as_str())?))
+    } else {
+        use sha2::Digest;
+        let digest = sha2::Sha256::digest(
+            format!("wi-delivery-recovery-v1:{}:{generation}", id.as_str()).as_bytes(),
+        );
+        let mut bytes = [0u8; 16];
+        bytes.copy_from_slice(&digest[..16]);
+        bytes[6] = (bytes[6] & 0x0f) | 0x50;
+        bytes[8] = (bytes[8] & 0x3f) | 0x80;
+        Ok(TaskId::from_uuid(uuid::Uuid::from_bytes(bytes)))
+    }
+}
+
+fn queue_request(id: &DeliveryId, generation: u32) -> Result<QueueObligation> {
+    let task_id = delivery_task_id(id, generation)?;
+    let mut constraints = TaskConstraints::default();
+    // An interrupted physical attempt is counted by AQ. WI's delivery policy
+    // remains the bound on actual subscriber attempts.
+    constraints.set_max_attempts(100)?;
     let spec = TaskSpec::new(
         task_id,
         TaskPayload::with_content_type(
@@ -213,12 +261,16 @@ fn queue_request(id: &DeliveryId) -> Result<QueueObligation> {
             "application/vnd.worldinterface.delivery+json;version=1",
         ),
         RunPolicy::Once,
-        TaskConstraints::default(),
+        constraints,
         TaskMetadata::default(),
     )?;
     let task = EnsureTaskRequest::for_task(spec, vec![])?;
     let signal = AdmitSignalRequest::new(
-        SignalId::new(format!("wi-delivery-{}", id.as_str()))?,
+        SignalId::new(if generation == 0 {
+            format!("wi-delivery-{}", id.as_str())
+        } else {
+            format!("wi-delivery-{}-{generation}", id.as_str())
+        })?,
         SignalNamespace::new("wi_ingress")?,
         SignalKind::new("delivery")?,
         Some(CorrelationId::new(format!("task/{task_id}"))?),
@@ -241,16 +293,17 @@ fn queue_request(id: &DeliveryId) -> Result<QueueObligation> {
         signal_request,
         task_admitted: false,
         signal_sequence: None,
+        generation,
+        prior: vec![],
     })
 }
 
 fn acknowledgment_request(id: &DeliveryId) -> Result<AcknowledgmentSignal> {
-    let task_id = TaskId::from_uuid(uuid::Uuid::parse_str(id.as_str())?);
     let request = AdmitSignalRequest::new(
         SignalId::new(format!("wi-ack-{}", id.as_str()))?,
         SignalNamespace::new("wi_ingress")?,
         SignalKind::new("acknowledgment")?,
-        Some(CorrelationId::new(format!("task/{task_id}"))?),
+        Some(CorrelationId::new(format!("delivery/{}", id.as_str()))?),
         None,
         Some(actionqueue_core::bounded::OpaqueRef::new(format!("delivery:{}", id.as_str()))?),
         None,
@@ -277,6 +330,14 @@ pub trait AqIngressPort {
         &mut self,
         request: AdmitSignalRequest,
     ) -> std::result::Result<WakeOutcome, AqDispatchFailure>;
+    /// A terminal AQ run cannot be replayed by ensure_task. Only a confirmed
+    /// terminal task may cause a new persisted recovery generation.
+    fn delivery_task_terminal(
+        &mut self,
+        _id: TaskId,
+    ) -> std::result::Result<bool, AqDispatchFailure> {
+        Ok(false)
+    }
 }
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum AdmissionOutcome {
@@ -354,6 +415,22 @@ where
             created: matches!(outcome, AdmitSignalOutcome::Admitted { .. }),
         })
     }
+    fn delivery_task_terminal(
+        &mut self,
+        id: TaskId,
+    ) -> std::result::Result<bool, AqDispatchFailure> {
+        let runs = self.engine.projection().run_ids_for_task(id);
+        if runs.is_empty() {
+            return Ok(false);
+        }
+        for run in runs {
+            let state = self.engine.get_run(run).map_err(|_| AqDispatchFailure::Uncertain)?.state;
+            if !state.is_terminal() {
+                return Ok(false);
+            }
+        }
+        Ok(true)
+    }
 }
 
 /// The protected subscriber channel must durably store the delivery by DeliveryId
@@ -418,13 +495,20 @@ impl IngressDeliveryHandler {
         {
             return Ok(AttemptDisposition::complete(None));
         }
-        let task_id = TaskId::from_uuid(uuid::Uuid::parse_str(id.as_str())?);
+        let task_id = delivery_task_id(
+            &id,
+            state.queue.get(&id).ok_or("missing queue obligation")?.generation,
+        )?;
         let filter = |kind: &str| -> Result<SignalFilter> {
             Ok(SignalFilter {
                 tenant_id: None,
                 namespace: SignalNamespace::new("wi_ingress")?,
                 kind: SignalKind::new(kind)?,
-                correlation_id: Some(CorrelationId::new(format!("task/{task_id}"))?),
+                correlation_id: Some(CorrelationId::new(if kind == "acknowledgment" {
+                    format!("delivery/{}", id.as_str())
+                } else {
+                    format!("task/{task_id}")
+                })?),
                 source_ref: Some(actionqueue_core::bounded::OpaqueRef::new(format!(
                     "delivery:{}",
                     id.as_str()
@@ -449,12 +533,15 @@ impl IngressDeliveryHandler {
             IngressRuntime::new(root, self.tenant.clone()).claim(&subscriber, &id, now)?
         {
             let succeeded = transport.deliver(&issued).is_ok();
+            let finished_at = std::time::SystemTime::now()
+                .duration_since(std::time::UNIX_EPOCH)?
+                .as_millis() as u64;
             Ingress::new(root).record_wake(
                 &self.tenant,
                 id.clone(),
                 issued.attempt,
                 succeeded,
-                now,
+                finished_at,
             )?;
         }
         let state = root.ingress_snapshot(&self.tenant)?;

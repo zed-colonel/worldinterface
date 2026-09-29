@@ -23,9 +23,9 @@ fs2 = "0.4"
 tempfile = "3"
 hex = "0.4"
 uuid = { version = "1", features = ["serde"] }
+sha2 = "0.10"
 
 [dev-dependencies]
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 rusqlite = { version = "0.32", features = ["bundled"] }
 hmac = "0.12"
-sha2 = "0.10"

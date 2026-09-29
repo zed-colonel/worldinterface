@@ -34,6 +34,10 @@ pub struct QueueObligation {
     pub task_admitted: bool,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub signal_sequence: Option<u64>,
+    #[serde(default)]
+    pub generation: u32,
+    #[serde(default)]
+    pub prior: Vec<QueueObligation>,
 }
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -69,6 +73,11 @@ pub enum IngressCommand {
     RecordQueueSignal {
         id: DeliveryId,
         sequence: u64,
+    },
+    RecoverQueue {
+        id: DeliveryId,
+        expected_generation: u32,
+        replacement: Box<QueueObligation>,
     },
     Claim {
         id: DeliveryId,
@@ -414,6 +423,8 @@ pub fn apply_ingress(
                                 || &q.delivery != id
                                 || q.task_admitted
                                 || q.signal_sequence.is_some()
+                                || q.generation != 0
+                                || !q.prior.is_empty()
                                 || q.task_request.is_empty()
                                 || q.signal_request.is_empty()
                                 || q.task_request.len() > 16384
@@ -578,6 +589,35 @@ pub fn apply_ingress(
                 return Err("invalid queue signal acknowledgment".into());
             }
             q.signal_sequence = Some(*sequence);
+            IngressResult::Updated
+        }
+        IngressCommand::RecoverQueue { id, expected_generation, replacement } => {
+            let old = s.queue.get(id).ok_or("unknown queue obligation")?;
+            let delivery = s.deliveries.get(id).ok_or("unknown delivery")?;
+            if delivery.state != DeliveryState::Pending
+                || old.generation != *expected_generation
+                || old.signal_sequence.is_none()
+                || replacement.version != 1
+                || replacement.delivery != *id
+                || expected_generation.checked_add(1) != Some(replacement.generation)
+                || replacement.task_admitted
+                || replacement.signal_sequence.is_some()
+                || !replacement.prior.is_empty()
+                || replacement.task_request.is_empty()
+                || replacement.signal_request.is_empty()
+                || replacement.task_request.len() > 16384
+                || replacement.signal_request.len() > 16384
+                || ContentHash::of(&replacement.task_request) != replacement.task_digest
+                || ContentHash::of(&replacement.signal_request) != replacement.signal_digest
+            {
+                return Err("invalid queue recovery".into());
+            }
+            let mut next = *replacement.clone();
+            next.prior = old.prior.clone();
+            let mut archived = old.clone();
+            archived.prior.clear();
+            next.prior.push(archived);
+            s.queue.insert(id.clone(), next);
             IngressResult::Updated
         }
         IngressCommand::Claim { id, subscriber, token_digest } => {

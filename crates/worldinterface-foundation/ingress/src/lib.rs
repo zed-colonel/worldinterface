@@ -334,11 +334,12 @@ impl<'a> Ingress<'a> {
         let token_digest = token.digest(id, &scope.principal)?;
         for attempt in 0..8 {
             let s = self.root.ingress_snapshot(&scope.tenant)?;
-            let mut view = view(&s, scope, id, now)?;
-            match self.root.ingress_transact(
+            let effective_now = now.max(s.last_at_ms);
+            let mut view = view(&s, scope, id, effective_now)?;
+            match self.root.ingress_transact_fresh_expected(
                 &scope.tenant,
-                Some(s.revision),
-                now,
+                s.revision,
+                effective_now,
                 &IngressCommand::Claim {
                     id: id.clone(),
                     subscriber: scope.principal.clone(),
@@ -374,9 +375,8 @@ impl<'a> Ingress<'a> {
         succeeded: bool,
         now: u64,
     ) -> Result<()> {
-        self.root.ingress_transact(
+        self.root.ingress_transact_fresh(
             tenant,
-            None,
             now,
             &IngressCommand::Finish { id, attempt, succeeded },
         )?;
@@ -423,7 +423,7 @@ impl<'a> Ingress<'a> {
                 token_digest,
             },
         };
-        let result = self.root.ingress_transact(&scope.tenant, None, now, &command)?;
+        let result = self.root.ingress_transact_fresh(&scope.tenant, now, &command)?;
         match result {
             IngressResult::Acknowledged(a) => Ok(a),
             _ => Err(error("unexpected acknowledgment result")),
