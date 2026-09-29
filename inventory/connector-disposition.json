@@ -4161,32 +4161,32 @@
         },
         {
           "id": "crates/worldinterface-runtime/tests/ingress.rs::::source-module:crates/worldinterface-runtime/tests/ingress.rs",
-          "source_sha256": "e17a86ad436b6ba412c7ace8ea72df3bad8e23ae3f6d1124d21e7111f6a2dd7b",
+          "source_sha256": "ab8f547b740c4bf408f7fd29bc1a918b35f559ea30ef3282db75ea9a5f14ba09",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/ingress.rs::::struct:Authority",
-          "source_sha256": "e17a86ad436b6ba412c7ace8ea72df3bad8e23ae3f6d1124d21e7111f6a2dd7b",
+          "source_sha256": "ab8f547b740c4bf408f7fd29bc1a918b35f559ea30ef3282db75ea9a5f14ba09",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/ingress.rs::::struct:Complete",
-          "source_sha256": "e17a86ad436b6ba412c7ace8ea72df3bad8e23ae3f6d1124d21e7111f6a2dd7b",
+          "source_sha256": "ab8f547b740c4bf408f7fd29bc1a918b35f559ea30ef3282db75ea9a5f14ba09",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/ingress.rs::::struct:CursorHandler",
-          "source_sha256": "e17a86ad436b6ba412c7ace8ea72df3bad8e23ae3f6d1124d21e7111f6a2dd7b",
+          "source_sha256": "ab8f547b740c4bf408f7fd29bc1a918b35f559ea30ef3282db75ea9a5f14ba09",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/ingress.rs::::struct:LostAcknowledgment",
-          "source_sha256": "e17a86ad436b6ba412c7ace8ea72df3bad8e23ae3f6d1124d21e7111f6a2dd7b",
+          "source_sha256": "ab8f547b740c4bf408f7fd29bc1a918b35f559ea30ef3282db75ea9a5f14ba09",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/ingress.rs::::struct:Subscriber",
-          "source_sha256": "e17a86ad436b6ba412c7ace8ea72df3bad8e23ae3f6d1124d21e7111f6a2dd7b",
+          "source_sha256": "ab8f547b740c4bf408f7fd29bc1a918b35f559ea30ef3282db75ea9a5f14ba09",
           "registration_sites": []
         },
         {
@@ -4878,7 +4878,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/tests/ingress.rs",
-          "source_sha256": "e17a86ad436b6ba412c7ace8ea72df3bad8e23ae3f6d1124d21e7111f6a2dd7b",
+          "source_sha256": "ab8f547b740c4bf408f7fd29bc1a918b35f559ea30ef3282db75ea9a5f14ba09",
           "treatment": "Review shared references and retain WI-03 ingress/AQ integration until its own acceptance and release decisions."
         },
         {

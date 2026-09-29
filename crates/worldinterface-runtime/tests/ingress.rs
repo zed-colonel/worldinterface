@@ -3,12 +3,13 @@ use actionqueue_core::{
     bounded::OpaqueRef as AqRef,
     causal::ControlMutationContext,
     continuation::{
-        AdmitSignalRequest, SignalEligibility, SignalFilter, SignalIngressContext, SignalKind,
-        SignalNamespace, WaitMatchPolicy, WaitSpec,
+        AdmitSignalRequest, CheckpointRef, SignalEligibility, SignalFilter, SignalIngressContext,
+        SignalKind, SignalNamespace, WaitMatchPolicy, WaitSpec,
     },
     control::{ControlScope, HostControlContext},
+    data_ref::DataRef,
     disposition::AttemptDisposition,
-    ids::{CorrelationId, SignalId, SignalSequence, TaskId, WaitId},
+    ids::{CheckpointId, CorrelationId, SignalId, SignalSequence, TaskId, WaitId},
     limits::{ContinuationLimits, SignalLimits, SignalRetentionPolicy},
     task::{
         constraints::TaskConstraints,
@@ -87,6 +88,10 @@ impl ExecutorHandler for CursorHandler {
             Some(actionqueue_core::continuation::WakeReason::Signal {
                 signal_sequence, ..
             }) => {
+                assert_eq!(
+                    ctx.input.resume_context.as_ref().unwrap().checkpoint.as_ref().unwrap().data,
+                    DataRef::from_bytes(b"cursor-checkpoint".to_vec()).unwrap()
+                );
                 self.0.lock().unwrap().push(signal_sequence.get());
                 if signal_sequence.get() >= 2 {
                     return AttemptDisposition::complete(None);
@@ -105,7 +110,11 @@ impl ExecutorHandler for CursorHandler {
         AttemptDisposition::awaiting(
             WaitSpec::new(WaitId::new(), filter, WaitMatchPolicy::FirstMatch, cursor, None)
                 .unwrap(),
-            None,
+            Some(CheckpointRef {
+                checkpoint_id: CheckpointId::new(),
+                data: DataRef::from_bytes(b"cursor-checkpoint".to_vec()).unwrap(),
+                created_by_attempt: ctx.input.attempt_id,
+            }),
         )
     }
 }

@@ -8728,7 +8728,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-runtime/tests/ingress.rs",
     "name": "crates/worldinterface-runtime/tests/ingress.rs",
-    "source_sha256": "e17a86ad436b6ba412c7ace8ea72df3bad8e23ae3f6d1124d21e7111f6a2dd7b",
+    "source_sha256": "ab8f547b740c4bf408f7fd29bc1a918b35f559ea30ef3282db75ea9a5f14ba09",
     "conditions": [],
     "registration_sites": []
   },
@@ -8737,7 +8737,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/ingress.rs",
     "name": "Authority",
-    "source_sha256": "e17a86ad436b6ba412c7ace8ea72df3bad8e23ae3f6d1124d21e7111f6a2dd7b",
+    "source_sha256": "ab8f547b740c4bf408f7fd29bc1a918b35f559ea30ef3282db75ea9a5f14ba09",
     "conditions": [],
     "registration_sites": []
   },
@@ -8746,7 +8746,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/ingress.rs",
     "name": "Complete",
-    "source_sha256": "e17a86ad436b6ba412c7ace8ea72df3bad8e23ae3f6d1124d21e7111f6a2dd7b",
+    "source_sha256": "ab8f547b740c4bf408f7fd29bc1a918b35f559ea30ef3282db75ea9a5f14ba09",
     "conditions": [],
     "registration_sites": []
   },
@@ -8755,7 +8755,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/ingress.rs",
     "name": "CursorHandler",
-    "source_sha256": "e17a86ad436b6ba412c7ace8ea72df3bad8e23ae3f6d1124d21e7111f6a2dd7b",
+    "source_sha256": "ab8f547b740c4bf408f7fd29bc1a918b35f559ea30ef3282db75ea9a5f14ba09",
     "conditions": [],
     "registration_sites": []
   },
@@ -8764,7 +8764,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/ingress.rs",
     "name": "LostAcknowledgment",
-    "source_sha256": "e17a86ad436b6ba412c7ace8ea72df3bad8e23ae3f6d1124d21e7111f6a2dd7b",
+    "source_sha256": "ab8f547b740c4bf408f7fd29bc1a918b35f559ea30ef3282db75ea9a5f14ba09",
     "conditions": [],
     "registration_sites": []
   },
@@ -8773,7 +8773,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/ingress.rs",
     "name": "Subscriber",
-    "source_sha256": "e17a86ad436b6ba412c7ace8ea72df3bad8e23ae3f6d1124d21e7111f6a2dd7b",
+    "source_sha256": "ab8f547b740c4bf408f7fd29bc1a918b35f559ea30ef3282db75ea9a5f14ba09",
     "conditions": [],
     "registration_sites": []
   },
