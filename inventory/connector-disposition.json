@@ -4216,12 +4216,12 @@
         },
         {
           "id": "crates/worldinterface-runtime/tests/g2_admission.rs::::source-module:crates/worldinterface-runtime/tests/g2_admission.rs",
-          "source_sha256": "a0422ef2229359ed87a5d3d4946c233ceb3caf594471667c8c6df51b5e35422b",
+          "source_sha256": "958890a1ff1a4d4a0fed79eee192a13609f7cf23f12b0e0023436fa48544ef67",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/g2_admission.rs::::struct:Complete",
-          "source_sha256": "a0422ef2229359ed87a5d3d4946c233ceb3caf594471667c8c6df51b5e35422b",
+          "source_sha256": "958890a1ff1a4d4a0fed79eee192a13609f7cf23f12b0e0023436fa48544ef67",
           "registration_sites": []
         },
         {
@@ -4928,7 +4928,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/tests/g2_admission.rs",
-          "source_sha256": "a0422ef2229359ed87a5d3d4946c233ceb3caf594471667c8c6df51b5e35422b",
+          "source_sha256": "958890a1ff1a4d4a0fed79eee192a13609f7cf23f12b0e0023436fa48544ef67",
           "treatment": "Retain WI-04 integration source for exact-revision review; any later selective removal requires independent evidence."
         },
         {

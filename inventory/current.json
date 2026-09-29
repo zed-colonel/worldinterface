@@ -8829,7 +8829,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-runtime/tests/g2_admission.rs",
     "name": "crates/worldinterface-runtime/tests/g2_admission.rs",
-    "source_sha256": "a0422ef2229359ed87a5d3d4946c233ceb3caf594471667c8c6df51b5e35422b",
+    "source_sha256": "958890a1ff1a4d4a0fed79eee192a13609f7cf23f12b0e0023436fa48544ef67",
     "conditions": [],
     "registration_sites": []
   },
@@ -8838,7 +8838,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/g2_admission.rs",
     "name": "Complete",
-    "source_sha256": "a0422ef2229359ed87a5d3d4946c233ceb3caf594471667c8c6df51b5e35422b",
+    "source_sha256": "958890a1ff1a4d4a0fed79eee192a13609f7cf23f12b0e0023436fa48544ef67",
     "conditions": [],
     "registration_sites": []
   },

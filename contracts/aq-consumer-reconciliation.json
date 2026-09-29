@@ -13,8 +13,17 @@
     "WI-AQ-012": "QueueReferences binds ancestry to a recovered same-store session. Foreign claims encode only external_ref. AQ owns child inheritance and permits only CausalOverride fields. References never authorize reads.",
     "WI-AQ-015": "TaskInputLocator version 1 encodes a scoped artifact in task bytes. ExternalDataRef is used separately at output APIs. Runtime authorizes before ContextStore integrity/read. Bundle backup retains WI/AQ offline locks and validates artifact closure.",
     "WI-AQ-001": "Production binding persists the complete EnsureTaskRequest with a preallocated task UUID. High-level ensure_task computes CanonicalAdmissionV2.",
-    "WI-AQ-002": "The same persisted key/request retries after uncertain acknowledgment; changed task or canonical meaning conflicts.",
+    "WI-AQ-002": "The same persisted key/request retries after uncertain acknowledgment. Changed in-scope digest-bearing fields conflict; a changed tenant ID is rejected by AQ host scope before conflict lookup, preserving the admitted task and projection (operator-approved AB-WI-003 interpretation).",
     "WI-AQ-004": "AQ task acknowledgment closes delivery. Authorized paginated inspection discovers run mappings separately."
+  },
+  "approved_case_interpretations": {
+    "AB-WI-003": {
+      "scope": "wi/WI-04/integration",
+      "gate": "WI-AQ-G2",
+      "source_record_sha256": "40a722ec7d187a8c3aeccfd9f595ae97353a6d58cd4b1ebb93b7ebb4162c120d",
+      "pass_criterion": "Using the public CanonicalAdmissionV2 vectors, change each valid digest-bearing field. Require a same-key AQ conflict for every in-scope mutation. A changed tenant ID must receive AQ host scope rejection before conflict lookup. Both outcomes preserve the admitted task and projection. Do not supply an independent digest to high-level ensure_task.",
+      "authority": "Operator approval for wi/WI-04/integration on 2026-09-29"
+    }
   },
   "later_owners": "G3 wake/signal adapters and G4 executor/continuation integration retain their mapped owners."
 }

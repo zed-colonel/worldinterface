@@ -370,11 +370,20 @@ fn ab_wi_003_public_v2_vectors_and_digest_field_boundaries() {
             }
             let parsed: EnsureTaskRequest = serde_json::from_value(changed).unwrap();
             assert_ne!(parsed.digest().unwrap(), runtime_digest, "{path}");
+            let before = queue.engine().projection().projection_digest().unwrap();
             if path == "task_spec.tenant_id" {
-                // AQ scopes admission lookup by tenant before digest comparison.
-                assert!(queue.engine_mut().ensure_task(parsed).is_err(), "{path}");
+                // An approved AB-WI-003 exception: AQ checks the host tenant scope
+                // before looking up the same-key request for a digest conflict.
+                assert!(
+                    matches!(
+                        queue.engine_mut().ensure_task(parsed),
+                        Err(actionqueue_runtime::control::ServiceError::Authorization(
+                            actionqueue_core::control::ControlError::Scope
+                        ))
+                    ),
+                    "{path}"
+                );
             } else {
-                let before = queue.engine().projection().projection_digest().unwrap();
                 assert!(
                     matches!(
                         queue.engine_mut().ensure_task(parsed),
@@ -386,12 +395,8 @@ fn ab_wi_003_public_v2_vectors_and_digest_field_boundaries() {
                     ),
                     "{path}"
                 );
-                assert_eq!(
-                    queue.engine().projection().projection_digest().unwrap(),
-                    before,
-                    "{path}"
-                );
             }
+            assert_eq!(queue.engine().projection().projection_digest().unwrap(), before, "{path}");
         }
         let mut excluded = request.clone();
         excluded["admission_key"] = serde_json::json!("changed-key");

@@ -36,14 +36,16 @@
       "source_record_sha256": "40a722ec7d187a8c3aeccfd9f595ae97353a6d58cd4b1ebb93b7ebb4162c120d",
       "required_tests": [
         "ab_wi_002_003_004_persist_retry_ack_and_discover",
-        "ab_wi_003_public_v2_vectors_and_digest_field_boundaries"
+        "ab_wi_003_public_v2_vectors_and_digest_field_boundaries",
+        "ab_wi_003_required_and_detached_same_key_conflict"
       ]
     },
     "AB-WI-004": {
       "source_record_sha256": "9e878d392ef66cfd0567dced1c21d308e6eb6ea021569b3fa2f26312a98d9690",
       "required_tests": [
         "ab_wi_002_003_004_persist_retry_ack_and_discover",
-        "run_discovery::tests::stale_cursor_restarts_and_partial_page_is_not_complete"
+        "run_discovery::tests::stale_cursor_restarts_and_partial_page_is_not_complete",
+        "wrong_queue_store_cannot_acknowledge_or_discover"
       ]
     }
   },
