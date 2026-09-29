@@ -69,9 +69,13 @@ pub enum IngressCommand {
     },
     RecordQueueTask {
         id: DeliveryId,
+        generation: u32,
+        task_digest: ContentHash,
     },
     RecordQueueSignal {
         id: DeliveryId,
+        generation: u32,
+        signal_digest: ContentHash,
         sequence: u64,
     },
     RecoverQueue {
@@ -129,6 +133,7 @@ pub enum IngressResult {
     Attempt(DeliveryAttempt),
     Acknowledged(DeliveryAcknowledgment),
     Updated,
+    StaleQueueGeneration,
 }
 pub fn digest<T: Serialize>(value: &T) -> Result<ContentHash> {
     Ok(ContentHash::of(&canonical_data(value)?))
@@ -575,21 +580,32 @@ pub fn apply_ingress(
                 }
             }
         }
-        IngressCommand::RecordQueueTask { id } => {
+        IngressCommand::RecordQueueTask { id, generation, task_digest } => {
             let q = s.queue.get_mut(id).ok_or("unknown queue obligation")?;
-            q.task_admitted = true;
-            IngressResult::Updated
+            if q.generation != *generation {
+                IngressResult::StaleQueueGeneration
+            } else if q.task_digest != *task_digest {
+                return Err("queue task identity mismatch".into());
+            } else {
+                q.task_admitted = true;
+                IngressResult::Updated
+            }
         }
-        IngressCommand::RecordQueueSignal { id, sequence } => {
+        IngressCommand::RecordQueueSignal { id, generation, signal_digest, sequence } => {
             let q = s.queue.get_mut(id).ok_or("unknown queue obligation")?;
-            if !q.task_admitted
+            if q.generation != *generation {
+                IngressResult::StaleQueueGeneration
+            } else if q.signal_digest != *signal_digest {
+                return Err("queue signal identity mismatch".into());
+            } else if !q.task_admitted
                 || *sequence == 0
                 || q.signal_sequence.is_some_and(|old| old != *sequence)
             {
                 return Err("invalid queue signal acknowledgment".into());
+            } else {
+                q.signal_sequence = Some(*sequence);
+                IngressResult::Updated
             }
-            q.signal_sequence = Some(*sequence);
-            IngressResult::Updated
         }
         IngressCommand::RecoverQueue { id, expected_generation, replacement } => {
             let old = s.queue.get(id).ok_or("unknown queue obligation")?;

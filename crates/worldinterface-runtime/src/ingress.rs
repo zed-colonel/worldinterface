@@ -117,55 +117,99 @@ impl<'a> IngressRuntime<'a> {
             if done >= limit {
                 break;
             }
-            let q = if q.signal_sequence.is_some() {
+            let mut q = q;
+            // AQ admission and the WI journal are separate durable authorities. Another
+            // dispatcher may replace a terminal generation during either AQ call.
+            for _ in 0..4 {
+                q = if q.signal_sequence.is_some() {
+                    let task: EnsureTaskRequest = serde_json::from_slice(&q.task_request)?;
+                    if !aq.delivery_task_terminal(task.task_spec().id())? {
+                        break;
+                    }
+                    let next = queue_request(
+                        &q.delivery,
+                        q.generation.checked_add(1).ok_or("recovery generation overflow")?,
+                    )?;
+                    let recovered = self.root.ingress_transact_fresh(
+                        &self.tenant,
+                        now,
+                        &worldinterface_domain::ingress::IngressCommand::RecoverQueue {
+                            id: q.delivery.clone(),
+                            expected_generation: q.generation,
+                            replacement: Box::new(next.clone()),
+                        },
+                    );
+                    if let Err(error) = recovered {
+                        let current = self
+                            .root
+                            .ingress_snapshot(&self.tenant)?
+                            .queue
+                            .get(&q.delivery)
+                            .cloned()
+                            .ok_or("unknown queue obligation")?;
+                        if current.generation != q.generation {
+                            q = current;
+                            continue;
+                        }
+                        return Err(error);
+                    }
+                    next
+                } else {
+                    q
+                };
+                if ContentHash::of(&q.task_request) != q.task_digest
+                    || ContentHash::of(&q.signal_request) != q.signal_digest
+                {
+                    return Err("queue request integrity mismatch".into());
+                }
                 let task: EnsureTaskRequest = serde_json::from_slice(&q.task_request)?;
-                if !aq.delivery_task_terminal(task.task_spec().id())? {
+                let signal: AdmitSignalRequest = serde_json::from_slice(&q.signal_request)?;
+                if !q.task_admitted {
+                    let _ = aq.ensure_delivery_task(task)?;
+                    let recorded = self.root.ingress_transact_fresh(
+                        &self.tenant,
+                        now,
+                        &worldinterface_domain::ingress::IngressCommand::RecordQueueTask {
+                            id: q.delivery.clone(),
+                            generation: q.generation,
+                            task_digest: q.task_digest.clone(),
+                        },
+                    )?;
+                    if recorded == IngressResult::StaleQueueGeneration {
+                        q = self
+                            .root
+                            .ingress_snapshot(&self.tenant)?
+                            .queue
+                            .get(&q.delivery)
+                            .cloned()
+                            .ok_or("unknown queue obligation")?;
+                        continue;
+                    }
+                }
+                let sequence = aq.admit_wake(signal)?.sequence;
+                let recorded = self.root.ingress_transact_fresh(
+                    &self.tenant,
+                    now,
+                    &worldinterface_domain::ingress::IngressCommand::RecordQueueSignal {
+                        id: q.delivery.clone(),
+                        generation: q.generation,
+                        signal_digest: q.signal_digest.clone(),
+                        sequence,
+                    },
+                )?;
+                if recorded == IngressResult::StaleQueueGeneration {
+                    q = self
+                        .root
+                        .ingress_snapshot(&self.tenant)?
+                        .queue
+                        .get(&q.delivery)
+                        .cloned()
+                        .ok_or("unknown queue obligation")?;
                     continue;
                 }
-                let next = queue_request(
-                    &q.delivery,
-                    q.generation.checked_add(1).ok_or("recovery generation overflow")?,
-                )?;
-                self.root.ingress_transact_fresh(
-                    &self.tenant,
-                    now,
-                    &worldinterface_domain::ingress::IngressCommand::RecoverQueue {
-                        id: q.delivery.clone(),
-                        expected_generation: q.generation,
-                        replacement: Box::new(next.clone()),
-                    },
-                )?;
-                next
-            } else {
-                q
-            };
-            if ContentHash::of(&q.task_request) != q.task_digest
-                || ContentHash::of(&q.signal_request) != q.signal_digest
-            {
-                return Err("queue request integrity mismatch".into());
+                done += 1;
+                break;
             }
-            let task: EnsureTaskRequest = serde_json::from_slice(&q.task_request)?;
-            let signal: AdmitSignalRequest = serde_json::from_slice(&q.signal_request)?;
-            if !q.task_admitted {
-                let _ = aq.ensure_delivery_task(task)?;
-                self.root.ingress_transact_fresh(
-                    &self.tenant,
-                    now,
-                    &worldinterface_domain::ingress::IngressCommand::RecordQueueTask {
-                        id: q.delivery.clone(),
-                    },
-                )?;
-            }
-            let sequence = aq.admit_wake(signal)?.sequence;
-            self.root.ingress_transact_fresh(
-                &self.tenant,
-                now,
-                &worldinterface_domain::ingress::IngressCommand::RecordQueueSignal {
-                    id: q.delivery,
-                    sequence,
-                },
-            )?;
-            done += 1;
         }
         let acknowledgments: Vec<_> = state
             .acknowledgments_to_signal

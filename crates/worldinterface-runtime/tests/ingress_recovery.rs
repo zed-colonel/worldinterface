@@ -400,3 +400,290 @@ async fn terminal_wait_capacity_recovers_from_journaled_generation() {
     drop(bundle);
     StoreBundle::open(&path).unwrap();
 }
+
+// Reproduce a paused generation-0 dispatch completion after another dispatcher
+// records that completion, observes terminal AQ failure, and journals generation 1.
+struct PauseRecoveryWake<'a> {
+    aq: &'a mut actionqueue_runtime::engine::BootstrappedEngine<IngressDeliveryHandler>,
+    tenant: OpaqueRef,
+}
+impl worldinterface_runtime::ingress::AqIngressPort for PauseRecoveryWake<'_> {
+    fn bound_tenant(&self) -> &OpaqueRef {
+        &self.tenant
+    }
+    fn ensure_delivery_task(
+        &mut self,
+        r: actionqueue_core::admission::EnsureTaskRequest,
+    ) -> std::result::Result<
+        worldinterface_runtime::ingress::AdmissionOutcome,
+        worldinterface_runtime::ingress::AqDispatchFailure,
+    > {
+        BoundAqIngress::new(self.aq, self.tenant.clone()).ensure_delivery_task(r)
+    }
+    fn admit_wake(
+        &mut self,
+        _: actionqueue_core::continuation::AdmitSignalRequest,
+    ) -> std::result::Result<
+        worldinterface_runtime::ingress::WakeOutcome,
+        worldinterface_runtime::ingress::AqDispatchFailure,
+    > {
+        Err(worldinterface_runtime::ingress::AqDispatchFailure::Uncertain)
+    }
+    fn delivery_task_terminal(
+        &mut self,
+        id: TaskId,
+    ) -> std::result::Result<bool, worldinterface_runtime::ingress::AqDispatchFailure> {
+        BoundAqIngress::new(self.aq, self.tenant.clone()).delivery_task_terminal(id)
+    }
+}
+struct DelayedOldCompletion {
+    aq: Arc<Mutex<actionqueue_runtime::engine::BootstrappedEngine<IngressDeliveryHandler>>>,
+    tenant: OpaqueRef,
+    ready: std::sync::mpsc::Sender<()>,
+    resume: std::sync::mpsc::Receiver<()>,
+    pause: bool,
+}
+struct DelayedOldTaskCompletion {
+    aq: Arc<Mutex<actionqueue_runtime::engine::BootstrappedEngine<IngressDeliveryHandler>>>,
+    tenant: OpaqueRef,
+    ready: std::sync::mpsc::Sender<()>,
+    resume: std::sync::mpsc::Receiver<()>,
+    pause: bool,
+}
+impl worldinterface_runtime::ingress::AqIngressPort for DelayedOldTaskCompletion {
+    fn bound_tenant(&self) -> &OpaqueRef {
+        &self.tenant
+    }
+    fn ensure_delivery_task(
+        &mut self,
+        r: actionqueue_core::admission::EnsureTaskRequest,
+    ) -> std::result::Result<
+        worldinterface_runtime::ingress::AdmissionOutcome,
+        worldinterface_runtime::ingress::AqDispatchFailure,
+    > {
+        let old = BoundAqIngress::new(&mut *self.aq.lock().unwrap(), self.tenant.clone())
+            .ensure_delivery_task(r)?;
+        if self.pause {
+            self.pause = false;
+            self.ready.send(()).unwrap();
+            self.resume.recv_timeout(Duration::from_secs(20)).unwrap();
+        }
+        Ok(old)
+    }
+    fn admit_wake(
+        &mut self,
+        r: actionqueue_core::continuation::AdmitSignalRequest,
+    ) -> std::result::Result<
+        worldinterface_runtime::ingress::WakeOutcome,
+        worldinterface_runtime::ingress::AqDispatchFailure,
+    > {
+        BoundAqIngress::new(&mut *self.aq.lock().unwrap(), self.tenant.clone()).admit_wake(r)
+    }
+}
+impl worldinterface_runtime::ingress::AqIngressPort for DelayedOldCompletion {
+    fn bound_tenant(&self) -> &OpaqueRef {
+        &self.tenant
+    }
+    fn ensure_delivery_task(
+        &mut self,
+        r: actionqueue_core::admission::EnsureTaskRequest,
+    ) -> std::result::Result<
+        worldinterface_runtime::ingress::AdmissionOutcome,
+        worldinterface_runtime::ingress::AqDispatchFailure,
+    > {
+        BoundAqIngress::new(&mut *self.aq.lock().unwrap(), self.tenant.clone())
+            .ensure_delivery_task(r)
+    }
+    fn admit_wake(
+        &mut self,
+        r: actionqueue_core::continuation::AdmitSignalRequest,
+    ) -> std::result::Result<
+        worldinterface_runtime::ingress::WakeOutcome,
+        worldinterface_runtime::ingress::AqDispatchFailure,
+    > {
+        let old = BoundAqIngress::new(&mut *self.aq.lock().unwrap(), self.tenant.clone())
+            .admit_wake(r)?;
+        if self.pause {
+            self.pause = false;
+            self.ready.send(()).unwrap();
+            self.resume.recv_timeout(Duration::from_secs(20)).unwrap();
+        }
+        Ok(old)
+    }
+}
+#[test]
+fn g3_paused_old_dispatch_ack_cannot_complete_replacement_generation() {
+    let temp = tempfile::tempdir().unwrap();
+    let path = temp.path().join("bundle");
+    let (bundle, binding, id) = setup(&path);
+    let tenant = binding.profile.scope.tenant.clone();
+    let recorder = Arc::new(Recorder::default());
+    let aq = ActionQueueEngine::new(
+        RuntimeConfig {
+            data_dir: bundle.aq_path(),
+            continuation_limits: ContinuationLimits { active_waits: 0, ..Default::default() },
+            ..Default::default()
+        },
+        handler(&bundle, &binding, recorder),
+    )
+    .bootstrap()
+    .unwrap()
+    .with_host(host());
+    let rt = tokio::runtime::Runtime::new().unwrap();
+    let aq = Arc::new(Mutex::new(aq));
+    let (ready_tx, ready_rx) = std::sync::mpsc::channel();
+    let (resume_tx, resume_rx) = std::sync::mpsc::channel();
+    let (worker_bundle, worker_tenant, worker_aq) = (bundle.clone(), tenant.clone(), aq.clone());
+    let worker = std::thread::spawn(move || {
+        IngressRuntime::new(worker_bundle.wi(), worker_tenant.clone()).dispatch_pending(
+            &mut DelayedOldCompletion {
+                aq: worker_aq,
+                tenant: worker_tenant,
+                ready: ready_tx,
+                resume: resume_rx,
+                pause: true,
+            },
+            10,
+            now(),
+        )
+    });
+    ready_rx.recv_timeout(Duration::from_secs(20)).unwrap();
+    {
+        let mut engine = aq.lock().unwrap();
+        let service = IngressRuntime::new(bundle.wi(), tenant.clone());
+        assert_eq!(
+            service
+                .dispatch_pending(&mut BoundAqIngress::new(&mut *engine, tenant.clone()), 10, now())
+                .unwrap(),
+            1
+        );
+        let _ = rt.block_on(engine.run_until_idle()).unwrap();
+        assert!(service
+            .dispatch_pending(
+                &mut PauseRecoveryWake { aq: &mut engine, tenant: tenant.clone() },
+                10,
+                now()
+            )
+            .is_err());
+        let state = bundle.wi().ingress_snapshot(&tenant).unwrap();
+        assert_eq!(state.queue[&id].generation, 1);
+        assert!(state.queue[&id].task_admitted);
+        assert!(state.queue[&id].signal_sequence.is_none());
+    }
+    resume_tx.send(()).unwrap();
+    let result = worker.join().unwrap();
+    let aq = Arc::try_unwrap(aq).ok().unwrap().into_inner().unwrap();
+    assert_eq!(result.unwrap(), 1);
+    let state = bundle.wi().ingress_snapshot(&tenant).unwrap();
+    let q = &state.queue[&id];
+    assert_eq!(q.generation, 1);
+    assert!(q.signal_sequence.is_some());
+    assert_eq!(q.prior[0].signal_sequence, Some(1));
+    let task: actionqueue_core::admission::EnsureTaskRequest =
+        serde_json::from_slice(&q.task_request).unwrap();
+    aq.shutdown().unwrap();
+    drop(state);
+    drop(bundle);
+    let bundle = Arc::new(StoreBundle::open(&path).unwrap());
+    let recorder = Arc::new(Recorder::default());
+    let mut aq = ActionQueueEngine::new(
+        RuntimeConfig { data_dir: bundle.aq_path(), ..Default::default() },
+        handler(&bundle, &binding, recorder.clone()),
+    )
+    .bootstrap()
+    .unwrap()
+    .with_host(host());
+    let count = IngressRuntime::new(bundle.wi(), tenant.clone())
+        .dispatch_pending(&mut BoundAqIngress::new(&mut aq, tenant.clone()), 10, now())
+        .unwrap();
+    let _ = rt.block_on(aq.run_until_idle()).unwrap();
+    let run = aq.projection().run_ids_for_task(task.task_spec().id())[0];
+    let recovered_state = aq.get_run(run).unwrap().state;
+    assert_eq!(count, 0);
+    assert_eq!(recovered_state, actionqueue_core::run::state::RunState::Awaiting);
+    assert_eq!(recorder.0.lock().unwrap().as_slice(), std::slice::from_ref(&id));
+    aq.shutdown().unwrap();
+    drop(bundle);
+    StoreBundle::open(&path).unwrap();
+}
+
+#[test]
+fn paused_old_task_ack_cannot_complete_replacement_generation() {
+    let temp = tempfile::tempdir().unwrap();
+    let path = temp.path().join("bundle");
+    let (bundle, binding, id) = setup(&path);
+    let tenant = binding.profile.scope.tenant.clone();
+    let recorder = Arc::new(Recorder::default());
+    let aq = ActionQueueEngine::new(
+        RuntimeConfig {
+            data_dir: bundle.aq_path(),
+            continuation_limits: ContinuationLimits { active_waits: 0, ..Default::default() },
+            ..Default::default()
+        },
+        handler(&bundle, &binding, recorder),
+    )
+    .bootstrap()
+    .unwrap()
+    .with_host(host());
+    let aq = Arc::new(Mutex::new(aq));
+    let (ready_tx, ready_rx) = std::sync::mpsc::channel();
+    let (resume_tx, resume_rx) = std::sync::mpsc::channel();
+    let (worker_bundle, worker_tenant, worker_aq) = (bundle.clone(), tenant.clone(), aq.clone());
+    let worker = std::thread::spawn(move || {
+        IngressRuntime::new(worker_bundle.wi(), worker_tenant.clone()).dispatch_pending(
+            &mut DelayedOldTaskCompletion {
+                aq: worker_aq,
+                tenant: worker_tenant,
+                ready: ready_tx,
+                resume: resume_rx,
+                pause: true,
+            },
+            10,
+            now(),
+        )
+    });
+    ready_rx.recv_timeout(Duration::from_secs(20)).unwrap();
+    {
+        let mut engine = aq.lock().unwrap();
+        let service = IngressRuntime::new(bundle.wi(), tenant.clone());
+        assert_eq!(
+            service
+                .dispatch_pending(&mut BoundAqIngress::new(&mut *engine, tenant.clone()), 10, now())
+                .unwrap(),
+            1
+        );
+        let _ = tokio::runtime::Runtime::new().unwrap().block_on(engine.run_until_idle()).unwrap();
+        assert!(service
+            .dispatch_pending(
+                &mut PauseRecoveryWake { aq: &mut engine, tenant: tenant.clone() },
+                10,
+                now()
+            )
+            .is_err());
+        let q = &bundle.wi().ingress_snapshot(&tenant).unwrap().queue[&id];
+        assert_eq!(q.generation, 1);
+        assert!(q.task_admitted);
+        assert!(q.signal_sequence.is_none());
+    }
+    resume_tx.send(()).unwrap();
+    assert_eq!(worker.join().unwrap().unwrap(), 1);
+    Arc::try_unwrap(aq).ok().unwrap().into_inner().unwrap().shutdown().unwrap();
+    let q = bundle.wi().ingress_snapshot(&tenant).unwrap().queue[&id].clone();
+    assert_eq!(q.generation, 1);
+    assert!(q.signal_sequence.is_some());
+    drop(bundle);
+    let bundle = Arc::new(StoreBundle::open(&path).unwrap());
+    let recorder = Arc::new(Recorder::default());
+    let mut aq = ActionQueueEngine::new(
+        RuntimeConfig { data_dir: bundle.aq_path(), ..Default::default() },
+        handler(&bundle, &binding, recorder.clone()),
+    )
+    .bootstrap()
+    .unwrap()
+    .with_host(host());
+    let _ = tokio::runtime::Runtime::new().unwrap().block_on(aq.run_until_idle()).unwrap();
+    assert_eq!(recorder.0.lock().unwrap().as_slice(), std::slice::from_ref(&id));
+    aq.shutdown().unwrap();
+    drop(bundle);
+    StoreBundle::open(&path).unwrap();
+}
