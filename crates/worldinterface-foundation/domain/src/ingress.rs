@@ -611,6 +611,7 @@ pub fn apply_ingress(
             let old = s.queue.get(id).ok_or("unknown queue obligation")?;
             let delivery = s.deliveries.get(id).ok_or("unknown delivery")?;
             if delivery.state != DeliveryState::Pending
+                || now >= delivery.expires_at_ms
                 || old.generation != *expected_generation
                 || old.signal_sequence.is_none()
                 || replacement.version != 1
