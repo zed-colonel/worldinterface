@@ -1,5 +1,8 @@
 //! Internal pure domain foundation. No composition root or production AQ adapter.
+pub mod developmental;
 pub mod ports;
+pub mod publication;
+pub mod receipt;
 use serde::{Deserialize, Serialize};
 use worldinterface_protocol::{EntityId, Timestamp};
 

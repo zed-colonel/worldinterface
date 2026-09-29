@@ -140,10 +140,20 @@ fn fresh_stores_all_records_query_reopen_and_deterministic_rebuild() {
         let p = t.path().join("root");
         let root = StoreRoot::create_empty(&p, profile(platform)).unwrap();
         assert_eq!(root.repository(StoreKind::Platform).is_ok(), platform);
-        let all = vectors();
+        let all: Vec<_> = vectors()
+            .into_iter()
+            .filter(|e| !matches!(e.record, Record::BoundaryReceipt(_)))
+            .collect();
         let id = EntityId::generate();
         for kind in [StoreKind::Fabric, StoreKind::Flow, StoreKind::Context] {
             let repo = root.repository(kind).unwrap();
+            let mut bypass = Batch::new(id.clone(), Machine::Effect, 0);
+            bypass.records = vectors()
+                .into_iter()
+                .filter(|e| matches!(e.record, Record::BoundaryReceipt(_)))
+                .collect();
+            bypass.events.push(event(&id, Action::Submit));
+            assert!(repo.append(&bypass).is_err());
             let mut b = Batch::new(id.clone(), Machine::Effect, 0);
             b.records = all.clone();
             b.events.push(event(&id, Action::Submit));

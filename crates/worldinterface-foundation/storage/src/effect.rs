@@ -20,6 +20,9 @@ fn snapshot(c: &Connection, tenant: &OpaqueRef) -> Result<EffectState> {
         |b| Ok(serde_json::from_value(strict_collection(&b).map_err(invalid)?)?),
     )
 }
+pub(crate) fn snapshot_for_replay(c: &Connection, tenant: &OpaqueRef) -> Result<EffectState> {
+    snapshot(c, tenant)
+}
 fn write(c: &Connection, tenant: &OpaqueRef, s: &EffectState, fault: Option<&str>) -> Result<()> {
     c.execute("INSERT INTO effect_state VALUES(?,?) ON CONFLICT(tenant) DO UPDATE SET state=excluded.state",params![tenant.as_str(),canonical_collection(s).map_err(invalid)?])?;
     if fault == Some("state") {
@@ -84,6 +87,54 @@ impl StoreRoot {
             self.read_artifact(reference)?;
         }
         transact(&mut self.connect(StoreKind::Fabric)?, command, None)
+    }
+    /// Commits a local outcome, receipt and effect outbox in one Fabric transaction.
+    /// This is a domain seam; it does not acknowledge an AQ attempt.
+    pub fn effect_transact_with_receipt(
+        &self,
+        command: &ValidatedEffectCommand,
+        receipt_id: ReceiptId,
+        execution: &ExecutionRecord,
+        temporal: TemporalProvenance,
+    ) -> Result<ContentHash> {
+        let mut c = self.connect(StoreKind::Fabric)?;
+        let tx = c.transaction_with_behavior(TransactionBehavior::Immediate)?;
+        let tenant = command.tenant();
+        let old = snapshot(&tx, tenant)?;
+        let (new, id) = replay_command(&old, tenant, command.bytes()).map_err(invalid)?;
+        if new.revision == old.revision {
+            return Err(invalid("receipt command already applied; inspect immutable receipt"));
+        }
+        let aggregate = new.effects.get(&id).ok_or_else(|| invalid("missing effect"))?;
+        let receipt = worldinterface_domain::receipt::prepare_egress_receipt(
+            aggregate,
+            new.revision,
+            receipt_id,
+            execution,
+            temporal,
+        )
+        .map_err(invalid)?;
+        let Record::BoundaryReceipt(ref r) = receipt.envelope().record else { unreachable!() };
+        let ReceiptBody::Egress(ref body) = r.body else { unreachable!() };
+        for reference in &body.output_refs {
+            self.read_artifact(reference)?;
+        }
+        for reference in worldinterface_domain::effect::required_artifacts(aggregate) {
+            self.read_artifact(reference)?;
+        }
+        tx.execute(
+            "INSERT INTO effect_history(tenant,revision,entry,digest) VALUES(?,?,?,?)",
+            params![
+                tenant.as_str(),
+                new.revision,
+                command.bytes(),
+                ContentHash::of(command.bytes()).as_str()
+            ],
+        )?;
+        write(&tx, tenant, &new, None)?;
+        let digest = crate::receipt::insert(&tx, tenant, &receipt)?;
+        tx.commit()?;
+        Ok(digest)
     }
 }
 impl StoreRoot {

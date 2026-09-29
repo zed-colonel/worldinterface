@@ -5,6 +5,8 @@ mod records;
 pub use canonical::*;
 pub use identity::*;
 pub use records::*;
+pub mod evidence;
+pub mod receipt;
 pub type Result<T> = std::result::Result<T, String>;
 
 mod ingress;

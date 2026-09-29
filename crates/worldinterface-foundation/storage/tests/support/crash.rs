@@ -77,13 +77,50 @@ fn child() {
         StoreRoot::backup_offline(path, path.with_extension("backup")).unwrap();
     } else {
         let root = StoreRoot::open_existing(path).unwrap();
-        if point == "artifact-durable" {
+        if point.starts_with("publication-") {
+            if point == "publication-identified" {
+                root.stage_publication(
+                    "publication:1".to_string().try_into().unwrap(),
+                    "tenant".to_string().try_into().unwrap(),
+                    b"bytes",
+                )
+                .unwrap();
+            } else {
+                root.publish_staged(&"publication:1".to_string().try_into().unwrap(), b"bytes")
+                    .unwrap();
+            }
+        } else if point == "artifact-durable" {
             root.publish("tenant".to_string().try_into().unwrap(), b"bytes").unwrap();
         } else {
             submit(&root);
         }
     }
     panic!("child did not reach requested barrier");
+}
+#[test]
+fn killed_publication_resumes_from_each_durable_boundary() {
+    for point in ["publication-identified", "publication-durable", "publication-availability"] {
+        let t = tempfile::tempdir().unwrap();
+        let path = t.path().join("root");
+        let root = StoreRoot::create_empty(&path, profile()).unwrap();
+        if point != "publication-identified" {
+            root.stage_publication(
+                "publication:1".to_string().try_into().unwrap(),
+                "tenant".to_string().try_into().unwrap(),
+                b"bytes",
+            )
+            .unwrap();
+        }
+        drop(root);
+        kill_at(&path, point);
+        let root = StoreRoot::open_existing(&path).unwrap();
+        let reference = root
+            .publish_staged(&"publication:1".to_string().try_into().unwrap(), b"bytes")
+            .unwrap();
+        assert_eq!(root.read_artifact(&reference).unwrap(), b"bytes");
+        drop(root);
+        StoreRoot::open_existing(&path).unwrap();
+    }
 }
 fn kill_at(path: &Path, point: &str) {
     kill_at_with_preload(path, point, None);

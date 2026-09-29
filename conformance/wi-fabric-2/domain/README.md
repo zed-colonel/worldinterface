@@ -63,7 +63,7 @@ historical reducers. Guarded ADR-007 semantics now live in the [WI-04 egress jou
 
 `StoreRoot` requires an empty directory for creation. Root and per-database
 manifests bind contract, schema 1, instance, creation time, feature profile
-`local-egress-1` and canonical profile (WI-04 supersedes development profiles
+`local-receipt-1` and canonical profile (WI-05 supersedes development profiles
 `local-domain-1` and `local-ingress-1`, both rejected unchanged). Fabric, Flow and Context databases are
 required; Platform is optional. All manifests and expected members are checked
 before SQLite opens. Unsupported, pre-contract and incomplete roots reject
@@ -148,7 +148,10 @@ It requires exact source/target review and controller-mediated integration.
 Remote protection/publication remains operator-owned, due before first remote
 publication and final release approval. `source-evidence.json` records hashes of
 supplied policy, approvals, prerequisite receipts and assumptions, not test results.
-ADR-001/002/003 are fully approved; ADR-016 has only the supplied early clauses.
+ADR-001/002/003 and ADR-016 are fully approved. ADR-016 approval
+`10a13b9c-cbfc-4469-9e03-9011adbdd507` settles architecture; it does not
+expand the narrower fixture-backed implementation evidence to ordinary provider
+admission.
 WI-02 integration records the WI-AQ-012/015 mappings; their acceptance and WP-A01
 remain subject to their named milestones. The target
 AQ pin is 29e096c4f06985d1a9bd9d5fe5a3a6a5db8a6860, conformance revision 16;

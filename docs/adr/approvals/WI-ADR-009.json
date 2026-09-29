@@ -1,0 +1,36 @@
+{
+  "submissionId": "0d8a5396-24a8-400f-8a2a-839c425cb639",
+  "checkpoint": "WI-ADR-009",
+  "definitionId": "0ebcb7cf-9686-4bc1-9b9d-bb85a1d0b4c9",
+  "bindingRevision": 4,
+  "decision": {
+    "coverage": "full",
+    "proposal": "Adopt Context/artifact ownership of immutable exact-byte content, content hashes, scoped availability, publication journaling, retention and quarantine. Fabric owns effect and observation meaning, immutable receipts, evidence links, outcomes, uncertainty and source outboxes. Neither artifact possession nor scoped availability grants access or establishes execution success. Use a durable staged protocol: persist publication identity, write and sync immutable bytes, verify content hash and size, commit scoped availability, then atomically commit the corresponding Fabric receipt or uncertainty record, domain outcome and downstream outbox. Only durably published required outputs may become completion-visible. Exact publication retries recover the original result; conflicting identity reuse fails. Fabric and ActionQueue remain separate transaction domains: a durable Fabric terminal outcome permits later AQ completion without reinvocation; AQ completion without required Fabric state is corruption and fails closed; possible provider commit without durable outcome requires reconciliation. Recovery validates references and resumes publication without inferring external success. Unreferenced staged content remains unavailable and may be reclaimed only after proving no committed reference or recoverable publication obligation depends on it. Corrections append linked records rather than overwrite history. Retention honors protected-content obligations and preserves permitted non-sensitive causal tombstones. Protected content requires an appropriate protected artifact backend; the local domain slice uses non-sensitive fixtures. Backup and restore preserve journals, published content and cross-store references coherently. Logical ownership remains unchanged if a deployment co-locates stores.",
+    "sourceReferences": "Imported map EXO-STACK-CONCURRENCY-DRAFT-1 0.3.0; exact plan binding 4; checkpoint WI-ADR-009.\n{\"source_id\":\"wi-plan\",\"section\":\"§4 ADR queue\",\"start_line\":362,\"end_line\":362}\ncraftingtable-scope-evidence.json: phaseReadiness and checkpoint WI-ADR-009\ndocs/adr/WI-ADR-009.md: queued status\nwi-fabric-2-foundational-implementation-plan.md: §4 WI-ADR-009, §5.6, WI-05, §§8.1 and 8.5–8.8\nworldinterface-v2-foundational-design.md: W24, §§13.8–13.11\ncrates/worldinterface-foundation/storage/src/contextstore.rs\ncrates/worldinterface-foundation/storage/src/effect.rs\nAttached source run 11febd2f-f4df-4afe-a22c-9490e8457f1c; SHA-256 ad37abfb64a82d4278293cae3ff976b0a5beddea5c6f58fc510681999ea404ea.",
+    "retainedObligations": "Implementation, candidate and merged-tree verification, distinct security review, WI-WORKER-G1, WI-05/integration and WI-AQ-G4 evidence, parent acceptance, and release/publication obligations remain separately required.",
+    "consumers": [],
+    "kind": "architecture-decision-v1",
+    "bindingDigest": "8cae5ff3253d493fce0527aa42381a551c40014440ab3d05270ae8d822d11295"
+  },
+  "approval": {
+    "submissionId": "0d8a5396-24a8-400f-8a2a-839c425cb639",
+    "outcome": "accepted",
+    "rationale": "I approve of this recommended approach.",
+    "id": "17643cb3-b956-4105-a34c-6fc23ad6a597",
+    "workspaceId": "6bf6915a-6cd0-47cc-b853-fcbc04f02f3d",
+    "decidedAt": "2026-09-29T16:04:59.717Z",
+    "decidedByUserId": "0698a39b-dda2-4870-8f3f-97ef94784ae9"
+  },
+  "sourceRunId": "11febd2f-f4df-4afe-a22c-9490e8457f1c",
+  "sourceRunDigest": "ad37abfb64a82d4278293cae3ff976b0a5beddea5c6f58fc510681999ea404ea",
+  "artifacts": [
+    {
+      "name": "decision-review-packet",
+      "digest": "219b91248a892178f4cec31b06543ad185ccd2a2ea18a02606caace3f6931abb"
+    },
+    {
+      "name": "source-design-proposal-not-approval",
+      "digest": "ad37abfb64a82d4278293cae3ff976b0a5beddea5c6f58fc510681999ea404ea"
+    }
+  ]
+}

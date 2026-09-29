@@ -52,6 +52,19 @@ impl Envelope {
         bytes.extend(self.canonical_bytes()?);
         Ok(ContentHash::of(&bytes))
     }
+    /// Receipt imports have an exact byte representation. The older general
+    /// parser remains permissive for preexisting non-receipt callers.
+    pub fn parse_receipt(bytes: &[u8]) -> Result<Self> {
+        let envelope = Self::parse(bytes)?;
+        let Record::BoundaryReceipt(ref receipt) = envelope.record else {
+            return Err("expected boundary receipt".into());
+        };
+        crate::receipt::validate_receipt(receipt)?;
+        if envelope.canonical_bytes()? != bytes {
+            return Err("noncanonical boundary receipt".into());
+        }
+        Ok(envelope)
+    }
 }
 
 /// Deterministic encoding for local manifests/events; not a public record hash API.

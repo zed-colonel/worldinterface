@@ -100,8 +100,12 @@
     "decision": "ContextStore versus artifact-store responsibility and publication atomicity",
     "due": "WI-05",
     "owner": "operator",
-    "status": "queued",
-    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4"
+    "status": "accepted",
+    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4",
+    "coverage": "full",
+    "approval_file": "docs/adr/approvals/WI-ADR-009.json",
+    "approval_sha256": "d67e5134bf562223b46b57c910d0cdd5ad1c4ff49d05799d97bc407a98346701",
+    "approval_id": "17643cb3-b956-4105-a34c-6fc23ad6a597"
   },
   {
     "id": "WI-ADR-010",

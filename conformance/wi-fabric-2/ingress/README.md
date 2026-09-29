@@ -21,8 +21,8 @@ on (tenant, revision), serialized mutation and reducer uniqueness enforce scoped
 provider and principal/request identities. This deliberately bounded local
 projection is not a production throughput claim.
 
-The current manifest profile is `local-egress-1`, schema 1, introduced by
-[WI-04](../egress/README.md). Previous development profiles `local-domain-1`
+The current manifest profile is `local-receipt-1`, schema 1, introduced by
+[WI-05](../receipts/README.md). Previous development profiles `local-domain-1`
 and `local-ingress-1` are rejected without modification. Separate Fabric, Flow,
 Context and optional Platform stores remain intact. Wire records keep the 64 KiB
 canonical bound; local collection snapshots have a separate 16 MiB ceiling.

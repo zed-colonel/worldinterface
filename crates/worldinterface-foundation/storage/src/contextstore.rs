@@ -1,17 +1,27 @@
 //! Immutable exact-byte content and scoped availability. A reference is not a grant.
-use crate::{
-    invalid,
-    root::{sync_dir, write_new},
-    Result, StoreKind, StoreRoot,
-};
+#[cfg(test)]
+use crate::root::{sync_dir, write_new};
+use crate::{invalid, Result, StoreKind, StoreRoot};
 use rusqlite::{params, Connection, OpenFlags, OptionalExtension};
 use std::fs;
-use worldinterface_protocol::{ArtifactRef, ContentHash, InstanceId, OpaqueRef};
+#[cfg(test)]
+use worldinterface_protocol::InstanceId;
+use worldinterface_protocol::{ArtifactRef, ContentHash, OpaqueRef};
 const MAX_ARTIFACT_BYTES: usize = 16 * 1024 * 1024;
 impl StoreRoot {
     pub fn publish(&self, scope: OpaqueRef, bytes: &[u8]) -> Result<ArtifactRef> {
-        self.publish_inner(scope, bytes, false)
+        let content = ContentHash::of(bytes);
+        let identity: OpaqueRef = format!(
+            "content:{}:{}",
+            ContentHash::of(scope.as_str().as_bytes()).as_str(),
+            content.as_str()
+        )
+        .try_into()
+        .map_err(invalid)?;
+        self.stage_publication(identity.clone(), scope, bytes)?;
+        self.publish_staged(&identity, bytes)
     }
+    #[cfg(test)]
     fn publish_inner(
         &self,
         scope: OpaqueRef,
@@ -98,6 +108,33 @@ impl StoreRoot {
                 || ContentHash::of(&bytes) != digest
             {
                 return Err(invalid("referenced artifact missing or corrupt"));
+            }
+        }
+        let mut staged = c.prepare("SELECT scope,content,size,state FROM publication_index")?;
+        let rows = staged.query_map([], |r| {
+            Ok((
+                r.get::<_, String>(0)?,
+                r.get::<_, String>(1)?,
+                r.get::<_, u64>(2)?,
+                r.get::<_, String>(3)?,
+            ))
+        })?;
+        for row in rows {
+            let (scope, content, size, state) = row?;
+            let digest: ContentHash = content.try_into().map_err(invalid)?;
+            if state == "durable" || state == "available" {
+                let bytes = fs::read(self.path.join("artifacts").join(digest.as_str()))?;
+                if bytes.len() as u64 != size || ContentHash::of(&bytes) != digest {
+                    return Err(invalid("publication obligation missing content"));
+                }
+            }
+            if state == "available" {
+                let reference = ArtifactRef {
+                    scope: scope.try_into().map_err(invalid)?,
+                    content: digest,
+                    size,
+                };
+                self.read_artifact(&reference)?;
             }
         }
         Ok(())

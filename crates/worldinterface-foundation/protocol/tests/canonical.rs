@@ -1,5 +1,26 @@
 use serde_json::{json, Value};
 use worldinterface_protocol::*;
+#[test]
+fn receipt_import_requires_exact_canonical_bytes_and_supported_profile() {
+    let vector = vectors()
+        .into_iter()
+        .find(|v| v["envelope"]["record"]["kind"] == "boundary_receipt")
+        .unwrap();
+    let mut value = vector["envelope"].clone();
+    value["record"]["body"]["profile"] = serde_json::json!("boundary:1");
+    let receipt: Envelope = Envelope::parse(&serde_json::to_vec(&value).unwrap()).unwrap();
+    let canonical = receipt.canonical_bytes().unwrap();
+    assert_eq!(
+        Envelope::parse_receipt(&canonical).unwrap().digest().unwrap(),
+        receipt.digest().unwrap()
+    );
+    let pretty = serde_json::to_vec_pretty(&value).unwrap();
+    assert!(Envelope::parse(&pretty).is_ok());
+    assert!(Envelope::parse_receipt(&pretty).is_err());
+    value["record"]["body"]["profile"] = serde_json::json!("unknown:1");
+    let unknown = Envelope::parse(&serde_json::to_vec(&value).unwrap()).unwrap();
+    assert!(Envelope::parse_receipt(&unknown.canonical_bytes().unwrap()).is_err());
+}
 fn vectors() -> Vec<Value> {
     serde_json::from_slice(
         &std::fs::read(concat!(
