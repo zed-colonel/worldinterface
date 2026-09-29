@@ -15,6 +15,9 @@ pub struct StreamSession {
     credentials: ProviderCredentials,
 }
 impl StreamSession {
+    pub fn profile(&self) -> &ProviderProfile {
+        &self.credentials.profile
+    }
     pub fn authenticate(
         bytes: &[u8],
         signature: &[u8],

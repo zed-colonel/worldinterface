@@ -264,10 +264,19 @@ pub fn conformance(root: &Path) -> Result<Vec<Finding>> {
     }
     let assigned: BTreeSet<_> =
         array(&m, "assigned_aq_baseline_cases")?.iter().map(|v| v.as_str().unwrap_or("")).collect();
-    if assigned != BTreeSet::from(["AB-WI-001", "AB-WI-015", "AB-WI-016"])
+    if assigned
+        != BTreeSet::from([
+            "AB-WI-001",
+            "AB-WI-006",
+            "AB-WI-007",
+            "AB-WI-009",
+            "AB-WI-015",
+            "AB-WI-016",
+            "AB-WI-022",
+        ])
         || !assigned.iter().all(|id| ids.contains(id))
     {
-        return Err("assigned G1 cases must be registered exactly".into());
+        return Err("assigned WI-02/WI-03 cases must be registered exactly".into());
     }
     if m["integration_fixture_sha256"]
         != hash(fs::read(root.join(string(&m, "integration_fixture")?))?)

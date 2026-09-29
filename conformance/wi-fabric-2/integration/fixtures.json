@@ -24,6 +24,32 @@
         "ab_wi_016_nested_destinations_leave_source_unchanged",
         "ab_wi_016_single_component_relative_destinations"
       ]
+    },
+    "AB-WI-006": {
+      "source_record_sha256": "2eae5f9661b6c3a24b34cb44fb18fe41647f1c134542db129ba4acedab196f18",
+      "required_tests": [
+        "ab_wi_006_009_one_wait_and_strict_signal_cursor_across_restart"
+      ]
+    },
+    "AB-WI-007": {
+      "source_record_sha256": "5e28dbfd281d310109931bdc6c6ab98a97b75b9c6bcc57a0f70433bad783a3b6",
+      "required_tests": [
+        "ab_wi_007_commit_replay_identity_and_subscriber_ack",
+        "captured_fanout_routes_each_delivery_to_its_trusted_subscriber",
+        "process_death_after_wi_commit_recovers_aq_obligation"
+      ]
+    },
+    "AB-WI-009": {
+      "source_record_sha256": "4b1907c6eb598efc348ba0390ac93da7626fa45deb5e3805ebd5d544e950f1ee",
+      "required_tests": [
+        "ab_wi_006_009_one_wait_and_strict_signal_cursor_across_restart"
+      ]
+    },
+    "AB-WI-022": {
+      "source_record_sha256": "39053f56f805b7c942cd07602c7c202227e7f00259f1f6897fe19cd71bf67d81",
+      "required_tests": [
+        "ab_wi_022_retirement_keeps_resident_capacity_and_alarm"
+      ]
     }
   },
   "assets": {
