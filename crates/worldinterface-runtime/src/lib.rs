@@ -1,7 +1,7 @@
-//! WI-FABRIC-2 G1 production composition. AQ remains the sole queue authority.
-//! Dispatch/admission/wake adapters belong to G2–G4, not this boundary.
+//! WI-FABRIC-2 production composition. AQ remains the sole queue authority.
 pub mod aq_adapter;
 pub mod artifact;
+pub mod ingress;
 pub mod storage;
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
 

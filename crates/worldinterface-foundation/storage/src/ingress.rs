@@ -79,6 +79,13 @@ fn transact(
     Ok(result)
 }
 impl StoreRoot {
+    /// Tenant inventory for cross-store reference validation during bundle reopen.
+    pub fn ingress_tenants(&self) -> Result<Vec<OpaqueRef>> {
+        let c = self.connect(StoreKind::Fabric)?;
+        let mut q = c.prepare("SELECT tenant FROM ingress_state ORDER BY tenant")?;
+        let rows = q.query_map([], |r| r.get::<_, String>(0))?;
+        rows.map(|row| row?.try_into().map_err(invalid)).collect()
+    }
     pub fn ingress_snapshot(&self, tenant: &OpaqueRef) -> Result<IngressState> {
         snapshot(&self.connect(StoreKind::Fabric)?, tenant)
     }

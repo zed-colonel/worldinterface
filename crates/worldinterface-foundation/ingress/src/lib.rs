@@ -1,5 +1,4 @@
-//! Inactive ingress library. Trusted contexts and ports require an authenticated composition
-//! root; this slice supplies only test implementations. No live ingress or AQ adapter exists.
+//! Authenticated ingress domain facade; the production composition lives in worldinterface-runtime.
 pub mod transport;
 use worldinterface_domain::ingress::*;
 use worldinterface_protocol::*;
@@ -170,6 +169,26 @@ impl<'a> Ingress<'a> {
         ids: AdmissionIds,
         now: u64,
     ) -> Result<IngressResult> {
+        self.admit_event(event, expected, ids, None, now)
+    }
+    pub fn admit_provider_event_queued(
+        &self,
+        event: transport::ValidatedProviderEvent,
+        expected: Vec<BindingVersion>,
+        ids: AdmissionIds,
+        queue: Vec<QueueObligation>,
+        now: u64,
+    ) -> Result<IngressResult> {
+        self.admit_event(event, expected, ids, Some(queue), now)
+    }
+    fn admit_event(
+        &self,
+        event: transport::ValidatedProviderEvent,
+        expected: Vec<BindingVersion>,
+        ids: AdmissionIds,
+        queue: Option<Vec<QueueObligation>>,
+        now: u64,
+    ) -> Result<IngressResult> {
         let transport::ValidatedProviderEvent { event, profile, provenance } = event;
         self.root.read_artifact(&event.content)?;
         for a in &event.attachments {
@@ -268,12 +287,11 @@ impl<'a> Ingress<'a> {
             },
             admitted_at_ms: now,
         };
-        self.root.ingress_transact(
-            &tenant,
-            None,
-            now,
-            &IngressCommand::Admit { admission: Box::new(admission) },
-        )
+        let command = match queue {
+            Some(queue) => IngressCommand::AdmitQueued { admission: Box::new(admission), queue },
+            None => IngressCommand::Admit { admission: Box::new(admission) },
+        };
+        self.root.ingress_transact(&tenant, None, now, &command)
     }
     pub fn inspect_delivery(
         &self,
@@ -366,16 +384,41 @@ impl<'a> Ingress<'a> {
         token: &DeliveryToken,
         now: u64,
     ) -> Result<DeliveryAcknowledgment> {
-        let result = self.root.ingress_transact(
-            &scope.tenant,
-            None,
-            now,
-            &IngressCommand::Acknowledge {
+        self.acknowledge_with_signal(scope, id, token, None, now)
+    }
+    pub fn acknowledge_queued(
+        &self,
+        scope: &AuthenticatedScope,
+        id: &DeliveryId,
+        token: &DeliveryToken,
+        signal: AcknowledgmentSignal,
+        now: u64,
+    ) -> Result<DeliveryAcknowledgment> {
+        self.acknowledge_with_signal(scope, id, token, Some(signal), now)
+    }
+    fn acknowledge_with_signal(
+        &self,
+        scope: &AuthenticatedScope,
+        id: &DeliveryId,
+        token: &DeliveryToken,
+        signal: Option<AcknowledgmentSignal>,
+        now: u64,
+    ) -> Result<DeliveryAcknowledgment> {
+        let token_digest = token.digest(id, &scope.principal)?;
+        let command = match signal {
+            Some(signal) => IngressCommand::AcknowledgeQueued {
                 id: id.clone(),
                 subscriber: scope.principal.clone(),
-                token_digest: token.digest(id, &scope.principal)?,
+                token_digest,
+                signal,
             },
-        )?;
+            None => IngressCommand::Acknowledge {
+                id: id.clone(),
+                subscriber: scope.principal.clone(),
+                token_digest,
+            },
+        };
+        let result = self.root.ingress_transact(&scope.tenant, None, now, &command)?;
         match result {
             IngressResult::Acknowledged(a) => Ok(a),
             _ => Err(error("unexpected acknowledgment result")),

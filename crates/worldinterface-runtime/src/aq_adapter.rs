@@ -49,6 +49,83 @@ impl QueueReferences {
     /// Checks all G1 input/output references through AQ's recovered public models.
     /// G3/G4 must extend this closure before introducing signal/checkpoint adapters.
     pub fn validate_artifacts(&self, wi: &worldinterface_storage::StoreRoot) -> Result<()> {
+        for tenant in wi.ingress_tenants()? {
+            let state = wi.ingress_snapshot(&tenant)?;
+            for (id, q) in &state.queue {
+                if id != &q.delivery
+                    || q.version != 1
+                    || worldinterface_protocol::ContentHash::of(&q.task_request) != q.task_digest
+                    || worldinterface_protocol::ContentHash::of(&q.signal_request)
+                        != q.signal_digest
+                {
+                    return Err("invalid ingress queue obligation".into());
+                }
+                let task: actionqueue_core::admission::EnsureTaskRequest =
+                    serde_json::from_slice(&q.task_request)?;
+                let signal: actionqueue_core::continuation::AdmitSignalRequest =
+                    serde_json::from_slice(&q.signal_request)?;
+                let expected =
+                    actionqueue_core::ids::TaskId::from_uuid(uuid::Uuid::parse_str(id.as_str())?);
+                if task.task_spec().id() != expected || task.task_spec().tenant_id().is_some() {
+                    return Err("ingress queue task identity mismatch".into());
+                }
+                if q.task_admitted {
+                    let record = self
+                        .projection
+                        .task_admission(expected)
+                        .ok_or("missing AQ ingress task admission")?;
+                    if record.digest() != &task.digest()? {
+                        return Err("AQ ingress task admission changed".into());
+                    }
+                }
+                if let Some(sequence) = q.signal_sequence {
+                    let record = self
+                        .projection
+                        .signals()
+                        .by_sequence(actionqueue_core::ids::SignalSequence::new(sequence))
+                        .ok_or("missing AQ ingress signal")?;
+                    let expected_signal = signal.envelope(
+                        &actionqueue_core::continuation::SignalIngressContext::default(),
+                        record.envelope().received_at,
+                    );
+                    if record.envelope().signal_id != expected_signal.signal_id
+                        || record.envelope().namespace != expected_signal.namespace
+                        || record.envelope().kind != expected_signal.kind
+                        || record.envelope().correlation_id != expected_signal.correlation_id
+                        || record.envelope().source_ref != expected_signal.source_ref
+                    {
+                        return Err("AQ ingress signal changed".into());
+                    }
+                }
+            }
+            for (id, q) in &state.acknowledgments_to_signal {
+                if id != &q.delivery
+                    || q.version != 1
+                    || worldinterface_protocol::ContentHash::of(&q.request) != q.digest
+                {
+                    return Err("invalid ingress acknowledgment obligation".into());
+                }
+                if let Some(sequence) = q.sequence {
+                    let record = self
+                        .projection
+                        .signals()
+                        .by_sequence(actionqueue_core::ids::SignalSequence::new(sequence))
+                        .ok_or("missing AQ acknowledgment signal")?;
+                    let request: actionqueue_core::continuation::AdmitSignalRequest =
+                        serde_json::from_slice(&q.request)?;
+                    let expected = request.envelope(
+                        &actionqueue_core::continuation::SignalIngressContext::default(),
+                        record.envelope().received_at,
+                    );
+                    if record.envelope().signal_id != expected.signal_id
+                        || record.envelope().kind != expected.kind
+                        || record.envelope().correlation_id != expected.correlation_id
+                    {
+                        return Err("AQ acknowledgment signal changed".into());
+                    }
+                }
+            }
+        }
         for task in self.projection.tasks() {
             if task.content_type()
                 == Some("application/vnd.worldinterface.task-input+json;version=1")

@@ -13,21 +13,99 @@ pub struct IngressState {
     pub bindings: BTreeMap<IngressBindingId, IngressBinding>,
     pub admissions: BTreeMap<ContentHash, IngressAdmission>,
     pub deliveries: BTreeMap<DeliveryId, ObservationDelivery>,
+    #[serde(default)]
+    pub queue: BTreeMap<DeliveryId, QueueObligation>,
+    #[serde(default)]
+    pub acknowledgments_to_signal: BTreeMap<DeliveryId, AcknowledgmentSignal>,
     pub conflicts: BTreeSet<(ContentHash, ContentHash)>,
     pub releases: Vec<(ArtifactRef, OpaqueRef, EvidenceRef)>,
+}
+/// AQ-neutral, immutable request bytes committed with an observation. The runtime
+/// constructs and validates both versioned requests before this journal accepts them.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct QueueObligation {
+    pub version: u32,
+    pub delivery: DeliveryId,
+    pub task_request: Vec<u8>,
+    pub signal_request: Vec<u8>,
+    pub task_digest: ContentHash,
+    pub signal_digest: ContentHash,
+    pub task_admitted: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub signal_sequence: Option<u64>,
+}
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct AcknowledgmentSignal {
+    pub version: u32,
+    pub delivery: DeliveryId,
+    pub request: Vec<u8>,
+    pub digest: ContentHash,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub sequence: Option<u64>,
 }
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "operation", rename_all = "snake_case", deny_unknown_fields)]
 pub enum IngressCommand {
-    Bind { binding: Box<IngressBinding> },
-    ChangeBinding { id: IngressBindingId, expected: u64, status: BindingStatus },
-    Admit { admission: Box<IngressAdmission> },
-    Claim { id: DeliveryId, subscriber: PrincipalId, token_digest: ContentHash },
-    Finish { id: DeliveryId, attempt: u32, succeeded: bool },
-    Acknowledge { id: DeliveryId, subscriber: PrincipalId, token_digest: ContentHash },
-    InvalidateToken { id: DeliveryId },
-    Expire { id: DeliveryId },
-    Release { artifact: ArtifactRef, quarantine: OpaqueRef, evidence: EvidenceRef },
+    Bind {
+        binding: Box<IngressBinding>,
+    },
+    ChangeBinding {
+        id: IngressBindingId,
+        expected: u64,
+        status: BindingStatus,
+    },
+    Admit {
+        admission: Box<IngressAdmission>,
+    },
+    AdmitQueued {
+        admission: Box<IngressAdmission>,
+        queue: Vec<QueueObligation>,
+    },
+    RecordQueueTask {
+        id: DeliveryId,
+    },
+    RecordQueueSignal {
+        id: DeliveryId,
+        sequence: u64,
+    },
+    Claim {
+        id: DeliveryId,
+        subscriber: PrincipalId,
+        token_digest: ContentHash,
+    },
+    Finish {
+        id: DeliveryId,
+        attempt: u32,
+        succeeded: bool,
+    },
+    Acknowledge {
+        id: DeliveryId,
+        subscriber: PrincipalId,
+        token_digest: ContentHash,
+    },
+    AcknowledgeQueued {
+        id: DeliveryId,
+        subscriber: PrincipalId,
+        token_digest: ContentHash,
+        signal: AcknowledgmentSignal,
+    },
+    RecordAcknowledgmentSignal {
+        id: DeliveryId,
+        sequence: u64,
+    },
+    InvalidateToken {
+        id: DeliveryId,
+    },
+    Expire {
+        id: DeliveryId,
+    },
+    Release {
+        artifact: ArtifactRef,
+        quarantine: OpaqueRef,
+        evidence: EvidenceRef,
+    },
 }
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 pub enum IngressResult {
@@ -273,8 +351,12 @@ pub fn apply_ingress(
             b.status = status.clone();
             IngressResult::Updated
         }
-        IngressCommand::Admit { admission } => {
+        IngressCommand::Admit { admission } | IngressCommand::AdmitQueued { admission, .. } => {
             let a = admission.as_ref();
+            let queue = match command {
+                IngressCommand::AdmitQueued { queue, .. } => Some(queue),
+                _ => None,
+            };
             validate_profile(&a.profile)?;
             validate_attachments(&a.profile, &a.event)?;
             validate_event_references(&a.profile, &a.event)?;
@@ -324,6 +406,24 @@ pub fn apply_ingress(
                     || s.deliveries.len() + a.deliveries.len() > 10000
                 {
                     return Err("admission capacity or fanout invalid".into());
+                }
+                if let Some(queue) = queue {
+                    if queue.len() != a.deliveries.len()
+                        || queue.iter().zip(&a.deliveries).any(|(q, id)| {
+                            q.version != 1
+                                || &q.delivery != id
+                                || q.task_admitted
+                                || q.signal_sequence.is_some()
+                                || q.task_request.is_empty()
+                                || q.signal_request.is_empty()
+                                || q.task_request.len() > 16384
+                                || q.signal_request.len() > 16384
+                                || ContentHash::of(&q.task_request) != q.task_digest
+                                || ContentHash::of(&q.signal_request) != q.signal_digest
+                        })
+                    {
+                        return Err("invalid immutable queue obligations".into());
+                    }
                 }
                 let expected: Vec<_> = s
                     .bindings
@@ -441,6 +541,11 @@ pub fn apply_ingress(
                         },
                     );
                 }
+                if let Some(queue) = queue {
+                    for q in queue {
+                        s.queue.insert(q.delivery.clone(), q.clone());
+                    }
+                }
                 s.admissions.insert(a.identity.clone(), a.clone());
                 let next = contiguous(&s, &a.profile);
                 let ordering = OrderingEvidence {
@@ -458,6 +563,22 @@ pub fn apply_ingress(
                     contiguous_next: next,
                 }
             }
+        }
+        IngressCommand::RecordQueueTask { id } => {
+            let q = s.queue.get_mut(id).ok_or("unknown queue obligation")?;
+            q.task_admitted = true;
+            IngressResult::Updated
+        }
+        IngressCommand::RecordQueueSignal { id, sequence } => {
+            let q = s.queue.get_mut(id).ok_or("unknown queue obligation")?;
+            if !q.task_admitted
+                || *sequence == 0
+                || q.signal_sequence.is_some_and(|old| old != *sequence)
+            {
+                return Err("invalid queue signal acknowledgment".into());
+            }
+            q.signal_sequence = Some(*sequence);
+            IngressResult::Updated
         }
         IngressCommand::Claim { id, subscriber, token_digest } => {
             let d = s.deliveries.get(id).ok_or("unknown delivery")?;
@@ -504,7 +625,19 @@ pub fn apply_ingress(
             a.status = status;
             IngressResult::Updated
         }
-        IngressCommand::Acknowledge { id, subscriber, token_digest } => {
+        IngressCommand::Acknowledge { id, subscriber, token_digest }
+        | IngressCommand::AcknowledgeQueued { id, subscriber, token_digest, .. } => {
+            if let IngressCommand::AcknowledgeQueued { signal, .. } = command {
+                if signal.version != 1
+                    || signal.delivery != *id
+                    || signal.request.is_empty()
+                    || signal.request.len() > 16384
+                    || signal.digest != ContentHash::of(&signal.request)
+                    || signal.sequence.is_some()
+                {
+                    return Err("invalid acknowledgment signal".into());
+                }
+            }
             let d = s.deliveries.get_mut(id).ok_or("unknown delivery")?;
             if now < state.last_at_ms
                 || &d.subscriber != subscriber
@@ -520,6 +653,16 @@ pub fn apply_ingress(
                 .find(|a| a.token_digest == *token_digest)
                 .ok_or("invalid delivery token")?;
             if let Some(ack) = &d.acknowledgment {
+                if let IngressCommand::AcknowledgeQueued { signal, .. } = command {
+                    if s.acknowledgments_to_signal.get(id) != Some(signal) {
+                        // Once dispatched, the recorded sequence is the only mutable field.
+                        if s.acknowledgments_to_signal.get(id).is_none_or(|old| {
+                            old.request != signal.request || old.digest != signal.digest
+                        }) {
+                            return Err("acknowledgment signal conflict".into());
+                        }
+                    }
+                }
                 return Ok((state.clone(), IngressResult::Acknowledged(ack.clone())));
             }
             let ack = DeliveryAcknowledgment {
@@ -530,7 +673,19 @@ pub fn apply_ingress(
             };
             d.acknowledgment = Some(ack.clone());
             d.state = DeliveryState::Acknowledged;
+            if let IngressCommand::AcknowledgeQueued { signal, .. } = command {
+                s.acknowledgments_to_signal.insert(id.clone(), signal.clone());
+            }
             IngressResult::Acknowledged(ack)
+        }
+        IngressCommand::RecordAcknowledgmentSignal { id, sequence } => {
+            let signal =
+                s.acknowledgments_to_signal.get_mut(id).ok_or("unknown acknowledgment signal")?;
+            if *sequence == 0 || signal.sequence.is_some_and(|old| old != *sequence) {
+                return Err("invalid acknowledgment signal sequence".into());
+            }
+            signal.sequence = Some(*sequence);
+            IngressResult::Updated
         }
         IngressCommand::InvalidateToken { id } => {
             s.deliveries.get_mut(id).ok_or("unknown delivery")?.token_invalidated = true;

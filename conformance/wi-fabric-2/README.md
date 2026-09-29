@@ -1,7 +1,8 @@
 # WI-FABRIC-2 conformance package, revision 1
 
 The package is partially implemented. AB-WI-001, AB-WI-015 and AB-WI-016 register
-WI-02 G1 consumer tests under `crates/worldinterface-runtime`. The unrelated
+WI-02 G1 consumer tests; AB-WI-006, AB-WI-007, AB-WI-009 and AB-WI-022
+register WI-03 ingress candidate tests under `crates/worldinterface-runtime`. The unrelated
 W1–W59 skeleton slots and historical store scenario inputs remain unimplemented;
 they are coverage obligations, not passing runtime evidence. Foundation source
 PR tests and WP-002 definitions remain registered separately in `domain/`.
@@ -15,7 +16,7 @@ rejects planned cases, stale pins, altered artifacts and self-review.
 
 Implementation registration does not assert passing independently accepted case
 receipts. Preserve those external artifacts with the exact candidate revision;
-rerun after integration/rebase. WI-AQ-G1 and parent acceptance remain controller
+rerun after integration/rebase. WI-AQ-G1/G2/G3 and parent acceptance remain controller
 obligations. Native checks use the controller Cargo launcher, which records
 AQ-free foundation/checker graphs as supplementary checks. Integration still
 requires a separate successful build/test receipt against the exact AQ pins.
