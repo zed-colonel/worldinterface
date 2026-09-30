@@ -733,6 +733,413 @@ fn successful_boundary_requires_durable_output_evidence() {
     assert_eq!(v.outcome, Some(o));
 }
 #[test]
+fn receipt_outcome_and_outbox_commit_after_scoped_publication() {
+    let (mut s, mut p) = fixture();
+    s.causal_refs.push(opaque("campaign:permitted"));
+    allow_submission(&mut p, &s);
+    let t = tempfile::tempdir().unwrap();
+    let r = root(&t);
+    let (id, mut o) = start(&r, &s, &p);
+    o.commit = CommitObservation::ConfirmedCommitted;
+    o.outcome = ExecutionOutcome::Succeeded;
+    o.durable_outputs = o.required_outputs.clone();
+    o.boundary_record = Some(p.grants[0].evidence.clone());
+    let make_command = || {
+        let state = r.effect_snapshot(caller(&p).tenant()).unwrap();
+        validate_command(
+            &state,
+            &caller(&p),
+            now(),
+            EffectAction::Outcome {
+                id: id.clone(),
+                evidence: VerifiedOutcome::from_trusted_verifier(o.clone()),
+            },
+        )
+        .unwrap()
+    };
+    let execution = ExecutionRecord {
+        intent_id: id.clone(),
+        attempt: o.attempt.clone(),
+        outcome: o.outcome.clone(),
+        evidence: o.evidence.clone(),
+        recorded_at: now(),
+    };
+    let time = TimeEvidence {
+        at: now(),
+        source: opaque("fixture-clock"),
+        assurance: opaque("fixture"),
+        uncertainty_nanos: 0,
+    };
+    let temporal = TemporalProvenance {
+        occurred_at: None,
+        observed_at: None,
+        received_at: time.clone(),
+        admitted_at: time,
+        dispatched_at: None,
+        committed_at: None,
+        reconciled_at: None,
+        sequence: None,
+    };
+    let receipt_id = ReceiptId::generate();
+    let access = worldinterface_domain::receipt::ReceiptAccess::from_trusted_authorizer(
+        caller(&p).tenant().clone(),
+        caller(&p).principal().clone(),
+        worldinterface_domain::receipt::DisclosureProfile::Full,
+    );
+    let prior = r.effect_snapshot(caller(&p).tenant()).unwrap();
+    assert!(r
+        .effect_transact_with_receipt(
+            &make_command(),
+            receipt_id.clone(),
+            &execution,
+            temporal.clone()
+        )
+        .is_err());
+    assert_eq!(prior, r.effect_snapshot(caller(&p).tenant()).unwrap());
+    assert!(r.inspect_receipt(&access, &receipt_id).unwrap().is_none());
+    r.stage_publication(opaque("output:publication"), opaque("tenant:fixture"), b"output").unwrap();
+    let output = r.publish_staged(&opaque("output:publication"), b"output").unwrap();
+    assert_eq!(output, o.required_outputs[0]);
+    let digest = r
+        .effect_transact_with_receipt(&make_command(), receipt_id.clone(), &execution, temporal)
+        .unwrap();
+    assert_eq!(r.inspect_receipt(&access, &receipt_id).unwrap().unwrap().digest.unwrap(), digest);
+    let summary = worldinterface_domain::receipt::ReceiptAccess::from_trusted_authorizer(
+        caller(&p).tenant().clone(),
+        caller(&p).principal().clone(),
+        worldinterface_domain::receipt::DisclosureProfile::Summary,
+    );
+    let view = r.inspect_receipt(&summary, &receipt_id).unwrap().unwrap();
+    assert_eq!(view.digest, Some(digest.clone()));
+    assert!(view.canonical.is_none() && view.evidence_hashes.is_empty());
+    assert_eq!(view.intent_id, Some(id.clone()));
+    assert_eq!(view.causal_refs, vec![opaque("campaign:permitted")]);
+    let redacted = worldinterface_domain::receipt::ReceiptAccess::from_trusted_authorizer(
+        caller(&p).tenant().clone(),
+        caller(&p).principal().clone(),
+        worldinterface_domain::receipt::DisclosureProfile::Redacted,
+    );
+    let redacted_view = r.inspect_receipt(&redacted, &receipt_id).unwrap().unwrap();
+    assert_eq!(redacted_view.digest, Some(digest));
+    assert!(redacted_view.canonical.is_none());
+    assert_eq!(redacted_view.causal_refs, vec![opaque("campaign:permitted")]);
+    assert!(!redacted_view.evidence_hashes.is_empty());
+    assert!(redacted_view
+        .evidence_hashes
+        .iter()
+        .all(|hash| hash == &o.evidence[0].artifact.content));
+    let foreign = worldinterface_domain::receipt::ReceiptAccess::from_trusted_authorizer(
+        opaque("foreign-tenant"),
+        caller(&p).principal().clone(),
+        worldinterface_domain::receipt::DisclosureProfile::Full,
+    );
+    assert!(r.inspect_receipt(&foreign, &receipt_id).unwrap().is_none());
+    let foreign_redacted = worldinterface_domain::receipt::ReceiptAccess::from_trusted_authorizer(
+        opaque("foreign-tenant"),
+        caller(&p).principal().clone(),
+        worldinterface_domain::receipt::DisclosureProfile::Redacted,
+    );
+    assert!(r.inspect_receipt(&foreign_redacted, &receipt_id).unwrap().is_none());
+    assert_eq!(Egress::new(&r).inspect(&caller(&p), &id).unwrap().phase, Phase::Succeeded);
+    drop(r);
+    let reopened = StoreRoot::open_existing(t.path().join("root")).unwrap();
+    assert!(reopened.inspect_receipt(&access, &receipt_id).unwrap().is_some());
+    let mut forged =
+        reopened.inspect_receipt(&access, &receipt_id).unwrap().unwrap().canonical.unwrap();
+    let Record::BoundaryReceipt(ref mut receipt) = forged.record else { unreachable!() };
+    receipt.id = ReceiptId::generate();
+    let Record::BoundaryReceipt(ref mut receipt) = forged.record else { unreachable!() };
+    let ReceiptBody::Egress(ref mut body) = receipt.body else { unreachable!() };
+    body.agency_digest = ContentHash::of(b"forged-agency");
+    let forged_id = receipt.id.clone();
+    let bytes = forged.canonical_bytes().unwrap();
+    let forged_digest = forged.digest().unwrap();
+    let revision = reopened.effect_snapshot(caller(&p).tenant()).unwrap().revision;
+    drop(reopened);
+    let c = rusqlite::Connection::open(t.path().join("root/fabric.sqlite")).unwrap();
+    c.execute("INSERT INTO receipt_history(id,tenant,intent,source_revision,canonical,digest) VALUES(?,?,?,?,?,?)",
+        rusqlite::params![forged_id.as_str(), caller(&p).tenant().as_str(), id.as_str(), revision, bytes, forged_digest.as_str()]).unwrap();
+    c.execute(
+        "INSERT INTO receipt_index VALUES(?,?,?,?)",
+        rusqlite::params![
+            forged_id.as_str(),
+            forged_digest.as_str(),
+            caller(&p).tenant().as_str(),
+            id.as_str()
+        ],
+    )
+    .unwrap();
+    drop(c);
+    assert!(StoreRoot::open_existing(t.path().join("root")).is_err());
+}
+
+fn receipt_temporal() -> TemporalProvenance {
+    let time = TimeEvidence {
+        at: now(),
+        source: opaque("fixture-clock"),
+        assurance: opaque("fixture"),
+        uncertainty_nanos: 0,
+    };
+    TemporalProvenance {
+        occurred_at: None,
+        observed_at: None,
+        received_at: time.clone(),
+        admitted_at: time,
+        dispatched_at: None,
+        committed_at: None,
+        reconciled_at: None,
+        sequence: None,
+    }
+}
+
+fn receipt_command(
+    r: &StoreRoot,
+    p: &AuthorizationSnapshot,
+    o: &OutcomeEvidence,
+) -> ValidatedEffectCommand {
+    validate_command(
+        &r.effect_snapshot(caller(p).tenant()).unwrap(),
+        &caller(p),
+        now(),
+        EffectAction::Outcome {
+            id: o.intent.clone(),
+            evidence: VerifiedOutcome::from_trusted_verifier(o.clone()),
+        },
+    )
+    .unwrap()
+}
+
+fn execution_for(o: &OutcomeEvidence, evidence: Vec<EvidenceRef>) -> ExecutionRecord {
+    ExecutionRecord {
+        intent_id: o.intent.clone(),
+        attempt: o.attempt.clone(),
+        outcome: o.outcome.clone(),
+        evidence,
+        recorded_at: now(),
+    }
+}
+
+#[test]
+fn historical_receipt_survives_reconciliation_retry_rebuild_and_restore() {
+    let (s, mut p) = fixture();
+    let t = tempfile::tempdir().unwrap();
+    let r = root(&t);
+    let (id, o) = start(&r, &s, &p);
+    let receipt_id = ReceiptId::generate();
+    let original = r
+        .effect_transact_with_receipt(
+            &receipt_command(&r, &p, &o),
+            receipt_id.clone(),
+            &execution_for(&o, o.evidence.clone()),
+            receipt_temporal(),
+        )
+        .unwrap();
+    Egress::new(&r)
+        .apply(
+            &caller(&p),
+            now(),
+            EffectAction::Reconcile {
+                id: id.clone(),
+                evidence: VerifiedReconciliation::from_trusted_verifier(reconciliation(
+                    &p,
+                    &o,
+                    ReconciliationResult::ConfirmedNotCommitted,
+                )),
+            },
+        )
+        .unwrap();
+    p.policy.retry_after_noncommit = true;
+    p.policy.revision = opaque("policy:next");
+    Egress::new(&r)
+        .apply(&caller(&p), now(), EffectAction::PermitRetry { id, snapshot: trusted(&p) })
+        .unwrap();
+    let access = worldinterface_domain::receipt::ReceiptAccess::from_trusted_authorizer(
+        caller(&p).tenant().clone(),
+        caller(&p).principal().clone(),
+        worldinterface_domain::receipt::DisclosureProfile::Full,
+    );
+    drop(r);
+    let path = t.path().join("root");
+    let reopened = StoreRoot::open_existing(&path).unwrap();
+    assert_eq!(
+        reopened.inspect_receipt(&access, &receipt_id).unwrap().unwrap().digest,
+        Some(original.clone())
+    );
+    reopened.repository(StoreKind::Fabric).unwrap().rebuild().unwrap();
+    assert_eq!(
+        reopened.inspect_receipt(&access, &receipt_id).unwrap().unwrap().digest,
+        Some(original.clone())
+    );
+    drop(reopened);
+    StoreRoot::backup_offline(&path, t.path().join("backup")).unwrap();
+    StoreRoot::restore_offline(t.path().join("backup"), t.path().join("restored")).unwrap();
+    let restored = StoreRoot::open_existing(t.path().join("restored")).unwrap();
+    assert_eq!(
+        restored.inspect_receipt(&access, &receipt_id).unwrap().unwrap().digest,
+        Some(original)
+    );
+}
+
+#[test]
+fn exact_receipt_retry_and_conflicting_bindings() {
+    let (s, p) = fixture();
+    let t = tempfile::tempdir().unwrap();
+    let r = root(&t);
+    let (_, o) = start(&r, &s, &p);
+    let cmd = receipt_command(&r, &p, &o);
+    let execution = execution_for(&o, o.evidence.clone());
+    let temporal = receipt_temporal();
+    let id = ReceiptId::generate();
+    let original =
+        r.effect_transact_with_receipt(&cmd, id.clone(), &execution, temporal.clone()).unwrap();
+    drop(r);
+    let r = StoreRoot::open_existing(t.path().join("root")).unwrap();
+    assert_eq!(
+        r.effect_transact_with_receipt(&cmd, id.clone(), &execution, temporal.clone()).unwrap(),
+        original
+    );
+    let mut changed = execution.clone();
+    changed.evidence.clear();
+    assert!(r.effect_transact_with_receipt(&cmd, id.clone(), &changed, temporal.clone()).is_err());
+    let mut changed_time = temporal;
+    changed_time.sequence = Some(opaque("different"));
+    assert!(r.effect_transact_with_receipt(&cmd, id.clone(), &execution, changed_time).is_err());
+    assert!(r
+        .effect_transact_with_receipt(&cmd, ReceiptId::generate(), &execution, receipt_temporal())
+        .is_err());
+}
+
+#[test]
+fn receipt_execution_evidence_is_bounded_by_authoritative_outcome() {
+    let (s, p) = fixture();
+    let t = tempfile::tempdir().unwrap();
+    let r = root(&t);
+    let (_, o) = start(&r, &s, &p);
+    let cmd = receipt_command(&r, &p, &o);
+    let mut foreign = o.evidence[0].clone();
+    foreign.artifact.scope = opaque("another-tenant");
+    let mut invented = o.evidence[0].clone();
+    invented.artifact.content = ContentHash::of(b"invented");
+    for extra in [foreign, invented] {
+        let result = r.effect_transact_with_receipt(
+            &cmd,
+            ReceiptId::generate(),
+            &execution_for(&o, vec![extra]),
+            receipt_temporal(),
+        );
+        assert!(result.is_err());
+    }
+    let id = ReceiptId::generate();
+    r.effect_transact_with_receipt(
+        &cmd,
+        id.clone(),
+        &execution_for(&o, vec![]),
+        receipt_temporal(),
+    )
+    .unwrap();
+    let access = worldinterface_domain::receipt::ReceiptAccess::from_trusted_authorizer(
+        caller(&p).tenant().clone(),
+        caller(&p).principal().clone(),
+        worldinterface_domain::receipt::DisclosureProfile::Full,
+    );
+    let view = r.inspect_receipt(&access, &id).unwrap().unwrap();
+    let Record::BoundaryReceipt(receipt) = view.canonical.unwrap().record else { panic!() };
+    assert_eq!(receipt.evidence, o.evidence);
+    drop(r);
+    StoreRoot::open_existing(t.path().join("root")).unwrap();
+}
+
+#[test]
+fn developmental_comparison_exposes_outcome_and_unknown() {
+    use worldinterface_domain::developmental::{compare_arms, inspect, Comparison};
+    let (s, p) = fixture();
+    let t = tempfile::tempdir().unwrap();
+    let r = root(&t);
+    let (id, _) = start(&r, &s, &p);
+    let state = r.effect_snapshot(caller(&p).tenant()).unwrap();
+    let mut a = inspect(&state.effects[&id], None).unwrap();
+    a.outcome = Some(ExecutionOutcome::Succeeded);
+    a.uncertainty = false;
+    for outcome in [
+        ExecutionOutcome::FailedBeforeCommit,
+        ExecutionOutcome::CanceledBeforeCommit,
+        ExecutionOutcome::Uncertain,
+    ] {
+        let mut b = a.clone();
+        b.outcome = Some(outcome);
+        let compared = compare_arms(&a, &b).unwrap();
+        assert!(compared
+            .fields
+            .iter()
+            .any(|(field, state)| field.as_str() == "outcome" && *state == Comparison::Difference));
+        assert!(compared.confounds.iter().any(|field| field.as_str() == "outcome"));
+    }
+    let mut b = a.clone();
+    b.outcome = None;
+    let compared = compare_arms(&a, &b).unwrap();
+    assert!(compared
+        .fields
+        .iter()
+        .any(|(field, state)| field.as_str() == "outcome" && *state == Comparison::Unknown));
+    let mut b = a.clone();
+    b.commit = CommitObservation::ConfirmedCommitted;
+    b.reconciliation_history = vec![ReconciliationResult::ConfirmedCommitted];
+    let compared = compare_arms(&a, &b).unwrap();
+    for field in ["commit", "reconciliation_history"] {
+        assert!(compared
+            .fields
+            .iter()
+            .any(|(name, state)| name.as_str() == field && *state == Comparison::Difference));
+        assert!(compared.confounds.iter().any(|name| name.as_str() == field));
+    }
+}
+#[test]
+fn developmental_comparison_retains_resolution_and_provider_versions() {
+    use worldinterface_domain::developmental::{compare_arms, inspect, Comparison};
+    let (s, p) = fixture();
+    let mut changed = p.clone();
+    changed.registry.entries[0].version = opaque("resolver:changed");
+    changed.registry.entries[0].descriptor = ContentHash::of(b"descriptor:changed");
+    changed.facts[0].registry = digest(&changed.registry).unwrap();
+    changed.worker.as_mut().unwrap().aq_version = ContentHash::of(b"aq:changed");
+    requalify(&mut changed);
+    let left_dir = tempfile::tempdir().unwrap();
+    let right_dir = tempfile::tempdir().unwrap();
+    let left = root(&left_dir);
+    let right = root(&right_dir);
+    let (left_id, _) = start(&left, &s, &p);
+    let (right_id, _) = start(&right, &s, &changed);
+    let left_state = left.effect_snapshot(caller(&p).tenant()).unwrap();
+    let right_state = right.effect_snapshot(caller(&changed).tenant()).unwrap();
+    let a = inspect(&left_state.effects[&left_id], None).unwrap();
+    let mut b = inspect(&right_state.effects[&right_id], None).unwrap();
+    let comparison = compare_arms(&a, &b).unwrap();
+    for field in ["resolver", "registry", "descriptor", "provider_profile", "aq_revision"] {
+        assert!(
+            comparison
+                .fields
+                .iter()
+                .any(|(name, state)| name.as_str() == field && *state == Comparison::Difference),
+            "{field}: {comparison:?}"
+        );
+    }
+    for field in ["connector", "environment"] {
+        assert!(
+            comparison
+                .fields
+                .iter()
+                .any(|(name, state)| name.as_str() == field && *state == Comparison::Match),
+            "{field}: {comparison:?}"
+        );
+    }
+    b.provider_profile = None;
+    let comparison = compare_arms(&a, &b).unwrap();
+    assert!(comparison
+        .fields
+        .iter()
+        .any(|(name, state)| name.as_str() == "provider_profile" && *state == Comparison::Unknown));
+}
+#[test]
 fn uncertainty_reconciliation_and_retry_require_noncommit_policy_and_authority() {
     for result in [
         ReconciliationResult::StillUncertain,
@@ -928,7 +1335,7 @@ fn unsupported_store_profile_is_rejected_without_upgrade() {
     drop(root(&t));
     let path = t.path().join("root/manifest.json");
     let bytes = std::fs::read(&path).unwrap();
-    let s = String::from_utf8(bytes).unwrap().replace("local-egress-1", "local-ingress-1");
+    let s = String::from_utf8(bytes).unwrap().replace("local-receipt-2", "local-ingress-1");
     std::fs::write(&path, &s).unwrap();
     assert!(StoreRoot::open_existing(t.path().join("root")).is_err());
     assert_eq!(std::fs::read_to_string(path).unwrap(), s);

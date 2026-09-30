@@ -7887,5 +7887,292 @@
     "target": "WI-03 production ingress and exact AQ consumer tests",
     "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
     "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/developmental.rs::::enum:Comparison",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/developmental.rs::::source-module:crates/worldinterface-foundation/domain/src/developmental.rs",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/developmental.rs::::struct:CampaignArmV1",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/developmental.rs::::struct:DevelopmentalComparisonV1",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/developmental.rs::::struct:DevelopmentalSnapshotV1",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/lib.rs::::module:developmental",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/lib.rs::::module:publication",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/lib.rs::::module:receipt",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/publication.rs::::enum:PublicationState",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/publication.rs::::source-module:crates/worldinterface-foundation/domain/src/publication.rs",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/publication.rs::::struct:Publication",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/receipt.rs::::enum:DisclosureProfile",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/receipt.rs::::source-module:crates/worldinterface-foundation/domain/src/receipt.rs",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/receipt.rs::::struct:ReceiptAccess",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/receipt.rs::::struct:ReceiptView",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/receipt.rs::::struct:ValidatedReceipt",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/tests/developmental.rs::::source-module:crates/worldinterface-foundation/domain/tests/developmental.rs",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/evidence.rs::::enum:EvidenceClass",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/evidence.rs::::source-module:crates/worldinterface-foundation/protocol/src/evidence.rs",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/evidence.rs::::struct:ClassifiedEvidenceV1",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/evidence.rs::::struct:CompletenessClaimV1",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/evidence.rs::::struct:EvidenceGapV1",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/lib.rs::::module:evidence",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/lib.rs::::module:receipt",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/receipt.rs::::enum:ProofBundleKind",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/receipt.rs::::source-module:crates/worldinterface-foundation/protocol/src/receipt.rs",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/receipt.rs::::struct:ProofBundleV1",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/receipt.rs::::struct:SigningProofV1",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/lib.rs::::module:publication",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/lib.rs::::module:receipt",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/publication.rs::::source-module:crates/worldinterface-foundation/storage/src/publication.rs",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/receipt.rs::::source-module:crates/worldinterface-foundation/storage/src/receipt.rs",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/receipt.rs::::type:ExistingRow",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain private durable receipt transaction row binding; no runtime admission or production authority is introduced."
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/receipt.rs::::type:RetryRow",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain private durable receipt transaction row binding; no runtime admission or production authority is introduced."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/evidence.rs::::enum:VerificationStatus",
+    "disposition": "retain-align",
+    "target": "WI-05 worker evidence domain WP-015/WP-016",
+    "source": "implementation plan WI-05; WI-WORKER-EXECUTION-1 WP-015/WP-016; WI-ADR-016",
+    "rationale": "Keep exact-profile incomplete worker and enclosing-instance evidence separate; fixture proof grants no ordinary provider admission."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/evidence.rs::::source-module:crates/worldinterface-foundation/worker/src/evidence.rs",
+    "disposition": "retain-align",
+    "target": "WI-05 worker evidence domain WP-015/WP-016",
+    "source": "implementation plan WI-05; WI-WORKER-EXECUTION-1 WP-015/WP-016; WI-ADR-016",
+    "rationale": "Keep exact-profile incomplete worker and enclosing-instance evidence separate; fixture proof grants no ordinary provider admission."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/evidence.rs::::struct:EnclosingInstanceEvidenceV1",
+    "disposition": "retain-align",
+    "target": "WI-05 worker evidence domain WP-015/WP-016",
+    "source": "implementation plan WI-05; WI-WORKER-EXECUTION-1 WP-015/WP-016; WI-ADR-016",
+    "rationale": "Keep exact-profile incomplete worker and enclosing-instance evidence separate; fixture proof grants no ordinary provider admission."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/evidence.rs::::struct:ExactWorkerBindingV1",
+    "disposition": "retain-align",
+    "target": "WI-05 worker evidence domain WP-015/WP-016",
+    "source": "implementation plan WI-05; WI-WORKER-EXECUTION-1 WP-015/WP-016; WI-ADR-016",
+    "rationale": "Keep exact-profile incomplete worker and enclosing-instance evidence separate; fixture proof grants no ordinary provider admission."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/evidence.rs::::struct:WorkerEvidenceReportV1",
+    "disposition": "retain-align",
+    "target": "WI-05 worker evidence domain WP-015/WP-016",
+    "source": "implementation plan WI-05; WI-WORKER-EXECUTION-1 WP-015/WP-016; WI-ADR-016",
+    "rationale": "Keep exact-profile incomplete worker and enclosing-instance evidence separate; fixture proof grants no ordinary provider admission."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/lib.rs::::module:evidence",
+    "disposition": "retain-align",
+    "target": "WI-05 worker evidence domain WP-015/WP-016",
+    "source": "implementation plan WI-05; WI-WORKER-EXECUTION-1 WP-015/WP-016; WI-ADR-016",
+    "rationale": "Keep exact-profile incomplete worker and enclosing-instance evidence separate; fixture proof grants no ordinary provider admission."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/tests/evidence.rs::::source-module:crates/worldinterface-foundation/worker/tests/evidence.rs",
+    "disposition": "retain-align",
+    "target": "WI-05 worker evidence domain WP-015/WP-016",
+    "source": "implementation plan WI-05; WI-WORKER-EXECUTION-1 WP-015/WP-016; WI-ADR-016",
+    "rationale": "Keep exact-profile incomplete worker and enclosing-instance evidence separate; fixture proof grants no ordinary provider admission."
   }
 ]

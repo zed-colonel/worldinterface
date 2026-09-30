@@ -6,6 +6,16 @@ use std::{
     process::{Command, Stdio},
     time::{Duration, Instant},
 };
+use worldinterface_domain::{
+    agency::AuthenticatedCaller,
+    authorization::{AuthorizationSnapshot, VerifiedSnapshot},
+    effect::{
+        validate_command, CommitObservation, EffectAction, OutcomeEvidence, ValidatedEffectCommand,
+        VerifiedOutcome,
+    },
+    ingress::digest,
+    ports::EffectAcknowledgment,
+};
 use worldinterface_domain::{Action, Event, Machine};
 use worldinterface_protocol::*;
 pub(crate) fn checkpoint(name: &str) {
@@ -77,13 +87,249 @@ fn child() {
         StoreRoot::backup_offline(path, path.with_extension("backup")).unwrap();
     } else {
         let root = StoreRoot::open_existing(path).unwrap();
-        if point == "artifact-durable" {
+        if point.starts_with("publication-") {
+            if point == "publication-identified" {
+                root.stage_publication(
+                    "publication:1".to_string().try_into().unwrap(),
+                    "tenant".to_string().try_into().unwrap(),
+                    b"bytes",
+                )
+                .unwrap();
+            } else {
+                root.publish_staged(&"publication:1".to_string().try_into().unwrap(), b"bytes")
+                    .unwrap();
+            }
+        } else if point == "artifact-durable" {
             root.publish("tenant".to_string().try_into().unwrap(), b"bytes").unwrap();
+        } else if point.starts_with("fabric-receipt-") {
+            let (command, id, execution, temporal) = fabric_receipt_inputs(&root, path);
+            root.effect_transact_with_receipt(&command, id, &execution, temporal).unwrap();
         } else {
             submit(&root);
         }
     }
     panic!("child did not reach requested barrier");
+}
+
+fn fabric_fixture() -> (EffectSubmission, AuthorizationSnapshot) {
+    let fixture: serde_json::Value = serde_json::from_str(include_str!(
+        "../../../../../conformance/wi-fabric-2/egress/fixture.json"
+    ))
+    .unwrap();
+    (
+        serde_json::from_value(fixture["submission"].clone()).unwrap(),
+        serde_json::from_value(fixture["snapshot"].clone()).unwrap(),
+    )
+}
+
+fn fabric_caller(p: &AuthorizationSnapshot) -> AuthenticatedCaller {
+    AuthenticatedCaller::from_trusted_authentication(
+        p.bindings[0].tenant.clone(),
+        p.bindings[0].principal.clone(),
+    )
+}
+
+fn fabric_apply(root: &StoreRoot, p: &AuthorizationSnapshot, action: EffectAction) {
+    let caller = fabric_caller(p);
+    let command = validate_command(
+        &root.effect_snapshot(caller.tenant()).unwrap(),
+        &caller,
+        profile().created_at,
+        action,
+    )
+    .unwrap();
+    root.effect_transact(&command).unwrap();
+}
+
+fn prepare_fabric_receipt(root: &StoreRoot, path: &Path) -> (OpaqueRef, ReceiptId) {
+    let (submission, p) = fabric_fixture();
+    let tenant = p.bindings[0].tenant.clone();
+    for name in [
+        "input",
+        "executable",
+        "dependency",
+        "configuration",
+        "profile-definition",
+        "adapter",
+        "resolution",
+        "grant",
+        "fixture-review",
+        "worker",
+    ] {
+        root.publish(tenant.clone(), name.as_bytes()).unwrap();
+    }
+    let id = EffectIntentId::generate();
+    let snapshot = || VerifiedSnapshot::from_trusted_verifier(p.clone()).unwrap();
+    fabric_apply(
+        root,
+        &p,
+        EffectAction::Submit {
+            id: id.clone(),
+            submission: Box::new(submission),
+            snapshot: snapshot(),
+            link: None,
+        },
+    );
+    fabric_apply(root, &p, EffectAction::Resolve { id: id.clone(), snapshot: snapshot() });
+    fabric_apply(root, &p, EffectAction::Authorize { id: id.clone(), snapshot: snapshot() });
+    fabric_apply(root, &p, EffectAction::Prepare { id: id.clone(), snapshot: snapshot() });
+    let state = root.effect_snapshot(&tenant).unwrap();
+    let request = &state.effects[&id].dispatches[0].request;
+    let ack = EffectAcknowledgment {
+        task: request.task.clone(),
+        admission_key: request.admission_key.clone(),
+        request_digest: digest(request).unwrap(),
+        durable_sequence: 1,
+    };
+    fabric_apply(root, &p, EffectAction::Acknowledge { id: id.clone(), acknowledgment: ack });
+    fabric_apply(
+        root,
+        &p,
+        EffectAction::Start {
+            id,
+            snapshot: snapshot(),
+            attempt: "attempt:1".to_string().try_into().unwrap(),
+        },
+    );
+    let receipt_id = ReceiptId::generate();
+    fs::write(path.with_extension("receipt-id"), receipt_id.as_str()).unwrap();
+    (tenant, receipt_id)
+}
+
+fn fabric_receipt_inputs(
+    root: &StoreRoot,
+    path: &Path,
+) -> (ValidatedEffectCommand, ReceiptId, ExecutionRecord, TemporalProvenance) {
+    let (_, p) = fabric_fixture();
+    let caller = fabric_caller(&p);
+    let state = root.effect_snapshot(caller.tenant()).unwrap();
+    let effect = state.effects.values().next().unwrap();
+    let id = effect.intent.id.clone();
+    let outcome = OutcomeEvidence {
+        intent: id.clone(),
+        attempt: "attempt:1".to_string().try_into().unwrap(),
+        connector_semantics: p.registry.entries[0].semantics.clone(),
+        commit: CommitObservation::Unknown,
+        outcome: ExecutionOutcome::Uncertain,
+        evidence: vec![p.grants[0].evidence.clone()],
+        required_outputs: p.required_outputs.clone(),
+        durable_outputs: vec![],
+        boundary_record: None,
+    };
+    let command = validate_command(
+        &state,
+        &caller,
+        profile().created_at,
+        EffectAction::Outcome {
+            id: id.clone(),
+            evidence: VerifiedOutcome::from_trusted_verifier(outcome.clone()),
+        },
+    )
+    .unwrap();
+    let execution = ExecutionRecord {
+        intent_id: id,
+        attempt: outcome.attempt,
+        outcome: outcome.outcome,
+        evidence: outcome.evidence,
+        recorded_at: profile().created_at,
+    };
+    let time = TimeEvidence {
+        at: profile().created_at,
+        source: "fixture".to_string().try_into().unwrap(),
+        assurance: "fixture".to_string().try_into().unwrap(),
+        uncertainty_nanos: 0,
+    };
+    let temporal = TemporalProvenance {
+        occurred_at: None,
+        observed_at: None,
+        received_at: time.clone(),
+        admitted_at: time,
+        dispatched_at: None,
+        committed_at: None,
+        reconciled_at: None,
+        sequence: None,
+    };
+    let receipt_id =
+        fs::read_to_string(path.with_extension("receipt-id")).unwrap().try_into().unwrap();
+    (command, receipt_id, execution, temporal)
+}
+
+#[test]
+fn killed_fabric_receipt_transaction_recovers_all_or_none_and_retries() {
+    for point in [
+        "fabric-receipt-history",
+        "fabric-receipt-outbox",
+        "fabric-receipt-index",
+        "fabric-receipt-committed",
+    ] {
+        let t = tempfile::tempdir().unwrap();
+        let path = t.path().join("root");
+        let root = StoreRoot::create_empty(&path, profile()).unwrap();
+        let (tenant, receipt_id) = prepare_fabric_receipt(&root, &path);
+        let (command, _, execution, temporal) = fabric_receipt_inputs(&root, &path);
+        let before = root.effect_snapshot(&tenant).unwrap();
+        drop(root);
+        kill_at(&path, point);
+        let root = StoreRoot::open_existing(&path).unwrap();
+        let committed = point == "fabric-receipt-committed";
+        let after = root.effect_snapshot(&tenant).unwrap();
+        let c = root.connect(StoreKind::Fabric).unwrap();
+        let count: u64 =
+            c.query_row("SELECT count(*) FROM receipt_history", [], |r| r.get(0)).unwrap();
+        let indexed: u64 =
+            c.query_row("SELECT count(*) FROM receipt_index", [], |r| r.get(0)).unwrap();
+        let histories: u64 =
+            c.query_row("SELECT count(*) FROM effect_history", [], |r| r.get(0)).unwrap();
+        assert_eq!(
+            (count, indexed, histories),
+            (u64::from(committed), u64::from(committed), before.revision + u64::from(committed)),
+            "{point}"
+        );
+        assert_eq!(after.revision, before.revision + u64::from(committed));
+        assert_eq!(after.effects.values().next().unwrap().outcomes.len(), usize::from(committed));
+        root.repository(StoreKind::Fabric).unwrap().rebuild().unwrap();
+        let digest = root
+            .effect_transact_with_receipt(
+                &command,
+                receipt_id.clone(),
+                &execution,
+                temporal.clone(),
+            )
+            .unwrap();
+        assert_eq!(
+            root.effect_transact_with_receipt(&command, receipt_id, &execution, temporal).unwrap(),
+            digest
+        );
+        drop(root);
+        StoreRoot::backup_offline(&path, t.path().join("backup")).unwrap();
+        StoreRoot::restore_offline(t.path().join("backup"), t.path().join("restored")).unwrap();
+        StoreRoot::open_existing(t.path().join("restored")).unwrap();
+    }
+}
+#[test]
+fn killed_publication_resumes_from_each_durable_boundary() {
+    for point in ["publication-identified", "publication-durable", "publication-availability"] {
+        let t = tempfile::tempdir().unwrap();
+        let path = t.path().join("root");
+        let root = StoreRoot::create_empty(&path, profile()).unwrap();
+        if point != "publication-identified" {
+            root.stage_publication(
+                "publication:1".to_string().try_into().unwrap(),
+                "tenant".to_string().try_into().unwrap(),
+                b"bytes",
+            )
+            .unwrap();
+        }
+        drop(root);
+        kill_at(&path, point);
+        let root = StoreRoot::open_existing(&path).unwrap();
+        let reference = root
+            .publish_staged(&"publication:1".to_string().try_into().unwrap(), b"bytes")
+            .unwrap();
+        assert_eq!(root.read_artifact(&reference).unwrap(), b"bytes");
+        drop(root);
+        StoreRoot::open_existing(&path).unwrap();
+    }
 }
 fn kill_at(path: &Path, point: &str) {
     kill_at_with_preload(path, point, None);

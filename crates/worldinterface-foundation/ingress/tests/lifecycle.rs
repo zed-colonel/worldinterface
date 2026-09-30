@@ -582,12 +582,25 @@ fn old_manifest_profile_rejects_without_modification() {
     drop(s.root);
     let manifest = path.join("manifest.json");
     let old =
-        std::fs::read_to_string(&manifest).unwrap().replace("local-egress-1", "local-domain-1");
+        std::fs::read_to_string(&manifest).unwrap().replace("local-receipt-2", "local-domain-1");
     std::fs::write(&manifest, &old).unwrap();
     let db = std::fs::read(path.join("fabric.sqlite")).unwrap();
     assert!(StoreRoot::open_existing(&path).is_err());
     assert_eq!(std::fs::read_to_string(&manifest).unwrap(), old);
     assert_eq!(std::fs::read(path.join("fabric.sqlite")).unwrap(), db);
+}
+
+#[test]
+fn admitted_ingress_receipt_uses_canonical_receipt_profile() {
+    let s = Setup::new();
+    let event = s.event("event:canonical-receipt", 1);
+    s.admit(&event, 1000);
+    let receipt = s.state().admissions.values().next().unwrap().receipt.clone();
+    assert_eq!(receipt.profile.as_str(), worldinterface_protocol::receipt::BOUNDARY_PROFILE);
+    assert_eq!(receipt.versions.policy, s.b.policy.version);
+    let envelope = Envelope::new(Record::BoundaryReceipt(receipt));
+    let canonical = envelope.canonical_bytes().unwrap();
+    assert_eq!(Envelope::parse_receipt(&canonical).unwrap(), envelope);
 }
 
 #[test]

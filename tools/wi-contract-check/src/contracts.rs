@@ -359,6 +359,7 @@ fn egress_approval_pin(id: &str) -> Option<&'static str> {
         "WI-ADR-006" => Some("2a826c9234ab0aebf218f95b679f13fbbca6036762e21c9ade1f771586f0b4c0"),
         "WI-ADR-007" => Some("885e1f5d78dd2c1076c60a9ed7f135f3f2f40de09675d75fb3b69b21ce45eb64"),
         "WI-ADR-008" => Some("81c1e9d516c944c77988c40c0720c0baf4e7844acd95498b60fb085591d73141"),
+        "WI-ADR-009" => Some("d67e5134bf562223b46b57c910d0cdd5ad1c4ff49d05799d97bc407a98346701"),
         "WI-ADR-010" => Some("858084bb5a3cc73d4b77be4839f507a44a4b9fc2d1f24629bd1be808955339f0"),
         _ => None,
     }
@@ -509,6 +510,7 @@ pub fn docs(root: &Path) -> Result<Vec<Finding>> {
                     | "WI-ADR-006"
                     | "WI-ADR-007"
                     | "WI-ADR-008"
+                    | "WI-ADR-009"
                     | "WI-ADR-010"
                     | "WI-ADR-012"
                     | "WI-ADR-013"

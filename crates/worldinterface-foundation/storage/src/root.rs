@@ -162,7 +162,7 @@ impl StoreRoot {
             contract: CONTRACT.into(),
             schema: 1,
             canonical_profile: CANONICAL_PROFILE.into(),
-            feature_profile: "local-egress-1".into(),
+            feature_profile: "local-receipt-2".into(),
             stores: kinds(profile.platform),
             profile,
             complete: true,
@@ -224,7 +224,7 @@ impl StoreRoot {
             || manifest.contract != CONTRACT
             || manifest.schema != 1
             || manifest.canonical_profile != CANONICAL_PROFILE
-            || manifest.feature_profile != "local-egress-1"
+            || manifest.feature_profile != "local-receipt-2"
             || !manifest.complete
             || manifest.stores != kinds(manifest.profile.platform)
             || path.join("initializing").exists()
@@ -346,6 +346,7 @@ impl StoreRoot {
         }
         root.validate_artifacts()?;
         root.validate_effect_artifacts()?;
+        root.validate_receipt_artifacts()?;
         Ok(root)
     }
     pub fn profile(&self) -> &StoreProfile {

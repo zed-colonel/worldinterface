@@ -82,7 +82,14 @@ for case in worker_coverage["cases"]:
     assert case["package"] == "worldinterface-worker"
     assert any(re.search(r"#\[test\]\s*fn\s+" + re.escape(case["test"]) + r"\s*\(", p.read_text())
                for p in (root / "crates/worldinterface-foundation/worker/tests").rglob("*.rs")), case
-print(json.dumps({"scopes": ["wi/WI-02/domain", "wi/WI-03/domain", "wi/WI-04/domain", "wi/WI-09/domain"], "isolation": "passed", "aq_packages": [],
+receipt_coverage = json.loads((root / "conformance/wi-fabric-2/receipts/coverage.json").read_text())
+assert receipt_coverage["scope"] == "wi/WI-05/domain" and receipt_coverage["upstream_conformance"] is False
+assert set(receipt_coverage["assigned_cases"]) == {"WP-015", "WP-016"}
+for obligation in receipt_coverage["obligations"]:
+    directory = root / "crates/worldinterface-foundation" / obligation["package"]
+    assert any(re.search(r"#\[test\]\s*fn\s+" + re.escape(obligation["test"]) + r"\s*\(", p.read_text())
+               for p in directory.rglob("*.rs")), obligation
+print(json.dumps({"scopes": ["wi/WI-02/domain", "wi/WI-03/domain", "wi/WI-04/domain", "wi/WI-05/domain", "wi/WI-09/domain"], "isolation": "passed", "aq_packages": [],
                   "production_adapter": False, "runtime_conformance": False,
                   "fixtures": {str(p.relative_to(fixture_dir.parent)): hashlib.sha256(p.read_bytes()).hexdigest()
                                for p in sorted(fixture_dir.parent.glob("*/**/*.json"))}}, sort_keys=True))

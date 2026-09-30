@@ -20,6 +20,33 @@ fn snapshot(c: &Connection, tenant: &OpaqueRef) -> Result<EffectState> {
         |b| Ok(serde_json::from_value(strict_collection(&b).map_err(invalid)?)?),
     )
 }
+pub(crate) fn snapshot_for_replay(c: &Connection, tenant: &OpaqueRef) -> Result<EffectState> {
+    snapshot(c, tenant)
+}
+pub(crate) fn snapshot_at_revision(
+    c: &Connection,
+    tenant: &OpaqueRef,
+    revision: u64,
+) -> Result<EffectState> {
+    let mut state = EffectState::default();
+    let mut query = c.prepare(
+        "SELECT revision,entry FROM effect_history WHERE tenant=? AND revision<=? ORDER BY revision",
+    )?;
+    let entries = query.query_map(params![tenant.as_str(), revision], |row| {
+        Ok((row.get::<_, u64>(0)?, row.get::<_, Vec<u8>>(1)?))
+    })?;
+    for entry in entries {
+        let (number, bytes) = entry?;
+        if number != state.revision + 1 {
+            return Err(invalid("effect history gap"));
+        }
+        state = replay_command(&state, tenant, &bytes).map_err(invalid)?.0;
+    }
+    if state.revision != revision {
+        return Err(invalid("missing receipt source revision"));
+    }
+    Ok(state)
+}
 fn write(c: &Connection, tenant: &OpaqueRef, s: &EffectState, fault: Option<&str>) -> Result<()> {
     c.execute("INSERT INTO effect_state VALUES(?,?) ON CONFLICT(tenant) DO UPDATE SET state=excluded.state",params![tenant.as_str(),canonical_collection(s).map_err(invalid)?])?;
     if fault == Some("state") {
@@ -84,6 +111,73 @@ impl StoreRoot {
             self.read_artifact(reference)?;
         }
         transact(&mut self.connect(StoreKind::Fabric)?, command, None)
+    }
+    /// Commits a local outcome, receipt and effect outbox in one Fabric transaction.
+    /// This is a domain seam; it does not acknowledge an AQ attempt.
+    pub fn effect_transact_with_receipt(
+        &self,
+        command: &ValidatedEffectCommand,
+        receipt_id: ReceiptId,
+        execution: &ExecutionRecord,
+        temporal: TemporalProvenance,
+    ) -> Result<ContentHash> {
+        let mut c = self.connect(StoreKind::Fabric)?;
+        let tx = c.transaction_with_behavior(TransactionBehavior::Immediate)?;
+        let tenant = command.tenant();
+        if let Some(digest) =
+            crate::receipt::exact_retry(&tx, tenant, command, &receipt_id, execution, &temporal)?
+        {
+            return Ok(digest);
+        }
+        let old = snapshot(&tx, tenant)?;
+        let (new, id) = replay_command(&old, tenant, command.bytes()).map_err(invalid)?;
+        if new.revision == old.revision {
+            return Err(invalid("receipt command already applied; inspect immutable receipt"));
+        }
+        let aggregate = new.effects.get(&id).ok_or_else(|| invalid("missing effect"))?;
+        let receipt = worldinterface_domain::receipt::prepare_egress_receipt(
+            aggregate,
+            new.revision,
+            receipt_id,
+            execution,
+            temporal,
+        )
+        .map_err(invalid)?;
+        let Record::BoundaryReceipt(ref r) = receipt.envelope().record else { unreachable!() };
+        let ReceiptBody::Egress(ref body) = r.body else { unreachable!() };
+        for reference in &body.output_refs {
+            self.read_artifact(reference)?;
+        }
+        for reference in &r.evidence {
+            if reference.artifact.scope != *tenant {
+                return Err(invalid("receipt evidence scope"));
+            }
+            self.read_artifact(&reference.artifact)?;
+        }
+        for reference in worldinterface_domain::effect::required_artifacts(aggregate) {
+            self.read_artifact(reference)?;
+        }
+        tx.execute(
+            "INSERT INTO effect_history(tenant,revision,entry,digest) VALUES(?,?,?,?)",
+            params![
+                tenant.as_str(),
+                new.revision,
+                command.bytes(),
+                ContentHash::of(command.bytes()).as_str()
+            ],
+        )?;
+        #[cfg(test)]
+        crate::crash::checkpoint("fabric-receipt-history");
+        write(&tx, tenant, &new, None)?;
+        #[cfg(test)]
+        crate::crash::checkpoint("fabric-receipt-outbox");
+        let digest = crate::receipt::insert(&tx, tenant, &receipt, execution)?;
+        #[cfg(test)]
+        crate::crash::checkpoint("fabric-receipt-index");
+        tx.commit()?;
+        #[cfg(test)]
+        crate::crash::checkpoint("fabric-receipt-committed");
+        Ok(digest)
     }
 }
 impl StoreRoot {

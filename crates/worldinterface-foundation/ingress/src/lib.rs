@@ -242,7 +242,10 @@ impl<'a> Ingress<'a> {
         let profile_hash = digest(&profile).map_err(error)?;
         let receipt = BoundaryReceipt {
             id: ids.receipt,
-            profile: profile.version.clone(),
+            profile: worldinterface_protocol::receipt::BOUNDARY_PROFILE
+                .to_string()
+                .try_into()
+                .map_err(error)?,
             versions: BoundaryVersions {
                 resolver: binding.resolver_version.clone(),
                 capability_descriptor: profile_hash.clone(),
@@ -267,6 +270,7 @@ impl<'a> Ingress<'a> {
             evidence,
             causal_refs: vec![],
         };
+        worldinterface_protocol::receipt::validate_receipt(&receipt).map_err(error)?;
         let tenant = profile.scope.tenant.clone();
         let admission = IngressAdmission {
             identity,

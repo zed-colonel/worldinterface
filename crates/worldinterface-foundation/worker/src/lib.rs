@@ -2,6 +2,7 @@
 pub mod artifacts;
 pub mod controls;
 pub mod credential;
+pub mod evidence;
 pub mod lifecycle;
 pub mod mapping;
 pub mod ports;

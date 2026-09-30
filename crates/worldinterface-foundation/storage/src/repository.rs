@@ -21,6 +21,14 @@ CREATE TABLE records(seq INTEGER PRIMARY KEY, entity TEXT NOT NULL, digest TEXT 
 CREATE TABLE admissions(scope TEXT NOT NULL, principal TEXT NOT NULL, class TEXT NOT NULL, request TEXT NOT NULL, digest TEXT NOT NULL, entity TEXT NOT NULL, PRIMARY KEY(scope,principal,class,request));
 CREATE TABLE outbox(key TEXT PRIMARY KEY, entity TEXT NOT NULL, payload TEXT NOT NULL, delivered INTEGER NOT NULL CHECK(delivered IN (0,1)));
 CREATE TABLE artifacts(scope TEXT NOT NULL, content TEXT NOT NULL, size INTEGER NOT NULL, PRIMARY KEY(scope,content));
+CREATE TABLE publication_history(seq INTEGER PRIMARY KEY, identity TEXT NOT NULL, entry BLOB NOT NULL, digest TEXT NOT NULL);
+CREATE TRIGGER publication_no_update BEFORE UPDATE ON publication_history BEGIN SELECT RAISE(ABORT,'append only'); END;
+CREATE TRIGGER publication_no_delete BEFORE DELETE ON publication_history BEGIN SELECT RAISE(ABORT,'append only'); END;
+CREATE TABLE publication_index(identity TEXT PRIMARY KEY, scope TEXT NOT NULL, content TEXT NOT NULL, size INTEGER NOT NULL, state TEXT NOT NULL);
+CREATE TABLE receipt_history(seq INTEGER PRIMARY KEY, id TEXT NOT NULL UNIQUE, tenant TEXT NOT NULL, intent TEXT NOT NULL, source_revision INTEGER NOT NULL, canonical BLOB NOT NULL, digest TEXT NOT NULL, execution BLOB NOT NULL DEFAULT X'', execution_digest TEXT NOT NULL DEFAULT '');
+CREATE TRIGGER receipt_no_update BEFORE UPDATE ON receipt_history BEGIN SELECT RAISE(ABORT,'append only'); END;
+CREATE TRIGGER receipt_no_delete BEFORE DELETE ON receipt_history BEGIN SELECT RAISE(ABORT,'append only'); END;
+CREATE TABLE receipt_index(id TEXT PRIMARY KEY, digest TEXT NOT NULL, tenant TEXT NOT NULL, intent TEXT NOT NULL);
 ";
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -199,6 +207,9 @@ fn apply(c: &Connection, b: &Batch, fault: Option<&str>) -> Result<()> {
 }
 fn append(c: &mut Connection, b: &Batch, fault: Option<&str>) -> Result<()> {
     let tx = c.transaction_with_behavior(TransactionBehavior::Immediate)?;
+    if b.records.iter().any(|r| matches!(r.record, Record::BoundaryReceipt(_))) {
+        return Err(invalid("receipts require guarded Fabric publication"));
+    }
     crate::effect::reject_generic(&tx, b)?;
     append_in(&tx, b, fault)?;
     tx.commit()?;
@@ -321,10 +332,12 @@ impl Repository<'_> {
     pub fn rebuild(&self) -> Result<()> {
         let mut c = self.root.connect(self.kind)?;
         let tx = c.transaction_with_behavior(TransactionBehavior::Immediate)?;
-        tx.execute_batch("DELETE FROM projections; DELETE FROM records; DELETE FROM admissions; DELETE FROM outbox; DELETE FROM ingress_state; DELETE FROM effect_state; DELETE FROM effect_outbox;")?;
+        tx.execute_batch("DELETE FROM projections; DELETE FROM records; DELETE FROM admissions; DELETE FROM outbox; DELETE FROM ingress_state; DELETE FROM effect_state; DELETE FROM effect_outbox; DELETE FROM publication_index; DELETE FROM receipt_index;")?;
         replay_into(&tx, &tx)?;
         crate::ingress::replay(&tx, &tx)?;
         crate::effect::replay(&tx, &tx)?;
+        crate::publication::replay(&tx, &tx)?;
+        crate::receipt::replay(&tx, &tx)?;
         tx.commit()?;
         #[cfg(test)]
         crate::crash::checkpoint("after-commit");
@@ -367,7 +380,9 @@ pub(crate) fn validate_database(c: &Connection) -> Result<()> {
     replay_into(c, &expected)?;
     crate::ingress::replay(c, &expected)?;
     crate::effect::replay(c, &expected)?;
-    for query in ["SELECT tenant,state FROM effect_state ORDER BY tenant", "SELECT tenant,intent,dispatch FROM effect_outbox ORDER BY tenant,intent", "SELECT tenant,state FROM ingress_state ORDER BY tenant", "SELECT entity,revision,state FROM projections ORDER BY entity", "SELECT entity,digest,canonical FROM records ORDER BY seq", "SELECT scope,principal,class,request,digest,entity FROM admissions ORDER BY scope,principal,class,request", "SELECT key,entity,payload,delivered FROM outbox ORDER BY key"] {
+    crate::publication::replay(c, &expected)?;
+    crate::receipt::replay(c, &expected)?;
+    for query in ["SELECT tenant,state FROM effect_state ORDER BY tenant", "SELECT tenant,intent,dispatch FROM effect_outbox ORDER BY tenant,intent", "SELECT tenant,state FROM ingress_state ORDER BY tenant", "SELECT entity,revision,state FROM projections ORDER BY entity", "SELECT entity,digest,canonical FROM records ORDER BY seq", "SELECT scope,principal,class,request,digest,entity FROM admissions ORDER BY scope,principal,class,request", "SELECT key,entity,payload,delivered FROM outbox ORDER BY key", "SELECT identity,scope,content,size,state FROM publication_index ORDER BY identity", "SELECT id,digest,tenant,intent FROM receipt_index ORDER BY id"] {
   fn values(c: &Connection, sql: &str) -> Result<Vec<Vec<rusqlite::types::Value>>> {
    let mut q=c.prepare(sql)?; let n=q.column_count();
    let rows=q.query_map([],|r|(0..n).map(|i|r.get(i)).collect::<rusqlite::Result<Vec<_>>>())?;
