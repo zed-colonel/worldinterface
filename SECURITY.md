@@ -20,8 +20,8 @@ plan within 7 days for critical issues.
 
 ## Scope
 
-WorldInterface is designed as an embedded/single-node workflow engine. The current
-security posture assumes trusted-network deployment:
+The historical runtime is an embedded/single-node workflow engine with a
+trusted-network deployment assumption:
 
 - Default bind: localhost only (`127.0.0.1:7800`)
 - No built-in authentication on HTTP endpoints (expected to be fronted by a
@@ -31,6 +31,12 @@ security posture assumes trusted-network deployment:
   control should be enforced at the FlowSpec validation or runtime policy layer
 - The HTTP connector (`http.request`) does not restrict target URLs — network-level
   controls or allowlists should be applied in production
+
+The WI-FABRIC-2 target effect path instead requires trusted authentication,
+server-owned agency and evidence, exact canonical resource resolution, and a
+dispatch-time comparison against the authorized target. The new embedded effect
+service is not an HTTP authentication middleware; the daemon composition belongs
+to WI-11. A host must supply verified authority and live resolver adapters.
 
 ## Supported Versions
 

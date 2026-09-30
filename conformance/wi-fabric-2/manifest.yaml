@@ -12,11 +12,14 @@
   },
   "assigned_aq_baseline_cases": [
     "AB-WI-001",
-    "AB-WI-015",
-    "AB-WI-016",
+    "AB-WI-002",
+    "AB-WI-003",
+    "AB-WI-004",
     "AB-WI-006",
     "AB-WI-007",
     "AB-WI-009",
+    "AB-WI-015",
+    "AB-WI-016",
     "AB-WI-022"
   ],
   "fixture_manifest": "fixtures/pre-wi-fabric-2/manifest.json",
@@ -587,6 +590,39 @@
       "test_source": "crates/worldinterface-runtime/tests/integration.rs"
     },
     {
+      "id": "AB-WI-002",
+      "invariants": [
+        "W1"
+      ],
+      "status": "implemented",
+      "kind": "runtime",
+      "result": null,
+      "source_record_sha256": "0a25734a2d94cee7d2ad8d51dfcc1ce679a0f85b384b0d5a43a582906b25bd0b",
+      "test_source": "crates/worldinterface-runtime/tests/g2_admission.rs"
+    },
+    {
+      "id": "AB-WI-003",
+      "invariants": [
+        "W1"
+      ],
+      "status": "implemented",
+      "kind": "runtime",
+      "result": null,
+      "source_record_sha256": "40a722ec7d187a8c3aeccfd9f595ae97353a6d58cd4b1ebb93b7ebb4162c120d",
+      "test_source": "crates/worldinterface-runtime/tests/g2_admission.rs"
+    },
+    {
+      "id": "AB-WI-004",
+      "invariants": [
+        "W1"
+      ],
+      "status": "implemented",
+      "kind": "runtime",
+      "result": null,
+      "source_record_sha256": "9e878d392ef66cfd0567dced1c21d308e6eb6ea021569b3fa2f26312a98d9690",
+      "test_source": "crates/worldinterface-runtime/tests/g2_admission.rs"
+    },
+    {
       "id": "AB-WI-006",
       "invariants": [
         "W1"
@@ -664,5 +700,5 @@
   "store_fixture": "conformance/wi-fabric-2/store-scenarios.json",
   "store_fixture_sha256": "57954a1042fd7845c4ecf72aa0f0524f7fb8f456d49ee9e501370add7658009d",
   "integration_fixture": "conformance/wi-fabric-2/integration/fixtures.json",
-  "integration_fixture_sha256": "1b0261d3c527c488a58944de99c0f3f5ef706b48bc3f5412d6121fb286293b72"
+  "integration_fixture_sha256": "18f7e74979b241f32aaa8b7f0e33c4b28700eb475e763b3df457f97732094df7"
 }

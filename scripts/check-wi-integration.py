@@ -28,7 +28,7 @@ assert {p['name'] for p in aq} >= {'actionqueue-core', 'actionqueue-storage', 'a
 wi = next(p for p in meta['packages'] if p['name'] == 'worldinterface-runtime')
 pending = [wi['id']]
 seen = set()
-allowed = {'worldinterface-runtime', 'worldinterface-storage', 'worldinterface-domain', 'worldinterface-protocol', 'worldinterface-ingress'}
+allowed = {'worldinterface-runtime', 'worldinterface-storage', 'worldinterface-domain', 'worldinterface-protocol', 'worldinterface-egress', 'worldinterface-ingress'}
 while pending:
     key = pending.pop()
     if key in seen: continue
@@ -51,6 +51,6 @@ manifest_text = (source_root / 'conformance/aq-cont-1/manifest.yaml').read_text(
 # AQ ships this manifest as JSON-compatible YAML.
 conformance = json.loads(manifest_text)
 assert conformance['package_revision'] == target['conformance_revision']
-print(json.dumps({'scope': 'wi/WI-03/integration', 'upstream': target, 'source_files': len(files),
+print(json.dumps({'scope': 'wi/WI-03+WI-04/integration', 'upstream': target, 'source_files': len(files),
                   'resolved_aq': sorted(aq, key=lambda p: p['name']), 'production_graph': 'passed',
                   'independent_review': 'pending', 'parent_acceptance': False}, sort_keys=True))

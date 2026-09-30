@@ -111,6 +111,23 @@ pub struct FixtureQualification {
     pub revoked: bool,
     pub evidence: EvidenceRef,
 }
+/// Independent ordinary-use qualification. Its evidence is verified by runtime authority.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct OrdinaryQualification {
+    pub realization: ContentHash,
+    pub tenant: OpaqueRef,
+    pub subject: PrincipalId,
+    pub provider: OpaqueRef,
+    pub profile: OpaqueRef,
+    pub operations: BTreeSet<OpaqueRef>,
+    pub aq_version: ContentHash,
+    pub wi_version: ContentHash,
+    pub expires_at: Timestamp,
+    pub revoked: bool,
+    pub quarantined: bool,
+    pub evidence: EvidenceRef,
+}
 /// Serializable journal facts, NOT a wire authentication/verification context.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -125,13 +142,15 @@ pub struct AuthorizationSnapshot {
     pub worker: Option<WorkerRealization>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub fixture: Option<FixtureQualification>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub qualification: Option<OrdinaryQualification>,
     pub required_outputs: Vec<ArtifactRef>,
 }
 /// Not caller-deserializable. A trusted composition verifies provenance before construction.
 #[derive(Clone, Debug)]
 pub struct VerifiedSnapshot(pub(crate) AuthorizationSnapshot);
 impl VerifiedSnapshot {
-    /// Test/host evidence boundary. There is no production evidence adapter in this slice.
+    /// Trusted evidence boundary; runtime verifies provenance before construction.
     pub fn from_trusted_verifier(snapshot: AuthorizationSnapshot) -> Result<Self> {
         digest(&snapshot)?;
         if snapshot.bindings.len() > 256
@@ -141,6 +160,9 @@ impl VerifiedSnapshot {
             return Err("snapshot bound".into());
         }
         Ok(Self(snapshot))
+    }
+    pub fn facts(&self) -> &AuthorizationSnapshot {
+        &self.0
     }
 }
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -198,6 +220,7 @@ pub fn approval_binding(
 fn worker_reason(
     w: &WorkerRealization,
     q: Option<&FixtureQualification>,
+    ordinary: Option<&OrdinaryQualification>,
     intent: &EffectIntent,
     agency: &AgencyRecord,
     resolution: &ResolutionRecord,
@@ -206,6 +229,8 @@ fn worker_reason(
     if !w.reviewed_executable {
         return Ok(Some(Reason::Executable));
     }
+    // Qualification attests this selected profile; it cannot expand the profile's
+    // excluded input and credential classes.
     if w.input_class != InputClass::NonSensitive {
         return Ok(Some(Reason::ProtectedInput));
     }
@@ -233,6 +258,29 @@ fn worker_reason(
         {
             return Ok(Some(Reason::MandatoryControl(required.clone())));
         }
+    }
+    if let Some(qualified) = ordinary {
+        if q.is_some()
+            || qualified.realization != digest(w)?
+            || qualified.tenant != agency.binding.tenant
+            || qualified.subject != agency.binding.principal
+            || qualified.provider != w.provider
+            || qualified.profile != w.profile
+            || qualified.aq_version != w.aq_version
+            || qualified.wi_version != w.wi_version
+            || qualified.evidence.artifact.scope != qualified.tenant
+            || qualified.revoked
+            || qualified.quarantined
+            || qualified.expires_at <= *now
+            || !qualified.operations.contains(&w.operation)
+            || w.input != intent.submission.input.artifact
+            || matches!(w.image, ImageApplicability::Unknown)
+            || !matches!(&resolution.fact.document.target, Target::Worker { provider, run, resource, operation }
+                if provider == &w.provider && run == &w.run && resource == &w.resource && operation == &w.operation)
+        {
+            return Ok(Some(Reason::ProfileDrift));
+        }
+        return Ok(None);
     }
     let Some(q) = q else {
         return Ok(Some(Reason::FixtureOnly));
@@ -378,9 +426,15 @@ pub fn authorize(
     if matches!(resolution.fact.document.target, Target::Worker { .. }) {
         match &s.worker {
             Some(w) => {
-                if let Some(r) =
-                    worker_reason(w, s.fixture.as_ref(), intent, agency, resolution, now)?
-                {
+                if let Some(r) = worker_reason(
+                    w,
+                    s.fixture.as_ref(),
+                    s.qualification.as_ref(),
+                    intent,
+                    agency,
+                    resolution,
+                    now,
+                )? {
                     reasons.push(r);
                 }
                 if let Credential::Test { expires_at, .. } = &w.credential {
@@ -389,10 +443,13 @@ pub fn authorize(
                 if let Some(q) = &s.fixture {
                     a.expires_at = a.expires_at.min(q.expires_at.clone());
                 }
+                if let Some(q) = &s.qualification {
+                    a.expires_at = a.expires_at.min(q.expires_at.clone());
+                }
             }
             None => reasons.push(Reason::FixtureOnly),
         }
-    } else if s.worker.is_some() || s.fixture.is_some() {
+    } else if s.worker.is_some() || s.fixture.is_some() || s.qualification.is_some() {
         reasons.push(Reason::ProfileDrift);
     }
     let mut approval_ids = BTreeSet::new();

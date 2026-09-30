@@ -1,11 +1,19 @@
 //! Explicit mappings; opaque attribution never selects authority.
+use crate::storage::StoreBundle;
 use crate::Result;
+use actionqueue_core::control::HostControlContext;
 use actionqueue_core::{
+    admission::{EnsureTaskOutcome, EnsureTaskRequest},
     bounded::{ContentHash, DataScheme, HashAlgorithm, OpaqueRef},
     causal::{CausalContext, CausalOverride, CausationLink},
     data_ref::ExternalDataRef,
     ids::{AttemptId, CorrelationId, RunId, TaskId, TraceId},
     task::task_spec::TaskPayload,
+};
+use actionqueue_executor_local::handler::ExecutorHandler;
+use actionqueue_runtime::{
+    config::RuntimeConfig,
+    engine::{ActionQueueEngine, BootstrappedEngine},
 };
 use actionqueue_storage::{recovery::reducer::ReplayReducer, store::StoreSession};
 use serde::{Deserialize, Serialize};
@@ -17,6 +25,74 @@ pub struct QueueStoreId(uuid::Uuid);
 impl QueueStoreId {
     pub fn from_session(session: &StoreSession) -> Self {
         Self(session.manifest().store_id)
+    }
+    pub fn as_uuid(self) -> uuid::Uuid {
+        self.0
+    }
+}
+
+/// The engine is bootstrapped only from the validated bundle whose WI journal
+/// records its admission. A caller cannot pair an engine from another store
+/// with this handle or supply an independent store identity.
+pub struct QueueEngine<'a, H: ExecutorHandler + 'static> {
+    bundle: &'a StoreBundle,
+    store: QueueStoreId,
+    engine: BootstrappedEngine<H>,
+}
+impl<'a, H: ExecutorHandler + 'static> QueueEngine<'a, H> {
+    pub fn bootstrap(
+        bundle: &'a StoreBundle,
+        handler: H,
+        host: HostControlContext,
+    ) -> Result<Self> {
+        let session = actionqueue_storage::store::open_store(
+            &bundle.aq_path(),
+            actionqueue_storage::store::OpenOptions::ReadOnly,
+        )?;
+        let store = QueueStoreId::from_session(&session);
+        drop(session);
+        let engine = ActionQueueEngine::new(
+            RuntimeConfig { data_dir: bundle.aq_path(), ..Default::default() },
+            handler,
+        )
+        .bootstrap()?
+        .with_host(host);
+        if bundle.aq_store_id()? != store.as_uuid() {
+            return Err("AQ store changed during engine bootstrap".into());
+        }
+        Ok(Self { bundle, store, engine })
+    }
+    pub fn wi(&self) -> &worldinterface_storage::StoreRoot {
+        self.bundle.wi()
+    }
+    pub fn bundle(&self) -> &StoreBundle {
+        self.bundle
+    }
+    pub fn store_id(&self) -> uuid::Uuid {
+        self.store.as_uuid()
+    }
+    pub fn engine(&self) -> &BootstrappedEngine<H> {
+        &self.engine
+    }
+    /// Submit through the engine bound at bootstrap. The engine itself cannot
+    /// be replaced independently of the WI journal and AQ store identity.
+    pub fn ensure_task(
+        &mut self,
+        request: EnsureTaskRequest,
+    ) -> std::result::Result<EnsureTaskOutcome, actionqueue_runtime::control::ServiceError> {
+        self.engine.ensure_task(request)
+    }
+    /// Install current trusted host authority without replacing the bound engine.
+    pub fn set_host_control_context(&mut self, host: Option<HostControlContext>) {
+        self.engine.set_control_context(host);
+    }
+    pub(crate) fn parts_mut(
+        &mut self,
+    ) -> (&worldinterface_storage::StoreRoot, &mut BootstrappedEngine<H>, uuid::Uuid) {
+        (self.bundle.wi(), &mut self.engine, self.store.as_uuid())
+    }
+    pub fn shutdown(self) -> Result<()> {
+        Ok(self.engine.shutdown()?)
     }
 }
 

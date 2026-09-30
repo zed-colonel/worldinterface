@@ -61,7 +61,7 @@ only when its own milestone is present; WI-04 and WI-05 need no WI-03 entry.
 Scheduling, dependency admission and rollback protection remain controller-owned.
 The checked-in state admits WI-01 only and asserts no completed milestone. Do not weaken policy files to make deletion gates pass.
 
-### WI-02 and WI-03 integration verification
+### WI-02, WI-03, and WI-04 integration verification
 
 For the active integration slice, use Rust 1.89.0 and the supplied controller
 Cargo launcher. Run `ct-check -- scripts/check-wi-domain.sh`,
