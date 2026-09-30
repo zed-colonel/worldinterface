@@ -142,7 +142,7 @@ fn ab_wi_002_003_004_persist_retry_ack_and_discover() {
     let prepared = bundle.wi().effect_snapshot(subject.tenant()).unwrap();
     assert_eq!(prepared.uses.values().sum::<u32>(), 1);
     // AQ commit without WI acknowledgment: retry uses the persisted request and returns AlreadyExists.
-    let first = queue.engine_mut().ensure_task(request.clone()).unwrap();
+    let first = queue.ensure_task(request.clone()).unwrap();
     assert!(first.is_created());
     let changed = EnsureTaskRequest::new(
         request.admission_key().clone(),
@@ -160,7 +160,7 @@ fn ab_wi_002_003_004_persist_retry_ack_and_discover() {
     )
     .unwrap();
     let unchanged = queue.engine().projection().projection_digest().unwrap();
-    assert!(queue.engine_mut().ensure_task(changed).is_err());
+    assert!(queue.ensure_task(changed).is_err());
     assert_eq!(queue.engine().projection().projection_digest().unwrap(), unchanged);
     let mut revoked = snapshot.clone();
     revoked.grants[0].revoked = true;
@@ -172,6 +172,25 @@ fn ab_wi_002_003_004_persist_retry_ack_and_discover() {
         .unwrap()
         .acknowledged_sequence
         .is_none());
+    // AQ must reauthorize the identical persisted request even after its first
+    // commit. WI authorization remains valid throughout this host-control cut.
+    queue.set_host_control_context(None);
+    let aq_before = queue.engine().projection().projection_digest().unwrap();
+    let denied = admission::deliver(&mut queue, &subject, at(), &id, verified(&snapshot))
+        .expect_err("AQ must reauthorize the unchanged request");
+    assert!(matches!(
+        denied.downcast_ref::<actionqueue_runtime::control::ServiceError>(),
+        Some(actionqueue_runtime::control::ServiceError::Authorization(_))
+    ));
+    assert_eq!(queue.engine().projection().projection_digest().unwrap(), aq_before);
+    assert_eq!(queue.engine().projection().task_count(), 1);
+    assert!(bundle.wi().effect_snapshot(subject.tenant()).unwrap().effects[&id].dispatches[0]
+        .admission
+        .as_ref()
+        .unwrap()
+        .acknowledged_sequence
+        .is_none());
+    queue.set_host_control_context(Some(host()));
     let retry = std::thread::scope(|scope| {
         let source = &bundle;
         let actor = &subject;
@@ -215,7 +234,7 @@ fn ab_wi_002_003_004_persist_retry_ack_and_discover() {
             None,
         )
         .unwrap();
-        queue.engine_mut().ensure_task(foreign).unwrap();
+        queue.ensure_task(foreign).unwrap();
     }
     let first_page = run_discovery::discover(&queue, &subject, at(), &id, 1).unwrap();
     assert!(!first_page.complete);
@@ -248,7 +267,7 @@ fn ab_wi_002_003_004_persist_retry_ack_and_discover() {
         None,
     )
     .unwrap();
-    queue.engine_mut().ensure_task(extra).unwrap();
+    queue.ensure_task(extra).unwrap();
     assert!(!run_discovery::discover(&queue, &subject, at(), &id, 1).unwrap().complete);
     assert!(bundle.wi().effect_snapshot(subject.tenant()).unwrap().effects[&id].dispatches[0]
         .admission
@@ -310,7 +329,7 @@ fn ab_wi_003_public_v2_vectors_and_digest_field_boundaries() {
         let admissible: EnsureTaskRequest =
             serde_json::from_value(admissible_json.clone()).unwrap();
         let runtime_digest = admissible.digest().unwrap();
-        let admitted = queue.engine_mut().ensure_task(admissible).unwrap();
+        let admitted = queue.ensure_task(admissible).unwrap();
         assert!(admitted.is_created());
         let mutations: Vec<(&str, serde_json::Value)> = vec![
             ("task_spec.id", serde_json::json!("00000000-0000-0000-0000-000000000009")),
@@ -376,7 +395,7 @@ fn ab_wi_003_public_v2_vectors_and_digest_field_boundaries() {
                 // before looking up the same-key request for a digest conflict.
                 assert!(
                     matches!(
-                        queue.engine_mut().ensure_task(parsed),
+                        queue.ensure_task(parsed),
                         Err(actionqueue_runtime::control::ServiceError::Authorization(
                             actionqueue_core::control::ControlError::Scope
                         ))
@@ -386,7 +405,7 @@ fn ab_wi_003_public_v2_vectors_and_digest_field_boundaries() {
             } else {
                 assert!(
                     matches!(
-                        queue.engine_mut().ensure_task(parsed),
+                        queue.ensure_task(parsed),
                         Err(actionqueue_runtime::control::ServiceError::Admission(
                             actionqueue_runtime::admission::AdmissionError::Rejected(
                                 actionqueue_core::admission::AdmissionRejection::Conflict { .. }
@@ -444,19 +463,19 @@ fn ab_wi_003_required_and_detached_same_key_conflict() {
         None,
     )
     .unwrap();
-    queue.engine_mut().ensure_task(parent_request).unwrap();
+    queue.ensure_task(parent_request).unwrap();
     let mut child = v1["request"].clone();
     child["task_spec"].as_object_mut().unwrap().remove("tenant_id");
     child["dependencies"] = serde_json::json!([]);
     child["task_spec"]["child_lifecycle_policy"] = "Required".into();
     let required: EnsureTaskRequest = serde_json::from_value(child.clone()).unwrap();
-    assert!(queue.engine_mut().ensure_task(required.clone()).unwrap().is_created());
+    assert!(queue.ensure_task(required.clone()).unwrap().is_created());
     let before = queue.engine().projection().projection_digest().unwrap();
     child["task_spec"]["child_lifecycle_policy"] = "Detached".into();
     let detached: EnsureTaskRequest = serde_json::from_value(child).unwrap();
     assert_ne!(required.digest().unwrap(), detached.digest().unwrap());
     assert!(matches!(
-        queue.engine_mut().ensure_task(detached),
+        queue.ensure_task(detached),
         Err(actionqueue_runtime::control::ServiceError::Admission(
             actionqueue_runtime::admission::AdmissionError::Rejected(
                 actionqueue_core::admission::AdmissionRejection::Conflict { .. }
@@ -532,6 +551,20 @@ fn wrong_queue_store_cannot_acknowledge_or_discover() {
         .unwrap()
         .acknowledged_sequence
         .is_none());
+    // Public admission acts on this handle's own AQ store. Even if the same
+    // request is admitted there, WI cannot acknowledge or discover it through
+    // a handle bound to another bundle.
+    let foreign_request = admission::load_request(source.wi(), &binding).unwrap();
+    assert!(wrong.ensure_task(foreign_request).unwrap().is_created());
+    assert_eq!(wrong.engine().projection().task_count(), 1);
+    assert!(admission::deliver(&mut wrong, &subject, at(), &id, verified(&snapshot)).is_err());
+    assert!(run_discovery::discover(&wrong, &subject, at(), &id, 1).is_err());
+    assert!(source.wi().effect_snapshot(subject.tenant()).unwrap().effects[&id].dispatches[0]
+        .admission
+        .as_ref()
+        .unwrap()
+        .acknowledged_sequence
+        .is_none());
     wrong.shutdown().unwrap();
 }
 
@@ -598,10 +631,7 @@ fn ab_wi_002_subprocess_crash_cuts() {
         let mut queue = QueueEngine::bootstrap(&bundle, Complete, host()).unwrap();
         let admission =
             admission::prepare(&bundle, &subject, at(), &id, verified(&snapshot)).unwrap();
-        queue
-            .engine_mut()
-            .ensure_task(admission::load_request(bundle.wi(), &admission).unwrap())
-            .unwrap();
+        queue.ensure_task(admission::load_request(bundle.wi(), &admission).unwrap()).unwrap();
         // A hard process exit skips engine shutdown and WI acknowledgment.
         std::process::exit(0);
     }

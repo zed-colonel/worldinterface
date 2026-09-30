@@ -8474,7 +8474,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-runtime/src/aq_adapter.rs",
     "name": "crates/worldinterface-runtime/src/aq_adapter.rs",
-    "source_sha256": "463665e260f6210b480ce5cfe372fc4f97606fe0ce9cb693e63f1548885a8f7e",
+    "source_sha256": "a12cc4fd64bb7eb4fbbac8241ba0eaaaf4e574375c2cc207528e59d82e54d17a",
     "conditions": [],
     "registration_sites": []
   },
@@ -8483,7 +8483,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/src/aq_adapter.rs",
     "name": "QueueEngine",
-    "source_sha256": "463665e260f6210b480ce5cfe372fc4f97606fe0ce9cb693e63f1548885a8f7e",
+    "source_sha256": "a12cc4fd64bb7eb4fbbac8241ba0eaaaf4e574375c2cc207528e59d82e54d17a",
     "conditions": [],
     "registration_sites": []
   },
@@ -8492,7 +8492,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/src/aq_adapter.rs",
     "name": "QueueProvenance",
-    "source_sha256": "463665e260f6210b480ce5cfe372fc4f97606fe0ce9cb693e63f1548885a8f7e",
+    "source_sha256": "a12cc4fd64bb7eb4fbbac8241ba0eaaaf4e574375c2cc207528e59d82e54d17a",
     "conditions": [],
     "registration_sites": []
   },
@@ -8501,7 +8501,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/src/aq_adapter.rs",
     "name": "QueueReferences",
-    "source_sha256": "463665e260f6210b480ce5cfe372fc4f97606fe0ce9cb693e63f1548885a8f7e",
+    "source_sha256": "a12cc4fd64bb7eb4fbbac8241ba0eaaaf4e574375c2cc207528e59d82e54d17a",
     "conditions": [],
     "registration_sites": []
   },
@@ -8510,7 +8510,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/src/aq_adapter.rs",
     "name": "QueueStoreId",
-    "source_sha256": "463665e260f6210b480ce5cfe372fc4f97606fe0ce9cb693e63f1548885a8f7e",
+    "source_sha256": "a12cc4fd64bb7eb4fbbac8241ba0eaaaf4e574375c2cc207528e59d82e54d17a",
     "conditions": [],
     "registration_sites": []
   },
@@ -8519,7 +8519,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/src/aq_adapter.rs",
     "name": "TaskInputLocator",
-    "source_sha256": "463665e260f6210b480ce5cfe372fc4f97606fe0ce9cb693e63f1548885a8f7e",
+    "source_sha256": "a12cc4fd64bb7eb4fbbac8241ba0eaaaf4e574375c2cc207528e59d82e54d17a",
     "conditions": [],
     "registration_sites": []
   },
@@ -8973,7 +8973,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-runtime/tests/g2_admission.rs",
     "name": "crates/worldinterface-runtime/tests/g2_admission.rs",
-    "source_sha256": "958890a1ff1a4d4a0fed79eee192a13609f7cf23f12b0e0023436fa48544ef67",
+    "source_sha256": "40a24ede9ef2aa9ba8880d33afbf3a085f0e61949919f8112f9146a0b5caed49",
     "conditions": [],
     "registration_sites": []
   },
@@ -8982,7 +8982,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/g2_admission.rs",
     "name": "Complete",
-    "source_sha256": "958890a1ff1a4d4a0fed79eee192a13609f7cf23f12b0e0023436fa48544ef67",
+    "source_sha256": "40a24ede9ef2aa9ba8880d33afbf3a085f0e61949919f8112f9146a0b5caed49",
     "conditions": [],
     "registration_sites": []
   },

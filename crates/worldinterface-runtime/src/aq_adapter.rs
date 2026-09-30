@@ -3,6 +3,7 @@ use crate::storage::StoreBundle;
 use crate::Result;
 use actionqueue_core::control::HostControlContext;
 use actionqueue_core::{
+    admission::{EnsureTaskOutcome, EnsureTaskRequest},
     bounded::{ContentHash, DataScheme, HashAlgorithm, OpaqueRef},
     causal::{CausalContext, CausalOverride, CausationLink},
     data_ref::ExternalDataRef,
@@ -73,8 +74,17 @@ impl<'a, H: ExecutorHandler + 'static> QueueEngine<'a, H> {
     pub fn engine(&self) -> &BootstrappedEngine<H> {
         &self.engine
     }
-    pub fn engine_mut(&mut self) -> &mut BootstrappedEngine<H> {
-        &mut self.engine
+    /// Submit through the engine bound at bootstrap. The engine itself cannot
+    /// be replaced independently of the WI journal and AQ store identity.
+    pub fn ensure_task(
+        &mut self,
+        request: EnsureTaskRequest,
+    ) -> std::result::Result<EnsureTaskOutcome, actionqueue_runtime::control::ServiceError> {
+        self.engine.ensure_task(request)
+    }
+    /// Install current trusted host authority without replacing the bound engine.
+    pub fn set_host_control_context(&mut self, host: Option<HostControlContext>) {
+        self.engine.set_control_context(host);
     }
     pub(crate) fn parts_mut(
         &mut self,
