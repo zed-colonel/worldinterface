@@ -7896,6 +7896,20 @@
     "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
   },
   {
+    "id": "crates/worldinterface-foundation/storage/src/receipt.rs::::type:ExistingRow",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain private durable receipt transaction row binding; no runtime admission or production authority is introduced."
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/receipt.rs::::type:RetryRow",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain private durable receipt transaction row binding; no runtime admission or production authority is introduced."
+  },
+  {
     "id": "crates/worldinterface-foundation/worker/src/evidence.rs::::enum:VerificationStatus",
     "disposition": "retain-align",
     "target": "WI-05 worker evidence domain WP-015/WP-016",

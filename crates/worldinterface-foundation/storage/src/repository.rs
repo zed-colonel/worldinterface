@@ -25,7 +25,7 @@ CREATE TABLE publication_history(seq INTEGER PRIMARY KEY, identity TEXT NOT NULL
 CREATE TRIGGER publication_no_update BEFORE UPDATE ON publication_history BEGIN SELECT RAISE(ABORT,'append only'); END;
 CREATE TRIGGER publication_no_delete BEFORE DELETE ON publication_history BEGIN SELECT RAISE(ABORT,'append only'); END;
 CREATE TABLE publication_index(identity TEXT PRIMARY KEY, scope TEXT NOT NULL, content TEXT NOT NULL, size INTEGER NOT NULL, state TEXT NOT NULL);
-CREATE TABLE receipt_history(seq INTEGER PRIMARY KEY, id TEXT NOT NULL UNIQUE, tenant TEXT NOT NULL, intent TEXT NOT NULL, source_revision INTEGER NOT NULL, canonical BLOB NOT NULL, digest TEXT NOT NULL);
+CREATE TABLE receipt_history(seq INTEGER PRIMARY KEY, id TEXT NOT NULL UNIQUE, tenant TEXT NOT NULL, intent TEXT NOT NULL, source_revision INTEGER NOT NULL, canonical BLOB NOT NULL, digest TEXT NOT NULL, execution BLOB NOT NULL DEFAULT X'', execution_digest TEXT NOT NULL DEFAULT '');
 CREATE TRIGGER receipt_no_update BEFORE UPDATE ON receipt_history BEGIN SELECT RAISE(ABORT,'append only'); END;
 CREATE TRIGGER receipt_no_delete BEFORE DELETE ON receipt_history BEGIN SELECT RAISE(ABORT,'append only'); END;
 CREATE TABLE receipt_index(id TEXT PRIMARY KEY, digest TEXT NOT NULL, tenant TEXT NOT NULL, intent TEXT NOT NULL);

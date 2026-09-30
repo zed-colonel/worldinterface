@@ -1,5 +1,8 @@
 //! Bounded descriptive comparison. Campaign labels confer no authority.
-use crate::{effect::EffectAggregate, ingress::digest};
+use crate::{
+    effect::{CommitObservation, EffectAggregate},
+    ingress::digest,
+};
 use serde::{Deserialize, Serialize};
 use worldinterface_protocol::*;
 
@@ -35,9 +38,13 @@ pub struct DevelopmentalSnapshotV1 {
     pub environment: Option<ContentHash>,
     pub input: ArtifactRef,
     pub outputs: Vec<ArtifactRef>,
+    pub attempt: Option<OpaqueRef>,
+    pub dispatch_key: Option<OpaqueRef>,
     pub receipt_profile: OpaqueRef,
     pub submitted_at: Timestamp,
     pub outcome: Option<ExecutionOutcome>,
+    pub commit: CommitObservation,
+    pub reconciliation_history: Vec<ReconciliationResult>,
     pub uncertainty: bool,
     pub gaps: Vec<OpaqueRef>,
 }
@@ -57,6 +64,13 @@ pub fn inspect(
     }
     if source.outcomes.is_empty() {
         gaps.push("outcome-missing".to_string().try_into()?);
+    }
+    if matches!(
+        source.commit,
+        crate::effect::CommitObservation::Possible | crate::effect::CommitObservation::Unknown
+    ) && source.reconciliations.is_empty()
+    {
+        gaps.push("reconciliation-missing".to_string().try_into()?);
     }
     if source.intent.submission.causal_refs.len() > 64
         || source.outcomes.len() > 64
@@ -92,9 +106,13 @@ pub fn inspect(
         environment: inputs.and_then(|i| i.worker.as_ref().map(|w| w.environment.clone())),
         input: source.intent.submission.input.artifact.clone(),
         outputs: outcome.map(|o| o.durable_outputs.clone()).unwrap_or_default(),
+        attempt: outcome.map(|o| o.attempt.clone()).or_else(|| source.attempt.clone()),
+        dispatch_key: source.dispatches.last().map(|d| d.request.admission_key.clone()),
         receipt_profile: source.intent.submission.requested_receipt_profile.clone(),
         submitted_at: source.intent.submitted_at.clone(),
         outcome: outcome.map(|o| o.outcome.clone()),
+        commit: source.commit.clone(),
+        reconciliation_history: source.reconciliations.iter().map(|r| r.result.clone()).collect(),
         uncertainty: source.commit == crate::effect::CommitObservation::Possible
             || source.commit == crate::effect::CommitObservation::Unknown
             || outcome.is_some_and(|o| o.outcome == ExecutionOutcome::Uncertain),
@@ -149,6 +167,14 @@ pub fn compare_arms(
         ("connector", compare(a.connector.as_ref(), b.connector.as_ref())),
         ("environment", compare(a.environment.as_ref(), b.environment.as_ref())),
         ("input", compare(Some(&a.input), Some(&b.input))),
+        ("attempt", compare(a.attempt.as_ref(), b.attempt.as_ref())),
+        ("dispatch_key", compare(a.dispatch_key.as_ref(), b.dispatch_key.as_ref())),
+        ("outcome", compare(a.outcome.as_ref(), b.outcome.as_ref())),
+        ("commit", compare(Some(&a.commit), Some(&b.commit))),
+        (
+            "reconciliation_history",
+            compare(Some(&a.reconciliation_history), Some(&b.reconciliation_history)),
+        ),
         (
             "outputs",
             compare(a.outcome.as_ref().map(|_| &a.outputs), b.outcome.as_ref().map(|_| &b.outputs)),

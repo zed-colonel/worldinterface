@@ -55,7 +55,11 @@ fn campaign_labels_are_attribution_and_material_differences_remain_visible() {
     let mut b = inspect(source, Some(arm("b"))).unwrap();
     let same = compare_arms(&a, &b).unwrap();
     assert!(same.confounds.iter().any(|c| c.as_str() == "outputs")); // no outcome: unknown
+    assert!(same.confounds.iter().any(|c| c.as_str() == "outcome"));
     assert!(same.fields.iter().all(|(name, state)| name.as_str() == "outputs"
+        || name.as_str() == "outcome"
+        || name.as_str() == "attempt"
+        || name.as_str() == "dispatch_key"
         || *state == Comparison::Match
         || name.as_str() == "information_use"));
     b.policy = Some("changed-policy".to_string().try_into().unwrap());

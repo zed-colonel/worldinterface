@@ -122,8 +122,12 @@ pub fn prepare_egress_receipt(
         outcome: outcome.outcome.clone(),
         output_refs: outcome.durable_outputs.clone(),
     };
-    let mut evidence = execution.evidence.clone();
-    evidence.extend(outcome.evidence.clone());
+    // The execution report is an assertion, not an authority for new references.
+    // A report may omit evidence; the durable outcome remains the source of truth.
+    if execution.evidence.iter().any(|reference| !outcome.evidence.contains(reference)) {
+        return Err("execution evidence is not bound to the authoritative outcome".into());
+    }
+    let mut evidence = outcome.evidence.clone();
     if let Some(reference) = &outcome.boundary_record {
         evidence.push(reference.clone());
     }
