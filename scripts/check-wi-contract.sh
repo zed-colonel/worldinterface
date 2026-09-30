@@ -30,4 +30,4 @@ rustfmt --check --edition 2021 tools/wi-contract-check/src/*.rs tools/wi-contrac
 run_cargo clippy --locked --manifest-path "$manifest" --all-targets -- -D warnings
 run_cargo build --locked --manifest-path "$manifest"
 run_cargo test --locked --manifest-path "$manifest"
-"$CARGO_TARGET_DIR/debug/wi-contract-check" all check
+run_cargo run --locked --manifest-path "$manifest" -- all check
