@@ -677,7 +677,9 @@ fn successful_boundary_requires_durable_output_evidence() {
 }
 #[test]
 fn receipt_outcome_and_outbox_commit_after_scoped_publication() {
-    let (s, p) = fixture();
+    let (mut s, mut p) = fixture();
+    s.causal_refs.push(opaque("campaign:permitted"));
+    allow_submission(&mut p, &s);
     let t = tempfile::tempdir().unwrap();
     let r = root(&t);
     let (id, mut o) = start(&r, &s, &p);
@@ -751,13 +753,36 @@ fn receipt_outcome_and_outbox_commit_after_scoped_publication() {
         worldinterface_domain::receipt::DisclosureProfile::Summary,
     );
     let view = r.inspect_receipt(&summary, &receipt_id).unwrap().unwrap();
-    assert!(view.digest.is_none() && view.canonical.is_none());
+    assert_eq!(view.digest, Some(digest.clone()));
+    assert!(view.canonical.is_none() && view.evidence_hashes.is_empty());
+    assert_eq!(view.intent_id, Some(id.clone()));
+    assert_eq!(view.causal_refs, vec![opaque("campaign:permitted")]);
+    let redacted = worldinterface_domain::receipt::ReceiptAccess::from_trusted_authorizer(
+        caller(&p).tenant().clone(),
+        caller(&p).principal().clone(),
+        worldinterface_domain::receipt::DisclosureProfile::Redacted,
+    );
+    let redacted_view = r.inspect_receipt(&redacted, &receipt_id).unwrap().unwrap();
+    assert_eq!(redacted_view.digest, Some(digest));
+    assert!(redacted_view.canonical.is_none());
+    assert_eq!(redacted_view.causal_refs, vec![opaque("campaign:permitted")]);
+    assert!(!redacted_view.evidence_hashes.is_empty());
+    assert!(redacted_view
+        .evidence_hashes
+        .iter()
+        .all(|hash| hash == &o.evidence[0].artifact.content));
     let foreign = worldinterface_domain::receipt::ReceiptAccess::from_trusted_authorizer(
         opaque("foreign-tenant"),
         caller(&p).principal().clone(),
         worldinterface_domain::receipt::DisclosureProfile::Full,
     );
     assert!(r.inspect_receipt(&foreign, &receipt_id).unwrap().is_none());
+    let foreign_redacted = worldinterface_domain::receipt::ReceiptAccess::from_trusted_authorizer(
+        opaque("foreign-tenant"),
+        caller(&p).principal().clone(),
+        worldinterface_domain::receipt::DisclosureProfile::Redacted,
+    );
+    assert!(r.inspect_receipt(&foreign_redacted, &receipt_id).unwrap().is_none());
     assert_eq!(Egress::new(&r).inspect(&caller(&p), &id).unwrap().phase, Phase::Succeeded);
     drop(r);
     let reopened = StoreRoot::open_existing(t.path().join("root")).unwrap();
@@ -1010,6 +1035,52 @@ fn developmental_comparison_exposes_outcome_and_unknown() {
             .any(|(name, state)| name.as_str() == field && *state == Comparison::Difference));
         assert!(compared.confounds.iter().any(|name| name.as_str() == field));
     }
+}
+#[test]
+fn developmental_comparison_retains_resolution_and_provider_versions() {
+    use worldinterface_domain::developmental::{compare_arms, inspect, Comparison};
+    let (s, p) = fixture();
+    let mut changed = p.clone();
+    changed.registry.entries[0].version = opaque("resolver:changed");
+    changed.registry.entries[0].descriptor = ContentHash::of(b"descriptor:changed");
+    changed.facts[0].registry = digest(&changed.registry).unwrap();
+    changed.worker.as_mut().unwrap().aq_version = ContentHash::of(b"aq:changed");
+    requalify(&mut changed);
+    let left_dir = tempfile::tempdir().unwrap();
+    let right_dir = tempfile::tempdir().unwrap();
+    let left = root(&left_dir);
+    let right = root(&right_dir);
+    let (left_id, _) = start(&left, &s, &p);
+    let (right_id, _) = start(&right, &s, &changed);
+    let left_state = left.effect_snapshot(caller(&p).tenant()).unwrap();
+    let right_state = right.effect_snapshot(caller(&changed).tenant()).unwrap();
+    let a = inspect(&left_state.effects[&left_id], None).unwrap();
+    let mut b = inspect(&right_state.effects[&right_id], None).unwrap();
+    let comparison = compare_arms(&a, &b).unwrap();
+    for field in ["resolver", "registry", "descriptor", "provider_profile", "aq_revision"] {
+        assert!(
+            comparison
+                .fields
+                .iter()
+                .any(|(name, state)| name.as_str() == field && *state == Comparison::Difference),
+            "{field}: {comparison:?}"
+        );
+    }
+    for field in ["connector", "environment"] {
+        assert!(
+            comparison
+                .fields
+                .iter()
+                .any(|(name, state)| name.as_str() == field && *state == Comparison::Match),
+            "{field}: {comparison:?}"
+        );
+    }
+    b.provider_profile = None;
+    let comparison = compare_arms(&a, &b).unwrap();
+    assert!(comparison
+        .fields
+        .iter()
+        .any(|(name, state)| name.as_str() == "provider_profile" && *state == Comparison::Unknown));
 }
 #[test]
 fn uncertainty_reconciliation_and_retry_require_noncommit_policy_and_authority() {

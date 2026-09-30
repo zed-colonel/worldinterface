@@ -30,12 +30,24 @@ pub struct DevelopmentalSnapshotV1 {
     pub campaign: Option<CampaignArmV1>,
     pub agency: ContentHash,
     pub resource: Option<CanonicalResourceRef>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub resolver_version: Option<OpaqueRef>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub registry_snapshot: Option<ContentHash>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub capability_descriptor: Option<ContentHash>,
     pub policy: Option<OpaqueRef>,
     pub grants: Vec<ContentHash>,
     pub approvals: Vec<ContentHash>,
     pub information_use: Option<ContentHash>,
     pub connector: Option<OpaqueRef>,
     pub environment: Option<ContentHash>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub provider_profile: Option<ContentHash>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub aq_revision: Option<ContentHash>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub wi_revision: Option<ContentHash>,
     pub input: ArtifactRef,
     pub outputs: Vec<ArtifactRef>,
     pub attempt: Option<OpaqueRef>,
@@ -86,6 +98,9 @@ pub fn inspect(
         campaign,
         agency: digest(&source.agency)?,
         resource: source.resolution.as_ref().map(|r| r.resolved.resource.clone()),
+        resolver_version: source.resolution.as_ref().map(|r| r.resolved.resolver_version.clone()),
+        registry_snapshot: source.resolution.as_ref().map(|r| r.resolved.registry_snapshot.clone()),
+        capability_descriptor: source.resolution.as_ref().map(|r| r.descriptor.clone()),
         policy: inputs.map(|i| i.policy.revision.clone()),
         grants: inputs
             .map(|i| i.grants.iter().map(digest).collect::<Result<Vec<_>>>())
@@ -104,6 +119,9 @@ pub fn inspect(
             .transpose()?,
         connector: source.resolution.as_ref().map(|r| r.resolved.connector.clone()),
         environment: inputs.and_then(|i| i.worker.as_ref().map(|w| w.environment.clone())),
+        provider_profile: inputs.and_then(|i| i.worker.as_ref().map(digest)).transpose()?,
+        aq_revision: inputs.and_then(|i| i.worker.as_ref().map(|w| w.aq_version.clone())),
+        wi_revision: inputs.and_then(|i| i.worker.as_ref().map(|w| w.wi_version.clone())),
         input: source.intent.submission.input.artifact.clone(),
         outputs: outcome.map(|o| o.durable_outputs.clone()).unwrap_or_default(),
         attempt: outcome.map(|o| o.attempt.clone()).or_else(|| source.attempt.clone()),
@@ -151,6 +169,9 @@ pub fn compare_arms(
     let fields: Vec<(OpaqueRef, Comparison)> = vec![
         ("agency", compare(Some(&a.agency), Some(&b.agency))),
         ("resource", compare(a.resource.as_ref(), b.resource.as_ref())),
+        ("resolver", compare(a.resolver_version.as_ref(), b.resolver_version.as_ref())),
+        ("registry", compare(a.registry_snapshot.as_ref(), b.registry_snapshot.as_ref())),
+        ("descriptor", compare(a.capability_descriptor.as_ref(), b.capability_descriptor.as_ref())),
         ("policy", compare(a.policy.as_ref(), b.policy.as_ref())),
         (
             "grants",
@@ -166,6 +187,9 @@ pub fn compare_arms(
         ("information_use", compare(a.information_use.as_ref(), b.information_use.as_ref())),
         ("connector", compare(a.connector.as_ref(), b.connector.as_ref())),
         ("environment", compare(a.environment.as_ref(), b.environment.as_ref())),
+        ("provider_profile", compare(a.provider_profile.as_ref(), b.provider_profile.as_ref())),
+        ("aq_revision", compare(a.aq_revision.as_ref(), b.aq_revision.as_ref())),
+        ("wi_revision", compare(a.wi_revision.as_ref(), b.wi_revision.as_ref())),
         ("input", compare(Some(&a.input), Some(&b.input))),
         ("attempt", compare(a.attempt.as_ref(), b.attempt.as_ref())),
         ("dispatch_key", compare(a.dispatch_key.as_ref(), b.dispatch_key.as_ref())),

@@ -111,15 +111,25 @@ impl StoreRoot {
             .map(|b| {
                 let envelope = Envelope::parse_receipt(&b).map_err(invalid)?;
                 let Record::BoundaryReceipt(ref receipt) = envelope.record else { unreachable!() };
-                let direction = match receipt.body {
-                    ReceiptBody::Ingress(_) => "ingress",
-                    ReceiptBody::Egress(_) => "egress",
+                let (direction, intent_id, observation_id) = match &receipt.body {
+                    ReceiptBody::Ingress(body) => {
+                        ("ingress", None, Some(body.observation_id.clone()))
+                    }
+                    ReceiptBody::Egress(body) => ("egress", Some(body.intent_id.clone()), None),
                 };
                 let full = access.disclosure() == DisclosureProfile::Full;
                 Ok(ReceiptView {
                     id: receipt.id.clone(),
                     direction: direction.to_string().try_into().map_err(invalid)?,
-                    digest: if full { Some(envelope.digest().map_err(invalid)?) } else { None },
+                    digest: Some(envelope.digest().map_err(invalid)?),
+                    causal_refs: receipt.causal_refs.clone(),
+                    intent_id,
+                    observation_id,
+                    evidence_hashes: if access.disclosure() == DisclosureProfile::Summary {
+                        Vec::new()
+                    } else {
+                        receipt.evidence.iter().map(|e| e.artifact.content.clone()).collect()
+                    },
                     canonical: if full { Some(envelope) } else { None },
                 })
             })

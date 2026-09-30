@@ -5166,7 +5166,7 @@
     "kind": "enum",
     "path": "crates/worldinterface-foundation/domain/src/developmental.rs",
     "name": "Comparison",
-    "source_sha256": "ad535d30a90fe62cd0f15537995a97df51f09a29f78f77b889bc981c1ad9185f",
+    "source_sha256": "79a78def69c4d619875051c49d36875dfe9094a6e328119bc3def87f1d540d53",
     "conditions": [],
     "registration_sites": []
   },
@@ -5175,7 +5175,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-foundation/domain/src/developmental.rs",
     "name": "crates/worldinterface-foundation/domain/src/developmental.rs",
-    "source_sha256": "ad535d30a90fe62cd0f15537995a97df51f09a29f78f77b889bc981c1ad9185f",
+    "source_sha256": "79a78def69c4d619875051c49d36875dfe9094a6e328119bc3def87f1d540d53",
     "conditions": [],
     "registration_sites": []
   },
@@ -5184,7 +5184,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/domain/src/developmental.rs",
     "name": "CampaignArmV1",
-    "source_sha256": "ad535d30a90fe62cd0f15537995a97df51f09a29f78f77b889bc981c1ad9185f",
+    "source_sha256": "79a78def69c4d619875051c49d36875dfe9094a6e328119bc3def87f1d540d53",
     "conditions": [],
     "registration_sites": []
   },
@@ -5193,7 +5193,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/domain/src/developmental.rs",
     "name": "DevelopmentalComparisonV1",
-    "source_sha256": "ad535d30a90fe62cd0f15537995a97df51f09a29f78f77b889bc981c1ad9185f",
+    "source_sha256": "79a78def69c4d619875051c49d36875dfe9094a6e328119bc3def87f1d540d53",
     "conditions": [],
     "registration_sites": []
   },
@@ -5202,7 +5202,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/domain/src/developmental.rs",
     "name": "DevelopmentalSnapshotV1",
-    "source_sha256": "ad535d30a90fe62cd0f15537995a97df51f09a29f78f77b889bc981c1ad9185f",
+    "source_sha256": "79a78def69c4d619875051c49d36875dfe9094a6e328119bc3def87f1d540d53",
     "conditions": [],
     "registration_sites": []
   },
@@ -5679,7 +5679,7 @@
     "kind": "enum",
     "path": "crates/worldinterface-foundation/domain/src/receipt.rs",
     "name": "DisclosureProfile",
-    "source_sha256": "281778e84db148fda1166da7dd1cb4f241f33d1c3fe98d2aa7eece06daee0bb9",
+    "source_sha256": "cc04a9230637b76ff4643775d429c03a2ca609a3435eeb4cadb8537b82b71e86",
     "conditions": [],
     "registration_sites": []
   },
@@ -5688,7 +5688,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-foundation/domain/src/receipt.rs",
     "name": "crates/worldinterface-foundation/domain/src/receipt.rs",
-    "source_sha256": "281778e84db148fda1166da7dd1cb4f241f33d1c3fe98d2aa7eece06daee0bb9",
+    "source_sha256": "cc04a9230637b76ff4643775d429c03a2ca609a3435eeb4cadb8537b82b71e86",
     "conditions": [],
     "registration_sites": []
   },
@@ -5697,7 +5697,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/domain/src/receipt.rs",
     "name": "ReceiptAccess",
-    "source_sha256": "281778e84db148fda1166da7dd1cb4f241f33d1c3fe98d2aa7eece06daee0bb9",
+    "source_sha256": "cc04a9230637b76ff4643775d429c03a2ca609a3435eeb4cadb8537b82b71e86",
     "conditions": [],
     "registration_sites": []
   },
@@ -5706,7 +5706,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/domain/src/receipt.rs",
     "name": "ReceiptView",
-    "source_sha256": "281778e84db148fda1166da7dd1cb4f241f33d1c3fe98d2aa7eece06daee0bb9",
+    "source_sha256": "cc04a9230637b76ff4643775d429c03a2ca609a3435eeb4cadb8537b82b71e86",
     "conditions": [],
     "registration_sites": []
   },
@@ -5715,7 +5715,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/domain/src/receipt.rs",
     "name": "ValidatedReceipt",
-    "source_sha256": "281778e84db148fda1166da7dd1cb4f241f33d1c3fe98d2aa7eece06daee0bb9",
+    "source_sha256": "cc04a9230637b76ff4643775d429c03a2ca609a3435eeb4cadb8537b82b71e86",
     "conditions": [],
     "registration_sites": []
   },
@@ -5841,7 +5841,7 @@
     "kind": "reviewed-generator",
     "path": "crates/worldinterface-foundation/egress/tests/domain.rs",
     "name": "proptest:fc2b2b8767972e02b0510cc5b226266fc8211d6d47dd8f319d5d3b5014771bc0",
-    "source_sha256": "41142265ec5c470fcf5cfd582b567c18764baefad303ae7716c6d94955903d35",
+    "source_sha256": "f20c0da96e6f6c1663c71eb0f3c39d56e3afa596e57518350ceda4406e833113",
     "conditions": [],
     "registration_sites": []
   },
@@ -5850,7 +5850,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-foundation/egress/tests/domain.rs",
     "name": "crates/worldinterface-foundation/egress/tests/domain.rs",
-    "source_sha256": "41142265ec5c470fcf5cfd582b567c18764baefad303ae7716c6d94955903d35",
+    "source_sha256": "f20c0da96e6f6c1663c71eb0f3c39d56e3afa596e57518350ceda4406e833113",
     "conditions": [],
     "registration_sites": []
   },
@@ -5859,7 +5859,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/egress/tests/domain.rs",
     "name": "Queue",
-    "source_sha256": "41142265ec5c470fcf5cfd582b567c18764baefad303ae7716c6d94955903d35",
+    "source_sha256": "f20c0da96e6f6c1663c71eb0f3c39d56e3afa596e57518350ceda4406e833113",
     "conditions": [],
     "registration_sites": []
   },
@@ -7253,7 +7253,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-foundation/storage/src/receipt.rs",
     "name": "crates/worldinterface-foundation/storage/src/receipt.rs",
-    "source_sha256": "84e873925c0b2332926e971152da03cc30a2b9f84823837a1ef8f0d94c262347",
+    "source_sha256": "cdf0e07fe85013373d90a2f6563e1a3940ad3dd8cb9ada28eeb799d49c0d8f4e",
     "conditions": [],
     "registration_sites": []
   },
@@ -7262,7 +7262,7 @@
     "kind": "type",
     "path": "crates/worldinterface-foundation/storage/src/receipt.rs",
     "name": "ExistingRow",
-    "source_sha256": "84e873925c0b2332926e971152da03cc30a2b9f84823837a1ef8f0d94c262347",
+    "source_sha256": "cdf0e07fe85013373d90a2f6563e1a3940ad3dd8cb9ada28eeb799d49c0d8f4e",
     "conditions": [],
     "registration_sites": []
   },
@@ -7271,7 +7271,7 @@
     "kind": "type",
     "path": "crates/worldinterface-foundation/storage/src/receipt.rs",
     "name": "RetryRow",
-    "source_sha256": "84e873925c0b2332926e971152da03cc30a2b9f84823837a1ef8f0d94c262347",
+    "source_sha256": "cdf0e07fe85013373d90a2f6563e1a3940ad3dd8cb9ada28eeb799d49c0d8f4e",
     "conditions": [],
     "registration_sites": []
   },

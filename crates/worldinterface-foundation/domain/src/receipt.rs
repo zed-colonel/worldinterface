@@ -8,7 +8,10 @@ use worldinterface_protocol::*;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub enum DisclosureProfile {
+    /// Receipt identity and structural links only.
     Summary,
+    /// Permitted evidence hashes and links, without receipt content.
+    Redacted,
     Full,
 }
 
@@ -46,6 +49,14 @@ pub struct ReceiptView {
     pub direction: OpaqueRef,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub digest: Option<ContentHash>,
+    /// Structural links are projected from the immutable receipt, never caller claims.
+    pub causal_refs: Vec<OpaqueRef>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub intent_id: Option<EffectIntentId>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub observation_id: Option<ObservationId>,
+    /// Exposed only by the trusted authorizer's Redacted or Full profile.
+    pub evidence_hashes: Vec<ContentHash>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub canonical: Option<Envelope>,
 }

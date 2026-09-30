@@ -2,7 +2,7 @@
 
 This is an independent, inactive foundation proof. It does not admit an ordinary
 provider, activate a lifecycle operation or establish AQ completion. The fresh
-local store profile is `local-receipt-1`; earlier profiles reject unchanged.
+local store profile is `local-receipt-2`; earlier profiles reject unchanged.
 
 Receipt import requires exact `wi-json-1` bytes, supported profile and a stable
 ID in the digest. Artifact hashes cover exact bytes. Signing proofs and proof

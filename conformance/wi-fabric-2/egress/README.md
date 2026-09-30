@@ -61,7 +61,7 @@ The only delivery API is `deliver_test`; there is no ordinary provider admission
 
 ## Persistence and recovery
 
-The current fresh-store feature profile is `local-receipt-1`, schema 1; unsupported
+The current fresh-store feature profile is `local-receipt-2`, schema 1; unsupported
 profiles reject without modification or upgrade. The version-1 effect journal is
 separate from historical generic batches and the ingress journal. Their replay
 semantics remain intact. Generic records remain inert predecessor persistence;
