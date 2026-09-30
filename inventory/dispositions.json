@@ -6531,6 +6531,20 @@
     "source": "implementation plan WI-04 and Appendix A; accepted ADR-004\u2013007; AQ G2 source contracts"
   },
   {
+    "id": "crates/worldinterface-runtime/tests/effect_service.rs::::struct:ExpireAtDeliveryClock",
+    "disposition": "retain-align",
+    "target": "WI-04 G2 source tests",
+    "rationale": "Trusted-time expiry regression fixture; independent review remains required.",
+    "source": "implementation plan WI-04 and Appendix A; accepted ADR-004\u2013007; AQ G2 source contracts"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/effect_service.rs::::struct:ExpiringEvidence",
+    "disposition": "retain-align",
+    "target": "WI-04 G2 source tests",
+    "rationale": "Trusted-time expiry regression fixture; independent review remains required.",
+    "source": "implementation plan WI-04 and Appendix A; accepted ADR-004\u2013007; AQ G2 source contracts"
+  },
+  {
     "id": "crates/worldinterface-runtime/tests/effect_service.rs::::struct:Complete",
     "disposition": "retain-align",
     "target": "WI-04 G2 source tests",

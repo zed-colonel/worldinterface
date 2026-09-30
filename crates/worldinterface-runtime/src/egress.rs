@@ -114,7 +114,6 @@ impl<A: Authentication, V: EvidenceAuthority, R: ResourceObserver, C: TrustedClo
         queue: &mut QueueEngine<'_, H>,
         limit: usize,
     ) -> Result<DispatchReport> {
-        let at = self.clock.now()?;
         if limit == 0 || limit > 100 {
             return Err("invalid dispatch bound".into());
         }
@@ -144,6 +143,7 @@ impl<A: Authentication, V: EvidenceAuthority, R: ResourceObserver, C: TrustedClo
             }
             report.attempted += 1;
             let result = (|| -> Result<()> {
+                let at = self.clock.now()?;
                 let snapshot = verify_snapshot(
                     self.root,
                     self.evidence,
@@ -155,15 +155,15 @@ impl<A: Authentication, V: EvidenceAuthority, R: ResourceObserver, C: TrustedClo
                     crate::resolution::require_current(self.resolver, &resolution.fact)?;
                 }
                 if effect.phase == worldinterface_domain::Phase::Authorized {
-                    crate::admission::prepare(
+                    crate::admission::prepare_with_clock(
                         queue.bundle(),
                         &principal,
-                        at.clone(),
+                        self.clock,
                         id,
                         snapshot.clone(),
                     )?;
                 }
-                crate::admission::deliver(queue, &principal, at.clone(), id, snapshot)?;
+                crate::admission::deliver_with_clock(queue, &principal, self.clock, id, snapshot)?;
                 Ok(())
             })();
             if result.is_ok() {

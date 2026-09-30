@@ -8465,7 +8465,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-runtime/src/admission.rs",
     "name": "crates/worldinterface-runtime/src/admission.rs",
-    "source_sha256": "73c4febd774d2964a816abe280c74d8dff9408f4a71b3e7aaf26752e76690143",
+    "source_sha256": "2ee7b54897db0a2212904415cbe1a5d37c733a99bfd53161030998dd374d51a5",
     "conditions": [],
     "registration_sites": []
   },
@@ -8591,7 +8591,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-runtime/src/egress.rs",
     "name": "crates/worldinterface-runtime/src/egress.rs",
-    "source_sha256": "b7a6e8f878e19a9c771a18317c888b31f94f6e59839d97f7ff30b0282ba99867",
+    "source_sha256": "919304b294c481557a0425ebb2fe31d431734c307f940b307c5f5b34d1fc8275",
     "conditions": [],
     "registration_sites": []
   },
@@ -8600,7 +8600,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/src/egress.rs",
     "name": "DispatchReport",
-    "source_sha256": "b7a6e8f878e19a9c771a18317c888b31f94f6e59839d97f7ff30b0282ba99867",
+    "source_sha256": "919304b294c481557a0425ebb2fe31d431734c307f940b307c5f5b34d1fc8275",
     "conditions": [],
     "registration_sites": []
   },
@@ -8609,7 +8609,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/src/egress.rs",
     "name": "EffectService",
-    "source_sha256": "b7a6e8f878e19a9c771a18317c888b31f94f6e59839d97f7ff30b0282ba99867",
+    "source_sha256": "919304b294c481557a0425ebb2fe31d431734c307f940b307c5f5b34d1fc8275",
     "conditions": [],
     "registration_sites": []
   },
@@ -8919,7 +8919,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-runtime/tests/effect_service.rs",
     "name": "crates/worldinterface-runtime/tests/effect_service.rs",
-    "source_sha256": "c3edbc6fee235af97c4e6291eae82830608eb5404cf74a0bc9afddb4729cd0b2",
+    "source_sha256": "a2be57c5a73f5a092ddc919d17baafe21f522a311da2acfb30201773ba170c06",
     "conditions": [],
     "registration_sites": []
   },
@@ -8928,7 +8928,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/effect_service.rs",
     "name": "Auth",
-    "source_sha256": "c3edbc6fee235af97c4e6291eae82830608eb5404cf74a0bc9afddb4729cd0b2",
+    "source_sha256": "a2be57c5a73f5a092ddc919d17baafe21f522a311da2acfb30201773ba170c06",
     "conditions": [],
     "registration_sites": []
   },
@@ -8937,7 +8937,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/effect_service.rs",
     "name": "Clock",
-    "source_sha256": "c3edbc6fee235af97c4e6291eae82830608eb5404cf74a0bc9afddb4729cd0b2",
+    "source_sha256": "a2be57c5a73f5a092ddc919d17baafe21f522a311da2acfb30201773ba170c06",
     "conditions": [],
     "registration_sites": []
   },
@@ -8946,7 +8946,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/effect_service.rs",
     "name": "Complete",
-    "source_sha256": "c3edbc6fee235af97c4e6291eae82830608eb5404cf74a0bc9afddb4729cd0b2",
+    "source_sha256": "a2be57c5a73f5a092ddc919d17baafe21f522a311da2acfb30201773ba170c06",
     "conditions": [],
     "registration_sites": []
   },
@@ -8955,7 +8955,25 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/effect_service.rs",
     "name": "Evidence",
-    "source_sha256": "c3edbc6fee235af97c4e6291eae82830608eb5404cf74a0bc9afddb4729cd0b2",
+    "source_sha256": "a2be57c5a73f5a092ddc919d17baafe21f522a311da2acfb30201773ba170c06",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/effect_service.rs::::struct:ExpireAtDeliveryClock",
+    "kind": "struct",
+    "path": "crates/worldinterface-runtime/tests/effect_service.rs",
+    "name": "ExpireAtDeliveryClock",
+    "source_sha256": "a2be57c5a73f5a092ddc919d17baafe21f522a311da2acfb30201773ba170c06",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/effect_service.rs::::struct:ExpiringEvidence",
+    "kind": "struct",
+    "path": "crates/worldinterface-runtime/tests/effect_service.rs",
+    "name": "ExpiringEvidence",
+    "source_sha256": "a2be57c5a73f5a092ddc919d17baafe21f522a311da2acfb30201773ba170c06",
     "conditions": [],
     "registration_sites": []
   },
@@ -8964,7 +8982,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/effect_service.rs",
     "name": "Observer",
-    "source_sha256": "c3edbc6fee235af97c4e6291eae82830608eb5404cf74a0bc9afddb4729cd0b2",
+    "source_sha256": "a2be57c5a73f5a092ddc919d17baafe21f522a311da2acfb30201773ba170c06",
     "conditions": [],
     "registration_sites": []
   },

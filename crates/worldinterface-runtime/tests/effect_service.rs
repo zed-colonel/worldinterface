@@ -7,7 +7,7 @@ use actionqueue_core::{
 use actionqueue_executor_local::handler::{ExecutorContext, ExecutorHandler};
 use std::cell::Cell;
 use worldinterface_domain::{
-    authorization::AuthorizationSnapshot,
+    authorization::{AuthorizationSnapshot, VerifiedSnapshot},
     resource::{ResolutionFact, ResolverSnapshot, Target, TargetDocument},
     Phase,
 };
@@ -15,8 +15,9 @@ use worldinterface_protocol::{
     ContentHash, EffectSubmission, EvidenceRef, InstanceId, OpaqueRef, PrincipalId, Timestamp,
 };
 use worldinterface_runtime::{
+    admission,
     aq_adapter::QueueEngine,
-    authority::{Authentication, EvidenceAuthority, TrustedClock},
+    authority::{caller, Authentication, EvidenceAuthority, TrustedClock},
     egress::EffectService,
     resolution::ResourceObserver,
     storage::StoreBundle,
@@ -77,6 +78,21 @@ impl TrustedClock for Clock {
         }
     }
 }
+struct ExpireAtDeliveryClock {
+    calls: Cell<usize>,
+    expire_on: usize,
+}
+impl TrustedClock for ExpireAtDeliveryClock {
+    fn now(&self) -> Result<Timestamp> {
+        let calls = self.calls.get() + 1;
+        self.calls.set(calls);
+        if calls >= self.expire_on {
+            Ok("2026-09-23T00:00:00.000000000Z".to_owned().try_into()?)
+        } else {
+            Ok(at())
+        }
+    }
+}
 struct Evidence {
     snapshot: AuthorizationSnapshot,
     revoked: Cell<bool>,
@@ -103,6 +119,35 @@ impl EvidenceAuthority for Evidence {
         } else {
             Ok(ContentHash::of(b"verified"))
         }
+    }
+}
+/// Advances trusted time while the host refreshes authority, after dispatch sampled it.
+struct ExpiringEvidence<'a> {
+    base: &'a Evidence,
+    clock: &'a Clock,
+    calls: Cell<usize>,
+    expire_on: usize,
+}
+impl EvidenceAuthority for ExpiringEvidence<'_> {
+    fn current_snapshot(
+        &self,
+        tenant: &OpaqueRef,
+        submission: &EffectSubmission,
+    ) -> Result<AuthorizationSnapshot> {
+        let calls = self.calls.get() + 1;
+        self.calls.set(calls);
+        if calls == self.expire_on {
+            self.clock.expired.set(true);
+        }
+        self.base.current_snapshot(tenant, submission)
+    }
+    fn verify(
+        &self,
+        tenant: &OpaqueRef,
+        reference: &EvidenceRef,
+        at: &Timestamp,
+    ) -> Result<ContentHash> {
+        self.base.verify(tenant, reference, at)
     }
 }
 struct Observer<'a> {
@@ -229,6 +274,146 @@ fn production_facade_authenticates_verifies_and_rechecks_live_target() {
     assert_eq!(queue.engine().projection().task_count(), 1);
     queue.shutdown().unwrap();
     wrong_queue.shutdown().unwrap();
+}
+
+#[test]
+fn expiry_during_refresh_blocks_initial_duplicate_and_later_batch_admission() {
+    for case in ["initial", "duplicate", "batch", "preparation", "authorization_commit"] {
+        let temp = tempfile::tempdir().unwrap();
+        let bundle = StoreBundle::initialize(
+            &temp.path().join("bundle"),
+            StoreProfile { instance: InstanceId::generate(), created_at: at(), platform: false },
+        )
+        .unwrap();
+        publish(bundle.wi());
+        let (submission, mut snapshot) = fixture();
+        let second_submission = if case == "batch" {
+            let mut second = submission.clone();
+            second.client_request_id = "fixture-request-2".to_owned().try_into().unwrap();
+            let authority = worldinterface_domain::ingress::digest(&second).unwrap();
+            snapshot.bindings[0].principal_authority.insert(authority.clone());
+            snapshot.bindings[0].capacity_authority.insert(authority.clone());
+            snapshot.policy.platform.insert(authority.clone());
+            snapshot.policy.resource.insert(authority.clone());
+            snapshot.policy.information_use.insert(authority.clone());
+            snapshot.grants[0].authority.insert(authority);
+            Some(second)
+        } else {
+            None
+        };
+        let auth = Auth { principal: snapshot.bindings[0].principal.clone() };
+        let evidence = Evidence {
+            snapshot: snapshot.clone(),
+            revoked: Cell::new(false),
+            invalid: Cell::new(false),
+        };
+        let observer = Observer {
+            root: bundle.wi(),
+            fact: snapshot.facts[0].clone(),
+            changed: Cell::new(false),
+            observed_after_intent: Cell::new(false),
+        };
+        let clock = Clock { expired: Cell::new(false) };
+        let service = EffectService {
+            root: bundle.wi(),
+            authentication: &auth,
+            evidence: &evidence,
+            resolver: &observer,
+            clock: &clock,
+        };
+        let id = service.submit(&"good", submission.clone()).unwrap();
+        assert_eq!(service.advance(&"good", &id).unwrap().phase, Phase::Resolving);
+        assert_eq!(service.advance(&"good", &id).unwrap().phase, Phase::Authorized);
+        let mut queue = QueueEngine::bootstrap(&bundle, Complete, host()).unwrap();
+        if let Some(second) = second_submission {
+            let second_id = service.submit(&"good", second).unwrap();
+            assert_eq!(service.advance(&"good", &second_id).unwrap().phase, Phase::Resolving);
+            let second_view = service.advance(&"good", &second_id).unwrap();
+            assert_eq!(second_view.phase, Phase::Authorized, "{:?}", second_view.authorization);
+        }
+        let prepared = if case == "duplicate" {
+            let subject = caller(&auth, &"good").unwrap();
+            let binding = admission::prepare(
+                &bundle,
+                &subject,
+                at(),
+                &id,
+                VerifiedSnapshot::from_trusted_verifier(snapshot.clone()).unwrap(),
+            )
+            .unwrap();
+            let request = admission::load_request(bundle.wi(), &binding).unwrap();
+            assert!(queue.ensure_task(request).unwrap().is_created());
+            Some(binding)
+        } else {
+            None
+        };
+        let before_aq = queue.engine().projection().projection_digest().unwrap();
+        let expiring = ExpiringEvidence {
+            base: &evidence,
+            clock: &clock,
+            calls: Cell::new(0),
+            expire_on: if case == "batch" { 2 } else { 1 },
+        };
+        let expiring_service = EffectService {
+            root: bundle.wi(),
+            authentication: &auth,
+            evidence: &expiring,
+            resolver: &observer,
+            clock: &clock,
+        };
+        let report = if case == "preparation" || case == "authorization_commit" {
+            let late_clock = ExpireAtDeliveryClock {
+                calls: Cell::new(0),
+                expire_on: if case == "preparation" { 3 } else { 4 },
+            };
+            EffectService {
+                root: bundle.wi(),
+                authentication: &auth,
+                evidence: &evidence,
+                resolver: &observer,
+                clock: &late_clock,
+            }
+            .dispatch_pending(&"good", &mut queue, 2)
+            .unwrap()
+        } else {
+            expiring_service.dispatch_pending(&"good", &mut queue, 2).unwrap()
+        };
+        assert_eq!(report.attempted, if case == "batch" { 2 } else { 1 }, "{case}");
+        assert_eq!(report.acknowledged, if case == "batch" { 1 } else { 0 }, "{case}");
+        assert_eq!(report.failed, 1, "{case}");
+        assert_eq!(
+            queue.engine().projection().task_count(),
+            if case == "batch" || case == "duplicate" { 1 } else { 0 },
+            "{case}"
+        );
+        let state = bundle.wi().effect_snapshot(&snapshot.bindings[0].tenant).unwrap();
+        assert_eq!(
+            state.uses.values().sum::<u32>(),
+            if case == "initial" { 0 } else { 1 },
+            "{case}"
+        );
+        if case == "preparation" || case == "authorization_commit" {
+            assert_eq!(queue.engine().projection().projection_digest().unwrap(), before_aq);
+            let admission = state.effects[&id].dispatches[0].admission.as_ref().unwrap();
+            assert!(admission.acknowledged_sequence.is_none());
+            admission::load_request(bundle.wi(), admission).unwrap();
+        }
+        if let Some(binding) = prepared {
+            assert_eq!(queue.engine().projection().projection_digest().unwrap(), before_aq);
+            let admission = state.effects[&id].dispatches[0].admission.as_ref().unwrap();
+            assert_eq!(admission, &binding);
+            assert!(admission.acknowledged_sequence.is_none());
+            assert_eq!(
+                admission::load_request(bundle.wi(), admission)
+                    .unwrap()
+                    .task_spec()
+                    .id()
+                    .to_string(),
+                binding.task.as_str()
+            );
+        }
+        queue.shutdown().unwrap();
+    }
 }
 
 #[test]

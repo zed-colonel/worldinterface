@@ -1,6 +1,7 @@
 //! Durable AQ admission. Only this module handles concrete queue request types.
 use crate::{
     aq_adapter::{QueueEngine, TaskInputLocator},
+    authority::TrustedClock,
     storage::StoreBundle,
     Result,
 };
@@ -49,6 +50,28 @@ pub fn prepare(
     bundle: &StoreBundle,
     caller: &AuthenticatedCaller,
     at: Timestamp,
+    id: &EffectIntentId,
+    snapshot: VerifiedSnapshot,
+) -> Result<ProductionAdmission> {
+    prepare_at(bundle, caller, || Ok(at), id, snapshot)
+}
+
+/// The production facade samples trusted time after request construction and artifact I/O,
+/// immediately before the atomic preparation and authorization-use reservation.
+pub fn prepare_with_clock(
+    bundle: &StoreBundle,
+    caller: &AuthenticatedCaller,
+    clock: &impl TrustedClock,
+    id: &EffectIntentId,
+    snapshot: VerifiedSnapshot,
+) -> Result<ProductionAdmission> {
+    prepare_at(bundle, caller, || clock.now(), id, snapshot)
+}
+
+fn prepare_at(
+    bundle: &StoreBundle,
+    caller: &AuthenticatedCaller,
+    now: impl FnOnce() -> Result<Timestamp>,
     id: &EffectIntentId,
     snapshot: VerifiedSnapshot,
 ) -> Result<ProductionAdmission> {
@@ -112,7 +135,7 @@ pub fn prepare(
     };
     match egress.apply(
         caller,
-        at,
+        now()?,
         EffectAction::PrepareProduction {
             id: id.clone(),
             snapshot,
@@ -163,14 +186,30 @@ pub fn deliver<H: ExecutorHandler + 'static>(
     id: &EffectIntentId,
     fresh: VerifiedSnapshot,
 ) -> Result<EnsureTaskOutcome> {
+    deliver_at(queue, caller, || Ok(at.clone()), id, fresh)
+}
+
+/// Refresh trusted time after evidence, resource checks, preparation, and request artifact I/O.
+/// The same check applies to first admission and identical-request recovery.
+pub fn deliver_with_clock<H: ExecutorHandler + 'static>(
+    queue: &mut QueueEngine<'_, H>,
+    caller: &AuthenticatedCaller,
+    clock: &impl TrustedClock,
+    id: &EffectIntentId,
+    fresh: VerifiedSnapshot,
+) -> Result<EnsureTaskOutcome> {
+    deliver_at(queue, caller, || clock.now(), id, fresh)
+}
+
+fn deliver_at<H: ExecutorHandler + 'static>(
+    queue: &mut QueueEngine<'_, H>,
+    caller: &AuthenticatedCaller,
+    mut now: impl FnMut() -> Result<Timestamp>,
+    id: &EffectIntentId,
+    fresh: VerifiedSnapshot,
+) -> Result<EnsureTaskOutcome> {
     let (root, engine, queue_store) = queue.parts_mut();
     let egress = Egress::new(root);
-    // Reauthorization is mandatory even on duplicate AQ admission after a lost acknowledgment.
-    egress.apply(
-        caller,
-        at.clone(),
-        EffectAction::Authorize { id: id.clone(), snapshot: fresh },
-    )?;
     let view: EffectView = egress.inspect(caller, id)?;
     let admission = view.dispatch.and_then(|d| d.admission).ok_or("unprepared admission")?;
     if admission.queue_store.as_str() != queue_store.to_string()
@@ -182,6 +221,21 @@ pub fn deliver<H: ExecutorHandler + 'static>(
         return Err("admission already acknowledged".into());
     }
     let request = load_request(root, &admission)?;
+    // Reauthorization is mandatory even on duplicate AQ admission after a lost acknowledgment.
+    // No potentially slow adapter or artifact work may reuse the earlier clock sample.
+    let at = now()?;
+    egress.apply(
+        caller,
+        at.clone(),
+        EffectAction::Authorize { id: id.clone(), snapshot: fresh },
+    )?;
+    // Journal validation can itself block. Check the evaluated expiry again as the
+    // last WI operation before AQ admission, without changing the persisted request.
+    let admission_at = now()?;
+    if admission_at < at || view.authorization.as_ref().is_none_or(|a| admission_at >= a.expires_at)
+    {
+        return Err("authorization expired before AQ admission".into());
+    }
     let outcome = engine.ensure_task(request.clone())?;
     let (sequence, task_id, key, digest) = match &outcome {
         EnsureTaskOutcome::Created { sequence, task_id, admission_key, digest }
@@ -197,6 +251,10 @@ pub fn deliver<H: ExecutorHandler + 'static>(
     {
         return Err("AQ acknowledgment conflict".into());
     }
-    egress.apply(caller, at, EffectAction::AcknowledgeProduction { id: id.clone(), sequence })?;
+    egress.apply(
+        caller,
+        admission_at,
+        EffectAction::AcknowledgeProduction { id: id.clone(), sequence },
+    )?;
     Ok(outcome)
 }
