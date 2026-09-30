@@ -1,5 +1,6 @@
 //! Deterministic resolution from pinned facts. No DNS, filesystem or provider calls.
 use crate::{agency::Result, ingress::digest};
+use core::net::IpAddr;
 use serde::{Deserialize, Serialize};
 use std::collections::BTreeSet;
 use worldinterface_protocol::*;
@@ -78,12 +79,16 @@ impl TargetDocument {
             {
                 return Err("invalid path components".into())
             }
-            Target::Network { scheme, port, addresses, redirects, path, .. }
+            Target::Network { scheme, host, port, addresses, redirects, path }
                 if !["https", "http"].contains(&scheme.as_str())
                     || *port == 0
                     || addresses.is_empty()
                     || addresses.len() > 32
-                    || redirects.len() > 8
+                    // A redirect has a distinct address chain; this initial
+                    // resolver contract has no per-hop attestation.
+                    || !redirects.is_empty()
+                    || addresses.iter().any(|address| !public_ip(address.as_str()))
+                    || host.as_str().parse::<IpAddr>().is_ok_and(|_| !public_ip(host.as_str()))
                     || !path.starts_with('/')
                     || path.len() > 4096 =>
             {
@@ -101,6 +106,30 @@ impl TargetDocument {
             resource: format!("wi-resource:sha256:{}", digest(self)?.as_str()).try_into()?,
             version: observed_version,
         })
+    }
+}
+fn public_ip(value: &str) -> bool {
+    match value.parse::<IpAddr>() {
+        Ok(IpAddr::V4(ip)) => {
+            let octets = ip.octets();
+            !ip.is_private()
+                && !ip.is_loopback()
+                && !ip.is_link_local()
+                && !ip.is_multicast()
+                && !ip.is_unspecified()
+                && octets[0] != 0
+                && octets[0] < 224
+                && !(octets[0] == 100 && (64..=127).contains(&octets[1]))
+        }
+        Ok(IpAddr::V6(ip)) => {
+            !ip.is_loopback()
+                && !ip.is_unique_local()
+                && !ip.is_unicast_link_local()
+                && !ip.is_multicast()
+                && !ip.is_unspecified()
+                && ip.to_ipv4_mapped().is_none_or(|mapped| public_ip(&mapped.to_string()))
+        }
+        Err(_) => false,
     }
 }
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]

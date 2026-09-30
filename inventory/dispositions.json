@@ -3664,224 +3664,238 @@
     "id": "crates/worldinterface-foundation/domain/src/authorization.rs::::enum:Credential",
     "disposition": "retain-align",
     "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "rationale": "Guarded WI-04 domain with production admission binding and exact worker qualification; independent review remains required.",
     "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
   },
   {
     "id": "crates/worldinterface-foundation/domain/src/authorization.rs::::enum:Enforcement",
     "disposition": "retain-align",
     "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "rationale": "Guarded WI-04 domain with production admission binding and exact worker qualification; independent review remains required.",
     "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
   },
   {
     "id": "crates/worldinterface-foundation/domain/src/authorization.rs::::enum:InputClass",
     "disposition": "retain-align",
     "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "rationale": "Guarded WI-04 domain with production admission binding and exact worker qualification; independent review remains required.",
     "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
   },
   {
     "id": "crates/worldinterface-foundation/domain/src/authorization.rs::::enum:Reason",
     "disposition": "retain-align",
     "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "rationale": "Guarded WI-04 domain with production admission binding and exact worker qualification; independent review remains required.",
     "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
   },
   {
     "id": "crates/worldinterface-foundation/domain/src/authorization.rs::::source-module:crates/worldinterface-foundation/domain/src/authorization.rs",
     "disposition": "retain-align",
     "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "rationale": "Guarded WI-04 domain with production admission binding and exact worker qualification; independent review remains required.",
     "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
   },
   {
     "id": "crates/worldinterface-foundation/domain/src/authorization.rs::::struct:Approval",
     "disposition": "retain-align",
     "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "rationale": "Guarded WI-04 domain with production admission binding and exact worker qualification; independent review remains required.",
     "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
   },
   {
     "id": "crates/worldinterface-foundation/domain/src/authorization.rs::::struct:Attenuation",
     "disposition": "retain-align",
     "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "rationale": "Guarded WI-04 domain with production admission binding and exact worker qualification; independent review remains required.",
     "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
   },
   {
     "id": "crates/worldinterface-foundation/domain/src/authorization.rs::::struct:AuthorizationEvaluation",
     "disposition": "retain-align",
     "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "rationale": "Guarded WI-04 domain with production admission binding and exact worker qualification; independent review remains required.",
     "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
   },
   {
     "id": "crates/worldinterface-foundation/domain/src/authorization.rs::::struct:AuthorizationSnapshot",
     "disposition": "retain-align",
     "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "rationale": "Guarded WI-04 domain with production admission binding and exact worker qualification; independent review remains required.",
     "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
   },
   {
     "id": "crates/worldinterface-foundation/domain/src/authorization.rs::::struct:FixtureQualification",
     "disposition": "retain-align",
     "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "rationale": "Guarded WI-04 domain with production admission binding and exact worker qualification; independent review remains required.",
     "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
   },
   {
     "id": "crates/worldinterface-foundation/domain/src/authorization.rs::::struct:Grant",
     "disposition": "retain-align",
     "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "rationale": "Guarded WI-04 domain with production admission binding and exact worker qualification; independent review remains required.",
     "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/authorization.rs::::struct:OrdinaryQualification",
+    "disposition": "retain-align",
+    "target": "WI-04 effect domain",
+    "rationale": "Guarded WI-04 domain with production admission binding and exact worker qualification; independent review remains required.",
+    "source": "implementation plan WI-04 and Appendix A; accepted ADR-004\u2013007; AQ G2 source contracts"
   },
   {
     "id": "crates/worldinterface-foundation/domain/src/authorization.rs::::struct:Policy",
     "disposition": "retain-align",
     "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "rationale": "Guarded WI-04 domain with production admission binding and exact worker qualification; independent review remains required.",
     "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
   },
   {
     "id": "crates/worldinterface-foundation/domain/src/authorization.rs::::struct:RequiredControl",
     "disposition": "retain-align",
     "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "rationale": "Guarded WI-04 domain with production admission binding and exact worker qualification; independent review remains required.",
     "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
   },
   {
     "id": "crates/worldinterface-foundation/domain/src/authorization.rs::::struct:UseLimit",
     "disposition": "retain-align",
     "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "rationale": "Guarded WI-04 domain with production admission binding and exact worker qualification; independent review remains required.",
     "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
   },
   {
     "id": "crates/worldinterface-foundation/domain/src/authorization.rs::::struct:VerifiedSnapshot",
     "disposition": "retain-align",
     "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "rationale": "Guarded WI-04 domain with production admission binding and exact worker qualification; independent review remains required.",
     "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
   },
   {
     "id": "crates/worldinterface-foundation/domain/src/authorization.rs::::struct:WorkerRealization",
     "disposition": "retain-align",
     "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "rationale": "Guarded WI-04 domain with production admission binding and exact worker qualification; independent review remains required.",
     "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
   },
   {
     "id": "crates/worldinterface-foundation/domain/src/effect.rs::::enum:CommitObservation",
     "disposition": "retain-align",
     "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "rationale": "Guarded WI-04 domain with production admission binding and exact worker qualification; independent review remains required.",
     "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
   },
   {
     "id": "crates/worldinterface-foundation/domain/src/effect.rs::::enum:EffectAction",
     "disposition": "retain-align",
     "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "rationale": "Guarded WI-04 domain with production admission binding and exact worker qualification; independent review remains required.",
     "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
   },
   {
     "id": "crates/worldinterface-foundation/domain/src/effect.rs::::enum:JournalAction",
     "disposition": "retain-align",
     "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "rationale": "Guarded WI-04 domain with production admission binding and exact worker qualification; independent review remains required.",
     "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
   },
   {
     "id": "crates/worldinterface-foundation/domain/src/effect.rs::::enum:LinkKind",
     "disposition": "retain-align",
     "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "rationale": "Guarded WI-04 domain with production admission binding and exact worker qualification; independent review remains required.",
     "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
   },
   {
     "id": "crates/worldinterface-foundation/domain/src/effect.rs::::source-module:crates/worldinterface-foundation/domain/src/effect.rs",
     "disposition": "retain-align",
     "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "rationale": "Guarded WI-04 domain with production admission binding and exact worker qualification; independent review remains required.",
     "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
   },
   {
     "id": "crates/worldinterface-foundation/domain/src/effect.rs::::struct:Dispatch",
     "disposition": "retain-align",
     "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "rationale": "Guarded WI-04 domain with production admission binding and exact worker qualification; independent review remains required.",
     "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
   },
   {
     "id": "crates/worldinterface-foundation/domain/src/effect.rs::::struct:EffectAggregate",
     "disposition": "retain-align",
     "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "rationale": "Guarded WI-04 domain with production admission binding and exact worker qualification; independent review remains required.",
     "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
   },
   {
     "id": "crates/worldinterface-foundation/domain/src/effect.rs::::struct:EffectState",
     "disposition": "retain-align",
     "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "rationale": "Guarded WI-04 domain with production admission binding and exact worker qualification; independent review remains required.",
     "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
   },
   {
     "id": "crates/worldinterface-foundation/domain/src/effect.rs::::struct:EffectView",
     "disposition": "retain-align",
     "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "rationale": "Guarded WI-04 domain with production admission binding and exact worker qualification; independent review remains required.",
     "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
   },
   {
     "id": "crates/worldinterface-foundation/domain/src/effect.rs::::struct:Entry",
     "disposition": "retain-align",
     "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "rationale": "Guarded WI-04 domain with production admission binding and exact worker qualification; independent review remains required.",
     "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
   },
   {
     "id": "crates/worldinterface-foundation/domain/src/effect.rs::::struct:IntentLink",
     "disposition": "retain-align",
     "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "rationale": "Guarded WI-04 domain with production admission binding and exact worker qualification; independent review remains required.",
     "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
   },
   {
     "id": "crates/worldinterface-foundation/domain/src/effect.rs::::struct:OutcomeEvidence",
     "disposition": "retain-align",
     "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "rationale": "Guarded WI-04 domain with production admission binding and exact worker qualification; independent review remains required.",
     "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/effect.rs::::struct:ProductionAdmission",
+    "disposition": "retain-align",
+    "target": "WI-04 effect domain",
+    "rationale": "Guarded WI-04 domain with production admission binding and exact worker qualification; independent review remains required.",
+    "source": "implementation plan WI-04 and Appendix A; accepted ADR-004\u2013007; AQ G2 source contracts"
   },
   {
     "id": "crates/worldinterface-foundation/domain/src/effect.rs::::struct:ReconciliationEvidence",
     "disposition": "retain-align",
     "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "rationale": "Guarded WI-04 domain with production admission binding and exact worker qualification; independent review remains required.",
     "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
   },
   {
     "id": "crates/worldinterface-foundation/domain/src/effect.rs::::struct:ValidatedEffectCommand",
     "disposition": "retain-align",
     "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "rationale": "Guarded WI-04 domain with production admission binding and exact worker qualification; independent review remains required.",
     "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
   },
   {
     "id": "crates/worldinterface-foundation/domain/src/effect.rs::::struct:VerifiedOutcome",
     "disposition": "retain-align",
     "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "rationale": "Guarded WI-04 domain with production admission binding and exact worker qualification; independent review remains required.",
     "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
   },
   {
     "id": "crates/worldinterface-foundation/domain/src/effect.rs::::struct:VerifiedReconciliation",
     "disposition": "retain-align",
     "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
+    "rationale": "Guarded WI-04 domain with production admission binding and exact worker qualification; independent review remains required.",
     "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
   },
   {
@@ -6244,11 +6258,25 @@
     "rationale": "AQ-owned queue authority, authenticated artifact resolution and validated store recovery; independent acceptance remains required."
   },
   {
+    "id": "crates/worldinterface-runtime/src/admission.rs::::source-module:crates/worldinterface-runtime/src/admission.rs",
+    "disposition": "retain-align",
+    "target": "WI-04 G2 runtime integration",
+    "rationale": "Production effect and AQ admission boundary with exact request binding; independent review remains required.",
+    "source": "implementation plan WI-04 and Appendix A; accepted ADR-004\u2013007; AQ G2 source contracts"
+  },
+  {
     "id": "crates/worldinterface-runtime/src/aq_adapter.rs::::source-module:crates/worldinterface-runtime/src/aq_adapter.rs",
     "disposition": "retain-align",
     "target": "WI-02 G1 runtime boundary and source evidence validation",
     "source": "implementation plan WI-02, \u00a75.3; accepted WI-02 integration design",
     "rationale": "AQ-owned queue authority, authenticated artifact resolution and validated store recovery; independent acceptance remains required."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/aq_adapter.rs::::struct:QueueEngine",
+    "disposition": "retain-align",
+    "target": "WI-04 G2 production admission",
+    "rationale": "Bundle-bound AQ engine and exact store identity; independent review remains required.",
+    "source": "implementation plan WI-04 \u00a79.3; accepted ADR-004\u2013007; AQ G2 source contracts"
   },
   {
     "id": "crates/worldinterface-runtime/src/aq_adapter.rs::::struct:QueueProvenance",
@@ -6300,6 +6328,62 @@
     "rationale": "AQ-owned queue authority, authenticated artifact resolution and validated store recovery; independent acceptance remains required."
   },
   {
+    "id": "crates/worldinterface-runtime/src/authority.rs::::source-module:crates/worldinterface-runtime/src/authority.rs",
+    "disposition": "retain-align",
+    "target": "WI-04 G2 runtime integration",
+    "rationale": "Production effect and AQ admission boundary with exact request binding; independent review remains required.",
+    "source": "implementation plan WI-04 and Appendix A; accepted ADR-004\u2013007; AQ G2 source contracts"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/authority.rs::::trait:Authentication",
+    "disposition": "retain-align",
+    "target": "WI-04 G2 runtime integration",
+    "rationale": "Production effect and AQ admission boundary with exact request binding; independent review remains required.",
+    "source": "implementation plan WI-04 and Appendix A; accepted ADR-004\u2013007; AQ G2 source contracts"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/authority.rs::::trait:EvidenceAuthority",
+    "disposition": "retain-align",
+    "target": "WI-04 G2 runtime integration",
+    "rationale": "Production effect and AQ admission boundary with exact request binding; independent review remains required.",
+    "source": "implementation plan WI-04 and Appendix A; accepted ADR-004\u2013007; AQ G2 source contracts"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/authority.rs::::trait:TrustedClock",
+    "disposition": "retain-align",
+    "target": "WI-04 G2 runtime integration",
+    "rationale": "Host-owned time source for effect submission, authorization and dispatch; independent review remains required.",
+    "source": "implementation plan WI-04 and Appendix A; accepted ADR-004\u2013007; AQ G2 source contracts"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/egress.rs::::source-module:crates/worldinterface-runtime/src/egress.rs",
+    "disposition": "retain-align",
+    "target": "WI-04 G2 runtime integration",
+    "rationale": "Production effect and AQ admission boundary with exact request binding; independent review remains required.",
+    "source": "implementation plan WI-04 and Appendix A; accepted ADR-004\u2013007; AQ G2 source contracts"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/egress.rs::::struct:DispatchReport",
+    "disposition": "retain-align",
+    "target": "WI-04 G2 runtime integration",
+    "rationale": "Production effect and AQ admission boundary with exact request binding; independent review remains required.",
+    "source": "implementation plan WI-04 and Appendix A; accepted ADR-004\u2013007; AQ G2 source contracts"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/egress.rs::::struct:EffectService",
+    "disposition": "retain-align",
+    "target": "WI-04 G2 runtime integration",
+    "rationale": "Production effect and AQ admission boundary with exact request binding; independent review remains required.",
+    "source": "implementation plan WI-04 and Appendix A; accepted ADR-004\u2013007; AQ G2 source contracts"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/lib.rs::::module:admission",
+    "disposition": "retain-align",
+    "target": "WI-04 G2 runtime integration",
+    "rationale": "Production effect and AQ admission boundary with exact request binding; independent review remains required.",
+    "source": "implementation plan WI-04 and Appendix A; accepted ADR-004\u2013007; AQ G2 source contracts"
+  },
+  {
     "id": "crates/worldinterface-runtime/src/lib.rs::::module:aq_adapter",
     "disposition": "retain-align",
     "target": "WI-02 G1 runtime boundary and source evidence validation",
@@ -6314,11 +6398,39 @@
     "rationale": "AQ-owned queue authority, authenticated artifact resolution and validated store recovery; independent acceptance remains required."
   },
   {
+    "id": "crates/worldinterface-runtime/src/lib.rs::::module:authority",
+    "disposition": "retain-align",
+    "target": "WI-04 G2 runtime integration",
+    "rationale": "Production effect and AQ admission boundary with exact request binding; independent review remains required.",
+    "source": "implementation plan WI-04 and Appendix A; accepted ADR-004\u2013007; AQ G2 source contracts"
+  },
+  {
     "id": "crates/worldinterface-runtime/src/lib.rs::::module:crash@10d1b0eff34c",
     "disposition": "retain-align",
     "target": "WI-02 G1 runtime boundary and source evidence validation",
     "source": "implementation plan WI-02, \u00a75.3; accepted WI-02 integration design",
     "rationale": "AQ-owned queue authority, authenticated artifact resolution and validated store recovery; independent acceptance remains required."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/lib.rs::::module:egress",
+    "disposition": "retain-align",
+    "target": "WI-04 G2 runtime integration",
+    "rationale": "Production effect and AQ admission boundary with exact request binding; independent review remains required.",
+    "source": "implementation plan WI-04 and Appendix A; accepted ADR-004\u2013007; AQ G2 source contracts"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/lib.rs::::module:resolution",
+    "disposition": "retain-align",
+    "target": "WI-04 G2 runtime integration",
+    "rationale": "Production effect and AQ admission boundary with exact request binding; independent review remains required.",
+    "source": "implementation plan WI-04 and Appendix A; accepted ADR-004\u2013007; AQ G2 source contracts"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/lib.rs::::module:run_discovery",
+    "disposition": "retain-align",
+    "target": "WI-04 G2 runtime integration",
+    "rationale": "Production effect and AQ admission boundary with exact request binding; independent review remains required.",
+    "source": "implementation plan WI-04 and Appendix A; accepted ADR-004\u2013007; AQ G2 source contracts"
   },
   {
     "id": "crates/worldinterface-runtime/src/lib.rs::::module:storage",
@@ -6342,6 +6454,41 @@
     "rationale": "AQ-owned queue authority, authenticated artifact resolution and validated store recovery; independent acceptance remains required."
   },
   {
+    "id": "crates/worldinterface-runtime/src/resolution.rs::::source-module:crates/worldinterface-runtime/src/resolution.rs",
+    "disposition": "retain-align",
+    "target": "WI-04 G2 runtime integration",
+    "rationale": "Production effect and AQ admission boundary with exact request binding; independent review remains required.",
+    "source": "implementation plan WI-04 and Appendix A; accepted ADR-004\u2013007; AQ G2 source contracts"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/resolution.rs::::trait:ResourceObserver",
+    "disposition": "retain-align",
+    "target": "WI-04 G2 runtime integration",
+    "rationale": "Production effect and AQ admission boundary with exact request binding; independent review remains required.",
+    "source": "implementation plan WI-04 and Appendix A; accepted ADR-004\u2013007; AQ G2 source contracts"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/run_discovery.rs::::module:tests@10d1b0eff34c",
+    "disposition": "retain-align",
+    "target": "WI-04 G2 runtime integration",
+    "rationale": "Bounded AQ admission and discovery source; independent review remains required.",
+    "source": "implementation plan WI-04 and Appendix A; AQ G2 source contracts"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/run_discovery.rs::::source-module:crates/worldinterface-runtime/src/run_discovery.rs",
+    "disposition": "retain-align",
+    "target": "WI-04 G2 runtime integration",
+    "rationale": "Production effect and AQ admission boundary with exact request binding; independent review remains required.",
+    "source": "implementation plan WI-04 and Appendix A; accepted ADR-004\u2013007; AQ G2 source contracts"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/run_discovery.rs::::struct:DiscoveryProgress",
+    "disposition": "retain-align",
+    "target": "WI-04 G2 runtime integration",
+    "rationale": "Production effect and AQ admission boundary with exact request binding; independent review remains required.",
+    "source": "implementation plan WI-04 and Appendix A; accepted ADR-004\u2013007; AQ G2 source contracts"
+  },
+  {
     "id": "crates/worldinterface-runtime/src/storage.rs::::source-module:crates/worldinterface-runtime/src/storage.rs",
     "disposition": "retain-align",
     "target": "WI-02 G1 runtime boundary and source evidence validation",
@@ -6361,6 +6508,76 @@
     "target": "WI-02 G1 runtime boundary and source evidence validation",
     "source": "implementation plan WI-02, \u00a75.3; accepted WI-02 integration design",
     "rationale": "AQ-owned queue authority, authenticated artifact resolution and validated store recovery; independent acceptance remains required."
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/effect_service.rs::::source-module:crates/worldinterface-runtime/tests/effect_service.rs",
+    "disposition": "retain-align",
+    "target": "WI-04 G2 source tests",
+    "rationale": "Production facade and resource-boundary tests; independent review remains required.",
+    "source": "implementation plan WI-04 and Appendix A; accepted ADR-004\u2013007; AQ G2 source contracts"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/effect_service.rs::::struct:Auth",
+    "disposition": "retain-align",
+    "target": "WI-04 G2 source tests",
+    "rationale": "Production facade and resource-boundary tests; independent review remains required.",
+    "source": "implementation plan WI-04 and Appendix A; accepted ADR-004\u2013007; AQ G2 source contracts"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/effect_service.rs::::struct:Clock",
+    "disposition": "retain-align",
+    "target": "WI-04 G2 source tests",
+    "rationale": "Production facade and resource-boundary tests; independent review remains required.",
+    "source": "implementation plan WI-04 and Appendix A; accepted ADR-004\u2013007; AQ G2 source contracts"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/effect_service.rs::::struct:ExpireAtDeliveryClock",
+    "disposition": "retain-align",
+    "target": "WI-04 G2 source tests",
+    "rationale": "Trusted-time expiry regression fixture; independent review remains required.",
+    "source": "implementation plan WI-04 and Appendix A; accepted ADR-004\u2013007; AQ G2 source contracts"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/effect_service.rs::::struct:ExpiringEvidence",
+    "disposition": "retain-align",
+    "target": "WI-04 G2 source tests",
+    "rationale": "Trusted-time expiry regression fixture; independent review remains required.",
+    "source": "implementation plan WI-04 and Appendix A; accepted ADR-004\u2013007; AQ G2 source contracts"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/effect_service.rs::::struct:Complete",
+    "disposition": "retain-align",
+    "target": "WI-04 G2 source tests",
+    "rationale": "Production facade and resource-boundary tests; independent review remains required.",
+    "source": "implementation plan WI-04 and Appendix A; accepted ADR-004\u2013007; AQ G2 source contracts"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/effect_service.rs::::struct:Evidence",
+    "disposition": "retain-align",
+    "target": "WI-04 G2 source tests",
+    "rationale": "Production facade and resource-boundary tests; independent review remains required.",
+    "source": "implementation plan WI-04 and Appendix A; accepted ADR-004\u2013007; AQ G2 source contracts"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/effect_service.rs::::struct:Observer",
+    "disposition": "retain-align",
+    "target": "WI-04 G2 source tests",
+    "rationale": "Production facade and resource-boundary tests; independent review remains required.",
+    "source": "implementation plan WI-04 and Appendix A; accepted ADR-004\u2013007; AQ G2 source contracts"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/g2_admission.rs::::source-module:crates/worldinterface-runtime/tests/g2_admission.rs",
+    "disposition": "retain-align",
+    "target": "WI-04 G2 source tests",
+    "rationale": "Candidate AQ admission, retry, canonical vector and discovery tests; independent review remains required.",
+    "source": "implementation plan WI-04 and Appendix A; accepted ADR-004\u2013007; AQ G2 source contracts"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/g2_admission.rs::::struct:Complete",
+    "disposition": "retain-align",
+    "target": "WI-04 G2 source tests",
+    "rationale": "Candidate AQ admission, retry, canonical vector and discovery tests; independent review remains required.",
+    "source": "implementation plan WI-04 and Appendix A; accepted ADR-004\u2013007; AQ G2 source contracts"
   },
   {
     "id": "crates/worldinterface-runtime/tests/integration.rs::::source-module:crates/worldinterface-runtime/tests/integration.rs",

@@ -125,6 +125,10 @@ impl StoreBundle {
     pub fn aq_path(&self) -> std::path::PathBuf {
         self.path.join("aq")
     }
+    /// The retained bundle lock pins the validated AQ store identity.
+    pub fn aq_store_id(&self) -> Result<uuid::Uuid> {
+        Ok(validate(&self.path)?.aq)
+    }
     pub fn backup(source: &Path, destination: &Path) -> Result<()> {
         require_independent_destination(source, destination)?;
         let manifest = validate(source)?;

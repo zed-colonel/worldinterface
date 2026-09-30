@@ -320,6 +320,63 @@ fn ordinary_provider_cannot_reuse_fixture_proof() {
     deny(p, Reason::FixtureOnly);
 }
 #[test]
+fn ordinary_qualification_is_exact_and_revocable() {
+    let (s, mut p) = fixture();
+    p.fixture = None;
+    let w = p.worker.as_mut().unwrap();
+    w.credential = Credential::None;
+    let q = OrdinaryQualification {
+        realization: digest(w).unwrap(),
+        tenant: opaque("tenant:fixture"),
+        subject: p.bindings[0].principal.clone(),
+        provider: w.provider.clone(),
+        profile: w.profile.clone(),
+        operations: BTreeSet::from([w.operation.clone()]),
+        aq_version: w.aq_version.clone(),
+        wi_version: w.wi_version.clone(),
+        expires_at: "2026-09-22T00:00:00.000000000Z".to_owned().try_into().unwrap(),
+        revoked: false,
+        quarantined: false,
+        evidence: p.facts[0].evidence.clone(),
+    };
+    p.qualification = Some(q.clone());
+    let t = tempfile::tempdir().unwrap();
+    let r = root(&t);
+    let id = submit(&r, &s, &p);
+    resolve(&r, &id, &p);
+    assert_eq!(evaluate(&r, &id, &p).phase, Phase::Authorized);
+    for (credential, input_class, expected) in [
+        (Credential::Production, InputClass::NonSensitive, Reason::Credential),
+        (Credential::None, InputClass::Protected, Reason::ProtectedInput),
+    ] {
+        let mut excluded = p.clone();
+        let worker = excluded.worker.as_mut().unwrap();
+        worker.credential = credential;
+        worker.input_class = input_class;
+        excluded.qualification.as_mut().unwrap().realization = digest(worker).unwrap();
+        let t = tempfile::tempdir().unwrap();
+        let r = root(&t);
+        let id = submit(&r, &s, &excluded);
+        resolve(&r, &id, &excluded);
+        let view = evaluate(&r, &id, &excluded);
+        assert_eq!(view.phase, Phase::Denied);
+        assert!(view.authorization.unwrap().reasons.contains(&expected));
+    }
+    p.qualification.as_mut().unwrap().quarantined = true;
+    let t = tempfile::tempdir().unwrap();
+    let r = root(&t);
+    let id = submit(&r, &s, &p);
+    resolve(&r, &id, &p);
+    assert_eq!(evaluate(&r, &id, &p).phase, Phase::Denied);
+    assert!(Egress::new(&r)
+        .inspect(&caller(&p), &id)
+        .unwrap()
+        .authorization
+        .unwrap()
+        .reasons
+        .contains(&Reason::ProfileDrift));
+}
+#[test]
 fn agency_forgery_ambiguity_expiry_revocation_and_attenuation() {
     let (s, p) = fixture();
     let c = caller(&p);

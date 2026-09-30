@@ -46,7 +46,7 @@ pub struct AuthenticatedCaller {
     pub(crate) principal: PrincipalId,
 }
 impl AuthenticatedCaller {
-    /// Authentication adapter boundary. No production implementation exists in this slice.
+    /// Authentication adapter boundary. Runtime host composition authenticates sessions.
     pub fn from_trusted_authentication(tenant: OpaqueRef, principal: PrincipalId) -> Self {
         Self { tenant, principal }
     }

@@ -1,5 +1,5 @@
-//! Inactive WI-04 facade. Trusted host supplies authenticated callers, verified facts,
-//! timestamps and IDs. Only test admission implementations exist; no live authority path.
+//! Guarded effect journal facade. The production AQ adapter and trusted host
+//! authority composition live in `worldinterface-runtime`.
 use worldinterface_domain::{
     agency::AuthenticatedCaller, authorization::VerifiedSnapshot, effect::*, ingress::digest,
     ports::TestEffectAdmissionPort, Phase,

@@ -69,7 +69,29 @@ pub struct IntentLink {
 pub struct Dispatch {
     pub request: EffectAdmissionRequest,
     #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub admission: Option<ProductionAdmission>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
     pub acknowledgment: Option<EffectAcknowledgment>,
+}
+/// AQ-neutral, immutable record of the complete request published as a scoped artifact.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ProductionAdmission {
+    pub version: u32,
+    pub queue_store: OpaqueRef,
+    pub task: OpaqueRef,
+    pub admission_key: OpaqueRef,
+    pub execution: ContentHash,
+    pub request_artifact: ArtifactRef,
+    pub request_hash: ContentHash,
+    pub canonical_version: u32,
+    pub canonical_digest: ContentHash,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub acknowledged_sequence: Option<u64>,
+    #[serde(default)]
+    pub observed_runs: Vec<OpaqueRef>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub discovery_cursor: Option<String>,
 }
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -180,6 +202,18 @@ pub fn inspect_effect(e: &EffectAggregate) -> Result<EffectView> {
     }
     for d in &e.dispatches {
         if d.request.intent != e.intent.id
+            || d.admission.as_ref().is_some_and(|a| {
+                a.version != 1
+                    || a.canonical_version != 2
+                    || a.execution != d.request.execution
+                    || a.admission_key != d.request.admission_key
+                    || a.request_artifact.scope != e.agency.binding.tenant
+                    || a.request_artifact.content != a.request_hash
+                    || a.acknowledged_sequence == Some(0)
+                    || a.observed_runs.len() > 10000
+                    || a.observed_runs.windows(2).any(|w| w[0] >= w[1])
+                    || !a.observed_runs.is_empty() && a.acknowledged_sequence.is_none()
+            })
             || d.acknowledgment.as_ref().is_some_and(|a| {
                 a.task != d.request.task
                     || a.admission_key != d.request.admission_key
@@ -230,6 +264,24 @@ pub enum EffectAction {
         id: EffectIntentId,
         snapshot: VerifiedSnapshot,
     },
+    PrepareProduction {
+        id: EffectIntentId,
+        snapshot: VerifiedSnapshot,
+        admission: Box<ProductionAdmission>,
+    },
+    AcknowledgeProduction {
+        id: EffectIntentId,
+        sequence: u64,
+    },
+    ObserveRun {
+        id: EffectIntentId,
+        run: OpaqueRef,
+    },
+    AdvanceDiscovery {
+        id: EffectIntentId,
+        previous: Option<String>,
+        next: Option<String>,
+    },
     Acknowledge {
         id: EffectIntentId,
         acknowledgment: EffectAcknowledgment,
@@ -277,6 +329,26 @@ enum JournalAction {
         id: EffectIntentId,
         snapshot: AuthorizationSnapshot,
     },
+    PrepareProduction {
+        id: EffectIntentId,
+        snapshot: AuthorizationSnapshot,
+        admission: Box<ProductionAdmission>,
+    },
+    AcknowledgeProduction {
+        id: EffectIntentId,
+        sequence: u64,
+    },
+    ObserveRun {
+        id: EffectIntentId,
+        run: OpaqueRef,
+    },
+    AdvanceDiscovery {
+        id: EffectIntentId,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        previous: Option<String>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        next: Option<String>,
+    },
     Acknowledge {
         id: EffectIntentId,
         acknowledgment: EffectAcknowledgment,
@@ -313,6 +385,16 @@ impl From<EffectAction> for JournalAction {
                 Self::Authorize { id, snapshot: snapshot.0 }
             }
             EffectAction::Prepare { id, snapshot } => Self::Prepare { id, snapshot: snapshot.0 },
+            EffectAction::PrepareProduction { id, snapshot, admission } => {
+                Self::PrepareProduction { id, snapshot: snapshot.0, admission }
+            }
+            EffectAction::AcknowledgeProduction { id, sequence } => {
+                Self::AcknowledgeProduction { id, sequence }
+            }
+            EffectAction::ObserveRun { id, run } => Self::ObserveRun { id, run },
+            EffectAction::AdvanceDiscovery { id, previous, next } => {
+                Self::AdvanceDiscovery { id, previous, next }
+            }
             EffectAction::Start { id, snapshot, attempt } => {
                 Self::Start { id, snapshot: snapshot.0, attempt }
             }
@@ -497,6 +579,10 @@ fn apply(state: &EffectState, entry: &Entry) -> Result<(EffectState, EffectInten
         JournalAction::Resolve { id, .. }
         | JournalAction::Authorize { id, .. }
         | JournalAction::Prepare { id, .. }
+        | JournalAction::PrepareProduction { id, .. }
+        | JournalAction::AcknowledgeProduction { id, .. }
+        | JournalAction::ObserveRun { id, .. }
+        | JournalAction::AdvanceDiscovery { id, .. }
         | JournalAction::Acknowledge { id, .. }
         | JournalAction::Start { id, .. }
         | JournalAction::Cancel { id }
@@ -533,7 +619,13 @@ fn apply(state: &EffectState, entry: &Entry) -> Result<(EffectState, EffectInten
             }
         }
         JournalAction::Authorize { snapshot, .. } => {
-            if !matches!(e.phase, Phase::Resolving | Phase::AwaitingApproval | Phase::Authorized) {
+            if !matches!(
+                e.phase,
+                Phase::Resolving
+                    | Phase::AwaitingApproval
+                    | Phase::Authorized
+                    | Phase::DispatchPending
+            ) {
                 return Err("authorization phase".into());
             }
             // The immutable intent's agency may not silently rebind. Changed bindings need replacement.
@@ -544,6 +636,12 @@ fn apply(state: &EffectState, entry: &Entry) -> Result<(EffectState, EffectInten
                 &VerifiedSnapshot(snapshot.clone()),
                 now,
             )?;
+            if e.phase == Phase::DispatchPending {
+                if a.decision != Decision::Allow || e.authorization.as_ref() != Some(&a) {
+                    return Err("pending admission authorization drift".into());
+                }
+                return Ok((state.clone(), id.clone()));
+            }
             e.phase = match a.decision {
                 Decision::Allow => Phase::Authorized,
                 Decision::Deny => Phase::Denied,
@@ -552,9 +650,17 @@ fn apply(state: &EffectState, entry: &Entry) -> Result<(EffectState, EffectInten
             e.authorization = Some(a);
             e.authorization_inputs = Some(snapshot.clone());
         }
-        JournalAction::Prepare { snapshot, .. } => {
+        JournalAction::Prepare { snapshot, .. }
+        | JournalAction::PrepareProduction { snapshot, .. } => {
             current(e, snapshot, now)?;
             if e.phase == Phase::DispatchPending {
+                if let JournalAction::PrepareProduction { admission, .. } = &entry.action {
+                    if e.dispatches.last().and_then(|d| d.admission.as_ref())
+                        != Some(admission.as_ref())
+                    {
+                        return Err("admission binding conflict".into());
+                    }
+                }
                 return Ok((state.clone(), id.clone()));
             }
             if e.phase != Phase::Authorized {
@@ -579,8 +685,70 @@ fn apply(state: &EffectState, entry: &Entry) -> Result<(EffectState, EffectInten
                 authorization: digest(a)?,
                 execution: digest(&(&e.intent, &e.resolution, a, snapshot, index))?,
             };
-            e.dispatches.push(Dispatch { request, acknowledgment: None });
+            let admission =
+                if let JournalAction::PrepareProduction { admission, .. } = &entry.action {
+                    if admission.version != 1
+                        || admission.canonical_version != 2
+                        || admission.request_artifact.scope != entry.tenant
+                        || admission.request_artifact.size == 0
+                        || admission.request_artifact.content != admission.request_hash
+                        || admission.execution != request.execution
+                        || admission.admission_key != request.admission_key
+                        || admission.acknowledged_sequence.is_some()
+                        || !admission.observed_runs.is_empty()
+                        || admission.discovery_cursor.is_some()
+                    {
+                        return Err("invalid production admission binding".into());
+                    }
+                    Some(*admission.clone())
+                } else {
+                    None
+                };
+            e.dispatches.push(Dispatch { request, admission, acknowledgment: None });
             e.phase = Phase::DispatchPending;
+        }
+        JournalAction::AcknowledgeProduction { sequence, .. } => {
+            let d = e.dispatches.last_mut().ok_or("missing production admission")?;
+            let a = d.admission.as_mut().ok_or("missing production binding")?;
+            if e.phase != Phase::DispatchPending || *sequence == 0 {
+                return Err("invalid production acknowledgment".into());
+            }
+            if let Some(old) = a.acknowledged_sequence {
+                if old != *sequence {
+                    return Err("production acknowledgment conflict".into());
+                }
+                return Ok((state.clone(), id.clone()));
+            }
+            a.acknowledged_sequence = Some(*sequence);
+        }
+        JournalAction::ObserveRun { run, .. } => {
+            let d = e.dispatches.last_mut().ok_or("missing production admission")?;
+            let a = d.admission.as_mut().ok_or("missing production binding")?;
+            if a.acknowledged_sequence.is_none() {
+                return Err("unacknowledged admission".into());
+            }
+            if a.observed_runs.contains(run) {
+                return Ok((state.clone(), id.clone()));
+            }
+            if a.observed_runs.len() >= 10000 {
+                return Err("run mapping limit".into());
+            }
+            a.observed_runs.push(run.clone());
+            a.observed_runs.sort();
+        }
+        JournalAction::AdvanceDiscovery { previous, next, .. } => {
+            let a = e
+                .dispatches
+                .last_mut()
+                .and_then(|d| d.admission.as_mut())
+                .ok_or("missing production admission")?;
+            if a.acknowledged_sequence.is_none()
+                || a.discovery_cursor != *previous
+                || next.as_ref().is_some_and(|v| v.len() > 4096)
+            {
+                return Err("discovery cursor conflict".into());
+            }
+            a.discovery_cursor = next.clone();
         }
         JournalAction::Acknowledge { acknowledgment, .. } => {
             if e.phase != Phase::DispatchPending {
@@ -769,6 +937,9 @@ pub fn required_artifacts(e: &EffectAggregate) -> Vec<&ArtifactRef> {
         if let Some(q) = &s.fixture {
             refs.push(&q.evidence.artifact);
         }
+        if let Some(q) = &s.qualification {
+            refs.push(&q.evidence.artifact);
+        }
     }
     for o in &e.outcomes {
         refs.extend(&o.durable_outputs);
@@ -777,6 +948,9 @@ pub fn required_artifacts(e: &EffectAggregate) -> Vec<&ArtifactRef> {
     }
     for r in &e.reconciliations {
         refs.extend(r.evidence.iter().map(|e| &e.artifact));
+    }
+    for d in &e.dispatches {
+        refs.extend(d.admission.as_ref().map(|a| &a.request_artifact));
     }
     refs
 }

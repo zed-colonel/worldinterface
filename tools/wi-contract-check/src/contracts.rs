@@ -267,6 +267,9 @@ pub fn conformance(root: &Path) -> Result<Vec<Finding>> {
     if assigned
         != BTreeSet::from([
             "AB-WI-001",
+            "AB-WI-002",
+            "AB-WI-003",
+            "AB-WI-004",
             "AB-WI-006",
             "AB-WI-007",
             "AB-WI-009",
@@ -276,7 +279,7 @@ pub fn conformance(root: &Path) -> Result<Vec<Finding>> {
         ])
         || !assigned.iter().all(|id| ids.contains(id))
     {
-        return Err("assigned WI-02/WI-03 cases must be registered exactly".into());
+        return Err("assigned WI-02/WI-03/WI-04 cases must be registered exactly".into());
     }
     if m["integration_fixture_sha256"]
         != hash(fs::read(root.join(string(&m, "integration_fixture")?))?)
