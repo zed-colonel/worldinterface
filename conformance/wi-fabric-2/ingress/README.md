@@ -2,9 +2,10 @@
 
 This independent library implements the WI-03/domain scope. HTTP and streaming
 validators open no sockets. `BindingAuthority`, authenticated caller contexts and
-release authorization are inactive trusted composition seams; their concrete
-implementations occur only in tests. No production subscriber, AQ adapter, live
-lifecycle activation, integration acceptance or parent completion is asserted.
+release authorization are trusted composition seams. The production composition
+now lives in `worldinterface-runtime::ingress`, with its AQ admission and signal
+adapter. This domain package alone does not assert integration acceptance or
+parent completion.
 
 ## Transactions and recovery
 
@@ -118,7 +119,8 @@ Those records are guidance and provenance, not test results. Run both repository
 scripts through `ct-check`, then `ct-act` for the domain and changed contract jobs.
 The controller must review the exact candidate and target, perform any authorized
 integration, and obtain fresh post-rebase/merged-target evidence. WI-AQ-005/006,
-AB-WI-006/007/009/022 and WI-AQ-G3 remain integration obligations. Remote protection
+AB-WI-006/007/009/022 have candidate runtime tests; independent case review and
+WI-AQ-G3 attestation remain integration obligations. Remote protection
 remains operator-owned before first publication and final release approval.
 
 Implementation grouping follows existing layering: pure commands/reducers in

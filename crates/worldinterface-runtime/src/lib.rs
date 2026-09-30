@@ -4,6 +4,7 @@ pub mod aq_adapter;
 pub mod artifact;
 pub mod authority;
 pub mod egress;
+pub mod ingress;
 pub mod resolution;
 pub mod run_discovery;
 pub mod storage;

@@ -1,5 +1,4 @@
-//! Inactive ingress library. Trusted contexts and ports require an authenticated composition
-//! root; this slice supplies only test implementations. No live ingress or AQ adapter exists.
+//! Authenticated ingress domain facade; the production composition lives in worldinterface-runtime.
 pub mod transport;
 use worldinterface_domain::ingress::*;
 use worldinterface_protocol::*;
@@ -170,6 +169,26 @@ impl<'a> Ingress<'a> {
         ids: AdmissionIds,
         now: u64,
     ) -> Result<IngressResult> {
+        self.admit_event(event, expected, ids, None, now)
+    }
+    pub fn admit_provider_event_queued(
+        &self,
+        event: transport::ValidatedProviderEvent,
+        expected: Vec<BindingVersion>,
+        ids: AdmissionIds,
+        queue: Vec<QueueObligation>,
+        now: u64,
+    ) -> Result<IngressResult> {
+        self.admit_event(event, expected, ids, Some(queue), now)
+    }
+    fn admit_event(
+        &self,
+        event: transport::ValidatedProviderEvent,
+        expected: Vec<BindingVersion>,
+        ids: AdmissionIds,
+        queue: Option<Vec<QueueObligation>>,
+        now: u64,
+    ) -> Result<IngressResult> {
         let transport::ValidatedProviderEvent { event, profile, provenance } = event;
         self.root.read_artifact(&event.content)?;
         for a in &event.attachments {
@@ -268,12 +287,11 @@ impl<'a> Ingress<'a> {
             },
             admitted_at_ms: now,
         };
-        self.root.ingress_transact(
-            &tenant,
-            None,
-            now,
-            &IngressCommand::Admit { admission: Box::new(admission) },
-        )
+        let command = match queue {
+            Some(queue) => IngressCommand::AdmitQueued { admission: Box::new(admission), queue },
+            None => IngressCommand::Admit { admission: Box::new(admission) },
+        };
+        self.root.ingress_transact(&tenant, None, now, &command)
     }
     pub fn inspect_delivery(
         &self,
@@ -313,34 +331,40 @@ impl<'a> Ingress<'a> {
         token: DeliveryToken,
         now: u64,
     ) -> Result<Option<IssuedDelivery>> {
-        let s = self.root.ingress_snapshot(&scope.tenant)?;
-        let mut view = view(&s, scope, id, now)?;
         let token_digest = token.digest(id, &scope.principal)?;
-        match self.root.ingress_transact(
-            &scope.tenant,
-            Some(s.revision),
-            now,
-            &IngressCommand::Claim {
-                id: id.clone(),
-                subscriber: scope.principal.clone(),
-                token_digest,
-            },
-        )? {
-            IngressResult::Attempt(a) => {
-                let d = &s.deliveries[id];
-                view.attempt_count += 1;
-                view.attempts.push((a.number, a.issued_at_ms, a.status.clone()));
-                Ok(Some(IssuedDelivery {
-                    view,
-                    token,
-                    attempt: a.number,
-                    wake_key: d.wake_key.clone(),
-                    locator: d.locator.clone(),
-                }))
+        for attempt in 0..8 {
+            let s = self.root.ingress_snapshot(&scope.tenant)?;
+            let effective_now = now.max(s.last_at_ms);
+            let mut view = view(&s, scope, id, effective_now)?;
+            match self.root.ingress_transact_fresh_expected(
+                &scope.tenant,
+                s.revision,
+                effective_now,
+                &IngressCommand::Claim {
+                    id: id.clone(),
+                    subscriber: scope.principal.clone(),
+                    token_digest: token_digest.clone(),
+                },
+            ) {
+                Ok(IngressResult::Attempt(a)) => {
+                    let d = &s.deliveries[id];
+                    view.attempt_count += 1;
+                    view.attempts.push((a.number, a.issued_at_ms, a.status.clone()));
+                    return Ok(Some(IssuedDelivery {
+                        view,
+                        token,
+                        attempt: a.number,
+                        wake_key: d.wake_key.clone(),
+                        locator: d.locator.clone(),
+                    }));
+                }
+                Ok(IngressResult::Updated) => return Ok(None),
+                Ok(_) => return Err(error("unexpected claim result")),
+                Err(e) if e.to_string() == "ingress revision conflict" && attempt < 7 => {}
+                Err(e) => return Err(e),
             }
-            IngressResult::Updated => Ok(None),
-            _ => Err(error("unexpected claim result")),
         }
+        unreachable!("bounded claim loop returns on its last attempt")
     }
     /// Trusted local dispatcher reports only wake transport outcome; this never acknowledges ingestion.
     pub fn record_wake(
@@ -351,9 +375,8 @@ impl<'a> Ingress<'a> {
         succeeded: bool,
         now: u64,
     ) -> Result<()> {
-        self.root.ingress_transact(
+        self.root.ingress_transact_fresh(
             tenant,
-            None,
             now,
             &IngressCommand::Finish { id, attempt, succeeded },
         )?;
@@ -366,16 +389,41 @@ impl<'a> Ingress<'a> {
         token: &DeliveryToken,
         now: u64,
     ) -> Result<DeliveryAcknowledgment> {
-        let result = self.root.ingress_transact(
-            &scope.tenant,
-            None,
-            now,
-            &IngressCommand::Acknowledge {
+        self.acknowledge_with_signal(scope, id, token, None, now)
+    }
+    pub fn acknowledge_queued(
+        &self,
+        scope: &AuthenticatedScope,
+        id: &DeliveryId,
+        token: &DeliveryToken,
+        signal: AcknowledgmentSignal,
+        now: u64,
+    ) -> Result<DeliveryAcknowledgment> {
+        self.acknowledge_with_signal(scope, id, token, Some(signal), now)
+    }
+    fn acknowledge_with_signal(
+        &self,
+        scope: &AuthenticatedScope,
+        id: &DeliveryId,
+        token: &DeliveryToken,
+        signal: Option<AcknowledgmentSignal>,
+        now: u64,
+    ) -> Result<DeliveryAcknowledgment> {
+        let token_digest = token.digest(id, &scope.principal)?;
+        let command = match signal {
+            Some(signal) => IngressCommand::AcknowledgeQueued {
                 id: id.clone(),
                 subscriber: scope.principal.clone(),
-                token_digest: token.digest(id, &scope.principal)?,
+                token_digest,
+                signal,
             },
-        )?;
+            None => IngressCommand::Acknowledge {
+                id: id.clone(),
+                subscriber: scope.principal.clone(),
+                token_digest,
+            },
+        };
+        let result = self.root.ingress_transact_fresh(&scope.tenant, now, &command)?;
         match result {
             IngressResult::Acknowledged(a) => Ok(a),
             _ => Err(error("unexpected acknowledgment result")),

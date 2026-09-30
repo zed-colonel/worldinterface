@@ -12,11 +12,15 @@
   },
   "assigned_aq_baseline_cases": [
     "AB-WI-001",
-    "AB-WI-015",
-    "AB-WI-016",
     "AB-WI-002",
     "AB-WI-003",
-    "AB-WI-004"
+    "AB-WI-004",
+    "AB-WI-006",
+    "AB-WI-007",
+    "AB-WI-009",
+    "AB-WI-015",
+    "AB-WI-016",
+    "AB-WI-022"
   ],
   "fixture_manifest": "fixtures/pre-wi-fabric-2/manifest.json",
   "fixture_manifest_sha256": "a03984aacf7c7b15f5d38ad5840958cbb784da02acaaa1d96f6bd054bb10882c",
@@ -617,6 +621,50 @@
       "result": null,
       "source_record_sha256": "9e878d392ef66cfd0567dced1c21d308e6eb6ea021569b3fa2f26312a98d9690",
       "test_source": "crates/worldinterface-runtime/tests/g2_admission.rs"
+    },
+    {
+      "id": "AB-WI-006",
+      "invariants": [
+        "W1"
+      ],
+      "status": "implemented",
+      "kind": "runtime",
+      "result": null,
+      "source_record_sha256": "2eae5f9661b6c3a24b34cb44fb18fe41647f1c134542db129ba4acedab196f18",
+      "test_source": "crates/worldinterface-runtime/tests/ingress.rs"
+    },
+    {
+      "id": "AB-WI-007",
+      "invariants": [
+        "W1"
+      ],
+      "status": "implemented",
+      "kind": "runtime",
+      "result": null,
+      "source_record_sha256": "5e28dbfd281d310109931bdc6c6ab98a97b75b9c6bcc57a0f70433bad783a3b6",
+      "test_source": "crates/worldinterface-runtime/tests/ingress.rs"
+    },
+    {
+      "id": "AB-WI-009",
+      "invariants": [
+        "W1"
+      ],
+      "status": "implemented",
+      "kind": "runtime",
+      "result": null,
+      "source_record_sha256": "4b1907c6eb598efc348ba0390ac93da7626fa45deb5e3805ebd5d544e950f1ee",
+      "test_source": "crates/worldinterface-runtime/tests/ingress.rs"
+    },
+    {
+      "id": "AB-WI-022",
+      "invariants": [
+        "W1"
+      ],
+      "status": "implemented",
+      "kind": "runtime",
+      "result": null,
+      "source_record_sha256": "39053f56f805b7c942cd07602c7c202227e7f00259f1f6897fe19cd71bf67d81",
+      "test_source": "crates/worldinterface-runtime/tests/ingress.rs"
     }
   ],
   "store_scenarios": [
@@ -652,5 +700,5 @@
   "store_fixture": "conformance/wi-fabric-2/store-scenarios.json",
   "store_fixture_sha256": "57954a1042fd7845c4ecf72aa0f0524f7fb8f456d49ee9e501370add7658009d",
   "integration_fixture": "conformance/wi-fabric-2/integration/fixtures.json",
-  "integration_fixture_sha256": "e3d52fac35e8287064d7a64fe6cda123f86bab599a19d91ac4d8f0658cb9252d"
+  "integration_fixture_sha256": "18f7e74979b241f32aaa8b7f0e33c4b28700eb475e763b3df457f97732094df7"
 }

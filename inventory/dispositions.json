@@ -7663,5 +7663,215 @@
     "target": "capability admission / WASM adapter",
     "rationale": "Each high-value semantic connector requires admission review before target retention",
     "source": "implementation plan \u00a71.1 and Appendix E"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/ingress.rs::::struct:AcknowledgmentSignal",
+    "disposition": "retain-align",
+    "target": "WI-03 AQ-neutral ingress journal extension",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Persist immutable queue and acknowledgment obligations in the authoritative Fabric transaction; AQ types remain outside foundation."
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/ingress.rs::::struct:QueueObligation",
+    "disposition": "retain-align",
+    "target": "WI-03 AQ-neutral ingress journal extension",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Persist immutable queue and acknowledgment obligations in the authoritative Fabric transaction; AQ types remain outside foundation."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/ingress.rs::::source-module:crates/worldinterface-runtime/src/ingress.rs",
+    "disposition": "retain-align",
+    "target": "WI-03 production ingress and exact AQ consumer tests",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/ingress.rs::::struct:BoundAqIngress",
+    "disposition": "retain-align",
+    "target": "WI-03 production ingress and exact AQ consumer tests",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/ingress.rs::::struct:IngressDeliveryHandler",
+    "disposition": "retain-align",
+    "target": "WI-03 production ingress and exact AQ consumer tests",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/ingress.rs::::struct:IngressRuntime",
+    "disposition": "retain-align",
+    "target": "WI-03 production ingress and exact AQ consumer tests",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/ingress.rs::::trait:AqIngressPort",
+    "disposition": "retain-align",
+    "target": "WI-03 production ingress and exact AQ consumer tests",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/ingress.rs::::trait:SubscriberTransport",
+    "disposition": "retain-align",
+    "target": "WI-03 production ingress and exact AQ consumer tests",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/lib.rs::::module:ingress",
+    "disposition": "retain-align",
+    "target": "WI-03 production ingress and exact AQ consumer tests",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/ingress.rs::::source-module:crates/worldinterface-runtime/tests/ingress.rs",
+    "disposition": "retain-align",
+    "target": "WI-03 production ingress and exact AQ consumer tests",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/ingress.rs::::struct:Authority",
+    "disposition": "retain-align",
+    "target": "WI-03 production ingress and exact AQ consumer tests",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/ingress.rs::::struct:Complete",
+    "disposition": "retain-align",
+    "target": "WI-03 production ingress and exact AQ consumer tests",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/ingress.rs::::struct:CursorHandler",
+    "disposition": "retain-align",
+    "target": "WI-03 production ingress and exact AQ consumer tests",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/ingress.rs::::struct:LostAcknowledgment",
+    "disposition": "retain-align",
+    "target": "WI-03 production ingress and exact AQ consumer tests",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/ingress.rs::::struct:Subscriber",
+    "disposition": "retain-align",
+    "target": "WI-03 production ingress and exact AQ consumer tests",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/ingress.rs::::enum:AdmissionOutcome",
+    "disposition": "retain-align",
+    "target": "WI-03 typed AQ admission and wake outcomes",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Keep conflict, capacity, uncertainty and durable identities distinct while replaying Fabric queue obligations; independent review remains due."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/ingress.rs::::enum:AqDispatchFailure",
+    "disposition": "retain-align",
+    "target": "WI-03 typed AQ admission and wake outcomes",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Keep conflict, capacity, uncertainty and durable identities distinct while replaying Fabric queue obligations; independent review remains due."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/ingress.rs::::struct:WakeOutcome",
+    "disposition": "retain-align",
+    "target": "WI-03 typed AQ admission and wake outcomes",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Keep conflict, capacity, uncertainty and durable identities distinct while replaying Fabric queue obligations; independent review remains due."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/ingress.rs::::module:http",
+    "disposition": "retain-align",
+    "target": "WI-03 bounded HTTP and streaming transport adapters",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Read exact signed bytes within provider limits before durable admission; streaming returns only the committed contiguous offset."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/ingress.rs::::module:streaming",
+    "disposition": "retain-align",
+    "target": "WI-03 bounded HTTP and streaming transport adapters",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Read exact signed bytes within provider limits before durable admission; streaming returns only the committed contiguous offset."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/ingress/http.rs::::source-module:crates/worldinterface-runtime/src/ingress/http.rs",
+    "disposition": "retain-align",
+    "target": "WI-03 bounded HTTP and streaming transport adapters",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Read exact signed bytes within provider limits before durable admission; streaming returns only the committed contiguous offset."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/ingress/streaming.rs::::source-module:crates/worldinterface-runtime/src/ingress/streaming.rs",
+    "disposition": "retain-align",
+    "target": "WI-03 bounded HTTP and streaming transport adapters",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Read exact signed bytes within provider limits before durable admission; streaming returns only the committed contiguous offset."
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/ingress_recovery.rs::::source-module:crates/worldinterface-runtime/tests/ingress_recovery.rs",
+    "disposition": "retain-align",
+    "target": "WI-03 production ingress and exact AQ consumer tests",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/ingress_recovery.rs::::struct:Authority",
+    "disposition": "retain-align",
+    "target": "WI-03 production ingress and exact AQ consumer tests",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/ingress_recovery.rs::::struct:ConcurrentWriter",
+    "disposition": "retain-align",
+    "target": "WI-03 production ingress and exact AQ consumer tests",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/ingress_recovery.rs::::struct:DurableStop",
+    "disposition": "retain-align",
+    "target": "WI-03 production ingress and exact AQ consumer tests",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/ingress_recovery.rs::::struct:Recorder",
+    "disposition": "retain-align",
+    "target": "WI-03 production ingress and exact AQ consumer tests",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/ingress_recovery.rs::::struct:PauseRecoveryWake",
+    "disposition": "retain-align",
+    "target": "WI-03 production ingress and exact AQ consumer tests",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/ingress_recovery.rs::::struct:DelayedOldCompletion",
+    "disposition": "retain-align",
+    "target": "WI-03 production ingress and exact AQ consumer tests",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/ingress_recovery.rs::::struct:DelayedOldTaskCompletion",
+    "disposition": "retain-align",
+    "target": "WI-03 production ingress and exact AQ consumer tests",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
   }
 ]

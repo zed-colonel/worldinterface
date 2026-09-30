@@ -52,9 +52,12 @@ fn transact(
     now: u64,
     command: &IngressCommand,
     fault: Option<&str>,
+    fresh: bool,
 ) -> Result<IngressResult> {
     let tx = c.transaction_with_behavior(TransactionBehavior::Immediate)?;
-    let revision = snapshot(&tx, tenant)?.revision;
+    let state = snapshot(&tx, tenant)?;
+    let revision = state.revision;
+    let now = if fresh { now.max(state.last_at_ms) } else { now };
     if expected.is_some_and(|v| v != revision) {
         return Err(invalid("ingress revision conflict"));
     }
@@ -79,6 +82,13 @@ fn transact(
     Ok(result)
 }
 impl StoreRoot {
+    /// Tenant inventory for cross-store reference validation during bundle reopen.
+    pub fn ingress_tenants(&self) -> Result<Vec<OpaqueRef>> {
+        let c = self.connect(StoreKind::Fabric)?;
+        let mut q = c.prepare("SELECT tenant FROM ingress_state ORDER BY tenant")?;
+        let rows = q.query_map([], |r| r.get::<_, String>(0))?;
+        rows.map(|row| row?.try_into().map_err(invalid)).collect()
+    }
     pub fn ingress_snapshot(&self, tenant: &OpaqueRef) -> Result<IngressState> {
         snapshot(&self.connect(StoreKind::Fabric)?, tenant)
     }
@@ -89,7 +99,34 @@ impl StoreRoot {
         now: u64,
         command: &IngressCommand,
     ) -> Result<IngressResult> {
-        transact(&mut self.connect(StoreKind::Fabric)?, tenant, expected, now, command, None)
+        transact(&mut self.connect(StoreKind::Fabric)?, tenant, expected, now, command, None, false)
+    }
+    /// Records a completion after external I/O using the journal clock observed under
+    /// the same write lock. The caller's timestamp cannot reverse concurrent writes.
+    pub fn ingress_transact_fresh(
+        &self,
+        tenant: &OpaqueRef,
+        now: u64,
+        command: &IngressCommand,
+    ) -> Result<IngressResult> {
+        transact(&mut self.connect(StoreKind::Fabric)?, tenant, None, now, command, None, true)
+    }
+    pub fn ingress_transact_fresh_expected(
+        &self,
+        tenant: &OpaqueRef,
+        expected: u64,
+        now: u64,
+        command: &IngressCommand,
+    ) -> Result<IngressResult> {
+        transact(
+            &mut self.connect(StoreKind::Fabric)?,
+            tenant,
+            Some(expected),
+            now,
+            command,
+            None,
+            true,
+        )
     }
 }
 pub(crate) fn replay(source: &Connection, target: &Connection) -> Result<()> {
@@ -140,14 +177,14 @@ mod tests {
             c.execute_batch(crate::effect::SCHEMA).unwrap();
             let tenant = binding.profile.scope.tenant.clone();
             let command = IngressCommand::Bind { binding: Box::new(binding.clone()) };
-            assert!(transact(&mut c, &tenant, None, 1000, &command, Some(fault)).is_err());
+            assert!(transact(&mut c, &tenant, None, 1000, &command, Some(fault), false).is_err());
             assert_eq!(snapshot(&c, &tenant).unwrap(), IngressState::default());
             assert_eq!(
                 c.query_row("SELECT count(*) FROM ingress_history", [], |r| r.get::<_, u64>(0))
                     .unwrap(),
                 0
             );
-            transact(&mut c, &tenant, None, 1000, &command, None).unwrap();
+            transact(&mut c, &tenant, None, 1000, &command, None, false).unwrap();
             crate::repository::validate_database(&c).unwrap();
         }
     }

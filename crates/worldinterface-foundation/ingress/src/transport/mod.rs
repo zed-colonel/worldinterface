@@ -23,12 +23,20 @@ impl ProviderCredentials {
         }
         Ok(Self { profile, key })
     }
+    pub fn profile(&self) -> &ProviderProfile {
+        &self.profile
+    }
 }
 /// Can only be created by authenticated transport validation; deliberately not Deserialize.
 pub struct ValidatedProviderEvent {
     pub(crate) event: ProviderEvent,
     pub(crate) profile: ProviderProfile,
     pub(crate) provenance: TransportProvenance,
+}
+impl ValidatedProviderEvent {
+    pub fn profile(&self) -> &ProviderProfile {
+        &self.profile
+    }
 }
 fn verify(key: &[u8], bytes: &[u8], signature: &[u8]) -> Result<()> {
     let mut mac = Hmac::<Sha256>::new_from_slice(key).map_err(|_| error("invalid key"))?;

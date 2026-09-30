@@ -8,23 +8,6 @@
         "ab_wi_001_store_formats_fresh_lineage_and_profile_rejection"
       ]
     },
-    "AB-WI-015": {
-      "source_record_sha256": "468730e76d4f44c133ceb65ff48b4efda113d03b1be3026ac4c58727e5dee6d1",
-      "required_tests": [
-        "ab_wi_015_bounds_and_unsupported_overrides_reject_without_truncation",
-        "ab_wi_015_016_real_child_execution_replay_and_foreign_provenance"
-      ]
-    },
-    "AB-WI-016": {
-      "source_record_sha256": "e9aae8a4df1330cd2ed265aef210847f82adf0bb7444a69cb689a9aeb8843a01",
-      "required_tests": [
-        "ab_wi_016_authorization_and_integrity",
-        "ab_wi_015_016_real_child_execution_replay_and_foreign_provenance",
-        "backup_retains_both_store_locks_and_rejects_missing_references",
-        "ab_wi_016_nested_destinations_leave_source_unchanged",
-        "ab_wi_016_single_component_relative_destinations"
-      ]
-    },
     "AB-WI-002": {
       "source_record_sha256": "0a25734a2d94cee7d2ad8d51dfcc1ce679a0f85b384b0d5a43a582906b25bd0b",
       "required_tests": [
@@ -46,6 +29,49 @@
         "ab_wi_002_003_004_persist_retry_ack_and_discover",
         "run_discovery::tests::stale_cursor_restarts_and_partial_page_is_not_complete",
         "wrong_queue_store_cannot_acknowledge_or_discover"
+      ]
+    },
+    "AB-WI-006": {
+      "source_record_sha256": "2eae5f9661b6c3a24b34cb44fb18fe41647f1c134542db129ba4acedab196f18",
+      "required_tests": [
+        "ab_wi_006_009_one_wait_and_strict_signal_cursor_across_restart"
+      ]
+    },
+    "AB-WI-007": {
+      "source_record_sha256": "5e28dbfd281d310109931bdc6c6ab98a97b75b9c6bcc57a0f70433bad783a3b6",
+      "required_tests": [
+        "ab_wi_007_commit_replay_identity_and_subscriber_ack",
+        "captured_fanout_routes_each_delivery_to_its_trusted_subscriber",
+        "process_death_after_wi_commit_recovers_aq_obligation"
+      ]
+    },
+    "AB-WI-009": {
+      "source_record_sha256": "4b1907c6eb598efc348ba0390ac93da7626fa45deb5e3805ebd5d544e950f1ee",
+      "required_tests": [
+        "ab_wi_006_009_one_wait_and_strict_signal_cursor_across_restart"
+      ]
+    },
+    "AB-WI-015": {
+      "source_record_sha256": "468730e76d4f44c133ceb65ff48b4efda113d03b1be3026ac4c58727e5dee6d1",
+      "required_tests": [
+        "ab_wi_015_bounds_and_unsupported_overrides_reject_without_truncation",
+        "ab_wi_015_016_real_child_execution_replay_and_foreign_provenance"
+      ]
+    },
+    "AB-WI-016": {
+      "source_record_sha256": "e9aae8a4df1330cd2ed265aef210847f82adf0bb7444a69cb689a9aeb8843a01",
+      "required_tests": [
+        "ab_wi_016_authorization_and_integrity",
+        "ab_wi_015_016_real_child_execution_replay_and_foreign_provenance",
+        "backup_retains_both_store_locks_and_rejects_missing_references",
+        "ab_wi_016_nested_destinations_leave_source_unchanged",
+        "ab_wi_016_single_component_relative_destinations"
+      ]
+    },
+    "AB-WI-022": {
+      "source_record_sha256": "39053f56f805b7c942cd07602c7c202227e7f00259f1f6897fe19cd71bf67d81",
+      "required_tests": [
+        "ab_wi_022_retirement_keeps_resident_capacity_and_alarm"
       ]
     }
   },
