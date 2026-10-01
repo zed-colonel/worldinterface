@@ -60,6 +60,13 @@ fn setup_with_timeout(
     path: &Path,
     acknowledgment_timeout_ms: u64,
 ) -> (Arc<StoreBundle>, IngressBinding, DeliveryId) {
+    setup_with_policy(path, acknowledgment_timeout_ms, 1_000_000)
+}
+fn setup_with_policy(
+    path: &Path,
+    acknowledgment_timeout_ms: u64,
+    retention_ms: u64,
+) -> (Arc<StoreBundle>, IngressBinding, DeliveryId) {
     let bundle = Arc::new(
         StoreBundle::initialize(
             path,
@@ -76,7 +83,7 @@ fn setup_with_timeout(
             .unwrap();
     let current = now();
     binding.expires_at_ms = current + 1_000_000;
-    binding.policy.retention_ms = 1_000_000;
+    binding.policy.retention_ms = retention_ms;
     binding.policy.acknowledgment_timeout_ms = acknowledgment_timeout_ms;
     binding.policy.backoff_ms = 1_000;
     let root = bundle.wi();
@@ -131,6 +138,194 @@ fn setup_with_timeout(
     };
     (bundle, binding, id)
 }
+
+#[tokio::test]
+async fn expired_before_dispatch_stays_expired_across_restart_and_repeated_dispatch() {
+    let temp = tempfile::tempdir().unwrap();
+    let path = temp.path().join("bundle");
+    let (bundle, binding, id) = setup_with_policy(&path, 1_000, 30_000);
+    let tenant = binding.profile.scope.tenant.clone();
+    let expires_at = bundle.wi().ingress_snapshot(&tenant).unwrap().deliveries[&id].expires_at_ms;
+    let recorder = Arc::new(Recorder::default());
+    let mut aq = ActionQueueEngine::new(
+        RuntimeConfig { data_dir: bundle.aq_path(), ..Default::default() },
+        handler(&bundle, &binding, recorder.clone()),
+    )
+    .bootstrap()
+    .unwrap()
+    .with_host(host());
+    let service = IngressRuntime::new(bundle.wi(), tenant.clone());
+    for _ in 0..3 {
+        assert_eq!(
+            service.dispatch_pending(
+                &mut BoundAqIngress::new(&mut aq, tenant.clone()),
+                10,
+                expires_at,
+            ).unwrap(),
+            0
+        );
+    }
+    let state = bundle.wi().ingress_snapshot(&tenant).unwrap();
+    assert_eq!(state.deliveries[&id].state, DeliveryState::Expired);
+    assert!(state.deliveries[&id].token_invalidated);
+    assert_eq!(state.queue[&id].generation, 0);
+    assert!(state.queue[&id].signal_sequence.is_none());
+    assert!(aq
+        .projection()
+        .run_ids_for_task(TaskId::from_uuid(uuid::Uuid::parse_str(id.as_str()).unwrap()))
+        .is_empty());
+    assert!(recorder.0.lock().unwrap().is_empty());
+    aq.shutdown().unwrap();
+    drop(service);
+    drop(bundle);
+
+    let bundle = Arc::new(StoreBundle::open(&path).unwrap());
+    let mut aq = ActionQueueEngine::new(
+        RuntimeConfig { data_dir: bundle.aq_path(), ..Default::default() },
+        handler(&bundle, &binding, recorder.clone()),
+    )
+    .bootstrap()
+    .unwrap()
+    .with_host(host());
+    for _ in 0..3 {
+        assert_eq!(
+            IngressRuntime::new(bundle.wi(), tenant.clone())
+                .dispatch_pending(
+                    &mut BoundAqIngress::new(&mut aq, tenant.clone()),
+                    10,
+                    expires_at + 1,
+                )
+                .unwrap(),
+            0
+        );
+    }
+    assert_eq!(bundle.wi().ingress_snapshot(&tenant).unwrap().queue[&id].generation, 0);
+    assert!(aq
+        .projection()
+        .run_ids_for_task(TaskId::from_uuid(uuid::Uuid::parse_str(id.as_str()).unwrap()))
+        .is_empty());
+    aq.shutdown().unwrap();
+}
+
+#[tokio::test]
+async fn expiration_during_ack_wait_completes_without_recovery_generation() {
+    let temp = tempfile::tempdir().unwrap();
+    let path = temp.path().join("bundle");
+    let (bundle, binding, id) = setup_with_policy(&path, 3_000, 3_000);
+    let tenant = binding.profile.scope.tenant.clone();
+    let recorder = Arc::new(Recorder::default());
+    let mut aq = ActionQueueEngine::new(
+        RuntimeConfig { data_dir: bundle.aq_path(), ..Default::default() },
+        handler(&bundle, &binding, recorder.clone()),
+    )
+    .bootstrap()
+    .unwrap()
+    .with_host(host());
+    let service = IngressRuntime::new(bundle.wi(), tenant.clone());
+    assert_eq!(
+        service
+            .dispatch_pending(&mut BoundAqIngress::new(&mut aq, tenant.clone()), 10, now())
+            .unwrap(),
+        1
+    );
+    let _ = aq.run_until_idle().await.unwrap();
+    let task = TaskId::from_uuid(uuid::Uuid::parse_str(id.as_str()).unwrap());
+    let run = aq.projection().run_ids_for_task(task)[0];
+    assert_eq!(aq.get_run(run).unwrap().state, actionqueue_core::run::state::RunState::Awaiting);
+    let token = {
+        let captured = recorder.0.lock().unwrap();
+        assert_eq!(captured.len(), 1);
+        assert_eq!(captured[0], id);
+        worldinterface_ingress::DeliveryToken::from_subscriber(&recorder.1.lock().unwrap()[0])
+            .unwrap()
+    };
+    tokio::time::sleep(Duration::from_millis(4100)).await;
+    assert_eq!(
+        service
+            .dispatch_pending(&mut BoundAqIngress::new(&mut aq, tenant.clone()), 10, now())
+            .unwrap(),
+        0
+    );
+    let _ = aq.run_until_idle().await.unwrap();
+    assert_eq!(aq.get_run(run).unwrap().state, actionqueue_core::run::state::RunState::Completed);
+    let state = bundle.wi().ingress_snapshot(&tenant).unwrap();
+    assert_eq!(state.deliveries[&id].state, DeliveryState::Expired);
+    assert!(state.deliveries[&id].token_invalidated);
+    assert_eq!(state.deliveries[&id].attempts.len(), 1);
+    assert_eq!(state.queue[&id].generation, 0);
+    assert_eq!(aq.projection().run_ids_for_task(task).len(), 1);
+    let subscriber =
+        AuthenticatedScope { tenant: tenant.clone(), principal: binding.subscriber.clone() };
+    assert!(service.claim(&subscriber, &id, now()).is_err());
+    assert!(service.acknowledge(&subscriber, &id, &token, now()).is_err());
+    aq.shutdown().unwrap();
+    drop(service);
+    drop(bundle);
+
+    let bundle = Arc::new(StoreBundle::open(&path).unwrap());
+    let mut aq = ActionQueueEngine::new(
+        RuntimeConfig { data_dir: bundle.aq_path(), ..Default::default() },
+        handler(&bundle, &binding, recorder.clone()),
+    )
+    .bootstrap()
+    .unwrap()
+    .with_host(host());
+    for _ in 0..3 {
+        assert_eq!(
+            IngressRuntime::new(bundle.wi(), tenant.clone())
+                .dispatch_pending(&mut BoundAqIngress::new(&mut aq, tenant.clone()), 10, now(),)
+                .unwrap(),
+            0
+        );
+    }
+    assert_eq!(bundle.wi().ingress_snapshot(&tenant).unwrap().queue[&id].generation, 0);
+    assert_eq!(aq.projection().run_ids_for_task(task).len(), 1);
+    assert_eq!(recorder.0.lock().unwrap().len(), 1);
+    aq.shutdown().unwrap();
+}
+
+#[tokio::test]
+async fn expired_terminal_aq_task_does_not_allocate_recovery_generation() {
+    let temp = tempfile::tempdir().unwrap();
+    let (bundle, binding, id) = setup_with_policy(&temp.path().join("bundle"), 1_000, 30_000);
+    let tenant = binding.profile.scope.tenant.clone();
+    let expires_at = bundle.wi().ingress_snapshot(&tenant).unwrap().deliveries[&id].expires_at_ms;
+    let recorder = Arc::new(Recorder::default());
+    let mut aq = ActionQueueEngine::new(
+        RuntimeConfig {
+            data_dir: bundle.aq_path(),
+            continuation_limits: ContinuationLimits { active_waits: 0, ..Default::default() },
+            ..Default::default()
+        },
+        handler(&bundle, &binding, recorder.clone()),
+    )
+    .bootstrap()
+    .unwrap()
+    .with_host(host());
+    let service = IngressRuntime::new(bundle.wi(), tenant.clone());
+    assert_eq!(
+        service
+            .dispatch_pending(&mut BoundAqIngress::new(&mut aq, tenant.clone()), 10, now())
+            .unwrap(),
+        1
+    );
+    let _ = aq.run_until_idle().await.unwrap();
+    let task = TaskId::from_uuid(uuid::Uuid::parse_str(id.as_str()).unwrap());
+    let run = aq.projection().run_ids_for_task(task)[0];
+    assert_eq!(aq.get_run(run).unwrap().state, actionqueue_core::run::state::RunState::Failed);
+    for _ in 0..3 {
+        assert_eq!(service.dispatch_pending(
+            &mut BoundAqIngress::new(&mut aq, tenant.clone()), 10, expires_at,
+        ).unwrap(), 0);
+    }
+    let state = bundle.wi().ingress_snapshot(&tenant).unwrap();
+    assert_eq!(state.deliveries[&id].state, DeliveryState::Expired);
+    assert!(state.deliveries[&id].attempts.is_empty());
+    assert_eq!(state.queue[&id].generation, 0);
+    assert_eq!(aq.projection().run_ids_for_task(task).len(), 1);
+    assert!(recorder.0.lock().unwrap().is_empty());
+    aq.shutdown().unwrap();
+}
 fn handler(
     bundle: &Arc<StoreBundle>,
     binding: &IngressBinding,
@@ -146,13 +341,14 @@ fn handler(
     )
 }
 #[derive(Default)]
-struct Recorder(Mutex<Vec<DeliveryId>>);
+struct Recorder(Mutex<Vec<DeliveryId>>, Mutex<Vec<String>>);
 impl SubscriberTransport for Recorder {
     fn deliver(
         &self,
         delivery: &worldinterface_ingress::IssuedDelivery,
     ) -> worldinterface_runtime::Result<()> {
         self.0.lock().unwrap().push(delivery.view.id.clone());
+        self.1.lock().unwrap().push(delivery.token.expose_to_subscriber().to_owned());
         Ok(())
     }
 }

@@ -24,8 +24,8 @@ use worldinterface_ingress::{
     AdmissionIds, AuthenticatedScope, DeliveryToken, Ingress, IssuedDelivery,
 };
 use worldinterface_protocol::{
-    BindingVersion, ContentHash, DeliveryAcknowledgment, DeliveryId, ObservationId, OpaqueRef,
-    PrincipalId, ReceiptId,
+    BindingVersion, ContentHash, DeliveryAcknowledgment, DeliveryId, DeliveryState, ObservationId,
+    OpaqueRef, PrincipalId, ReceiptId,
 };
 use worldinterface_storage::StoreRoot;
 
@@ -104,18 +104,19 @@ impl<'a> IngressRuntime<'a> {
             .queue
             .values()
             .filter(|q| {
-                q.signal_sequence.is_none()
-                    || state
-                        .deliveries
-                        .get(&q.delivery)
-                        .is_some_and(|d| d.state == worldinterface_protocol::DeliveryState::Pending)
+                state.deliveries.get(&q.delivery).is_some_and(|d| d.state == DeliveryState::Pending)
             })
             .cloned()
             .collect();
         let mut done = 0;
+        let mut reconciled = 0;
         for q in pending {
-            if done >= limit {
+            if done + reconciled >= limit {
                 break;
+            }
+            if !reconcile_delivery(self.root, &self.tenant, &q.delivery, now)? {
+                reconciled += 1;
+                continue;
             }
             let mut q = q;
             // AQ admission and the WI journal are separate durable authorities. Another
@@ -124,6 +125,9 @@ impl<'a> IngressRuntime<'a> {
                 q = if q.signal_sequence.is_some() {
                     let task: EnsureTaskRequest = serde_json::from_slice(&q.task_request)?;
                     if !aq.delivery_task_terminal(task.task_spec().id())? {
+                        break;
+                    }
+                    if !reconcile_delivery(self.root, &self.tenant, &q.delivery, now)? {
                         break;
                     }
                     let next = queue_request(
@@ -140,6 +144,9 @@ impl<'a> IngressRuntime<'a> {
                         },
                     );
                     if let Err(error) = recovered {
+                        if !reconcile_delivery(self.root, &self.tenant, &q.delivery, now)? {
+                            break;
+                        }
                         let current = self
                             .root
                             .ingress_snapshot(&self.tenant)?
@@ -157,6 +164,9 @@ impl<'a> IngressRuntime<'a> {
                 } else {
                     q
                 };
+                if !reconcile_delivery(self.root, &self.tenant, &q.delivery, now)? {
+                    break;
+                }
                 if ContentHash::of(&q.task_request) != q.task_digest
                     || ContentHash::of(&q.signal_request) != q.signal_digest
                 {
@@ -215,7 +225,7 @@ impl<'a> IngressRuntime<'a> {
             .acknowledgments_to_signal
             .values()
             .filter(|s| s.sequence.is_none())
-            .take(limit.saturating_sub(done))
+            .take(limit.saturating_sub(done + reconciled))
             .cloned()
             .collect();
         for signal in acknowledgments {
@@ -265,6 +275,27 @@ impl<'a> IngressRuntime<'a> {
             now,
         )
     }
+}
+
+/// The journal is the authority for expiration. Recheck it at each boundary
+/// before creating AQ work because a dispatcher may hold an older snapshot.
+fn reconcile_delivery(
+    root: &StoreRoot,
+    tenant: &OpaqueRef,
+    id: &DeliveryId,
+    now: u64,
+) -> Result<bool> {
+    let state = root.ingress_snapshot(tenant)?;
+    let delivery = state.deliveries.get(id).ok_or("unknown delivery")?;
+    if delivery.state != DeliveryState::Pending {
+        return Ok(false);
+    }
+    let effective_now = now.max(state.last_at_ms);
+    if effective_now >= delivery.expires_at_ms {
+        Ingress::new(root).expire_delivery(tenant, id, effective_now)?;
+        return Ok(false);
+    }
+    Ok(true)
 }
 
 fn read_bounded(mut source: impl Read, max_bytes: u32) -> Result<Vec<u8>> {
@@ -525,20 +556,22 @@ impl IngressDeliveryHandler {
             .to_owned()
             .try_into()?;
         let root = self.bundle.wi();
+        let now =
+            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH)?.as_millis() as u64;
+        if !reconcile_delivery(root, &self.tenant, &id, now)? {
+            return Ok(AttemptDisposition::complete(None));
+        }
         let state = root.ingress_snapshot(&self.tenant)?;
         let delivery = state.deliveries.get(&id).ok_or("unknown delivery task")?;
+        if delivery.state != DeliveryState::Pending {
+            return Ok(AttemptDisposition::complete(None));
+        }
         let transport =
             self.subscribers.get(&delivery.subscriber).ok_or("unregistered subscriber")?;
         let subscriber = AuthenticatedScope {
             tenant: self.tenant.clone(),
             principal: delivery.subscriber.clone(),
         };
-        if delivery.state == worldinterface_protocol::DeliveryState::Acknowledged
-            || delivery.state == worldinterface_protocol::DeliveryState::Expired
-            || delivery.state == worldinterface_protocol::DeliveryState::DeadLetter
-        {
-            return Ok(AttemptDisposition::complete(None));
-        }
         let task_id = delivery_task_id(
             &id,
             state.queue.get(&id).ok_or("missing queue obligation")?.generation,
@@ -571,8 +604,6 @@ impl IngressDeliveryHandler {
                 None,
             ));
         }
-        let now =
-            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH)?.as_millis() as u64;
         // Recovery can resume an issued delivery before WI's retry time.
         // Reestablish its acknowledgment wait without failing another AQ attempt
         // or issuing a second subscriber token early.
@@ -593,18 +624,21 @@ impl IngressDeliveryHandler {
                 )?;
             }
         }
+        let finished_at =
+            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH)?.as_millis() as u64;
+        if !reconcile_delivery(root, &self.tenant, &id, finished_at)? {
+            return Ok(AttemptDisposition::complete(None));
+        }
         let state = root.ingress_snapshot(&self.tenant)?;
         let delivery = state.deliveries.get(&id).ok_or("missing delivery after claim")?;
-        if delivery.state == worldinterface_protocol::DeliveryState::Acknowledged
-            || delivery.state == worldinterface_protocol::DeliveryState::DeadLetter
-        {
+        if delivery.state != DeliveryState::Pending {
             return Ok(AttemptDisposition::complete(None));
         }
         let retry_at_ms =
             delivery.attempts.last().map(|a| a.next_attempt_ms).unwrap_or(now.saturating_add(1000));
         // Fabric records milliseconds; AQ continuation deadlines use Unix seconds.
-        let retry_at_seconds = retry_at_ms.saturating_add(999) / 1000;
-        let now_seconds = now / 1000;
+        let retry_at_seconds = retry_at_ms.min(delivery.expires_at_ms).saturating_add(999) / 1000;
+        let now_seconds = finished_at / 1000;
         let wait = WaitSpec::new(
             WaitId::new(),
             filter("acknowledgment")?,
