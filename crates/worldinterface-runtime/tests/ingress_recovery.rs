@@ -668,6 +668,7 @@ async fn process_death_after_subscriber_storage_redelivers_same_id() {
     let delivery = state.deliveries.values().next().unwrap();
     let id = delivery.id.clone();
     assert_eq!(std::fs::read_to_string(ready.with_extension("record")).unwrap(), id.as_str());
+    assert_eq!(delivery.attempts.len(), 1);
     let binding = state.bindings.values().next().unwrap().clone();
     let recorder = Arc::new(Recorder::default());
     let mut aq = ActionQueueEngine::new(
@@ -691,8 +692,9 @@ async fn process_death_after_subscriber_storage_redelivers_same_id() {
         tokio::time::sleep(Duration::from_millis(250)).await;
     }
     assert_eq!(aq.get_run(run).unwrap().state, actionqueue_core::run::state::RunState::Awaiting);
-    assert!(recorder.0.lock().unwrap().is_empty());
-    assert_eq!(bundle.wi().ingress_snapshot(&tenant).unwrap().deliveries[&id].attempts.len(), 1);
+    // The retry can become due while AQ restores the wait. Either it has
+    // already redelivered once or the loop below will drive that transition.
+    assert!(recorder.0.lock().unwrap().len() <= 1);
     let deadline = std::time::Instant::now() + Duration::from_secs(16);
     while recorder.0.lock().unwrap().is_empty() && std::time::Instant::now() < deadline {
         service
@@ -701,7 +703,8 @@ async fn process_death_after_subscriber_storage_redelivers_same_id() {
         let _ = aq.run_until_idle().await.unwrap();
         tokio::time::sleep(Duration::from_millis(250)).await;
     }
-    assert_eq!(recorder.0.lock().unwrap().as_slice(), &[id]);
+    assert_eq!(recorder.0.lock().unwrap().as_slice(), std::slice::from_ref(&id));
+    assert_eq!(bundle.wi().ingress_snapshot(&tenant).unwrap().deliveries[&id].attempts.len(), 2);
     aq.shutdown().unwrap();
 }
 
