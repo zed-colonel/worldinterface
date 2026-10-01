@@ -4591,7 +4591,7 @@
         },
         {
           "id": "crates/worldinterface-runtime/tests/support/crash.rs::::source-module:crates/worldinterface-runtime/tests/support/crash.rs",
-          "source_sha256": "ca683f7a5b0aba961b19863dbab51b02d891a782c6e4d40cbf159feb002dace9",
+          "source_sha256": "b95be04ff4cf769bfc8a68e4c51eba4d47dd3617cbf5153b8ad0767d4230629e",
           "registration_sites": []
         },
         {
@@ -5319,7 +5319,7 @@
         {
           "path": "crates/worldinterface-runtime/tests/support/crash.rs",
           "treatment": "Retain target integration source and tests; audit shared declarations before any later selective removal.",
-          "source_sha256": "ca683f7a5b0aba961b19863dbab51b02d891a782c6e4d40cbf159feb002dace9"
+          "source_sha256": "b95be04ff4cf769bfc8a68e4c51eba4d47dd3617cbf5153b8ad0767d4230629e"
         },
         {
           "path": "examples/agent-embedding/Cargo.toml",
