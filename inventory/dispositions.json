@@ -7854,6 +7854,13 @@
     "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
   },
   {
+    "id": "crates/worldinterface-runtime/tests/ingress_recovery.rs::::struct:InterruptedWake",
+    "disposition": "retain-align",
+    "target": "WI-03 production ingress and exact AQ consumer tests",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Exercise partial AQ task admission and bounded initial waits; independent case review and gate attestation remain due."
+  },
+  {
     "id": "crates/worldinterface-runtime/tests/ingress_recovery.rs::::struct:Recorder",
     "disposition": "retain-align",
     "target": "WI-03 production ingress and exact AQ consumer tests",
