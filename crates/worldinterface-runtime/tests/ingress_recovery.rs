@@ -19,7 +19,10 @@ use worldinterface_ingress::{
 };
 use worldinterface_protocol::*;
 use worldinterface_runtime::{
-    ingress::{BoundAqIngress, IngressDeliveryHandler, IngressRuntime, SubscriberTransport},
+    ingress::{
+        AdmissionOutcome, AqDispatchFailure, AqIngressPort, BoundAqIngress, IngressDeliveryHandler,
+        IngressRuntime, SubscriberTransport, WakeOutcome,
+    },
     storage::StoreBundle,
 };
 use worldinterface_storage::StoreProfile;
@@ -326,6 +329,167 @@ async fn expired_terminal_aq_task_does_not_allocate_recovery_generation() {
     assert!(recorder.0.lock().unwrap().is_empty());
     aq.shutdown().unwrap();
 }
+
+// Simulate a process dying after AQ task admission, or a failed AQ signal call.
+// Both leave a runnable task with no delivery signal; neither may retain an
+// unbounded first wait after WI expires the delivery.
+struct InterruptedWake<'a> {
+    aq: &'a mut actionqueue_runtime::engine::BootstrappedEngine<IngressDeliveryHandler>,
+    tenant: OpaqueRef,
+    fail_after_task: bool,
+}
+impl AqIngressPort for InterruptedWake<'_> {
+    fn bound_tenant(&self) -> &OpaqueRef {
+        &self.tenant
+    }
+    fn ensure_delivery_task(
+        &mut self,
+        request: actionqueue_core::admission::EnsureTaskRequest,
+    ) -> std::result::Result<AdmissionOutcome, AqDispatchFailure> {
+        let outcome = BoundAqIngress::new(&mut *self.aq, self.tenant.clone())
+            .ensure_delivery_task(request)?;
+        if self.fail_after_task {
+            Err(AqDispatchFailure::Uncertain)
+        } else {
+            Ok(outcome)
+        }
+    }
+    fn admit_wake(
+        &mut self,
+        _request: actionqueue_core::continuation::AdmitSignalRequest,
+    ) -> std::result::Result<WakeOutcome, AqDispatchFailure> {
+        Err(AqDispatchFailure::Uncertain)
+    }
+    fn delivery_task_terminal(
+        &mut self,
+        id: TaskId,
+    ) -> std::result::Result<bool, AqDispatchFailure> {
+        BoundAqIngress::new(&mut *self.aq, self.tenant.clone()).delivery_task_terminal(id)
+    }
+}
+
+async fn initial_wait_expires_after_interrupted_wake(replacement: bool, fail_after_task: bool) {
+    let temp = tempfile::tempdir().unwrap();
+    let path = temp.path().join("bundle");
+    let (bundle, binding, id) = setup_with_policy(&path, 1_000, 5_000);
+    let tenant = binding.profile.scope.tenant.clone();
+    let expires_at = bundle.wi().ingress_snapshot(&tenant).unwrap().deliveries[&id].expires_at_ms;
+    let recorder = Arc::new(Recorder::default());
+    let service = IngressRuntime::new(bundle.wi(), tenant.clone());
+    if replacement {
+        let mut aq = ActionQueueEngine::new(
+            RuntimeConfig {
+                data_dir: bundle.aq_path(),
+                continuation_limits: ContinuationLimits { active_waits: 0, ..Default::default() },
+                ..Default::default()
+            },
+            handler(&bundle, &binding, recorder.clone()),
+        )
+        .bootstrap()
+        .unwrap()
+        .with_host(host());
+        assert_eq!(
+            service
+                .dispatch_pending(&mut BoundAqIngress::new(&mut aq, tenant.clone()), 10, now(),)
+                .unwrap(),
+            1
+        );
+        let _ = aq.run_until_idle().await.unwrap();
+        let original = TaskId::from_uuid(uuid::Uuid::parse_str(id.as_str()).unwrap());
+        let run = aq.projection().run_ids_for_task(original)[0];
+        assert_eq!(aq.get_run(run).unwrap().state, actionqueue_core::run::state::RunState::Failed);
+        aq.shutdown().unwrap();
+    }
+    let mut aq = ActionQueueEngine::new(
+        RuntimeConfig {
+            data_dir: bundle.aq_path(),
+            continuation_limits: ContinuationLimits { active_waits: 1, ..Default::default() },
+            ..Default::default()
+        },
+        handler(&bundle, &binding, recorder.clone()),
+    )
+    .bootstrap()
+    .unwrap()
+    .with_host(host());
+    assert!(service
+        .dispatch_pending(
+            &mut InterruptedWake { aq: &mut aq, tenant: tenant.clone(), fail_after_task },
+            10,
+            now(),
+        )
+        .is_err());
+    let q = bundle.wi().ingress_snapshot(&tenant).unwrap().queue[&id].clone();
+    assert_eq!(q.generation, u32::from(replacement));
+    assert_eq!(q.task_admitted, !fail_after_task);
+    assert!(q.signal_sequence.is_none());
+    let task: actionqueue_core::admission::EnsureTaskRequest =
+        serde_json::from_slice(&q.task_request).unwrap();
+    let task_id = task.task_spec().id();
+    let _ = aq.run_until_idle().await.unwrap();
+    let run = aq.projection().run_ids_for_task(task_id)[0];
+    assert_eq!(aq.get_run(run).unwrap().state, actionqueue_core::run::state::RunState::Awaiting);
+    assert_eq!(aq.projection().waits().active_count(), 1);
+    assert!(aq.projection().waits().active(run).unwrap().spec.deadline().is_some());
+    assert!(recorder.0.lock().unwrap().is_empty());
+    aq.shutdown().unwrap();
+    drop(service);
+    drop(bundle);
+
+    let bundle = Arc::new(StoreBundle::open(&path).unwrap());
+    let mut aq = ActionQueueEngine::new(
+        RuntimeConfig {
+            data_dir: bundle.aq_path(),
+            continuation_limits: ContinuationLimits { active_waits: 1, ..Default::default() },
+            ..Default::default()
+        },
+        handler(&bundle, &binding, recorder.clone()),
+    )
+    .bootstrap()
+    .unwrap()
+    .with_host(host());
+    assert_eq!(aq.get_run(run).unwrap().state, actionqueue_core::run::state::RunState::Awaiting);
+    assert_eq!(aq.projection().waits().active_count(), 1);
+    let remaining = expires_at.saturating_sub(now());
+    tokio::time::sleep(Duration::from_millis(remaining + 1200)).await;
+    let service = IngressRuntime::new(bundle.wi(), tenant.clone());
+    for _ in 0..3 {
+        assert_eq!(
+            service
+                .dispatch_pending(&mut BoundAqIngress::new(&mut aq, tenant.clone()), 10, now(),)
+                .unwrap(),
+            0
+        );
+    }
+    assert_eq!(
+        bundle.wi().ingress_snapshot(&tenant).unwrap().deliveries[&id].state,
+        DeliveryState::Expired
+    );
+    let _ = aq.run_until_idle().await.unwrap();
+    assert_eq!(aq.get_run(run).unwrap().state, actionqueue_core::run::state::RunState::Completed);
+    assert_eq!(aq.projection().waits().active_count(), 0);
+    let q = &bundle.wi().ingress_snapshot(&tenant).unwrap().queue[&id];
+    assert_eq!(q.generation, u32::from(replacement));
+    assert!(q.signal_sequence.is_none());
+    assert_eq!(aq.projection().run_ids_for_task(task_id).len(), 1);
+    assert!(recorder.0.lock().unwrap().is_empty());
+    aq.shutdown().unwrap();
+}
+
+#[tokio::test]
+async fn failed_signal_admission_releases_initial_wait_after_expiration() {
+    initial_wait_expires_after_interrupted_wake(false, false).await;
+}
+
+#[tokio::test]
+async fn interrupted_task_admission_releases_initial_wait_after_expiration() {
+    initial_wait_expires_after_interrupted_wake(false, true).await;
+}
+
+#[tokio::test]
+async fn replacement_generation_releases_initial_wait_after_expiration() {
+    initial_wait_expires_after_interrupted_wake(true, false).await;
+}
+
 fn handler(
     bundle: &Arc<StoreBundle>,
     binding: &IngressBinding,

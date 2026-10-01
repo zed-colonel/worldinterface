@@ -593,13 +593,20 @@ impl IngressDeliveryHandler {
             })
         };
         if ctx.input.resume_context.is_none() {
+            // Task admission can commit even when the delivery signal does not.
+            // Keep that first wait bounded by WI's durable retention deadline so
+            // expiration can finish the AQ run without admitting a stale wake.
+            let expiry_second = delivery.expires_at_ms.saturating_add(999) / 1000;
             return Ok(AttemptDisposition::awaiting(
                 WaitSpec::new(
                     WaitId::new(),
                     filter("delivery")?,
                     WaitMatchPolicy::FirstMatch,
                     SignalEligibility::AnyRetained,
-                    None,
+                    Some(WaitDeadline {
+                        at: expiry_second.max(now / 1000 + 1),
+                        policy: WaitTimeoutPolicy::ResumeWithTimeout,
+                    }),
                 )?,
                 None,
             ));
