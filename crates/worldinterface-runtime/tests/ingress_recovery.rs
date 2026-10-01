@@ -318,6 +318,142 @@ async fn expiration_during_ack_wait_completes_without_recovery_generation() {
 }
 
 #[tokio::test]
+async fn token_invalidated_before_first_claim_never_spends_aq_retries() {
+    let temp = tempfile::tempdir().unwrap();
+    let path = temp.path().join("bundle");
+    let (bundle, binding, id) = setup_with_policy(&path, 1_000, 5_000);
+    let tenant = binding.profile.scope.tenant.clone();
+    let owner = AuthenticatedScope { tenant: tenant.clone(), principal: binding.principal.clone() };
+    let subscriber =
+        AuthenticatedScope { tenant: tenant.clone(), principal: binding.subscriber.clone() };
+    let recorder = Arc::new(Recorder::default());
+    let mut aq = ActionQueueEngine::new(
+        RuntimeConfig { data_dir: bundle.aq_path(), ..Default::default() },
+        handler(&bundle, &binding, recorder.clone()),
+    )
+    .bootstrap()
+    .unwrap()
+    .with_host(host());
+    let service = IngressRuntime::new(bundle.wi(), tenant.clone());
+    assert_eq!(
+        service
+            .dispatch_pending(&mut BoundAqIngress::new(&mut aq, tenant.clone()), 1, now())
+            .unwrap(),
+        1
+    );
+    Ingress::new(bundle.wi()).invalidate_token(&owner, &id, now()).unwrap();
+    let _ = aq.run_until_idle().await.unwrap();
+    let task = TaskId::from_uuid(uuid::Uuid::parse_str(id.as_str()).unwrap());
+    let run = aq.projection().run_ids_for_task(task)[0];
+    assert_eq!(aq.get_run(run).unwrap().state, actionqueue_core::run::state::RunState::Awaiting);
+    for _ in 0..3 {
+        assert_eq!(
+            service
+                .dispatch_pending(&mut BoundAqIngress::new(&mut aq, tenant.clone()), 1, now())
+                .unwrap(),
+            0
+        );
+        let _ = aq.run_until_idle().await.unwrap();
+    }
+    assert!(service.claim(&subscriber, &id, now()).is_err());
+    let state = bundle.wi().ingress_snapshot(&tenant).unwrap();
+    assert!(state.deliveries[&id].token_invalidated);
+    assert!(state.deliveries[&id].attempts.is_empty());
+    assert_eq!(state.queue[&id].generation, 0);
+    assert!(recorder.0.lock().unwrap().is_empty());
+    aq.shutdown().unwrap();
+    drop(service);
+    drop(bundle);
+
+    let bundle = Arc::new(StoreBundle::open(&path).unwrap());
+    let mut aq = ActionQueueEngine::new(
+        RuntimeConfig { data_dir: bundle.aq_path(), ..Default::default() },
+        handler(&bundle, &binding, recorder.clone()),
+    )
+    .bootstrap()
+    .unwrap()
+    .with_host(host());
+    for _ in 0..3 {
+        assert_eq!(
+            IngressRuntime::new(bundle.wi(), tenant.clone())
+                .dispatch_pending(&mut BoundAqIngress::new(&mut aq, tenant.clone()), 1, now())
+                .unwrap(),
+            0
+        );
+        let _ = aq.run_until_idle().await.unwrap();
+    }
+    assert_eq!(aq.get_run(run).unwrap().state, actionqueue_core::run::state::RunState::Awaiting);
+    assert_eq!(bundle.wi().ingress_snapshot(&tenant).unwrap().queue[&id].generation, 0);
+    assert!(recorder.0.lock().unwrap().is_empty());
+    aq.shutdown().unwrap();
+}
+
+#[tokio::test]
+async fn token_invalidated_after_delivery_denies_ack_and_recovery_after_restart() {
+    let temp = tempfile::tempdir().unwrap();
+    let path = temp.path().join("bundle");
+    let (bundle, binding, id) = setup_with_policy(&path, 1_000, 5_000);
+    let tenant = binding.profile.scope.tenant.clone();
+    let owner = AuthenticatedScope { tenant: tenant.clone(), principal: binding.principal.clone() };
+    let subscriber =
+        AuthenticatedScope { tenant: tenant.clone(), principal: binding.subscriber.clone() };
+    let recorder = Arc::new(Recorder::default());
+    let mut aq = ActionQueueEngine::new(
+        RuntimeConfig { data_dir: bundle.aq_path(), ..Default::default() },
+        handler(&bundle, &binding, recorder.clone()),
+    )
+    .bootstrap()
+    .unwrap()
+    .with_host(host());
+    let service = IngressRuntime::new(bundle.wi(), tenant.clone());
+    assert_eq!(
+        service
+            .dispatch_pending(&mut BoundAqIngress::new(&mut aq, tenant.clone()), 1, now())
+            .unwrap(),
+        1
+    );
+    let _ = aq.run_until_idle().await.unwrap();
+    let task = TaskId::from_uuid(uuid::Uuid::parse_str(id.as_str()).unwrap());
+    let run = aq.projection().run_ids_for_task(task)[0];
+    let token =
+        worldinterface_ingress::DeliveryToken::from_subscriber(&recorder.1.lock().unwrap()[0])
+            .unwrap();
+    Ingress::new(bundle.wi()).invalidate_token(&owner, &id, now()).unwrap();
+    assert!(service.acknowledge(&subscriber, &id, &token, now()).is_err());
+    assert!(service.claim(&subscriber, &id, now()).is_err());
+    aq.shutdown().unwrap();
+    drop(service);
+    drop(bundle);
+
+    let bundle = Arc::new(StoreBundle::open(&path).unwrap());
+    let mut aq = ActionQueueEngine::new(
+        RuntimeConfig { data_dir: bundle.aq_path(), ..Default::default() },
+        handler(&bundle, &binding, recorder.clone()),
+    )
+    .bootstrap()
+    .unwrap()
+    .with_host(host());
+    tokio::time::sleep(Duration::from_millis(1300)).await;
+    for _ in 0..3 {
+        let _ = aq.run_until_idle().await.unwrap();
+        assert_eq!(
+            IngressRuntime::new(bundle.wi(), tenant.clone())
+                .dispatch_pending(&mut BoundAqIngress::new(&mut aq, tenant.clone()), 1, now())
+                .unwrap(),
+            0
+        );
+    }
+    let state = bundle.wi().ingress_snapshot(&tenant).unwrap();
+    assert!(state.deliveries[&id].token_invalidated);
+    assert_eq!(state.deliveries[&id].attempts.len(), 1);
+    assert_eq!(state.queue[&id].generation, 0);
+    assert_eq!(recorder.0.lock().unwrap().len(), 1);
+    assert_eq!(aq.projection().run_ids_for_task(task).len(), 1);
+    assert_eq!(aq.get_run(run).unwrap().state, actionqueue_core::run::state::RunState::Awaiting);
+    aq.shutdown().unwrap();
+}
+
+#[tokio::test]
 async fn inactive_binding_and_missing_registration_never_regenerate_aq_work() {
     for mode in ["revoked", "suspended", "binding-expired", "unregistered"] {
         let temp = tempfile::tempdir().unwrap();

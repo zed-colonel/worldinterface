@@ -661,6 +661,7 @@ pub fn apply_ingress(
             let old = s.queue.get(id).ok_or("unknown queue obligation")?;
             let delivery = s.deliveries.get(id).ok_or("unknown delivery")?;
             if delivery.state != DeliveryState::Pending
+                || delivery.token_invalidated
                 || now >= delivery.expires_at_ms
                 || s.bindings
                     .get(&delivery.binding.id)

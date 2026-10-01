@@ -476,6 +476,34 @@ fn expired_outbox_sweep_survives_restart_and_rejects_recovery() {
     assert!(apply_ingress(
         &state,
         &tenant,
+        1001,
+        &IngressCommand::RecoverQueue {
+            id: first.clone(),
+            expected_generation: 0,
+            replacement: Box::new(replacement.clone()),
+        },
+    )
+    .is_ok());
+    let mut invalidated = s.state();
+    let mut invalidated_queue = queue.clone();
+    invalidated_queue.delivery = second.clone();
+    invalidated.queue.insert(second.clone(), invalidated_queue);
+    let mut invalidated_replacement = replacement.clone();
+    invalidated_replacement.delivery = second.clone();
+    assert!(apply_ingress(
+        &invalidated,
+        &tenant,
+        1001,
+        &IngressCommand::RecoverQueue {
+            id: second.clone(),
+            expected_generation: 0,
+            replacement: Box::new(invalidated_replacement),
+        },
+    )
+    .is_err());
+    assert!(apply_ingress(
+        &state,
+        &tenant,
         2000,
         &IngressCommand::RecoverQueue {
             id: first.clone(),

@@ -340,6 +340,12 @@ fn delivery_readiness(
     if effective_now >= delivery.expires_at_ms {
         return Ok(DeliveryReadiness::Closed);
     }
+    // Token invalidation forbids every future claim, including the first one.
+    // Keep an admitted AQ run waiting only until retention expires; dispatch
+    // must not admit or recover work that can no longer reach a subscriber.
+    if delivery.token_invalidated {
+        return Ok(DeliveryReadiness::WaitingUntil(delivery.expires_at_ms));
+    }
     let binding = state.bindings.get(&delivery.binding.id).ok_or("missing delivery binding")?;
     Ok(match binding.status {
         _ if binding.expires_at_ms <= effective_now => {
