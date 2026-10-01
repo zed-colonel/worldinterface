@@ -345,7 +345,7 @@ async fn inactive_binding_and_missing_registration_never_regenerate_aq_work() {
         let service = IngressRuntime::new(bundle.wi(), tenant.clone());
         assert_eq!(
             service
-                .dispatch_pending(&mut BoundAqIngress::new(&mut aq, tenant.clone()), 10, now())
+                .dispatch_pending(&mut BoundAqIngress::new(&mut aq, tenant.clone()), 1, now())
                 .unwrap(),
             1
         );
@@ -379,7 +379,7 @@ async fn inactive_binding_and_missing_registration_never_regenerate_aq_work() {
         for _ in 0..3 {
             assert_eq!(
                 service
-                    .dispatch_pending(&mut BoundAqIngress::new(&mut aq, tenant.clone()), 10, now())
+                    .dispatch_pending(&mut BoundAqIngress::new(&mut aq, tenant.clone()), 1, now())
                     .unwrap(),
                 0,
                 "{mode}"
@@ -406,7 +406,7 @@ async fn inactive_binding_and_missing_registration_never_regenerate_aq_work() {
         for _ in 0..3 {
             assert_eq!(
                 IngressRuntime::new(reopened.wi(), tenant.clone())
-                    .dispatch_pending(&mut BoundAqIngress::new(&mut aq, tenant.clone()), 10, now())
+                    .dispatch_pending(&mut BoundAqIngress::new(&mut aq, tenant.clone()), 1, now())
                     .unwrap(),
                 0,
                 "{mode}"
@@ -580,6 +580,15 @@ async fn newly_quarantined_required_content_keeps_existing_aq_run_awaiting() {
 
 #[tokio::test]
 async fn small_dispatch_limit_skips_waiting_prefix_and_publishes_ack_after_restart() {
+    small_dispatch_limit_progress_for(BindingStatus::Suspended).await;
+}
+
+#[tokio::test]
+async fn revoked_prefix_at_small_dispatch_limit_preserves_ready_and_ack_progress() {
+    small_dispatch_limit_progress_for(BindingStatus::Revoked).await;
+}
+
+async fn small_dispatch_limit_progress_for(inactive_status: BindingStatus) {
     let temp = tempfile::tempdir().unwrap();
     let path = temp.path().join("bundle");
     let (bundle, binding, _original) = setup_with_policy(&path, 1_000, 30_000);
@@ -633,7 +642,7 @@ async fn small_dispatch_limit_skips_waiting_prefix_and_publishes_ack_after_resta
         .change_binding(
             &owner,
             &BindingVersion { id: waiting_binding, revision: 1 },
-            BindingStatus::Suspended,
+            inactive_status,
             now(),
         )
         .unwrap();
