@@ -101,7 +101,7 @@ impl<'a> IngressRuntime<'a> {
             return Err("dispatch bound".into());
         }
         let state = self.root.ingress_snapshot(&self.tenant)?;
-        let pending: Vec<_> = state
+        let mut pending: Vec<_> = state
             .queue
             .values()
             .filter(|q| {
@@ -109,17 +109,56 @@ impl<'a> IngressRuntime<'a> {
             })
             .cloned()
             .collect();
+        if let Some(cursor) = &state.dispatch_cursor {
+            let first_after = pending.partition_point(|q| &q.delivery <= cursor);
+            pending.rotate_left(first_after);
+        }
+        // Acknowledgments are already durable subscriber work and must progress
+        // even when an earlier delivery is paused or denied disclosure.
+        let acknowledgments: Vec<_> = state
+            .acknowledgments_to_signal
+            .values()
+            .filter(|s| s.sequence.is_none())
+            .take(limit)
+            .cloned()
+            .collect();
         let mut done = 0;
-        let mut reconciled = 0;
-        for q in pending {
-            if done + reconciled >= limit {
+        for signal in acknowledgments {
+            if ContentHash::of(&signal.request) != signal.digest {
+                return Err("acknowledgment request integrity mismatch".into());
+            }
+            let request: AdmitSignalRequest = serde_json::from_slice(&signal.request)?;
+            let sequence = aq.admit_wake(request)?.sequence;
+            self.root.ingress_transact_fresh(
+                &self.tenant,
+                now,
+                &worldinterface_domain::ingress::IngressCommand::RecordAcknowledgmentSignal {
+                    id: signal.delivery,
+                    sequence,
+                },
+            )?;
+            done += 1;
+        }
+        for (scanned, q) in pending.into_iter().enumerate() {
+            if done >= limit || scanned >= limit - done {
                 break;
             }
-            if reconcile_delivery(self.root, &self.tenant, &q.delivery, now)?
-                != DeliveryReadiness::Ready
-            {
-                reconciled += 1;
-                continue;
+            // Persist the scan position before examining this entry. A restart
+            // continues after unchanged waits; an interrupted inspection will
+            // visit this entry again after one bounded rotation.
+            self.root.ingress_transact_fresh(
+                &self.tenant,
+                now,
+                &worldinterface_domain::ingress::IngressCommand::AdvanceDispatchCursor {
+                    id: q.delivery.clone(),
+                },
+            )?;
+            match reconcile_delivery(self.root, &self.tenant, &q.delivery, now)? {
+                DeliveryReadiness::Ready => {}
+                DeliveryReadiness::Closed => {
+                    continue;
+                }
+                DeliveryReadiness::WaitingUntil(_) => continue,
             }
             let mut q = q;
             // AQ admission and the WI journal are separate durable authorities. Another
@@ -230,29 +269,6 @@ impl<'a> IngressRuntime<'a> {
                 break;
             }
         }
-        let acknowledgments: Vec<_> = state
-            .acknowledgments_to_signal
-            .values()
-            .filter(|s| s.sequence.is_none())
-            .take(limit.saturating_sub(done + reconciled))
-            .cloned()
-            .collect();
-        for signal in acknowledgments {
-            if ContentHash::of(&signal.request) != signal.digest {
-                return Err("acknowledgment request integrity mismatch".into());
-            }
-            let request: AdmitSignalRequest = serde_json::from_slice(&signal.request)?;
-            let sequence = aq.admit_wake(request)?.sequence;
-            self.root.ingress_transact_fresh(
-                &self.tenant,
-                now,
-                &worldinterface_domain::ingress::IngressCommand::RecordAcknowledgmentSignal {
-                    id: signal.delivery,
-                    sequence,
-                },
-            )?;
-            done += 1;
-        }
         Ok(done)
     }
     pub fn claim(
@@ -302,13 +318,26 @@ fn reconcile_delivery(
     now: u64,
 ) -> Result<DeliveryReadiness> {
     let state = root.ingress_snapshot(tenant)?;
+    let readiness = delivery_readiness(&state, id, now)?;
+    let delivery = state.deliveries.get(id).ok_or("unknown delivery")?;
+    let effective_now = now.max(state.last_at_ms);
+    if delivery.state == DeliveryState::Pending && effective_now >= delivery.expires_at_ms {
+        Ingress::new(root).expire_delivery(tenant, id, effective_now)?;
+    }
+    Ok(readiness)
+}
+
+fn delivery_readiness(
+    state: &worldinterface_domain::ingress::IngressState,
+    id: &DeliveryId,
+    now: u64,
+) -> Result<DeliveryReadiness> {
     let delivery = state.deliveries.get(id).ok_or("unknown delivery")?;
     if delivery.state != DeliveryState::Pending {
         return Ok(DeliveryReadiness::Closed);
     }
     let effective_now = now.max(state.last_at_ms);
     if effective_now >= delivery.expires_at_ms {
-        Ingress::new(root).expire_delivery(tenant, id, effective_now)?;
         return Ok(DeliveryReadiness::Closed);
     }
     let binding = state.bindings.get(&delivery.binding.id).ok_or("missing delivery binding")?;
@@ -316,7 +345,24 @@ fn reconcile_delivery(
         _ if binding.expires_at_ms <= effective_now => {
             DeliveryReadiness::WaitingUntil(delivery.expires_at_ms)
         }
-        BindingStatus::Active => DeliveryReadiness::Ready,
+        BindingStatus::Active => {
+            let references_available =
+                worldinterface_domain::ingress::required_references_disclosable(state, delivery)?;
+            let disclosed = worldinterface_domain::ingress::disclose(
+                state,
+                delivery,
+                &delivery.subscriber,
+                effective_now,
+            )
+            .is_ok();
+            if !references_available || !disclosed {
+                DeliveryReadiness::WaitingUntil(
+                    effective_now.saturating_add(1000).min(delivery.expires_at_ms),
+                )
+            } else {
+                DeliveryReadiness::Ready
+            }
+        }
         BindingStatus::Suspended => DeliveryReadiness::WaitingUntil(
             effective_now.saturating_add(1000).min(delivery.expires_at_ms),
         ),

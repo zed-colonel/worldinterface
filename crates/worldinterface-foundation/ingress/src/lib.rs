@@ -539,12 +539,7 @@ fn view(
     let binding = s.bindings.get(&d.binding.id).ok_or_else(|| error("missing binding"))?;
     // The shared receipt contains every matched binding's grant. Check only the
     // caller's required grant; no other principal's grant enters this view.
-    if !artifact_disclosable(s, &a.event.content)
-        || profile_evidence(&a.event.profile)
-            .first()
-            .is_some_and(|e| !artifact_disclosable(s, &e.artifact))
-        || !artifact_disclosable(s, &binding.authorization.artifact)
-    {
+    if !worldinterface_domain::ingress::required_references_disclosable(s, d).map_err(error)? {
         return Err(error("required delivery reference quarantined"));
     }
     let attachments = a

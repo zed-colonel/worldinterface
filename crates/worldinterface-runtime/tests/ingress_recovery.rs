@@ -78,6 +78,21 @@ fn setup_with_binding_expiry(
     retention_ms: u64,
     binding_lifetime_ms: u64,
 ) -> (Arc<StoreBundle>, IngressBinding, DeliveryId) {
+    setup_with_event_quarantine(
+        path,
+        acknowledgment_timeout_ms,
+        retention_ms,
+        binding_lifetime_ms,
+        false,
+    )
+}
+fn setup_with_event_quarantine(
+    path: &Path,
+    acknowledgment_timeout_ms: u64,
+    retention_ms: u64,
+    binding_lifetime_ms: u64,
+    quarantine_content: bool,
+) -> (Arc<StoreBundle>, IngressBinding, DeliveryId) {
     let bundle = Arc::new(
         StoreBundle::initialize(
             path,
@@ -112,6 +127,8 @@ fn setup_with_binding_expiry(
             current,
         )
         .unwrap();
+    let content =
+        root.publish(provider_artifact_scope(&binding.profile.scope).unwrap(), b"message").unwrap();
     let event = ProviderEvent {
         scope: binding.profile.scope.clone(),
         event_id: Some("recovery-event".to_owned().try_into().unwrap()),
@@ -119,10 +136,15 @@ fn setup_with_binding_expiry(
         produced_at_ms: current,
         asserted_sender: "asserted".to_owned().try_into().unwrap(),
         asserted_audience: vec![],
-        content: root
-            .publish(provider_artifact_scope(&binding.profile.scope).unwrap(), b"message")
-            .unwrap(),
-        attachments: vec![],
+        content: content.clone(),
+        attachments: if quarantine_content {
+            vec![GovernedAttachment {
+                artifact: content,
+                quarantine: Some("quarantine-1".to_owned().try_into().unwrap()),
+            }]
+        } else {
+            vec![]
+        },
         information_use: InformationUseEnvelope {
             purpose_refs: vec![],
             allowed_audiences: vec![binding.subscriber.clone()],
@@ -399,6 +421,291 @@ async fn inactive_binding_and_missing_registration_never_regenerate_aq_work() {
         assert!(recorder.0.lock().unwrap().is_empty(), "{mode}");
         aq.shutdown().unwrap();
     }
+}
+
+#[tokio::test]
+async fn quarantined_required_content_waits_without_aq_failure_then_releases_after_restart() {
+    let temp = tempfile::tempdir().unwrap();
+    let path = temp.path().join("bundle");
+    let (bundle, binding, id) = setup_with_event_quarantine(&path, 1_000, 30_000, 30_000, true);
+    let tenant = binding.profile.scope.tenant.clone();
+    let recorder = Arc::new(Recorder::default());
+    let mut aq = ActionQueueEngine::new(
+        RuntimeConfig { data_dir: bundle.aq_path(), ..Default::default() },
+        handler(&bundle, &binding, recorder.clone()),
+    )
+    .bootstrap()
+    .unwrap()
+    .with_host(host());
+    for _ in 0..3 {
+        assert_eq!(
+            IngressRuntime::new(bundle.wi(), tenant.clone())
+                .dispatch_pending(&mut BoundAqIngress::new(&mut aq, tenant.clone()), 1, now(),)
+                .unwrap(),
+            0
+        );
+        let _ = aq.run_until_idle().await.unwrap();
+    }
+    let state = bundle.wi().ingress_snapshot(&tenant).unwrap();
+    assert_eq!(state.queue[&id].generation, 0);
+    assert!(state.queue[&id].signal_sequence.is_none());
+    assert!(state.deliveries[&id].attempts.is_empty());
+    assert!(recorder.0.lock().unwrap().is_empty());
+    aq.shutdown().unwrap();
+    drop(bundle);
+
+    let bundle = Arc::new(StoreBundle::open(&path).unwrap());
+    let mut aq = ActionQueueEngine::new(
+        RuntimeConfig { data_dir: bundle.aq_path(), ..Default::default() },
+        handler(&bundle, &binding, recorder.clone()),
+    )
+    .bootstrap()
+    .unwrap()
+    .with_host(host());
+    assert_eq!(
+        IngressRuntime::new(bundle.wi(), tenant.clone())
+            .dispatch_pending(&mut BoundAqIngress::new(&mut aq, tenant.clone()), 1, now(),)
+            .unwrap(),
+        0
+    );
+    let state = bundle.wi().ingress_snapshot(&tenant).unwrap();
+    let admission = state.admissions.values().next().unwrap();
+    let content = admission.event.content.clone();
+    assert!(Ingress::new(bundle.wi())
+        .inspect_delivery(
+            &AuthenticatedScope { tenant: tenant.clone(), principal: binding.subscriber.clone() },
+            &id,
+            now(),
+        )
+        .is_err());
+    let release = bundle.wi().publish(tenant.clone(), b"trusted release").unwrap();
+    Ingress::new(bundle.wi())
+        .release_attachment(
+            &tenant,
+            content,
+            "quarantine-1".to_owned().try_into().unwrap(),
+            EvidenceRef { artifact: release, schema: "release-v1".to_owned().try_into().unwrap() },
+            now(),
+        )
+        .unwrap();
+    assert_eq!(
+        IngressRuntime::new(bundle.wi(), tenant.clone())
+            .dispatch_pending(&mut BoundAqIngress::new(&mut aq, tenant.clone()), 1, now(),)
+            .unwrap(),
+        1
+    );
+    let _ = aq.run_until_idle().await.unwrap();
+    assert_eq!(recorder.0.lock().unwrap().as_slice(), std::slice::from_ref(&id));
+    let state = bundle.wi().ingress_snapshot(&tenant).unwrap();
+    assert_eq!(state.queue[&id].generation, 0);
+    assert_eq!(state.deliveries[&id].attempts.len(), 1);
+    aq.shutdown().unwrap();
+}
+
+#[tokio::test]
+async fn newly_quarantined_required_content_keeps_existing_aq_run_awaiting() {
+    let temp = tempfile::tempdir().unwrap();
+    let (bundle, binding, id) = setup_with_policy(&temp.path().join("bundle"), 1_000, 30_000);
+    let tenant = binding.profile.scope.tenant.clone();
+    let recorder = Arc::new(Recorder::default());
+    let mut aq = ActionQueueEngine::new(
+        RuntimeConfig { data_dir: bundle.aq_path(), ..Default::default() },
+        handler(&bundle, &binding, recorder.clone()),
+    )
+    .bootstrap()
+    .unwrap()
+    .with_host(host());
+    let service = IngressRuntime::new(bundle.wi(), tenant.clone());
+    assert_eq!(
+        service
+            .dispatch_pending(&mut BoundAqIngress::new(&mut aq, tenant.clone()), 1, now())
+            .unwrap(),
+        1
+    );
+    let state = bundle.wi().ingress_snapshot(&tenant).unwrap();
+    let mut event = state.admissions.values().next().unwrap().event.clone();
+    let original_content = event.content.clone();
+    event.event_id = Some("quarantine-later".to_owned().try_into().unwrap());
+    event.offset = Some(1);
+    event.produced_at_ms = now();
+    event.content = bundle
+        .wi()
+        .publish(provider_artifact_scope(&binding.profile.scope).unwrap(), b"another message")
+        .unwrap();
+    event.attachments = vec![GovernedAttachment {
+        artifact: original_content.clone(),
+        quarantine: Some("quarantine-1".to_owned().try_into().unwrap()),
+    }];
+    let body = canonical_data(&event).unwrap();
+    let mut mac = Hmac::<Sha256>::new_from_slice(&[7; 32]).unwrap();
+    mac.update(&body);
+    let credential = ProviderCredentials::new(binding.profile.clone(), vec![7; 32]).unwrap();
+    service.accept_http(&credential, &body, &mac.finalize().into_bytes(), now()).unwrap();
+    let _ = aq.run_until_idle().await.unwrap();
+    let task = TaskId::from_uuid(uuid::Uuid::parse_str(id.as_str()).unwrap());
+    let run = aq.projection().run_ids_for_task(task)[0];
+    assert_eq!(aq.get_run(run).unwrap().state, actionqueue_core::run::state::RunState::Awaiting);
+    assert!(recorder.0.lock().unwrap().is_empty());
+    assert!(bundle.wi().ingress_snapshot(&tenant).unwrap().deliveries[&id].attempts.is_empty());
+    for _ in 0..3 {
+        let _ = service
+            .dispatch_pending(&mut BoundAqIngress::new(&mut aq, tenant.clone()), 1, now())
+            .unwrap();
+        assert_eq!(bundle.wi().ingress_snapshot(&tenant).unwrap().queue[&id].generation, 0);
+        assert_eq!(
+            aq.get_run(run).unwrap().state,
+            actionqueue_core::run::state::RunState::Awaiting
+        );
+    }
+    assert_eq!(bundle.wi().ingress_snapshot(&tenant).unwrap().queue[&id].generation, 0);
+    let evidence = bundle.wi().publish(tenant.clone(), b"trusted release").unwrap();
+    Ingress::new(bundle.wi())
+        .release_attachment(
+            &tenant,
+            original_content,
+            "quarantine-1".to_owned().try_into().unwrap(),
+            EvidenceRef { artifact: evidence, schema: "release-v1".to_owned().try_into().unwrap() },
+            now(),
+        )
+        .unwrap();
+    let deadline = std::time::Instant::now() + Duration::from_secs(4);
+    while !recorder.0.lock().unwrap().contains(&id) && std::time::Instant::now() < deadline {
+        tokio::time::sleep(Duration::from_millis(250)).await;
+        let _ = aq.run_until_idle().await.unwrap();
+    }
+    assert_eq!(recorder.0.lock().unwrap().iter().filter(|d| *d == &id).count(), 1);
+    assert_eq!(bundle.wi().ingress_snapshot(&tenant).unwrap().queue[&id].generation, 0);
+    aq.shutdown().unwrap();
+}
+
+#[tokio::test]
+async fn small_dispatch_limit_skips_waiting_prefix_and_publishes_ack_after_restart() {
+    let temp = tempfile::tempdir().unwrap();
+    let path = temp.path().join("bundle");
+    let (bundle, binding, _original) = setup_with_policy(&path, 1_000, 30_000);
+    let tenant = binding.profile.scope.tenant.clone();
+    let owner = AuthenticatedScope { tenant: tenant.clone(), principal: binding.principal.clone() };
+    let mut another = binding.clone();
+    another.id = IngressBindingId::generate();
+    another.submission.client_request_id = "request-2".to_owned().try_into().unwrap();
+    Ingress::new(bundle.wi())
+        .submit_binding(
+            &owner,
+            another.submission.clone(),
+            another.id.clone(),
+            &Authority(another.clone()),
+            now(),
+        )
+        .unwrap();
+    let original_event = bundle
+        .wi()
+        .ingress_snapshot(&tenant)
+        .unwrap()
+        .admissions
+        .values()
+        .next()
+        .unwrap()
+        .event
+        .clone();
+    let mut event = original_event;
+    event.event_id = Some("recovery-event-2".to_owned().try_into().unwrap());
+    event.offset = Some(1);
+    event.produced_at_ms = now();
+    let body = canonical_data(&event).unwrap();
+    let mut mac = Hmac::<Sha256>::new_from_slice(&[7; 32]).unwrap();
+    mac.update(&body);
+    let credential = ProviderCredentials::new(binding.profile.clone(), vec![7; 32]).unwrap();
+    let result = IngressRuntime::new(bundle.wi(), tenant.clone())
+        .accept_http(&credential, &body, &mac.finalize().into_bytes(), now())
+        .unwrap();
+    let admitted = match result {
+        IngressResult::Admitted { deliveries, .. } => deliveries,
+        _ => panic!("second event not admitted"),
+    };
+    assert_eq!(admitted.len(), 2);
+    let state = bundle.wi().ingress_snapshot(&tenant).unwrap();
+    let first = state.queue.keys().next().unwrap().clone();
+    let waiting_binding = state.deliveries[&first].binding.id.clone();
+    let ready =
+        state.deliveries.values().find(|d| d.binding.id != waiting_binding).unwrap().id.clone();
+    assert!(first < ready);
+    Ingress::new(bundle.wi())
+        .change_binding(
+            &owner,
+            &BindingVersion { id: waiting_binding, revision: 1 },
+            BindingStatus::Suspended,
+            now(),
+        )
+        .unwrap();
+    let recorder = Arc::new(Recorder::default());
+    let mut aq = ActionQueueEngine::new(
+        RuntimeConfig { data_dir: bundle.aq_path(), ..Default::default() },
+        handler(&bundle, &binding, recorder.clone()),
+    )
+    .bootstrap()
+    .unwrap()
+    .with_host(host());
+    let service = IngressRuntime::new(bundle.wi(), tenant.clone());
+    assert_eq!(
+        service
+            .dispatch_pending(&mut BoundAqIngress::new(&mut aq, tenant.clone()), 1, now())
+            .unwrap(),
+        0
+    );
+    assert_eq!(bundle.wi().ingress_snapshot(&tenant).unwrap().dispatch_cursor, Some(first.clone()));
+    for _ in 0..3 {
+        let _ = service
+            .dispatch_pending(&mut BoundAqIngress::new(&mut aq, tenant.clone()), 1, now())
+            .unwrap();
+    }
+    let state = bundle.wi().ingress_snapshot(&tenant).unwrap();
+    assert!(state.queue[&ready].signal_sequence.is_some());
+    assert!(state.queue[&first].signal_sequence.is_none());
+    assert_eq!(state.queue[&first].generation, 0);
+    let _ = aq.run_until_idle().await.unwrap();
+    let delivered = recorder.0.lock().unwrap().clone();
+    let tokens = recorder.1.lock().unwrap().clone();
+    let position = delivered.iter().position(|id| id == &ready).unwrap();
+    let token = worldinterface_ingress::DeliveryToken::from_subscriber(&tokens[position]).unwrap();
+    service
+        .acknowledge(
+            &AuthenticatedScope { tenant: tenant.clone(), principal: binding.subscriber.clone() },
+            &ready,
+            &token,
+            now(),
+        )
+        .unwrap();
+    aq.shutdown().unwrap();
+    drop(service);
+    drop(bundle);
+
+    let bundle = Arc::new(StoreBundle::open(&path).unwrap());
+    let mut aq = ActionQueueEngine::new(
+        RuntimeConfig { data_dir: bundle.aq_path(), ..Default::default() },
+        handler(&bundle, &binding, recorder.clone()),
+    )
+    .bootstrap()
+    .unwrap()
+    .with_host(host());
+    assert_eq!(
+        IngressRuntime::new(bundle.wi(), tenant.clone())
+            .dispatch_pending(&mut BoundAqIngress::new(&mut aq, tenant.clone()), 1, now(),)
+            .unwrap(),
+        1
+    );
+    for _ in 0..3 {
+        assert_eq!(
+            IngressRuntime::new(bundle.wi(), tenant.clone())
+                .dispatch_pending(&mut BoundAqIngress::new(&mut aq, tenant.clone()), 1, now(),)
+                .unwrap(),
+            0
+        );
+    }
+    let state = bundle.wi().ingress_snapshot(&tenant).unwrap();
+    assert!(state.acknowledgments_to_signal[&ready].sequence.is_some());
+    assert_eq!(state.queue[&first].generation, 0);
+    assert_eq!(state.deliveries[&first].attempts.len(), 0);
+    aq.shutdown().unwrap();
 }
 
 #[tokio::test]

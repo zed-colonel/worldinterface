@@ -15,6 +15,10 @@ pub struct IngressState {
     pub deliveries: BTreeMap<DeliveryId, ObservationDelivery>,
     #[serde(default)]
     pub queue: BTreeMap<DeliveryId, QueueObligation>,
+    /// Last queue entry inspected by the bounded dispatcher. This schedules
+    /// inspection only; the delivery journal remains the authority for state.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub dispatch_cursor: Option<DeliveryId>,
     #[serde(default)]
     pub acknowledgments_to_signal: BTreeMap<DeliveryId, AcknowledgmentSignal>,
     pub conflicts: BTreeSet<(ContentHash, ContentHash)>,
@@ -77,6 +81,9 @@ pub enum IngressCommand {
         generation: u32,
         signal_digest: ContentHash,
         sequence: u64,
+    },
+    AdvanceDispatchCursor {
+        id: DeliveryId,
     },
     RecoverQueue {
         id: DeliveryId,
@@ -280,6 +287,25 @@ pub fn disclose(
         return Err("disclosure denied".into());
     }
     Ok(())
+}
+/// The references required to issue a subscriber delivery must be available as
+/// a group. Optional attachments and attestations are redacted by the view.
+pub fn required_references_disclosable(
+    state: &IngressState,
+    d: &ObservationDelivery,
+) -> Result<bool> {
+    let admission = state
+        .admissions
+        .values()
+        .find(|a| a.observation.id == d.observation)
+        .ok_or("missing observation")?;
+    validate_event_references(&admission.profile, &admission.event)?;
+    let binding = state.bindings.get(&d.binding.id).ok_or("missing binding")?;
+    Ok(artifact_disclosable(state, &admission.event.content)
+        && profile_evidence(&admission.event.profile)
+            .first()
+            .is_none_or(|e| artifact_disclosable(state, &e.artifact))
+        && artifact_disclosable(state, &binding.authorization.artifact))
 }
 pub fn contiguous(state: &IngressState, p: &ProviderProfile) -> u64 {
     let positions: BTreeSet<_> = state
@@ -607,6 +633,13 @@ pub fn apply_ingress(
                 q.task_admitted = true;
                 IngressResult::Updated
             }
+        }
+        IngressCommand::AdvanceDispatchCursor { id } => {
+            if !s.queue.contains_key(id) {
+                return Err("unknown dispatch cursor".into());
+            }
+            s.dispatch_cursor = Some(id.clone());
+            IngressResult::Updated
         }
         IngressCommand::RecordQueueSignal { id, generation, signal_digest, sequence } => {
             let q = s.queue.get_mut(id).ok_or("unknown queue obligation")?;
