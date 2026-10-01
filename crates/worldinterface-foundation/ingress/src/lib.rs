@@ -454,13 +454,41 @@ impl<'a> Ingress<'a> {
         Ok(())
     }
     pub fn expire_delivery(&self, tenant: &OpaqueRef, id: &DeliveryId, now: u64) -> Result<()> {
-        self.root.ingress_transact(
+        self.root.ingress_transact_fresh(
             tenant,
-            None,
             now,
             &IngressCommand::Expire { id: id.clone() },
         )?;
         Ok(())
+    }
+    /// Reconcile a bounded set of retained deliveries before a dispatcher scans its
+    /// outbox. Each expiration is journaled, so an interrupted sweep resumes safely.
+    pub fn expire_due_deliveries(
+        &self,
+        tenant: &OpaqueRef,
+        now: u64,
+        limit: usize,
+    ) -> Result<Vec<DeliveryId>> {
+        if limit == 0 || limit > 1000 {
+            return Err(error("query bound"));
+        }
+        let state = self.root.ingress_snapshot(tenant)?;
+        let effective_now = now.max(state.last_at_ms);
+        let due: Vec<_> = state
+            .deliveries
+            .values()
+            .filter(|delivery| {
+                delivery.expires_at_ms <= effective_now
+                    && delivery.state != DeliveryState::Acknowledged
+                    && delivery.state != DeliveryState::Expired
+            })
+            .take(limit)
+            .map(|delivery| delivery.id.clone())
+            .collect();
+        for id in &due {
+            self.expire_delivery(tenant, id, effective_now)?;
+        }
+        Ok(due)
     }
     /// Inactive, trusted policy seam: a release evidence reference must have been independently
     /// authorized by the caller. Provider assertions cannot call this through either transport.

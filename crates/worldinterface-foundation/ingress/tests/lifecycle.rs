@@ -436,6 +436,84 @@ fn delayed_ack_after_exhaustion_token_misuse_revocation_and_expiration() {
     assert_eq!(s.state().admissions.len(), 3);
 }
 #[test]
+fn expired_outbox_sweep_survives_restart_and_rejects_recovery() {
+    let s = Setup::new();
+    let first = delivery(s.admit(&s.event("first", 0), 1000));
+    let second = delivery(s.admit(&s.event("second", 1), 1000));
+    let mut expiration_order = [first.clone(), second.clone()];
+    expiration_order.sort();
+    let tenant = s.b.profile.scope.tenant.clone();
+    let subscriber = s.subscriber();
+    let ingress = Ingress::new(&s.root);
+    let issued = ingress
+        .claim_due_delivery(&subscriber, &first, DeliveryToken::generate(), 1000)
+        .unwrap()
+        .unwrap();
+    ingress.invalidate_token(&s.owner(), &second, 1000).unwrap();
+    assert!(ingress.expire_due_deliveries(&tenant, 1999, 1).unwrap().is_empty());
+    assert!(ingress.expire_due_deliveries(&tenant, 2000, 0).is_err());
+
+    let mut state = s.state();
+    let request = b"task".to_vec();
+    let signal = b"signal".to_vec();
+    let queue = QueueObligation {
+        version: 1,
+        delivery: first.clone(),
+        task_digest: ContentHash::of(&request),
+        signal_digest: ContentHash::of(&signal),
+        task_request: request,
+        signal_request: signal,
+        task_admitted: true,
+        signal_sequence: Some(1),
+        generation: 0,
+        prior: vec![],
+    };
+    state.queue.insert(first.clone(), queue.clone());
+    let mut replacement = queue.clone();
+    replacement.generation = 1;
+    replacement.task_admitted = false;
+    replacement.signal_sequence = None;
+    assert!(apply_ingress(
+        &state,
+        &tenant,
+        2000,
+        &IngressCommand::RecoverQueue {
+            id: first.clone(),
+            expected_generation: 0,
+            replacement: Box::new(replacement),
+        },
+    )
+    .is_err());
+
+    let path = s.temp.path().join("root");
+    drop(s.root);
+    let root = StoreRoot::open_existing(&path).unwrap();
+    let ingress = Ingress::new(&root);
+    assert_eq!(
+        ingress.expire_due_deliveries(&tenant, 2000, 1).unwrap(),
+        vec![expiration_order[0].clone()]
+    );
+    assert_eq!(
+        root.ingress_snapshot(&tenant).unwrap().deliveries[&expiration_order[0]].state,
+        DeliveryState::Expired
+    );
+    drop(root);
+    let root = StoreRoot::open_existing(&path).unwrap();
+    let ingress = Ingress::new(&root);
+    assert_eq!(
+        ingress.expire_due_deliveries(&tenant, 2000, 1).unwrap(),
+        vec![expiration_order[1].clone()]
+    );
+    assert!(ingress.expire_due_deliveries(&tenant, 2000, 1).unwrap().is_empty());
+    let state = root.ingress_snapshot(&tenant).unwrap();
+    assert!(state
+        .deliveries
+        .values()
+        .all(|d| d.state == DeliveryState::Expired && d.token_invalidated));
+    assert!(ingress.acknowledge(&subscriber, &first, &issued.token, 2000).is_err());
+    assert!(ingress.due_deliveries(&subscriber, 2000, 10).unwrap().is_empty());
+}
+#[test]
 fn gaps_reconnects_and_out_of_order_preserve_safe_committed_prefix() {
     let s = Setup::new();
     let i = Ingress::new(&s.root);
