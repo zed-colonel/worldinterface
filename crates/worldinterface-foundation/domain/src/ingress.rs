@@ -389,7 +389,18 @@ pub fn apply_ingress(
                     && old.profile.scope == a.profile.scope
                     && old.producer_digest != a.producer_digest
             });
-            if let Some(old) = offset_conflict.or_else(|| s.admissions.get(&a.identity)) {
+            // Authenticated exact-byte retransmission is a duplicate even for sources
+            // without a stable producer key. Session identity fences stream frames.
+            let exact_replay = s.admissions.values().find(|old| {
+                old.profile.scope == a.profile.scope
+                    && old.provenance.transport == a.provenance.transport
+                    && old.provenance.session == a.provenance.session
+                    && old.provenance.exact_bytes_digest == a.provenance.exact_bytes_digest
+                    && now.saturating_sub(old.admitted_at_ms) <= a.profile.replay_window_ms
+            });
+            if let Some(old) =
+                offset_conflict.or(exact_replay).or_else(|| s.admissions.get(&a.identity))
+            {
                 if old.producer_digest == a.producer_digest {
                     return Ok((
                         state.clone(),
@@ -414,7 +425,12 @@ pub fn apply_ingress(
                 {
                     return Err("outside replay window or offset range".into());
                 }
-                if s.admissions.len() >= a.profile.capacity as usize
+                if s.admissions.len() >= 10000
+                    || s.admissions
+                        .values()
+                        .filter(|old| old.profile.scope == a.profile.scope)
+                        .count()
+                        >= a.profile.capacity as usize
                     || a.bindings.is_empty()
                     || a.bindings.len() != a.deliveries.len()
                     || s.deliveries.len() + a.deliveries.len() > 10000
@@ -448,6 +464,7 @@ pub fn apply_ingress(
                         b.profile == a.profile
                             && b.status == BindingStatus::Active
                             && b.expires_at_ms > now
+                            && a.event.information_use.allowed_audiences.contains(&b.subscriber)
                     })
                     .map(|b| BindingVersion { id: b.id.clone(), revision: b.revision })
                     .collect();
@@ -612,6 +629,9 @@ pub fn apply_ingress(
             let delivery = s.deliveries.get(id).ok_or("unknown delivery")?;
             if delivery.state != DeliveryState::Pending
                 || now >= delivery.expires_at_ms
+                || s.bindings
+                    .get(&delivery.binding.id)
+                    .is_none_or(|b| b.status != BindingStatus::Active || now >= b.expires_at_ms)
                 || old.generation != *expected_generation
                 || old.signal_sequence.is_none()
                 || replacement.version != 1

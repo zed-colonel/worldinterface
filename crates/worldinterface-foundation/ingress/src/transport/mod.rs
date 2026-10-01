@@ -37,6 +37,9 @@ impl ValidatedProviderEvent {
     pub fn profile(&self) -> &ProviderProfile {
         &self.profile
     }
+    pub fn allowed_audiences(&self) -> &[PrincipalId] {
+        &self.event.information_use.allowed_audiences
+    }
 }
 fn verify(key: &[u8], bytes: &[u8], signature: &[u8]) -> Result<()> {
     let mut mac = Hmac::<Sha256>::new_from_slice(key).map_err(|_| error("invalid key"))?;

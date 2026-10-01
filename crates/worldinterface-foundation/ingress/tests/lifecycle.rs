@@ -595,8 +595,8 @@ fn quarantine_and_typed_lifecycle_evidence_do_not_create_authority() {
     )
     .unwrap();
     assert_eq!(i.inspect_delivery(&s.subscriber(), &id, 1000).unwrap().attachments, vec![artifact]);
-    let ReceiptBody::Ingress(receipt) = view.receipt.body else { panic!() };
-    assert_eq!(receipt.validation.as_str(), "transport-validated-no-semantic-authority");
+    assert_eq!(view.receipt.admitting_binding.id, s.b.id);
+    assert_eq!(view.receipt.authorization, s.b.authorization);
     let mut e = s.event("commission", 1);
     e.profile = ObservationProfile::Commissioning { evidence: s.b.authorization.clone() };
     let id = delivery(s.admit(&e, 1000));
@@ -626,10 +626,11 @@ fn capacity_tombstones_profiles_and_atomic_fanout_failure() {
         let e = s.event("id", 0);
         s.admit(&e, 1000);
         s.admit(&e, 1000);
-        assert_eq!(
-            s.state().admissions.len(),
-            if strategy == IdentityStrategy::NonDeduplicable { 2 } else { 1 }
-        );
+        assert_eq!(s.state().admissions.len(), 1);
+        if strategy == IdentityStrategy::NonDeduplicable {
+            s.admit(&s.event("another", 1), 1000);
+            assert_eq!(s.state().admissions.len(), 2);
+        }
     }
     let s = Setup::new();
     let mut b = s.b.clone();
@@ -652,6 +653,115 @@ fn capacity_tombstones_profiles_and_atomic_fanout_failure() {
     let mut p = s.b.policy.clone();
     p.physical_erasure = true;
     assert!(validate_policy(&p).is_err());
+}
+
+#[test]
+fn audience_matching_and_subscriber_receipt_isolate_principals() {
+    let s = Setup::new();
+    let mut second = s.b.clone();
+    second.id = IngressBindingId::generate();
+    second.principal = PrincipalId::generate();
+    second.subscriber = PrincipalId::generate();
+    second.submission.client_request_id = "second-request".to_owned().try_into().unwrap();
+    second.submission.subscriber = r("second-endpoint");
+    second.authorization.artifact =
+        s.root.publish(s.b.profile.scope.tenant.clone(), b"second-authorization").unwrap();
+    let second_scope = AuthenticatedScope {
+        tenant: s.b.profile.scope.tenant.clone(),
+        principal: second.principal.clone(),
+    };
+    let second_version = Ingress::new(&s.root)
+        .submit_binding(
+            &second_scope,
+            second.submission.clone(),
+            second.id.clone(),
+            &Authority(second.clone()),
+            1000,
+        )
+        .unwrap();
+    let first_event = s.event("first-only", 0);
+    let first_id = delivery(s.admit(&first_event, 1000));
+    assert!(Ingress::new(&s.root)
+        .inspect_delivery(
+            &AuthenticatedScope {
+                tenant: second_scope.tenant.clone(),
+                principal: second.subscriber.clone(),
+            },
+            &first_id,
+            1000,
+        )
+        .is_err());
+    let mut both = s.event("both", 1);
+    both.information_use.allowed_audiences.push(second.subscriber.clone());
+    let mut versions = vec![s.version.clone(), second_version.clone()];
+    versions.sort_by(|a, b| a.id.cmp(&b.id));
+    let result =
+        Ingress::new(&s.root).admit_provider_event(s.http(&both), versions, ids(2), 1000).unwrap();
+    let IngressResult::Admitted { deliveries, .. } = result else { panic!("not admitted") };
+    let state = s.state();
+    let second_id =
+        deliveries.iter().find(|id| state.deliveries[*id].subscriber == second.subscriber).unwrap();
+    let view = Ingress::new(&s.root)
+        .inspect_delivery(
+            &AuthenticatedScope { tenant: second_scope.tenant, principal: second.subscriber },
+            second_id,
+            1000,
+        )
+        .unwrap();
+    assert_eq!(view.receipt.admitting_binding, second_version);
+    assert_eq!(view.receipt.authorization, second.authorization);
+    assert_ne!(view.receipt.authorization, s.b.authorization);
+}
+
+#[test]
+fn exact_byte_replay_does_not_consume_non_deduplicable_capacity() {
+    let mut binding = fixture();
+    binding.profile.identity = IdentityStrategy::NonDeduplicable;
+    binding.profile.capacity = 2;
+    let s = Setup::with(binding);
+    let mut event = s.event("not-a-key", 0);
+    event.offset = None;
+    let ingress = Ingress::new(&s.root);
+    let first = delivery(
+        ingress
+            .admit_provider_event(s.http(&event), vec![s.version.clone()], ids(1), 1000)
+            .unwrap(),
+    );
+    for _ in 0..5 {
+        let result = ingress
+            .admit_provider_event(s.http(&event), vec![s.version.clone()], ids(1), 1000)
+            .unwrap();
+        assert!(
+            matches!(result, IngressResult::Admitted { duplicate: true, ref deliveries, .. } if deliveries == &vec![first.clone()])
+        );
+    }
+    let mut stream_event = event.clone();
+    stream_event.offset = Some(1);
+    let second = delivery(
+        ingress
+            .admit_provider_event(
+                stream(&stream_event, &s.b.profile, 0),
+                vec![s.version.clone()],
+                ids(1),
+                1000,
+            )
+            .unwrap(),
+    );
+    assert_ne!(first, second);
+    for _ in 0..5 {
+        let result = ingress
+            .admit_provider_event(
+                stream(&stream_event, &s.b.profile, 0),
+                vec![s.version.clone()],
+                ids(1),
+                1000,
+            )
+            .unwrap();
+        assert!(
+            matches!(result, IngressResult::Admitted { duplicate: true, ref deliveries, .. } if deliveries == &vec![second.clone()])
+        );
+    }
+    assert_eq!(s.state().admissions.len(), 2);
 }
 #[test]
 fn old_manifest_profile_rejects_without_modification() {
@@ -1165,6 +1275,8 @@ mod generated {
                     a.identity =
                         provider_identity(&a.profile, &a.event, &a.observation.id).unwrap();
                     a.producer_digest = producer_digest(&a.profile, &a.event).unwrap();
+                    a.provenance.exact_bytes_digest =
+                        ContentHash::of(&canonical_data(&a.event).unwrap());
                     a.observation.deduplication_key = r(a.identity.as_str());
                     a.observation.asserted_sender = a.event.asserted_sender.clone();
                     if let ReceiptBody::Ingress(receipt) = &mut a.receipt.body {

@@ -24,8 +24,8 @@ use worldinterface_ingress::{
     AdmissionIds, AuthenticatedScope, DeliveryToken, Ingress, IssuedDelivery,
 };
 use worldinterface_protocol::{
-    BindingVersion, ContentHash, DeliveryAcknowledgment, DeliveryId, DeliveryState, ObservationId,
-    OpaqueRef, PrincipalId, ReceiptId,
+    BindingStatus, BindingVersion, ContentHash, DeliveryAcknowledgment, DeliveryId, DeliveryState,
+    ObservationId, OpaqueRef, PrincipalId, ReceiptId,
 };
 use worldinterface_storage::StoreRoot;
 
@@ -70,6 +70,7 @@ impl<'a> IngressRuntime<'a> {
                 b.profile == *profile
                     && b.status == worldinterface_protocol::BindingStatus::Active
                     && b.expires_at_ms > now
+                    && event.allowed_audiences().contains(&b.subscriber)
             })
             .map(|b| BindingVersion { id: b.id.clone(), revision: b.revision })
             .collect();
@@ -114,7 +115,9 @@ impl<'a> IngressRuntime<'a> {
             if done + reconciled >= limit {
                 break;
             }
-            if !reconcile_delivery(self.root, &self.tenant, &q.delivery, now)? {
+            if reconcile_delivery(self.root, &self.tenant, &q.delivery, now)?
+                != DeliveryReadiness::Ready
+            {
                 reconciled += 1;
                 continue;
             }
@@ -127,7 +130,9 @@ impl<'a> IngressRuntime<'a> {
                     if !aq.delivery_task_terminal(task.task_spec().id())? {
                         break;
                     }
-                    if !reconcile_delivery(self.root, &self.tenant, &q.delivery, now)? {
+                    if reconcile_delivery(self.root, &self.tenant, &q.delivery, now)?
+                        != DeliveryReadiness::Ready
+                    {
                         break;
                     }
                     let next = queue_request(
@@ -144,7 +149,9 @@ impl<'a> IngressRuntime<'a> {
                         },
                     );
                     if let Err(error) = recovered {
-                        if !reconcile_delivery(self.root, &self.tenant, &q.delivery, now)? {
+                        if reconcile_delivery(self.root, &self.tenant, &q.delivery, now)?
+                            != DeliveryReadiness::Ready
+                        {
                             break;
                         }
                         let current = self
@@ -164,7 +171,9 @@ impl<'a> IngressRuntime<'a> {
                 } else {
                     q
                 };
-                if !reconcile_delivery(self.root, &self.tenant, &q.delivery, now)? {
+                if reconcile_delivery(self.root, &self.tenant, &q.delivery, now)?
+                    != DeliveryReadiness::Ready
+                {
                     break;
                 }
                 if ContentHash::of(&q.task_request) != q.task_digest
@@ -279,23 +288,40 @@ impl<'a> IngressRuntime<'a> {
 
 /// The journal is the authority for expiration. Recheck it at each boundary
 /// before creating AQ work because a dispatcher may hold an older snapshot.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum DeliveryReadiness {
+    Ready,
+    WaitingUntil(u64),
+    Closed,
+}
+
 fn reconcile_delivery(
     root: &StoreRoot,
     tenant: &OpaqueRef,
     id: &DeliveryId,
     now: u64,
-) -> Result<bool> {
+) -> Result<DeliveryReadiness> {
     let state = root.ingress_snapshot(tenant)?;
     let delivery = state.deliveries.get(id).ok_or("unknown delivery")?;
     if delivery.state != DeliveryState::Pending {
-        return Ok(false);
+        return Ok(DeliveryReadiness::Closed);
     }
     let effective_now = now.max(state.last_at_ms);
     if effective_now >= delivery.expires_at_ms {
         Ingress::new(root).expire_delivery(tenant, id, effective_now)?;
-        return Ok(false);
+        return Ok(DeliveryReadiness::Closed);
     }
-    Ok(true)
+    let binding = state.bindings.get(&delivery.binding.id).ok_or("missing delivery binding")?;
+    Ok(match binding.status {
+        _ if binding.expires_at_ms <= effective_now => {
+            DeliveryReadiness::WaitingUntil(delivery.expires_at_ms)
+        }
+        BindingStatus::Active => DeliveryReadiness::Ready,
+        BindingStatus::Suspended => DeliveryReadiness::WaitingUntil(
+            effective_now.saturating_add(1000).min(delivery.expires_at_ms),
+        ),
+        BindingStatus::Revoked => DeliveryReadiness::WaitingUntil(delivery.expires_at_ms),
+    })
 }
 
 fn read_bounded(mut source: impl Read, max_bytes: u32) -> Result<Vec<u8>> {
@@ -558,7 +584,8 @@ impl IngressDeliveryHandler {
         let root = self.bundle.wi();
         let now =
             std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH)?.as_millis() as u64;
-        if !reconcile_delivery(root, &self.tenant, &id, now)? {
+        let readiness = reconcile_delivery(root, &self.tenant, &id, now)?;
+        if readiness == DeliveryReadiness::Closed {
             return Ok(AttemptDisposition::complete(None));
         }
         let state = root.ingress_snapshot(&self.tenant)?;
@@ -566,8 +593,6 @@ impl IngressDeliveryHandler {
         if delivery.state != DeliveryState::Pending {
             return Ok(AttemptDisposition::complete(None));
         }
-        let transport =
-            self.subscribers.get(&delivery.subscriber).ok_or("unregistered subscriber")?;
         let subscriber = AuthenticatedScope {
             tenant: self.tenant.clone(),
             principal: delivery.subscriber.clone(),
@@ -592,6 +617,22 @@ impl IngressDeliveryHandler {
                 ))?),
             })
         };
+        let await_ack_until = |deadline_ms: u64| -> Result<AttemptDisposition> {
+            let deadline_seconds = deadline_ms.saturating_add(999) / 1000;
+            Ok(AttemptDisposition::awaiting(
+                WaitSpec::new(
+                    WaitId::new(),
+                    filter("acknowledgment")?,
+                    WaitMatchPolicy::FirstMatch,
+                    SignalEligibility::AnyRetained,
+                    Some(WaitDeadline {
+                        at: deadline_seconds.max(now / 1000 + 1),
+                        policy: WaitTimeoutPolicy::ResumeWithTimeout,
+                    }),
+                )?,
+                None,
+            ))
+        };
         if ctx.input.resume_context.is_none() {
             // Task admission can commit even when the delivery signal does not.
             // Keep that first wait bounded by WI's durable retention deadline so
@@ -611,13 +652,33 @@ impl IngressDeliveryHandler {
                 None,
             ));
         }
+        let transport = self.subscribers.get(&delivery.subscriber);
+        if readiness != DeliveryReadiness::Ready || transport.is_none() {
+            // Revocation and binding expiry cannot become deliverable; pause and
+            // missing local registration are rechecked without burning AQ retries.
+            // Acknowledgment remains possible for an already issued token.
+            let deadline_ms = match readiness {
+                DeliveryReadiness::WaitingUntil(deadline) => deadline,
+                _ => now.saturating_add(1000).min(delivery.expires_at_ms),
+            };
+            return await_ack_until(deadline_ms);
+        }
+        let transport = transport.expect("checked registration");
         // Recovery can resume an issued delivery before WI's retry time.
         // Reestablish its acknowledgment wait without failing another AQ attempt
         // or issuing a second subscriber token early.
         if delivery.attempts.last().is_none_or(|a| now >= a.next_attempt_ms) {
-            if let Some(issued) =
-                IngressRuntime::new(root, self.tenant.clone()).claim(&subscriber, &id, now)?
-            {
+            let claimed =
+                IngressRuntime::new(root, self.tenant.clone()).claim(&subscriber, &id, now);
+            let claimed = match claimed {
+                Ok(claimed) => claimed,
+                Err(error) => match reconcile_delivery(root, &self.tenant, &id, now)? {
+                    DeliveryReadiness::Closed => return Ok(AttemptDisposition::complete(None)),
+                    DeliveryReadiness::WaitingUntil(deadline) => return await_ack_until(deadline),
+                    DeliveryReadiness::Ready => return Err(error),
+                },
+            };
+            if let Some(issued) = claimed {
                 let succeeded = transport.deliver(&issued).is_ok();
                 let finished_at = std::time::SystemTime::now()
                     .duration_since(std::time::UNIX_EPOCH)?
@@ -633,7 +694,7 @@ impl IngressDeliveryHandler {
         }
         let finished_at =
             std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH)?.as_millis() as u64;
-        if !reconcile_delivery(root, &self.tenant, &id, finished_at)? {
+        if reconcile_delivery(root, &self.tenant, &id, finished_at)? == DeliveryReadiness::Closed {
             return Ok(AttemptDisposition::complete(None));
         }
         let state = root.ingress_snapshot(&self.tenant)?;
