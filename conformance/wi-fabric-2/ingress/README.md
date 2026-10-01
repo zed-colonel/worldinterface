@@ -47,8 +47,13 @@ capacity. Its scope cannot change profiles in place. Stable provider IDs and
 stream positions are preferred. Explicit content-window profiles normalize
 producer time to a bucket and omit unstable event IDs/offsets for content identity;
 this approximation intentionally does not advance cursor state on a suppressed
-retransmission. Non-deduplicable profiles allocate an observation identity for
-each arrival. Equal identity/content recovers the original observation/deliveries;
+retransmission. Non-deduplicable profiles allocate a new observation for each
+distinct arrival. Authenticated exact-byte replay within the provider replay
+window returns the existing admission when provider/source scope, transport,
+and stream session match. This bounded transport replay check is separate from
+semantic provider-event deduplication; it does not give other arrivals a stable
+provider-event identity. Equal identity/content recovers the original
+observation/deliveries;
 conflicts preserve protected hashes and cannot replace or wake. Reuse of an
 already committed offset with different producer content also records conflict,
 even when a content-window identity matches a different earlier observation.
