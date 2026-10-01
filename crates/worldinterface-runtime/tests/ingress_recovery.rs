@@ -680,7 +680,10 @@ async fn process_death_after_subscriber_storage_redelivers_same_id() {
     let service = IngressRuntime::new(bundle.wi(), tenant.clone());
     let task = TaskId::from_uuid(uuid::Uuid::parse_str(id.as_str()).unwrap());
     let run = aq.projection().run_ids_for_task(task)[0];
-    let wait_deadline = std::time::Instant::now() + Duration::from_secs(8);
+    // AQ may still be in its lease-recovery retry wait while other real-AQ
+    // crash cases run in the same test binary. Poll for the actual restored
+    // acknowledgment wait rather than assuming it appears within one lease.
+    let wait_deadline = std::time::Instant::now() + Duration::from_secs(25);
     while aq.get_run(run).unwrap().state != actionqueue_core::run::state::RunState::Awaiting
         && std::time::Instant::now() < wait_deadline
     {
