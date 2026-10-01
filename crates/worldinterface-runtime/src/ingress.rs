@@ -15,7 +15,11 @@ use actionqueue_core::{
 };
 use actionqueue_executor_local::handler::{ExecutorContext, ExecutorHandler};
 use actionqueue_runtime::engine::BootstrappedEngine;
-use std::{collections::BTreeMap, io::Read, sync::Arc};
+use std::{
+    collections::{BTreeMap, BTreeSet},
+    io::Read,
+    sync::Arc,
+};
 use worldinterface_domain::ingress::{AcknowledgmentSignal, IngressResult, QueueObligation};
 use worldinterface_ingress::{
     transport::{
@@ -158,7 +162,7 @@ impl<'a> IngressRuntime<'a> {
                 DeliveryReadiness::Closed => {
                     continue;
                 }
-                DeliveryReadiness::WaitingUntil(_) => continue,
+                DeliveryReadiness::Unavailable => continue,
             }
             let mut q = q;
             // AQ admission and the WI journal are separate durable authorities. Another
@@ -167,6 +171,12 @@ impl<'a> IngressRuntime<'a> {
                 q = if q.signal_sequence.is_some() {
                     let task: EnsureTaskRequest = serde_json::from_slice(&q.task_request)?;
                     if !aq.delivery_task_terminal(task.task_spec().id())? {
+                        break;
+                    }
+                    let current = self.root.ingress_snapshot(&self.tenant)?;
+                    let subscriber =
+                        &current.deliveries.get(&q.delivery).ok_or("unknown delivery")?.subscriber;
+                    if !aq.subscriber_registered(subscriber) {
                         break;
                     }
                     if reconcile_delivery(self.root, &self.tenant, &q.delivery, now)?
@@ -307,7 +317,7 @@ impl<'a> IngressRuntime<'a> {
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 enum DeliveryReadiness {
     Ready,
-    WaitingUntil(u64),
+    Unavailable,
     Closed,
 }
 
@@ -341,16 +351,13 @@ fn delivery_readiness(
         return Ok(DeliveryReadiness::Closed);
     }
     // Token invalidation forbids every future claim, including the first one.
-    // Keep an admitted AQ run waiting only until retention expires; dispatch
-    // must not admit or recover work that can no longer reach a subscriber.
+    // Dispatch must not admit or recover work that can no longer reach a subscriber.
     if delivery.token_invalidated {
-        return Ok(DeliveryReadiness::WaitingUntil(delivery.expires_at_ms));
+        return Ok(DeliveryReadiness::Unavailable);
     }
     let binding = state.bindings.get(&delivery.binding.id).ok_or("missing delivery binding")?;
     Ok(match binding.status {
-        _ if binding.expires_at_ms <= effective_now => {
-            DeliveryReadiness::WaitingUntil(delivery.expires_at_ms)
-        }
+        _ if binding.expires_at_ms <= effective_now => DeliveryReadiness::Unavailable,
         BindingStatus::Active => {
             let references_available =
                 worldinterface_domain::ingress::required_references_disclosable(state, delivery)?;
@@ -362,17 +369,13 @@ fn delivery_readiness(
             )
             .is_ok();
             if !references_available || !disclosed {
-                DeliveryReadiness::WaitingUntil(
-                    effective_now.saturating_add(1000).min(delivery.expires_at_ms),
-                )
+                DeliveryReadiness::Unavailable
             } else {
                 DeliveryReadiness::Ready
             }
         }
-        BindingStatus::Suspended => DeliveryReadiness::WaitingUntil(
-            effective_now.saturating_add(1000).min(delivery.expires_at_ms),
-        ),
-        BindingStatus::Revoked => DeliveryReadiness::WaitingUntil(delivery.expires_at_ms),
+        BindingStatus::Suspended => DeliveryReadiness::Unavailable,
+        BindingStatus::Revoked => DeliveryReadiness::Unavailable,
     })
 }
 
@@ -475,6 +478,12 @@ fn acknowledgment_request(id: &DeliveryId) -> Result<AcknowledgmentSignal> {
 
 pub trait AqIngressPort {
     fn bound_tenant(&self) -> &OpaqueRef;
+    /// Recovery needs a trusted host registration before replacing a terminal
+    /// AQ run. Unknown registration fails closed; initial admission remains
+    /// durable so a later registered dispatcher can recover it.
+    fn subscriber_registered(&self, _subscriber: &PrincipalId) -> bool {
+        false
+    }
     fn ensure_delivery_task(
         &mut self,
         request: EnsureTaskRequest,
@@ -530,14 +539,25 @@ pub struct BoundAqIngress<'a, H: ExecutorHandler + 'static, C: actionqueue_core:
 {
     engine: &'a mut BootstrappedEngine<H, C>,
     tenant: OpaqueRef,
+    registered_subscribers: BTreeSet<PrincipalId>,
 }
 impl<'a, H, C> BoundAqIngress<'a, H, C>
 where
     H: ExecutorHandler + 'static,
     C: actionqueue_core::time::clock::Clock,
 {
+    /// Starts with no trusted subscriber registrations. Recovery remains
+    /// parked until the host supplies its active registrations below.
     pub fn new(engine: &'a mut BootstrappedEngine<H, C>, tenant: OpaqueRef) -> Self {
-        Self { engine, tenant }
+        Self { engine, tenant, registered_subscribers: BTreeSet::new() }
+    }
+    /// Bind the trusted host's local subscriber registrations to recovery.
+    pub fn with_registered_subscribers(
+        mut self,
+        subscribers: impl IntoIterator<Item = PrincipalId>,
+    ) -> Self {
+        self.registered_subscribers = subscribers.into_iter().collect();
+        self
     }
 }
 impl<H, C> AqIngressPort for BoundAqIngress<'_, H, C>
@@ -547,6 +567,9 @@ where
 {
     fn bound_tenant(&self) -> &OpaqueRef {
         &self.tenant
+    }
+    fn subscriber_registered(&self, subscriber: &PrincipalId) -> bool {
+        self.registered_subscribers.contains(subscriber)
     }
     fn ensure_delivery_task(
         &mut self,
@@ -669,22 +692,6 @@ impl IngressDeliveryHandler {
                 ))?),
             })
         };
-        let await_ack_until = |deadline_ms: u64| -> Result<AttemptDisposition> {
-            let deadline_seconds = deadline_ms.saturating_add(999) / 1000;
-            Ok(AttemptDisposition::awaiting(
-                WaitSpec::new(
-                    WaitId::new(),
-                    filter("acknowledgment")?,
-                    WaitMatchPolicy::FirstMatch,
-                    SignalEligibility::AnyRetained,
-                    Some(WaitDeadline {
-                        at: deadline_seconds.max(now / 1000 + 1),
-                        policy: WaitTimeoutPolicy::ResumeWithTimeout,
-                    }),
-                )?,
-                None,
-            ))
-        };
         if ctx.input.resume_context.is_none() {
             // Task admission can commit even when the delivery signal does not.
             // Keep that first wait bounded by WI's durable retention deadline so
@@ -706,14 +713,11 @@ impl IngressDeliveryHandler {
         }
         let transport = self.subscribers.get(&delivery.subscriber);
         if readiness != DeliveryReadiness::Ready || transport.is_none() {
-            // Revocation and binding expiry cannot become deliverable; pause and
-            // missing local registration are rechecked without burning AQ retries.
-            // Acknowledgment remains possible for an already issued token.
-            let deadline_ms = match readiness {
-                DeliveryReadiness::WaitingUntil(deadline) => deadline,
-                _ => now.saturating_add(1000).min(delivery.expires_at_ms),
-            };
-            return await_ack_until(deadline_ms);
+            // A paused delivery must not make AQ poll until retention. Retire this
+            // run; readiness-gated dispatch recovers the same WI delivery with a
+            // new AQ generation when the binding, content, and subscriber return.
+            // WI can still accept an acknowledgment for an already issued token.
+            return Ok(AttemptDisposition::complete(None));
         }
         let transport = transport.expect("checked registration");
         // Recovery can resume an issued delivery before WI's retry time.
@@ -726,7 +730,9 @@ impl IngressDeliveryHandler {
                 Ok(claimed) => claimed,
                 Err(error) => match reconcile_delivery(root, &self.tenant, &id, now)? {
                     DeliveryReadiness::Closed => return Ok(AttemptDisposition::complete(None)),
-                    DeliveryReadiness::WaitingUntil(deadline) => return await_ack_until(deadline),
+                    DeliveryReadiness::Unavailable => {
+                        return Ok(AttemptDisposition::complete(None));
+                    }
                     DeliveryReadiness::Ready => return Err(error),
                 },
             };
@@ -746,7 +752,7 @@ impl IngressDeliveryHandler {
         }
         let finished_at =
             std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH)?.as_millis() as u64;
-        if reconcile_delivery(root, &self.tenant, &id, finished_at)? == DeliveryReadiness::Closed {
+        if reconcile_delivery(root, &self.tenant, &id, finished_at)? != DeliveryReadiness::Ready {
             return Ok(AttemptDisposition::complete(None));
         }
         let state = root.ingress_snapshot(&self.tenant)?;
@@ -755,7 +761,10 @@ impl IngressDeliveryHandler {
             return Ok(AttemptDisposition::complete(None));
         }
         let retry_at_ms =
-            delivery.attempts.last().map(|a| a.next_attempt_ms).unwrap_or(now.saturating_add(1000));
+            delivery.attempts.last().map(|a| a.next_attempt_ms).unwrap_or_else(|| {
+                now.saturating_add(delivery.policy.acknowledgment_timeout_ms)
+                    .saturating_add(delivery.policy.backoff_ms)
+            });
         // Fabric records milliseconds; AQ continuation deadlines use Unix seconds.
         let retry_at_seconds = retry_at_ms.min(delivery.expires_at_ms).saturating_add(999) / 1000;
         let now_seconds = finished_at / 1000;
