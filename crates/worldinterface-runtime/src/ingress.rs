@@ -15,11 +15,7 @@ use actionqueue_core::{
 };
 use actionqueue_executor_local::handler::{ExecutorContext, ExecutorHandler};
 use actionqueue_runtime::engine::BootstrappedEngine;
-use std::{
-    collections::{BTreeMap, BTreeSet},
-    io::Read,
-    sync::Arc,
-};
+use std::{collections::BTreeMap, io::Read, sync::Arc};
 use worldinterface_domain::ingress::{AcknowledgmentSignal, IngressResult, QueueObligation};
 use worldinterface_ingress::{
     transport::{
@@ -197,6 +193,9 @@ impl<'a> IngressRuntime<'a> {
                             replacement: Box::new(next.clone()),
                         },
                     );
+                    if matches!(recovered, Ok(IngressResult::QueueRecoveryExhausted)) {
+                        break;
+                    }
                     if let Err(error) = recovered {
                         if reconcile_delivery(self.root, &self.tenant, &q.delivery, now)?
                             != DeliveryReadiness::Ready
@@ -478,9 +477,8 @@ fn acknowledgment_request(id: &DeliveryId) -> Result<AcknowledgmentSignal> {
 
 pub trait AqIngressPort {
     fn bound_tenant(&self) -> &OpaqueRef;
-    /// Recovery needs a trusted host registration before replacing a terminal
-    /// AQ run. Unknown registration fails closed; initial admission remains
-    /// durable so a later registered dispatcher can recover it.
+    /// Recovery needs the active handler's trusted transport registration before
+    /// replacing a terminal AQ run. Unknown registration fails closed.
     fn subscriber_registered(&self, _subscriber: &PrincipalId) -> bool {
         false
     }
@@ -539,7 +537,7 @@ pub struct BoundAqIngress<'a, H: ExecutorHandler + 'static, C: actionqueue_core:
 {
     engine: &'a mut BootstrappedEngine<H, C>,
     tenant: OpaqueRef,
-    registered_subscribers: BTreeSet<PrincipalId>,
+    subscribers: Option<SubscriberRegistry>,
 }
 impl<'a, H, C> BoundAqIngress<'a, H, C>
 where
@@ -549,14 +547,12 @@ where
     /// Starts with no trusted subscriber registrations. Recovery remains
     /// parked until the host supplies its active registrations below.
     pub fn new(engine: &'a mut BootstrappedEngine<H, C>, tenant: OpaqueRef) -> Self {
-        Self { engine, tenant, registered_subscribers: BTreeSet::new() }
+        Self { engine, tenant, subscribers: None }
     }
-    /// Bind the trusted host's local subscriber registrations to recovery.
-    pub fn with_registered_subscribers(
-        mut self,
-        subscribers: impl IntoIterator<Item = PrincipalId>,
-    ) -> Self {
-        self.registered_subscribers = subscribers.into_iter().collect();
+    /// Use the registry obtained from the handler bootstrapped into this engine.
+    /// It contains the actual transports, rather than a separate list of names.
+    pub fn with_subscriber_registry(mut self, subscribers: SubscriberRegistry) -> Self {
+        self.subscribers = Some(subscribers);
         self
     }
 }
@@ -569,7 +565,9 @@ where
         &self.tenant
     }
     fn subscriber_registered(&self, subscriber: &PrincipalId) -> bool {
-        self.registered_subscribers.contains(subscriber)
+        self.subscribers
+            .as_ref()
+            .is_some_and(|r| r.tenant == self.tenant && r.transports.contains_key(subscriber))
     }
     fn ensure_delivery_task(
         &mut self,
@@ -615,12 +613,20 @@ pub trait SubscriberTransport: Send + Sync {
     fn deliver(&self, delivery: &IssuedDelivery) -> Result<()>;
 }
 
+/// Immutable host registrations shared by a delivery handler and its dispatcher.
+/// Only the handler creates this registry; provider input cannot add names.
+#[derive(Clone)]
+pub struct SubscriberRegistry {
+    tenant: OpaqueRef,
+    transports: Arc<BTreeMap<PrincipalId, Arc<dyn SubscriberTransport>>>,
+}
+
 /// AQ executes delivery work and owns the acknowledgment wait and retry deadline.
 /// This handler reloads current Fabric state on every physical attempt.
 pub struct IngressDeliveryHandler {
     bundle: Arc<crate::storage::StoreBundle>,
     tenant: OpaqueRef,
-    subscribers: BTreeMap<PrincipalId, Arc<dyn SubscriberTransport>>,
+    subscribers: SubscriberRegistry,
 }
 impl IngressDeliveryHandler {
     pub fn new(
@@ -636,7 +642,15 @@ impl IngressDeliveryHandler {
         tenant: OpaqueRef,
         subscribers: impl IntoIterator<Item = (PrincipalId, Arc<dyn SubscriberTransport>)>,
     ) -> Self {
-        Self { bundle, tenant, subscribers: subscribers.into_iter().collect() }
+        let subscribers = SubscriberRegistry {
+            tenant: tenant.clone(),
+            transports: Arc::new(subscribers.into_iter().collect()),
+        };
+        Self { bundle, tenant, subscribers }
+    }
+    /// Capture before moving this handler into AQ; pass the clone to recovery.
+    pub fn subscriber_registry(&self) -> SubscriberRegistry {
+        self.subscribers.clone()
     }
     fn execute_delivery(
         &self,
@@ -668,6 +682,14 @@ impl IngressDeliveryHandler {
         if delivery.state != DeliveryState::Pending {
             return Ok(AttemptDisposition::complete(None));
         }
+        let transport = self.subscribers.transports.get(&delivery.subscriber);
+        if readiness != DeliveryReadiness::Ready || transport.is_none() {
+            // Retire unavailable work without polling or establishing a wait.
+            // Dispatch can recover when readiness returns, within the journaled
+            // generation budget. Already issued tokens can still be acknowledged.
+            return Ok(AttemptDisposition::complete(None));
+        }
+        let transport = transport.expect("checked registration");
         let subscriber = AuthenticatedScope {
             tenant: self.tenant.clone(),
             principal: delivery.subscriber.clone(),
@@ -711,15 +733,6 @@ impl IngressDeliveryHandler {
                 None,
             ));
         }
-        let transport = self.subscribers.get(&delivery.subscriber);
-        if readiness != DeliveryReadiness::Ready || transport.is_none() {
-            // A paused delivery must not make AQ poll until retention. Retire this
-            // run; readiness-gated dispatch recovers the same WI delivery with a
-            // new AQ generation when the binding, content, and subscriber return.
-            // WI can still accept an acknowledgment for an already issued token.
-            return Ok(AttemptDisposition::complete(None));
-        }
-        let transport = transport.expect("checked registration");
         // Recovery can resume an issued delivery before WI's retry time.
         // Reestablish its acknowledgment wait without failing another AQ attempt
         // or issuing a second subscriber token early.

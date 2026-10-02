@@ -141,6 +141,7 @@ pub enum IngressResult {
     Acknowledged(DeliveryAcknowledgment),
     Updated,
     StaleQueueGeneration,
+    QueueRecoveryExhausted,
 }
 pub fn digest<T: Serialize>(value: &T) -> Result<ContentHash> {
     Ok(ContentHash::of(&canonical_data(value)?))
@@ -683,13 +684,23 @@ pub fn apply_ingress(
             {
                 return Err("invalid queue recovery".into());
             }
-            let mut next = *replacement.clone();
-            next.prior = old.prior.clone();
-            let mut archived = old.clone();
-            archived.prior.clear();
-            next.prior.push(archived);
-            s.queue.insert(id.clone(), next);
-            IngressResult::Updated
+            // Bound infrastructure recovery independently of subscriber claims:
+            // unavailable work may retire an AQ run without making a claim.
+            // The pinned policy bounds both subscriber attempts and replacement
+            // generations. Journal this exhaustion without allocating more work;
+            // retained lineage and this command preserve the failure evidence.
+            if old.generation >= delivery.policy.max_attempts {
+                s.deliveries.get_mut(id).unwrap().state = DeliveryState::DeadLetter;
+                IngressResult::QueueRecoveryExhausted
+            } else {
+                let mut next = *replacement.clone();
+                next.prior = old.prior.clone();
+                let mut archived = old.clone();
+                archived.prior.clear();
+                next.prior.push(archived);
+                s.queue.insert(id.clone(), next);
+                IngressResult::Updated
+            }
         }
         IngressCommand::Claim { id, subscriber, token_digest } => {
             let d = s.deliveries.get(id).ok_or("unknown delivery")?;

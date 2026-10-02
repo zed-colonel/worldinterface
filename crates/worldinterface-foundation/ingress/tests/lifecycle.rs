@@ -126,6 +126,86 @@ fn sign(bytes: &[u8]) -> Vec<u8> {
     h.update(bytes);
     h.finalize().into_bytes().to_vec()
 }
+
+#[test]
+fn queue_recovery_exhaustion_uses_pinned_policy_and_preserves_lineage() {
+    for budget in [1, 2, 100] {
+        let mut binding = fixture();
+        binding.policy.max_attempts = budget;
+        let s = Setup::with(binding);
+        let id = delivery(s.admit(&s.event("recovery-budget", 0), 1000));
+        let tenant = s.b.profile.scope.tenant.clone();
+        let mut state = s.state();
+        let request = |generation| {
+            let task_request = format!("task-{generation}").into_bytes();
+            let signal_request = format!("signal-{generation}").into_bytes();
+            QueueObligation {
+                version: 1,
+                delivery: id.clone(),
+                task_digest: ContentHash::of(&task_request),
+                signal_digest: ContentHash::of(&signal_request),
+                task_request,
+                signal_request,
+                task_admitted: false,
+                signal_sequence: None,
+                generation,
+                prior: vec![],
+            }
+        };
+        let mut initial = request(0);
+        initial.task_admitted = true;
+        initial.signal_sequence = Some(1);
+        state.queue.insert(id.clone(), initial);
+        // Current binding configuration cannot extend a captured delivery budget.
+        state.bindings.get_mut(&s.b.id).unwrap().policy.max_attempts = 100;
+        for generation in 0..=budget {
+            let command = IngressCommand::RecoverQueue {
+                id: id.clone(),
+                expected_generation: generation,
+                replacement: Box::new(request(generation + 1)),
+            };
+            let (next, result) = apply_ingress(&state, &tenant, 1000, &command).unwrap();
+            if generation == budget {
+                assert_eq!(result, IngressResult::QueueRecoveryExhausted);
+                assert_eq!(next.deliveries[&id].state, DeliveryState::DeadLetter);
+                assert_eq!(next.queue, state.queue);
+                assert!(next.deliveries[&id].attempts.is_empty());
+                assert!(apply_ingress(&next, &tenant, 1000, &command).is_err());
+            } else {
+                assert_eq!(result, IngressResult::Updated);
+                assert_eq!(next.queue[&id].prior.len(), generation as usize + 1);
+                state = next;
+                let q = &state.queue[&id];
+                state = apply_ingress(
+                    &state,
+                    &tenant,
+                    1000,
+                    &IngressCommand::RecordQueueTask {
+                        id: id.clone(),
+                        generation: generation + 1,
+                        task_digest: q.task_digest.clone(),
+                    },
+                )
+                .unwrap()
+                .0;
+                let q = &state.queue[&id];
+                state = apply_ingress(
+                    &state,
+                    &tenant,
+                    1000,
+                    &IngressCommand::RecordQueueSignal {
+                        id: id.clone(),
+                        generation: generation + 1,
+                        signal_digest: q.signal_digest.clone(),
+                        sequence: u64::from(generation) + 2,
+                    },
+                )
+                .unwrap()
+                .0;
+            }
+        }
+    }
+}
 fn credentials(p: &ProviderProfile) -> ProviderCredentials {
     ProviderCredentials::new(p.clone(), vec![7; 32]).unwrap()
 }

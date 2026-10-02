@@ -574,9 +574,11 @@ async fn inactive_binding_and_missing_registration_never_regenerate_aq_work() {
                     )
                     .unwrap();
             }
+            let delivery_handler = handler(&reopened, &binding, recorder.clone());
+            let registry = delivery_handler.subscriber_registry();
             let mut resumed = ActionQueueEngine::new(
                 RuntimeConfig { data_dir: reopened.aq_path(), ..Default::default() },
-                handler(&reopened, &binding, recorder.clone()),
+                delivery_handler,
             )
             .bootstrap()
             .unwrap()
@@ -585,7 +587,7 @@ async fn inactive_binding_and_missing_registration_never_regenerate_aq_work() {
                 IngressRuntime::new(reopened.wi(), tenant.clone())
                     .dispatch_pending(
                         &mut BoundAqIngress::new(&mut resumed, tenant.clone())
-                            .with_registered_subscribers([binding.subscriber.clone()]),
+                            .with_subscriber_registry(registry.clone()),
                         1,
                         now()
                     )
@@ -598,6 +600,208 @@ async fn inactive_binding_and_missing_registration_never_regenerate_aq_work() {
             assert_eq!(recorder.0.lock().unwrap().as_slice(), std::slice::from_ref(&id));
             resumed.shutdown().unwrap();
         }
+    }
+}
+
+#[tokio::test]
+async fn handler_registry_fails_closed_for_missing_transport_and_wrong_tenant() {
+    let temp = tempfile::tempdir().unwrap();
+    let (bundle, binding, id) = setup(&temp.path().join("bundle"));
+    let tenant = binding.profile.scope.tenant.clone();
+    let empty_handler =
+        IngressDeliveryHandler::with_subscribers(bundle.clone(), tenant.clone(), []);
+    let registry = empty_handler.subscriber_registry();
+    let mut aq = ActionQueueEngine::new(
+        RuntimeConfig { data_dir: bundle.aq_path(), ..Default::default() },
+        empty_handler,
+    )
+    .bootstrap()
+    .unwrap()
+    .with_host(host());
+    let service = IngressRuntime::new(bundle.wi(), tenant.clone());
+    service.dispatch_pending(&mut BoundAqIngress::new(&mut aq, tenant.clone()), 1, now()).unwrap();
+    let _ = aq.run_until_idle().await.unwrap();
+    let wrong_tenant = IngressDeliveryHandler::new(
+        bundle.clone(),
+        AuthenticatedScope {
+            tenant: "tenant-b".to_owned().try_into().unwrap(),
+            principal: binding.subscriber.clone(),
+        },
+        Arc::new(Recorder::default()),
+    )
+    .subscriber_registry();
+    for registry in [registry, wrong_tenant] {
+        let mut port =
+            BoundAqIngress::new(&mut aq, tenant.clone()).with_subscriber_registry(registry);
+        assert!(!port.subscriber_registered(&binding.subscriber));
+        for _ in 0..8 {
+            assert_eq!(service.dispatch_pending(&mut port, 1, now()).unwrap(), 0);
+        }
+    }
+    let state = bundle.wi().ingress_snapshot(&tenant).unwrap();
+    assert_eq!(state.queue[&id].generation, 0);
+    assert!(state.queue[&id].prior.is_empty());
+    assert!(state.deliveries[&id].attempts.is_empty());
+    aq.shutdown().unwrap();
+}
+
+#[tokio::test]
+async fn recovery_generation_budget_bounds_mismatch_binding_churn_and_capacity_after_restart() {
+    for mode in ["mismatched-registry", "suspend-resume", "wait-capacity", "delayed-ack"] {
+        let temp = tempfile::tempdir().unwrap();
+        let path = temp.path().join("bundle");
+        let (bundle, binding, id) = setup(&path);
+        let tenant = binding.profile.scope.tenant.clone();
+        let owner =
+            AuthenticatedScope { tenant: tenant.clone(), principal: binding.principal.clone() };
+        let subscriber =
+            AuthenticatedScope { tenant: tenant.clone(), principal: binding.subscriber.clone() };
+        let recorder = Arc::new(Recorder::default());
+        let transport_handler = handler(&bundle, &binding, recorder.clone());
+        let registry = transport_handler.subscriber_registry();
+        let delivery_handler = if mode == "suspend-resume" || mode == "wait-capacity" {
+            transport_handler
+        } else {
+            // A host mistakenly passes another handler's registry to dispatch.
+            // Even this configuration cannot bypass the durable recovery bound.
+            IngressDeliveryHandler::with_subscribers(bundle.clone(), tenant.clone(), [])
+        };
+        let mut aq = ActionQueueEngine::new(
+            RuntimeConfig {
+                data_dir: bundle.aq_path(),
+                continuation_limits: ContinuationLimits {
+                    active_waits: if mode == "wait-capacity" { 0 } else { 100 },
+                    ..Default::default()
+                },
+                ..Default::default()
+            },
+            delivery_handler,
+        )
+        .bootstrap()
+        .unwrap()
+        .with_host(host());
+        let service = IngressRuntime::new(bundle.wi(), tenant.clone());
+        let issued = if mode == "delayed-ack" {
+            service.claim(&subscriber, &id, now()).unwrap()
+        } else {
+            None
+        };
+        let budget = binding.policy.max_attempts;
+        let mut revision = 1;
+        for cycle in 0..budget + 4 {
+            let dispatched = service
+                .dispatch_pending(
+                    &mut BoundAqIngress::new(&mut aq, tenant.clone())
+                        .with_subscriber_registry(registry.clone()),
+                    1,
+                    now(),
+                )
+                .unwrap();
+            assert_eq!(dispatched, usize::from(cycle <= budget), "{mode}, cycle {cycle}");
+            if dispatched > 0 && mode == "suspend-resume" {
+                Ingress::new(bundle.wi())
+                    .change_binding(
+                        &owner,
+                        &BindingVersion { id: binding.id.clone(), revision },
+                        BindingStatus::Suspended,
+                        now(),
+                    )
+                    .unwrap();
+                revision += 1;
+            }
+            let _ = aq.run_until_idle().await.unwrap();
+            if dispatched > 0 && mode == "suspend-resume" {
+                Ingress::new(bundle.wi())
+                    .change_binding(
+                        &owner,
+                        &BindingVersion { id: binding.id.clone(), revision },
+                        BindingStatus::Active,
+                        now(),
+                    )
+                    .unwrap();
+                revision += 1;
+            }
+        }
+        let state = bundle.wi().ingress_snapshot(&tenant).unwrap();
+        let q = &state.queue[&id];
+        assert_eq!(q.generation, budget, "{mode}");
+        assert_eq!(q.prior.len(), budget as usize, "{mode}");
+        assert_eq!(state.deliveries[&id].state, DeliveryState::DeadLetter, "{mode}");
+        assert_eq!(state.deliveries[&id].attempts.len(), usize::from(issued.is_some()), "{mode}");
+        assert!(recorder.0.lock().unwrap().is_empty(), "{mode}");
+        let queue = q.clone();
+        let runs: Vec<_> = q
+            .prior
+            .iter()
+            .chain(std::iter::once(q))
+            .map(|q| {
+                let task: actionqueue_core::admission::EnsureTaskRequest =
+                    serde_json::from_slice(&q.task_request).unwrap();
+                let runs = aq.projection().run_ids_for_task(task.task_spec().id());
+                assert_eq!(runs.len(), 1, "{mode}");
+                let run = aq.get_run(runs[0]).unwrap();
+                assert!(run.state.is_terminal(), "{mode}");
+                if mode != "wait-capacity" {
+                    assert_eq!(run.failure_attempt_count, 0, "{mode}");
+                }
+                (runs[0], run.attempt_count, run.failure_attempt_count)
+            })
+            .collect();
+        let signal_count = aq.signal_statistics().retained;
+        assert_eq!(signal_count, budget as usize + 1, "{mode}");
+        aq.shutdown().unwrap();
+        drop(service);
+        drop(bundle);
+
+        let bundle = Arc::new(StoreBundle::open(&path).unwrap());
+        let delivery_handler = handler(&bundle, &binding, recorder.clone());
+        let registry = delivery_handler.subscriber_registry();
+        let mut aq = ActionQueueEngine::new(
+            RuntimeConfig { data_dir: bundle.aq_path(), ..Default::default() },
+            delivery_handler,
+        )
+        .bootstrap()
+        .unwrap()
+        .with_host(host());
+        let service = IngressRuntime::new(bundle.wi(), tenant.clone());
+        for _ in 0..8 {
+            assert_eq!(
+                service
+                    .dispatch_pending(
+                        &mut BoundAqIngress::new(&mut aq, tenant.clone())
+                            .with_subscriber_registry(registry.clone()),
+                        1,
+                        now(),
+                    )
+                    .unwrap(),
+                0,
+                "{mode}"
+            );
+            let _ = aq.run_until_idle().await.unwrap();
+        }
+        assert_eq!(bundle.wi().ingress_snapshot(&tenant).unwrap().queue[&id], queue, "{mode}");
+        assert_eq!(aq.signal_statistics().retained, signal_count, "{mode}");
+        for (id, attempts, failures) in runs {
+            let run = aq.get_run(id).unwrap();
+            assert!(run.state.is_terminal(), "{mode}");
+            assert_eq!(run.attempt_count, attempts, "{mode}");
+            assert_eq!(run.failure_attempt_count, failures, "{mode}");
+        }
+        if let Some(issued) = issued {
+            let ack = service.acknowledge(&subscriber, &id, &issued.token, now()).unwrap();
+            assert_eq!(service.acknowledge(&subscriber, &id, &issued.token, now()).unwrap(), ack);
+            assert_eq!(
+                service
+                    .dispatch_pending(&mut BoundAqIngress::new(&mut aq, tenant.clone()), 1, now())
+                    .unwrap(),
+                1
+            );
+            let state = bundle.wi().ingress_snapshot(&tenant).unwrap();
+            assert_eq!(state.deliveries[&id].state, DeliveryState::Acknowledged);
+            assert_eq!(state.queue[&id], queue);
+        }
+        assert!(recorder.0.lock().unwrap().is_empty(), "{mode}");
+        aq.shutdown().unwrap();
     }
 }
 
@@ -744,9 +948,11 @@ async fn newly_quarantined_required_content_retires_aq_until_release() {
     let (bundle, binding, id) = setup_with_policy(&path, 1_000, 30_000);
     let tenant = binding.profile.scope.tenant.clone();
     let recorder = Arc::new(Recorder::default());
+    let delivery_handler = handler(&bundle, &binding, recorder.clone());
+    let registry = delivery_handler.subscriber_registry();
     let mut aq = ActionQueueEngine::new(
         RuntimeConfig { data_dir: bundle.aq_path(), ..Default::default() },
-        handler(&bundle, &binding, recorder.clone()),
+        delivery_handler,
     )
     .bootstrap()
     .unwrap()
@@ -756,7 +962,7 @@ async fn newly_quarantined_required_content_retires_aq_until_release() {
         service
             .dispatch_pending(
                 &mut BoundAqIngress::new(&mut aq, tenant.clone())
-                    .with_registered_subscribers([binding.subscriber.clone()]),
+                    .with_subscriber_registry(registry.clone()),
                 1,
                 now(),
             )
@@ -808,9 +1014,11 @@ async fn newly_quarantined_required_content_retires_aq_until_release() {
     drop(service);
     drop(bundle);
     let bundle = Arc::new(StoreBundle::open(&path).unwrap());
+    let delivery_handler = handler(&bundle, &binding, recorder.clone());
+    let registry = delivery_handler.subscriber_registry();
     let mut aq = ActionQueueEngine::new(
         RuntimeConfig { data_dir: bundle.aq_path(), ..Default::default() },
-        handler(&bundle, &binding, recorder.clone()),
+        delivery_handler,
     )
     .bootstrap()
     .unwrap()
@@ -841,7 +1049,7 @@ async fn newly_quarantined_required_content_retires_aq_until_release() {
         let _ = service
             .dispatch_pending(
                 &mut BoundAqIngress::new(&mut aq, tenant.clone())
-                    .with_registered_subscribers([binding.subscriber.clone()]),
+                    .with_subscriber_registry(registry.clone()),
                 1,
                 now(),
             )
@@ -1266,9 +1474,11 @@ async fn concurrent_journal_write_preserves_ack_wait_and_redelivery() {
         bundle: bundle.clone(),
         binding: binding.clone(),
     });
+    let delivery_handler = handler(&bundle, &binding, writer.clone());
+    let registry = delivery_handler.subscriber_registry();
     let mut aq = ActionQueueEngine::new(
         RuntimeConfig { data_dir: bundle.aq_path(), ..Default::default() },
-        handler(&bundle, &binding, writer.clone()),
+        delivery_handler,
     )
     .bootstrap()
     .unwrap()
@@ -1278,7 +1488,7 @@ async fn concurrent_journal_write_preserves_ack_wait_and_redelivery() {
         service
             .dispatch_pending(
                 &mut BoundAqIngress::new(&mut aq, binding.profile.scope.tenant.clone())
-                    .with_registered_subscribers([binding.subscriber.clone()]),
+                    .with_subscriber_registry(registry.clone()),
                 10,
                 now(),
             )
@@ -1295,9 +1505,10 @@ async fn concurrent_journal_write_preserves_ack_wait_and_redelivery() {
     );
     aq.shutdown().unwrap();
     tokio::time::sleep(Duration::from_secs(3)).await;
+    let delivery_handler = handler(&bundle, &binding, writer.clone());
     let mut aq = ActionQueueEngine::new(
         RuntimeConfig { data_dir: bundle.aq_path(), ..Default::default() },
-        handler(&bundle, &binding, writer.clone()),
+        delivery_handler,
     )
     .bootstrap()
     .unwrap()
@@ -1451,9 +1662,11 @@ async fn terminal_wait_capacity_recovers_from_journaled_generation() {
     let run = aq.projection().run_ids_for_task(original)[0];
     assert_eq!(aq.get_run(run).unwrap().state, actionqueue_core::run::state::RunState::Failed);
     aq.shutdown().unwrap();
+    let delivery_handler = handler(&bundle, &binding, recorder.clone());
+    let registry = delivery_handler.subscriber_registry();
     let mut aq = ActionQueueEngine::new(
         RuntimeConfig { data_dir: bundle.aq_path(), ..Default::default() },
-        handler(&bundle, &binding, recorder.clone()),
+        delivery_handler,
     )
     .bootstrap()
     .unwrap()
@@ -1462,7 +1675,7 @@ async fn terminal_wait_capacity_recovers_from_journaled_generation() {
         service
             .dispatch_pending(
                 &mut BoundAqIngress::new(&mut aq, binding.profile.scope.tenant.clone())
-                    .with_registered_subscribers([binding.subscriber.clone()]),
+                    .with_subscriber_registry(registry.clone()),
                 10,
                 now(),
             )
@@ -1607,13 +1820,15 @@ fn g3_paused_old_dispatch_ack_cannot_complete_replacement_generation() {
     let (bundle, binding, id) = setup(&path);
     let tenant = binding.profile.scope.tenant.clone();
     let recorder = Arc::new(Recorder::default());
+    let delivery_handler = handler(&bundle, &binding, recorder);
+    let registry = delivery_handler.subscriber_registry();
     let aq = ActionQueueEngine::new(
         RuntimeConfig {
             data_dir: bundle.aq_path(),
             continuation_limits: ContinuationLimits { active_waits: 0, ..Default::default() },
             ..Default::default()
         },
-        handler(&bundle, &binding, recorder),
+        delivery_handler,
     )
     .bootstrap()
     .unwrap()
@@ -1644,7 +1859,7 @@ fn g3_paused_old_dispatch_ack_cannot_complete_replacement_generation() {
             service
                 .dispatch_pending(
                     &mut BoundAqIngress::new(&mut *engine, tenant.clone())
-                        .with_registered_subscribers([binding.subscriber.clone()]),
+                        .with_subscriber_registry(registry.clone()),
                     10,
                     now(),
                 )
@@ -1680,9 +1895,10 @@ fn g3_paused_old_dispatch_ack_cannot_complete_replacement_generation() {
     drop(bundle);
     let bundle = Arc::new(StoreBundle::open(&path).unwrap());
     let recorder = Arc::new(Recorder::default());
+    let delivery_handler = handler(&bundle, &binding, recorder.clone());
     let mut aq = ActionQueueEngine::new(
         RuntimeConfig { data_dir: bundle.aq_path(), ..Default::default() },
-        handler(&bundle, &binding, recorder.clone()),
+        delivery_handler,
     )
     .bootstrap()
     .unwrap()
@@ -1708,13 +1924,15 @@ fn paused_old_task_ack_cannot_complete_replacement_generation() {
     let (bundle, binding, id) = setup(&path);
     let tenant = binding.profile.scope.tenant.clone();
     let recorder = Arc::new(Recorder::default());
+    let delivery_handler = handler(&bundle, &binding, recorder);
+    let registry = delivery_handler.subscriber_registry();
     let aq = ActionQueueEngine::new(
         RuntimeConfig {
             data_dir: bundle.aq_path(),
             continuation_limits: ContinuationLimits { active_waits: 0, ..Default::default() },
             ..Default::default()
         },
-        handler(&bundle, &binding, recorder),
+        delivery_handler,
     )
     .bootstrap()
     .unwrap()
@@ -1744,7 +1962,7 @@ fn paused_old_task_ack_cannot_complete_replacement_generation() {
             service
                 .dispatch_pending(
                     &mut BoundAqIngress::new(&mut *engine, tenant.clone())
-                        .with_registered_subscribers([binding.subscriber.clone()]),
+                        .with_subscriber_registry(registry.clone()),
                     10,
                     now(),
                 )
@@ -1773,9 +1991,10 @@ fn paused_old_task_ack_cannot_complete_replacement_generation() {
     drop(bundle);
     let bundle = Arc::new(StoreBundle::open(&path).unwrap());
     let recorder = Arc::new(Recorder::default());
+    let delivery_handler = handler(&bundle, &binding, recorder.clone());
     let mut aq = ActionQueueEngine::new(
         RuntimeConfig { data_dir: bundle.aq_path(), ..Default::default() },
-        handler(&bundle, &binding, recorder.clone()),
+        delivery_handler,
     )
     .bootstrap()
     .unwrap()

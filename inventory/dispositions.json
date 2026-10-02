@@ -6741,6 +6741,13 @@
     "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
   },
   {
+    "id": "crates/worldinterface-runtime/src/ingress.rs::::struct:SubscriberRegistry",
+    "disposition": "retain-align",
+    "target": "WI-03 production ingress and exact AQ consumer tests",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Immutable tenant-bound transport registry shares actual handler registrations with AQ recovery; journaled policy bounds replacement generations."
+  },
+  {
     "id": "crates/worldinterface-runtime/src/ingress.rs::::struct:WakeOutcome",
     "disposition": "retain-align",
     "target": "WI-03 typed AQ admission and wake outcomes",
