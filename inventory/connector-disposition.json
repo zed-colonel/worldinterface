@@ -1266,6 +1266,11 @@
           "path": "docs/work-items/wi-03-integration.md",
           "source_sha256": "f0f160f3c164e7ac593cce9e190885153666369617d8d15ebb2a1ad4469d8a29",
           "treatment": "Retain ingress recovery and acknowledgment documentation; audit shared references before later selective connector removal."
+        },
+        {
+          "path": "crates/worldinterface-runtime/tests/ingress_recovery.rs",
+          "source_sha256": "c918f24e5e7ae3ba827523e4109f68619a4d3ebdcffa206989002ef1fc85a79f",
+          "treatment": "Retain WI-03 delayed acknowledgment and recovery regression tests; review shared references before later selective connector removal."
         }
       ],
       "replacement_requirements": [
