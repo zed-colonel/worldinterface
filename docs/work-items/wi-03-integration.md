@@ -31,6 +31,20 @@ lineage retain the cause and recovery evidence. Current binding configuration ca
 increase a captured delivery budget. This implements ADR-013's bounded retry and
 dead-letter policy without introducing another persistence authority.
 
+Replacement tasks reuse the delivery's exact persisted wake request and retained
+AQ signal sequence. The initial wait reads its correlation from that request,
+including requests journaled by earlier versions, rather than deriving it from
+the replacement task ID. AQ signals are non-consuming; each task uses the wake
+once to reload WI authority, then waits for acknowledgment with a separate kind
+and correlation. Recovery therefore retains one delivery signal per logical
+delivery, independent of the generation budget. An acknowledgment retains at
+most one additional signal. Identity and byte consumption still obey AQ's
+lifetime capacity/backpressure policy; retirement does not reclaim that capacity.
+An interrupted duplicate wake dispatch can already resume a replacement from
+the retained signal, while local completion remains generation-fenced. If a
+host explicitly retires the signal, the retention-bounded initial wait still
+ends without allocating a replacement wake identity.
+
 Dead-letter stops automatic work; it does not retract an issued token or assert
 application rejection. An authenticated delayed acknowledgment with a valid token
 can still close that delivery before retention expiry. Expiration and invalidation
@@ -59,6 +73,8 @@ fresh independent review; this table is implementation coverage, not that review
 
 | Finding | Correction or retained check |
 | --- | --- |
+| SEC4-F001 | Reuse the journaled delivery wake across replacements. `owner_churn_reuses_wake_capacity_and_other_owner_can_deliver_and_ack_after_restart` exhausts the 100-generation policy through owner churn across restart, asserts constant one-identity/byte consumption, then completes another owner's delivery and acknowledgment under a three-identity/4 KiB AQ limit. The existing mismatch, wait-capacity and delayed-ack budget regression now asserts one retained wake and equal request/sequence across the full lineage. |
+| SEC4-F002 | No source defect or capability change. Rerun the adopted `foundation-test` alone on this candidate and preserve the log; serial checks avoid the earlier shared-artifact collision. |
 | SEC3-F001 | Shared transport registry, tenant guard and durable generation budget; `handler_registry_fails_closed_for_missing_transport_and_wrong_tenant` and `recovery_generation_budget_bounds_mismatch_binding_churn_and_capacity_after_restart`. |
 | SEC3-F002 | The same generation budget bounds owner suspend/resume without claims; the latter real-AQ test also checks zero subscriber calls, bounded prior/signal/run counts and restart. |
 | R1.WI03P-F001 | Durable expiration at dispatch, recovery and execution; expiry-before-dispatch, acknowledgment-wait and terminal-task expiration regressions in `ingress_recovery.rs`. |
@@ -92,6 +108,17 @@ exercise missing transports, deliberately mismatched registry configuration,
 tenant mismatch, repeated lifecycle churn, persistent wait-capacity failure and
 valid delayed acknowledgment. Existing replay/property, crash, expiry, token,
 audience, disclosure and dispatch-progress tests remain required.
+
+The signal-capacity audit covers initial admission, all terminal recovery causes,
+interrupted task/wake completion, old dispatch completion races and delayed
+acknowledgment. Replacements preserve the current persisted wake, so historical
+generations remain replayable and new recovery cannot add signal identities.
+Generation checks remain necessary even when signal bytes/digests are equal.
+Fresh task identities and bounded prior lineage still consume AQ task/journal
+capacity; this fix preserves their accepted per-delivery bound. Re-arming the
+delivery wake in an acknowledgment loop is forbidden; the two wait kinds remain
+separate. Original admission and acknowledgment identities still incur ordinary
+capacity/backpressure and cannot be assumed to compact.
 
 The journal-growth audit covers all dispatch write sites: acknowledgment signals,
 task completions, wake completions, terminal recovery and expiration. Only a

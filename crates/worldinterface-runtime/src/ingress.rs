@@ -87,8 +87,11 @@ impl<'a> IngressRuntime<'a> {
             receipt: ReceiptId::generate(),
             deliveries: bindings.iter().map(|_| DeliveryId::generate()).collect(),
         };
-        let queue =
-            ids.deliveries.iter().map(|id| queue_request(id, 0)).collect::<Result<Vec<_>>>()?;
+        let queue = ids
+            .deliveries
+            .iter()
+            .map(|id| queue_request(id, 0, None))
+            .collect::<Result<Vec<_>>>()?;
         Ingress::new(self.root).admit_provider_event_queued(event, bindings, ids, queue, now)
     }
     /// Replays unchanged requests. A failed local acknowledgment is always treated as
@@ -190,6 +193,7 @@ impl<'a> IngressRuntime<'a> {
                     let next = queue_request(
                         &q.delivery,
                         q.generation.checked_add(1).ok_or("recovery generation overflow")?,
+                        Some(&q),
                     )?;
                     let recovered = self.root.ingress_transact_dispatch(
                         &self.tenant,
@@ -414,7 +418,11 @@ pub(crate) fn delivery_task_id(id: &DeliveryId, generation: u32) -> Result<TaskI
     }
 }
 
-fn queue_request(id: &DeliveryId, generation: u32) -> Result<QueueObligation> {
+fn queue_request(
+    id: &DeliveryId,
+    generation: u32,
+    retained_wake: Option<&QueueObligation>,
+) -> Result<QueueObligation> {
     let task_id = delivery_task_id(id, generation)?;
     let mut constraints = TaskConstraints::default();
     // An interrupted physical attempt is counted by AQ. WI's delivery policy
@@ -431,25 +439,30 @@ fn queue_request(id: &DeliveryId, generation: u32) -> Result<QueueObligation> {
         TaskMetadata::default(),
     )?;
     let task = EnsureTaskRequest::for_task(spec, vec![])?;
-    let signal = AdmitSignalRequest::new(
-        SignalId::new(if generation == 0 {
-            format!("wi-delivery-{}", id.as_str())
-        } else {
-            format!("wi-delivery-{}-{generation}", id.as_str())
-        })?,
-        SignalNamespace::new("wi_ingress")?,
-        SignalKind::new("delivery")?,
-        Some(CorrelationId::new(format!("task/{task_id}"))?),
-        None,
-        Some(actionqueue_core::bounded::OpaqueRef::new(format!("delivery:{}", id.as_str()))?),
-        None,
-        None,
-        None,
-    )?;
+    let signal_request = if let Some(old) = retained_wake {
+        if old.delivery != *id || ContentHash::of(&old.signal_request) != old.signal_digest {
+            return Err("queue wake integrity mismatch".into());
+        }
+        // Signals are non-consuming. Replacement tasks replay the same delivery
+        // wake instead of spending another lifetime AQ identity per generation.
+        // Preserve persisted bytes, including older task-correlated requests.
+        old.signal_request.clone()
+    } else {
+        serde_json::to_vec(&AdmitSignalRequest::new(
+            SignalId::new(format!("wi-delivery-{}", id.as_str()))?,
+            SignalNamespace::new("wi_ingress")?,
+            SignalKind::new("delivery")?,
+            Some(CorrelationId::new(format!("task/{task_id}"))?),
+            None,
+            Some(actionqueue_core::bounded::OpaqueRef::new(format!("delivery:{}", id.as_str()))?),
+            None,
+            None,
+            None,
+        )?)?
+    };
     // AQ validates and computes its own CanonicalAdmissionV2 digest. These are
     // stable serde bytes for replay, not a WI replacement admission digest.
     let task_request = serde_json::to_vec(&task)?;
-    let signal_request = serde_json::to_vec(&signal)?;
     Ok(QueueObligation {
         version: 1,
         delivery: id.clone(),
@@ -705,20 +718,24 @@ impl IngressDeliveryHandler {
             tenant: self.tenant.clone(),
             principal: delivery.subscriber.clone(),
         };
-        let task_id = delivery_task_id(
-            &id,
-            state.queue.get(&id).ok_or("missing queue obligation")?.generation,
-        )?;
+        let queue = state.queue.get(&id).ok_or("missing queue obligation")?;
+        if ContentHash::of(&queue.signal_request) != queue.signal_digest {
+            return Err("queue wake integrity mismatch".into());
+        }
+        let wake: AdmitSignalRequest = serde_json::from_slice(&queue.signal_request)?;
+        let wake = wake.envelope(&Default::default(), 0);
         let filter = |kind: &str| -> Result<SignalFilter> {
             Ok(SignalFilter {
                 tenant_id: None,
                 namespace: SignalNamespace::new("wi_ingress")?,
                 kind: SignalKind::new(kind)?,
-                correlation_id: Some(CorrelationId::new(if kind == "acknowledgment" {
-                    format!("delivery/{}", id.as_str())
+                correlation_id: if kind == "acknowledgment" {
+                    Some(CorrelationId::new(format!("delivery/{}", id.as_str()))?)
                 } else {
-                    format!("task/{task_id}")
-                })?),
+                    // The immutable wake belongs to the logical delivery, even
+                    // when the AQ task has a replacement identity.
+                    wake.correlation_id.clone()
+                },
                 source_ref: Some(actionqueue_core::bounded::OpaqueRef::new(format!(
                     "delivery:{}",
                     id.as_str()

@@ -3,7 +3,7 @@ use actionqueue_core::{
     causal::ControlMutationContext,
     control::{ControlScope, HostControlContext},
     ids::TaskId,
-    limits::ContinuationLimits,
+    limits::{ContinuationLimits, SignalLimits, SignalRetentionPolicy},
 };
 use actionqueue_runtime::{config::RuntimeConfig, engine::ActionQueueEngine};
 use hmac::{Hmac, Mac};
@@ -93,6 +93,23 @@ fn setup_with_event_quarantine(
     binding_lifetime_ms: u64,
     quarantine_content: bool,
 ) -> (Arc<StoreBundle>, IngressBinding, DeliveryId) {
+    setup_with_recovery_budget(
+        path,
+        acknowledgment_timeout_ms,
+        retention_ms,
+        binding_lifetime_ms,
+        quarantine_content,
+        2,
+    )
+}
+fn setup_with_recovery_budget(
+    path: &Path,
+    acknowledgment_timeout_ms: u64,
+    retention_ms: u64,
+    binding_lifetime_ms: u64,
+    quarantine_content: bool,
+    max_attempts: u32,
+) -> (Arc<StoreBundle>, IngressBinding, DeliveryId) {
     let bundle = Arc::new(
         StoreBundle::initialize(
             path,
@@ -112,6 +129,7 @@ fn setup_with_event_quarantine(
     binding.policy.retention_ms = retention_ms;
     binding.policy.acknowledgment_timeout_ms = acknowledgment_timeout_ms;
     binding.policy.backoff_ms = 1_000;
+    binding.policy.max_attempts = max_attempts;
     let root = bundle.wi();
     root.publish(binding.profile.scope.tenant.clone(), b"authorization").unwrap();
     let owner = AuthenticatedScope {
@@ -883,7 +901,9 @@ async fn recovery_generation_budget_bounds_mismatch_binding_churn_and_capacity_a
             })
             .collect();
         let signal_count = aq.signal_statistics().retained;
-        assert_eq!(signal_count, budget as usize + 1, "{mode}");
+        assert_eq!(signal_count, 1, "{mode}");
+        assert!(q.prior.iter().all(|old| old.signal_request == q.signal_request), "{mode}");
+        assert!(q.prior.iter().all(|old| old.signal_sequence == q.signal_sequence), "{mode}");
         aq.shutdown().unwrap();
         drop(service);
         drop(bundle);
@@ -938,6 +958,190 @@ async fn recovery_generation_budget_bounds_mismatch_binding_churn_and_capacity_a
         assert!(recorder.0.lock().unwrap().is_empty(), "{mode}");
         aq.shutdown().unwrap();
     }
+}
+
+#[tokio::test]
+async fn owner_churn_reuses_wake_capacity_and_other_owner_can_deliver_and_ack_after_restart() {
+    let temp = tempfile::tempdir().unwrap();
+    let path = temp.path().join("bundle");
+    let (mut bundle, binding, id) =
+        setup_with_recovery_budget(&path, 10_000, 1_000_000, 1_000_000, false, 100);
+    let tenant = binding.profile.scope.tenant.clone();
+    let owner = AuthenticatedScope { tenant: tenant.clone(), principal: binding.principal.clone() };
+    let mut other = binding.clone();
+    other.id = IngressBindingId::generate();
+    other.principal = PrincipalId::generate();
+    other.subscriber = PrincipalId::generate();
+    other.policy.max_attempts = 2;
+    other.submission.client_request_id = "other-owner-request".to_owned().try_into().unwrap();
+    other.submission.subscriber = "other-subscriber-endpoint".to_owned().try_into().unwrap();
+    Ingress::new(bundle.wi())
+        .submit_binding(
+            &AuthenticatedScope { tenant: tenant.clone(), principal: other.principal.clone() },
+            other.submission.clone(),
+            other.id.clone(),
+            &Authority(other.clone()),
+            now(),
+        )
+        .unwrap();
+    let recorder = Arc::new(Recorder::default());
+    let other_recorder = Arc::new(Recorder::default());
+    let original = bundle.wi().ingress_snapshot(&tenant).unwrap().queue[&id].clone();
+    let mut revision = 1;
+    let mut resident_bytes = None;
+    for phase in 0..2 {
+        let delivery_handler = IngressDeliveryHandler::with_subscribers(
+            bundle.clone(),
+            tenant.clone(),
+            [
+                (binding.subscriber.clone(), recorder.clone() as Arc<dyn SubscriberTransport>),
+                (other.subscriber.clone(), other_recorder.clone() as Arc<dyn SubscriberTransport>),
+            ],
+        );
+        let registry = delivery_handler.subscriber_registry();
+        let mut aq = ActionQueueEngine::new(
+            RuntimeConfig {
+                data_dir: bundle.aq_path(),
+                // Three identities cover two deliveries and the other owner's
+                // acknowledgment, independent of the 100-generation budget.
+                signal_limits: SignalLimits { identities: 3, bytes: 4096, ..Default::default() },
+                ..Default::default()
+            },
+            delivery_handler,
+        )
+        .bootstrap()
+        .unwrap()
+        .with_host(host());
+        let service = IngressRuntime::new(bundle.wi(), tenant.clone());
+        let cycles = if phase == 0 { 0..50 } else { 50..101 };
+        for generation in cycles {
+            assert_eq!(
+                service
+                    .dispatch_pending(
+                        &mut BoundAqIngress::new(&mut aq, tenant.clone())
+                            .with_subscriber_registry(registry.clone()),
+                        10,
+                        now(),
+                    )
+                    .unwrap(),
+                1
+            );
+            Ingress::new(bundle.wi())
+                .change_binding(
+                    &owner,
+                    &BindingVersion { id: binding.id.clone(), revision },
+                    BindingStatus::Suspended,
+                    now(),
+                )
+                .unwrap();
+            revision += 1;
+            let _ = aq.run_until_idle().await.unwrap();
+            Ingress::new(bundle.wi())
+                .change_binding(
+                    &owner,
+                    &BindingVersion { id: binding.id.clone(), revision },
+                    BindingStatus::Active,
+                    now(),
+                )
+                .unwrap();
+            revision += 1;
+            let state = bundle.wi().ingress_snapshot(&tenant).unwrap();
+            let q = &state.queue[&id];
+            assert_eq!(q.generation, generation);
+            assert_eq!(q.signal_request, original.signal_request);
+            assert_eq!(q.signal_digest, original.signal_digest);
+            assert_eq!(q.signal_sequence, Some(1));
+            assert!(state.deliveries[&id].attempts.is_empty());
+            let statistics = aq.signal_statistics();
+            assert_eq!(statistics.retained, 1);
+            assert_eq!(statistics.bytes, *resident_bytes.get_or_insert(statistics.bytes));
+            assert_eq!(statistics.capacity_rejections, 0);
+        }
+        if phase == 1 {
+            let mut event = bundle
+                .wi()
+                .ingress_snapshot(&tenant)
+                .unwrap()
+                .admissions
+                .values()
+                .next()
+                .unwrap()
+                .event
+                .clone();
+            event.event_id = Some("other-owner-event".to_owned().try_into().unwrap());
+            event.offset = Some(1);
+            event.produced_at_ms = now();
+            event.information_use.allowed_audiences = vec![other.subscriber.clone()];
+            let body = canonical_data(&event).unwrap();
+            let mut mac = Hmac::<Sha256>::new_from_slice(&[7; 32]).unwrap();
+            mac.update(&body);
+            let credentials = ProviderCredentials::new(other.profile.clone(), vec![7; 32]).unwrap();
+            let result = service
+                .accept_http(&credentials, &body, &mac.finalize().into_bytes(), now())
+                .unwrap();
+            let other_id = match result {
+                IngressResult::Admitted { deliveries, .. } => {
+                    assert_eq!(deliveries.len(), 1);
+                    deliveries[0].clone()
+                }
+                _ => panic!("other owner's event not admitted"),
+            };
+            assert_eq!(
+                service
+                    .dispatch_pending(
+                        &mut BoundAqIngress::new(&mut aq, tenant.clone())
+                            .with_subscriber_registry(registry.clone()),
+                        10,
+                        now()
+                    )
+                    .unwrap(),
+                1
+            );
+            let _ = aq.run_until_idle().await.unwrap();
+            assert_eq!(
+                other_recorder.0.lock().unwrap().as_slice(),
+                std::slice::from_ref(&other_id)
+            );
+            let token = worldinterface_ingress::DeliveryToken::from_subscriber(
+                &other_recorder.1.lock().unwrap()[0],
+            )
+            .unwrap();
+            let subscriber =
+                AuthenticatedScope { tenant: tenant.clone(), principal: other.subscriber.clone() };
+            service.acknowledge(&subscriber, &other_id, &token, now()).unwrap();
+            assert_eq!(
+                service
+                    .dispatch_pending(&mut BoundAqIngress::new(&mut aq, tenant.clone()), 10, now())
+                    .unwrap(),
+                1
+            );
+            let _ = aq.run_until_idle().await.unwrap();
+            let state = bundle.wi().ingress_snapshot(&tenant).unwrap();
+            assert_eq!(state.deliveries[&id].state, DeliveryState::DeadLetter);
+            assert_eq!(state.deliveries[&other_id].state, DeliveryState::Acknowledged);
+            assert_eq!(aq.signal_statistics().retained, 3);
+            assert_eq!(aq.signal_statistics().capacity_rejections, 0);
+            let task: actionqueue_core::admission::EnsureTaskRequest =
+                serde_json::from_slice(&state.queue[&other_id].task_request).unwrap();
+            let run = aq.projection().run_ids_for_task(task.task_spec().id())[0];
+            assert_eq!(
+                aq.get_run(run).unwrap().state,
+                actionqueue_core::run::state::RunState::Completed
+            );
+        }
+        assert!(recorder.0.lock().unwrap().is_empty());
+        aq.shutdown().unwrap();
+        drop(service);
+        drop(bundle);
+        bundle = Arc::new(StoreBundle::open(&path).unwrap());
+    }
+    let state = bundle.wi().ingress_snapshot(&tenant).unwrap();
+    assert_eq!(state.queue[&id].generation, 100);
+    assert_eq!(state.queue[&id].prior.len(), 100);
+    assert_eq!(
+        state.deliveries.values().filter(|d| d.state == DeliveryState::Acknowledged).count(),
+        1
+    );
 }
 
 #[tokio::test]
@@ -1655,7 +1859,11 @@ impl AqIngressPort for InterruptedWake<'_> {
     }
 }
 
-async fn initial_wait_expires_after_interrupted_wake(replacement: bool, fail_after_task: bool) {
+async fn initial_wait_expires_after_interrupted_wake(
+    replacement: bool,
+    fail_after_task: bool,
+    retire_wake: bool,
+) {
     let temp = tempfile::tempdir().unwrap();
     let path = temp.path().join("bundle");
     let (bundle, binding, id) = setup_with_policy(&path, 1_000, 5_000);
@@ -1668,6 +1876,10 @@ async fn initial_wait_expires_after_interrupted_wake(replacement: bool, fail_aft
             RuntimeConfig {
                 data_dir: bundle.aq_path(),
                 continuation_limits: ContinuationLimits { active_waits: 0, ..Default::default() },
+                signal_retention: SignalRetentionPolicy {
+                    minimum_age_secs: 0,
+                    minimum_sequence_window: 0,
+                },
                 ..Default::default()
             },
             handler(&bundle, &binding, recorder.clone()),
@@ -1685,6 +1897,35 @@ async fn initial_wait_expires_after_interrupted_wake(replacement: bool, fail_aft
         let original = TaskId::from_uuid(uuid::Uuid::parse_str(id.as_str()).unwrap());
         let run = aq.projection().run_ids_for_task(original)[0];
         assert_eq!(aq.get_run(run).unwrap().state, actionqueue_core::run::state::RunState::Failed);
+        if retire_wake {
+            // Even a zero retirement window requires a strictly newer signal.
+            aq.admit_signal(
+                actionqueue_core::continuation::AdmitSignalRequest::new(
+                    actionqueue_core::ids::SignalId::new("retirement-barrier").unwrap(),
+                    actionqueue_core::continuation::SignalNamespace::new("retention_test").unwrap(),
+                    actionqueue_core::continuation::SignalKind::new("barrier").unwrap(),
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                    None,
+                )
+                .unwrap(),
+            )
+            .unwrap();
+            tokio::time::sleep(Duration::from_millis(1100)).await;
+            let sequence =
+                bundle.wi().ingress_snapshot(&tenant).unwrap().queue[&id].signal_sequence.unwrap();
+            assert_eq!(
+                aq.retire_signals(
+                    vec![actionqueue_core::ids::SignalSequence::new(sequence)],
+                    Default::default(),
+                )
+                .unwrap(),
+                1
+            );
+        }
         aq.shutdown().unwrap();
     }
     let mut aq = ActionQueueEngine::new(
@@ -1717,7 +1958,16 @@ async fn initial_wait_expires_after_interrupted_wake(replacement: bool, fail_aft
     assert_eq!(aq.get_run(run).unwrap().state, actionqueue_core::run::state::RunState::Awaiting);
     assert_eq!(aq.projection().waits().active_count(), 1);
     assert!(aq.projection().waits().active(run).unwrap().spec.deadline().is_some());
-    assert!(recorder.0.lock().unwrap().is_empty());
+    // A replacement's original wake is already retained: an interrupted
+    // duplicate admission cannot strand it in the initial wait. It delivers
+    // once and establishes the retention-bounded acknowledgment wait instead.
+    let subscriber_calls = usize::from(replacement && !retire_wake);
+    assert_eq!(recorder.0.lock().unwrap().len(), subscriber_calls);
+    if replacement {
+        assert_eq!(aq.signal_statistics().retained, 1);
+        assert_eq!(aq.signal_statistics().retired, usize::from(retire_wake));
+        assert_eq!(q.signal_request, q.prior[0].signal_request);
+    }
     aq.shutdown().unwrap();
     drop(service);
     drop(bundle);
@@ -1758,23 +2008,28 @@ async fn initial_wait_expires_after_interrupted_wake(replacement: bool, fail_aft
     assert_eq!(q.generation, u32::from(replacement));
     assert!(q.signal_sequence.is_none());
     assert_eq!(aq.projection().run_ids_for_task(task_id).len(), 1);
-    assert!(recorder.0.lock().unwrap().is_empty());
+    assert_eq!(recorder.0.lock().unwrap().len(), subscriber_calls);
     aq.shutdown().unwrap();
 }
 
 #[tokio::test]
 async fn failed_signal_admission_releases_initial_wait_after_expiration() {
-    initial_wait_expires_after_interrupted_wake(false, false).await;
+    initial_wait_expires_after_interrupted_wake(false, false, false).await;
 }
 
 #[tokio::test]
 async fn interrupted_task_admission_releases_initial_wait_after_expiration() {
-    initial_wait_expires_after_interrupted_wake(false, true).await;
+    initial_wait_expires_after_interrupted_wake(false, true, false).await;
 }
 
 #[tokio::test]
 async fn replacement_generation_releases_initial_wait_after_expiration() {
-    initial_wait_expires_after_interrupted_wake(true, false).await;
+    initial_wait_expires_after_interrupted_wake(true, false, true).await;
+}
+
+#[tokio::test]
+async fn replacement_generation_uses_retained_wake_after_interrupted_dispatch() {
+    initial_wait_expires_after_interrupted_wake(true, false, false).await;
 }
 
 fn handler(
