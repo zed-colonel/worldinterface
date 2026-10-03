@@ -16,6 +16,22 @@
     "WI-AQ-002": "The same persisted key/request retries after uncertain acknowledgment. Changed in-scope digest-bearing fields conflict; a changed tenant ID is rejected by AQ host scope before conflict lookup, preserving the admitted task and projection (operator-approved AB-WI-003 interpretation).",
     "WI-AQ-004": "AQ task acknowledgment closes delivery. Authorized paginated inspection discovers run mappings separately."
   },
+  "additional_consumers": {
+    "wi/WI-03/integration": {
+      "gate": "WI-AQ-G2",
+      "assumptions": ["WI-AQ-001", "WI-AQ-002"],
+      "adapter": "crates/worldinterface-runtime/src/ingress.rs::BoundAqIngress::ensure_delivery_task",
+      "mapping": "Observation admission atomically journals each delivery's complete EnsureTaskRequest::for_task. RecoverQueue journals a replacement task request before AQ admission. The task/{TaskId} key and all request bytes are immutable within a generation; uncertain acknowledgments retry the saved bytes. Created and AlreadyExists must return the request's task ID, key, canonical version/digest and a nonzero durable sequence before WI records task_admitted. AQ conflicts propagate without local completion.",
+      "tests": [
+        "delivery_admission_rejects_mismatched_acknowledgments",
+        "ingress_task_admission_preserves_identity_and_conflicts_after_restart",
+        "conflicting_ingress_task_key_leaves_journal_pending",
+        "ab_wi_007_commit_replay_identity_and_subscriber_ack",
+        "process_death_after_wi_commit_recovers_aq_obligation"
+      ],
+      "review": "Candidate tests are implementation evidence; independent G2/G3 and assigned-case attestations remain controller-managed. The primary scope and AB-WI-003 interpretation above remain owned by WI-04/integration."
+    }
+  },
   "approved_case_interpretations": {
     "AB-WI-003": {
       "scope": "wi/WI-04/integration",

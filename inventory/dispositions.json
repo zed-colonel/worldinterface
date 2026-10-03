@@ -7116,7 +7116,7 @@
     "disposition": "retain-align",
     "target": "WI-03 production ingress and exact AQ consumer tests",
     "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
-    "rationale": "Exercise partial AQ task admission and bounded initial waits; independent case review and gate attestation remain due."
+    "rationale": "Exercise host retirement during wake admission and durable dead-letter cause recording, including lost completion and restart; independent case review and gate attestation remain due."
   },
   {
     "id": "crates/worldinterface-runtime/tests/integration.rs::::source-module:crates/worldinterface-runtime/tests/integration.rs",

@@ -9,6 +9,15 @@ WI-AQ-005/006 map to retained durable signals, bounded waits and real-AQ restart
 tests, rather than process-local matching. The four assigned baseline cases and
 their source-record hashes are in `conformance/wi-fabric-2/integration/fixtures.json`.
 
+WI-AQ-001/002 also apply to delivery task admission at G2, as recorded in
+`contracts/aq-consumer-reconciliation.json` under this slice's additional consumer
+mapping. Original and replacement generations persist the full task request before
+calling AQ; each retry preserves the `task/{TaskId}` key and exact bytes. The adapter
+checks both Created and AlreadyExists against the saved request's task ID, key,
+canonical version/digest and nonzero durable sequence. A conflict leaves local
+task completion pending. The journal byte hash and AQ's canonical digest serve
+different integrity checks; WI does not supply its own digest to high-level AQ admission.
+
 Capture `IngressDeliveryHandler::subscriber_registry()` before moving the handler
 into the AQ engine, then supply that clone through
 `BoundAqIngress::with_subscriber_registry`. The registry shares the immutable
@@ -82,6 +91,8 @@ fresh independent review; this table is implementation coverage, not that review
 
 | Finding | Correction or retained check |
 | --- | --- |
+| WI03I-G2-F001 | Record the ingress G2 consumer mapping and validate both admission reply variants. `delivery_admission_rejects_mismatched_acknowledgments` rejects changes to task ID, key, canonical hash/version and zero sequence. Real-AQ `ingress_task_admission_preserves_identity_and_conflicts_after_restart` checks Created/AlreadyExists and restart identity; `conflicting_ingress_task_key_leaves_journal_pending` checks same-key payload/TaskId conflicts leave AQ and WI unchanged. Existing lost-acknowledgment and process-death tests retain crash coverage. |
+| WI03I-F012 | Correct `RetireDuringWake`'s inventory rationale to describe host retirement during wake admission and durable dead-letter cause recording. Audit the related admission-loss and retirement helpers against their tests. |
 | SEC4-F001 | Reuse the journaled delivery wake across replacements. `owner_churn_reuses_wake_capacity_and_other_owner_can_deliver_and_ack_after_restart` exhausts the 100-generation policy through owner churn across restart, asserts constant one-identity/byte consumption, then completes another owner's delivery and acknowledgment under a three-identity/4 KiB AQ limit. The existing mismatch, wait-capacity and delayed-ack budget regression now asserts one retained wake and equal request/sequence across the full lineage. |
 | WI03I-F011 | Journal a fenced retired-wake cause and dead-letter rather than silently waiting for expiry. `retired_wake_deadletters_without_replacement_after_restart` retires a wake between AQ failure and recovery, including an interrupted replacement, and checks replay, constant capacity, no subscriber call or further generation, idle no-ops and valid delayed acknowledgment. `retirement_during_wake_admission_records_cause_without_local_sequence` covers retirement during successful/lost admission completion. Reducer identity/closure and journal rollback/replay tests cover the new command. |
 | SEC4-F002 | No source defect or capability change. Rerun the adopted `foundation-test` alone on this candidate and preserve the log; serial checks avoid the earlier shared-artifact collision. |

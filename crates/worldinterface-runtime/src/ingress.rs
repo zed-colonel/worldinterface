@@ -3,7 +3,7 @@ pub mod http;
 pub mod streaming;
 use crate::Result;
 use actionqueue_core::{
-    admission::EnsureTaskRequest,
+    admission::{EnsureTaskOutcome, EnsureTaskRequest},
     continuation::{AdmitSignalOutcome, AdmitSignalRequest, SignalKind, SignalNamespace},
     ids::{CorrelationId, SignalId, TaskId},
     task::{
@@ -599,6 +599,29 @@ fn classify(error: actionqueue_runtime::control::ServiceError) -> AqDispatchFail
         _ => AqDispatchFailure::Uncertain,
     }
 }
+fn validate_delivery_admission(
+    request: &EnsureTaskRequest,
+    outcome: &EnsureTaskOutcome,
+) -> std::result::Result<AdmissionOutcome, AqDispatchFailure> {
+    let (key, digest) = match outcome {
+        EnsureTaskOutcome::Created { admission_key, digest, .. }
+        | EnsureTaskOutcome::AlreadyExists { admission_key, digest, .. } => (admission_key, digest),
+    };
+    // Check AQ's canonical identity, not the journal's hash of serialized bytes.
+    // A mismatched acknowledgment must leave WI pending for identical replay.
+    if outcome.sequence() == 0
+        || outcome.task_id() != request.task_spec().id()
+        || key != request.admission_key()
+        || digest != &request.digest().map_err(|_| AqDispatchFailure::Invalid)?
+    {
+        return Err(AqDispatchFailure::Conflict);
+    }
+    Ok(if outcome.is_created() {
+        AdmissionOutcome::Created
+    } else {
+        AdmissionOutcome::AlreadyExists
+    })
+}
 /// Binds the unscoped AQ SingleTenant profile to exactly one configured WI tenant.
 pub struct BoundAqIngress<'a, H: ExecutorHandler + 'static, C: actionqueue_core::time::clock::Clock>
 {
@@ -651,11 +674,8 @@ where
         &mut self,
         request: EnsureTaskRequest,
     ) -> std::result::Result<AdmissionOutcome, AqDispatchFailure> {
-        Ok(if self.engine.ensure_task(request).map_err(classify)?.is_created() {
-            AdmissionOutcome::Created
-        } else {
-            AdmissionOutcome::AlreadyExists
-        })
+        let outcome = self.engine.ensure_task(request.clone()).map_err(classify)?;
+        validate_delivery_admission(&request, &outcome)
     }
     fn admit_wake(
         &mut self,
@@ -884,5 +904,62 @@ impl ExecutorHandler for IngressDeliveryHandler {
                     .expect("static bounded error"),
             )
         })
+    }
+}
+
+#[cfg(test)]
+#[test]
+fn delivery_admission_rejects_mismatched_acknowledgments() {
+    use actionqueue_core::{admission::AdmissionDigest, ids::AdmissionKey};
+    let id = DeliveryId::generate();
+    let queue = queue_request(&id, 0, None).unwrap();
+    let request: EnsureTaskRequest = serde_json::from_slice(&queue.task_request).unwrap();
+    let digest = request.digest().unwrap();
+    let other = queue_request(&DeliveryId::generate(), 0, None).unwrap();
+    let other: EnsureTaskRequest = serde_json::from_slice(&other.task_request).unwrap();
+    for created in [true, false] {
+        let valid = if created {
+            EnsureTaskOutcome::Created {
+                sequence: 1,
+                task_id: request.task_spec().id(),
+                admission_key: request.admission_key().clone(),
+                digest: digest.clone(),
+            }
+        } else {
+            EnsureTaskOutcome::AlreadyExists {
+                sequence: 1,
+                task_id: request.task_spec().id(),
+                admission_key: request.admission_key().clone(),
+                digest: digest.clone(),
+            }
+        };
+        assert_eq!(
+            validate_delivery_admission(&request, &valid),
+            Ok(if created { AdmissionOutcome::Created } else { AdmissionOutcome::AlreadyExists })
+        );
+        for field in 0..5 {
+            let mut invalid = valid.clone();
+            let (sequence, task_id, key, returned_digest) = match &mut invalid {
+                EnsureTaskOutcome::Created { sequence, task_id, admission_key, digest }
+                | EnsureTaskOutcome::AlreadyExists { sequence, task_id, admission_key, digest } => {
+                    (sequence, task_id, admission_key, digest)
+                }
+            };
+            match field {
+                0 => *sequence = 0,
+                1 => *task_id = other.task_spec().id(),
+                2 => *key = AdmissionKey::new("wrong-key").unwrap(),
+                3 => *returned_digest = other.digest().unwrap(),
+                4 => {
+                    *returned_digest = AdmissionDigest::versioned(1, digest.hash().clone()).unwrap()
+                }
+                _ => unreachable!(),
+            }
+            assert_eq!(
+                validate_delivery_admission(&request, &invalid),
+                Err(AqDispatchFailure::Conflict),
+                "created={created}, field={field}"
+            );
+        }
     }
 }

@@ -56,6 +56,119 @@ fn host() -> HostControlContext {
         attribution: ControlMutationContext::new(AqRef::new("trusted-ingress-host").unwrap()),
     }
 }
+
+fn conflicting_request(
+    request: &actionqueue_core::admission::EnsureTaskRequest,
+    change_task_id: bool,
+) -> actionqueue_core::admission::EnsureTaskRequest {
+    use actionqueue_core::task::task_spec::{TaskPayload, TaskSpec};
+    let spec = request.task_spec();
+    actionqueue_core::admission::EnsureTaskRequest::new(
+        request.admission_key().clone(),
+        TaskSpec::new(
+            if change_task_id { TaskId::new() } else { spec.id() },
+            if change_task_id {
+                spec.task_payload().clone()
+            } else {
+                TaskPayload::with_content_type(
+                    b"different-delivery".to_vec(),
+                    spec.content_type().unwrap(),
+                )
+            },
+            spec.run_policy().clone(),
+            spec.constraints().clone(),
+            spec.metadata().clone(),
+        )
+        .unwrap(),
+        request.dependencies().to_vec(),
+        request.causal_context().clone(),
+        request.control_context().cloned(),
+    )
+    .unwrap()
+}
+
+#[test]
+fn ingress_task_admission_preserves_identity_and_conflicts_after_restart() {
+    use actionqueue_core::admission::{EnsureTaskOutcome, EnsureTaskRequest};
+    let temp = tempfile::tempdir().unwrap();
+    let (bundle, binding, id) = setup(&temp.path().join("bundle"));
+    let tenant = binding.profile.scope.tenant.clone();
+    let journal = bundle.wi().ingress_snapshot(&tenant).unwrap();
+    let request: EnsureTaskRequest =
+        serde_json::from_slice(&journal.queue[&id].task_request).unwrap();
+    let mut aq = ActionQueueEngine::new(
+        RuntimeConfig { data_dir: bundle.aq_path(), ..Default::default() },
+        handler(&bundle, &binding, Arc::new(Recorder::default())),
+    )
+    .bootstrap()
+    .unwrap()
+    .with_host(host());
+    assert_eq!(
+        BoundAqIngress::new(&mut aq, tenant.clone()).ensure_delivery_task(request.clone()),
+        Ok(AdmissionOutcome::Created)
+    );
+    let replay = aq.ensure_task(request.clone()).unwrap();
+    let EnsureTaskOutcome::AlreadyExists { sequence, task_id, admission_key, digest } = &replay
+    else {
+        panic!("expected identical replay");
+    };
+    assert!(*sequence > 0);
+    assert_eq!(*task_id, request.task_spec().id());
+    assert_eq!(admission_key, request.admission_key());
+    assert_eq!(digest, &request.digest().unwrap());
+    aq.shutdown().unwrap();
+    let mut aq = ActionQueueEngine::new(
+        RuntimeConfig { data_dir: bundle.aq_path(), ..Default::default() },
+        handler(&bundle, &binding, Arc::new(Recorder::default())),
+    )
+    .bootstrap()
+    .unwrap()
+    .with_host(host());
+    assert_eq!(aq.ensure_task(request.clone()).unwrap(), replay);
+    assert_eq!(
+        BoundAqIngress::new(&mut aq, tenant.clone()).ensure_delivery_task(request.clone()),
+        Ok(AdmissionOutcome::AlreadyExists)
+    );
+    for change_task_id in [false, true] {
+        let before = aq.projection().projection_digest().unwrap();
+        assert_eq!(
+            BoundAqIngress::new(&mut aq, tenant.clone())
+                .ensure_delivery_task(conflicting_request(&request, change_task_id)),
+            Err(AqDispatchFailure::Conflict)
+        );
+        assert_eq!(aq.projection().projection_digest().unwrap(), before);
+        assert_eq!(bundle.wi().ingress_snapshot(&tenant).unwrap(), journal);
+    }
+    aq.shutdown().unwrap();
+}
+
+#[test]
+fn conflicting_ingress_task_key_leaves_journal_pending() {
+    for change_task_id in [false, true] {
+        let temp = tempfile::tempdir().unwrap();
+        let (bundle, binding, id) = setup(&temp.path().join("bundle"));
+        let tenant = binding.profile.scope.tenant.clone();
+        let journal = bundle.wi().ingress_snapshot(&tenant).unwrap();
+        let request = serde_json::from_slice(&journal.queue[&id].task_request).unwrap();
+        let mut aq = ActionQueueEngine::new(
+            RuntimeConfig { data_dir: bundle.aq_path(), ..Default::default() },
+            handler(&bundle, &binding, Arc::new(Recorder::default())),
+        )
+        .bootstrap()
+        .unwrap()
+        .with_host(host());
+        aq.ensure_task(conflicting_request(&request, change_task_id)).unwrap();
+        let before = aq.projection().projection_digest().unwrap();
+        let error = IngressRuntime::new(bundle.wi(), tenant.clone())
+            .dispatch_pending(&mut BoundAqIngress::new(&mut aq, tenant.clone()), 1, now())
+            .unwrap_err();
+        assert_eq!(error.to_string(), AqDispatchFailure::Conflict.to_string());
+        assert_eq!(bundle.wi().ingress_snapshot(&tenant).unwrap(), journal);
+        assert_eq!(aq.projection().projection_digest().unwrap(), before);
+        aq.shutdown().unwrap();
+    }
+}
+
 fn setup(path: &Path) -> (Arc<StoreBundle>, IngressBinding, DeliveryId) {
     setup_with_timeout(path, 1_000)
 }
