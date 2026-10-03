@@ -1830,6 +1830,12 @@ impl AqIngressPort for InterruptedWake<'_> {
     fn bound_tenant(&self) -> &OpaqueRef {
         &self.tenant
     }
+    fn retired_wake_sequence(
+        &mut self,
+        request: &actionqueue_core::continuation::AdmitSignalRequest,
+    ) -> std::result::Result<Option<u64>, AqDispatchFailure> {
+        BoundAqIngress::new(&mut *self.aq, self.tenant.clone()).retired_wake_sequence(request)
+    }
     fn subscriber_registered(&self, _: &PrincipalId) -> bool {
         true
     }
@@ -1859,11 +1865,7 @@ impl AqIngressPort for InterruptedWake<'_> {
     }
 }
 
-async fn initial_wait_expires_after_interrupted_wake(
-    replacement: bool,
-    fail_after_task: bool,
-    retire_wake: bool,
-) {
+async fn initial_wait_expires_after_interrupted_wake(replacement: bool, fail_after_task: bool) {
     let temp = tempfile::tempdir().unwrap();
     let path = temp.path().join("bundle");
     let (bundle, binding, id) = setup_with_policy(&path, 1_000, 5_000);
@@ -1897,35 +1899,6 @@ async fn initial_wait_expires_after_interrupted_wake(
         let original = TaskId::from_uuid(uuid::Uuid::parse_str(id.as_str()).unwrap());
         let run = aq.projection().run_ids_for_task(original)[0];
         assert_eq!(aq.get_run(run).unwrap().state, actionqueue_core::run::state::RunState::Failed);
-        if retire_wake {
-            // Even a zero retirement window requires a strictly newer signal.
-            aq.admit_signal(
-                actionqueue_core::continuation::AdmitSignalRequest::new(
-                    actionqueue_core::ids::SignalId::new("retirement-barrier").unwrap(),
-                    actionqueue_core::continuation::SignalNamespace::new("retention_test").unwrap(),
-                    actionqueue_core::continuation::SignalKind::new("barrier").unwrap(),
-                    None,
-                    None,
-                    None,
-                    None,
-                    None,
-                    None,
-                )
-                .unwrap(),
-            )
-            .unwrap();
-            tokio::time::sleep(Duration::from_millis(1100)).await;
-            let sequence =
-                bundle.wi().ingress_snapshot(&tenant).unwrap().queue[&id].signal_sequence.unwrap();
-            assert_eq!(
-                aq.retire_signals(
-                    vec![actionqueue_core::ids::SignalSequence::new(sequence)],
-                    Default::default(),
-                )
-                .unwrap(),
-                1
-            );
-        }
         aq.shutdown().unwrap();
     }
     let mut aq = ActionQueueEngine::new(
@@ -1961,11 +1934,11 @@ async fn initial_wait_expires_after_interrupted_wake(
     // A replacement's original wake is already retained: an interrupted
     // duplicate admission cannot strand it in the initial wait. It delivers
     // once and establishes the retention-bounded acknowledgment wait instead.
-    let subscriber_calls = usize::from(replacement && !retire_wake);
+    let subscriber_calls = usize::from(replacement);
     assert_eq!(recorder.0.lock().unwrap().len(), subscriber_calls);
     if replacement {
         assert_eq!(aq.signal_statistics().retained, 1);
-        assert_eq!(aq.signal_statistics().retired, usize::from(retire_wake));
+        assert_eq!(aq.signal_statistics().retired, 0);
         assert_eq!(q.signal_request, q.prior[0].signal_request);
     }
     aq.shutdown().unwrap();
@@ -2014,22 +1987,277 @@ async fn initial_wait_expires_after_interrupted_wake(
 
 #[tokio::test]
 async fn failed_signal_admission_releases_initial_wait_after_expiration() {
-    initial_wait_expires_after_interrupted_wake(false, false, false).await;
+    initial_wait_expires_after_interrupted_wake(false, false).await;
 }
 
 #[tokio::test]
 async fn interrupted_task_admission_releases_initial_wait_after_expiration() {
-    initial_wait_expires_after_interrupted_wake(false, true, false).await;
-}
-
-#[tokio::test]
-async fn replacement_generation_releases_initial_wait_after_expiration() {
-    initial_wait_expires_after_interrupted_wake(true, false, true).await;
+    initial_wait_expires_after_interrupted_wake(false, true).await;
 }
 
 #[tokio::test]
 async fn replacement_generation_uses_retained_wake_after_interrupted_dispatch() {
-    initial_wait_expires_after_interrupted_wake(true, false, false).await;
+    initial_wait_expires_after_interrupted_wake(true, false).await;
+}
+
+// Retirement preserves AQ identity/bytes but removes matching eligibility. A
+// duplicate admission must not turn this permanent cause into a silent wait.
+fn retirement_barrier(
+    aq: &mut actionqueue_runtime::engine::BootstrappedEngine<IngressDeliveryHandler>,
+) {
+    aq.admit_signal(
+        actionqueue_core::continuation::AdmitSignalRequest::new(
+            actionqueue_core::ids::SignalId::new("retirement-barrier").unwrap(),
+            actionqueue_core::continuation::SignalNamespace::new("retention_test").unwrap(),
+            actionqueue_core::continuation::SignalKind::new("barrier").unwrap(),
+            None,
+            None,
+            None,
+            None,
+            None,
+            None,
+        )
+        .unwrap(),
+    )
+    .unwrap();
+}
+
+struct RetireDuringWake<'a> {
+    aq: &'a mut actionqueue_runtime::engine::BootstrappedEngine<IngressDeliveryHandler>,
+    tenant: OpaqueRef,
+    lose_completion: bool,
+}
+impl AqIngressPort for RetireDuringWake<'_> {
+    fn bound_tenant(&self) -> &OpaqueRef {
+        &self.tenant
+    }
+    fn retired_wake_sequence(
+        &mut self,
+        request: &actionqueue_core::continuation::AdmitSignalRequest,
+    ) -> std::result::Result<Option<u64>, AqDispatchFailure> {
+        BoundAqIngress::new(&mut *self.aq, self.tenant.clone()).retired_wake_sequence(request)
+    }
+    fn ensure_delivery_task(
+        &mut self,
+        request: actionqueue_core::admission::EnsureTaskRequest,
+    ) -> std::result::Result<AdmissionOutcome, AqDispatchFailure> {
+        BoundAqIngress::new(&mut *self.aq, self.tenant.clone()).ensure_delivery_task(request)
+    }
+    fn admit_wake(
+        &mut self,
+        request: actionqueue_core::continuation::AdmitSignalRequest,
+    ) -> std::result::Result<WakeOutcome, AqDispatchFailure> {
+        let outcome =
+            BoundAqIngress::new(&mut *self.aq, self.tenant.clone()).admit_wake(request)?;
+        retirement_barrier(self.aq);
+        std::thread::sleep(Duration::from_millis(1100));
+        assert_eq!(
+            self.aq
+                .retire_signals(
+                    vec![actionqueue_core::ids::SignalSequence::new(outcome.sequence)],
+                    Default::default(),
+                )
+                .unwrap(),
+            1
+        );
+        if self.lose_completion {
+            Err(AqDispatchFailure::Uncertain)
+        } else {
+            Ok(outcome)
+        }
+    }
+}
+
+#[tokio::test]
+async fn retirement_during_wake_admission_records_cause_without_local_sequence() {
+    for lose_completion in [false, true] {
+        let temp = tempfile::tempdir().unwrap();
+        let path = temp.path().join("bundle");
+        let (bundle, binding, id) = setup(&path);
+        let tenant = binding.profile.scope.tenant.clone();
+        let recorder = Arc::new(Recorder::default());
+        let mut aq = ActionQueueEngine::new(
+            RuntimeConfig {
+                data_dir: bundle.aq_path(),
+                signal_retention: SignalRetentionPolicy {
+                    minimum_age_secs: 0,
+                    minimum_sequence_window: 0,
+                },
+                ..Default::default()
+            },
+            handler(&bundle, &binding, recorder.clone()),
+        )
+        .bootstrap()
+        .unwrap()
+        .with_host(host());
+        let service = IngressRuntime::new(bundle.wi(), tenant.clone());
+        let result = service.dispatch_pending(
+            &mut RetireDuringWake { aq: &mut aq, tenant: tenant.clone(), lose_completion },
+            10,
+            now(),
+        );
+        if lose_completion {
+            assert!(result.is_err());
+        } else {
+            assert_eq!(result.unwrap(), 0);
+        }
+        assert!(bundle.wi().ingress_snapshot(&tenant).unwrap().queue[&id]
+            .signal_sequence
+            .is_none());
+        aq.shutdown().unwrap();
+        drop(service);
+        drop(bundle);
+        let bundle = Arc::new(StoreBundle::open(&path).unwrap());
+        let mut aq = ActionQueueEngine::new(
+            RuntimeConfig { data_dir: bundle.aq_path(), ..Default::default() },
+            handler(&bundle, &binding, recorder.clone()),
+        )
+        .bootstrap()
+        .unwrap()
+        .with_host(host());
+        let service = IngressRuntime::new(bundle.wi(), tenant.clone());
+        assert_eq!(
+            service
+                .dispatch_pending(&mut BoundAqIngress::new(&mut aq, tenant.clone()), 10, now(),)
+                .unwrap(),
+            0
+        );
+        let closed = bundle.wi().ingress_snapshot(&tenant).unwrap();
+        assert_eq!(closed.deliveries[&id].state, DeliveryState::DeadLetter);
+        assert_eq!(closed.queue[&id].retired_wake_sequence, Some(1));
+        assert_eq!(closed.queue[&id].generation, 0);
+        assert!(closed.queue[&id].prior.is_empty());
+        assert!(closed.deliveries[&id].attempts.is_empty());
+        let _ = aq.run_until_idle().await.unwrap();
+        assert_eq!(aq.projection().waits().active_count(), 0);
+        assert!(recorder.0.lock().unwrap().is_empty());
+        assert_eq!((aq.signal_statistics().retained, aq.signal_statistics().retired), (1, 1));
+        aq.shutdown().unwrap();
+    }
+}
+
+#[tokio::test]
+async fn retired_wake_deadletters_without_replacement_after_restart() {
+    for interrupted_recovery in [false, true] {
+        let temp = tempfile::tempdir().unwrap();
+        let path = temp.path().join("bundle");
+        let (bundle, binding, id) = setup(&path);
+        let tenant = binding.profile.scope.tenant.clone();
+        let recorder = Arc::new(Recorder::default());
+        let delivery_handler = handler(&bundle, &binding, recorder.clone());
+        let registry = delivery_handler.subscriber_registry();
+        let mut aq = ActionQueueEngine::new(
+            RuntimeConfig {
+                data_dir: bundle.aq_path(),
+                continuation_limits: ContinuationLimits { active_waits: 0, ..Default::default() },
+                signal_retention: SignalRetentionPolicy {
+                    minimum_age_secs: 0,
+                    minimum_sequence_window: 0,
+                },
+                ..Default::default()
+            },
+            delivery_handler,
+        )
+        .bootstrap()
+        .unwrap()
+        .with_host(host());
+        let service = IngressRuntime::new(bundle.wi(), tenant.clone());
+        assert_eq!(
+            service
+                .dispatch_pending(&mut BoundAqIngress::new(&mut aq, tenant.clone()), 10, now(),)
+                .unwrap(),
+            1
+        );
+        let _ = aq.run_until_idle().await.unwrap();
+        let original = TaskId::from_uuid(uuid::Uuid::parse_str(id.as_str()).unwrap());
+        let run = aq.projection().run_ids_for_task(original)[0];
+        assert_eq!(aq.get_run(run).unwrap().state, actionqueue_core::run::state::RunState::Failed);
+        let sequence =
+            bundle.wi().ingress_snapshot(&tenant).unwrap().queue[&id].signal_sequence.unwrap();
+        if interrupted_recovery {
+            assert!(service
+                .dispatch_pending(
+                    &mut InterruptedWake {
+                        aq: &mut aq,
+                        tenant: tenant.clone(),
+                        fail_after_task: false
+                    },
+                    10,
+                    now(),
+                )
+                .is_err());
+        }
+        // A valid issued token retains acknowledgment authority after dead-letter.
+        let subscriber =
+            AuthenticatedScope { tenant: tenant.clone(), principal: binding.subscriber.clone() };
+        let issued = service.claim(&subscriber, &id, now()).unwrap().unwrap();
+        retirement_barrier(&mut aq);
+        tokio::time::sleep(Duration::from_millis(1100)).await;
+        assert_eq!(
+            aq.retire_signals(
+                vec![actionqueue_core::ids::SignalSequence::new(sequence)],
+                Default::default(),
+            )
+            .unwrap(),
+            1
+        );
+        let resident = aq.signal_statistics().bytes;
+        aq.shutdown().unwrap();
+        drop(service);
+        drop(bundle);
+
+        let bundle = Arc::new(StoreBundle::open(&path).unwrap());
+        let mut aq = ActionQueueEngine::new(
+            RuntimeConfig { data_dir: bundle.aq_path(), ..Default::default() },
+            handler(&bundle, &binding, recorder.clone()),
+        )
+        .bootstrap()
+        .unwrap()
+        .with_host(host());
+        let service = IngressRuntime::new(bundle.wi(), tenant.clone());
+        assert_eq!(
+            service
+                .dispatch_pending(
+                    &mut BoundAqIngress::new(&mut aq, tenant.clone())
+                        .with_subscriber_registry(registry),
+                    10,
+                    now(),
+                )
+                .unwrap(),
+            0
+        );
+        let closed = bundle.wi().ingress_snapshot(&tenant).unwrap();
+        let q = &closed.queue[&id];
+        assert_eq!(q.generation, u32::from(interrupted_recovery));
+        assert_eq!(q.prior.len(), usize::from(interrupted_recovery));
+        assert_eq!(q.retired_wake_sequence, Some(sequence));
+        assert_eq!(closed.deliveries[&id].state, DeliveryState::DeadLetter);
+        for _ in 0..3 {
+            assert_eq!(
+                service
+                    .dispatch_pending(&mut BoundAqIngress::new(&mut aq, tenant.clone()), 10, now(),)
+                    .unwrap(),
+                0
+            );
+        }
+        assert_eq!(bundle.wi().ingress_snapshot(&tenant).unwrap(), closed);
+        let _ = aq.run_until_idle().await.unwrap();
+        assert_eq!(aq.projection().waits().active_count(), 0);
+        assert!(recorder.0.lock().unwrap().is_empty());
+        assert_eq!((aq.signal_statistics().retained, aq.signal_statistics().retired), (1, 1));
+        assert_eq!(aq.signal_statistics().bytes, resident);
+        aq.shutdown().unwrap();
+        drop(service);
+        drop(bundle);
+        let bundle = StoreBundle::open(&path).unwrap();
+        assert_eq!(bundle.wi().ingress_snapshot(&tenant).unwrap(), closed);
+        IngressRuntime::new(bundle.wi(), tenant.clone())
+            .acknowledge(&subscriber, &id, &issued.token, now())
+            .unwrap();
+        let acknowledged = bundle.wi().ingress_snapshot(&tenant).unwrap();
+        assert_eq!(acknowledged.deliveries[&id].state, DeliveryState::Acknowledged);
+        assert_eq!(acknowledged.queue[&id].retired_wake_sequence, Some(sequence));
+    }
 }
 
 fn handler(
@@ -2413,6 +2641,7 @@ async fn previously_journaled_generation_wake_is_reused_without_migration_after_
                     signal_request,
                     task_admitted: false,
                     signal_sequence: None,
+                    retired_wake_sequence: None,
                     prior: vec![],
                 }),
             },
@@ -2479,6 +2708,12 @@ impl worldinterface_runtime::ingress::AqIngressPort for PauseRecoveryWake<'_> {
     fn bound_tenant(&self) -> &OpaqueRef {
         &self.tenant
     }
+    fn retired_wake_sequence(
+        &mut self,
+        request: &actionqueue_core::continuation::AdmitSignalRequest,
+    ) -> std::result::Result<Option<u64>, AqDispatchFailure> {
+        BoundAqIngress::new(&mut *self.aq, self.tenant.clone()).retired_wake_sequence(request)
+    }
     fn subscriber_registered(&self, _: &PrincipalId) -> bool {
         true
     }
@@ -2525,6 +2760,13 @@ impl worldinterface_runtime::ingress::AqIngressPort for DelayedOldTaskCompletion
     fn bound_tenant(&self) -> &OpaqueRef {
         &self.tenant
     }
+    fn retired_wake_sequence(
+        &mut self,
+        request: &actionqueue_core::continuation::AdmitSignalRequest,
+    ) -> std::result::Result<Option<u64>, AqDispatchFailure> {
+        BoundAqIngress::new(&mut *self.aq.lock().unwrap(), self.tenant.clone())
+            .retired_wake_sequence(request)
+    }
     fn subscriber_registered(&self, _: &PrincipalId) -> bool {
         true
     }
@@ -2557,6 +2799,13 @@ impl worldinterface_runtime::ingress::AqIngressPort for DelayedOldTaskCompletion
 impl worldinterface_runtime::ingress::AqIngressPort for DelayedOldCompletion {
     fn bound_tenant(&self) -> &OpaqueRef {
         &self.tenant
+    }
+    fn retired_wake_sequence(
+        &mut self,
+        request: &actionqueue_core::continuation::AdmitSignalRequest,
+    ) -> std::result::Result<Option<u64>, AqDispatchFailure> {
+        BoundAqIngress::new(&mut *self.aq.lock().unwrap(), self.tenant.clone())
+            .retired_wake_sequence(request)
     }
     fn subscriber_registered(&self, _: &PrincipalId) -> bool {
         true

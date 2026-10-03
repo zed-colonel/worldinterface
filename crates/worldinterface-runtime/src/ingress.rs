@@ -174,6 +174,15 @@ impl<'a> IngressRuntime<'a> {
             // AQ admission and the WI journal are separate durable authorities. Another
             // dispatcher may replace a terminal generation during either AQ call.
             for _ in 0..4 {
+                if ContentHash::of(&q.task_request) != q.task_digest
+                    || ContentHash::of(&q.signal_request) != q.signal_digest
+                {
+                    return Err("queue request integrity mismatch".into());
+                }
+                let wake: AdmitSignalRequest = serde_json::from_slice(&q.signal_request)?;
+                if self.record_retired_wake(aq, &q, &wake, now)? {
+                    break;
+                }
                 q = if q.signal_sequence.is_some() {
                     let task: EnsureTaskRequest = serde_json::from_slice(&q.task_request)?;
                     if !aq.delivery_task_terminal(task.task_spec().id())? {
@@ -265,6 +274,13 @@ impl<'a> IngressRuntime<'a> {
                     }
                 }
                 let sequence = aq.admit_wake(signal)?.sequence;
+                // Host retirement may have happened during an interrupted AQ
+                // admission, before its local acknowledgment. Inspect AQ's
+                // durable retention state rather than trusting AlreadyExists.
+                let wake: AdmitSignalRequest = serde_json::from_slice(&q.signal_request)?;
+                if self.record_retired_wake(aq, &q, &wake, now)? {
+                    break;
+                }
                 let recorded = self.root.ingress_transact_dispatch(
                     &self.tenant,
                     now,
@@ -290,6 +306,26 @@ impl<'a> IngressRuntime<'a> {
             }
         }
         Ok(done)
+    }
+    fn record_retired_wake(
+        &self,
+        aq: &mut impl AqIngressPort,
+        queue: &QueueObligation,
+        wake: &AdmitSignalRequest,
+        now: u64,
+    ) -> Result<bool> {
+        let Some(sequence) = aq.retired_wake_sequence(wake)? else { return Ok(false) };
+        self.root.ingress_transact_dispatch(
+            &self.tenant,
+            now,
+            &worldinterface_domain::ingress::IngressCommand::RecordQueueWakeRetired {
+                id: queue.delivery.clone(),
+                generation: queue.generation,
+                signal_digest: queue.signal_digest.clone(),
+                sequence,
+            },
+        )?;
+        Ok(true)
     }
     pub fn claim(
         &self,
@@ -472,6 +508,7 @@ fn queue_request(
         signal_request,
         task_admitted: false,
         signal_sequence: None,
+        retired_wake_sequence: None,
         generation,
         prior: vec![],
     })
@@ -501,6 +538,12 @@ fn acknowledgment_request(id: &DeliveryId) -> Result<AcknowledgmentSignal> {
 
 pub trait AqIngressPort {
     fn bound_tenant(&self) -> &OpaqueRef;
+    /// Consult AQ's durable retention state. A retired identity remains resident
+    /// and duplicate admission succeeds, but it can never match another wait.
+    fn retired_wake_sequence(
+        &mut self,
+        request: &AdmitSignalRequest,
+    ) -> std::result::Result<Option<u64>, AqDispatchFailure>;
     /// Recovery needs the active handler's trusted transport registration before
     /// replacing a terminal AQ run. Unknown registration fails closed.
     fn subscriber_registered(&self, _subscriber: &PrincipalId) -> bool {
@@ -587,6 +630,17 @@ where
 {
     fn bound_tenant(&self) -> &OpaqueRef {
         &self.tenant
+    }
+    fn retired_wake_sequence(
+        &mut self,
+        request: &AdmitSignalRequest,
+    ) -> std::result::Result<Option<u64>, AqDispatchFailure> {
+        let envelope = request.envelope(&Default::default(), 0);
+        match self.engine.get_signal(&envelope.signal_id) {
+            Ok(signal) => Ok((!signal.retained).then_some(signal.sequence.get())),
+            Err(actionqueue_runtime::inspection::InspectionError::NotFound) => Ok(None),
+            Err(_) => Err(AqDispatchFailure::Uncertain),
+        }
     }
     fn subscriber_registered(&self, subscriber: &PrincipalId) -> bool {
         self.subscribers

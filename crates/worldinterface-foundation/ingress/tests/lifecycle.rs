@@ -148,6 +148,7 @@ fn queue_recovery_exhaustion_uses_pinned_policy_and_preserves_lineage() {
                 signal_request,
                 task_admitted: false,
                 signal_sequence: None,
+                retired_wake_sequence: None,
                 generation,
                 prior: vec![],
             }
@@ -205,6 +206,84 @@ fn queue_recovery_exhaustion_uses_pinned_policy_and_preserves_lineage() {
             }
         }
     }
+}
+
+#[test]
+fn retired_queue_wake_fences_identity_and_preserves_closure() {
+    let s = Setup::new();
+    let id = delivery(s.admit(&s.event("retired-wake", 0), 1000));
+    let tenant = s.b.profile.scope.tenant.clone();
+    let mut state = s.state();
+    let queue = QueueObligation {
+        version: 1,
+        delivery: id.clone(),
+        task_request: b"task".to_vec(),
+        signal_request: b"signal".to_vec(),
+        task_digest: ContentHash::of(b"task"),
+        signal_digest: ContentHash::of(b"signal"),
+        task_admitted: true,
+        signal_sequence: Some(7),
+        retired_wake_sequence: None,
+        generation: 1,
+        prior: vec![],
+    };
+    state.queue.insert(id.clone(), queue.clone());
+    let retirement = |generation, signal_digest, sequence| IngressCommand::RecordQueueWakeRetired {
+        id: id.clone(),
+        generation,
+        signal_digest,
+        sequence,
+    };
+    let command = retirement(1, queue.signal_digest.clone(), 7);
+    let (unchanged, result) =
+        apply_ingress(&state, &tenant, 1000, &retirement(0, queue.signal_digest.clone(), 7))
+            .unwrap();
+    assert_eq!(result, IngressResult::StaleQueueGeneration);
+    assert_eq!(unchanged, state);
+    for bad in [
+        retirement(1, ContentHash::of(b"wrong"), 7),
+        retirement(1, queue.signal_digest.clone(), 0),
+        retirement(1, queue.signal_digest.clone(), 8),
+    ] {
+        assert!(apply_ingress(&state, &tenant, 1000, &bad).is_err());
+    }
+    let (closed, _) = apply_ingress(&state, &tenant, 1000, &command).unwrap();
+    assert_eq!(closed.deliveries[&id].state, DeliveryState::DeadLetter);
+    assert_eq!(closed.queue[&id].retired_wake_sequence, Some(7));
+    assert_eq!(apply_ingress(&closed, &tenant, 1000, &command).unwrap().0, closed);
+    let expires = state.deliveries[&id].expires_at_ms;
+    let (expired, _) = apply_ingress(&state, &tenant, expires, &command).unwrap();
+    assert_eq!(expired.deliveries[&id].state, DeliveryState::Expired);
+    assert!(expired.deliveries[&id].token_invalidated);
+    assert!(expired.queue[&id].retired_wake_sequence.is_none());
+    let token_digest = ContentHash::of(b"issued-token");
+    let (claimed, _) = apply_ingress(
+        &state,
+        &tenant,
+        1000,
+        &IngressCommand::Claim {
+            id: id.clone(),
+            subscriber: s.b.subscriber.clone(),
+            token_digest: token_digest.clone(),
+        },
+    )
+    .unwrap();
+    let (acknowledged, _) = apply_ingress(
+        &claimed,
+        &tenant,
+        1000,
+        &IngressCommand::Acknowledge {
+            id: id.clone(),
+            subscriber: s.b.subscriber.clone(),
+            token_digest,
+        },
+    )
+    .unwrap();
+    assert_eq!(apply_ingress(&acknowledged, &tenant, 1000, &command).unwrap().0, acknowledged);
+    // Older journal bytes omit the optional cause and round-trip unchanged.
+    let bytes = serde_json::to_vec(&queue).unwrap();
+    assert!(!std::str::from_utf8(&bytes).unwrap().contains("retired_wake_sequence"));
+    assert_eq!(serde_json::from_slice::<QueueObligation>(&bytes).unwrap(), queue);
 }
 fn credentials(p: &ProviderProfile) -> ProviderCredentials {
     ProviderCredentials::new(p.clone(), vec![7; 32]).unwrap()
@@ -545,6 +624,7 @@ fn expired_outbox_sweep_survives_restart_and_rejects_recovery() {
         signal_request: signal,
         task_admitted: true,
         signal_sequence: Some(1),
+        retired_wake_sequence: None,
         generation: 0,
         prior: vec![],
     };

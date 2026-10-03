@@ -95,6 +95,7 @@ fn transact_dispatch(
     let id = match command {
         IngressCommand::RecordQueueTask { id, .. }
         | IngressCommand::RecordQueueSignal { id, .. }
+        | IngressCommand::RecordQueueWakeRetired { id, .. }
         | IngressCommand::RecoverQueue { id, .. }
         | IngressCommand::RecordAcknowledgmentSignal { id, .. }
         | IngressCommand::Expire { id } => id,
@@ -240,6 +241,7 @@ mod tests {
                 signal_digest: ContentHash::of(b"signal"),
                 task_admitted: false,
                 signal_sequence: None,
+                retired_wake_sequence: None,
                 generation: 0,
                 prior: vec![],
             },
@@ -320,6 +322,87 @@ mod tests {
         }
     }
     #[test]
+    fn retired_wake_and_cursor_roll_back_and_replay_atomically() {
+        let binding: IngressBinding = serde_json::from_str(include_str!(
+            "../../../../conformance/wi-fabric-2/ingress/binding.json"
+        ))
+        .unwrap();
+        let tenant = binding.profile.scope.tenant.clone();
+        let id = DeliveryId::generate();
+        let queued = id.clone();
+        let mut initial = IngressState::default();
+        initial.queue.insert(
+            queued.clone(),
+            worldinterface_domain::ingress::QueueObligation {
+                version: 1,
+                delivery: queued.clone(),
+                task_request: b"task".to_vec(),
+                signal_request: b"signal".to_vec(),
+                task_digest: ContentHash::of(b"task"),
+                signal_digest: ContentHash::of(b"signal"),
+                task_admitted: false,
+                signal_sequence: None,
+                retired_wake_sequence: None,
+                generation: 0,
+                prior: vec![],
+            },
+        );
+        initial.deliveries.insert(
+            id.clone(),
+            ObservationDelivery {
+                id: id.clone(),
+                observation: ObservationId::generate(),
+                binding: BindingVersion { id: binding.id, revision: binding.revision },
+                subscriber: binding.subscriber,
+                policy: binding.policy,
+                expires_at_ms: 1000,
+                state: DeliveryState::Pending,
+                attempts: vec![],
+                acknowledgment: None,
+                token_invalidated: false,
+                wake_key: "wake".to_owned().try_into().unwrap(),
+                locator: "locator".to_owned().try_into().unwrap(),
+            },
+        );
+        let command = IngressCommand::RecordQueueWakeRetired {
+            id: id.clone(),
+            generation: 0,
+            signal_digest: ContentHash::of(b"signal"),
+            sequence: 7,
+        };
+        for fault in ["history", "projection", "cursor-history", "cursor-projection"] {
+            let mut c = Connection::open_in_memory().unwrap();
+            c.execute_batch(SCHEMA).unwrap();
+            write_state(&c, &tenant, &initial).unwrap();
+            assert!(transact_dispatch(&mut c, &tenant, 999, &command, Some(fault)).is_err());
+            assert_eq!(snapshot(&c, &tenant).unwrap(), initial);
+            assert_eq!(
+                c.query_row("SELECT count(*) FROM ingress_history", [], |r| r.get::<_, u64>(0))
+                    .unwrap(),
+                0
+            );
+            transact_dispatch(&mut c, &tenant, 999, &command, None).unwrap();
+            let committed = snapshot(&c, &tenant).unwrap();
+            assert_eq!(committed.dispatch_cursor, Some(id.clone()));
+            assert_eq!(committed.queue[&id].signal_request, initial.queue[&id].signal_request);
+            assert_eq!(committed.revision, 2);
+            assert_eq!(committed.deliveries[&id].state, DeliveryState::DeadLetter);
+            assert_eq!(committed.queue[&id].retired_wake_sequence, Some(7));
+            transact_dispatch(&mut c, &tenant, 2000, &command, None).unwrap();
+            assert_eq!(snapshot(&c, &tenant).unwrap(), committed);
+            assert_eq!(
+                c.query_row("SELECT count(*) FROM ingress_history", [], |r| r.get::<_, u64>(0))
+                    .unwrap(),
+                2
+            );
+            let replayed = Connection::open_in_memory().unwrap();
+            replayed.execute_batch(SCHEMA).unwrap();
+            write_state(&replayed, &tenant, &initial).unwrap();
+            replay(&c, &replayed).unwrap();
+            assert_eq!(snapshot(&replayed, &tenant).unwrap(), committed);
+        }
+    }
+    #[test]
     fn dispatch_progress_and_cursor_roll_back_together_without_idle_writes() {
         let tenant: OpaqueRef = "tenant".to_owned().try_into().unwrap();
         let id = DeliveryId::generate();
@@ -336,6 +419,7 @@ mod tests {
                 signal_digest: ContentHash::of(b"signal"),
                 task_admitted: false,
                 signal_sequence: None,
+                retired_wake_sequence: None,
                 generation: 0,
                 prior: vec![],
             },

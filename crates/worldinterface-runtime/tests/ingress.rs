@@ -155,6 +155,12 @@ impl AqIngressPort for LostAcknowledgment<'_> {
     fn bound_tenant(&self) -> &OpaqueRef {
         &self.tenant
     }
+    fn retired_wake_sequence(
+        &mut self,
+        request: &actionqueue_core::continuation::AdmitSignalRequest,
+    ) -> std::result::Result<Option<u64>, AqDispatchFailure> {
+        BoundAqIngress::new(&mut *self.aq, self.tenant.clone()).retired_wake_sequence(request)
+    }
     fn ensure_delivery_task(
         &mut self,
         request: EnsureTaskRequest,

@@ -38,6 +38,10 @@ pub struct QueueObligation {
     pub task_admitted: bool,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub signal_sequence: Option<u64>,
+    /// AQ confirmed that this immutable wake no longer matches. Retain the
+    /// cause on the closed obligation without allocating another signal.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub retired_wake_sequence: Option<u64>,
     #[serde(default)]
     pub generation: u32,
     #[serde(default)]
@@ -77,6 +81,12 @@ pub enum IngressCommand {
         task_digest: ContentHash,
     },
     RecordQueueSignal {
+        id: DeliveryId,
+        generation: u32,
+        signal_digest: ContentHash,
+        sequence: u64,
+    },
+    RecordQueueWakeRetired {
         id: DeliveryId,
         generation: u32,
         signal_digest: ContentHash,
@@ -479,6 +489,7 @@ pub fn apply_ingress(
                                 || q.signal_request.len() > 16384
                                 || ContentHash::of(&q.task_request) != q.task_digest
                                 || ContentHash::of(&q.signal_request) != q.signal_digest
+                                || q.retired_wake_sequence.is_some()
                         })
                     {
                         return Err("invalid immutable queue obligations".into());
@@ -658,6 +669,34 @@ pub fn apply_ingress(
                 IngressResult::Updated
             }
         }
+        IngressCommand::RecordQueueWakeRetired { id, generation, signal_digest, sequence } => {
+            let q = s.queue.get(id).ok_or("unknown queue obligation")?;
+            let d = s.deliveries.get(id).ok_or("unknown delivery")?;
+            if q.generation != *generation {
+                IngressResult::StaleQueueGeneration
+            } else if q.signal_digest != *signal_digest {
+                return Err("queue signal identity mismatch".into());
+            } else if *sequence == 0
+                || q.signal_sequence.is_some_and(|old| old != *sequence)
+                || q.retired_wake_sequence.is_some_and(|old| old != *sequence)
+            {
+                return Err("invalid retired queue wake".into());
+            } else {
+                // An old dispatcher cannot overwrite closure or a valid delayed
+                // acknowledgment. The command and projection retain the cause.
+                if d.state == DeliveryState::Pending {
+                    if now >= d.expires_at_ms {
+                        let d = s.deliveries.get_mut(id).unwrap();
+                        d.state = DeliveryState::Expired;
+                        d.token_invalidated = true;
+                    } else {
+                        s.deliveries.get_mut(id).unwrap().state = DeliveryState::DeadLetter;
+                        s.queue.get_mut(id).unwrap().retired_wake_sequence = Some(*sequence);
+                    }
+                }
+                IngressResult::Updated
+            }
+        }
         IngressCommand::RecoverQueue { id, expected_generation, replacement } => {
             let old = s.queue.get(id).ok_or("unknown queue obligation")?;
             let delivery = s.deliveries.get(id).ok_or("unknown delivery")?;
@@ -674,6 +713,7 @@ pub fn apply_ingress(
                 || expected_generation.checked_add(1) != Some(replacement.generation)
                 || replacement.task_admitted
                 || replacement.signal_sequence.is_some()
+                || replacement.retired_wake_sequence.is_some()
                 || !replacement.prior.is_empty()
                 || replacement.task_request.is_empty()
                 || replacement.signal_request.is_empty()

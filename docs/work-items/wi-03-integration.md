@@ -44,8 +44,15 @@ signal. Identity and byte consumption still obey AQ's
 lifetime capacity/backpressure policy; retirement does not reclaim that capacity.
 An interrupted duplicate wake dispatch can already resume a replacement from
 the retained signal, while local completion remains generation-fenced. If a
-host explicitly retires the signal, the retention-bounded initial wait still
-ends without allocating a replacement wake identity.
+host explicitly retires the signal, the dispatcher reads AQ's durable retention
+state before recovery and after admission, then records `RecordQueueWakeRetired`.
+The generation, request digest and observed sequence fence that command. It closes
+pending delivery as `DeadLetter` and retains `retired_wake_sequence` on the current
+queue obligation for inspection and replay. No replacement task or signal is
+allocated to work with a retired wake. An interrupted admission with no local
+sequence follows the same path after restart. Existing tasks finish when they
+reload the closed delivery; an already established wait remains deadline-bounded.
+Expiration takes precedence if the delivery's retention has already elapsed.
 
 Dead-letter stops automatic work; it does not retract an issued token or assert
 application rejection. An authenticated delayed acknowledgment with a valid token
@@ -65,8 +72,8 @@ runtime. Their acknowledgment signals and expiration commit without changing the
 queue cursor; mixed admission APIs cannot block queued dispatch. Reopening retains
 the durable position; any idle
 rotation since the last progress is repeated at most once. Acknowledgments still
-take priority over the bounded delivery scan. No schema, replay vocabulary or
-second persistence authority is introduced.
+take priority over the bounded delivery scan. All progress and retirement evidence
+use the existing ingress journal and its authority.
 
 ## Repair coverage
 
@@ -76,6 +83,7 @@ fresh independent review; this table is implementation coverage, not that review
 | Finding | Correction or retained check |
 | --- | --- |
 | SEC4-F001 | Reuse the journaled delivery wake across replacements. `owner_churn_reuses_wake_capacity_and_other_owner_can_deliver_and_ack_after_restart` exhausts the 100-generation policy through owner churn across restart, asserts constant one-identity/byte consumption, then completes another owner's delivery and acknowledgment under a three-identity/4 KiB AQ limit. The existing mismatch, wait-capacity and delayed-ack budget regression now asserts one retained wake and equal request/sequence across the full lineage. |
+| WI03I-F011 | Journal a fenced retired-wake cause and dead-letter rather than silently waiting for expiry. `retired_wake_deadletters_without_replacement_after_restart` retires a wake between AQ failure and recovery, including an interrupted replacement, and checks replay, constant capacity, no subscriber call or further generation, idle no-ops and valid delayed acknowledgment. `retirement_during_wake_admission_records_cause_without_local_sequence` covers retirement during successful/lost admission completion. Reducer identity/closure and journal rollback/replay tests cover the new command. |
 | SEC4-F002 | No source defect or capability change. Rerun the adopted `foundation-test` alone on this candidate and preserve the log; serial checks avoid the earlier shared-artifact collision. |
 | SEC3-F001 | Shared transport registry, tenant guard and durable generation budget; `handler_registry_fails_closed_for_missing_transport_and_wrong_tenant` and `recovery_generation_budget_bounds_mismatch_binding_churn_and_capacity_after_restart`. |
 | SEC3-F002 | The same generation budget bounds owner suspend/resume without claims; the latter real-AQ test also checks zero subscriber calls, bounded prior/signal/run counts and restart. |
@@ -134,14 +142,25 @@ command remains readable for historical replay; the dispatcher no longer emits
 it for inspection. Real progress still consumes append-only audit capacity under
 the accepted retention/backpressure policy.
 
-The mixed-admission audit covers all five commands accepted by the dispatch
-transaction. Task admission, wake admission and recovery still require a queue
+The mixed-admission audit covers all six commands accepted by the dispatch
+transaction. Task admission, wake admission, retirement and recovery require a queue
 entry in the reducer. Acknowledgment signaling and expiration are also valid for
 non-queued deliveries and preserve the current cursor. The transaction observes
 membership under the same SQLite write lock as the progress command. No public
 claim or acknowledgment authority is narrowed, and the reducer continues to reject
 unknown standalone cursor entries. Queued rollback/no-op/replay and idle-poll tests
 remain required alongside the non-queued regressions.
+
+The retirement audit covers initial and duplicate wake admission, terminal recovery,
+interrupted task/signal completion and earlier generation-specific persisted wakes.
+The adapter reads AQ retention through the trusted tenant-bound inspection API;
+unavailable inspection returns an error instead of assuming a wake can match.
+Retirement evidence is scoped to the exact generation and digest; stale evidence,
+duplicates and previously closed deliveries cannot append progress or overwrite
+acknowledgment. The optional cause is absent in historical request bytes and old
+journals still replay. The new AQ-neutral command belongs to the existing ingress
+journal, with state and cursor committed or rolled back together. No retention
+policy, generation budget, token authority or second matching authority is added.
 
 Use the supplied Cargo launcher for native runtime build/test and the AQ-free
 supplementary domain/contract checks. Run all four adopted foundation checks with
