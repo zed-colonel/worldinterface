@@ -240,6 +240,141 @@ async fn expired_before_dispatch_stays_expired_across_restart_and_repeated_dispa
     aq.shutdown().unwrap();
 }
 
+#[test]
+fn nonqueued_acknowledgment_preserves_queued_dispatch_progress_across_restart() {
+    for limit in [1, 10] {
+        for publish_before_restart in [false, true] {
+            let temp = tempfile::tempdir().unwrap();
+            let path = temp.path().join("bundle");
+            let (bundle, binding, queued) = setup(&path);
+            let tenant = binding.profile.scope.tenant.clone();
+            let mut event = bundle
+                .wi()
+                .ingress_snapshot(&tenant)
+                .unwrap()
+                .admissions
+                .values()
+                .next()
+                .unwrap()
+                .event
+                .clone();
+            event.event_id = Some("nonqueued-event".to_owned().try_into().unwrap());
+            event.offset = Some(1);
+            event.produced_at_ms = now();
+            let body = canonical_data(&event).unwrap();
+            let mut mac = Hmac::<Sha256>::new_from_slice(&[7; 32]).unwrap();
+            mac.update(&body);
+            let credential =
+                ProviderCredentials::new(binding.profile.clone(), vec![7; 32]).unwrap();
+            let event = worldinterface_ingress::transport::http::validate_http(
+                &body,
+                &mac.finalize().into_bytes(),
+                &credential,
+                now(),
+            )
+            .unwrap();
+            let nonqueued = DeliveryId::generate();
+            let admitted = Ingress::new(bundle.wi())
+                .admit_provider_event(
+                    event,
+                    vec![BindingVersion { id: binding.id.clone(), revision: binding.revision }],
+                    worldinterface_ingress::AdmissionIds {
+                        observation: ObservationId::generate(),
+                        receipt: ReceiptId::generate(),
+                        deliveries: vec![nonqueued.clone()],
+                    },
+                    now(),
+                )
+                .unwrap();
+            assert!(matches!(admitted, IngressResult::Admitted { .. }));
+            assert!(!bundle.wi().ingress_snapshot(&tenant).unwrap().queue.contains_key(&nonqueued));
+            let subscriber = AuthenticatedScope {
+                tenant: tenant.clone(),
+                principal: binding.subscriber.clone(),
+            };
+            let service = IngressRuntime::new(bundle.wi(), tenant.clone());
+            let issued = service.claim(&subscriber, &nonqueued, now()).unwrap().unwrap();
+            service.acknowledge(&subscriber, &nonqueued, &issued.token, now()).unwrap();
+            let recorder = Arc::new(Recorder::default());
+            let mut aq = ActionQueueEngine::new(
+                RuntimeConfig { data_dir: bundle.aq_path(), ..Default::default() },
+                handler(&bundle, &binding, recorder.clone()),
+            )
+            .bootstrap()
+            .unwrap()
+            .with_host(host());
+            if publish_before_restart {
+                assert_eq!(
+                    service
+                        .dispatch_pending(
+                            &mut BoundAqIngress::new(&mut aq, tenant.clone()),
+                            limit,
+                            now(),
+                        )
+                        .unwrap(),
+                    if limit == 1 { 1 } else { 2 }
+                );
+                let state = bundle.wi().ingress_snapshot(&tenant).unwrap();
+                assert_eq!(state.acknowledgments_to_signal[&nonqueued].sequence, Some(1));
+                if limit == 1 {
+                    // Acknowledgment priority uses this poll's budget, but must
+                    // neither move the queue cursor nor strand the queued delivery.
+                    assert!(state.dispatch_cursor.is_none());
+                    assert!(!state.queue[&queued].task_admitted);
+                }
+            }
+            aq.shutdown().unwrap();
+            drop(service);
+            drop(bundle);
+
+            let bundle = Arc::new(StoreBundle::open(&path).unwrap());
+            let mut aq = ActionQueueEngine::new(
+                RuntimeConfig { data_dir: bundle.aq_path(), ..Default::default() },
+                handler(&bundle, &binding, recorder.clone()),
+            )
+            .bootstrap()
+            .unwrap()
+            .with_host(host());
+            let service = IngressRuntime::new(bundle.wi(), tenant.clone());
+            for _ in 0..3 {
+                service
+                    .dispatch_pending(
+                        &mut BoundAqIngress::new(&mut aq, tenant.clone()),
+                        limit,
+                        now(),
+                    )
+                    .unwrap();
+            }
+            let state = bundle.wi().ingress_snapshot(&tenant).unwrap();
+            assert_eq!(state.acknowledgments_to_signal[&nonqueued].sequence, Some(1));
+            assert_eq!(state.deliveries[&nonqueued].state, DeliveryState::Acknowledged);
+            assert!(!state.queue.contains_key(&nonqueued));
+            assert!(state.queue[&queued].task_admitted);
+            assert_eq!(state.queue[&queued].signal_sequence, Some(2));
+            assert_eq!(state.dispatch_cursor, Some(queued.clone()));
+            let nonqueued_task =
+                TaskId::from_uuid(uuid::Uuid::parse_str(nonqueued.as_str()).unwrap());
+            assert!(aq.projection().run_ids_for_task(nonqueued_task).is_empty());
+            // Repeated acknowledgment and polling preserve both durable results.
+            service.acknowledge(&subscriber, &nonqueued, &issued.token, now()).unwrap();
+            for _ in 0..3 {
+                assert_eq!(
+                    service
+                        .dispatch_pending(
+                            &mut BoundAqIngress::new(&mut aq, tenant.clone()),
+                            limit,
+                            now(),
+                        )
+                        .unwrap(),
+                    0
+                );
+            }
+            assert_eq!(bundle.wi().ingress_snapshot(&tenant).unwrap(), state);
+            aq.shutdown().unwrap();
+        }
+    }
+}
+
 #[tokio::test]
 async fn expiration_during_ack_wait_completes_without_recovery_generation() {
     let temp = tempfile::tempdir().unwrap();

@@ -110,10 +110,12 @@ fn transact_dispatch(
         command: command.clone(),
     };
     let (new, result) = record(&tx, &e, fault)?;
-    if new.revision != state.revision {
+    if new.revision != state.revision && new.queue.contains_key(id) {
         // Retain the existing replay vocabulary. No cursor-only row is written
         // for a no-op or a fenced stale completion, and both writes roll back
-        // together if either the progress or cursor cannot be committed.
+        // together if either the progress or cursor cannot be committed. An
+        // acknowledgment or expiration can also belong to a non-queued delivery;
+        // that progress commits without changing the queue's scan position.
         let cursor = Entry {
             tenant: tenant.clone(),
             expected: new.revision,
@@ -155,8 +157,9 @@ impl StoreRoot {
     ) -> Result<IngressResult> {
         transact(&mut self.connect(StoreKind::Fabric)?, tenant, None, now, command, None, true)
     }
-    /// Commits dispatch progress and its restart scan position together. Idle
-    /// inspection remains process-local and never enters the replayed journal.
+    /// Commits dispatch progress and, for queue entries, its restart scan position
+    /// together. Non-queued progress preserves that position. Idle inspection
+    /// remains process-local and never enters the replayed journal.
     pub fn ingress_transact_dispatch(
         &self,
         tenant: &OpaqueRef,
@@ -216,6 +219,106 @@ pub(crate) fn replay(source: &Connection, target: &Connection) -> Result<()> {
 mod tests {
     use super::*;
     use worldinterface_protocol::*;
+    #[test]
+    fn nonqueued_dispatch_progress_preserves_cursor_and_replays_atomically() {
+        let binding: IngressBinding = serde_json::from_str(include_str!(
+            "../../../../conformance/wi-fabric-2/ingress/binding.json"
+        ))
+        .unwrap();
+        let tenant = binding.profile.scope.tenant.clone();
+        let id = DeliveryId::generate();
+        let queued = DeliveryId::generate();
+        let mut initial = IngressState::default();
+        initial.queue.insert(
+            queued.clone(),
+            worldinterface_domain::ingress::QueueObligation {
+                version: 1,
+                delivery: queued.clone(),
+                task_request: b"task".to_vec(),
+                signal_request: b"signal".to_vec(),
+                task_digest: ContentHash::of(b"task"),
+                signal_digest: ContentHash::of(b"signal"),
+                task_admitted: false,
+                signal_sequence: None,
+                generation: 0,
+                prior: vec![],
+            },
+        );
+        initial.dispatch_cursor = Some(queued);
+        initial.deliveries.insert(
+            id.clone(),
+            ObservationDelivery {
+                id: id.clone(),
+                observation: ObservationId::generate(),
+                binding: BindingVersion { id: binding.id, revision: binding.revision },
+                subscriber: binding.subscriber,
+                policy: binding.policy,
+                expires_at_ms: 1000,
+                state: DeliveryState::Pending,
+                attempts: vec![],
+                acknowledgment: None,
+                token_invalidated: false,
+                wake_key: "wake".to_owned().try_into().unwrap(),
+                locator: "locator".to_owned().try_into().unwrap(),
+            },
+        );
+        initial.acknowledgments_to_signal.insert(
+            id.clone(),
+            worldinterface_domain::ingress::AcknowledgmentSignal {
+                version: 1,
+                delivery: id.clone(),
+                request: b"ack".to_vec(),
+                digest: ContentHash::of(b"ack"),
+                sequence: None,
+            },
+        );
+        // Both commands are valid without a queue entry. An unrelated queued
+        // cursor must survive their success, failure, duplicate and replay paths.
+        for command in [
+            IngressCommand::RecordAcknowledgmentSignal { id: id.clone(), sequence: 1 },
+            IngressCommand::Expire { id: id.clone() },
+        ] {
+            for fault in ["history", "projection"] {
+                let mut c = Connection::open_in_memory().unwrap();
+                c.execute_batch(SCHEMA).unwrap();
+                write_state(&c, &tenant, &initial).unwrap();
+                assert!(transact_dispatch(&mut c, &tenant, 1000, &command, Some(fault)).is_err());
+                assert_eq!(snapshot(&c, &tenant).unwrap(), initial);
+                assert_eq!(
+                    c.query_row("SELECT count(*) FROM ingress_history", [], |r| r.get::<_, u64>(0))
+                        .unwrap(),
+                    0
+                );
+                transact_dispatch(&mut c, &tenant, 1000, &command, None).unwrap();
+                let committed = snapshot(&c, &tenant).unwrap();
+                assert_eq!(committed.dispatch_cursor, initial.dispatch_cursor);
+                assert_eq!(committed.queue, initial.queue);
+                assert_eq!(committed.revision, 1);
+                match &command {
+                    IngressCommand::RecordAcknowledgmentSignal { .. } => {
+                        assert_eq!(committed.acknowledgments_to_signal[&id].sequence, Some(1));
+                    }
+                    IngressCommand::Expire { .. } => {
+                        assert_eq!(committed.deliveries[&id].state, DeliveryState::Expired);
+                        assert!(committed.deliveries[&id].token_invalidated);
+                    }
+                    _ => unreachable!(),
+                }
+                transact_dispatch(&mut c, &tenant, 2000, &command, None).unwrap();
+                assert_eq!(snapshot(&c, &tenant).unwrap(), committed);
+                assert_eq!(
+                    c.query_row("SELECT count(*) FROM ingress_history", [], |r| r.get::<_, u64>(0))
+                        .unwrap(),
+                    1
+                );
+                let replayed = Connection::open_in_memory().unwrap();
+                replayed.execute_batch(SCHEMA).unwrap();
+                write_state(&replayed, &tenant, &initial).unwrap();
+                replay(&c, &replayed).unwrap();
+                assert_eq!(snapshot(&replayed, &tenant).unwrap(), committed);
+            }
+        }
+    }
     #[test]
     fn dispatch_progress_and_cursor_roll_back_together_without_idle_writes() {
         let tenant: OpaqueRef = "tenant".to_owned().try_into().unwrap();

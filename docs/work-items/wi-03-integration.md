@@ -42,8 +42,12 @@ Keep one `IngressRuntime` instance for repeated dispatch polls. Its bounded scan
 rotates in memory even when every inspected delivery is inactive or already
 waiting. Idle inspection writes neither a journal revision nor history rows.
 Actual task/signal admission, recovery, expiration and acknowledgment signaling
-commit the restart cursor in the same SQLite transaction as that progress, using
-the existing journal commands. Reopening retains that durable position; any idle
+for a queue entry commit the restart cursor in the same SQLite transaction as
+that progress, using the existing journal commands. Non-queued deliveries admitted
+through the foundation API may also be claimed and acknowledged through the
+runtime. Their acknowledgment signals and expiration commit without changing the
+queue cursor; mixed admission APIs cannot block queued dispatch. Reopening retains
+the durable position; any idle
 rotation since the last progress is repeated at most once. Acknowledgments still
 take priority over the bounded delivery scan. No schema, replay vocabulary or
 second persistence authority is introduced.
@@ -76,6 +80,8 @@ fresh independent review; this table is implementation coverage, not that review
 | WI03I-F006 | In-memory idle rotation, durable progress cursor and acknowledgment-first dispatch; small-limit inactive-prefix progress tests. |
 | WI03I-F007 | Ingress README documents the bounded authenticated exact-byte replay exception. |
 | WI03I-F008 | Idle polls leave the full ingress projection and history count unchanged before/after restart; `idle_dispatch_polls_preserve_revision_and_history_across_restart` covers three deliveries, limits 1/10, suspended/revoked/expired bindings, quarantine, invalidation, active waits, missing registration and expired deliveries, before/after initial admission. Storage fault tests roll back progress and cursor together and verify duplicate/stale completion no-ops and replay. |
+| WI03I-F009 | Queue membership conditions only the cursor write, preserving non-queued progress. `nonqueued_acknowledgment_preserves_queued_dispatch_progress_across_restart` covers both admission APIs on one store, acknowledgment priority at limits 1/10, restart before/after signaling, queued progress and duplicate no-ops. `nonqueued_dispatch_progress_preserves_cursor_and_replays_atomically` covers acknowledgment and expiration, rollback, an unrelated cursor, duplicate no-ops and replay. |
+| WI03I-F010 | Deferred host-loop integration nit: retain one runtime per tenant across polls as documented above. There is no production poller in this slice; adding one or a process-wide cursor holder is unselected follow-up. Existing small-limit restart tests verify the retained-runtime contract. |
 
 The audit covers every producer of replacement work (`dispatch_pending`), its
 journal authority (`RecoverQueue`), and retirement paths in the handler before
@@ -95,6 +101,15 @@ stale generations cannot append cursor-only history. The older standalone cursor
 command remains readable for historical replay; the dispatcher no longer emits
 it for inspection. Real progress still consumes append-only audit capacity under
 the accepted retention/backpressure policy.
+
+The mixed-admission audit covers all five commands accepted by the dispatch
+transaction. Task admission, wake admission and recovery still require a queue
+entry in the reducer. Acknowledgment signaling and expiration are also valid for
+non-queued deliveries and preserve the current cursor. The transaction observes
+membership under the same SQLite write lock as the progress command. No public
+claim or acknowledgment authority is narrowed, and the reducer continues to reject
+unknown standalone cursor entries. Queued rollback/no-op/replay and idle-poll tests
+remain required alongside the non-queued regressions.
 
 Use the supplied Cargo launcher for native runtime build/test and the AQ-free
 supplementary domain/contract checks. Run all four adopted foundation checks with
