@@ -38,6 +38,16 @@ continue to deny acknowledgment and disclosure. Retention bounds initial deliver
 waits and acknowledgment waits even when task admission commits but signal admission
 does not. The AQ retained log is not assumed to compact or reclaim identity capacity.
 
+Keep one `IngressRuntime` instance for repeated dispatch polls. Its bounded scan
+rotates in memory even when every inspected delivery is inactive or already
+waiting. Idle inspection writes neither a journal revision nor history rows.
+Actual task/signal admission, recovery, expiration and acknowledgment signaling
+commit the restart cursor in the same SQLite transaction as that progress, using
+the existing journal commands. Reopening retains that durable position; any idle
+rotation since the last progress is repeated at most once. Acknowledgments still
+take priority over the bounded delivery scan. No schema, replay vocabulary or
+second persistence authority is introduced.
+
 ## Repair coverage
 
 The following IDs preserve the handoff lineage. Candidate remediation requires
@@ -63,8 +73,9 @@ fresh independent review; this table is implementation coverage, not that review
 | WI03I-F003 | Journaled replacement generations recover terminal AQ wait-capacity failures; persistent failures now exhaust a finite budget. |
 | WI03I-F004 | Generation/digest fencing of delayed old task/signal completions. |
 | WI03I-F005 | Retention deadlines release initial waits after interrupted task/wake admission, including replacement generations and restart. |
-| WI03I-F006 | Durable scan cursor and acknowledgment-first dispatch; small-limit inactive-prefix progress tests. |
+| WI03I-F006 | In-memory idle rotation, durable progress cursor and acknowledgment-first dispatch; small-limit inactive-prefix progress tests. |
 | WI03I-F007 | Ingress README documents the bounded authenticated exact-byte replay exception. |
+| WI03I-F008 | Idle polls leave the full ingress projection and history count unchanged before/after restart; `idle_dispatch_polls_preserve_revision_and_history_across_restart` covers three deliveries, limits 1/10, suspended/revoked/expired bindings, quarantine, invalidation, active waits, missing registration and expired deliveries, before/after initial admission. Storage fault tests roll back progress and cursor together and verify duplicate/stale completion no-ops and replay. |
 
 The audit covers every producer of replacement work (`dispatch_pending`), its
 journal authority (`RecoverQueue`), and retirement paths in the handler before
@@ -75,6 +86,15 @@ exercise missing transports, deliberately mismatched registry configuration,
 tenant mismatch, repeated lifecycle churn, persistent wait-capacity failure and
 valid delayed acknowledgment. Existing replay/property, crash, expiry, token,
 audience, disclosure and dispatch-progress tests remain required.
+
+The journal-growth audit covers all dispatch write sites: acknowledgment signals,
+task completions, wake completions, terminal recovery and expiration. Only a
+mutating progress command can persist a cursor. Unchanged readiness checks,
+unregistered terminal work, established waits, duplicate completions and fenced
+stale generations cannot append cursor-only history. The older standalone cursor
+command remains readable for historical replay; the dispatcher no longer emits
+it for inspection. Real progress still consumes append-only audit capacity under
+the accepted retention/backpressure policy.
 
 Use the supplied Cargo launcher for native runtime build/test and the AQ-free
 supplementary domain/contract checks. Run all four adopted foundation checks with

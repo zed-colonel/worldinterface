@@ -15,7 +15,11 @@ use actionqueue_core::{
 };
 use actionqueue_executor_local::handler::{ExecutorContext, ExecutorHandler};
 use actionqueue_runtime::engine::BootstrappedEngine;
-use std::{collections::BTreeMap, io::Read, sync::Arc};
+use std::{
+    collections::BTreeMap,
+    io::Read,
+    sync::{Arc, Mutex},
+};
 use worldinterface_domain::ingress::{AcknowledgmentSignal, IngressResult, QueueObligation};
 use worldinterface_ingress::{
     transport::{
@@ -34,10 +38,11 @@ use worldinterface_storage::StoreRoot;
 pub struct IngressRuntime<'a> {
     root: &'a StoreRoot,
     tenant: OpaqueRef,
+    scan_cursor: Mutex<Option<DeliveryId>>,
 }
 impl<'a> IngressRuntime<'a> {
     pub fn new(root: &'a StoreRoot, tenant: OpaqueRef) -> Self {
-        Self { root, tenant }
+        Self { root, tenant, scan_cursor: Mutex::new(None) }
     }
     pub fn accept_http(
         &self,
@@ -88,6 +93,8 @@ impl<'a> IngressRuntime<'a> {
     }
     /// Replays unchanged requests. A failed local acknowledgment is always treated as
     /// possibly committed in AQ; the next call retries the same persisted bytes.
+    /// Retain this runtime across polls so idle scans rotate without journal writes.
+    /// A restart resumes after the last durable progress and may repeat one rotation.
     pub fn dispatch_pending(
         &self,
         aq: &mut impl AqIngressPort,
@@ -109,7 +116,13 @@ impl<'a> IngressRuntime<'a> {
             })
             .cloned()
             .collect();
-        if let Some(cursor) = &state.dispatch_cursor {
+        let cursor = self
+            .scan_cursor
+            .lock()
+            .map_err(|_| "dispatch cursor poisoned")?
+            .clone()
+            .or(state.dispatch_cursor.clone());
+        if let Some(cursor) = &cursor {
             let first_after = pending.partition_point(|q| &q.delivery <= cursor);
             pending.rotate_left(first_after);
         }
@@ -129,7 +142,7 @@ impl<'a> IngressRuntime<'a> {
             }
             let request: AdmitSignalRequest = serde_json::from_slice(&signal.request)?;
             let sequence = aq.admit_wake(request)?.sequence;
-            self.root.ingress_transact_fresh(
+            self.root.ingress_transact_dispatch(
                 &self.tenant,
                 now,
                 &worldinterface_domain::ingress::IngressCommand::RecordAcknowledgmentSignal {
@@ -143,16 +156,10 @@ impl<'a> IngressRuntime<'a> {
             if done >= limit || scanned >= limit - done {
                 break;
             }
-            // Persist the scan position before examining this entry. A restart
-            // continues after unchanged waits; an interrupted inspection will
-            // visit this entry again after one bounded rotation.
-            self.root.ingress_transact_fresh(
-                &self.tenant,
-                now,
-                &worldinterface_domain::ingress::IngressCommand::AdvanceDispatchCursor {
-                    id: q.delivery.clone(),
-                },
-            )?;
+            // Idle scans rotate in memory. Durable progress records its cursor
+            // atomically below; after a restart at most one rotation is repeated.
+            *self.scan_cursor.lock().map_err(|_| "dispatch cursor poisoned")? =
+                Some(q.delivery.clone());
             match reconcile_delivery(self.root, &self.tenant, &q.delivery, now)? {
                 DeliveryReadiness::Ready => {}
                 DeliveryReadiness::Closed => {
@@ -184,7 +191,7 @@ impl<'a> IngressRuntime<'a> {
                         &q.delivery,
                         q.generation.checked_add(1).ok_or("recovery generation overflow")?,
                     )?;
-                    let recovered = self.root.ingress_transact_fresh(
+                    let recovered = self.root.ingress_transact_dispatch(
                         &self.tenant,
                         now,
                         &worldinterface_domain::ingress::IngressCommand::RecoverQueue {
@@ -233,7 +240,7 @@ impl<'a> IngressRuntime<'a> {
                 let signal: AdmitSignalRequest = serde_json::from_slice(&q.signal_request)?;
                 if !q.task_admitted {
                     let _ = aq.ensure_delivery_task(task)?;
-                    let recorded = self.root.ingress_transact_fresh(
+                    let recorded = self.root.ingress_transact_dispatch(
                         &self.tenant,
                         now,
                         &worldinterface_domain::ingress::IngressCommand::RecordQueueTask {
@@ -254,7 +261,7 @@ impl<'a> IngressRuntime<'a> {
                     }
                 }
                 let sequence = aq.admit_wake(signal)?.sequence;
-                let recorded = self.root.ingress_transact_fresh(
+                let recorded = self.root.ingress_transact_dispatch(
                     &self.tenant,
                     now,
                     &worldinterface_domain::ingress::IngressCommand::RecordQueueSignal {
@@ -331,7 +338,11 @@ fn reconcile_delivery(
     let delivery = state.deliveries.get(id).ok_or("unknown delivery")?;
     let effective_now = now.max(state.last_at_ms);
     if delivery.state == DeliveryState::Pending && effective_now >= delivery.expires_at_ms {
-        Ingress::new(root).expire_delivery(tenant, id, effective_now)?;
+        root.ingress_transact_dispatch(
+            tenant,
+            effective_now,
+            &worldinterface_domain::ingress::IngressCommand::Expire { id: id.clone() },
+        )?;
     }
     Ok(readiness)
 }

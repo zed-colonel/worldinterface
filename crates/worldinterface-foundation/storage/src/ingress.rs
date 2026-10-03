@@ -45,6 +45,24 @@ fn write_state(c: &Connection, tenant: &OpaqueRef, s: &IngressState) -> Result<(
     c.execute("INSERT INTO ingress_state VALUES(?,?) ON CONFLICT(tenant) DO UPDATE SET state=excluded.state",params![tenant.as_str(),canonical_collection(s).map_err(invalid)?])?;
     Ok(())
 }
+fn record(c: &Connection, e: &Entry, fault: Option<&str>) -> Result<(IngressState, IngressResult)> {
+    let (new, result) = apply(c, e)?;
+    if new.revision != e.expected {
+        let bytes = canonical_data(e).map_err(invalid)?;
+        c.execute(
+            "INSERT INTO ingress_history(tenant,revision,entry,digest) VALUES(?,?,?,?)",
+            params![e.tenant.as_str(), new.revision, bytes, ContentHash::of(&bytes).as_str()],
+        )?;
+        if fault == Some("history") {
+            return Err(invalid("injected after ingress history"));
+        }
+        write_state(c, &e.tenant, &new)?;
+        if fault == Some("projection") {
+            return Err(invalid("injected after ingress projection"));
+        }
+    }
+    Ok((new, result))
+}
 fn transact(
     c: &mut Connection,
     tenant: &OpaqueRef,
@@ -63,20 +81,46 @@ fn transact(
     }
     let e =
         Entry { tenant: tenant.clone(), expected: revision, at_ms: now, command: command.clone() };
-    let (new, result) = apply(&tx, &e)?;
-    if new.revision != revision {
-        let bytes = canonical_data(&e).map_err(invalid)?;
-        tx.execute(
-            "INSERT INTO ingress_history(tenant,revision,entry,digest) VALUES(?,?,?,?)",
-            params![tenant.as_str(), new.revision, bytes, ContentHash::of(&bytes).as_str()],
-        )?;
-        if fault == Some("history") {
-            return Err(invalid("injected after ingress history"));
-        }
-        write_state(&tx, tenant, &new)?;
-        if fault == Some("projection") {
-            return Err(invalid("injected after ingress projection"));
-        }
+    let (_, result) = record(&tx, &e, fault)?;
+    tx.commit()?;
+    Ok(result)
+}
+fn transact_dispatch(
+    c: &mut Connection,
+    tenant: &OpaqueRef,
+    now: u64,
+    command: &IngressCommand,
+    fault: Option<&str>,
+) -> Result<IngressResult> {
+    let id = match command {
+        IngressCommand::RecordQueueTask { id, .. }
+        | IngressCommand::RecordQueueSignal { id, .. }
+        | IngressCommand::RecoverQueue { id, .. }
+        | IngressCommand::RecordAcknowledgmentSignal { id, .. }
+        | IngressCommand::Expire { id } => id,
+        _ => return Err(invalid("command is not dispatch progress")),
+    };
+    let tx = c.transaction_with_behavior(TransactionBehavior::Immediate)?;
+    let state = snapshot(&tx, tenant)?;
+    let now = now.max(state.last_at_ms);
+    let e = Entry {
+        tenant: tenant.clone(),
+        expected: state.revision,
+        at_ms: now,
+        command: command.clone(),
+    };
+    let (new, result) = record(&tx, &e, fault)?;
+    if new.revision != state.revision {
+        // Retain the existing replay vocabulary. No cursor-only row is written
+        // for a no-op or a fenced stale completion, and both writes roll back
+        // together if either the progress or cursor cannot be committed.
+        let cursor = Entry {
+            tenant: tenant.clone(),
+            expected: new.revision,
+            at_ms: now,
+            command: IngressCommand::AdvanceDispatchCursor { id: id.clone() },
+        };
+        record(&tx, &cursor, fault.and_then(|f| f.strip_prefix("cursor-")))?;
     }
     tx.commit()?;
     Ok(result)
@@ -110,6 +154,16 @@ impl StoreRoot {
         command: &IngressCommand,
     ) -> Result<IngressResult> {
         transact(&mut self.connect(StoreKind::Fabric)?, tenant, None, now, command, None, true)
+    }
+    /// Commits dispatch progress and its restart scan position together. Idle
+    /// inspection remains process-local and never enters the replayed journal.
+    pub fn ingress_transact_dispatch(
+        &self,
+        tenant: &OpaqueRef,
+        now: u64,
+        command: &IngressCommand,
+    ) -> Result<IngressResult> {
+        transact_dispatch(&mut self.connect(StoreKind::Fabric)?, tenant, now, command, None)
     }
     pub fn ingress_transact_fresh_expected(
         &self,
@@ -162,6 +216,88 @@ pub(crate) fn replay(source: &Connection, target: &Connection) -> Result<()> {
 mod tests {
     use super::*;
     use worldinterface_protocol::*;
+    #[test]
+    fn dispatch_progress_and_cursor_roll_back_together_without_idle_writes() {
+        let tenant: OpaqueRef = "tenant".to_owned().try_into().unwrap();
+        let id = DeliveryId::generate();
+        let task_digest = ContentHash::of(b"task");
+        let mut initial = IngressState::default();
+        initial.queue.insert(
+            id.clone(),
+            worldinterface_domain::ingress::QueueObligation {
+                version: 1,
+                delivery: id.clone(),
+                task_request: b"task".to_vec(),
+                signal_request: b"signal".to_vec(),
+                task_digest: task_digest.clone(),
+                signal_digest: ContentHash::of(b"signal"),
+                task_admitted: false,
+                signal_sequence: None,
+                generation: 0,
+                prior: vec![],
+            },
+        );
+        let other = DeliveryId::generate();
+        let mut other_queue = initial.queue[&id].clone();
+        other_queue.delivery = other.clone();
+        initial.queue.insert(other.clone(), other_queue);
+        let command = IngressCommand::RecordQueueTask {
+            id: id.clone(),
+            generation: 0,
+            task_digest: task_digest.clone(),
+        };
+        for fault in ["history", "projection", "cursor-history", "cursor-projection"] {
+            let mut c = Connection::open_in_memory().unwrap();
+            c.execute_batch(SCHEMA).unwrap();
+            write_state(&c, &tenant, &initial).unwrap();
+            assert!(transact_dispatch(&mut c, &tenant, 1000, &command, Some(fault)).is_err());
+            assert_eq!(snapshot(&c, &tenant).unwrap(), initial);
+            assert_eq!(
+                c.query_row("SELECT count(*) FROM ingress_history", [], |r| r.get::<_, u64>(0))
+                    .unwrap(),
+                0
+            );
+            transact_dispatch(&mut c, &tenant, 1000, &command, None).unwrap();
+            let committed = snapshot(&c, &tenant).unwrap();
+            assert!(committed.queue[&id].task_admitted);
+            assert_eq!(committed.dispatch_cursor, Some(id.clone()));
+            assert_eq!(committed.revision, 2);
+            transact(
+                &mut c,
+                &tenant,
+                None,
+                1000,
+                &IngressCommand::AdvanceDispatchCursor { id: other.clone() },
+                None,
+                true,
+            )
+            .unwrap();
+            let committed = snapshot(&c, &tenant).unwrap();
+            // Neither duplicate nor generation-fenced completions write a cursor.
+            transact_dispatch(&mut c, &tenant, 2000, &command, None).unwrap();
+            let stale = IngressCommand::RecordQueueTask {
+                id: id.clone(),
+                generation: 1,
+                task_digest: task_digest.clone(),
+            };
+            assert_eq!(
+                transact_dispatch(&mut c, &tenant, 2000, &stale, None).unwrap(),
+                IngressResult::StaleQueueGeneration
+            );
+            assert_eq!(snapshot(&c, &tenant).unwrap(), committed);
+            assert_eq!(
+                c.query_row("SELECT count(*) FROM ingress_history", [], |r| r.get::<_, u64>(0))
+                    .unwrap(),
+                3
+            );
+            // Existing command bytes replay to the identical projection.
+            let replayed = Connection::open_in_memory().unwrap();
+            replayed.execute_batch(SCHEMA).unwrap();
+            write_state(&replayed, &tenant, &initial).unwrap();
+            replay(&c, &replayed).unwrap();
+            assert_eq!(snapshot(&replayed, &tenant).unwrap(), committed);
+        }
+    }
     #[test]
     fn ingress_journal_and_projection_faults_roll_back_together() {
         // Exercise a real binding transaction through each physical write boundary.

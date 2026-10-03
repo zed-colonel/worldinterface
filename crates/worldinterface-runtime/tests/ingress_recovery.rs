@@ -1066,6 +1066,222 @@ async fn newly_quarantined_required_content_retires_aq_until_release() {
 }
 
 #[tokio::test]
+async fn idle_dispatch_polls_preserve_revision_and_history_across_restart() {
+    for mode in [
+        "suspended",
+        "revoked",
+        "binding-expired",
+        "quarantined",
+        "invalidated",
+        "waiting",
+        "unregistered",
+        "expired",
+    ] {
+        for admit_first in [false, true] {
+            if mode == "quarantined" && admit_first {
+                continue;
+            }
+            let temp = tempfile::tempdir().unwrap();
+            let path = temp.path().join("bundle");
+            let (bundle, binding, _) = setup_with_event_quarantine(
+                &path,
+                30_000,
+                2_000_000,
+                1_000_000,
+                mode == "quarantined",
+            );
+            let tenant = binding.profile.scope.tenant.clone();
+            let mut event = bundle
+                .wi()
+                .ingress_snapshot(&tenant)
+                .unwrap()
+                .admissions
+                .values()
+                .next()
+                .unwrap()
+                .event
+                .clone();
+            let credential =
+                ProviderCredentials::new(binding.profile.clone(), vec![7; 32]).unwrap();
+            let service = IngressRuntime::new(bundle.wi(), tenant.clone());
+            for offset in 1..3 {
+                event.event_id = Some(format!("idle-event-{offset}").try_into().unwrap());
+                event.offset = Some(offset);
+                let body = canonical_data(&event).unwrap();
+                let mut mac = Hmac::<Sha256>::new_from_slice(&[7; 32]).unwrap();
+                mac.update(&body);
+                service
+                    .accept_http(&credential, &body, &mac.finalize().into_bytes(), now())
+                    .unwrap();
+            }
+            let recorder = Arc::new(Recorder::default());
+            let delivery_handler = if mode == "unregistered" {
+                IngressDeliveryHandler::with_subscribers(bundle.clone(), tenant.clone(), [])
+            } else {
+                handler(&bundle, &binding, recorder.clone())
+            };
+            let registry = delivery_handler.subscriber_registry();
+            let mut aq = ActionQueueEngine::new(
+                RuntimeConfig { data_dir: bundle.aq_path(), ..Default::default() },
+                delivery_handler,
+            )
+            .bootstrap()
+            .unwrap()
+            .with_host(host());
+            if admit_first {
+                assert_eq!(
+                    service
+                        .dispatch_pending(
+                            &mut BoundAqIngress::new(&mut aq, tenant.clone())
+                                .with_subscriber_registry(registry.clone()),
+                            10,
+                            now(),
+                        )
+                        .unwrap(),
+                    3
+                );
+            }
+            if mode == "suspended" || mode == "revoked" {
+                Ingress::new(bundle.wi())
+                    .change_binding(
+                        &AuthenticatedScope {
+                            tenant: tenant.clone(),
+                            principal: binding.principal.clone(),
+                        },
+                        &BindingVersion { id: binding.id.clone(), revision: 1 },
+                        if mode == "suspended" {
+                            BindingStatus::Suspended
+                        } else {
+                            BindingStatus::Revoked
+                        },
+                        now(),
+                    )
+                    .unwrap();
+            }
+            if mode == "invalidated" {
+                for id in bundle.wi().ingress_snapshot(&tenant).unwrap().queue.keys() {
+                    Ingress::new(bundle.wi())
+                        .invalidate_token(
+                            &AuthenticatedScope {
+                                tenant: tenant.clone(),
+                                principal: binding.principal.clone(),
+                            },
+                            id,
+                            now(),
+                        )
+                        .unwrap();
+                }
+            }
+            let poll_at = match mode {
+                "binding-expired" => binding.expires_at_ms,
+                "expired" => bundle
+                    .wi()
+                    .ingress_snapshot(&tenant)
+                    .unwrap()
+                    .deliveries
+                    .values()
+                    .map(|d| d.expires_at_ms)
+                    .max()
+                    .unwrap(),
+                _ => now(),
+            };
+            // Establish waits/retirement/expiry before measuring unchanged polls.
+            service
+                .dispatch_pending(
+                    &mut BoundAqIngress::new(&mut aq, tenant.clone())
+                        .with_subscriber_registry(registry.clone()),
+                    10,
+                    poll_at,
+                )
+                .unwrap();
+            if mode != "binding-expired" && mode != "expired" {
+                let _ = aq.run_until_idle().await.unwrap();
+            }
+            let baseline = bundle.wi().ingress_snapshot(&tenant).unwrap();
+            assert_eq!(baseline.queue.len(), 3);
+            let calls = recorder.0.lock().unwrap().len();
+            if mode != "waiting" {
+                assert_eq!(calls, 0, "{mode}, admit_first={admit_first}");
+            }
+            let history_count = || {
+                let c = rusqlite::Connection::open_with_flags(
+                    path.join("wi/fabric.sqlite"),
+                    rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY,
+                )
+                .unwrap();
+                c.query_row("SELECT count(*) FROM ingress_history", [], |r| r.get::<_, u64>(0))
+                    .unwrap()
+            };
+            let history = history_count();
+            for limit in [1, 10] {
+                for _ in 0..50 {
+                    assert_eq!(
+                        service
+                            .dispatch_pending(
+                                &mut BoundAqIngress::new(&mut aq, tenant.clone())
+                                    .with_subscriber_registry(registry.clone()),
+                                limit,
+                                poll_at,
+                            )
+                            .unwrap(),
+                        0
+                    );
+                }
+            }
+            assert_eq!(
+                bundle.wi().ingress_snapshot(&tenant).unwrap(),
+                baseline,
+                "{mode}, admit_first={admit_first}"
+            );
+            assert_eq!(history_count(), history);
+            aq.shutdown().unwrap();
+            drop(service);
+            drop(bundle);
+
+            let bundle = Arc::new(StoreBundle::open(&path).unwrap());
+            assert_eq!(bundle.wi().ingress_snapshot(&tenant).unwrap(), baseline);
+            let delivery_handler = if mode == "unregistered" {
+                IngressDeliveryHandler::with_subscribers(bundle.clone(), tenant.clone(), [])
+            } else {
+                handler(&bundle, &binding, recorder.clone())
+            };
+            let registry = delivery_handler.subscriber_registry();
+            let mut aq = ActionQueueEngine::new(
+                RuntimeConfig { data_dir: bundle.aq_path(), ..Default::default() },
+                delivery_handler,
+            )
+            .bootstrap()
+            .unwrap()
+            .with_host(host());
+            let service = IngressRuntime::new(bundle.wi(), tenant.clone());
+            for limit in [1, 10] {
+                for _ in 0..50 {
+                    assert_eq!(
+                        service
+                            .dispatch_pending(
+                                &mut BoundAqIngress::new(&mut aq, tenant.clone())
+                                    .with_subscriber_registry(registry.clone()),
+                                limit,
+                                poll_at,
+                            )
+                            .unwrap(),
+                        0
+                    );
+                }
+            }
+            assert_eq!(
+                bundle.wi().ingress_snapshot(&tenant).unwrap(),
+                baseline,
+                "reopened {mode}, admit_first={admit_first}"
+            );
+            assert_eq!(history_count(), history);
+            assert_eq!(recorder.0.lock().unwrap().len(), calls);
+            aq.shutdown().unwrap();
+        }
+    }
+}
+
+#[tokio::test]
 async fn small_dispatch_limit_skips_waiting_prefix_and_publishes_ack_after_restart() {
     small_dispatch_limit_progress_for(BindingStatus::Suspended).await;
 }
@@ -1148,7 +1364,22 @@ async fn small_dispatch_limit_progress_for(inactive_status: BindingStatus) {
             .unwrap(),
         0
     );
-    assert_eq!(bundle.wi().ingress_snapshot(&tenant).unwrap().dispatch_cursor, Some(first.clone()));
+    // Inactive inspection advances only the service's memory cursor.
+    assert!(bundle.wi().ingress_snapshot(&tenant).unwrap().dispatch_cursor.is_none());
+    aq.shutdown().unwrap();
+    drop(service);
+    drop(bundle);
+    // A restart may repeat the inactive prefix once, then a bounded rotation
+    // still reaches ready work without any cursor-only journal writes.
+    let bundle = Arc::new(StoreBundle::open(&path).unwrap());
+    let mut aq = ActionQueueEngine::new(
+        RuntimeConfig { data_dir: bundle.aq_path(), ..Default::default() },
+        handler(&bundle, &binding, recorder.clone()),
+    )
+    .bootstrap()
+    .unwrap()
+    .with_host(host());
+    let service = IngressRuntime::new(bundle.wi(), tenant.clone());
     for _ in 0..3 {
         let _ = service
             .dispatch_pending(&mut BoundAqIngress::new(&mut aq, tenant.clone()), 1, now())
@@ -1156,6 +1387,7 @@ async fn small_dispatch_limit_progress_for(inactive_status: BindingStatus) {
     }
     let state = bundle.wi().ingress_snapshot(&tenant).unwrap();
     assert!(state.queue[&ready].signal_sequence.is_some());
+    assert!(state.dispatch_cursor.is_some());
     assert!(state.queue[&first].signal_sequence.is_none());
     assert_eq!(state.queue[&first].generation, 0);
     let _ = aq.run_until_idle().await.unwrap();
