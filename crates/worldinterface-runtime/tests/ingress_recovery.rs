@@ -2316,6 +2316,159 @@ async fn terminal_wait_capacity_recovers_from_journaled_generation() {
     StoreBundle::open(&path).unwrap();
 }
 
+#[tokio::test]
+async fn previously_journaled_generation_wake_is_reused_without_migration_after_restart() {
+    use actionqueue_core::{
+        admission::EnsureTaskRequest,
+        continuation::{AdmitSignalRequest, SignalKind, SignalNamespace},
+        ids::{CorrelationId, SignalId},
+        task::{
+            constraints::TaskConstraints,
+            metadata::TaskMetadata,
+            run_policy::RunPolicy,
+            task_spec::{TaskPayload, TaskSpec},
+        },
+    };
+    let temp = tempfile::tempdir().unwrap();
+    let path = temp.path().join("bundle");
+    let (bundle, binding, id) = setup(&path);
+    let tenant = binding.profile.scope.tenant.clone();
+    let recorder = Arc::new(Recorder::default());
+    let mut aq = ActionQueueEngine::new(
+        RuntimeConfig {
+            data_dir: bundle.aq_path(),
+            continuation_limits: ContinuationLimits { active_waits: 0, ..Default::default() },
+            ..Default::default()
+        },
+        handler(&bundle, &binding, recorder.clone()),
+    )
+    .bootstrap()
+    .unwrap()
+    .with_host(host());
+    let service = IngressRuntime::new(bundle.wi(), tenant.clone());
+    service.dispatch_pending(&mut BoundAqIngress::new(&mut aq, tenant.clone()), 10, now()).unwrap();
+    let _ = aq.run_until_idle().await.unwrap();
+    let original_task = TaskId::from_uuid(uuid::Uuid::parse_str(id.as_str()).unwrap());
+    let original_run = aq.projection().run_ids_for_task(original_task)[0];
+    assert_eq!(
+        aq.get_run(original_run).unwrap().state,
+        actionqueue_core::run::state::RunState::Failed
+    );
+    // Reconstruct the former generation-1 producer's persisted request shape
+    // using public AQ requests, then replay it through the real journal and AQ.
+    let digest = <Sha256 as sha2::Digest>::digest(
+        format!("wi-delivery-recovery-v1:{}:1", id.as_str()).as_bytes(),
+    );
+    let mut task_bytes = [0u8; 16];
+    task_bytes.copy_from_slice(&digest[..16]);
+    task_bytes[6] = (task_bytes[6] & 0x0f) | 0x50;
+    task_bytes[8] = (task_bytes[8] & 0x3f) | 0x80;
+    let task_id = TaskId::from_uuid(uuid::Uuid::from_bytes(task_bytes));
+    let mut constraints = TaskConstraints::default();
+    constraints.set_max_attempts(100).unwrap();
+    let spec = TaskSpec::new(
+        task_id,
+        TaskPayload::with_content_type(
+            format!("delivery:{}", id.as_str()).into_bytes(),
+            "application/vnd.worldinterface.delivery+json;version=1",
+        ),
+        RunPolicy::Once,
+        constraints,
+        TaskMetadata::default(),
+    )
+    .unwrap();
+    let task_request =
+        serde_json::to_vec(&EnsureTaskRequest::for_task(spec, vec![]).unwrap()).unwrap();
+    let signal_request = serde_json::to_vec(
+        &AdmitSignalRequest::new(
+            SignalId::new(format!("wi-delivery-{}-1", id.as_str())).unwrap(),
+            SignalNamespace::new("wi_ingress").unwrap(),
+            SignalKind::new("delivery").unwrap(),
+            Some(CorrelationId::new(format!("task/{task_id}")).unwrap()),
+            None,
+            Some(AqRef::new(format!("delivery:{}", id.as_str())).unwrap()),
+            None,
+            None,
+            None,
+        )
+        .unwrap(),
+    )
+    .unwrap();
+    let prior_request = signal_request.clone();
+    bundle
+        .wi()
+        .ingress_transact_dispatch(
+            &tenant,
+            now(),
+            &worldinterface_domain::ingress::IngressCommand::RecoverQueue {
+                id: id.clone(),
+                expected_generation: 0,
+                replacement: Box::new(worldinterface_domain::ingress::QueueObligation {
+                    version: 1,
+                    delivery: id.clone(),
+                    generation: 1,
+                    task_digest: ContentHash::of(&task_request),
+                    task_request,
+                    signal_digest: ContentHash::of(&signal_request),
+                    signal_request,
+                    task_admitted: false,
+                    signal_sequence: None,
+                    prior: vec![],
+                }),
+            },
+        )
+        .unwrap();
+    service.dispatch_pending(&mut BoundAqIngress::new(&mut aq, tenant.clone()), 10, now()).unwrap();
+    let _ = aq.run_until_idle().await.unwrap();
+    assert_eq!(aq.signal_statistics().retained, 2);
+    let resident_bytes = aq.signal_statistics().bytes;
+    let prior_run = aq.projection().run_ids_for_task(task_id)[0];
+    assert_eq!(
+        aq.get_run(prior_run).unwrap().state,
+        actionqueue_core::run::state::RunState::Failed
+    );
+    aq.shutdown().unwrap();
+    drop(service);
+    drop(bundle);
+
+    let bundle = Arc::new(StoreBundle::open(&path).unwrap());
+    let delivery_handler = handler(&bundle, &binding, recorder.clone());
+    let registry = delivery_handler.subscriber_registry();
+    let mut aq = ActionQueueEngine::new(
+        RuntimeConfig { data_dir: bundle.aq_path(), ..Default::default() },
+        delivery_handler,
+    )
+    .bootstrap()
+    .unwrap()
+    .with_host(host());
+    let service = IngressRuntime::new(bundle.wi(), tenant.clone());
+    assert_eq!(
+        service
+            .dispatch_pending(
+                &mut BoundAqIngress::new(&mut aq, tenant.clone())
+                    .with_subscriber_registry(registry),
+                10,
+                now()
+            )
+            .unwrap(),
+        1
+    );
+    let _ = aq.run_until_idle().await.unwrap();
+    let state = bundle.wi().ingress_snapshot(&tenant).unwrap();
+    let q = &state.queue[&id];
+    assert_eq!(q.generation, 2);
+    assert_eq!(q.signal_request, prior_request);
+    assert_eq!(q.signal_sequence, Some(2));
+    assert_eq!(q.prior[1].signal_request, prior_request);
+    assert_eq!(q.prior[0].signal_sequence, Some(1));
+    assert_eq!(aq.signal_statistics().retained, 2);
+    assert_eq!(aq.signal_statistics().bytes, resident_bytes);
+    assert_eq!(recorder.0.lock().unwrap().as_slice(), std::slice::from_ref(&id));
+    aq.shutdown().unwrap();
+    drop(bundle);
+    StoreBundle::open(&path).unwrap();
+}
+
 // Reproduce a paused generation-0 dispatch completion after another dispatcher
 // records that completion, observes terminal AQ failure, and journals generation 1.
 struct PauseRecoveryWake<'a> {

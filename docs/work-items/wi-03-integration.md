@@ -36,9 +36,11 @@ AQ signal sequence. The initial wait reads its correlation from that request,
 including requests journaled by earlier versions, rather than deriving it from
 the replacement task ID. AQ signals are non-consuming; each task uses the wake
 once to reload WI authority, then waits for acknowledgment with a separate kind
-and correlation. Recovery therefore retains one delivery signal per logical
-delivery, independent of the generation budget. An acknowledgment retains at
-most one additional signal. Identity and byte consumption still obey AQ's
+and correlation. A newly admitted delivery therefore retains one delivery signal,
+independent of the generation budget. Already admitted signals from earlier
+versions remain resident; subsequent recovery reuses the current journaled wake
+and adds no further identities. An acknowledgment retains at most one additional
+signal. Identity and byte consumption still obey AQ's
 lifetime capacity/backpressure policy; retirement does not reclaim that capacity.
 An interrupted duplicate wake dispatch can already resume a replacement from
 the retained signal, while local completion remains generation-fenced. If a
@@ -111,8 +113,11 @@ audience, disclosure and dispatch-progress tests remain required.
 
 The signal-capacity audit covers initial admission, all terminal recovery causes,
 interrupted task/wake completion, old dispatch completion races and delayed
-acknowledgment. Replacements preserve the current persisted wake, so historical
-generations remain replayable and new recovery cannot add signal identities.
+acknowledgment. `previously_journaled_generation_wake_is_reused_without_migration_after_restart`
+replays an earlier generation-specific wake through the real journal and AQ,
+then verifies constant resident signal identities/bytes and delivery after restart.
+Replacements preserve the current persisted wake, so historical generations remain
+replayable and new recovery cannot add signal identities.
 Generation checks remain necessary even when signal bytes/digests are equal.
 Fresh task identities and bounded prior lineage still consume AQ task/journal
 capacity; this fix preserves their accepted per-delivery bound. Re-arming the

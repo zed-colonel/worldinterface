@@ -9468,7 +9468,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-runtime/tests/ingress_recovery.rs",
     "name": "crates/worldinterface-runtime/tests/ingress_recovery.rs",
-    "source_sha256": "dd423b3d1ea91459ef0a10d0b7c14420ee9778a2a96328924045f740ce592856",
+    "source_sha256": "55916c85a945d2147c76006633c0be8f0d206be567b19f45e772f6d30b1c9efe",
     "conditions": [],
     "registration_sites": []
   },
@@ -9477,7 +9477,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/ingress_recovery.rs",
     "name": "Authority",
-    "source_sha256": "dd423b3d1ea91459ef0a10d0b7c14420ee9778a2a96328924045f740ce592856",
+    "source_sha256": "55916c85a945d2147c76006633c0be8f0d206be567b19f45e772f6d30b1c9efe",
     "conditions": [],
     "registration_sites": []
   },
@@ -9486,7 +9486,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/ingress_recovery.rs",
     "name": "ConcurrentWriter",
-    "source_sha256": "dd423b3d1ea91459ef0a10d0b7c14420ee9778a2a96328924045f740ce592856",
+    "source_sha256": "55916c85a945d2147c76006633c0be8f0d206be567b19f45e772f6d30b1c9efe",
     "conditions": [],
     "registration_sites": []
   },
@@ -9495,7 +9495,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/ingress_recovery.rs",
     "name": "DelayedOldCompletion",
-    "source_sha256": "dd423b3d1ea91459ef0a10d0b7c14420ee9778a2a96328924045f740ce592856",
+    "source_sha256": "55916c85a945d2147c76006633c0be8f0d206be567b19f45e772f6d30b1c9efe",
     "conditions": [],
     "registration_sites": []
   },
@@ -9504,7 +9504,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/ingress_recovery.rs",
     "name": "DelayedOldTaskCompletion",
-    "source_sha256": "dd423b3d1ea91459ef0a10d0b7c14420ee9778a2a96328924045f740ce592856",
+    "source_sha256": "55916c85a945d2147c76006633c0be8f0d206be567b19f45e772f6d30b1c9efe",
     "conditions": [],
     "registration_sites": []
   },
@@ -9513,7 +9513,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/ingress_recovery.rs",
     "name": "DurableStop",
-    "source_sha256": "dd423b3d1ea91459ef0a10d0b7c14420ee9778a2a96328924045f740ce592856",
+    "source_sha256": "55916c85a945d2147c76006633c0be8f0d206be567b19f45e772f6d30b1c9efe",
     "conditions": [],
     "registration_sites": []
   },
@@ -9522,7 +9522,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/ingress_recovery.rs",
     "name": "InterruptedWake",
-    "source_sha256": "dd423b3d1ea91459ef0a10d0b7c14420ee9778a2a96328924045f740ce592856",
+    "source_sha256": "55916c85a945d2147c76006633c0be8f0d206be567b19f45e772f6d30b1c9efe",
     "conditions": [],
     "registration_sites": []
   },
@@ -9531,7 +9531,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/ingress_recovery.rs",
     "name": "PauseRecoveryWake",
-    "source_sha256": "dd423b3d1ea91459ef0a10d0b7c14420ee9778a2a96328924045f740ce592856",
+    "source_sha256": "55916c85a945d2147c76006633c0be8f0d206be567b19f45e772f6d30b1c9efe",
     "conditions": [],
     "registration_sites": []
   },
@@ -9540,7 +9540,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/ingress_recovery.rs",
     "name": "Recorder",
-    "source_sha256": "dd423b3d1ea91459ef0a10d0b7c14420ee9778a2a96328924045f740ce592856",
+    "source_sha256": "55916c85a945d2147c76006633c0be8f0d206be567b19f45e772f6d30b1c9efe",
     "conditions": [],
     "registration_sites": []
   },
