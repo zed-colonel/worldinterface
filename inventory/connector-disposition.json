@@ -1264,7 +1264,7 @@
         },
         {
           "path": "docs/work-items/wi-03-integration.md",
-          "source_sha256": "f3369200b516f5e529335e459d22704265200a7119ba7cf4bef09f4404fba1c6",
+          "source_sha256": "6870759f13697b76e3c476308ab2624a2a55dd5f4f5d0a29680b3851b4990815",
           "treatment": "Retain ingress recovery and acknowledgment documentation; audit shared references before later selective connector removal."
         },
         {
