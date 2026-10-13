@@ -1,0 +1,165 @@
+{
+  "version": 1,
+  "checks": [
+    {
+      "id": "foundation-fmt",
+      "argv": [
+        "cargo",
+        "fmt",
+        "--manifest-path",
+        "crates/worldinterface-foundation/Cargo.toml",
+        "--all",
+        "--",
+        "--check"
+      ],
+      "definitionPaths": [
+        "rustfmt.toml",
+        ".cargo/config.toml",
+        "fixtures/pre-wi-fabric-2/source/rust-toolchain.toml",
+        "rust-toolchain.toml"
+      ]
+    },
+    {
+      "id": "foundation-clippy",
+      "argv": [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--manifest-path",
+        "crates/worldinterface-foundation/Cargo.toml",
+        "--workspace",
+        "--all-targets",
+        "--all-features",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "definitionPaths": [
+        "clippy.toml",
+        ".cargo/config.toml",
+        "fixtures/pre-wi-fabric-2/source/rust-toolchain.toml",
+        "rust-toolchain.toml"
+      ]
+    },
+    {
+      "id": "foundation-test",
+      "argv": [
+        "env",
+        "PROPTEST_DISABLE_FAILURE_PERSISTENCE=1",
+        "cargo",
+        "test",
+        "--locked",
+        "--manifest-path",
+        "crates/worldinterface-foundation/Cargo.toml",
+        "--workspace",
+        "--all-features"
+      ],
+      "definitionPaths": [
+        ".cargo/config.toml",
+        "fixtures/pre-wi-fabric-2/source/rust-toolchain.toml",
+        "rust-toolchain.toml"
+      ]
+    },
+    {
+      "id": "foundation-isolation",
+      "argv": [
+        "bash",
+        "-c",
+        "cargo metadata --locked --manifest-path crates/worldinterface-foundation/Cargo.toml --all-features --format-version 1 > \"$TMPDIR/metadata.json\" && python3 scripts/check-wi-domain-isolation.py \"$TMPDIR/metadata.json\""
+      ],
+      "definitionPaths": [
+        "scripts/check-wi-domain-isolation.py",
+        ".cargo/config.toml",
+        "fixtures/pre-wi-fabric-2/source/rust-toolchain.toml",
+        "rust-toolchain.toml"
+      ]
+    },
+    {
+      "id": "runtime-fmt",
+      "argv": [
+        "cargo",
+        "fmt",
+        "--manifest-path",
+        "crates/worldinterface-runtime/Cargo.toml",
+        "--",
+        "--check"
+      ],
+      "definitionPaths": [
+        "rustfmt.toml",
+        ".cargo/config.toml",
+        "fixtures/pre-wi-fabric-2/source/rust-toolchain.toml",
+        "rust-toolchain.toml"
+      ]
+    },
+    {
+      "id": "runtime-clippy",
+      "argv": [
+        "cargo",
+        "clippy",
+        "--locked",
+        "--manifest-path",
+        "crates/worldinterface-runtime/Cargo.toml",
+        "--all-targets",
+        "--",
+        "-D",
+        "warnings"
+      ],
+      "definitionPaths": [
+        "clippy.toml",
+        ".cargo/config.toml",
+        "fixtures/pre-wi-fabric-2/source/rust-toolchain.toml",
+        "rust-toolchain.toml"
+      ]
+    },
+    {
+      "id": "runtime-test",
+      "argv": [
+        "env",
+        "PROPTEST_DISABLE_FAILURE_PERSISTENCE=1",
+        "cargo",
+        "test",
+        "--locked",
+        "--manifest-path",
+        "crates/worldinterface-runtime/Cargo.toml"
+      ],
+      "definitionPaths": [
+        ".cargo/config.toml",
+        "fixtures/pre-wi-fabric-2/source/rust-toolchain.toml",
+        "rust-toolchain.toml"
+      ]
+    },
+    {
+      "id": "runtime-aq-graph",
+      "argv": [
+        "bash",
+        "-c",
+        "cargo metadata --locked --manifest-path crates/worldinterface-runtime/Cargo.toml --format-version 1 > \"$TMPDIR/runtime-metadata.json\" && python3 scripts/check-wi-integration.py \"$TMPDIR/runtime-metadata.json\" crates/worldinterface-runtime/Cargo.lock"
+      ],
+      "definitionPaths": [
+        "scripts/check-wi-integration.py",
+        "contracts/aq-integration-target.json",
+        ".cargo/config.toml",
+        "fixtures/pre-wi-fabric-2/source/rust-toolchain.toml",
+        "rust-toolchain.toml"
+      ]
+    },
+    {
+      "id": "contract-check",
+      "argv": [
+        "cargo",
+        "run",
+        "--locked",
+        "--manifest-path",
+        "tools/wi-contract-check/Cargo.toml",
+        "--",
+        "all",
+        "check"
+      ],
+      "definitionPaths": [
+        ".cargo/config.toml",
+        "fixtures/pre-wi-fabric-2/source/rust-toolchain.toml",
+        "rust-toolchain.toml"
+      ]
+    }
+  ]
+}

@@ -30,20 +30,22 @@ and embedded host surfaces.
 
 ## Verification
 
-- Active WI-02/WI-03/WI-04 integration: run `scripts/check-wi-integration.sh` through
-  `ct-check`, and `wi-integration.yml` through `ct-act`. Run domain and contract
-  checks as well. Select Rust 1.89.0. Foundation remains an independent AQ-free
-  workspace. Use the updated controller Cargo launcher for all native checks:
-  it records AQ-free domain/contract graphs as supplementary checks. Those
-  receipts do not satisfy the separate current-upstream build/test requirement;
-  integration must still build/test against the exact supplied AQ pins. CI uses
-  the supplied explicit Cargo config. No native explicit-config bypass is needed.
-- Active WI-FABRIC-2 domain slice: run `scripts/check-wi-domain.sh` and
-  `scripts/check-wi-contract.sh` through the supplied `ct-check`; run the
-  `wi-domain.yml` domain job through `ct-act`. Use the controller Cargo launcher
-  natively and its explicit Cargo config inside CI. Foundation is an independent
-  workspace at `crates/worldinterface-foundation`; never resolve the historical
-  runtime to satisfy a scoped check. These checks do not prove AQ integration.
+- Since 2026-10-13 WorldInterface is developed as single-application work, outside the
+  former cross-project map: there is no controller Cargo launcher, `ct-act`, `ct-native`
+  or supplied AQ pin. ActionQueue comes from crates.io at 0.2.0 (the published crates
+  match `contracts/aq-integration-target.json`'s `published_release`); never path- or
+  patch-override AQ. Run `cargo fetch` first when dependencies must be downloaded.
+- Before review, run the checks CraftingTable will run from `.craftingtable/checks.json`
+  (offline, in a private clone of the reviewed commit). With Rust 1.89.0:
+  - `scripts/check-wi-domain.sh`: the AQ-free foundation workspace
+    (`crates/worldinterface-foundation`): format, Clippy, build, test, domain isolation.
+  - `scripts/check-wi-integration.sh`: the runtime (`crates/worldinterface-runtime`, its
+    own workspace and lock): format, Clippy, build, test, and the resolved-graph check
+    that AQ is crates.io 0.2.0 with the published checksums.
+  - `scripts/check-wi-contract.sh`: the contract tool (`tools/wi-contract-check`).
+  `CARGO_TARGET_DIR` and `TMPDIR` must be outside the worktree; they default under
+  `/tmp`. Foundation stays an independent AQ-free workspace; never resolve the runtime
+  to satisfy a foundation check.
 - Historical whole-workspace guidance below is retained for runtime changes and
   future public maintenance. Reinstate it for the supported complete workspace
   before public maintenance; scoped development does not waive release checks.

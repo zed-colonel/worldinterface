@@ -41,7 +41,9 @@ for p in packages.values():
         assert p["features"] == {}, "new features require isolation review"
         assert not any(t["kind"] == ["bin"] for t in p["targets"]), "inactive library scope only"
 for p in (root / "crates/worldinterface-foundation").rglob("*.rs"):
-    if "src" not in p.parts:
+    # Only crate sources: judged relative to the repository, so a checkout whose own path
+    # contains a `src` directory (such as ~/src/...) does not pull tests/ into the scan.
+    if "src" not in p.relative_to(root).parts:
         continue
     # No process/network calls or production port implementations. Test mocks live in tests/.
     s = p.read_text()

@@ -5,6 +5,8 @@ version = 4
 [[package]]
 name = "actionqueue-core"
 version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5c859fa85a8b35ad8ee38002764df2ad1fab69883c902673c208fa1c223f6aeb"
 dependencies = [
  "serde",
  "sha2",
@@ -15,6 +17,8 @@ dependencies = [
 [[package]]
 name = "actionqueue-engine"
 version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "4bbd8ace8868ae649c751cdf1bd5f8d60aa45fb3ba1c44e6616a5925ccfa8bae"
 dependencies = [
  "actionqueue-core",
  "actionqueue-executor-local",
@@ -24,6 +28,8 @@ dependencies = [
 [[package]]
 name = "actionqueue-executor-local"
 version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2da9f041c8af8eae06c87fe3b0e90e7c61c8a34868a5aa8ca65235de073ebe97"
 dependencies = [
  "actionqueue-core",
  "tracing",
@@ -32,6 +38,8 @@ dependencies = [
 [[package]]
 name = "actionqueue-runtime"
 version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "817ce7ac8bf601ab4c486552ec5797d1444f9927ace9e13d3db7531a9269abe4"
 dependencies = [
  "actionqueue-core",
  "actionqueue-engine",
@@ -48,6 +56,8 @@ dependencies = [
 [[package]]
 name = "actionqueue-storage"
 version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2288e807e0b061285c7b8fd8080d00d09ac40f115f2c2dd8b4962ccf7aba539c"
 dependencies = [
  "actionqueue-core",
  "crc32fast",
@@ -62,6 +72,8 @@ dependencies = [
 [[package]]
 name = "actionqueue-workflow"
 version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "fe1eccacd2c7f1f9a585ea63fae5bfede22cac7141bc5e05eedc3069d2876bd9"
 dependencies = [
  "actionqueue-core",
  "actionqueue-executor-local",
@@ -866,23 +878,3 @@ name = "zmij"
 version = "1.0.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "29666d0abbfad1e3dc4dcf6144730dd3a3ab225bbbdac83319345b1b44ccfc1b"
-
-[[patch.unused]]
-name = "actionqueue-actor"
-version = "0.2.0"
-
-[[patch.unused]]
-name = "actionqueue-budget"
-version = "0.2.0"
-
-[[patch.unused]]
-name = "actionqueue-cli"
-version = "0.2.0"
-
-[[patch.unused]]
-name = "actionqueue-daemon"
-version = "0.2.0"
-
-[[patch.unused]]
-name = "actionqueue-platform"
-version = "0.2.0"

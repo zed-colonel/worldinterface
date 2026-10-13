@@ -13,5 +13,59 @@
   "historical_development_input": "97c9dc26c19c697dbfb204ed503e82c5f053394f",
   "historical_runtime_aq": "registry crates 0.1.0/0.1.1; see frozen Cargo.lock; not target conformance",
   "consumer_manifest": "crates/worldinterface-runtime/Cargo.toml",
-  "consumer_reconciliation": "contracts/aq-consumer-reconciliation.json"
+  "consumer_reconciliation": "contracts/aq-consumer-reconciliation.json",
+  "published_release": {
+    "registry": "crates.io",
+    "tag": "v0.2.0",
+    "source_commit": "29e096c4f06985d1a9bd9d5fe5a3a6a5db8a6860",
+    "release_manifest_sha256": "8f91415c723bc5ec4d1d9a49f5ecc1e0aad2d24298a79db407d3537c342fe348",
+    "published_at": "2026-10-13",
+    "crates": {
+      "actionqueue-actor": {
+        "version": "0.2.0",
+        "checksum": "f6bec18eb073d6a61c518c75f01355f63a9b5d930fd3443e5a6532d274f052da"
+      },
+      "actionqueue-budget": {
+        "version": "0.2.0",
+        "checksum": "ec032b0be7a6c94e95cf52d91f3cb40e8287e843a44923239830a191cb5a1058"
+      },
+      "actionqueue-cli": {
+        "version": "0.2.0",
+        "checksum": "77328e0cbd6ad8e257c4a17c1c35bea7e25f23fab144c501f4828518e583a4cf"
+      },
+      "actionqueue-core": {
+        "version": "0.2.0",
+        "checksum": "5c859fa85a8b35ad8ee38002764df2ad1fab69883c902673c208fa1c223f6aeb"
+      },
+      "actionqueue-daemon": {
+        "version": "0.2.0",
+        "checksum": "db2604415a1fa77e3fda7673b5a2d80a8870c8e105665c19466777035ddc5927"
+      },
+      "actionqueue-engine": {
+        "version": "0.2.0",
+        "checksum": "4bbd8ace8868ae649c751cdf1bd5f8d60aa45fb3ba1c44e6616a5925ccfa8bae"
+      },
+      "actionqueue-executor-local": {
+        "version": "0.2.0",
+        "checksum": "2da9f041c8af8eae06c87fe3b0e90e7c61c8a34868a5aa8ca65235de073ebe97"
+      },
+      "actionqueue-platform": {
+        "version": "0.2.0",
+        "checksum": "bfbebb165fd11f2017ac6525896750d055fa09c57d1e3de91427dde4a9bad4ff"
+      },
+      "actionqueue-runtime": {
+        "version": "0.2.0",
+        "checksum": "817ce7ac8bf601ab4c486552ec5797d1444f9927ace9e13d3db7531a9269abe4"
+      },
+      "actionqueue-storage": {
+        "version": "0.2.0",
+        "checksum": "2288e807e0b061285c7b8fd8080d00d09ac40f115f2c2dd8b4962ccf7aba539c"
+      },
+      "actionqueue-workflow": {
+        "version": "0.2.0",
+        "checksum": "fe1eccacd2c7f1f9a585ea63fae5bfede22cac7141bc5e05eedc3069d2876bd9"
+      }
+    },
+    "note": "WorldInterface resolves AQ from crates.io outside the cross-project map. The published 0.2.0 source is the implementation_commit above; the checksums are the registry .crate SHA-256 values Cargo.lock records."
+  }
 }

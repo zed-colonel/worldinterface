@@ -1,9 +1,9 @@
 name: WI protocol, store, ingress, egress, receipt and worker domain
 on:
   push:
-    branches: [wi-fabric-2]
+    branches: [main, wi-fabric-2, wi-worker-proof-1]
   pull_request:
-    branches: [wi-fabric-2]
+    branches: [main, wi-fabric-2, wi-worker-proof-1]
   workflow_dispatch:
 permissions:
   contents: read
@@ -19,12 +19,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          : "${CRAFTINGTABLE_DEPENDENCY_MANIFEST:?controller provisioning required}"
-          : "${CRAFTINGTABLE_CARGO_CONFIG:?controller Cargo config required}"
-          : "${CRAFTINGTABLE_CI_ARTIFACTS_DIR:?external evidence directory required}"
-          : "${CRAFTINGTABLE_VERIFICATION_MODE:?verification mode required}"
-          case "$CRAFTINGTABLE_VERIFICATION_MODE" in scoped-checks|current-upstream-build) ;; *) exit 1;; esac
           export CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$RUNNER_TEMP/wi-domain-target}"
           export TMPDIR="${TMPDIR:-$RUNNER_TEMP/wi-domain-scratch}"
-          mkdir -p "$CRAFTINGTABLE_CI_ARTIFACTS_DIR" "$TMPDIR"
-          scripts/check-wi-domain.sh 2>&1 | tee "$CRAFTINGTABLE_CI_ARTIFACTS_DIR/wi-domain.log"
+          mkdir -p "$RUNNER_TEMP/evidence" "$TMPDIR"
+          scripts/check-wi-domain.sh 2>&1 | tee "$RUNNER_TEMP/evidence/wi-domain.log"

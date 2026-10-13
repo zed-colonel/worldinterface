@@ -1,28 +1,39 @@
 #!/usr/bin/env python3
-"""Verify the resolved consumer graph and controller-supplied current AQ bytes."""
-import hashlib
+"""Verify the runtime's resolved graph uses the published AQ 0.2.0 crates from crates.io.
+
+Usage: check-wi-integration.py <cargo-metadata.json> [<Cargo.lock>]
+
+Outside the cross-project map, AQ comes from crates.io. Each AQ package must be version
+0.2.0 from the crates.io index, and its Cargo.lock checksum must equal the published
+.crate SHA-256 recorded in contracts/aq-integration-target.json (published_release).
+"""
 import json
 import pathlib
 import sys
+import tomllib
 
+CRATES_IO = 'registry+https://github.com/rust-lang/crates.io-index'
 root = pathlib.Path(__file__).resolve().parent.parent
 meta = json.loads(pathlib.Path(sys.argv[1]).read_text())
-supplied = json.loads(pathlib.Path(sys.argv[2]).read_text())
-target = json.loads((root / 'contracts/aq-integration-target.json').read_text())['target']
-identity = next(v for v in supplied['dependencyIdentities'] if v['alias'] == 'aq')
-assert identity['commitSha'] == target['implementation_commit'], 'stale AQ commit'
-assert identity['treeSha'] == target['git_tree'], 'stale AQ tree'
-pins = {p['name']: pathlib.Path(p['path']).resolve() for p in supplied['packages']}
+lock_path = pathlib.Path(sys.argv[2]) if len(sys.argv) > 2 else root / 'crates/worldinterface-runtime/Cargo.lock'
+target_file = json.loads((root / 'contracts/aq-integration-target.json').read_text())
+target, published = target_file['target'], target_file['published_release']
+assert published['source_commit'] == target['implementation_commit'], 'published release is not the target commit'
+expected = published['crates']
+locked = {p['name']: p for p in tomllib.loads(lock_path.read_text())['package'] if p['name'].startswith('actionqueue-')}
 packages = {p['id']: p for p in meta['packages']}
-nodes = {p['id']: p for p in meta['resolve']['nodes']}
+nodes = {n['id']: n for n in meta['resolve']['nodes']}
 aq = []
 for node in nodes.values():
     p = packages[node['id']]
     if p['name'].startswith('actionqueue-'):
-        assert p['name'] in pins and p['version'] == '0.2.0'
-        assert p['source'] is None and pathlib.Path(p['manifest_path']).parent.resolve() == pins[p['name']]
-        assert not set(node['features']) & {'actor', 'budget', 'platform', 'workflow'}
-        aq.append({'name': p['name'], 'version': p['version'], 'features': node['features']})
+        name = p['name']
+        assert name in expected, f'unexpected AQ crate {name}'
+        assert p['version'] == expected[name]['version'] == '0.2.0', f'{name} is not 0.2.0'
+        assert p['source'] == CRATES_IO, f'{name} does not come from crates.io: {p["source"]}'
+        assert locked.get(name, {}).get('checksum') == expected[name]['checksum'], f'{name}: Cargo.lock checksum is not the published one'
+        assert not set(node['features']) & {'actor', 'budget', 'platform', 'workflow'}, f'{name}: unexpected feature'
+        aq.append({'name': name, 'version': p['version'], 'features': node['features']})
 assert {p['name'] for p in aq} >= {'actionqueue-core', 'actionqueue-storage', 'actionqueue-runtime'}
 # Inspect the complete production dependency graph, including transitive aliases.
 wi = next(p for p in meta['packages'] if p['name'] == 'worldinterface-runtime')
@@ -31,26 +42,16 @@ seen = set()
 allowed = {'worldinterface-runtime', 'worldinterface-storage', 'worldinterface-domain', 'worldinterface-protocol', 'worldinterface-egress', 'worldinterface-ingress'}
 while pending:
     key = pending.pop()
-    if key in seen: continue
+    if key in seen:
+        continue
     seen.add(key)
     p = packages[key]
     assert not p['name'].startswith('exoskeleton')
-    if p['name'].startswith('worldinterface-'): assert p['name'] in allowed, p['name']
+    if p['name'].startswith('worldinterface-'):
+        assert p['name'] in allowed, p['name']
     for d in nodes[key]['deps']:
-        if any(k['kind'] != 'dev' for k in d['dep_kinds']): pending.append(d['pkg'])
-source_root = pins['actionqueue-core'].parent.parent
-files = []
-for f in supplied['files']:
-    p = pathlib.Path(f['path'])
-    assert hashlib.sha256(p.read_bytes()).hexdigest() == f['digest'], str(p)
-    if p.is_relative_to(source_root): files.append((p.relative_to(source_root).as_posix(), f['digest']))
-# Source lock records SHA-256 over sorted '<sha256>  <relative path>\n' rows.
-tree = hashlib.sha256(''.join(f'{h}  {p}\n' for p, h in sorted(files)).encode()).hexdigest()
-assert tree == target['source_tree_sha256'], (tree, target['source_tree_sha256'])
-manifest_text = (source_root / 'conformance/aq-cont-1/manifest.yaml').read_text()
-# AQ ships this manifest as JSON-compatible YAML.
-conformance = json.loads(manifest_text)
-assert conformance['package_revision'] == target['conformance_revision']
-print(json.dumps({'scope': 'wi/WI-03+WI-04/integration', 'upstream': target, 'source_files': len(files),
-                  'resolved_aq': sorted(aq, key=lambda p: p['name']), 'production_graph': 'passed',
-                  'independent_review': 'pending', 'parent_acceptance': False}, sort_keys=True))
+        if any(k['kind'] != 'dev' for k in d['dep_kinds']):
+            pending.append(d['pkg'])
+print(json.dumps({'upstream': target, 'registry': published['registry'], 'tag': published['tag'],
+                  'resolved_aq': sorted(aq, key=lambda p: p['name']), 'production_graph': 'passed'},
+                 sort_keys=True))

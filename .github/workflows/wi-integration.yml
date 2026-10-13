@@ -1,9 +1,9 @@
 name: WI production integration
 on:
   push:
-    branches: [wi-fabric-2]
+    branches: [main, wi-fabric-2, wi-worker-proof-1]
   pull_request:
-    branches: [wi-fabric-2]
+    branches: [main, wi-fabric-2, wi-worker-proof-1]
   workflow_dispatch:
 permissions:
   contents: read
@@ -15,16 +15,11 @@ jobs:
         uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
         with:
           fetch-depth: 0
-      - name: Verify WI-02, WI-03, and WI-04 against current exact AQ pin
+      - name: Verify the runtime against published AQ 0.2.0 from crates.io
         shell: bash
         run: |
           set -euo pipefail
-          : "${CRAFTINGTABLE_DEPENDENCY_MANIFEST:?controller provisioning required}"
-          : "${CRAFTINGTABLE_CARGO_CONFIG:?controller Cargo config required}"
-          : "${CRAFTINGTABLE_CI_ARTIFACTS_DIR:?external evidence directory required}"
-          : "${CRAFTINGTABLE_VERIFICATION_MODE:?verification mode required}"
-          test "$CRAFTINGTABLE_VERIFICATION_MODE" = current-upstream-build
           export CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$RUNNER_TEMP/wi-integration-target}"
           export TMPDIR="${TMPDIR:-$RUNNER_TEMP/wi-integration-scratch}"
-          mkdir -p "$CRAFTINGTABLE_CI_ARTIFACTS_DIR" "$TMPDIR"
-          scripts/check-wi-integration.sh 2>&1 | tee "$CRAFTINGTABLE_CI_ARTIFACTS_DIR/wi-integration.log"
+          mkdir -p "$RUNNER_TEMP/evidence" "$TMPDIR"
+          scripts/check-wi-integration.sh 2>&1 | tee "$RUNNER_TEMP/evidence/wi-integration.log"
