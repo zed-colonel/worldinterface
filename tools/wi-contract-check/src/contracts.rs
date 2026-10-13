@@ -361,10 +361,20 @@ fn egress_approval_pin(id: &str) -> Option<&'static str> {
         "WI-ADR-008" => Some("81c1e9d516c944c77988c40c0720c0baf4e7844acd95498b60fb085591d73141"),
         "WI-ADR-009" => Some("d67e5134bf562223b46b57c910d0cdd5ad1c4ff49d05799d97bc407a98346701"),
         "WI-ADR-010" => Some("858084bb5a3cc73d4b77be4839f507a44a4b9fc2d1f24629bd1be808955339f0"),
+        "WI-ADR-011" => Some("54830d7f51558e190a25495560d4720d75360b3eba9ca53557afbeb0e540672d"),
+        "WI-ADR-014" => Some("e9d242ec5966759c39006f9adfb753b8e1f47ad654568aff92766caeb9d69792"),
+        "WI-ADR-015" => Some("a8710a8d7baa6f7779760b73ed124d3f5abc2198553c847111cff246378d411e"),
+        "WI-ADR-018" => Some("c2998e4d1dc52be7d6cb5c8d5cc76a42f73848af2390119789576980ba368ff2"),
         _ => None,
     }
 }
 pub fn adr_coverage(root: &Path, id: &str, scope: &str, phase: &str, full: bool) -> Result<bool> {
+    if id == "WI-ADR-016" && full {
+        return Ok(hash(fs::read(root.join("docs/adr/approvals.json"))?)
+            == "80d06ce11cfdf319d7611c3d8bc093c086e29ab68d482fdff200cc5fa5156c90"
+            && hash(fs::read(root.join("docs/adr/approvals/WI-ADR-016-full.json"))?)
+                == "b25fea0d6571e51bfbd60d370a2c5fad7b30b664b05ba80c425ac2616cf7d9cf");
+    }
     if let Some(pin) = egress_approval_pin(id) {
         let bytes = fs::read(root.join(format!("docs/adr/approvals/{id}.json")))?;
         return Ok(hash(&bytes) == pin);
@@ -492,6 +502,16 @@ pub fn docs(root: &Path) -> Result<Vec<Finding>> {
                 || approval["decision"]["coverage"] != coverage
                 || approval["approval"]["outcome"] != "accepted"
                 || r["approval_id"] != approval["approval"]["id"]
+                || (matches!(id, "WI-ADR-011" | "WI-ADR-014" | "WI-ADR-015" | "WI-ADR-018")
+                    && (r["decision_packet_digest"] != approval["artifacts"][0]["digest"]
+                        || !fs::read_to_string(root.join(format!("docs/adr/{id}.md")))?
+                            .contains(string(&approval["decision"], "proposal")?)
+                        || !fs::read_to_string(root.join(format!("docs/adr/{id}.md")))?
+                            .contains(string(&approval["approval"], "rationale")?)
+                        || !fs::read_to_string(root.join(format!("docs/adr/{id}.md")))?
+                            .contains(string(&approval["decision"], "retainedObligations")?)
+                        || !fs::read_to_string(root.join(format!("docs/adr/{id}.md")))?
+                            .contains(string(&approval["artifacts"][0], "digest")?)))
             {
                 f.push(finding("ADR-APPROVAL", &path, id, "supplied operator approvals, binding revision 4", "approval provenance or coverage changed; full and clause acceptance are distinct"));
             }
@@ -502,7 +522,11 @@ pub fn docs(root: &Path) -> Result<Vec<Finding>> {
             || r["owner"] != "operator"
             || if matches!(
                 id,
-                "WI-ADR-001"
+                "WI-ADR-011"
+                    | "WI-ADR-014"
+                    | "WI-ADR-015"
+                    | "WI-ADR-018"
+                    | "WI-ADR-001"
                     | "WI-ADR-002"
                     | "WI-ADR-003"
                     | "WI-ADR-004"

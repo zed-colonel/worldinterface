@@ -1,0 +1,65 @@
+{
+  "version": 1,
+  "id": "WI-AQ-G2",
+  "source_record_sha256": "bced2dba67f44e9e4cf1088027cc6b3b16ec87eb3a5c54cabd04df5791bc7bc4",
+  "pass_criteria": [
+    "Created/AlreadyExists preserve durable identities; mismatched digest conflicts.",
+    "Admission and local outbox retry behavior pass race/crash tests.",
+    "wi reviews its own mappings and applicable assumptions; a similarly named gate for another consumer is not an automatic pass.",
+    "Historical AQ-NN references identify retained capability/evidence obligations of the completed source; they are not runnable work. Review actual consumer candidate-branch fixtures on the exact accepted AQ build; independent gate attestation is still required and is not inferred from source presence."
+  ],
+  "requires": [
+    {
+      "id": "STACK-PLAN-ACCEPTED",
+      "kind": "checkpoint",
+      "state": "passed"
+    },
+    {
+      "id": "AQ-BASELINE-ACCEPTED",
+      "kind": "checkpoint",
+      "state": "passed"
+    }
+  ],
+  "required_cases": [
+    "AB-WI-002",
+    "AB-WI-003",
+    "AB-WI-004"
+  ],
+  "closing_item": "WIP-04",
+  "status": "open",
+  "effective_on": "reviewed-merge-with-adopted-checks",
+  "historical_evidence": [
+    "7cdecc06",
+    "7ed4b60e"
+  ],
+  "requirement_bindings": [
+    {
+      "requirement": {
+        "id": "STACK-PLAN-ACCEPTED",
+        "kind": "checkpoint",
+        "state": "passed"
+      },
+      "binding": {
+        "kind": "plan-import",
+        "plan_version": "9212604c-4873-4cd5-b492-1ee3141b8b0b",
+        "date": "2026-10-13",
+        "historical_acceptance": "2026-10-01"
+      }
+    },
+    {
+      "requirement": {
+        "id": "AQ-BASELINE-ACCEPTED",
+        "kind": "checkpoint",
+        "state": "passed"
+      },
+      "binding": {
+        "kind": "published-aq",
+        "historical_submission": "7b060900",
+        "historical_acceptance": "2026-09-21",
+        "contract": "contracts/aq-integration-target.json",
+        "record": "published_release",
+        "check": "runtime-aq-graph"
+      }
+    }
+  ]
+}

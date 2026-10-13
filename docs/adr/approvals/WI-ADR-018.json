@@ -1,0 +1,36 @@
+{
+  "submissionId": "91054d44-c940-48c4-812f-421b9f296d1f",
+  "checkpoint": "WI-ADR-018",
+  "definitionId": "0ebcb7cf-9686-4bc1-9b9d-bb85a1d0b4c9",
+  "bindingRevision": 4,
+  "decision": {
+    "coverage": "full",
+    "proposal": "Adopt one shared Fabric application-service and authorization path for embedded, authenticated single-tenant daemon, and optional multi-tenant Platform profiles. Profile selection is explicit at startup. Local-development mode is visibly non-production, loopback-bound by default, and cannot issue production credentials or create Platform tenancy. Remote requests authenticate through a trusted adapter before construction of server-owned caller context; caller fields never establish principal or tenant identity. Resolve current tenant-scoped principal, actor, delegation, and acting-capacity bindings under WI-ADR-004, then apply WI-ADR-006's exact, default-deny authority intersection. Organization membership and administrative role labels confer no ambient effect authority. Scope principals, bindings, grants, resources, Flows, workers, signals, receipts, artifacts, and queries to tenant and applicable organization. Make policy and grant administration versioned, attributed, durable, and mediated by the same application services; enforce scoped receipt, evidence, and audit access. Keep quotas and connector concurrency in the Platform/Fabric control plane and scheduling fairness in ActionQueue. Use reference-based secret brokerage with custody outside ordinary domain rows: issue short-lived credentials only for exact authorized connector or worker audience, operation, resource, and run scope; persist custody-safe references and metadata, support rotation and revocation, and exclude secret material from receipts, telemetry, Flow definitions, worker transcripts, and artifact exports. Embedded and daemon routes and CLI commands use the same services without direct database mutation. The optional Platform metadata store follows WI-ADR-003's manifest-controlled layout. This decision fixes architecture, not credential-provider selection, implementation completion, provider qualification, or passing security evidence.",
+    "sourceReferences": "Imported map EXO-STACK-CONCURRENCY-DRAFT-1 0.3.0; exact plan binding 4; checkpoint WI-ADR-018.\n{\"source_id\":\"wi-plan\",\"section\":\"\u00a74 ADR queue\",\"start_line\":371,\"end_line\":371}\nwi-fabric-2-foundational-implementation-plan.md: \u00a74 WI-ADR-018, WI-11, \u00a7\u00a713.1, 13.3, 13.6\nworldinterface-v2-foundational-design.md: \u00a7\u00a75.3\u20135.4, 6.2\u20136.3\ndecision-preparation/context.json: checkpoint WI-ADR-018 and consumers\ndocs/adr/WI-ADR-004.md: accepted agency boundary\ndocs/adr/WI-ADR-006.md: accepted authorization grammar\ndocs/adr/WI-ADR-003.md: accepted optional Platform store\nAttached source run 37306ef6-e693-4fbc-9bcc-daf06696c901; SHA-256 373b640a1e9f192318044f7e446b74c71e115f1b29661733f2c035950b0a5d00.",
+    "retainedObligations": "Implement and verify the mapped WI-11 slices and complete parent integration, exact-upstream checks, review, and release gates. Remote protection and publication remain operator-owned at the policy milestone.",
+    "consumers": [],
+    "kind": "architecture-decision-v1",
+    "bindingDigest": "8cae5ff3253d493fce0527aa42381a551c40014440ab3d05270ae8d822d11295"
+  },
+  "approval": {
+    "submissionId": "91054d44-c940-48c4-812f-421b9f296d1f",
+    "outcome": "accepted",
+    "rationale": "I approve of this recommendation.",
+    "id": "e10f16b5-61f6-4d75-8e1b-9a5d913c58db",
+    "workspaceId": "6bf6915a-6cd0-47cc-b853-fcbc04f02f3d",
+    "decidedAt": "2026-09-29T16:30:53.721Z",
+    "decidedByUserId": "0698a39b-dda2-4870-8f3f-97ef94784ae9"
+  },
+  "sourceRunId": "37306ef6-e693-4fbc-9bcc-daf06696c901",
+  "sourceRunDigest": "373b640a1e9f192318044f7e446b74c71e115f1b29661733f2c035950b0a5d00",
+  "artifacts": [
+    {
+      "name": "decision-review-packet",
+      "digest": "14549785dd1a031f3762ae310e1c978a0fdd22650a4c7e58e73905cedefcf1a0"
+    },
+    {
+      "name": "source-design-proposal-not-approval",
+      "digest": "373b640a1e9f192318044f7e446b74c71e115f1b29661733f2c035950b0a5d00"
+    }
+  ]
+}

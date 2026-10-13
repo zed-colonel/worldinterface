@@ -440,3 +440,87 @@ fn ab_wi_016_single_component_relative_destinations() {
         String::from_utf8_lossy(&output.stderr)
     );
 }
+
+/// AB-WI-001: actual resolved crates.io graph plus independently pinned source identity.
+#[test]
+fn ab_wi_001_published_identity_rejects_substitutions() {
+    use serde_json::Value;
+    use std::{fs, path::Path, process::Command};
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..").canonicalize().unwrap();
+    let temp = tempfile::TempDir::new().unwrap();
+    let output = Command::new("cargo")
+        .current_dir(&root)
+        .args([
+            "metadata",
+            "--offline",
+            "--locked",
+            "--manifest-path",
+            "crates/worldinterface-runtime/Cargo.toml",
+            "--format-version",
+            "1",
+        ])
+        .output()
+        .unwrap();
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    let metadata: Value = serde_json::from_slice(&output.stdout).unwrap();
+    let contract: Value = serde_json::from_slice(
+        &fs::read(root.join("contracts/aq-integration-target.json")).unwrap(),
+    )
+    .unwrap();
+    let check = |meta: &Value, target: &Value| {
+        let m = temp.path().join("metadata.json");
+        let t = temp.path().join("contract.json");
+        fs::write(&m, serde_json::to_vec(meta).unwrap()).unwrap();
+        fs::write(&t, serde_json::to_vec(target).unwrap()).unwrap();
+        Command::new("python3")
+            .arg(root.join("scripts/check-wi-integration.py"))
+            .arg(m)
+            .arg(root.join("crates/worldinterface-runtime/Cargo.lock"))
+            .arg(t)
+            .output()
+            .unwrap()
+    };
+    let valid = check(&metadata, &contract);
+    assert!(valid.status.success(), "{}", String::from_utf8_lossy(&valid.stderr));
+    for field in ["implementation_commit", "git_tree", "source_tree_sha256", "conformance_revision"]
+    {
+        let mut c = contract.clone();
+        c["target"][field] = if field == "conformance_revision" {
+            serde_json::json!(15)
+        } else {
+            serde_json::json!("97c9dc26c19c697dbfb204ed503e82c5f053394f")
+        };
+        if field == "implementation_commit" {
+            c["published_release"]["source_commit"] = c["target"][field].clone();
+        }
+        assert!(!check(&metadata, &c).status.success(), "accepted substituted {field}");
+    }
+    let mut c = contract.clone();
+    c["published_release"]["crates"]["actionqueue-core"]["checksum"] =
+        serde_json::json!("0".repeat(64));
+    assert!(!check(&metadata, &c).status.success());
+    for (field, value) in [
+        ("version", "0.1.1"),
+        ("source", "git+https://example.invalid/aq"),
+        ("source", "path+file:///tmp/aq"),
+    ] {
+        let mut m = metadata.clone();
+        let p = m["packages"]
+            .as_array_mut()
+            .unwrap()
+            .iter_mut()
+            .find(|p| p["name"] == "actionqueue-core")
+            .unwrap();
+        p[field] = serde_json::json!(value);
+        assert!(!check(&m, &contract).status.success(), "accepted substituted {field}");
+    }
+    let mut m = metadata.clone();
+    let id =
+        m["packages"].as_array().unwrap().iter().find(|p| p["name"] == "actionqueue-core").unwrap()
+            ["id"]
+            .clone();
+    let n =
+        m["resolve"]["nodes"].as_array_mut().unwrap().iter_mut().find(|n| n["id"] == id).unwrap();
+    n["features"].as_array_mut().unwrap().push(serde_json::json!("platform"));
+    assert!(!check(&m, &contract).status.success());
+}

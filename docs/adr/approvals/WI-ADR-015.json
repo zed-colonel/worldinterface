@@ -1,0 +1,36 @@
+{
+  "submissionId": "af240966-a74c-42e2-a031-0f445982039c",
+  "checkpoint": "WI-ADR-015",
+  "definitionId": "0ebcb7cf-9686-4bc1-9b9d-bb85a1d0b4c9",
+  "bindingRevision": 4,
+  "decision": {
+    "coverage": "full",
+    "proposal": "WorldInterface shall lower Flow waits to AQ-CONT-1 Awaiting dispositions with one valid WaitSpec per run, a durable coordinator checkpoint, and resumed coordinator evaluation. Static Flow dependencies remain AQ DAG dependencies. External callbacks, approvals, reconciliation outcomes, and worker events first commit an authoritative WorldInterface record and its signal-outbox obligation, regardless of whether a waiter exists; the outbox admits a stable, deduplicated AQ signal carrying bounded routing and an opaque record reference. Early-event waits use an exact correlated AnyRetained filter; repeated waits advance the handled SignalSequence or use a fresh correlation generation. WorldInterface performs principal authorization and reloads authoritative state after every wake. Pure timers use AQ scheduling or an inclusive absolute deadline with an explicit timeout action; no delay connector or executor sleep implements waiting. A signal/deadline race follows AQ's first committed eligible resolution. Resume delivery, including retry and recovery, is handled idempotently across signal, children, deadline, control, and administrative forms. AQ resolution never independently establishes a Flow business outcome or external effect success. Remove signal.await, signal.emit, SignalRegistry, and delay from the target runtime and public capability catalog.",
+    "sourceReferences": "Imported map EXO-STACK-CONCURRENCY-DRAFT-1 0.3.0; exact plan binding 4; checkpoint WI-ADR-015.\n{\"source_id\":\"wi-plan\",\"section\":\"\u00a74 ADR queue\",\"start_line\":368,\"end_line\":368}\ndecision-preparation/context.json: checkpoint WI-ADR-015 and consumer wi/WI-08/integration\nwi-fabric-2-foundational-implementation-plan.md: \u00a74 WI-ADR-015; WI-08\nworldinterface-v2-foundational-design.md: \u00a7\u00a78.7, 12.8\nAQ-BASELINE-ALIGNMENT.md: \u00a7\u00a72\u20133\naq-baseline-integration-acceptance-matrix.yaml: AB-WI-008, AB-WI-011\nAttached source run 76fddd55-5549-4b52-879c-048d54531fbf; SHA-256 6b9a8efba14486254f5287e310837934d8682a4cad493a862209184f1dd8adc5.",
+    "retainedObligations": "Implement and verify WI-08 against the exact AQ pins, including WI-AQ-G3/G4, AB-WI-008 and AB-WI-011, race/crash/negative tests, exact-candidate review and integration, parent acceptance, and later release and remote-publication obligations under repository policy revision 1.",
+    "consumers": [],
+    "kind": "architecture-decision-v1",
+    "bindingDigest": "8cae5ff3253d493fce0527aa42381a551c40014440ab3d05270ae8d822d11295"
+  },
+  "approval": {
+    "submissionId": "af240966-a74c-42e2-a031-0f445982039c",
+    "outcome": "accepted",
+    "rationale": "I agree with this recommendation. While \"richer\" waits could be useful, the introduction of more complex recovery and race mechanics is not worth it in my opinion.",
+    "id": "3df98058-4a86-4faf-86be-26f267301fb3",
+    "workspaceId": "6bf6915a-6cd0-47cc-b853-fcbc04f02f3d",
+    "decidedAt": "2026-09-29T16:25:04.705Z",
+    "decidedByUserId": "0698a39b-dda2-4870-8f3f-97ef94784ae9"
+  },
+  "sourceRunId": "76fddd55-5549-4b52-879c-048d54531fbf",
+  "sourceRunDigest": "6b9a8efba14486254f5287e310837934d8682a4cad493a862209184f1dd8adc5",
+  "artifacts": [
+    {
+      "name": "decision-review-packet",
+      "digest": "bf607924a8fe5450dd28a2dff5452d454ed9b0bf1ee077671a8d7cb257c51334"
+    },
+    {
+      "name": "source-design-proposal-not-approval",
+      "digest": "6b9a8efba14486254f5287e310837934d8682a4cad493a862209184f1dd8adc5"
+    }
+  ]
+}

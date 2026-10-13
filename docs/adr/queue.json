@@ -124,8 +124,13 @@
     "decision": "HTTP redirect, DNS, credential, SSRF, and replay policy",
     "due": "WI-06",
     "owner": "operator",
-    "status": "queued",
-    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4"
+    "status": "accepted",
+    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4",
+    "coverage": "full",
+    "approval_id": "bb208f8d-50f6-42a3-b666-ca2d0c7d43f9",
+    "approval_file": "docs/adr/approvals/WI-ADR-011.json",
+    "approval_sha256": "54830d7f51558e190a25495560d4720d75360b3eba9ca53557afbeb0e540672d",
+    "decision_packet_digest": "66de4c9d1db930bdb1a0735386ee8374a6669bef05aa1d631e33fce76742866b"
   },
   {
     "id": "WI-ADR-012",
@@ -156,16 +161,26 @@
     "decision": "Common `ExecutionPlan`, plan hash, transform determinism, and Flow versioning",
     "due": "WI-07",
     "owner": "operator",
-    "status": "queued",
-    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4"
+    "status": "accepted",
+    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4",
+    "coverage": "full",
+    "approval_id": "95b07d70-97d4-43d3-a685-5a49993409db",
+    "approval_file": "docs/adr/approvals/WI-ADR-014.json",
+    "approval_sha256": "e9d242ec5966759c39006f9adfb753b8e1f47ad654568aff92766caeb9d69792",
+    "decision_packet_digest": "11c17826f9ed097a7fd0bd6e13638f5491609a3afca07a920d3bae2aef326894"
   },
   {
     "id": "WI-ADR-015",
     "decision": "Flow wait/timer lowering to `AQ-CONT-1`",
     "due": "WI-08",
     "owner": "operator",
-    "status": "queued",
-    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4"
+    "status": "accepted",
+    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4",
+    "coverage": "full",
+    "approval_id": "3df98058-4a86-4faf-86be-26f267301fb3",
+    "approval_file": "docs/adr/approvals/WI-ADR-015.json",
+    "approval_sha256": "a8710a8d7baa6f7779760b73ed124d3f5abc2198553c847111cff246378d411e",
+    "decision_packet_digest": "bf607924a8fe5450dd28a2dff5452d454ed9b0bf1ee077671a8d7cb257c51334"
   },
   {
     "id": "WI-ADR-016",
@@ -195,8 +210,13 @@
     "decision": "Daemon authentication profiles, tenancy, organizational grants, and secret brokerage",
     "due": "WI-11",
     "owner": "operator",
-    "status": "queued",
-    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4"
+    "status": "accepted",
+    "source": "contracts/sources/wi-fabric-2-foundational-implementation-plan.md#4",
+    "coverage": "full",
+    "approval_id": "e10f16b5-61f6-4d75-8e1b-9a5d913c58db",
+    "approval_file": "docs/adr/approvals/WI-ADR-018.json",
+    "approval_sha256": "c2998e4d1dc52be7d6cb5c8d5cc76a42f73848af2390119789576980ba368ff2",
+    "decision_packet_digest": "14549785dd1a031f3762ae310e1c978a0fdd22650a4c7e58e73905cedefcf1a0"
   },
   {
     "id": "WI-ADR-019",

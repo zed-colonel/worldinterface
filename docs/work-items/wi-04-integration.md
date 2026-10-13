@@ -1,5 +1,10 @@
 # WI-04 integration boundary
 
+Historical slice record. Active work follows [WI-WORKER-PROOF-1](wi-worker-proof-1.md):
+crates.io AQ 0.2.0, adopted checks and in-repo gate records supersede the
+map-era launcher, slice receipts and controller-only verification wording below.
+Historical evidence and retained implementation obligations are preserved.
+
 The implementation extends the guarded effect journal in `worldinterface-foundation` and the AQ-linked `worldinterface-runtime`. The source outbox is part of the journal state. A production dispatch record holds a versioned binding to a scoped immutable artifact containing the complete serialized `EnsureTaskRequest`, a distinct artifact hash, the AQ CanonicalAdmissionV2 digest, the store ID, task UUID, execution digest, and acknowledgment sequence. The use reservation and this binding are committed by one guarded journal command. AQ is never called for an unreferenced staged artifact.
 
 The runtime checks authenticated host identity and verified evidence before submitting an intent. Public effect operations take time from an injected trusted host clock. Live resource observations must match the authorized fact. AQ delivery reloads the complete request artifact, reauthorizes the pending intent, and uses the host-bound `ensure_task` API. Created and AlreadyExists are both checked against task, key, canonical version/digest, and sequence. Acknowledgment records admission only. The active engine inspector discovers run mappings separately through bounded pages. A partial enumeration remains incomplete; journaled run mappings survive retry.

@@ -21,6 +21,16 @@ and embedded host surfaces.
 - `examples/`: embedding and wasm examples
 - `plans/`, `docs/`, `scripts/`: design notes and repo helpers
 
+## Active work items
+
+- Work targets `wi-worker-proof-1` under the [active ledger](docs/work-items/wi-worker-proof-1.md).
+- Register implemented cases in `conformance/wi-fabric-2/proof/cases.json`; preserve
+  authoritative scope coverage and exact manifest/package/test references.
+- Run `cargo run --locked --manifest-path tools/wi-contract-check/Cargo.toml -- hashes refresh`
+  after source edits. Structural drift needs an explicit reviewed disposition change.
+- Run every adopted check on the committed head. `contract-test` is approved for
+  adoption at WIP-01 merge. Only CraftingTable integrates reviewed work.
+
 ## Working Conventions
 
 - Tool-path issues usually involve the connector layer, coordinator, or host.

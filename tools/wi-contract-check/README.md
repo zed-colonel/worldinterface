@@ -9,6 +9,8 @@ From the repository root:
 ```
 wi-contract-check inventory generate
 wi-contract-check inventory check
+wi-contract-check hashes refresh
+wi-contract-check proof check
 wi-contract-check contracts check
 wi-contract-check clean-break check
 wi-contract-check all check
@@ -22,8 +24,8 @@ Each finding has a stable rule/item ID, source path, governing source,
 disposition and diagnostic. Failures return nonzero. `WI_REPO_ROOT` overrides the
 working directory for tooling/tests; it grants no authority.
 
-Run builds/tests with the controller Cargo launcher and supplied config. The
-repository script and act job are described in CONTRIBUTING.md. Unit and mutation
+Run with Rust 1.89.0 using the independent Cargo manifest. The adopted checks
+and three local preparation scripts are described in CONTRIBUTING.md. Unit and mutation
 tests use TMPDIR, never runtime stores or publication targets. A passing checker
 record is independent development evidence, not runtime conformance.
 
@@ -32,8 +34,8 @@ a matching controller-provided digest; file and digest are trusted controller
 inputs, not an authorization signature. Milestones are an unordered set of unique
 known IDs containing WI-01 entry, not a numeric prefix. Each deletion rule checks
 its own approved milestone. The controller owns dependency admission and rollback
-protection; the checker adds no predecessor edges. The checker cannot advance gates. Future
-controller integration must prevent PR authors from setting these trusted inputs.
+protection for historical external milestone inputs. During WI-WORKER-PROOF-1,
+`contracts/milestones.json` stays at WI-01; no external advancement is supplied.
 
 Archive isolation conservatively checks Cargo members, target and dependency
 paths, aliases and local transitive dependencies, Rust path attributes and static
@@ -58,3 +60,25 @@ unknown keywords fail closed. Execution evidence validation also verifies artifa
 bytes, planned-case rejection and upstream/source/reviewer identity bindings. It
 cannot determine whether a reviewer or external observation is truthful. Independent
 review and controller authority remain external obligations.
+
+## Off-map proof and maintenance
+
+`proof check`, included in `all check`, validates 55 cases and ten gates against
+independent normative matrix and export pins. It derives required cases separately
+from gate records, checks scope coverage, and resolves executable tests through
+Cargo metadata and compiled harness listings under the adopted configurations.
+Discovery runs `cargo test --locked --no-run`, then each executable with `--list`
+and `--ignored --list`; it also inspects reachable Rust test attributes. Discovery
+establishes eligibility only. Adopted test checks establish passage and review
+assesses assertions. Fixture mutation tests supply a separate discovery index.
+
+`hashes refresh` computes both inventory and connector-disposition updates before
+writing either. Only `source_sha256` fields may change. Structural inventory or
+catalog drift is rejected for explicit review; ownership, destinations, surfaces,
+registration sites and treatments are retained. Repeat refresh is deterministic.
+Approval bytes, source matrices and gate-source pins never refresh automatically.
+
+Closed gates become effective through reviewed merge with adopted checks passing.
+`evidence check` remains historical receipt tooling and does not close these gates.
+The new `contract-test` check executes WP-007 and checker regressions after its
+operator-approved adoption at WIP-01 merge.

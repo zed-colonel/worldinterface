@@ -4,6 +4,8 @@ pub mod contracts;
 pub mod evidence;
 pub mod inventory;
 pub mod policy;
+pub mod proof;
+pub mod refresh;
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
