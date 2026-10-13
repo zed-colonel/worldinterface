@@ -33,8 +33,9 @@ current passage automatically.
 The approved operator override makes WIP-01 `check_adoption_at_merge: true`,
 replacing the plan bundle's original false value. Add `contract-test` and retain
 its three Cargo definition paths. Current adoption governs until merge.
-`runtime-aq-graph`'s definition script is also strengthened by WIP-01; review and
-adoption include that definition-path change. No source matrix or read-only plan
+`runtime-aq-graph`'s definition script is also strengthened by WIP-01. The operator
+explicitly approved adopting it together with `contract-test` at WIP-01 merge in
+the 2026-10-13 remediation guidance (see [WIP-01](wip-01.md)). No source matrix or read-only plan
 bundle is changed.
 
 ### 3.2 Inherited baseline ledger

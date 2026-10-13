@@ -482,8 +482,21 @@ fn ab_wi_001_published_identity_rejects_substitutions() {
     };
     let valid = check(&metadata, &contract);
     assert!(valid.status.success(), "{}", String::from_utf8_lossy(&valid.stderr));
-    for field in ["implementation_commit", "git_tree", "source_tree_sha256", "conformance_revision"]
-    {
+    let reject = |meta: &Value, target: &Value, expected: &str| {
+        let output = check(meta, target);
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        assert!(!output.status.success(), "accepted substitution; expected {expected}");
+        assert!(
+            stderr.contains(&format!("AssertionError: {expected}")),
+            "expected rejection {expected:?}, got:\n{stderr}"
+        );
+    };
+    for (field, expected) in [
+        ("implementation_commit", "historical or substituted source commit"),
+        ("git_tree", "wrong source tree"),
+        ("source_tree_sha256", "wrong complete source tree digest"),
+        ("conformance_revision", "wrong conformance revision"),
+    ] {
         let mut c = contract.clone();
         c["target"][field] = if field == "conformance_revision" {
             serde_json::json!(15)
@@ -493,16 +506,24 @@ fn ab_wi_001_published_identity_rejects_substitutions() {
         if field == "implementation_commit" {
             c["published_release"]["source_commit"] = c["target"][field].clone();
         }
-        assert!(!check(&metadata, &c).status.success(), "accepted substituted {field}");
+        reject(&metadata, &c, expected);
     }
     let mut c = contract.clone();
     c["published_release"]["crates"]["actionqueue-core"]["checksum"] =
         serde_json::json!("0".repeat(64));
-    assert!(!check(&metadata, &c).status.success());
-    for (field, value) in [
-        ("version", "0.1.1"),
-        ("source", "git+https://example.invalid/aq"),
-        ("source", "path+file:///tmp/aq"),
+    reject(&metadata, &c, "published checksums changed");
+    for (field, value, expected) in [
+        ("version", "0.1.1", "actionqueue-core is not 0.2.0"),
+        (
+            "source",
+            "git+https://example.invalid/aq",
+            "actionqueue-core does not come from crates.io: git+https://example.invalid/aq",
+        ),
+        (
+            "source",
+            "path+file:///tmp/aq",
+            "actionqueue-core does not come from crates.io: path+file:///tmp/aq",
+        ),
     ] {
         let mut m = metadata.clone();
         let p = m["packages"]
@@ -512,7 +533,7 @@ fn ab_wi_001_published_identity_rejects_substitutions() {
             .find(|p| p["name"] == "actionqueue-core")
             .unwrap();
         p[field] = serde_json::json!(value);
-        assert!(!check(&m, &contract).status.success(), "accepted substituted {field}");
+        reject(&m, &contract, expected);
     }
     let mut m = metadata.clone();
     let id =
@@ -522,5 +543,5 @@ fn ab_wi_001_published_identity_rejects_substitutions() {
     let n =
         m["resolve"]["nodes"].as_array_mut().unwrap().iter_mut().find(|n| n["id"] == id).unwrap();
     n["features"].as_array_mut().unwrap().push(serde_json::json!("platform"));
-    assert!(!check(&m, &contract).status.success());
+    reject(&m, &contract, "actionqueue-core: unsupported feature profile");
 }

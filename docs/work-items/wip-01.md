@@ -56,8 +56,12 @@ WIP-01 is `check_adoption_at_merge: true`, overriding the original plan field.
 Current adoption remains binding until merge; the operator adopts the new version
 then. `scripts/check-wi-integration.py` is a changed definition path for
 `runtime-aq-graph`: identity and feature validation is strengthened so the new
-runtime regression can exercise the same graph checker. Review/adoption must
-include it. This is the concrete implementation of the accepted identity check;
+runtime regression can exercise the same graph checker. On 2026-10-13, in the
+remediation run `3969a222-9611-4825-b4a0-9fc154868201`, the operator explicitly
+approved: "I approve adopting the strengthened runtime-aq-graph definition
+together with contract-test when WIP-01 merges" (F-002). The approved script's
+SHA-256 is `5afba7a35fb8af5df9f8149915fb994f1f28aa536ba572ede4b53a01e729b049`.
+This is the concrete implementation of the accepted identity check;
 no runtime production behavior or AQ source is changed.
 
 The supplied gate export is authoritative. Map-only requirements are translated
@@ -79,6 +83,16 @@ tooling 76 tests (including 12 new proof/refresh regressions), zero failures or
 ignored tests. Format, Clippy, builds, domain isolation, actual AQ graph and all
 ten contract families passed. CraftingTable establishes final adopted-check
 passage on the reviewed merge.
+
+Review remediation on 2026-10-13 retains F-001's withdrawn disposition. F-002's
+explicit adoption approval is recorded above. For F-003,
+`ab_wi_001_published_identity_rejects_substitutions` now requires each negative
+case's expected `AssertionError` message as well as a failing exit. For F-004,
+`scope_digest_and_closed_gate_adr_status_disagreement_reject` selects WI-ADR-016 by
+ID rather than queue position. Both focused tests passed before commit. Evidence
+for this run is under
+`/mnt/workhorse/craftingtable/runs/3969a222-9611-4825-b4a0-9fc154868201/scratch/verification/`;
+the final run report records the committed-head declared-check results.
 
 Retained work: the remaining 44 planned cases, eight open gates, later WIP
 implementation/review, full-parent and legacy clean-break obligations, consumer

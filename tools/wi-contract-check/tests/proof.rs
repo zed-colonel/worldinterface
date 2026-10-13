@@ -276,7 +276,13 @@ fn scope_digest_and_closed_gate_adr_status_disagreement_reject() {
         .any(|f| f.rule == "PROOF-COVERAGE"));
     let p = t.path().join("docs/adr/queue.json");
     let mut q = read(&p).unwrap();
-    q[15]["status"] = json!("queued");
+    let adr = q
+        .as_array_mut()
+        .unwrap()
+        .iter_mut()
+        .find(|entry| entry["id"] == "WI-ADR-016")
+        .expect("closed WI-WORKER-G1 requires WI-ADR-016");
+    adr["status"] = json!("queued");
     fs::write(p, serde_json::to_vec(&q).unwrap()).unwrap();
     assert!(proof::validate(t.path(), &r, &g, &i).unwrap().iter().any(|f| f.rule == "PROOF-ADR"));
 }

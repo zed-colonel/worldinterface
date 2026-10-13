@@ -28,8 +28,9 @@ and embedded host surfaces.
   authoritative scope coverage and exact manifest/package/test references.
 - Run `cargo run --locked --manifest-path tools/wi-contract-check/Cargo.toml -- hashes refresh`
   after source edits. Structural drift needs an explicit reviewed disposition change.
-- Run every adopted check on the committed head. `contract-test` is approved for
-  adoption at WIP-01 merge. Only CraftingTable integrates reviewed work.
+- Run every adopted check on the committed head. `contract-test` and the strengthened
+  `runtime-aq-graph` definition are approved for adoption at WIP-01 merge.
+  Only CraftingTable integrates reviewed work.
 
 ## Working Conventions
 
