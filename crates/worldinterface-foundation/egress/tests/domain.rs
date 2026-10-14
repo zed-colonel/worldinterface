@@ -1,4 +1,4 @@
-use proptest::proptest;
+use proptest::test_runner::TestRunner;
 use std::collections::BTreeSet;
 use worldinterface_domain::{
     agency::*, authorization::*, effect::*, ingress::digest, ports::*, resource::*, Phase,
@@ -318,6 +318,61 @@ fn ordinary_provider_cannot_reuse_fixture_proof() {
     let (_, mut p) = fixture();
     p.fixture = None;
     deny(p, Reason::FixtureOnly);
+}
+#[test]
+fn ordinary_unsupported_operations_are_unavailable_without_substitution() {
+    for operation in ["suspend", "checkpoint", "resume", "command"] {
+        let (s, mut p) = fixture();
+        p.worker.as_mut().unwrap().operation = opaque(operation);
+        if let Target::Worker { operation: target, .. } = &mut p.facts[0].document.target {
+            *target = opaque(operation);
+        }
+        p.facts[0].attested_document = digest(&p.facts[0].document).unwrap();
+        p.policy.targets = BTreeSet::from([p.facts[0].attested_document.clone()]);
+        let w = p.worker.as_ref().unwrap();
+        p.qualification = Some(OrdinaryQualification {
+            realization: digest(w).unwrap(),
+            tenant: p.bindings[0].tenant.clone(),
+            subject: p.bindings[0].principal.clone(),
+            provider: w.provider.clone(),
+            profile: w.profile.clone(),
+            operations: BTreeSet::from([opaque("start")]),
+            aq_version: w.aq_version.clone(),
+            wi_version: w.wi_version.clone(),
+            expires_at: p.policy.expires_at.clone(),
+            revoked: false,
+            quarantined: false,
+            evidence: p.fixture.take().unwrap().evidence,
+        });
+        let t = tempfile::tempdir().unwrap();
+        let r = root(&t);
+        let id = submit(&r, &s, &p);
+        resolve(&r, &id, &p);
+        let view = evaluate(&r, &id, &p);
+        assert_eq!(view.phase, Phase::Denied);
+        assert_eq!(view.authorization.unwrap().reasons, vec![Reason::Unavailable]);
+        let mut queue = Queue::default();
+        assert!(Egress::new(&r)
+            .deliver_test(&caller(&p), now(), &id, trusted(&p), &mut queue)
+            .is_err());
+        assert!(queue.calls.is_empty());
+        let state = r.effect_snapshot(caller(&p).tenant()).unwrap();
+        assert!(state.uses.is_empty());
+        assert_eq!(state.effects.len(), 1);
+        assert!(state.effects[&id].dispatches.is_empty());
+        // An unavailable operation must not mask an invalid ordinary qualification.
+        p.qualification.as_mut().unwrap().revoked = true;
+        let effect = &state.effects[&id];
+        let invalid = authorize(
+            &effect.intent,
+            &effect.agency,
+            effect.resolution.as_ref().unwrap(),
+            &trusted(&p),
+            &now(),
+        )
+        .unwrap();
+        assert_eq!(invalid.reasons, vec![Reason::ProfileDrift]);
+    }
 }
 #[test]
 fn ordinary_qualification_is_exact_and_revocable() {
@@ -1340,12 +1395,69 @@ fn unsupported_store_profile_is_rejected_without_upgrade() {
     assert!(StoreRoot::open_existing(t.path().join("root")).is_err());
     assert_eq!(std::fs::read_to_string(path).unwrap(), s);
 }
-proptest! {
- #[test]
- fn removing_authority_never_increases_allowed_demands(mask in 0u8..32){let(s,mut p)=fixture();let c=caller(&p);let a=resolve_agency(&c,&s,&p.bindings,&now()).unwrap();let intent=EffectIntent{id:EffectIntentId::generate(),submission:s.clone(),agency:a.context.clone(),stable_idempotency_identity:opaque("test"),submitted_at:now()};let r=resolve_resource(&intent,c.tenant(),&p.registry,&p.facts,&now()).unwrap();for(i,set)in [&mut p.bindings[0].capacity_authority,&mut p.policy.platform,&mut p.policy.resource,&mut p.policy.information_use,&mut p.grants[0].authority].into_iter().enumerate(){if mask&(1<<i)!=0{set.clear();}}let result=authorize(&intent,&a,&r,&trusted(&p),&now()).unwrap();proptest::prop_assert_eq!(result.decision==Decision::Allow,mask==0);for pair in result.trace.windows(2){proptest::prop_assert!(pair[1].remaining.is_subset(&pair[0].remaining));}}
- #[test]
- fn deterministic_command_replay_preserves_state_and_rejects_stale_commands(seed in proptest::prelude::any::<u64>()){let(s,p)=fixture();let c=caller(&p);let mut s=s;s.client_request_id=format!("request-{seed}").try_into().unwrap();let action=EffectAction::Submit{id:EffectIntentId::generate(),submission:Box::new(s),snapshot:trusted(&p),link:None};let old=EffectState::default();let cmd=validate_command(&old,&c,now(),action).unwrap();let(a,id)=replay_command(&old,c.tenant(),cmd.bytes()).unwrap();let(b,other)=replay_command(&old,c.tenant(),cmd.bytes()).unwrap();proptest::prop_assert_eq!(&a,&b);proptest::prop_assert_eq!(id,other);proptest::prop_assert!(replay_command(&a,c.tenant(),cmd.bytes()).is_err());}
+#[test]
+fn removing_authority_never_increases_allowed_demands() {
+    TestRunner::default()
+        .run(&(0u8..32), |mask| {
+            let (s, mut p) = fixture();
+            let c = caller(&p);
+            let a = resolve_agency(&c, &s, &p.bindings, &now()).unwrap();
+            let intent = EffectIntent {
+                id: EffectIntentId::generate(),
+                submission: s.clone(),
+                agency: a.context.clone(),
+                stable_idempotency_identity: opaque("test"),
+                submitted_at: now(),
+            };
+            let r = resolve_resource(&intent, c.tenant(), &p.registry, &p.facts, &now()).unwrap();
+            for (i, set) in [
+                &mut p.bindings[0].capacity_authority,
+                &mut p.policy.platform,
+                &mut p.policy.resource,
+                &mut p.policy.information_use,
+                &mut p.grants[0].authority,
+            ]
+            .into_iter()
+            .enumerate()
+            {
+                if mask & (1 << i) != 0 {
+                    set.clear();
+                }
+            }
+            let result = authorize(&intent, &a, &r, &trusted(&p), &now()).unwrap();
+            proptest::prop_assert_eq!(result.decision == Decision::Allow, mask == 0);
+            for pair in result.trace.windows(2) {
+                proptest::prop_assert!(pair[1].remaining.is_subset(&pair[0].remaining));
+            }
+            Ok(())
+        })
+        .unwrap();
 }
+#[test]
+fn deterministic_command_replay_preserves_state_and_rejects_stale_commands() {
+    TestRunner::default()
+        .run(&proptest::prelude::any::<u64>(), |seed| {
+            let (mut s, p) = fixture();
+            let c = caller(&p);
+            s.client_request_id = format!("request-{seed}").try_into().unwrap();
+            let action = EffectAction::Submit {
+                id: EffectIntentId::generate(),
+                submission: Box::new(s),
+                snapshot: trusted(&p),
+                link: None,
+            };
+            let old = EffectState::default();
+            let cmd = validate_command(&old, &c, now(), action).unwrap();
+            let (a, id) = replay_command(&old, c.tenant(), cmd.bytes()).unwrap();
+            let (b, other) = replay_command(&old, c.tenant(), cmd.bytes()).unwrap();
+            proptest::prop_assert_eq!(&a, &b);
+            proptest::prop_assert_eq!(id, other);
+            proptest::prop_assert!(replay_command(&a, c.tenant(), cmd.bytes()).is_err());
+            Ok(())
+        })
+        .unwrap();
+}
+
 #[test]
 fn unknown_control_and_revoked_qualification_fail_closed() {
     let (_, mut p) = fixture();

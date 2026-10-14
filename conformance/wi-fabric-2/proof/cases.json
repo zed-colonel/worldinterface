@@ -171,11 +171,137 @@
       "source_record_sha256": "dc6946ef4ea28eb03d95eb92ae830f9c2b2f19f491d2e177cf27aceb927a967c",
       "gate": "WI-WORKER-G2",
       "owning_item": "WIP-02",
-      "status": "planned",
+      "status": "implemented",
       "coverage_refs": [
         "conformance/wi-fabric-2/egress/coverage.json"
       ],
-      "tests": []
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "wp009_exact_fixture_durable_intent_and_admission"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "ordinary_provider_cannot_reuse_fixture_proof"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "resolution_failures_are_durable_without_running"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "canonical_resource_grammar_and_namespace_specific_bounds"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "identical_request_recovery_conflicts_and_scoped_inspection"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "lost_ack_reopens_identical_request_without_extra_use"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "forged_acknowledgments_cannot_complete_outbox"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "concurrent_submissions_and_logical_use_races"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "commit_evidence_rejects_false_success_failure_and_missing_publication"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "successful_boundary_requires_durable_output_evidence"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "uncertainty_reconciliation_and_retry_require_noncommit_policy_and_authority"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "reconciliation_cannot_change_confirmed_commit_or_skip_evidence"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "cancellation_before_dispatch_and_after_handoff_are_distinct"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "compensation_is_a_separate_intent_without_inherited_authority"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "backup_rebuild_replay_and_generic_bypass_integrity"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "unsupported_store_profile_is_rejected_without_upgrade"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "removing_authority_never_increases_allowed_demands"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "deterministic_command_replay_preserves_state_and_rejects_stale_commands"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "resolution_attests_symlinks_dns_redirects_and_exact_audience"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "unpublished_output_cannot_be_marked_successful_or_survive_reopen"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "concurrent_conflicting_requests_commit_only_one_intent"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-storage",
+          "test": "effect::tests::effect_journal_faults_roll_back_every_projection"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "ordinary_qualification_is_exact_and_revocable"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp009_runtime_exact_qualification_admits_once_without_execution_success"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "self_initiated_and_external_requests_follow_the_same_authorization_path"
+        }
+      ]
     },
     {
       "id": "WP-010",
@@ -183,11 +309,32 @@
       "source_record_sha256": "a89213f864e8b98160a3904a9c55e8d115c3868e2f09d90212a29216d90b280e",
       "gate": "WI-WORKER-G2",
       "owning_item": "WIP-02",
-      "status": "planned",
+      "status": "implemented",
       "coverage_refs": [
         "conformance/wi-fabric-2/egress/coverage.json"
       ],
-      "tests": []
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "wp010_unreviewed_executable_cannot_be_waived"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "approval_and_separation_of_duties_are_bound_to_exact_inputs"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "purpose_candidate_and_lifecycle_labels_never_supply_authority"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp010_runtime_generated_executable_denied_despite_exact_approval_and_purpose"
+        }
+      ]
     },
     {
       "id": "WP-011",
@@ -195,11 +342,57 @@
       "source_record_sha256": "ce7ba45b617d0a87e4fef1d4cdfeda0307556935fc475fd38529386a58bbdc27",
       "gate": "WI-WORKER-G2",
       "owning_item": "WIP-02",
-      "status": "planned",
+      "status": "implemented",
       "coverage_refs": [
         "conformance/wi-fabric-2/egress/coverage.json"
       ],
-      "tests": []
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "wp011_protected_credentials_and_cross_run_denied"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "wp011_test_credential_is_exact_and_short_lived"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "agency_forgery_ambiguity_expiry_revocation_and_attenuation"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "delegation_endpoints_cycles_and_widening_fail_closed"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "inspection_rejects_missing_and_contradictory_evidence"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp011_runtime_protected_input_and_credentials_cannot_admit"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp011_runtime_test_credential_is_exact_short_lived_and_inspection_is_scoped"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "caller_claims_cannot_override_authenticated_agency_or_grants"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "production_facade_authenticates_verifies_and_rechecks_live_target"
+        }
+      ]
     },
     {
       "id": "WP-012",
@@ -207,11 +400,27 @@
       "source_record_sha256": "3ffa62097b75745831489791bae6a9e5be3355f0d9312c663943c662fa7e0bca",
       "gate": "WI-WORKER-G2",
       "owning_item": "WIP-02",
-      "status": "planned",
+      "status": "implemented",
       "coverage_refs": [
         "conformance/wi-fabric-2/egress/coverage.json"
       ],
-      "tests": []
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "wp012_each_unmet_control_names_requirement_and_never_dispatches"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "unknown_control_and_revoked_qualification_fail_closed"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp012_runtime_each_mandatory_control_denies_without_downgrade"
+        }
+      ]
     },
     {
       "id": "WP-013",
@@ -219,11 +428,27 @@
       "source_record_sha256": "c25988cfdfd4be855b6948e6ea32c78ffcfc5584482c376841d556e67a404972",
       "gate": "WI-WORKER-G2",
       "owning_item": "WIP-02",
-      "status": "planned",
+      "status": "implemented",
       "coverage_refs": [
         "conformance/wi-fabric-2/egress/coverage.json"
       ],
-      "tests": []
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "wp013_unsupported_operation_is_unavailable"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "ordinary_unsupported_operations_are_unavailable_without_substitution"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp013_runtime_ordinary_unsupported_operations_are_unavailable"
+        }
+      ]
     },
     {
       "id": "WP-014",
@@ -231,11 +456,32 @@
       "source_record_sha256": "ada06f6fd970d259617415866247bbc59c8fa3cd22e6360e986531138e0eb6ba",
       "gate": "WI-WORKER-G2",
       "owning_item": "WIP-02",
-      "status": "planned",
+      "status": "implemented",
       "coverage_refs": [
         "conformance/wi-fabric-2/egress/coverage.json"
       ],
-      "tests": []
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "wp014_every_snapshot_binding_drift_requires_reevaluation"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "profile_change_requires_explicit_exact_reevaluation"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp014_runtime_drift_blocks_initial_and_prepared_delivery"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp014_runtime_explicit_reevaluation_cannot_rebind_persisted_request"
+        }
+      ]
     },
     {
       "id": "WP-015",
@@ -470,11 +716,52 @@
       "source_record_sha256": "0a25734a2d94cee7d2ad8d51dfcc1ce679a0f85b384b0d5a43a582906b25bd0b",
       "gate": "WI-AQ-G2",
       "owning_item": "WIP-02",
-      "status": "planned",
+      "status": "implemented",
       "coverage_refs": [
         "conformance/wi-fabric-2/integration/fixtures.json"
       ],
-      "tests": []
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_002_003_004_persist_retry_ack_and_discover"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_002_subprocess_crash_cuts"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "production_facade_authenticates_verifies_and_rechecks_live_target"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "expiry_during_refresh_blocks_initial_duplicate_and_later_batch_admission"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "live_ambiguity_after_intent_never_reaches_aq"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "production_facade_rejects_resource_boundaries_before_admission"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "caller_claims_cannot_override_authenticated_agency_or_grants"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "self_initiated_and_external_requests_follow_the_same_authorization_path"
+        }
+      ]
     },
     {
       "id": "AB-WI-003",
@@ -482,11 +769,27 @@
       "source_record_sha256": "40a722ec7d187a8c3aeccfd9f595ae97353a6d58cd4b1ebb93b7ebb4162c120d",
       "gate": "WI-AQ-G2",
       "owning_item": "WIP-02",
-      "status": "planned",
+      "status": "implemented",
       "coverage_refs": [
         "conformance/wi-fabric-2/integration/fixtures.json"
       ],
-      "tests": []
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_002_003_004_persist_retry_ack_and_discover"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_003_public_v2_vectors_and_digest_field_boundaries"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_003_required_and_detached_same_key_conflict"
+        }
+      ]
     },
     {
       "id": "AB-WI-004",
@@ -494,11 +797,27 @@
       "source_record_sha256": "9e878d392ef66cfd0567dced1c21d308e6eb6ea021569b3fa2f26312a98d9690",
       "gate": "WI-AQ-G2",
       "owning_item": "WIP-02",
-      "status": "planned",
+      "status": "implemented",
       "coverage_refs": [
         "conformance/wi-fabric-2/integration/fixtures.json"
       ],
-      "tests": []
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_002_003_004_persist_retry_ack_and_discover"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "run_discovery::tests::stale_cursor_restarts_and_partial_page_is_not_complete"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wrong_queue_store_cannot_acknowledge_or_discover"
+        }
+      ]
     },
     {
       "id": "AB-WI-005",

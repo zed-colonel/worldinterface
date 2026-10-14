@@ -276,6 +276,14 @@ fn ab_wi_002_003_004_persist_retry_ack_and_discover() {
         .discovery_cursor
         .is_none());
     let mut complete = false;
+    // Even acknowledged tasks require current host authorization for run inspection.
+    let before_inspection = bundle.wi().effect_snapshot(subject.tenant()).unwrap();
+    let before_projection = queue.engine().projection().projection_digest().unwrap();
+    queue.set_host_control_context(None);
+    assert!(run_discovery::discover(&queue, &subject, at(), &id, 1).is_err());
+    assert_eq!(bundle.wi().effect_snapshot(subject.tenant()).unwrap(), before_inspection);
+    assert_eq!(queue.engine().projection().projection_digest().unwrap(), before_projection);
+    queue.set_host_control_context(Some(host()));
     for _ in 0..4 {
         complete = run_discovery::discover(&queue, &subject, at(), &id, 1).unwrap().complete;
         if complete {
@@ -293,6 +301,10 @@ fn ab_wi_002_003_004_persist_retry_ack_and_discover() {
         &reopened.wi().effect_snapshot(subject.tenant()).unwrap().effects[&id].dispatches[0];
     assert_eq!(recorded.admission.as_ref().unwrap().canonical_digest, binding.canonical_digest);
     assert!(recorded.admission.as_ref().unwrap().acknowledged_sequence.is_some());
+    assert_eq!(
+        recorded.admission.as_ref().unwrap().observed_runs,
+        state.effects[&id].dispatches[0].admission.as_ref().unwrap().observed_runs
+    );
 }
 
 #[test]
