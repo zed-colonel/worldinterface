@@ -15,6 +15,10 @@ pub struct IngressState {
     pub deliveries: BTreeMap<DeliveryId, ObservationDelivery>,
     #[serde(default)]
     pub queue: BTreeMap<DeliveryId, QueueObligation>,
+    /// Last queue entry inspected by the bounded dispatcher. This schedules
+    /// inspection only; the delivery journal remains the authority for state.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub dispatch_cursor: Option<DeliveryId>,
     #[serde(default)]
     pub acknowledgments_to_signal: BTreeMap<DeliveryId, AcknowledgmentSignal>,
     pub conflicts: BTreeSet<(ContentHash, ContentHash)>,
@@ -34,6 +38,10 @@ pub struct QueueObligation {
     pub task_admitted: bool,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub signal_sequence: Option<u64>,
+    /// AQ confirmed that this immutable wake no longer matches. Retain the
+    /// cause on the closed obligation without allocating another signal.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub retired_wake_sequence: Option<u64>,
     #[serde(default)]
     pub generation: u32,
     #[serde(default)]
@@ -77,6 +85,15 @@ pub enum IngressCommand {
         generation: u32,
         signal_digest: ContentHash,
         sequence: u64,
+    },
+    RecordQueueWakeRetired {
+        id: DeliveryId,
+        generation: u32,
+        signal_digest: ContentHash,
+        sequence: u64,
+    },
+    AdvanceDispatchCursor {
+        id: DeliveryId,
     },
     RecoverQueue {
         id: DeliveryId,
@@ -134,6 +151,7 @@ pub enum IngressResult {
     Acknowledged(DeliveryAcknowledgment),
     Updated,
     StaleQueueGeneration,
+    QueueRecoveryExhausted,
 }
 pub fn digest<T: Serialize>(value: &T) -> Result<ContentHash> {
     Ok(ContentHash::of(&canonical_data(value)?))
@@ -281,6 +299,25 @@ pub fn disclose(
     }
     Ok(())
 }
+/// The references required to issue a subscriber delivery must be available as
+/// a group. Optional attachments and attestations are redacted by the view.
+pub fn required_references_disclosable(
+    state: &IngressState,
+    d: &ObservationDelivery,
+) -> Result<bool> {
+    let admission = state
+        .admissions
+        .values()
+        .find(|a| a.observation.id == d.observation)
+        .ok_or("missing observation")?;
+    validate_event_references(&admission.profile, &admission.event)?;
+    let binding = state.bindings.get(&d.binding.id).ok_or("missing binding")?;
+    Ok(artifact_disclosable(state, &admission.event.content)
+        && profile_evidence(&admission.event.profile)
+            .first()
+            .is_none_or(|e| artifact_disclosable(state, &e.artifact))
+        && artifact_disclosable(state, &binding.authorization.artifact))
+}
 pub fn contiguous(state: &IngressState, p: &ProviderProfile) -> u64 {
     let positions: BTreeSet<_> = state
         .admissions
@@ -389,7 +426,18 @@ pub fn apply_ingress(
                     && old.profile.scope == a.profile.scope
                     && old.producer_digest != a.producer_digest
             });
-            if let Some(old) = offset_conflict.or_else(|| s.admissions.get(&a.identity)) {
+            // Authenticated exact-byte retransmission is a duplicate even for sources
+            // without a stable producer key. Session identity fences stream frames.
+            let exact_replay = s.admissions.values().find(|old| {
+                old.profile.scope == a.profile.scope
+                    && old.provenance.transport == a.provenance.transport
+                    && old.provenance.session == a.provenance.session
+                    && old.provenance.exact_bytes_digest == a.provenance.exact_bytes_digest
+                    && now.saturating_sub(old.admitted_at_ms) <= a.profile.replay_window_ms
+            });
+            if let Some(old) =
+                offset_conflict.or(exact_replay).or_else(|| s.admissions.get(&a.identity))
+            {
                 if old.producer_digest == a.producer_digest {
                     return Ok((
                         state.clone(),
@@ -414,7 +462,12 @@ pub fn apply_ingress(
                 {
                     return Err("outside replay window or offset range".into());
                 }
-                if s.admissions.len() >= a.profile.capacity as usize
+                if s.admissions.len() >= 10000
+                    || s.admissions
+                        .values()
+                        .filter(|old| old.profile.scope == a.profile.scope)
+                        .count()
+                        >= a.profile.capacity as usize
                     || a.bindings.is_empty()
                     || a.bindings.len() != a.deliveries.len()
                     || s.deliveries.len() + a.deliveries.len() > 10000
@@ -436,6 +489,7 @@ pub fn apply_ingress(
                                 || q.signal_request.len() > 16384
                                 || ContentHash::of(&q.task_request) != q.task_digest
                                 || ContentHash::of(&q.signal_request) != q.signal_digest
+                                || q.retired_wake_sequence.is_some()
                         })
                     {
                         return Err("invalid immutable queue obligations".into());
@@ -448,6 +502,7 @@ pub fn apply_ingress(
                         b.profile == a.profile
                             && b.status == BindingStatus::Active
                             && b.expires_at_ms > now
+                            && a.event.information_use.allowed_audiences.contains(&b.subscriber)
                     })
                     .map(|b| BindingVersion { id: b.id.clone(), revision: b.revision })
                     .collect();
@@ -591,6 +646,13 @@ pub fn apply_ingress(
                 IngressResult::Updated
             }
         }
+        IngressCommand::AdvanceDispatchCursor { id } => {
+            if !s.queue.contains_key(id) {
+                return Err("unknown dispatch cursor".into());
+            }
+            s.dispatch_cursor = Some(id.clone());
+            IngressResult::Updated
+        }
         IngressCommand::RecordQueueSignal { id, generation, signal_digest, sequence } => {
             let q = s.queue.get_mut(id).ok_or("unknown queue obligation")?;
             if q.generation != *generation {
@@ -607,11 +669,43 @@ pub fn apply_ingress(
                 IngressResult::Updated
             }
         }
+        IngressCommand::RecordQueueWakeRetired { id, generation, signal_digest, sequence } => {
+            let q = s.queue.get(id).ok_or("unknown queue obligation")?;
+            let d = s.deliveries.get(id).ok_or("unknown delivery")?;
+            if q.generation != *generation {
+                IngressResult::StaleQueueGeneration
+            } else if q.signal_digest != *signal_digest {
+                return Err("queue signal identity mismatch".into());
+            } else if *sequence == 0
+                || q.signal_sequence.is_some_and(|old| old != *sequence)
+                || q.retired_wake_sequence.is_some_and(|old| old != *sequence)
+            {
+                return Err("invalid retired queue wake".into());
+            } else {
+                // An old dispatcher cannot overwrite closure or a valid delayed
+                // acknowledgment. The command and projection retain the cause.
+                if d.state == DeliveryState::Pending {
+                    if now >= d.expires_at_ms {
+                        let d = s.deliveries.get_mut(id).unwrap();
+                        d.state = DeliveryState::Expired;
+                        d.token_invalidated = true;
+                    } else {
+                        s.deliveries.get_mut(id).unwrap().state = DeliveryState::DeadLetter;
+                        s.queue.get_mut(id).unwrap().retired_wake_sequence = Some(*sequence);
+                    }
+                }
+                IngressResult::Updated
+            }
+        }
         IngressCommand::RecoverQueue { id, expected_generation, replacement } => {
             let old = s.queue.get(id).ok_or("unknown queue obligation")?;
             let delivery = s.deliveries.get(id).ok_or("unknown delivery")?;
             if delivery.state != DeliveryState::Pending
+                || delivery.token_invalidated
                 || now >= delivery.expires_at_ms
+                || s.bindings
+                    .get(&delivery.binding.id)
+                    .is_none_or(|b| b.status != BindingStatus::Active || now >= b.expires_at_ms)
                 || old.generation != *expected_generation
                 || old.signal_sequence.is_none()
                 || replacement.version != 1
@@ -619,6 +713,7 @@ pub fn apply_ingress(
                 || expected_generation.checked_add(1) != Some(replacement.generation)
                 || replacement.task_admitted
                 || replacement.signal_sequence.is_some()
+                || replacement.retired_wake_sequence.is_some()
                 || !replacement.prior.is_empty()
                 || replacement.task_request.is_empty()
                 || replacement.signal_request.is_empty()
@@ -629,13 +724,23 @@ pub fn apply_ingress(
             {
                 return Err("invalid queue recovery".into());
             }
-            let mut next = *replacement.clone();
-            next.prior = old.prior.clone();
-            let mut archived = old.clone();
-            archived.prior.clear();
-            next.prior.push(archived);
-            s.queue.insert(id.clone(), next);
-            IngressResult::Updated
+            // Bound infrastructure recovery independently of subscriber claims:
+            // unavailable work may retire an AQ run without making a claim.
+            // The pinned policy bounds both subscriber attempts and replacement
+            // generations. Journal this exhaustion without allocating more work;
+            // retained lineage and this command preserve the failure evidence.
+            if old.generation >= delivery.policy.max_attempts {
+                s.deliveries.get_mut(id).unwrap().state = DeliveryState::DeadLetter;
+                IngressResult::QueueRecoveryExhausted
+            } else {
+                let mut next = *replacement.clone();
+                next.prior = old.prior.clone();
+                let mut archived = old.clone();
+                archived.prior.clear();
+                next.prior.push(archived);
+                s.queue.insert(id.clone(), next);
+                IngressResult::Updated
+            }
         }
         IngressCommand::Claim { id, subscriber, token_digest } => {
             let d = s.deliveries.get(id).ok_or("unknown delivery")?;

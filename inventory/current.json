@@ -5373,7 +5373,7 @@
     "kind": "enum",
     "path": "crates/worldinterface-foundation/domain/src/ingress.rs",
     "name": "IngressCommand",
-    "source_sha256": "fc7f203adf5d430a1bb89985fe578e1216f997b3d2f1e2a695a6b37f24c75f2a",
+    "source_sha256": "d38a26d7b8647ea212f4cb84ffe141dea9e3b9fd42f143d1168d82f6b3fd1bec",
     "conditions": [],
     "registration_sites": []
   },
@@ -5382,7 +5382,7 @@
     "kind": "enum",
     "path": "crates/worldinterface-foundation/domain/src/ingress.rs",
     "name": "IngressResult",
-    "source_sha256": "fc7f203adf5d430a1bb89985fe578e1216f997b3d2f1e2a695a6b37f24c75f2a",
+    "source_sha256": "d38a26d7b8647ea212f4cb84ffe141dea9e3b9fd42f143d1168d82f6b3fd1bec",
     "conditions": [],
     "registration_sites": []
   },
@@ -5391,7 +5391,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-foundation/domain/src/ingress.rs",
     "name": "crates/worldinterface-foundation/domain/src/ingress.rs",
-    "source_sha256": "fc7f203adf5d430a1bb89985fe578e1216f997b3d2f1e2a695a6b37f24c75f2a",
+    "source_sha256": "d38a26d7b8647ea212f4cb84ffe141dea9e3b9fd42f143d1168d82f6b3fd1bec",
     "conditions": [],
     "registration_sites": []
   },
@@ -5400,7 +5400,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/domain/src/ingress.rs",
     "name": "AcknowledgmentSignal",
-    "source_sha256": "fc7f203adf5d430a1bb89985fe578e1216f997b3d2f1e2a695a6b37f24c75f2a",
+    "source_sha256": "d38a26d7b8647ea212f4cb84ffe141dea9e3b9fd42f143d1168d82f6b3fd1bec",
     "conditions": [],
     "registration_sites": []
   },
@@ -5409,7 +5409,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/domain/src/ingress.rs",
     "name": "IngressState",
-    "source_sha256": "fc7f203adf5d430a1bb89985fe578e1216f997b3d2f1e2a695a6b37f24c75f2a",
+    "source_sha256": "d38a26d7b8647ea212f4cb84ffe141dea9e3b9fd42f143d1168d82f6b3fd1bec",
     "conditions": [],
     "registration_sites": []
   },
@@ -5418,7 +5418,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/domain/src/ingress.rs",
     "name": "QueueObligation",
-    "source_sha256": "fc7f203adf5d430a1bb89985fe578e1216f997b3d2f1e2a695a6b37f24c75f2a",
+    "source_sha256": "d38a26d7b8647ea212f4cb84ffe141dea9e3b9fd42f143d1168d82f6b3fd1bec",
     "conditions": [],
     "registration_sites": []
   },
@@ -5427,7 +5427,7 @@
     "kind": "type",
     "path": "crates/worldinterface-foundation/domain/src/ingress.rs",
     "name": "Result",
-    "source_sha256": "fc7f203adf5d430a1bb89985fe578e1216f997b3d2f1e2a695a6b37f24c75f2a",
+    "source_sha256": "d38a26d7b8647ea212f4cb84ffe141dea9e3b9fd42f143d1168d82f6b3fd1bec",
     "conditions": [],
     "registration_sites": []
   },
@@ -5886,7 +5886,7 @@
     "kind": "module",
     "path": "crates/worldinterface-foundation/ingress/src/lib.rs",
     "name": "transport",
-    "source_sha256": "a20fe3c8f24143a83c135d6f1085cc3d374c3decf49383855de73c4057810976",
+    "source_sha256": "80dbe708cc5e0676b9cacb76c7c96dc3d59e2ae8ebb8d1a3678a2b093ee4eb38",
     "conditions": [],
     "registration_sites": []
   },
@@ -5895,7 +5895,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-foundation/ingress/src/lib.rs",
     "name": "crates/worldinterface-foundation/ingress/src/lib.rs",
-    "source_sha256": "a20fe3c8f24143a83c135d6f1085cc3d374c3decf49383855de73c4057810976",
+    "source_sha256": "80dbe708cc5e0676b9cacb76c7c96dc3d59e2ae8ebb8d1a3678a2b093ee4eb38",
     "conditions": [],
     "registration_sites": []
   },
@@ -5904,7 +5904,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/ingress/src/lib.rs",
     "name": "AdmissionIds",
-    "source_sha256": "a20fe3c8f24143a83c135d6f1085cc3d374c3decf49383855de73c4057810976",
+    "source_sha256": "80dbe708cc5e0676b9cacb76c7c96dc3d59e2ae8ebb8d1a3678a2b093ee4eb38",
     "conditions": [],
     "registration_sites": []
   },
@@ -5913,7 +5913,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/ingress/src/lib.rs",
     "name": "AuthenticatedScope",
-    "source_sha256": "a20fe3c8f24143a83c135d6f1085cc3d374c3decf49383855de73c4057810976",
+    "source_sha256": "80dbe708cc5e0676b9cacb76c7c96dc3d59e2ae8ebb8d1a3678a2b093ee4eb38",
     "conditions": [],
     "registration_sites": []
   },
@@ -5922,7 +5922,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/ingress/src/lib.rs",
     "name": "BindingGrant",
-    "source_sha256": "a20fe3c8f24143a83c135d6f1085cc3d374c3decf49383855de73c4057810976",
+    "source_sha256": "80dbe708cc5e0676b9cacb76c7c96dc3d59e2ae8ebb8d1a3678a2b093ee4eb38",
     "conditions": [],
     "registration_sites": []
   },
@@ -5931,7 +5931,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/ingress/src/lib.rs",
     "name": "DeliveryToken",
-    "source_sha256": "a20fe3c8f24143a83c135d6f1085cc3d374c3decf49383855de73c4057810976",
+    "source_sha256": "80dbe708cc5e0676b9cacb76c7c96dc3d59e2ae8ebb8d1a3678a2b093ee4eb38",
     "conditions": [],
     "registration_sites": []
   },
@@ -5940,7 +5940,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/ingress/src/lib.rs",
     "name": "DeliveryView",
-    "source_sha256": "a20fe3c8f24143a83c135d6f1085cc3d374c3decf49383855de73c4057810976",
+    "source_sha256": "80dbe708cc5e0676b9cacb76c7c96dc3d59e2ae8ebb8d1a3678a2b093ee4eb38",
     "conditions": [],
     "registration_sites": []
   },
@@ -5949,7 +5949,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/ingress/src/lib.rs",
     "name": "Ingress",
-    "source_sha256": "a20fe3c8f24143a83c135d6f1085cc3d374c3decf49383855de73c4057810976",
+    "source_sha256": "80dbe708cc5e0676b9cacb76c7c96dc3d59e2ae8ebb8d1a3678a2b093ee4eb38",
     "conditions": [],
     "registration_sites": []
   },
@@ -5958,7 +5958,16 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/ingress/src/lib.rs",
     "name": "IssuedDelivery",
-    "source_sha256": "a20fe3c8f24143a83c135d6f1085cc3d374c3decf49383855de73c4057810976",
+    "source_sha256": "80dbe708cc5e0676b9cacb76c7c96dc3d59e2ae8ebb8d1a3678a2b093ee4eb38",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-foundation/ingress/src/lib.rs::::struct:SubscriberReceiptView",
+    "kind": "struct",
+    "path": "crates/worldinterface-foundation/ingress/src/lib.rs",
+    "name": "SubscriberReceiptView",
+    "source_sha256": "80dbe708cc5e0676b9cacb76c7c96dc3d59e2ae8ebb8d1a3678a2b093ee4eb38",
     "conditions": [],
     "registration_sites": []
   },
@@ -5967,7 +5976,7 @@
     "kind": "trait",
     "path": "crates/worldinterface-foundation/ingress/src/lib.rs",
     "name": "BindingAuthority",
-    "source_sha256": "a20fe3c8f24143a83c135d6f1085cc3d374c3decf49383855de73c4057810976",
+    "source_sha256": "80dbe708cc5e0676b9cacb76c7c96dc3d59e2ae8ebb8d1a3678a2b093ee4eb38",
     "conditions": [],
     "registration_sites": []
   },
@@ -5976,7 +5985,7 @@
     "kind": "type",
     "path": "crates/worldinterface-foundation/ingress/src/lib.rs",
     "name": "Result",
-    "source_sha256": "a20fe3c8f24143a83c135d6f1085cc3d374c3decf49383855de73c4057810976",
+    "source_sha256": "80dbe708cc5e0676b9cacb76c7c96dc3d59e2ae8ebb8d1a3678a2b093ee4eb38",
     "conditions": [],
     "registration_sites": []
   },
@@ -5994,7 +6003,7 @@
     "kind": "module",
     "path": "crates/worldinterface-foundation/ingress/src/transport/mod.rs",
     "name": "http",
-    "source_sha256": "d8a6052c04791b94c3ee7aaab79bbb1e2b0b3b070c8f9df722aaab41aa333ee1",
+    "source_sha256": "f43cc2c41c91a272dc687691ba30e7e6449d3851d875008e22a40f0cd4d15973",
     "conditions": [],
     "registration_sites": []
   },
@@ -6003,7 +6012,7 @@
     "kind": "module",
     "path": "crates/worldinterface-foundation/ingress/src/transport/mod.rs",
     "name": "streaming",
-    "source_sha256": "d8a6052c04791b94c3ee7aaab79bbb1e2b0b3b070c8f9df722aaab41aa333ee1",
+    "source_sha256": "f43cc2c41c91a272dc687691ba30e7e6449d3851d875008e22a40f0cd4d15973",
     "conditions": [],
     "registration_sites": []
   },
@@ -6012,7 +6021,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-foundation/ingress/src/transport/mod.rs",
     "name": "crates/worldinterface-foundation/ingress/src/transport/mod.rs",
-    "source_sha256": "d8a6052c04791b94c3ee7aaab79bbb1e2b0b3b070c8f9df722aaab41aa333ee1",
+    "source_sha256": "f43cc2c41c91a272dc687691ba30e7e6449d3851d875008e22a40f0cd4d15973",
     "conditions": [],
     "registration_sites": []
   },
@@ -6021,7 +6030,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/ingress/src/transport/mod.rs",
     "name": "ProviderCredentials",
-    "source_sha256": "d8a6052c04791b94c3ee7aaab79bbb1e2b0b3b070c8f9df722aaab41aa333ee1",
+    "source_sha256": "f43cc2c41c91a272dc687691ba30e7e6449d3851d875008e22a40f0cd4d15973",
     "conditions": [],
     "registration_sites": []
   },
@@ -6030,7 +6039,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/ingress/src/transport/mod.rs",
     "name": "ValidatedProviderEvent",
-    "source_sha256": "d8a6052c04791b94c3ee7aaab79bbb1e2b0b3b070c8f9df722aaab41aa333ee1",
+    "source_sha256": "f43cc2c41c91a272dc687691ba30e7e6449d3851d875008e22a40f0cd4d15973",
     "conditions": [],
     "registration_sites": []
   },
@@ -6066,7 +6075,7 @@
     "kind": "module",
     "path": "crates/worldinterface-foundation/ingress/tests/lifecycle.rs",
     "name": "generated",
-    "source_sha256": "17e931e6884bf44196d035bdb9d127a3062d1a632338bc5695040498e40933a9",
+    "source_sha256": "56c678c8df8fc15974fe8379533c6eb74d0ada62e4fa0b61a8cca9613ba5d4ea",
     "conditions": [],
     "registration_sites": []
   },
@@ -6075,7 +6084,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-foundation/ingress/tests/lifecycle.rs",
     "name": "crates/worldinterface-foundation/ingress/tests/lifecycle.rs",
-    "source_sha256": "17e931e6884bf44196d035bdb9d127a3062d1a632338bc5695040498e40933a9",
+    "source_sha256": "56c678c8df8fc15974fe8379533c6eb74d0ada62e4fa0b61a8cca9613ba5d4ea",
     "conditions": [],
     "registration_sites": []
   },
@@ -6084,7 +6093,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/ingress/tests/lifecycle.rs",
     "name": "Authority",
-    "source_sha256": "17e931e6884bf44196d035bdb9d127a3062d1a632338bc5695040498e40933a9",
+    "source_sha256": "56c678c8df8fc15974fe8379533c6eb74d0ada62e4fa0b61a8cca9613ba5d4ea",
     "conditions": [],
     "registration_sites": []
   },
@@ -6093,7 +6102,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/ingress/tests/lifecycle.rs",
     "name": "MockWake",
-    "source_sha256": "17e931e6884bf44196d035bdb9d127a3062d1a632338bc5695040498e40933a9",
+    "source_sha256": "56c678c8df8fc15974fe8379533c6eb74d0ada62e4fa0b61a8cca9613ba5d4ea",
     "conditions": [],
     "registration_sites": []
   },
@@ -6102,7 +6111,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/ingress/tests/lifecycle.rs",
     "name": "Setup",
-    "source_sha256": "17e931e6884bf44196d035bdb9d127a3062d1a632338bc5695040498e40933a9",
+    "source_sha256": "56c678c8df8fc15974fe8379533c6eb74d0ada62e4fa0b61a8cca9613ba5d4ea",
     "conditions": [],
     "registration_sites": []
   },
@@ -7132,7 +7141,7 @@
     "kind": "module",
     "path": "crates/worldinterface-foundation/storage/src/ingress.rs",
     "name": "tests",
-    "source_sha256": "9ccbe6bde910f3f59f47f9671f9b4cfded4e6a0447db16fb9809b3b8b12c3e69",
+    "source_sha256": "b891bd0c7535c0b79d02e8fe65f944d85f3c5c40f2a402a01b9dbda626244d91",
     "conditions": [
       "# [cfg (test)]"
     ],
@@ -7143,7 +7152,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-foundation/storage/src/ingress.rs",
     "name": "crates/worldinterface-foundation/storage/src/ingress.rs",
-    "source_sha256": "9ccbe6bde910f3f59f47f9671f9b4cfded4e6a0447db16fb9809b3b8b12c3e69",
+    "source_sha256": "b891bd0c7535c0b79d02e8fe65f944d85f3c5c40f2a402a01b9dbda626244d91",
     "conditions": [],
     "registration_sites": []
   },
@@ -7152,7 +7161,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/storage/src/ingress.rs",
     "name": "Entry",
-    "source_sha256": "9ccbe6bde910f3f59f47f9671f9b4cfded4e6a0447db16fb9809b3b8b12c3e69",
+    "source_sha256": "b891bd0c7535c0b79d02e8fe65f944d85f3c5c40f2a402a01b9dbda626244d91",
     "conditions": [],
     "registration_sites": []
   },
@@ -8978,7 +8987,7 @@
     "kind": "enum",
     "path": "crates/worldinterface-runtime/src/ingress.rs",
     "name": "AdmissionOutcome",
-    "source_sha256": "7415124f2b3db0b3cc8c6cfd9c22549962c1a5cc69f21d33edf8f6059f3bdfa0",
+    "source_sha256": "aebab554d6ac2a5ccf9c4e998b8175ca5167a9aad16c8204c5fcced9f30c6f6b",
     "conditions": [],
     "registration_sites": []
   },
@@ -8987,7 +8996,16 @@
     "kind": "enum",
     "path": "crates/worldinterface-runtime/src/ingress.rs",
     "name": "AqDispatchFailure",
-    "source_sha256": "7415124f2b3db0b3cc8c6cfd9c22549962c1a5cc69f21d33edf8f6059f3bdfa0",
+    "source_sha256": "aebab554d6ac2a5ccf9c4e998b8175ca5167a9aad16c8204c5fcced9f30c6f6b",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/ingress.rs::::enum:DeliveryReadiness",
+    "kind": "enum",
+    "path": "crates/worldinterface-runtime/src/ingress.rs",
+    "name": "DeliveryReadiness",
+    "source_sha256": "aebab554d6ac2a5ccf9c4e998b8175ca5167a9aad16c8204c5fcced9f30c6f6b",
     "conditions": [],
     "registration_sites": []
   },
@@ -8996,7 +9014,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/src/ingress.rs",
     "name": "http",
-    "source_sha256": "7415124f2b3db0b3cc8c6cfd9c22549962c1a5cc69f21d33edf8f6059f3bdfa0",
+    "source_sha256": "aebab554d6ac2a5ccf9c4e998b8175ca5167a9aad16c8204c5fcced9f30c6f6b",
     "conditions": [],
     "registration_sites": []
   },
@@ -9005,7 +9023,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/src/ingress.rs",
     "name": "streaming",
-    "source_sha256": "7415124f2b3db0b3cc8c6cfd9c22549962c1a5cc69f21d33edf8f6059f3bdfa0",
+    "source_sha256": "aebab554d6ac2a5ccf9c4e998b8175ca5167a9aad16c8204c5fcced9f30c6f6b",
     "conditions": [],
     "registration_sites": []
   },
@@ -9014,7 +9032,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-runtime/src/ingress.rs",
     "name": "crates/worldinterface-runtime/src/ingress.rs",
-    "source_sha256": "7415124f2b3db0b3cc8c6cfd9c22549962c1a5cc69f21d33edf8f6059f3bdfa0",
+    "source_sha256": "aebab554d6ac2a5ccf9c4e998b8175ca5167a9aad16c8204c5fcced9f30c6f6b",
     "conditions": [],
     "registration_sites": []
   },
@@ -9023,7 +9041,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/src/ingress.rs",
     "name": "BoundAqIngress",
-    "source_sha256": "7415124f2b3db0b3cc8c6cfd9c22549962c1a5cc69f21d33edf8f6059f3bdfa0",
+    "source_sha256": "aebab554d6ac2a5ccf9c4e998b8175ca5167a9aad16c8204c5fcced9f30c6f6b",
     "conditions": [],
     "registration_sites": []
   },
@@ -9032,7 +9050,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/src/ingress.rs",
     "name": "IngressDeliveryHandler",
-    "source_sha256": "7415124f2b3db0b3cc8c6cfd9c22549962c1a5cc69f21d33edf8f6059f3bdfa0",
+    "source_sha256": "aebab554d6ac2a5ccf9c4e998b8175ca5167a9aad16c8204c5fcced9f30c6f6b",
     "conditions": [],
     "registration_sites": []
   },
@@ -9041,7 +9059,16 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/src/ingress.rs",
     "name": "IngressRuntime",
-    "source_sha256": "7415124f2b3db0b3cc8c6cfd9c22549962c1a5cc69f21d33edf8f6059f3bdfa0",
+    "source_sha256": "aebab554d6ac2a5ccf9c4e998b8175ca5167a9aad16c8204c5fcced9f30c6f6b",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/ingress.rs::::struct:SubscriberRegistry",
+    "kind": "struct",
+    "path": "crates/worldinterface-runtime/src/ingress.rs",
+    "name": "SubscriberRegistry",
+    "source_sha256": "aebab554d6ac2a5ccf9c4e998b8175ca5167a9aad16c8204c5fcced9f30c6f6b",
     "conditions": [],
     "registration_sites": []
   },
@@ -9050,7 +9077,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/src/ingress.rs",
     "name": "WakeOutcome",
-    "source_sha256": "7415124f2b3db0b3cc8c6cfd9c22549962c1a5cc69f21d33edf8f6059f3bdfa0",
+    "source_sha256": "aebab554d6ac2a5ccf9c4e998b8175ca5167a9aad16c8204c5fcced9f30c6f6b",
     "conditions": [],
     "registration_sites": []
   },
@@ -9059,7 +9086,7 @@
     "kind": "trait",
     "path": "crates/worldinterface-runtime/src/ingress.rs",
     "name": "AqIngressPort",
-    "source_sha256": "7415124f2b3db0b3cc8c6cfd9c22549962c1a5cc69f21d33edf8f6059f3bdfa0",
+    "source_sha256": "aebab554d6ac2a5ccf9c4e998b8175ca5167a9aad16c8204c5fcced9f30c6f6b",
     "conditions": [],
     "registration_sites": []
   },
@@ -9068,7 +9095,7 @@
     "kind": "trait",
     "path": "crates/worldinterface-runtime/src/ingress.rs",
     "name": "SubscriberTransport",
-    "source_sha256": "7415124f2b3db0b3cc8c6cfd9c22549962c1a5cc69f21d33edf8f6059f3bdfa0",
+    "source_sha256": "aebab554d6ac2a5ccf9c4e998b8175ca5167a9aad16c8204c5fcced9f30c6f6b",
     "conditions": [],
     "registration_sites": []
   },
@@ -9387,7 +9414,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-runtime/tests/ingress.rs",
     "name": "crates/worldinterface-runtime/tests/ingress.rs",
-    "source_sha256": "ab8f547b740c4bf408f7fd29bc1a918b35f559ea30ef3282db75ea9a5f14ba09",
+    "source_sha256": "d445f670dbb9a9703aa65c8638ca702c3ef04eece209500082659696824d222a",
     "conditions": [],
     "registration_sites": []
   },
@@ -9396,7 +9423,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/ingress.rs",
     "name": "Authority",
-    "source_sha256": "ab8f547b740c4bf408f7fd29bc1a918b35f559ea30ef3282db75ea9a5f14ba09",
+    "source_sha256": "d445f670dbb9a9703aa65c8638ca702c3ef04eece209500082659696824d222a",
     "conditions": [],
     "registration_sites": []
   },
@@ -9405,7 +9432,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/ingress.rs",
     "name": "Complete",
-    "source_sha256": "ab8f547b740c4bf408f7fd29bc1a918b35f559ea30ef3282db75ea9a5f14ba09",
+    "source_sha256": "d445f670dbb9a9703aa65c8638ca702c3ef04eece209500082659696824d222a",
     "conditions": [],
     "registration_sites": []
   },
@@ -9414,7 +9441,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/ingress.rs",
     "name": "CursorHandler",
-    "source_sha256": "ab8f547b740c4bf408f7fd29bc1a918b35f559ea30ef3282db75ea9a5f14ba09",
+    "source_sha256": "d445f670dbb9a9703aa65c8638ca702c3ef04eece209500082659696824d222a",
     "conditions": [],
     "registration_sites": []
   },
@@ -9423,7 +9450,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/ingress.rs",
     "name": "LostAcknowledgment",
-    "source_sha256": "ab8f547b740c4bf408f7fd29bc1a918b35f559ea30ef3282db75ea9a5f14ba09",
+    "source_sha256": "d445f670dbb9a9703aa65c8638ca702c3ef04eece209500082659696824d222a",
     "conditions": [],
     "registration_sites": []
   },
@@ -9432,7 +9459,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/ingress.rs",
     "name": "Subscriber",
-    "source_sha256": "ab8f547b740c4bf408f7fd29bc1a918b35f559ea30ef3282db75ea9a5f14ba09",
+    "source_sha256": "d445f670dbb9a9703aa65c8638ca702c3ef04eece209500082659696824d222a",
     "conditions": [],
     "registration_sites": []
   },
@@ -9441,7 +9468,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-runtime/tests/ingress_recovery.rs",
     "name": "crates/worldinterface-runtime/tests/ingress_recovery.rs",
-    "source_sha256": "c959b4d8e3d2c28d2e9fc64b9b5dc45e43e595f7199658efb12844ea4e2dfd61",
+    "source_sha256": "7b75fbf13cae87b3a4c4f8170f5c9a9f32efaa4d620ba88b3ced13a0fac2522e",
     "conditions": [],
     "registration_sites": []
   },
@@ -9450,7 +9477,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/ingress_recovery.rs",
     "name": "Authority",
-    "source_sha256": "c959b4d8e3d2c28d2e9fc64b9b5dc45e43e595f7199658efb12844ea4e2dfd61",
+    "source_sha256": "7b75fbf13cae87b3a4c4f8170f5c9a9f32efaa4d620ba88b3ced13a0fac2522e",
     "conditions": [],
     "registration_sites": []
   },
@@ -9459,7 +9486,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/ingress_recovery.rs",
     "name": "ConcurrentWriter",
-    "source_sha256": "c959b4d8e3d2c28d2e9fc64b9b5dc45e43e595f7199658efb12844ea4e2dfd61",
+    "source_sha256": "7b75fbf13cae87b3a4c4f8170f5c9a9f32efaa4d620ba88b3ced13a0fac2522e",
     "conditions": [],
     "registration_sites": []
   },
@@ -9468,7 +9495,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/ingress_recovery.rs",
     "name": "DelayedOldCompletion",
-    "source_sha256": "c959b4d8e3d2c28d2e9fc64b9b5dc45e43e595f7199658efb12844ea4e2dfd61",
+    "source_sha256": "7b75fbf13cae87b3a4c4f8170f5c9a9f32efaa4d620ba88b3ced13a0fac2522e",
     "conditions": [],
     "registration_sites": []
   },
@@ -9477,7 +9504,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/ingress_recovery.rs",
     "name": "DelayedOldTaskCompletion",
-    "source_sha256": "c959b4d8e3d2c28d2e9fc64b9b5dc45e43e595f7199658efb12844ea4e2dfd61",
+    "source_sha256": "7b75fbf13cae87b3a4c4f8170f5c9a9f32efaa4d620ba88b3ced13a0fac2522e",
     "conditions": [],
     "registration_sites": []
   },
@@ -9486,7 +9513,16 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/ingress_recovery.rs",
     "name": "DurableStop",
-    "source_sha256": "c959b4d8e3d2c28d2e9fc64b9b5dc45e43e595f7199658efb12844ea4e2dfd61",
+    "source_sha256": "7b75fbf13cae87b3a4c4f8170f5c9a9f32efaa4d620ba88b3ced13a0fac2522e",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/ingress_recovery.rs::::struct:InterruptedWake",
+    "kind": "struct",
+    "path": "crates/worldinterface-runtime/tests/ingress_recovery.rs",
+    "name": "InterruptedWake",
+    "source_sha256": "7b75fbf13cae87b3a4c4f8170f5c9a9f32efaa4d620ba88b3ced13a0fac2522e",
     "conditions": [],
     "registration_sites": []
   },
@@ -9495,7 +9531,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/ingress_recovery.rs",
     "name": "PauseRecoveryWake",
-    "source_sha256": "c959b4d8e3d2c28d2e9fc64b9b5dc45e43e595f7199658efb12844ea4e2dfd61",
+    "source_sha256": "7b75fbf13cae87b3a4c4f8170f5c9a9f32efaa4d620ba88b3ced13a0fac2522e",
     "conditions": [],
     "registration_sites": []
   },
@@ -9504,7 +9540,16 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/ingress_recovery.rs",
     "name": "Recorder",
-    "source_sha256": "c959b4d8e3d2c28d2e9fc64b9b5dc45e43e595f7199658efb12844ea4e2dfd61",
+    "source_sha256": "7b75fbf13cae87b3a4c4f8170f5c9a9f32efaa4d620ba88b3ced13a0fac2522e",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/ingress_recovery.rs::::struct:RetireDuringWake",
+    "kind": "struct",
+    "path": "crates/worldinterface-runtime/tests/ingress_recovery.rs",
+    "name": "RetireDuringWake",
+    "source_sha256": "7b75fbf13cae87b3a4c4f8170f5c9a9f32efaa4d620ba88b3ced13a0fac2522e",
     "conditions": [],
     "registration_sites": []
   },
@@ -9558,7 +9603,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-runtime/tests/support/crash.rs",
     "name": "crates/worldinterface-runtime/tests/support/crash.rs",
-    "source_sha256": "ca683f7a5b0aba961b19863dbab51b02d891a782c6e4d40cbf159feb002dace9",
+    "source_sha256": "b95be04ff4cf769bfc8a68e4c51eba4d47dd3617cbf5153b8ad0767d4230629e",
     "conditions": [],
     "registration_sites": []
   },

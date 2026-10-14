@@ -126,6 +126,14 @@ The full-parent obligations that do not serve the generic engine are deferred, w
 
 ## Standing work-item steps
 
+WIP-03 takes over the 23 parked WI-03 repair commits through `26114a7`, adds the
+exact WI03P-F001 expiry regression and admitted-task companion, and registers
+AB-WI-006/007/009/022. [WIP-03](WIP-03.md) maps every WI-03 source-required test,
+records ADR-012/013 and the retained admission mapping, and documents the required
+security review. WI03I-F010 remains the permitted host-loop follow-up: retain one
+`IngressRuntime` per tenant across polls. Independent candidate review and
+CraftingTable integration remain due; WI-AQ-G3 stays open for WIP-08.
+
 Register cases against non-ignored exact tests, preserve scope coverage and source
 pins, run `hashes refresh`, then all adopted checks on the committed head. Record
 review decisions and retained work in the item note. Structural inventory changes

@@ -8181,5 +8181,40 @@
     "target": "WI-04 G2 source tests",
     "rationale": "WIP-02 reviewed runtime admission test harness: mutable trusted evidence and facade type alias; no production interface or authority. Independent review remains required.",
     "source": "docs/work-items/WIP-02.md; accepted WIP-02 design; ADR-004/005/006/007"
+  },
+  {
+    "id": "crates/worldinterface-foundation/ingress/src/lib.rs::::struct:SubscriberReceiptView",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/ingress.rs::::enum:DeliveryReadiness",
+    "disposition": "retain-align",
+    "target": "WI-03 production ingress and exact AQ consumer tests",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/ingress.rs::::struct:SubscriberRegistry",
+    "disposition": "retain-align",
+    "target": "WI-03 production ingress and exact AQ consumer tests",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Immutable tenant-bound transport registry shares actual handler registrations with AQ recovery; journaled policy bounds replacement generations."
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/ingress_recovery.rs::::struct:InterruptedWake",
+    "disposition": "retain-align",
+    "target": "WI-03 production ingress and exact AQ consumer tests",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Exercise partial AQ task admission and bounded initial waits; independent case review and gate attestation remain due."
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/ingress_recovery.rs::::struct:RetireDuringWake",
+    "disposition": "retain-align",
+    "target": "WI-03 production ingress and exact AQ consumer tests",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Exercise host retirement during wake admission and durable dead-letter cause recording, including lost completion and restart; independent case review and gate attestation remain due."
   }
 ]

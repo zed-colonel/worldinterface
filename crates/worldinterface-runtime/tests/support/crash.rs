@@ -69,7 +69,9 @@ fn killed_bundle_publication_never_exposes_incomplete_destination() {
             .stdout(Stdio::null())
             .spawn()
             .unwrap();
-        let deadline = Instant::now() + Duration::from_secs(10);
+        // CI may start the helper while another crash case is doing durable
+        // bundle I/O. Give the child time to reach the explicit fault point.
+        let deadline = Instant::now() + Duration::from_secs(30);
         while !ready.exists() && Instant::now() < deadline {
             if let Some(status) = child.try_wait().unwrap() {
                 panic!("early exit {status}");
@@ -79,7 +81,7 @@ fn killed_bundle_publication_never_exposes_incomplete_destination() {
         let reached = ready.exists();
         child.kill().unwrap();
         child.wait().unwrap();
-        assert!(reached);
+        assert!(reached, "publication barrier not reached for {operation} at {point}");
         let dest = path.with_extension("destination");
         if point == "before-rename" {
             assert!(!dest.exists());
@@ -123,7 +125,7 @@ fn destination_racing_publication_is_never_replaced() {
             .stderr(Stdio::null())
             .spawn()
             .unwrap();
-        let deadline = Instant::now() + Duration::from_secs(10);
+        let deadline = Instant::now() + Duration::from_secs(30);
         while !ready.exists() && Instant::now() < deadline {
             assert!(child.try_wait().unwrap().is_none());
             std::thread::sleep(Duration::from_millis(5));
@@ -131,14 +133,14 @@ fn destination_racing_publication_is_never_replaced() {
         if !ready.exists() {
             child.kill().unwrap();
             child.wait().unwrap();
-            panic!("publication barrier timed out");
+            panic!("publication barrier timed out for {operation}");
         }
         // An empty directory is the critical case: ordinary rename would replace it.
         fs::create_dir(&dest).unwrap();
         use std::os::unix::fs::MetadataExt;
         let inode = fs::metadata(&dest).unwrap().ino();
         fs::write(t.path().join("continue"), b"continue").unwrap();
-        let deadline = Instant::now() + Duration::from_secs(10);
+        let deadline = Instant::now() + Duration::from_secs(30);
         let status = loop {
             if let Some(status) = child.try_wait().unwrap() {
                 break status;
@@ -146,7 +148,7 @@ fn destination_racing_publication_is_never_replaced() {
             if Instant::now() >= deadline {
                 child.kill().unwrap();
                 child.wait().unwrap();
-                panic!("publication did not finish");
+                panic!("publication did not finish for {operation}");
             }
             std::thread::sleep(Duration::from_millis(5));
         };

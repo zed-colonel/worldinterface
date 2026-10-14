@@ -68,11 +68,23 @@ pub struct DeliveryView {
     pub acknowledgment: Option<DeliveryAcknowledgment>,
     pub content: ArtifactRef,
     pub attachments: Vec<ArtifactRef>,
-    pub receipt: BoundaryReceipt,
+    pub receipt: SubscriberReceiptView,
     pub ordering: OrderingEvidence,
     pub provenance: TransportProvenance,
     pub profile: ObservationProfile,
     pub information_use: InformationUseEnvelope,
+}
+/// Principal-scoped projection of the shared ingress receipt. This is an inspection
+/// view, not a canonical BoundaryReceipt or an independently signed receipt.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct SubscriberReceiptView {
+    pub source_receipt: ReceiptId,
+    pub admitting_binding: BindingVersion,
+    pub resolver_version: OpaqueRef,
+    pub policy_version: OpaqueRef,
+    pub authorization: EvidenceRef,
+    pub observation_digest: ContentHash,
+    pub temporal: TemporalProvenance,
 }
 pub struct IssuedDelivery {
     pub view: DeliveryView,
@@ -524,13 +536,10 @@ fn view(
         .find(|a| a.observation.id == d.observation)
         .ok_or_else(|| error("missing observation"))?;
     validate_event_references(&a.profile, &a.event).map_err(error)?;
-    // Required fields cannot be redacted without changing the view's meaning.
-    if !artifact_disclosable(s, &a.event.content)
-        || profile_evidence(&a.event.profile)
-            .first()
-            .is_some_and(|e| !artifact_disclosable(s, &e.artifact))
-        || a.receipt.evidence.iter().any(|e| !artifact_disclosable(s, &e.artifact))
-    {
+    let binding = s.bindings.get(&d.binding.id).ok_or_else(|| error("missing binding"))?;
+    // The shared receipt contains every matched binding's grant. Check only the
+    // caller's required grant; no other principal's grant enters this view.
+    if !worldinterface_domain::ingress::required_references_disclosable(s, d).map_err(error)? {
         return Err(error("required delivery reference quarantined"));
     }
     let attachments = a
@@ -560,7 +569,18 @@ fn view(
         acknowledgment: d.acknowledgment.clone(),
         content: a.event.content.clone(),
         attachments,
-        receipt: a.receipt.clone(),
+        receipt: SubscriberReceiptView {
+            source_receipt: a.receipt.id.clone(),
+            admitting_binding: d.binding.clone(),
+            resolver_version: binding.resolver_version.clone(),
+            policy_version: binding.policy.version.clone(),
+            authorization: binding.authorization.clone(),
+            observation_digest: match &a.receipt.body {
+                ReceiptBody::Ingress(body) => body.observation_digest.clone(),
+                _ => return Err(error("invalid ingress receipt")),
+            },
+            temporal: a.receipt.temporal.clone(),
+        },
         ordering: a.ordering.clone(),
         provenance: a.provenance.clone(),
         profile,

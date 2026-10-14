@@ -126,6 +126,165 @@ fn sign(bytes: &[u8]) -> Vec<u8> {
     h.update(bytes);
     h.finalize().into_bytes().to_vec()
 }
+
+#[test]
+fn queue_recovery_exhaustion_uses_pinned_policy_and_preserves_lineage() {
+    for budget in [1, 2, 100] {
+        let mut binding = fixture();
+        binding.policy.max_attempts = budget;
+        let s = Setup::with(binding);
+        let id = delivery(s.admit(&s.event("recovery-budget", 0), 1000));
+        let tenant = s.b.profile.scope.tenant.clone();
+        let mut state = s.state();
+        let request = |generation| {
+            let task_request = format!("task-{generation}").into_bytes();
+            let signal_request = format!("signal-{generation}").into_bytes();
+            QueueObligation {
+                version: 1,
+                delivery: id.clone(),
+                task_digest: ContentHash::of(&task_request),
+                signal_digest: ContentHash::of(&signal_request),
+                task_request,
+                signal_request,
+                task_admitted: false,
+                signal_sequence: None,
+                retired_wake_sequence: None,
+                generation,
+                prior: vec![],
+            }
+        };
+        let mut initial = request(0);
+        initial.task_admitted = true;
+        initial.signal_sequence = Some(1);
+        state.queue.insert(id.clone(), initial);
+        // Current binding configuration cannot extend a captured delivery budget.
+        state.bindings.get_mut(&s.b.id).unwrap().policy.max_attempts = 100;
+        for generation in 0..=budget {
+            let command = IngressCommand::RecoverQueue {
+                id: id.clone(),
+                expected_generation: generation,
+                replacement: Box::new(request(generation + 1)),
+            };
+            let (next, result) = apply_ingress(&state, &tenant, 1000, &command).unwrap();
+            if generation == budget {
+                assert_eq!(result, IngressResult::QueueRecoveryExhausted);
+                assert_eq!(next.deliveries[&id].state, DeliveryState::DeadLetter);
+                assert_eq!(next.queue, state.queue);
+                assert!(next.deliveries[&id].attempts.is_empty());
+                assert!(apply_ingress(&next, &tenant, 1000, &command).is_err());
+            } else {
+                assert_eq!(result, IngressResult::Updated);
+                assert_eq!(next.queue[&id].prior.len(), generation as usize + 1);
+                state = next;
+                let q = &state.queue[&id];
+                state = apply_ingress(
+                    &state,
+                    &tenant,
+                    1000,
+                    &IngressCommand::RecordQueueTask {
+                        id: id.clone(),
+                        generation: generation + 1,
+                        task_digest: q.task_digest.clone(),
+                    },
+                )
+                .unwrap()
+                .0;
+                let q = &state.queue[&id];
+                state = apply_ingress(
+                    &state,
+                    &tenant,
+                    1000,
+                    &IngressCommand::RecordQueueSignal {
+                        id: id.clone(),
+                        generation: generation + 1,
+                        signal_digest: q.signal_digest.clone(),
+                        sequence: u64::from(generation) + 2,
+                    },
+                )
+                .unwrap()
+                .0;
+            }
+        }
+    }
+}
+
+#[test]
+fn retired_queue_wake_fences_identity_and_preserves_closure() {
+    let s = Setup::new();
+    let id = delivery(s.admit(&s.event("retired-wake", 0), 1000));
+    let tenant = s.b.profile.scope.tenant.clone();
+    let mut state = s.state();
+    let queue = QueueObligation {
+        version: 1,
+        delivery: id.clone(),
+        task_request: b"task".to_vec(),
+        signal_request: b"signal".to_vec(),
+        task_digest: ContentHash::of(b"task"),
+        signal_digest: ContentHash::of(b"signal"),
+        task_admitted: true,
+        signal_sequence: Some(7),
+        retired_wake_sequence: None,
+        generation: 1,
+        prior: vec![],
+    };
+    state.queue.insert(id.clone(), queue.clone());
+    let retirement = |generation, signal_digest, sequence| IngressCommand::RecordQueueWakeRetired {
+        id: id.clone(),
+        generation,
+        signal_digest,
+        sequence,
+    };
+    let command = retirement(1, queue.signal_digest.clone(), 7);
+    let (unchanged, result) =
+        apply_ingress(&state, &tenant, 1000, &retirement(0, queue.signal_digest.clone(), 7))
+            .unwrap();
+    assert_eq!(result, IngressResult::StaleQueueGeneration);
+    assert_eq!(unchanged, state);
+    for bad in [
+        retirement(1, ContentHash::of(b"wrong"), 7),
+        retirement(1, queue.signal_digest.clone(), 0),
+        retirement(1, queue.signal_digest.clone(), 8),
+    ] {
+        assert!(apply_ingress(&state, &tenant, 1000, &bad).is_err());
+    }
+    let (closed, _) = apply_ingress(&state, &tenant, 1000, &command).unwrap();
+    assert_eq!(closed.deliveries[&id].state, DeliveryState::DeadLetter);
+    assert_eq!(closed.queue[&id].retired_wake_sequence, Some(7));
+    assert_eq!(apply_ingress(&closed, &tenant, 1000, &command).unwrap().0, closed);
+    let expires = state.deliveries[&id].expires_at_ms;
+    let (expired, _) = apply_ingress(&state, &tenant, expires, &command).unwrap();
+    assert_eq!(expired.deliveries[&id].state, DeliveryState::Expired);
+    assert!(expired.deliveries[&id].token_invalidated);
+    assert!(expired.queue[&id].retired_wake_sequence.is_none());
+    let token_digest = ContentHash::of(b"issued-token");
+    let (claimed, _) = apply_ingress(
+        &state,
+        &tenant,
+        1000,
+        &IngressCommand::Claim {
+            id: id.clone(),
+            subscriber: s.b.subscriber.clone(),
+            token_digest: token_digest.clone(),
+        },
+    )
+    .unwrap();
+    let (acknowledged, _) = apply_ingress(
+        &claimed,
+        &tenant,
+        1000,
+        &IngressCommand::Acknowledge {
+            id: id.clone(),
+            subscriber: s.b.subscriber.clone(),
+            token_digest,
+        },
+    )
+    .unwrap();
+    assert_eq!(apply_ingress(&acknowledged, &tenant, 1000, &command).unwrap().0, acknowledged);
+    // Older journal bytes omit the optional cause and round-trip unchanged.
+    let bytes = serde_json::to_vec(&queue).unwrap();
+    assert!(!std::str::from_utf8(&bytes).unwrap().contains("retired_wake_sequence"));
+    assert_eq!(serde_json::from_slice::<QueueObligation>(&bytes).unwrap(), queue);
+}
 fn credentials(p: &ProviderProfile) -> ProviderCredentials {
     ProviderCredentials::new(p.clone(), vec![7; 32]).unwrap()
 }
@@ -465,6 +624,7 @@ fn expired_outbox_sweep_survives_restart_and_rejects_recovery() {
         signal_request: signal,
         task_admitted: true,
         signal_sequence: Some(1),
+        retired_wake_sequence: None,
         generation: 0,
         prior: vec![],
     };
@@ -473,6 +633,34 @@ fn expired_outbox_sweep_survives_restart_and_rejects_recovery() {
     replacement.generation = 1;
     replacement.task_admitted = false;
     replacement.signal_sequence = None;
+    assert!(apply_ingress(
+        &state,
+        &tenant,
+        1001,
+        &IngressCommand::RecoverQueue {
+            id: first.clone(),
+            expected_generation: 0,
+            replacement: Box::new(replacement.clone()),
+        },
+    )
+    .is_ok());
+    let mut invalidated = s.state();
+    let mut invalidated_queue = queue.clone();
+    invalidated_queue.delivery = second.clone();
+    invalidated.queue.insert(second.clone(), invalidated_queue);
+    let mut invalidated_replacement = replacement.clone();
+    invalidated_replacement.delivery = second.clone();
+    assert!(apply_ingress(
+        &invalidated,
+        &tenant,
+        1001,
+        &IngressCommand::RecoverQueue {
+            id: second.clone(),
+            expected_generation: 0,
+            replacement: Box::new(invalidated_replacement),
+        },
+    )
+    .is_err());
     assert!(apply_ingress(
         &state,
         &tenant,
@@ -595,8 +783,31 @@ fn quarantine_and_typed_lifecycle_evidence_do_not_create_authority() {
     )
     .unwrap();
     assert_eq!(i.inspect_delivery(&s.subscriber(), &id, 1000).unwrap().attachments, vec![artifact]);
-    let ReceiptBody::Ingress(receipt) = view.receipt.body else { panic!() };
+    assert_eq!(view.receipt.admitting_binding.id, s.b.id);
+    assert_eq!(view.receipt.authorization, s.b.authorization);
+    let state = s.state();
+    let admission =
+        state.admissions.values().find(|a| a.observation.id == view.observation).unwrap();
+    assert_eq!(admission.observation.asserted_sender, e.asserted_sender);
+    let ReceiptBody::Ingress(receipt) = &admission.receipt.body else {
+        panic!("expected ingress provenance receipt");
+    };
     assert_eq!(receipt.validation.as_str(), "transport-validated-no-semantic-authority");
+    assert_eq!(
+        receipt.observation_digest,
+        Envelope::new(Record::BoundaryObservation(admission.observation.clone())).digest().unwrap()
+    );
+    // Transport validation and asserted role evidence confer no application
+    // semantics. Each forbidden claim is absent and rejected by the wire schema.
+    let body = serde_json::to_value(receipt).unwrap();
+    let canonical_receipt = serde_json::to_value(&admission.receipt).unwrap();
+    for claim in ["content_truth", "truth", "urgency", "conversation_membership", "authority"] {
+        assert!(body.get(claim).is_none(), "receipt body must not claim {claim}");
+        assert!(canonical_receipt.get(claim).is_none(), "receipt must not claim {claim}");
+        let mut forged = body.clone();
+        forged[claim] = serde_json::Value::Bool(true);
+        assert!(serde_json::from_value::<IngressReceipt>(forged).is_err(), "reject {claim}");
+    }
     let mut e = s.event("commission", 1);
     e.profile = ObservationProfile::Commissioning { evidence: s.b.authorization.clone() };
     let id = delivery(s.admit(&e, 1000));
@@ -626,10 +837,11 @@ fn capacity_tombstones_profiles_and_atomic_fanout_failure() {
         let e = s.event("id", 0);
         s.admit(&e, 1000);
         s.admit(&e, 1000);
-        assert_eq!(
-            s.state().admissions.len(),
-            if strategy == IdentityStrategy::NonDeduplicable { 2 } else { 1 }
-        );
+        assert_eq!(s.state().admissions.len(), 1);
+        if strategy == IdentityStrategy::NonDeduplicable {
+            s.admit(&s.event("another", 1), 1000);
+            assert_eq!(s.state().admissions.len(), 2);
+        }
     }
     let s = Setup::new();
     let mut b = s.b.clone();
@@ -652,6 +864,115 @@ fn capacity_tombstones_profiles_and_atomic_fanout_failure() {
     let mut p = s.b.policy.clone();
     p.physical_erasure = true;
     assert!(validate_policy(&p).is_err());
+}
+
+#[test]
+fn audience_matching_and_subscriber_receipt_isolate_principals() {
+    let s = Setup::new();
+    let mut second = s.b.clone();
+    second.id = IngressBindingId::generate();
+    second.principal = PrincipalId::generate();
+    second.subscriber = PrincipalId::generate();
+    second.submission.client_request_id = "second-request".to_owned().try_into().unwrap();
+    second.submission.subscriber = r("second-endpoint");
+    second.authorization.artifact =
+        s.root.publish(s.b.profile.scope.tenant.clone(), b"second-authorization").unwrap();
+    let second_scope = AuthenticatedScope {
+        tenant: s.b.profile.scope.tenant.clone(),
+        principal: second.principal.clone(),
+    };
+    let second_version = Ingress::new(&s.root)
+        .submit_binding(
+            &second_scope,
+            second.submission.clone(),
+            second.id.clone(),
+            &Authority(second.clone()),
+            1000,
+        )
+        .unwrap();
+    let first_event = s.event("first-only", 0);
+    let first_id = delivery(s.admit(&first_event, 1000));
+    assert!(Ingress::new(&s.root)
+        .inspect_delivery(
+            &AuthenticatedScope {
+                tenant: second_scope.tenant.clone(),
+                principal: second.subscriber.clone(),
+            },
+            &first_id,
+            1000,
+        )
+        .is_err());
+    let mut both = s.event("both", 1);
+    both.information_use.allowed_audiences.push(second.subscriber.clone());
+    let mut versions = vec![s.version.clone(), second_version.clone()];
+    versions.sort_by(|a, b| a.id.cmp(&b.id));
+    let result =
+        Ingress::new(&s.root).admit_provider_event(s.http(&both), versions, ids(2), 1000).unwrap();
+    let IngressResult::Admitted { deliveries, .. } = result else { panic!("not admitted") };
+    let state = s.state();
+    let second_id =
+        deliveries.iter().find(|id| state.deliveries[*id].subscriber == second.subscriber).unwrap();
+    let view = Ingress::new(&s.root)
+        .inspect_delivery(
+            &AuthenticatedScope { tenant: second_scope.tenant, principal: second.subscriber },
+            second_id,
+            1000,
+        )
+        .unwrap();
+    assert_eq!(view.receipt.admitting_binding, second_version);
+    assert_eq!(view.receipt.authorization, second.authorization);
+    assert_ne!(view.receipt.authorization, s.b.authorization);
+}
+
+#[test]
+fn exact_byte_replay_does_not_consume_non_deduplicable_capacity() {
+    let mut binding = fixture();
+    binding.profile.identity = IdentityStrategy::NonDeduplicable;
+    binding.profile.capacity = 2;
+    let s = Setup::with(binding);
+    let mut event = s.event("not-a-key", 0);
+    event.offset = None;
+    let ingress = Ingress::new(&s.root);
+    let first = delivery(
+        ingress
+            .admit_provider_event(s.http(&event), vec![s.version.clone()], ids(1), 1000)
+            .unwrap(),
+    );
+    for _ in 0..5 {
+        let result = ingress
+            .admit_provider_event(s.http(&event), vec![s.version.clone()], ids(1), 1000)
+            .unwrap();
+        assert!(
+            matches!(result, IngressResult::Admitted { duplicate: true, ref deliveries, .. } if deliveries == &vec![first.clone()])
+        );
+    }
+    let mut stream_event = event.clone();
+    stream_event.offset = Some(1);
+    let second = delivery(
+        ingress
+            .admit_provider_event(
+                stream(&stream_event, &s.b.profile, 0),
+                vec![s.version.clone()],
+                ids(1),
+                1000,
+            )
+            .unwrap(),
+    );
+    assert_ne!(first, second);
+    for _ in 0..5 {
+        let result = ingress
+            .admit_provider_event(
+                stream(&stream_event, &s.b.profile, 0),
+                vec![s.version.clone()],
+                ids(1),
+                1000,
+            )
+            .unwrap();
+        assert!(
+            matches!(result, IngressResult::Admitted { duplicate: true, ref deliveries, .. } if deliveries == &vec![second.clone()])
+        );
+    }
+    assert_eq!(s.state().admissions.len(), 2);
 }
 #[test]
 fn old_manifest_profile_rejects_without_modification() {
@@ -1165,6 +1486,8 @@ mod generated {
                     a.identity =
                         provider_identity(&a.profile, &a.event, &a.observation.id).unwrap();
                     a.producer_digest = producer_digest(&a.profile, &a.event).unwrap();
+                    a.provenance.exact_bytes_digest =
+                        ContentHash::of(&canonical_data(&a.event).unwrap());
                     a.observation.deduplication_key = r(a.identity.as_str());
                     a.observation.asserted_sender = a.event.asserted_sender.clone();
                     if let ReceiptBody::Ingress(receipt) = &mut a.receipt.body {

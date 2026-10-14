@@ -155,6 +155,12 @@ impl AqIngressPort for LostAcknowledgment<'_> {
     fn bound_tenant(&self) -> &OpaqueRef {
         &self.tenant
     }
+    fn retired_wake_sequence(
+        &mut self,
+        request: &actionqueue_core::continuation::AdmitSignalRequest,
+    ) -> std::result::Result<Option<u64>, AqDispatchFailure> {
+        BoundAqIngress::new(&mut *self.aq, self.tenant.clone()).retired_wake_sequence(request)
+    }
     fn ensure_delivery_task(
         &mut self,
         request: EnsureTaskRequest,
@@ -192,6 +198,20 @@ fn sign(bytes: &[u8]) -> Vec<u8> {
 
 #[tokio::test]
 async fn captured_fanout_routes_each_delivery_to_its_trusted_subscriber() {
+    fanout_routes(false, false).await;
+}
+
+#[tokio::test]
+async fn partial_audience_http_isolates_subscribers() {
+    fanout_routes(true, false).await;
+}
+
+#[tokio::test]
+async fn partial_audience_stream_isolates_subscribers() {
+    fanout_routes(true, true).await;
+}
+
+async fn fanout_routes(partial_audience: bool, stream: bool) {
     let temp = tempfile::tempdir().unwrap();
     let bundle = std::sync::Arc::new(
         StoreBundle::initialize(
@@ -213,16 +233,17 @@ async fn captured_fanout_routes_each_delivery_to_its_trusted_subscriber() {
     first.policy.acknowledgment_timeout_ms = 10_000;
     let mut second = first.clone();
     second.id = IngressBindingId::generate();
+    second.principal = PrincipalId::generate();
     second.subscriber = PrincipalId::generate();
     second.submission.client_request_id = "request-2".to_owned().try_into().unwrap();
     second.submission.subscriber = "subscriber-endpoint-2".to_owned().try_into().unwrap();
     let root = bundle.wi();
     root.publish(first.profile.scope.tenant.clone(), b"authorization").unwrap();
-    let owner = AuthenticatedScope {
-        tenant: first.profile.scope.tenant.clone(),
-        principal: first.principal.clone(),
-    };
     for binding in [&first, &second] {
+        let owner = AuthenticatedScope {
+            tenant: binding.profile.scope.tenant.clone(),
+            principal: binding.principal.clone(),
+        };
         Ingress::new(root)
             .submit_binding(
                 &owner,
@@ -246,7 +267,11 @@ async fn captured_fanout_routes_each_delivery_to_its_trusted_subscriber() {
         attachments: vec![],
         information_use: InformationUseEnvelope {
             purpose_refs: vec![],
-            allowed_audiences: vec![first.subscriber.clone(), second.subscriber.clone()],
+            allowed_audiences: if partial_audience {
+                vec![first.subscriber.clone()]
+            } else {
+                vec![first.subscriber.clone(), second.subscriber.clone()]
+            },
             retention_policy_ref: None,
             disclosure_policy_ref: None,
             derivation_policy_ref: None,
@@ -259,10 +284,45 @@ async fn captured_fanout_routes_each_delivery_to_its_trusted_subscriber() {
     let body = canonical_data(&event).unwrap();
     let service = IngressRuntime::new(root, first.profile.scope.tenant.clone());
     let credential = ProviderCredentials::new(first.profile.clone(), vec![7; 32]).unwrap();
-    let admitted = service.accept_http(&credential, &body, &sign(&body), current).unwrap();
+    let admitted = if stream {
+        let handshake = SessionHandshake {
+            session: "fanout-session".to_owned().try_into().unwrap(),
+            scope: first.profile.scope.clone(),
+            reconnect_from: 0,
+            expires_at_ms: current + 1000,
+        };
+        let handshake_bytes = canonical_data(&handshake).unwrap();
+        let session = StreamSession::authenticate(
+            &handshake_bytes,
+            &sign(&handshake_bytes),
+            ProviderCredentials::new(first.profile.clone(), vec![7; 32]).unwrap(),
+            current,
+        )
+        .unwrap();
+        service
+            .accept_frame(
+                &session,
+                &body,
+                &sign(&canonical_data(&(handshake.session, body.as_slice())).unwrap()),
+                current,
+            )
+            .unwrap()
+    } else {
+        service.accept_http(&credential, &body, &sign(&body), current).unwrap()
+    };
+    let expected = if partial_audience { 1 } else { 2 };
     assert!(
-        matches!(admitted, IngressResult::Admitted { ref deliveries, .. } if deliveries.len() == 2)
+        matches!(admitted, IngressResult::Admitted { ref deliveries, .. } if deliveries.len() == expected)
     );
+    if partial_audience {
+        let IngressResult::Admitted { ref deliveries, .. } = admitted else { unreachable!() };
+        let excluded = AuthenticatedScope {
+            tenant: first.profile.scope.tenant.clone(),
+            principal: second.subscriber.clone(),
+        };
+        assert!(Ingress::new(root).inspect_delivery(&excluded, &deliveries[0], current).is_err());
+        assert!(Ingress::new(root).due_deliveries(&excluded, current, 10).unwrap().is_empty());
+    }
     let first_transport = std::sync::Arc::new(Subscriber(std::sync::Mutex::new(Vec::new())));
     let second_transport = std::sync::Arc::new(Subscriber(std::sync::Mutex::new(Vec::new())));
     let mut aq = ActionQueueEngine::new(
@@ -280,7 +340,7 @@ async fn captured_fanout_routes_each_delivery_to_its_trusted_subscriber() {
                 current + 1,
             )
             .unwrap(),
-        2
+        expected
     );
     aq.shutdown().unwrap();
     std::thread::sleep(std::time::Duration::from_millis(20));
@@ -311,13 +371,13 @@ async fn captured_fanout_routes_each_delivery_to_its_trusted_subscriber() {
             .unwrap()
             .unwrap();
         if first_transport.0.lock().unwrap().len() == 1
-            && second_transport.0.lock().unwrap().len() == 1
+            && second_transport.0.lock().unwrap().len() == usize::from(!partial_audience)
         {
             break;
         }
     }
     assert_eq!(first_transport.0.lock().unwrap().len(), 1);
-    assert_eq!(second_transport.0.lock().unwrap().len(), 1);
+    assert_eq!(second_transport.0.lock().unwrap().len(), usize::from(!partial_audience));
     aq.shutdown().unwrap();
 }
 

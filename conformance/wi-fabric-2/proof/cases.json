@@ -835,11 +835,17 @@
       "source_record_sha256": "2eae5f9661b6c3a24b34cb44fb18fe41647f1c134542db129ba4acedab196f18",
       "gate": "WI-AQ-G3",
       "owning_item": "WIP-03",
-      "status": "planned",
+      "status": "implemented",
       "coverage_refs": [
         "conformance/wi-fabric-2/integration/fixtures.json"
       ],
-      "tests": []
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_006_009_one_wait_and_strict_signal_cursor_across_restart"
+        }
+      ]
     },
     {
       "id": "AB-WI-007",
@@ -847,11 +853,42 @@
       "source_record_sha256": "5e28dbfd281d310109931bdc6c6ab98a97b75b9c6bcc57a0f70433bad783a3b6",
       "gate": "WI-AQ-G3",
       "owning_item": "WIP-03",
-      "status": "planned",
+      "status": "implemented",
       "coverage_refs": [
         "conformance/wi-fabric-2/integration/fixtures.json"
       ],
-      "tests": []
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_007_commit_replay_identity_and_subscriber_ack"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "captured_fanout_routes_each_delivery_to_its_trusted_subscriber"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "process_death_after_wi_commit_recovers_aq_obligation"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "partial_audience_http_isolates_subscribers"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "partial_audience_stream_isolates_subscribers"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "process_death_after_subscriber_storage_redelivers_same_id"
+        }
+      ]
     },
     {
       "id": "AB-WI-008",
@@ -869,11 +906,17 @@
       "source_record_sha256": "4b1907c6eb598efc348ba0390ac93da7626fa45deb5e3805ebd5d544e950f1ee",
       "gate": "WI-AQ-G3",
       "owning_item": "WIP-03",
-      "status": "planned",
+      "status": "implemented",
       "coverage_refs": [
         "conformance/wi-fabric-2/integration/fixtures.json"
       ],
-      "tests": []
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_006_009_one_wait_and_strict_signal_cursor_across_restart"
+        }
+      ]
     },
     {
       "id": "AB-WI-010",
@@ -1022,11 +1065,57 @@
       "source_record_sha256": "39053f56f805b7c942cd07602c7c202227e7f00259f1f6897fe19cd71bf67d81",
       "gate": "WI-AQ-G3",
       "owning_item": "WIP-03",
-      "status": "planned",
+      "status": "implemented",
       "coverage_refs": [
         "conformance/wi-fabric-2/integration/fixtures.json"
       ],
-      "tests": []
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_022_retirement_keeps_resident_capacity_and_alarm"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wi03p_f001_expired_pending_delivery_stops_recovery"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wi03p_f001_admitted_delivery_completes_after_expiry"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "expiration_during_ack_wait_completes_without_recovery_generation"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "recovery_generation_budget_bounds_mismatch_binding_churn_and_capacity_after_restart"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "owner_churn_reuses_wake_capacity_and_other_owner_can_deliver_and_ack_after_restart"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "terminal_wait_capacity_recovers_from_journaled_generation"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "previously_journaled_generation_wake_is_reused_without_migration_after_restart"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "retired_wake_deadletters_without_replacement_after_restart"
+        }
+      ]
     },
     {
       "id": "AB-WI-023",
