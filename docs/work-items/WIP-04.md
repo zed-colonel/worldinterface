@@ -143,3 +143,29 @@ silently upgrading them. Operators should preserve such stores for an explicit
 future migration; this work does not rewrite them. Inventory additions cover the
 run index diagnostic types, temporal lookup and regression helpers by source
 family, with explicit dispositions and canonical source hash refresh.
+
+## Remediation of review 2c045b50
+
+The inherited head was `bfc80fc`, with a clean worktree and no untracked artifacts.
+The source-run handoff confirms its ten adopted checks passed, but the separate
+security pass identified S-014 as a major completion race. Those historical
+results do not verify this remediation. The following are implementation claims
+for the next independent reviewer, preserving the finding IDs.
+
+| Finding | Disposition and executable evidence |
+|---|---|
+| S-014 | Fixed: publish outputs/evidence once, then retry journal conflicts or SQLite writer contention at most 32 times. Each retry takes a fresh tenant snapshot and clock, checks Running, the original attempt, no outcome for that attempt, and the delivering run in the current dispatch, and rebuilds the receipt transaction from the original published references. Journal phase times are scanned once before the retry window and bound to the same Start. `contended_completion_preserves_provider_outcome_and_published_artifacts` commits another same-tenant effect after the snapshot and advances the clock; both success and proven noncommit retain the original outcome, receipt and evidence without reinvocation. `completion_contention_budget_is_bounded_without_reinvocation` exhausts 32 conflicts and checks the uncertainty fallback. `contended_completion_preserves_a_superseding_uncertain_receipt` proves a second delivery's receipt cannot be overwritten by a retried success. |
+| S-015 | Fixed: `wi.effect.pre_start_error` requires a positively read DispatchPending phase with no attempt. Failed binding, missing effect or unavailable phase returns terminal `wi.effect.phase_unknown`, which preserves possible commit. `unreadable_binding_never_claims_retry_safe_pre_start_failure` removes the input artifact before delivery both with and without an earlier durable Start; neither case retries or calls the provider. The existing expired-authority regression still proves three retries when the safe phase is known. |
+| S-016 | Fixed: canceled pre-Start AQ runs append `wi.effect.pre_start_canceled`, distinct from failure exhaustion, and this code is validated on replay. Failed AQ runs with `wi.effect.uncertain_recording_error` or `wi.effect.phase_unknown` agree with a Fabric Uncertain outcome; other codes or queue states still record convergence faults. `canceled_pre_start_run_retains_cancellation_diagnostic_on_reopen` and `possible_commit_aq_codes_converge_without_spurious_faults` use real AQ terminal states and repeated reopen, including an unexpected-code negative control. |
+| S-017 | Fixed: inferred completion/recovery time is only `observed_at`; `reconciled_at` remains absent because no Reconcile action occurred. The inferred assurance and capped uncertainty sentinel remain explicit. Both the clock-failure regression and terminal-run recovery regression assert this distinction. |
+| S-009 | Deferred as accepted by review: explicit router metadata remains host-composition work. The current strict payload forms are disjoint, and durable binding validation fails closed. No optional router change is included. |
+
+The deterministic interleaving clock has an explicit test-evidence inventory and
+catalog disposition. All new regressions are non-ignored runtime tests mapped to
+the existing WI-05 obligations in `completion/coverage.json`. No admission bytes,
+queue policy, receipt schema or check definition changes are needed here.
+
+Verification and separate correctness/security self-review evidence for this run
+live under `a79fc357-c82e-4e8a-a29d-6101a32c9455/scratch/verification` and
+`scratch/review`. Qualifying independent review, including its separate security
+pass, remains with CraftingTable before WI-05 and G2 closure takes effect.

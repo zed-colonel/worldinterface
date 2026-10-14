@@ -10,10 +10,14 @@
     "aq_disposition_process_kills_replay_the_original_locator",
     "authenticated_redaction_and_cross_tenant_principal_denials",
     "campaign_labels_are_attribution_and_material_differences_remain_visible",
+    "canceled_pre_start_run_retains_cancellation_diagnostic_on_reopen",
     "canonical_receipt_survives_replay_rebuild_backup_restore",
     "completed_aq_run_without_fabric_receipt_or_locator_rejects_reopen",
     "completion_clock_failure_records_inferred_uncertainty_with_effect_phase_times",
+    "completion_contention_budget_is_bounded_without_reinvocation",
     "completion_kill_matrix",
+    "contended_completion_preserves_a_superseding_uncertain_receipt",
+    "contended_completion_preserves_provider_outcome_and_published_artifacts",
     "crash::killed_fabric_receipt_transaction_recovers_all_or_none_and_retries",
     "crash::killed_publication_resumes_from_each_durable_boundary",
     "detached_proofs_are_restricted_provenance_and_leave_receipts_immutable",
@@ -25,6 +29,7 @@
     "overlapping_delivery_preserves_uncertainty_and_single_port_call",
     "persisted_old_policy_request_is_retried_without_rewriting",
     "plain_effect_transaction_cannot_persist_a_receiptless_outcome",
+    "possible_commit_aq_codes_converge_without_spurious_faults",
     "process_death_after_wi_commit_recovers_aq_obligation",
     "production_facade_authenticates_verifies_and_rechecks_live_target",
     "proof::tests::proof_and_diagnostic_ids_are_unique_within_each_tenant",
@@ -37,6 +42,7 @@
     "runtime_campaign_inspection_preserves_authority_and_material_confounds",
     "successful_completion_preserves_distinct_journal_phase_times",
     "three_expired_deliveries_record_convergence_fault_without_second_port_call",
+    "unreadable_binding_never_claims_retry_safe_pre_start_failure",
     "worker_report_identity_mismatch_is_not_disclosed_as_bound_evidence",
     "wp015_runtime_receipt_separates_enclosing_provenance_from_worker_enforcement",
     "wp016_runtime_receipt_retains_requested_advertised_applied_observed_missing_unknown"
@@ -101,6 +107,21 @@
         "manifest": "crates/worldinterface-runtime/Cargo.toml",
         "package": "worldinterface-runtime",
         "test": "plain_effect_transaction_cannot_persist_a_receiptless_outcome"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "contended_completion_preserves_provider_outcome_and_published_artifacts"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "unreadable_binding_never_claims_retry_safe_pre_start_failure"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "canceled_pre_start_run_retains_cancellation_diagnostic_on_reopen"
       }
     ],
     "publication-before-completion": [
@@ -165,6 +186,21 @@
         "manifest": "crates/worldinterface-runtime/Cargo.toml",
         "package": "worldinterface-runtime",
         "test": "invocation_fence_rechecks_after_supersession"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "completion_contention_budget_is_bounded_without_reinvocation"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "contended_completion_preserves_a_superseding_uncertain_receipt"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "possible_commit_aq_codes_converge_without_spurious_faults"
       }
     ],
     "redacted-inspection": [

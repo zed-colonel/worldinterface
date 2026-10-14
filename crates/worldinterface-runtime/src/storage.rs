@@ -139,20 +139,16 @@ impl StoreBundle {
                         effect.dispatches.last().and_then(|d| d.admission.as_ref())
                     {
                         for run in &admission.observed_runs {
-                            if matches!(
-                                references.run_state(run.as_str())?,
-                                Some(
-                                    actionqueue_core::run::state::RunState::Failed
-                                        | actionqueue_core::run::state::RunState::Canceled
-                                )
-                            ) {
-                                wi.record_dispatch_fault(
-                                    &tenant,
-                                    id,
-                                    run,
-                                    "wi.effect.pre_start_exhausted",
-                                )?;
-                            }
+                            let code = match references.run_state(run.as_str())? {
+                                Some(actionqueue_core::run::state::RunState::Failed) => {
+                                    "wi.effect.pre_start_exhausted"
+                                }
+                                Some(actionqueue_core::run::state::RunState::Canceled) => {
+                                    "wi.effect.pre_start_canceled"
+                                }
+                                _ => continue,
+                            };
+                            wi.record_dispatch_fault(&tenant, id, run, code)?;
                         }
                     }
                 }
@@ -226,9 +222,18 @@ impl StoreBundle {
                     ) && match expected_code {
                         None => queue != actionqueue_core::run::state::RunState::Completed,
                         Some(code) => {
+                            let actual = references.terminal_failure_code(run.as_str())?;
+                            let expected_uncertainty = outcome.outcome
+                                == worldinterface_protocol::ExecutionOutcome::Uncertain
+                                && matches!(
+                                    actual.as_deref(),
+                                    Some(
+                                        "wi.effect.uncertain_recording_error"
+                                            | "wi.effect.phase_unknown"
+                                    )
+                                );
                             queue != actionqueue_core::run::state::RunState::Failed
-                                || references.terminal_failure_code(run.as_str())?.as_deref()
-                                    != Some(code)
+                                || (actual.as_deref() != Some(code) && !expected_uncertainty)
                         }
                     } {
                         let queue_label = match queue {

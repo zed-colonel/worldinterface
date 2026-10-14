@@ -4,6 +4,15 @@ use crate::{invalid, Batch, Result, StoreKind, StoreRoot};
 use rusqlite::{params, Connection, OptionalExtension, TransactionBehavior};
 use worldinterface_domain::effect::{replay_command, EffectState, ValidatedEffectCommand};
 use worldinterface_protocol::*;
+
+/// Optimistic journal conflict or SQLite writer contention. Callers must
+/// re-snapshot and revalidate the original effect fence before a bounded retry.
+pub fn is_effect_contention(error: &(dyn std::error::Error + 'static)) -> bool {
+    error.to_string() == "stale or unsupported effect journal"
+        || matches!(error.downcast_ref::<rusqlite::Error>(),
+            Some(rusqlite::Error::SqliteFailure(code, _))
+                if matches!(code.code, rusqlite::ErrorCode::DatabaseBusy | rusqlite::ErrorCode::DatabaseLocked))
+}
 pub(crate) const SCHEMA: &str = "
 CREATE TABLE effect_history(seq INTEGER PRIMARY KEY, tenant TEXT NOT NULL, revision INTEGER NOT NULL, entry BLOB NOT NULL, digest TEXT NOT NULL, UNIQUE(tenant,revision));
 CREATE TRIGGER effect_no_update BEFORE UPDATE ON effect_history BEGIN SELECT RAISE(ABORT,'append only'); END;
@@ -297,7 +306,13 @@ impl StoreRoot {
         run: &OpaqueRef,
         code: &str,
     ) -> Result<()> {
-        if !["wi.effect.pre_start_error", "wi.effect.pre_start_exhausted"].contains(&code) {
+        if ![
+            "wi.effect.pre_start_error",
+            "wi.effect.pre_start_exhausted",
+            "wi.effect.pre_start_canceled",
+        ]
+        .contains(&code)
+        {
             return Err(invalid("unsupported dispatch fault code"));
         }
         let mut c = self.connect(StoreKind::Fabric)?;
@@ -514,8 +529,12 @@ impl StoreRoot {
             let state = snapshot(&c, &tenant)?;
             let effect =
                 state.effects.get(&id).ok_or_else(|| invalid("dispatch fault without effect"))?;
-            if !["wi.effect.pre_start_error", "wi.effect.pre_start_exhausted"]
-                .contains(&code.as_str())
+            if ![
+                "wi.effect.pre_start_error",
+                "wi.effect.pre_start_exhausted",
+                "wi.effect.pre_start_canceled",
+            ]
+            .contains(&code.as_str())
                 || ContentHash::of(&canonical_data(&(&tenant, &id, &run, &code)).map_err(invalid)?)
                     .as_str()
                     != digest

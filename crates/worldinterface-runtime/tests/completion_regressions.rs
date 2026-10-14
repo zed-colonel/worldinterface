@@ -67,7 +67,7 @@ impl EvidenceAuthority for Evidence {
     }
 }
 fn second(n: u32) -> Timestamp {
-    format!("2026-09-21T00:00:{n:02}.000000000Z").try_into().unwrap()
+    format!("2026-09-21T00:{:02}:{:02}.000000000Z", n / 60, n % 60).try_into().unwrap()
 }
 struct Clock;
 impl TrustedClock for Clock {
@@ -89,6 +89,16 @@ struct SequenceClock(AtomicUsize);
 impl TrustedClock for SequenceClock {
     fn now(&self) -> Result<Timestamp> {
         Ok(second(2 + self.0.fetch_add(1, Ordering::SeqCst) as u32))
+    }
+}
+struct InterleavingClock<F>(AtomicUsize, usize, F);
+impl<F: Fn(usize)> TrustedClock for InterleavingClock<F> {
+    fn now(&self) -> Result<Timestamp> {
+        let tick = self.0.fetch_add(1, Ordering::SeqCst);
+        if tick > 0 && tick <= self.1 {
+            (self.2)(tick);
+        }
+        Ok(second(2 + 2 * tick as u32))
     }
 }
 struct Port {
@@ -116,6 +126,12 @@ impl EffectExecutionPort for Port {
             "incomplete" => o.boundary_record = None,
             "oversized" => o.outputs = vec![vec![1; 16 * 1024 * 1024 + 1]],
             "missing-evidence" => o.evidence.clear(),
+            "noncommit" => {
+                o.commit = CommitObservation::ProvenImpossible;
+                o.outcome = ExecutionOutcome::FailedBeforeCommit;
+                o.outputs.clear();
+                o.boundary_record = None;
+            }
             "uncertain" => {
                 o.commit = CommitObservation::Unknown;
                 o.outcome = ExecutionOutcome::Uncertain;
@@ -260,7 +276,305 @@ fn completion_clock_failure_records_inferred_uncertainty_with_effect_phase_times
     assert_eq!(temporal.dispatched_at.unwrap().at, second(2));
     assert!(temporal.committed_at.is_none());
     assert_eq!(temporal.observed_at.as_ref().unwrap().assurance.as_str(), "inferred");
-    assert_eq!(temporal.reconciled_at.unwrap().uncertainty_nanos, 9_007_199_254_740_991);
+    assert_eq!(temporal.observed_at.unwrap().uncertainty_nanos, 9_007_199_254_740_991);
+    assert!(temporal.reconciled_at.is_none());
+}
+#[test]
+fn contended_completion_preserves_provider_outcome_and_published_artifacts() {
+    // S-014: commit another same-tenant effect after the completion snapshot,
+    // advancing both the tenant digest and its clock lower bound.
+    for variant in ["success", "noncommit"] {
+        let case = Prepared::new();
+        let actor = caller(&case.snapshot);
+        let other_id = EffectIntentId::generate();
+        let (mut submission, _) = fixture();
+        submission.client_request_id = "concurrent-request".to_owned().try_into().unwrap();
+        let concurrent_bundle = case.bundle.clone();
+        let concurrent_snapshot = case.snapshot.clone();
+        let concurrent_actor = caller(&case.snapshot);
+        let concurrent_id = other_id.clone();
+        let calls = Arc::new(AtomicUsize::new(0));
+        let handler = EffectAttemptHandler {
+            bundle: case.bundle.clone(),
+            port: Port { calls: calls.clone(), variant },
+            evidence: Evidence(case.snapshot.clone()),
+            clock: InterleavingClock(AtomicUsize::new(0), 1, move |_| {
+                Egress::new(concurrent_bundle.wi())
+                    .apply(
+                        &concurrent_actor,
+                        second(5),
+                        EffectAction::Submit {
+                            id: concurrent_id.clone(),
+                            submission: Box::new(submission.clone()),
+                            snapshot: verified(&concurrent_snapshot),
+                            link: None,
+                        },
+                    )
+                    .unwrap();
+            }),
+        };
+        let disposition = handler.execute(case.ctx(case.run));
+        if variant == "success" {
+            assert!(matches!(disposition.outcome(), DispositionOutcome::Complete));
+        } else {
+            assert!(matches!(disposition.outcome(), DispositionOutcome::TerminalFailure { error }
+                if error.code.as_str() == "wi.effect.failed_before_commit"));
+        }
+        let expected = if variant == "success" {
+            ExecutionOutcome::Succeeded
+        } else {
+            ExecutionOutcome::FailedBeforeCommit
+        };
+        let state = case.bundle.wi().effect_snapshot(actor.tenant()).unwrap();
+        assert!(state.effects.contains_key(&other_id));
+        assert_eq!(state.effects[&case.id].outcomes.len(), 1);
+        assert_eq!(state.effects[&case.id].outcomes[0].outcome, expected);
+        let receipt = case.receipt();
+        let ReceiptBody::Egress(body) = &receipt.body else { panic!("egress receipt") };
+        assert_eq!(body.outcome, expected);
+        if variant == "success" {
+            assert_eq!(body.output_refs.len(), 1);
+            assert_eq!(case.bundle.wi().read_artifact(&body.output_refs[0]).unwrap(), b"output");
+        }
+        assert_eq!(receipt.temporal.observed_at.as_ref().unwrap().at, second(6));
+        assert!(receipt.temporal.reconciled_at.is_none());
+        assert!(!receipt.evidence.iter().any(|e| e.schema.as_str().contains("uncertainty")));
+        // The retry reused the original publications and never re-invoked the port.
+        let c =
+            rusqlite::Connection::open(case.temp.path().join("bundle/wi/context.sqlite")).unwrap();
+        assert_eq!(
+            c.query_row(
+                "SELECT count(*) FROM publication_index WHERE identity GLOB 'effect-*:port:*'",
+                [],
+                |r| r.get::<_, usize>(0)
+            )
+            .unwrap(),
+            if variant == "success" { 3 } else { 1 }
+        );
+        assert_eq!(handler.execute(case.ctx(case.run)).outcome(), disposition.outcome());
+        assert_eq!(calls.load(Ordering::SeqCst), 1);
+        assert_eq!(case.receipt(), receipt);
+        StoreBundle::open(&case.temp.path().join("bundle")).unwrap();
+    }
+}
+
+#[test]
+fn completion_contention_budget_is_bounded_without_reinvocation() {
+    let case = Prepared::new();
+    let concurrent_bundle = case.bundle.clone();
+    let concurrent_snapshot = case.snapshot.clone();
+    let mutations = Arc::new(AtomicUsize::new(0));
+    let concurrent_mutations = mutations.clone();
+    let calls = Arc::new(AtomicUsize::new(0));
+    let handler = EffectAttemptHandler {
+        bundle: case.bundle.clone(),
+        port: Port { calls: calls.clone(), variant: "success" },
+        evidence: Evidence(case.snapshot.clone()),
+        clock: InterleavingClock(AtomicUsize::new(0), 32, move |tick| {
+            let (mut submission, _) = fixture();
+            submission.client_request_id = format!("contender-{tick}").try_into().unwrap();
+            Egress::new(concurrent_bundle.wi())
+                .apply(
+                    &caller(&concurrent_snapshot),
+                    second(3 + 2 * tick as u32),
+                    EffectAction::Submit {
+                        id: EffectIntentId::generate(),
+                        submission: Box::new(submission),
+                        snapshot: verified(&concurrent_snapshot),
+                        link: None,
+                    },
+                )
+                .unwrap();
+            concurrent_mutations.fetch_add(1, Ordering::SeqCst);
+        }),
+    };
+    assert_uncertain(&handler.execute(case.ctx(case.run)));
+    assert_eq!(mutations.load(Ordering::SeqCst), 32);
+    assert_eq!(calls.load(Ordering::SeqCst), 1);
+    assert!(case
+        .receipt()
+        .evidence
+        .iter()
+        .any(|e| e.schema.as_str() == "wi.completion.uncertainty:1"));
+    assert_uncertain(&handler.execute(case.ctx(case.run)));
+    assert_eq!(calls.load(Ordering::SeqCst), 1);
+}
+
+#[test]
+fn contended_completion_preserves_a_superseding_uncertain_receipt() {
+    let case = Prepared::new();
+    let calls = Arc::new(AtomicUsize::new(0));
+    let contender_calls = Arc::new(AtomicUsize::new(0));
+    let contender = EffectAttemptHandler {
+        bundle: case.bundle.clone(),
+        port: Port { calls: contender_calls.clone(), variant: "success" },
+        evidence: Evidence(case.snapshot.clone()),
+        clock: Clock,
+    };
+    let contender_ctx = case.ctx(case.run);
+    let handler = EffectAttemptHandler {
+        bundle: case.bundle.clone(),
+        port: Port { calls: calls.clone(), variant: "success" },
+        evidence: Evidence(case.snapshot.clone()),
+        clock: InterleavingClock(AtomicUsize::new(0), 1, move |_| {
+            assert_uncertain(&contender.execute_bound(&contender_ctx).unwrap());
+        }),
+    };
+    assert_uncertain(&handler.execute(case.ctx(case.run)));
+    assert_eq!(calls.load(Ordering::SeqCst), 1);
+    assert_eq!(contender_calls.load(Ordering::SeqCst), 0);
+    let receipt = case.receipt();
+    assert!(receipt.evidence.iter().any(|e| e.schema.as_str() == "wi.recovery.uncertainty:1"));
+    assert!(!receipt.evidence.iter().any(|e| e.schema.as_str() == "wi.completion.uncertainty:1"));
+    assert_uncertain(&handler.execute(case.ctx(case.run)));
+    assert_eq!(case.receipt(), receipt);
+}
+
+#[test]
+fn unreadable_binding_never_claims_retry_safe_pre_start_failure() {
+    // S-015: the durable phase cannot be inferred from a failed input read,
+    // including on a delivery after an earlier durable Start.
+    for started in [false, true] {
+        let case = Prepared::new();
+        let actor = caller(&case.snapshot);
+        let ctx = case.ctx(case.run);
+        if started {
+            Egress::new(case.bundle.wi())
+                .apply(
+                    &actor,
+                    second(2),
+                    EffectAction::StartProduction {
+                        id: case.id.clone(),
+                        snapshot: verified(&case.snapshot),
+                        run: case.run.to_string().try_into().unwrap(),
+                        attempt: ctx.input.attempt_id.to_string().try_into().unwrap(),
+                    },
+                )
+                .unwrap();
+        }
+        let state = case.bundle.wi().effect_snapshot(actor.tenant()).unwrap();
+        let input = &state.effects[&case.id].intent.submission.input.artifact;
+        let path = case.temp.path().join("bundle/wi/artifacts").join(input.content.as_str());
+        let bytes = std::fs::read(&path).unwrap();
+        std::fs::remove_file(&path).unwrap();
+        let calls = Arc::new(AtomicUsize::new(0));
+        let handler = EffectAttemptHandler {
+            bundle: case.bundle.clone(),
+            port: Port { calls: calls.clone(), variant: "success" },
+            evidence: Evidence(case.snapshot.clone()),
+            clock: Clock,
+        };
+        assert!(
+            matches!(handler.execute(ctx).outcome(), DispositionOutcome::TerminalFailure { error }
+            if error.code.as_str() == "wi.effect.phase_unknown")
+        );
+        assert_eq!(calls.load(Ordering::SeqCst), 0);
+        assert!(case.bundle.wi().dispatch_faults(actor.tenant(), &case.id).unwrap().is_empty());
+        std::fs::write(&path, bytes).unwrap();
+        assert_eq!(case.bundle.wi().effect_snapshot(actor.tenant()).unwrap(), state);
+        StoreBundle::open(&case.temp.path().join("bundle")).unwrap();
+    }
+}
+
+#[test]
+fn canceled_pre_start_run_retains_cancellation_diagnostic_on_reopen() {
+    // S-016: operator cancellation did not exhaust AQ's failure budget.
+    let case = Prepared::new();
+    let mut aq = actionqueue_runtime::engine::ActionQueueEngine::new(
+        actionqueue_runtime::config::RuntimeConfig {
+            data_dir: case.bundle.aq_path(),
+            ..Default::default()
+        },
+        Noop(None),
+    )
+    .bootstrap()
+    .unwrap()
+    .with_host(host());
+    aq.cancel_run(case.run).unwrap();
+    assert_eq!(
+        aq.projection().get_run_state(&case.run),
+        Some(&actionqueue_core::run::state::RunState::Canceled)
+    );
+    aq.shutdown().unwrap();
+    let actor = caller(&case.snapshot);
+    for _ in 0..2 {
+        let reopened = StoreBundle::open(&case.temp.path().join("bundle")).unwrap();
+        let faults = reopened.wi().dispatch_faults(actor.tenant(), &case.id).unwrap();
+        assert_eq!(faults.len(), 1);
+        assert_eq!(faults[0].code, "wi.effect.pre_start_canceled");
+        assert!(reopened.wi().effect_receipts(actor.tenant(), &case.id).unwrap().is_empty());
+        let state = reopened.wi().effect_snapshot(actor.tenant()).unwrap();
+        assert_eq!(state.effects[&case.id].phase, Phase::DispatchPending);
+        assert!(state.effects[&case.id].attempt.is_none());
+    }
+}
+
+#[test]
+fn possible_commit_aq_codes_converge_without_spurious_faults() {
+    // S-016/S-017: these codes preserve possible commit; recovery records an
+    // inferred observation without claiming that reconciliation took place.
+    for code in [
+        "wi.effect.uncertain_recording_error",
+        "wi.effect.phase_unknown",
+        "fixture.disposition_mismatch",
+    ] {
+        let case = Prepared::new();
+        let actor = caller(&case.snapshot);
+        let attempt: OpaqueRef = AttemptId::new().to_string().try_into().unwrap();
+        Egress::new(case.bundle.wi())
+            .apply(
+                &actor,
+                second(2),
+                EffectAction::StartProduction {
+                    id: case.id.clone(),
+                    snapshot: verified(&case.snapshot),
+                    run: case.run.to_string().try_into().unwrap(),
+                    attempt: attempt.clone(),
+                },
+            )
+            .unwrap();
+        let mut aq = actionqueue_runtime::engine::ActionQueueEngine::new(
+            actionqueue_runtime::config::RuntimeConfig {
+                data_dir: case.bundle.aq_path(),
+                ..Default::default()
+            },
+            Noop(Some(code)),
+        )
+        .bootstrap()
+        .unwrap()
+        .with_host(host());
+        tokio::runtime::Builder::new_current_thread().enable_all().build().unwrap().block_on(
+            async {
+                let _ =
+                    tokio::time::timeout(std::time::Duration::from_secs(20), aq.run_until_idle())
+                        .await
+                        .unwrap()
+                        .unwrap();
+            },
+        );
+        assert_eq!(
+            aq.projection().get_run_state(&case.run),
+            Some(&actionqueue_core::run::state::RunState::Failed)
+        );
+        aq.shutdown().unwrap();
+        for _ in 0..2 {
+            let reopened = StoreBundle::open(&case.temp.path().join("bundle")).unwrap();
+            assert_eq!(
+                reopened.convergence_faults().len(),
+                usize::from(code == "fixture.disposition_mismatch")
+            );
+            let state = reopened.wi().effect_snapshot(actor.tenant()).unwrap();
+            assert_eq!(state.effects[&case.id].phase, Phase::Uncertain);
+            assert_eq!(state.effects[&case.id].attempt.as_ref(), Some(&attempt));
+            let receipt = case.receipt();
+            let observed = receipt.temporal.observed_at.unwrap();
+            assert_eq!(observed.at, second(2));
+            assert_eq!(observed.assurance.as_str(), "inferred");
+            assert_eq!(observed.uncertainty_nanos, 9_007_199_254_740_991);
+            assert!(receipt.temporal.committed_at.is_none());
+            assert!(receipt.temporal.reconciled_at.is_none());
+        }
+    }
 }
 #[test]
 fn successful_completion_preserves_distinct_journal_phase_times() {
