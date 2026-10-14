@@ -4179,13 +4179,6 @@
     "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
   },
   {
-    "id": "crates/worldinterface-foundation/egress/tests/domain.rs::::reviewed-generator:proptest:fc2b2b8767972e02b0510cc5b226266fc8211d6d47dd8f319d5d3b5014771bc0",
-    "disposition": "retain-align",
-    "target": "egress-domain",
-    "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
-    "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
     "id": "crates/worldinterface-foundation/egress/tests/domain.rs::::source-module:crates/worldinterface-foundation/egress/tests/domain.rs",
     "disposition": "retain-align",
     "target": "egress-domain",
@@ -8174,5 +8167,19 @@
     "target": "WI-05 worker evidence domain WP-015/WP-016",
     "source": "implementation plan WI-05; WI-WORKER-EXECUTION-1 WP-015/WP-016; WI-ADR-016",
     "rationale": "Keep exact-profile incomplete worker and enclosing-instance evidence separate; fixture proof grants no ordinary provider admission."
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/effect_service.rs::::struct:CurrentEvidence",
+    "disposition": "retain-align",
+    "target": "WI-04 G2 source tests",
+    "rationale": "WIP-02 reviewed runtime admission test harness: mutable trusted evidence and facade type alias; no production interface or authority. Independent review remains required.",
+    "source": "docs/work-items/WIP-02.md; accepted WIP-02 design; ADR-004/005/006/007"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/effect_service.rs::::type:Service",
+    "disposition": "retain-align",
+    "target": "WI-04 G2 source tests",
+    "rationale": "WIP-02 reviewed runtime admission test harness: mutable trusted evidence and facade type alias; no production interface or authority. Independent review remains required.",
+    "source": "docs/work-items/WIP-02.md; accepted WIP-02 design; ADR-004/005/006/007"
   }
 ]

@@ -272,13 +272,15 @@ fn worker_reason(
             || qualified.revoked
             || qualified.quarantined
             || qualified.expires_at <= *now
-            || !qualified.operations.contains(&w.operation)
             || w.input != intent.submission.input.artifact
             || matches!(w.image, ImageApplicability::Unknown)
             || !matches!(&resolution.fact.document.target, Target::Worker { provider, run, resource, operation }
                 if provider == &w.provider && run == &w.run && resource == &w.resource && operation == &w.operation)
         {
             return Ok(Some(Reason::ProfileDrift));
+        }
+        if !qualified.operations.contains(&w.operation) {
+            return Ok(Some(Reason::Unavailable));
         }
         return Ok(None);
     }

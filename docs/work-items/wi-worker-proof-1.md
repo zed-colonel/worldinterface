@@ -40,6 +40,13 @@ bundle is changed.
 
 ### 3.2 Inherited baseline ledger
 
+WIP-02 implementation verifies the inherited WI-04 admission boundary on crates.io
+AQ 0.2.0, registers AB-WI-002/003/004 and WP-009–WP-014 with domain/runtime tests,
+and resolves WP-A02 at runtime admission. The WI-04 source-test and ADR-004/005/006/007
+assessment, fixed findings and candidate evidence are in [WIP-02](WIP-02.md).
+Independent CraftingTable review and merged-head verification remain due. Both
+G2 gate records stay open for WIP-04; the historical ledger below is unchanged.
+
 Every `wi-fabric-2` merge, with the evidence the retired roadmap recorded for it. "Verified" means a slice-verification scope receipt on the merged commit, where an independent agent reviewed it and ran checks. WIP-01 commits this ledger to `docs/work-items/wi-worker-proof-1.md` so that finalization reviewers can see which inherited code was independently verified.
 
 | Merge | Source scope | Diff | Retired-roadmap evidence |
