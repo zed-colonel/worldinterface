@@ -27,6 +27,46 @@ fn snapshot(c: &Connection, tenant: &OpaqueRef) -> Result<EffectState> {
 pub(crate) fn snapshot_for_replay(c: &Connection, tenant: &OpaqueRef) -> Result<EffectState> {
     snapshot(c, tenant)
 }
+// Convergence diagnostics survive reconciliation and later dispatches. Bind them
+// to the immutable receipt's source revision, not the effect's newest outcome.
+fn receipt_binds_convergence_fault(
+    c: &Connection,
+    tenant: &OpaqueRef,
+    id: &EffectIntentId,
+    run: &OpaqueRef,
+    outcome: &ExecutionOutcome,
+) -> Result<bool> {
+    let mut q = c.prepare(
+        "SELECT source_revision,execution FROM receipt_history WHERE tenant=? AND intent=?",
+    )?;
+    for row in q.query_map(params![tenant.as_str(), id.as_str()], |r| {
+        Ok((r.get::<_, u64>(0)?, r.get::<_, Vec<u8>>(1)?))
+    })? {
+        let (revision, bytes) = row?;
+        let execution: ExecutionRecord =
+            serde_json::from_value(strict_collection(&bytes).map_err(invalid)?)?;
+        if &execution.outcome != outcome {
+            continue;
+        }
+        let source = snapshot_at_revision(c, tenant, revision)?;
+        let effect =
+            source.effects.get(id).ok_or_else(|| invalid("fault receipt without effect"))?;
+        if effect
+            .outcomes
+            .last()
+            .is_some_and(|o| &o.outcome == outcome && o.attempt == execution.attempt)
+            && effect
+                .dispatches
+                .last()
+                .and_then(|d| d.admission.as_ref())
+                .is_some_and(|a| a.observed_runs.contains(run))
+        {
+            return Ok(true);
+        }
+    }
+    Ok(false)
+}
+
 pub(crate) fn snapshot_at_revision(
     c: &Connection,
     tenant: &OpaqueRef,
@@ -517,16 +557,7 @@ impl StoreRoot {
             {
                 return Err(invalid("convergence fault record corrupt"));
             }
-            let state = snapshot(&c, &tenant)?;
-            let effect =
-                state.effects.get(&intent).ok_or_else(|| invalid("fault without effect"))?;
-            if effect.outcomes.last().is_none_or(|o| o.outcome != outcome)
-                || effect
-                    .dispatches
-                    .last()
-                    .and_then(|d| d.admission.as_ref())
-                    .is_none_or(|a| !a.observed_runs.contains(&run))
-            {
+            if !receipt_binds_convergence_fault(&c, &tenant, &intent, &run, &outcome)? {
                 return Err(invalid("convergence fault source mismatch"));
             }
         }

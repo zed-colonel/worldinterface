@@ -3856,22 +3856,22 @@
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/effect.rs::::module:tests@10d1b0eff34c",
-          "source_sha256": "813cc541e5975d7819690a65504cbbb68effe71c2aa497adc16dc7ff7c7332d2",
+          "source_sha256": "3a7374a5654bcc729402267a88578359c856c5b2da896a2fdc010f746053e782",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/effect.rs::::source-module:crates/worldinterface-foundation/storage/src/effect.rs",
-          "source_sha256": "813cc541e5975d7819690a65504cbbb68effe71c2aa497adc16dc7ff7c7332d2",
+          "source_sha256": "3a7374a5654bcc729402267a88578359c856c5b2da896a2fdc010f746053e782",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/effect.rs::::struct:DispatchFault",
-          "source_sha256": "813cc541e5975d7819690a65504cbbb68effe71c2aa497adc16dc7ff7c7332d2",
+          "source_sha256": "3a7374a5654bcc729402267a88578359c856c5b2da896a2fdc010f746053e782",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/effect.rs::::struct:EffectExecutionTimes",
-          "source_sha256": "813cc541e5975d7819690a65504cbbb68effe71c2aa497adc16dc7ff7c7332d2",
+          "source_sha256": "3a7374a5654bcc729402267a88578359c856c5b2da896a2fdc010f746053e782",
           "registration_sites": []
         },
         {
@@ -4321,37 +4321,37 @@
         },
         {
           "id": "crates/worldinterface-runtime/src/completion.rs::::source-module:crates/worldinterface-runtime/src/completion.rs",
-          "source_sha256": "2da5a3a09a4c589fc9b5c2e731b93c15f43937012a96314677878d80d3da080a",
+          "source_sha256": "dc23bb5a7bdc9be7b01669e57d8dd2448bbf9e48af0bf9769470c799f93cbcd1",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/completion.rs::::struct:BoundExecution",
-          "source_sha256": "2da5a3a09a4c589fc9b5c2e731b93c15f43937012a96314677878d80d3da080a",
+          "source_sha256": "dc23bb5a7bdc9be7b01669e57d8dd2448bbf9e48af0bf9769470c799f93cbcd1",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/completion.rs::::struct:CompletionLocator",
-          "source_sha256": "2da5a3a09a4c589fc9b5c2e731b93c15f43937012a96314677878d80d3da080a",
+          "source_sha256": "dc23bb5a7bdc9be7b01669e57d8dd2448bbf9e48af0bf9769470c799f93cbcd1",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/completion.rs::::struct:EffectAttemptHandler",
-          "source_sha256": "2da5a3a09a4c589fc9b5c2e731b93c15f43937012a96314677878d80d3da080a",
+          "source_sha256": "dc23bb5a7bdc9be7b01669e57d8dd2448bbf9e48af0bf9769470c799f93cbcd1",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/completion.rs::::struct:EvidenceBytes",
-          "source_sha256": "2da5a3a09a4c589fc9b5c2e731b93c15f43937012a96314677878d80d3da080a",
+          "source_sha256": "dc23bb5a7bdc9be7b01669e57d8dd2448bbf9e48af0bf9769470c799f93cbcd1",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/completion.rs::::struct:PortObservation",
-          "source_sha256": "2da5a3a09a4c589fc9b5c2e731b93c15f43937012a96314677878d80d3da080a",
+          "source_sha256": "dc23bb5a7bdc9be7b01669e57d8dd2448bbf9e48af0bf9769470c799f93cbcd1",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/completion.rs::::trait:EffectExecutionPort",
-          "source_sha256": "2da5a3a09a4c589fc9b5c2e731b93c15f43937012a96314677878d80d3da080a",
+          "source_sha256": "dc23bb5a7bdc9be7b01669e57d8dd2448bbf9e48af0bf9769470c799f93cbcd1",
           "registration_sites": []
         },
         {
@@ -4636,62 +4636,62 @@
         },
         {
           "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::module:child_guard",
-          "source_sha256": "60395219cb67bff512d4ae2b366267f3d938b673f661bccc756d55106f7134ad",
+          "source_sha256": "67e0e8f9859c5abf19dd2ae803a927d81ff1cbcf9d632af1972b6d4f2f15de18",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::module:support",
-          "source_sha256": "60395219cb67bff512d4ae2b366267f3d938b673f661bccc756d55106f7134ad",
+          "source_sha256": "67e0e8f9859c5abf19dd2ae803a927d81ff1cbcf9d632af1972b6d4f2f15de18",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::source-module:crates/worldinterface-runtime/tests/completion_regressions.rs",
-          "source_sha256": "60395219cb67bff512d4ae2b366267f3d938b673f661bccc756d55106f7134ad",
+          "source_sha256": "67e0e8f9859c5abf19dd2ae803a927d81ff1cbcf9d632af1972b6d4f2f15de18",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::struct:BrokenCompletionClock",
-          "source_sha256": "60395219cb67bff512d4ae2b366267f3d938b673f661bccc756d55106f7134ad",
+          "source_sha256": "67e0e8f9859c5abf19dd2ae803a927d81ff1cbcf9d632af1972b6d4f2f15de18",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::struct:Clock",
-          "source_sha256": "60395219cb67bff512d4ae2b366267f3d938b673f661bccc756d55106f7134ad",
+          "source_sha256": "67e0e8f9859c5abf19dd2ae803a927d81ff1cbcf9d632af1972b6d4f2f15de18",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::struct:Evidence",
-          "source_sha256": "60395219cb67bff512d4ae2b366267f3d938b673f661bccc756d55106f7134ad",
+          "source_sha256": "67e0e8f9859c5abf19dd2ae803a927d81ff1cbcf9d632af1972b6d4f2f15de18",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::struct:Noop",
-          "source_sha256": "60395219cb67bff512d4ae2b366267f3d938b673f661bccc756d55106f7134ad",
+          "source_sha256": "67e0e8f9859c5abf19dd2ae803a927d81ff1cbcf9d632af1972b6d4f2f15de18",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::struct:Port",
-          "source_sha256": "60395219cb67bff512d4ae2b366267f3d938b673f661bccc756d55106f7134ad",
+          "source_sha256": "67e0e8f9859c5abf19dd2ae803a927d81ff1cbcf9d632af1972b6d4f2f15de18",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::struct:Prepared",
-          "source_sha256": "60395219cb67bff512d4ae2b366267f3d938b673f661bccc756d55106f7134ad",
+          "source_sha256": "67e0e8f9859c5abf19dd2ae803a927d81ff1cbcf9d632af1972b6d4f2f15de18",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::struct:SequenceClock",
-          "source_sha256": "60395219cb67bff512d4ae2b366267f3d938b673f661bccc756d55106f7134ad",
+          "source_sha256": "67e0e8f9859c5abf19dd2ae803a927d81ff1cbcf9d632af1972b6d4f2f15de18",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::invocation_fence_rechecks_after_supersession::struct:Forbidden",
-          "source_sha256": "60395219cb67bff512d4ae2b366267f3d938b673f661bccc756d55106f7134ad",
+          "source_sha256": "67e0e8f9859c5abf19dd2ae803a927d81ff1cbcf9d632af1972b6d4f2f15de18",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::support::module:effect_fixture",
-          "source_sha256": "60395219cb67bff512d4ae2b366267f3d938b673f661bccc756d55106f7134ad",
+          "source_sha256": "67e0e8f9859c5abf19dd2ae803a927d81ff1cbcf9d632af1972b6d4f2f15de18",
           "registration_sites": []
         },
         {
@@ -5538,7 +5538,7 @@
         },
         {
           "path": "crates/worldinterface-foundation/storage/src/effect.rs",
-          "source_sha256": "813cc541e5975d7819690a65504cbbb68effe71c2aa497adc16dc7ff7c7332d2",
+          "source_sha256": "3a7374a5654bcc729402267a88578359c856c5b2da896a2fdc010f746053e782",
           "treatment": "Retain WI-04 guarded domain and production admission binding; review selective changes without weakening replacement or qualification gates."
         },
         {
@@ -5663,7 +5663,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/src/completion.rs",
-          "source_sha256": "2da5a3a09a4c589fc9b5c2e731b93c15f43937012a96314677878d80d3da080a",
+          "source_sha256": "dc23bb5a7bdc9be7b01669e57d8dd2448bbf9e48af0bf9769470c799f93cbcd1",
           "treatment": "Retain target WI-05 completion, receipt inspection or crash evidence; shared infrastructure is not a legacy connector deletion surface (WIP-04)."
         },
         {
@@ -5718,7 +5718,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/tests/completion_regressions.rs",
-          "source_sha256": "60395219cb67bff512d4ae2b366267f3d938b673f661bccc756d55106f7134ad",
+          "source_sha256": "67e0e8f9859c5abf19dd2ae803a927d81ff1cbcf9d632af1972b6d4f2f15de18",
           "treatment": "Retain focused WI-05 remediation evidence for uncertainty, dispatch convergence, invocation fencing, historical receipt binding and reopen invariants (WIP-04)."
         },
         {

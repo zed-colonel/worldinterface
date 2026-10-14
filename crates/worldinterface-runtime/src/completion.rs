@@ -296,6 +296,14 @@ impl<P: EffectExecutionPort, V: EvidenceAuthority, C: TrustedClock> EffectAttemp
         let root = self.bundle.wi();
         let state = root.effect_snapshot(caller.tenant())?;
         let effect = state.effects.get(id).ok_or("missing effect")?;
+        if effect
+            .dispatches
+            .last()
+            .and_then(|d| d.admission.as_ref())
+            .is_none_or(|a| !a.observed_runs.contains(run))
+        {
+            return Err("outcome run belongs to another dispatch".into());
+        }
         if effect.phase != Phase::Running || effect.attempt.as_ref() != Some(&attempt) {
             if let Some(disposition) = self.committed_disposition(caller, id, run)? {
                 return Ok(disposition);

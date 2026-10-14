@@ -35,10 +35,18 @@ use worldinterface_runtime::{
 };
 use worldinterface_storage::StoreProfile;
 
-struct Noop;
+struct Noop(Option<&'static str>);
 impl ExecutorHandler for Noop {
     fn execute(&self, _: ExecutorContext) -> actionqueue_core::disposition::AttemptDisposition {
-        actionqueue_core::disposition::AttemptDisposition::complete(None)
+        match self.0 {
+            None => actionqueue_core::disposition::AttemptDisposition::complete(None),
+            Some(code) => actionqueue_core::disposition::AttemptDisposition::terminal_failure(
+                actionqueue_core::bounded::BoundedError {
+                    code: actionqueue_core::bounded::BoundedCode::new(code).unwrap(),
+                    message: actionqueue_core::bounded::BoundedMessage::new(code).unwrap(),
+                },
+            ),
+        }
     }
 }
 struct Evidence(AuthorizationSnapshot);
@@ -143,7 +151,7 @@ impl Prepared {
         let (submission, snapshot) = fixture();
         let id = authorize(&bundle, submission, &snapshot);
         let actor = caller(&snapshot);
-        let mut queue = QueueEngine::bootstrap(&bundle, Noop, host()).unwrap();
+        let mut queue = QueueEngine::bootstrap(&bundle, Noop(None), host()).unwrap();
         admission::prepare(&bundle, &actor, at(), &id, verified(&snapshot)).unwrap();
         admission::deliver(&mut queue, &actor, second(1), &id, verified(&snapshot)).unwrap();
         run_discovery::discover(&queue, &actor, second(1), &id, 8).unwrap();
@@ -347,6 +355,26 @@ fn retry_dispatch_does_not_reuse_the_previous_attempt_disposition() {
     let e = &state.effects[&case.id];
     let attempt = e.attempt.clone().unwrap();
     let original_receipt = case.receipt();
+    // Persist an AQ/Fabric mismatch for the old dispatch. A later legitimate
+    // noncommit retry must retain this diagnostic against its immutable source.
+    let mut aq = actionqueue_runtime::engine::ActionQueueEngine::new(
+        actionqueue_runtime::config::RuntimeConfig {
+            data_dir: case.bundle.aq_path(),
+            ..Default::default()
+        },
+        Noop(Some("fixture.disposition_mismatch")),
+    )
+    .bootstrap()
+    .unwrap()
+    .with_host(host());
+    tokio::runtime::Builder::new_current_thread().enable_all().build().unwrap().block_on(async {
+        let _ = aq.run_until_idle().await.unwrap();
+    });
+    aq.shutdown().unwrap();
+    assert_eq!(
+        StoreBundle::open(&case.temp.path().join("bundle")).unwrap().convergence_faults().len(),
+        1
+    );
     Egress::new(case.bundle.wi())
         .apply(
             &actor,
@@ -378,7 +406,7 @@ fn retry_dispatch_does_not_reuse_the_previous_attempt_disposition() {
             EffectAction::PermitRetry { id: case.id.clone(), snapshot: verified(&snapshot) },
         )
         .unwrap();
-    let mut queue = QueueEngine::bootstrap(&case.bundle, Noop, host()).unwrap();
+    let mut queue = QueueEngine::bootstrap(&case.bundle, Noop(None), host()).unwrap();
     admission::prepare(&case.bundle, &actor, second(2), &case.id, verified(&snapshot)).unwrap();
     admission::deliver(&mut queue, &actor, second(2), &case.id, verified(&snapshot)).unwrap();
     run_discovery::discover(&queue, &actor, second(2), &case.id, 8).unwrap();
@@ -395,6 +423,10 @@ fn retry_dispatch_does_not_reuse_the_previous_attempt_disposition() {
         .parse()
         .unwrap();
     queue.shutdown().unwrap();
+    assert!(StoreBundle::open(&case.temp.path().join("bundle"))
+        .unwrap()
+        .convergence_faults()
+        .is_empty());
     let handler = EffectAttemptHandler {
         bundle: case.bundle.clone(),
         port: Port { calls: calls.clone(), variant: "success" },
@@ -406,6 +438,16 @@ fn retry_dispatch_does_not_reuse_the_previous_attempt_disposition() {
     let receipts = case.bundle.wi().effect_receipts(actor.tenant(), &case.id).unwrap();
     assert_eq!(receipts.len(), 2);
     assert_ne!(receipts.last().unwrap().0, original_receipt.id);
+    assert!(StoreBundle::open(&case.temp.path().join("bundle"))
+        .unwrap()
+        .convergence_faults()
+        .is_empty());
+    let c = rusqlite::Connection::open(case.temp.path().join("bundle/wi/fabric.sqlite")).unwrap();
+    assert_eq!(
+        c.query_row("SELECT count(*) FROM convergence_fault_history", [], |r| r.get::<_, usize>(0))
+            .unwrap(),
+        1
+    );
     // An old run cannot consume the new dispatch's receipt.
     assert!(handler.execute_bound(&case.ctx(case.run)).is_err());
 }

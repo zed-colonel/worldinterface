@@ -15,10 +15,10 @@ class CrashIsolationTests(unittest.TestCase):
 
     def reject(self, storage, runtime):
         with self.assertRaises(AssertionError):
-            check_manifests([("storage", storage), ("runtime", runtime)])
+            check_manifests([("crates/worldinterface-foundation/storage/Cargo.toml", storage), ("crates/worldinterface-runtime/Cargo.toml", runtime)])
 
     def test_empty_dev_exception(self):
-        check_manifests([("storage", self.storage), ("runtime", self.runtime)])
+        check_manifests([("crates/worldinterface-foundation/storage/Cargo.toml", self.storage), ("crates/worldinterface-runtime/Cargo.toml", self.runtime)])
 
     def test_default_and_feature_forwarding_rejected(self):
         for name in ("default", "forward"):
@@ -54,6 +54,12 @@ class CrashIsolationTests(unittest.TestCase):
         ):
             with self.assertRaises(AssertionError):
                 check_manifests([("example/Cargo.toml", manifest)])
+
+    def test_spoofed_runtime_and_storage_paths_rejected(self):
+        with self.assertRaises(AssertionError):
+            check_manifests([("examples/fake-runtime/Cargo.toml", self.runtime)])
+        with self.assertRaises(AssertionError):
+            check_manifests([("examples/fake-storage/Cargo.toml", self.storage)])
 
     def test_compilation_evidence_rejects_activation_tests_and_missing_records(self):
         record = {"reason": "compiler-artifact", "target": {"name": "worldinterface_storage"},

@@ -10,6 +10,7 @@ def check_manifests(manifests):
         name = manifest.get("package", {}).get("name", "")
         features = manifest.get("features", {})
         if name == "worldinterface-storage":
+            assert str(path) == "crates/worldinterface-foundation/storage/Cargo.toml", "foreign storage crash feature declaration"
             assert features == {"crash-points": []}, "storage crash feature must be exactly empty"
         elif name in {"worldinterface-protocol", "worldinterface-capability", "worldinterface-domain",
                       "worldinterface-ingress", "worldinterface-egress", "worldinterface-worker", "worldinterface-runtime"}:
@@ -27,6 +28,7 @@ def check_manifests(manifests):
                         continue
                     package = dependency.get("package", alias)
                     if "crash-points" in dependency.get("features", []):
+                        assert str(path) == "crates/worldinterface-runtime/Cargo.toml", "foreign runtime crash consumer"
                         assert (name, kind, package) == (
                             "worldinterface-runtime", "dev-dependencies", "worldinterface-storage"
                         ), f"forbidden crash feature activation in {path}: {kind}/{alias}"
@@ -46,7 +48,7 @@ def check_manifests(manifests):
 def check_repository(root):
     manifests = sorted(path for path in root.rglob("Cargo.toml")
                        if not {"target", "dev-output", ".git"}.intersection(path.relative_to(root).parts))
-    check_manifests([(path, tomllib.loads(path.read_text())) for path in manifests])
+    check_manifests([(path.relative_to(root), tomllib.loads(path.read_text())) for path in manifests])
     subprocess.run(["python3", "-B", "scripts/test_wi_crash_isolation.py"], cwd=root, check=True)
 
 
