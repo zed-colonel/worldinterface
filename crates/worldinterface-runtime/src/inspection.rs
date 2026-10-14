@@ -103,7 +103,10 @@ impl<A: Authentication, D: ReceiptDisclosure<A>> ReceiptInspector<'_, A, D> {
         }
         let receipt_view =
             self.root.inspect_receipt(&access, receipt)?.ok_or("proof receipt unavailable")?;
-        let Some(bundle) = self.root.inspect_proof_bundle(&access, id)? else {
+        let Some(bundle) = self.root.inspect_proof_bundle(&access, id, |reference| {
+            self.disclosure.evidence_allowed(session, access.tenant(), reference)
+        })?
+        else {
             return Ok(None);
         };
         if !receipt_view.digest.as_ref().is_some_and(|digest| bundle.records.contains(digest)) {
@@ -115,11 +118,6 @@ impl<A: Authentication, D: ReceiptDisclosure<A>> ReceiptInspector<'_, A, D> {
                 || self.root.inspect_receipt(&member_access, &member)?.is_none()
             {
                 return Err("proof bundle member disclosure denied".into());
-            }
-        }
-        for reference in &bundle.evidence {
-            if !self.disclosure.evidence_allowed(session, access.tenant(), reference)? {
-                return Err("proof bundle evidence disclosure denied".into());
             }
         }
         Ok(Some(bundle))

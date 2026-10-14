@@ -32,13 +32,13 @@ CREATE TABLE receipt_index(id TEXT PRIMARY KEY, digest TEXT NOT NULL, tenant TEX
 CREATE TABLE receipt_proofs(seq INTEGER PRIMARY KEY, tenant TEXT NOT NULL, receipt TEXT NOT NULL, digest TEXT NOT NULL, canonical BLOB NOT NULL, UNIQUE(tenant,receipt,digest));
 CREATE TRIGGER receipt_proofs_no_update BEFORE UPDATE ON receipt_proofs BEGIN SELECT RAISE(ABORT,'append only'); END;
 CREATE TRIGGER receipt_proofs_no_delete BEFORE DELETE ON receipt_proofs BEGIN SELECT RAISE(ABORT,'append only'); END;
-CREATE TABLE proof_bundles(seq INTEGER PRIMARY KEY, tenant TEXT NOT NULL, id TEXT NOT NULL UNIQUE, digest TEXT NOT NULL, canonical BLOB NOT NULL);
+CREATE TABLE proof_bundles(seq INTEGER PRIMARY KEY, tenant TEXT NOT NULL, id TEXT NOT NULL, digest TEXT NOT NULL, canonical BLOB NOT NULL, UNIQUE(tenant,id));
 CREATE TRIGGER proof_bundles_no_update BEFORE UPDATE ON proof_bundles BEGIN SELECT RAISE(ABORT,'append only'); END;
 CREATE TRIGGER proof_bundles_no_delete BEFORE DELETE ON proof_bundles BEGIN SELECT RAISE(ABORT,'append only'); END;
-CREATE TABLE workflow_trace(seq INTEGER PRIMARY KEY, tenant TEXT NOT NULL, id TEXT NOT NULL UNIQUE, receipt TEXT NOT NULL, retention TEXT NOT NULL, digest TEXT NOT NULL);
+CREATE TABLE workflow_trace(seq INTEGER PRIMARY KEY, tenant TEXT NOT NULL, id TEXT NOT NULL, receipt TEXT NOT NULL, retention TEXT NOT NULL, digest TEXT NOT NULL, UNIQUE(tenant,id));
 CREATE TRIGGER workflow_trace_no_update BEFORE UPDATE ON workflow_trace BEGIN SELECT RAISE(ABORT,'append only'); END;
 CREATE TRIGGER workflow_trace_no_delete BEFORE DELETE ON workflow_trace BEGIN SELECT RAISE(ABORT,'append only'); END;
-CREATE TABLE telemetry(seq INTEGER PRIMARY KEY, tenant TEXT NOT NULL, id TEXT NOT NULL UNIQUE, receipt TEXT NOT NULL, retention TEXT NOT NULL, digest TEXT NOT NULL);
+CREATE TABLE telemetry(seq INTEGER PRIMARY KEY, tenant TEXT NOT NULL, id TEXT NOT NULL, receipt TEXT NOT NULL, retention TEXT NOT NULL, digest TEXT NOT NULL, UNIQUE(tenant,id));
 CREATE TRIGGER telemetry_no_update BEFORE UPDATE ON telemetry BEGIN SELECT RAISE(ABORT,'append only'); END;
 CREATE TRIGGER telemetry_no_delete BEFORE DELETE ON telemetry BEGIN SELECT RAISE(ABORT,'append only'); END;
 CREATE TABLE convergence_fault_history(seq INTEGER PRIMARY KEY, tenant TEXT NOT NULL, intent TEXT NOT NULL, run TEXT NOT NULL, fabric TEXT NOT NULL, queue TEXT NOT NULL, digest TEXT NOT NULL, UNIQUE(tenant,intent,run,fabric,queue));
@@ -407,7 +407,7 @@ pub(crate) fn validate_database(c: &Connection) -> Result<()> {
     crate::effect::replay(c, &expected)?;
     crate::publication::replay(c, &expected)?;
     crate::receipt::replay(c, &expected)?;
-    for query in ["SELECT tenant,state FROM effect_state ORDER BY tenant", "SELECT tenant,intent,dispatch FROM effect_outbox ORDER BY tenant,intent", "SELECT tenant,state FROM ingress_state ORDER BY tenant", "SELECT id,tenant,identity,digest,canonical FROM ingress_receipt_index ORDER BY id", "SELECT entity,revision,state FROM projections ORDER BY entity", "SELECT entity,digest,canonical FROM records ORDER BY seq", "SELECT scope,principal,class,request,digest,entity FROM admissions ORDER BY scope,principal,class,request", "SELECT key,entity,payload,delivered FROM outbox ORDER BY key", "SELECT identity,scope,content,size,state FROM publication_index ORDER BY identity", "SELECT id,digest,tenant,intent FROM receipt_index ORDER BY id"] {
+    for query in ["SELECT run,tenant,intent,task FROM effect_run_index ORDER BY run", "SELECT tenant,state FROM effect_state ORDER BY tenant", "SELECT tenant,intent,dispatch FROM effect_outbox ORDER BY tenant,intent", "SELECT tenant,state FROM ingress_state ORDER BY tenant", "SELECT id,tenant,identity,digest,canonical FROM ingress_receipt_index ORDER BY id", "SELECT entity,revision,state FROM projections ORDER BY entity", "SELECT entity,digest,canonical FROM records ORDER BY seq", "SELECT scope,principal,class,request,digest,entity FROM admissions ORDER BY scope,principal,class,request", "SELECT key,entity,payload,delivered FROM outbox ORDER BY key", "SELECT identity,scope,content,size,state FROM publication_index ORDER BY identity", "SELECT id,digest,tenant,intent FROM receipt_index ORDER BY id"] {
   fn values(c: &Connection, sql: &str) -> Result<Vec<Vec<rusqlite::types::Value>>> {
    let mut q=c.prepare(sql)?; let n=q.column_count();
    let rows=q.query_map([],|r|(0..n).map(|i|r.get(i)).collect::<rusqlite::Result<Vec<_>>>())?;

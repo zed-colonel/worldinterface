@@ -79,13 +79,20 @@ fn prepare_at(
     let queue_store = bundle.aq_store_id()?;
     let egress = Egress::new(root);
     let view = egress.inspect(caller, id)?;
-    if let Some(existing) = view.dispatch.as_ref().and_then(|d| d.admission.as_ref()) {
+    if let Some(existing) = view
+        .dispatch
+        .as_ref()
+        .and_then(|d| d.admission.as_ref())
+        .filter(|_| view.phase != worldinterface_domain::Phase::Authorized)
+    {
         if existing.queue_store.as_str() != queue_store.to_string() {
             return Err("queue store changed for prepared admission".into());
         }
         return Ok(existing.clone());
     }
-    let index = root.effect_snapshot(caller.tenant())?.effects[id].dispatches.len();
+    let state = root.effect_snapshot(caller.tenant())?;
+    let effect = state.effects.get(id).ok_or("missing admission effect")?;
+    let index = effect.dispatches.len();
     let task = TaskId::new();
     let identity = worldinterface_domain::ingress::digest(&(caller.tenant(), id, index as u32))
         .map_err(|e| -> Box<dyn std::error::Error + Send + Sync> { e.into() })?;
@@ -110,7 +117,7 @@ fn prepare_at(
     let artifact = root.publish(caller.tenant().clone(), &bytes)?;
     let execution = {
         let state = root.effect_snapshot(caller.tenant())?;
-        let e = &state.effects[id];
+        let e = state.effects.get(id).ok_or("missing admission effect")?;
         worldinterface_domain::ingress::digest(&(
             &e.intent,
             &e.resolution,

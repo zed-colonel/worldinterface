@@ -154,7 +154,8 @@ fn authenticated_redaction_and_cross_tenant_principal_denials() {
     let foreign = ("foreign-tenant".to_owned().try_into().unwrap(), case.session().1);
     assert!(inspector.receipt(&foreign, &case.receipt).unwrap().is_none());
     let stranger = (case.session().0, PrincipalId::generate());
-    assert!(inspector.receipt(&stranger, &case.receipt).is_err());
+    assert!(inspector.receipt(&stranger, &case.receipt).unwrap().is_none());
+    assert!(inspector.receipt(&stranger, &ReceiptId::generate()).unwrap().is_none());
     assert!(inspector.effect_chain(&stranger, &case.id).is_err());
     assert!(inspector.worker_controls(&stranger, &case.id).is_err());
     assert!(redactor.worker_evidence(&case.session(), &case.id).is_err());
@@ -228,7 +229,7 @@ fn proof_bundles_bind_receipts_and_authorize_every_member() {
         case.session().1,
         DisclosureProfile::Redacted,
     );
-    assert!(case.bundle.wi().inspect_proof_bundle(&redacted, &id).is_err());
+    assert!(case.bundle.wi().inspect_proof_bundle(&redacted, &id, |_| Ok(false)).is_err());
     assert!(case.bundle.wi().append_proof_bundle(&tenant, &id, &single).is_err());
     single.records = vec![ContentHash::of(b"absent")];
     assert!(case.bundle.wi().append_proof_bundle(&tenant, &single_id, &single).is_err());
@@ -247,6 +248,24 @@ fn proof_bundles_bind_receipts_and_authorize_every_member() {
     with_extra.evidence.push(extra.clone());
     case.bundle.wi().append_proof_bundle(&tenant, &extra_id, &with_extra).unwrap();
     assert!(inspector.proof_bundle(&case.session(), &extra_id, &case.receipt).is_err());
+    let storage_access = worldinterface_domain::receipt::ReceiptAccess::from_trusted_authorizer(
+        tenant.clone(),
+        case.session().1,
+        DisclosureProfile::Full,
+    );
+    assert!(case
+        .bundle
+        .wi()
+        .inspect_proof_bundle(&storage_access, &extra_id, |_| Ok(false))
+        .is_err());
+    assert_eq!(
+        case.bundle
+            .wi()
+            .inspect_proof_bundle(&storage_access, &extra_id, |reference| Ok(reference == &extra))
+            .unwrap(),
+        Some(with_extra.clone())
+    );
+
     let allowed =
         Disclosure { profile: DisclosureProfile::Full, restricted: None, evidence: Some(extra) };
     let allowed_inspector =

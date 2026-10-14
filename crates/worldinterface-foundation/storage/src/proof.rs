@@ -3,7 +3,9 @@ use crate::{invalid, Result, StoreKind, StoreRoot};
 use rusqlite::{params, Connection, OptionalExtension};
 use worldinterface_domain::receipt::{DisclosureProfile, ReceiptAccess};
 use worldinterface_protocol::receipt::{ProofBundleV1, SigningProofV1};
-use worldinterface_protocol::{canonical_data, strict_json, ContentHash, OpaqueRef, ReceiptId};
+use worldinterface_protocol::{
+    canonical_data, strict_json, ContentHash, EvidenceRef, OpaqueRef, ReceiptId,
+};
 
 fn receipt_digest(
     c: &Connection,
@@ -19,6 +21,7 @@ fn receipt_digest(
 impl StoreRoot {
     /// The signing provider and key lifecycle are external. This stores its immutable
     /// provenance assertion only, without changing the boundary receipt.
+    /// Trusted-host append; the host must authorize this tenant and signing provider.
     pub fn append_receipt_proof(
         &self,
         tenant: &OpaqueRef,
@@ -70,6 +73,7 @@ impl StoreRoot {
             })
             .collect()
     }
+    /// Trusted-host append; authorizing a receipt does not authorize a bundle append.
     pub fn append_proof_bundle(
         &self,
         tenant: &OpaqueRef,
@@ -97,8 +101,8 @@ impl StoreRoot {
         let digest = ContentHash::of(&bytes);
         let old: Option<(String, String, Vec<u8>)> = c
             .query_row(
-                "SELECT tenant,digest,canonical FROM proof_bundles WHERE id=?",
-                [id.as_str()],
+                "SELECT tenant,digest,canonical FROM proof_bundles WHERE tenant=? AND id=?",
+                params![tenant.as_str(), id.as_str()],
                 |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
             )
             .optional()?;
@@ -116,10 +120,13 @@ impl StoreRoot {
         c.commit()?;
         Ok(digest)
     }
+    /// Receipt ownership and full disclosure are necessary. Additional evidence
+    /// requires a separate trusted-host grant for every returned reference.
     pub fn inspect_proof_bundle(
         &self,
         access: &ReceiptAccess,
         id: &OpaqueRef,
+        mut evidence_allowed: impl FnMut(&EvidenceRef) -> Result<bool>,
     ) -> Result<Option<ProofBundleV1>> {
         if access.disclosure() != DisclosureProfile::Full {
             return Err(invalid("proof bundle disclosure denied"));
@@ -140,6 +147,11 @@ impl StoreRoot {
                 for receipt in self.proof_bundle_receipts(access.tenant(), &bundle)? {
                     if self.inspect_receipt(access, &receipt)?.is_none() {
                         return Err(invalid("proof bundle member disclosure denied"));
+                    }
+                }
+                for reference in &bundle.evidence {
+                    if !evidence_allowed(reference)? {
+                        return Err(invalid("proof bundle evidence disclosure denied"));
                     }
                 }
                 Ok(bundle)
@@ -292,4 +304,36 @@ pub(crate) fn validate(root: &StoreRoot) -> Result<()> {
         }
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn proof_and_diagnostic_ids_are_unique_within_each_tenant() {
+        let c = Connection::open_in_memory().unwrap();
+        c.execute_batch(crate::repository::SCHEMA).unwrap();
+        for tenant in ["first", "second"] {
+            c.execute(
+                "INSERT INTO proof_bundles(tenant,id,digest,canonical) VALUES(?,?,?,?)",
+                params![tenant, "same-id", "digest", b"fixture".as_slice()],
+            )
+            .unwrap();
+            for table in ["workflow_trace", "telemetry"] {
+                let sql = format!(
+                    "INSERT INTO {table}(tenant,id,receipt,retention,digest) VALUES(?,?,?,?,?)"
+                );
+                c.execute(&sql, params![tenant, "same-id", "receipt", "short", "digest"]).unwrap();
+                assert!(c
+                    .execute(&sql, params![tenant, "same-id", "receipt", "short", "digest"])
+                    .is_err());
+            }
+            assert!(c
+                .execute(
+                    "INSERT INTO proof_bundles(tenant,id,digest,canonical) VALUES(?,?,?,?)",
+                    params![tenant, "same-id", "digest", b"fixture".as_slice()]
+                )
+                .is_err());
+        }
+    }
 }

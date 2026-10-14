@@ -1,4 +1,14 @@
 //! Fresh local repositories. This package authenticates nobody and dispatches nothing.
+//!
+//! All public APIs are trusted-host persistence interfaces. Host composition must
+//! authenticate and authorize tenant, principal, artifact and evidence access
+//! before using them; tenant arguments alone confer no authority. In particular,
+//! snapshot, enumeration, journal append and artifact APIs must never be exposed
+//! directly to remote callers. ReceiptAccess is a trusted authorizer assertion.
+
+#[cfg(all(feature = "crash-points", not(debug_assertions)))]
+const CRASH_POINTS_REQUIRE_DEBUG: () =
+    assert!(false, "crash-points is restricted to debug verification builds");
 pub mod contextstore;
 mod repository;
 mod root;
@@ -21,3 +31,5 @@ mod receipt;
 #[cfg(test)]
 #[path = "../tests/support/crash.rs"]
 mod crash;
+
+pub use effect::{DispatchFault, EffectExecutionTimes};

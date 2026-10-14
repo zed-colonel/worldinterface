@@ -61,6 +61,14 @@ fn index_new_receipts(
         );
         let canonical = envelope.canonical_bytes().map_err(invalid)?;
         let digest = envelope.digest().map_err(invalid)?;
+        let collision: bool = c.query_row(
+            "SELECT EXISTS(SELECT 1 FROM receipt_index WHERE id=?)",
+            [admission.receipt.id.as_str()],
+            |r| r.get(0),
+        )?;
+        if collision {
+            return Err(invalid("cross-direction receipt identity collision"));
+        }
         c.execute(
             "INSERT INTO ingress_receipt_index VALUES(?,?,?,?,?)",
             params![

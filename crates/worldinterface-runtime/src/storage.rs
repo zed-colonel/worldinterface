@@ -132,8 +132,32 @@ impl StoreBundle {
         for tenant in wi.effect_tenants()? {
             let state = wi.effect_snapshot(&tenant)?;
             for (id, effect) in &state.effects {
+                if effect.phase == worldinterface_domain::Phase::DispatchPending
+                    && effect.attempt.is_none()
+                {
+                    if let Some(admission) =
+                        effect.dispatches.last().and_then(|d| d.admission.as_ref())
+                    {
+                        for run in &admission.observed_runs {
+                            if matches!(
+                                references.run_state(run.as_str())?,
+                                Some(
+                                    actionqueue_core::run::state::RunState::Failed
+                                        | actionqueue_core::run::state::RunState::Canceled
+                                )
+                            ) {
+                                wi.record_dispatch_fault(
+                                    &tenant,
+                                    id,
+                                    run,
+                                    "wi.effect.pre_start_exhausted",
+                                )?;
+                            }
+                        }
+                    }
+                }
                 if effect.phase != worldinterface_domain::Phase::Running
-                    || !effect.outcomes.is_empty()
+                    || effect.outcomes.iter().any(|o| Some(&o.attempt) == effect.attempt.as_ref())
                 {
                     continue;
                 }
@@ -164,6 +188,16 @@ impl StoreBundle {
                 let Some(outcome) = effect.outcomes.last() else {
                     continue;
                 };
+                if effect.attempt.as_ref() != Some(&outcome.attempt)
+                    || matches!(
+                        effect.phase,
+                        worldinterface_domain::Phase::Authorized
+                            | worldinterface_domain::Phase::DispatchPending
+                            | worldinterface_domain::Phase::Running
+                    )
+                {
+                    continue;
+                }
                 let Some(admission) = effect.dispatches.last().and_then(|d| d.admission.as_ref())
                 else {
                     continue;

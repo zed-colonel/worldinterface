@@ -24,6 +24,9 @@ pub struct ReceiptAccess {
     disclosure: DisclosureProfile,
 }
 impl ReceiptAccess {
+    /// Trusted-host only: the caller must authenticate and authorize these exact
+    /// tenant/principal bindings and the requested disclosure before construction.
+    /// This constructor does not itself check a grant.
     pub fn from_trusted_authorizer(
         tenant: OpaqueRef,
         principal: PrincipalId,

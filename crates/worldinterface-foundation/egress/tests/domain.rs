@@ -715,14 +715,30 @@ fn outcome(
     if !o.durable_outputs.is_empty() {
         r.publish(opaque("tenant:fixture"), b"output").unwrap();
     }
-    Egress::new(r).apply(
+    let state = r.effect_snapshot(caller(p).tenant())?;
+    let execution = ExecutionRecord {
+        intent_id: id.clone(),
+        attempt: o.attempt.clone(),
+        outcome: o.outcome.clone(),
+        evidence: o.evidence.clone(),
+        recorded_at: now(),
+    };
+    let command = validate_command(
+        &state,
         &caller(p),
         now(),
         EffectAction::Outcome {
             id: id.clone(),
             evidence: VerifiedOutcome::from_trusted_verifier(o),
         },
-    )
+    )?;
+    r.effect_transact_with_receipt(
+        &command,
+        ReceiptId::generate(),
+        &execution,
+        receipt_temporal(),
+    )?;
+    Ok(id.clone())
 }
 fn reconciliation(
     p: &AuthorizationSnapshot,

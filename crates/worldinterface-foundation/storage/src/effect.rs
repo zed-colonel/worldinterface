@@ -8,7 +8,11 @@ pub(crate) const SCHEMA: &str = "
 CREATE TABLE effect_history(seq INTEGER PRIMARY KEY, tenant TEXT NOT NULL, revision INTEGER NOT NULL, entry BLOB NOT NULL, digest TEXT NOT NULL, UNIQUE(tenant,revision));
 CREATE TRIGGER effect_no_update BEFORE UPDATE ON effect_history BEGIN SELECT RAISE(ABORT,'append only'); END;
 CREATE TRIGGER effect_no_delete BEFORE DELETE ON effect_history BEGIN SELECT RAISE(ABORT,'append only'); END;
+CREATE TABLE effect_run_index(run TEXT PRIMARY KEY, tenant TEXT NOT NULL, intent TEXT NOT NULL, task TEXT NOT NULL);
 CREATE TABLE effect_state(tenant TEXT PRIMARY KEY, state BLOB NOT NULL);
+CREATE TABLE effect_dispatch_fault_history(seq INTEGER PRIMARY KEY, tenant TEXT NOT NULL, intent TEXT NOT NULL, run TEXT NOT NULL, code TEXT NOT NULL, digest TEXT NOT NULL, UNIQUE(tenant,intent,run,code));
+CREATE TRIGGER dispatch_fault_no_update BEFORE UPDATE ON effect_dispatch_fault_history BEGIN SELECT RAISE(ABORT,'append only'); END;
+CREATE TRIGGER dispatch_fault_no_delete BEFORE DELETE ON effect_dispatch_fault_history BEGIN SELECT RAISE(ABORT,'append only'); END;
 CREATE TABLE effect_outbox(tenant TEXT NOT NULL, intent TEXT NOT NULL, dispatch BLOB NOT NULL, PRIMARY KEY(tenant,intent));
 ";
 fn snapshot(c: &Connection, tenant: &OpaqueRef) -> Result<EffectState> {
@@ -72,6 +76,28 @@ fn write_projection(
         // An empty list is the durable non-dispatch-ready source outbox. Queue delivery cannot read
         // it as a request. All operation requests/acks remain in the authoritative journal.
         c.execute("INSERT INTO effect_outbox VALUES(?,?,?) ON CONFLICT(tenant,intent) DO UPDATE SET dispatch=excluded.dispatch",params![tenant.as_str(),id.as_str(),canonical_data(&e.dispatches).map_err(invalid)?])?;
+        for admission in e.dispatches.iter().filter_map(|d| d.admission.as_ref()) {
+            for run in &admission.observed_runs {
+                c.execute(
+                    "INSERT OR IGNORE INTO effect_run_index VALUES(?,?,?,?)",
+                    params![run.as_str(), tenant.as_str(), id.as_str(), admission.task.as_str()],
+                )?;
+                let binding: (String, String, String) = c.query_row(
+                    "SELECT tenant,intent,task FROM effect_run_index WHERE run=?",
+                    [run.as_str()],
+                    |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
+                )?;
+                if binding
+                    != (
+                        tenant.as_str().to_owned(),
+                        id.as_str().to_owned(),
+                        admission.task.as_str().to_owned(),
+                    )
+                {
+                    return Err(invalid("conflicting effect run binding"));
+                }
+            }
+        }
     }
     if fault == Some("outbox") {
         return Err(invalid("injected effect outbox"));
@@ -113,10 +139,174 @@ fn transact(
         write(&tx, tenant, &new, fault)?;
     }
     tx.commit()?;
+    #[cfg(any(test, feature = "crash-points"))]
+    if strict_json(command.bytes()).map_err(invalid)?["action"]["operation"].as_str()
+        == Some("start_production")
+    {
+        #[cfg(test)]
+        crate::crash::checkpoint("fabric-start-committed");
+        #[cfg(all(feature = "crash-points", not(test)))]
+        crate::crashpoint::checkpoint("fabric-start-committed");
+    }
     Ok(id)
 }
+/// A trusted-host diagnostic. It does not fabricate a domain outcome or receipt.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct DispatchFault {
+    pub tenant: OpaqueRef,
+    pub intent: EffectIntentId,
+    pub run: OpaqueRef,
+    pub code: String,
+}
+
+/// Phase observations from this effect's authoritative journal, not a tenant clock.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct EffectExecutionTimes {
+    pub received: Timestamp,
+    pub admitted: Timestamp,
+    pub dispatched: Timestamp,
+    pub run: Option<OpaqueRef>,
+    pub attempt: OpaqueRef,
+}
+
 impl StoreRoot {
-    /// A cross-store diagnostic. It never changes an outcome or receipt.
+    /// Trusted-host lookup from the journal-derived run index. This is a binding,
+    /// not authorization; hosts must still check the admission and principal.
+    pub fn effect_run_binding(
+        &self,
+        run: &OpaqueRef,
+    ) -> Result<Option<(OpaqueRef, EffectIntentId)>> {
+        let c = self.connect(StoreKind::Fabric)?;
+        let binding: Option<(String, String)> = c
+            .query_row(
+                "SELECT tenant,intent FROM effect_run_index WHERE run=?",
+                [run.as_str()],
+                |r| Ok((r.get(0)?, r.get(1)?)),
+            )
+            .optional()?;
+        binding
+            .map(|(tenant, id)| {
+                Ok((tenant.try_into().map_err(invalid)?, id.try_into().map_err(invalid)?))
+            })
+            .transpose()
+    }
+
+    /// Trusted-host lookup of the immutable receipt's source dispatch and attempt.
+    pub fn effect_snapshot_at_revision(
+        &self,
+        tenant: &OpaqueRef,
+        revision: u64,
+    ) -> Result<EffectState> {
+        snapshot_at_revision(&self.connect(StoreKind::Fabric)?, tenant, revision)
+    }
+
+    /// Trusted-host lookup; the last Start belongs to the current dispatch.
+    pub fn effect_execution_times(
+        &self,
+        tenant: &OpaqueRef,
+        id: &EffectIntentId,
+    ) -> Result<EffectExecutionTimes> {
+        let c = self.connect(StoreKind::Fabric)?;
+        let mut q =
+            c.prepare("SELECT entry FROM effect_history WHERE tenant=? ORDER BY revision")?;
+        let mut received = None;
+        let mut admitted = None;
+        let mut dispatched = None;
+        let mut run = None;
+        let mut attempt = None;
+        for row in q.query_map([tenant.as_str()], |r| r.get::<_, Vec<u8>>(0))? {
+            let entry = strict_json(&row?).map_err(invalid)?;
+            let action = &entry["action"];
+            if action["id"].as_str() != Some(id.as_str()) {
+                continue;
+            }
+            let at: Timestamp = serde_json::from_value(entry["at"].clone())?;
+            match action["operation"].as_str() {
+                Some("submit") => received = Some(at),
+                Some("prepare" | "prepare_production") => {
+                    admitted = None;
+                    dispatched = None;
+                    run = None;
+                    attempt = None;
+                }
+                Some("acknowledge" | "acknowledge_production") => admitted = Some(at),
+                Some("start" | "start_production") => {
+                    dispatched = Some(at);
+                    attempt = Some(serde_json::from_value(action["attempt"].clone())?);
+                    run =
+                        action.get("run").map(|v| serde_json::from_value(v.clone())).transpose()?;
+                }
+                _ => {}
+            }
+        }
+        Ok(EffectExecutionTimes {
+            received: received.ok_or_else(|| invalid("missing submission timestamp"))?,
+            admitted: admitted.ok_or_else(|| invalid("missing admission timestamp"))?,
+            dispatched: dispatched.ok_or_else(|| invalid("missing Start timestamp"))?,
+            run,
+            attempt: attempt.ok_or_else(|| invalid("missing Start attempt"))?,
+        })
+    }
+
+    /// Trusted-host diagnostic for a refused dispatch. No provider ran under this
+    /// dispatch's Start fence. A later authorized attempt may still proceed.
+    pub fn record_dispatch_fault(
+        &self,
+        tenant: &OpaqueRef,
+        id: &EffectIntentId,
+        run: &OpaqueRef,
+        code: &str,
+    ) -> Result<()> {
+        if !["wi.effect.pre_start_error", "wi.effect.pre_start_exhausted"].contains(&code) {
+            return Err(invalid("unsupported dispatch fault code"));
+        }
+        let mut c = self.connect(StoreKind::Fabric)?;
+        let tx = c.transaction_with_behavior(TransactionBehavior::Immediate)?;
+        let state = snapshot(&tx, tenant)?;
+        let effect = state.effects.get(id).ok_or_else(|| invalid("fault without effect"))?;
+        if effect.phase != worldinterface_domain::Phase::DispatchPending
+            || effect.attempt.is_some()
+            || effect
+                .dispatches
+                .last()
+                .and_then(|d| d.admission.as_ref())
+                .is_none_or(|a| !a.observed_runs.contains(run))
+        {
+            return Err(invalid("dispatch fault source mismatch"));
+        }
+        let digest = ContentHash::of(&canonical_data(&(tenant, id, run, code)).map_err(invalid)?);
+        tx.execute("INSERT OR IGNORE INTO effect_dispatch_fault_history(tenant,intent,run,code,digest) VALUES(?,?,?,?,?)",
+            params![tenant.as_str(), id.as_str(), run.as_str(), code, digest.as_str()])?;
+        tx.commit()?;
+        Ok(())
+    }
+
+    /// Trusted-host enumeration; authenticate and authorize before disclosure.
+    pub fn dispatch_faults(
+        &self,
+        tenant: &OpaqueRef,
+        id: &EffectIntentId,
+    ) -> Result<Vec<DispatchFault>> {
+        let c = self.connect(StoreKind::Fabric)?;
+        let mut q = c.prepare("SELECT run,code FROM effect_dispatch_fault_history WHERE tenant=? AND intent=? ORDER BY seq")?;
+        let result = q
+            .query_map(params![tenant.as_str(), id.as_str()], |r| {
+                Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?))
+            })?
+            .map(|row| {
+                let (run, code) = row?;
+                Ok(DispatchFault {
+                    tenant: tenant.clone(),
+                    intent: id.clone(),
+                    run: run.try_into().map_err(invalid)?,
+                    code,
+                })
+            })
+            .collect();
+        result
+    }
+
+    /// Trusted-host append. A cross-store diagnostic. It never changes an outcome or receipt.
     pub fn record_convergence_fault(
         &self,
         tenant: &OpaqueRef,
@@ -146,6 +336,7 @@ impl StoreRoot {
                 serde_json::to_string(fabric)?, queue, ContentHash::of(&bytes).as_str()])?;
         Ok(())
     }
+    /// Trusted-host enumeration; never expose the tenant list to remote callers.
     pub fn effect_tenants(&self) -> Result<Vec<OpaqueRef>> {
         let c = self.connect(StoreKind::Fabric)?;
         let mut q = c.prepare("SELECT tenant FROM effect_state ORDER BY tenant")?;
@@ -155,6 +346,7 @@ impl StoreRoot {
             .collect();
         tenants
     }
+    /// Trusted-host lookup; the host must authorize the tenant and effect principal.
     pub fn effect_snapshot(&self, tenant: &OpaqueRef) -> Result<EffectState> {
         snapshot(&self.connect(StoreKind::Fabric)?, tenant)
     }
@@ -162,7 +354,11 @@ impl StoreRoot {
         let state = self.effect_snapshot(command.tenant())?;
         let (new, id) =
             replay_command(&state, command.tenant(), command.bytes()).map_err(invalid)?;
-        for reference in worldinterface_domain::effect::required_artifacts(&new.effects[&id]) {
+        let aggregate = new.effects.get(&id).ok_or_else(|| invalid("missing effect"))?;
+        if aggregate.outcomes.len() != state.effects.get(&id).map_or(0, |e| e.outcomes.len()) {
+            return Err(invalid("outcome requires atomic receipt transaction"));
+        }
+        for reference in worldinterface_domain::effect::required_artifacts(aggregate) {
             self.read_artifact(reference)?;
         }
         transact(&mut self.connect(StoreKind::Fabric)?, command, None)
@@ -258,6 +454,38 @@ impl StoreRoot {
                 for reference in worldinterface_domain::effect::required_artifacts(e) {
                     self.read_artifact(reference)?;
                 }
+            }
+        }
+        let mut q =
+            c.prepare("SELECT tenant,intent,run,code,digest FROM effect_dispatch_fault_history")?;
+        for row in q.query_map([], |r| {
+            Ok((
+                r.get::<_, String>(0)?,
+                r.get::<_, String>(1)?,
+                r.get::<_, String>(2)?,
+                r.get::<_, String>(3)?,
+                r.get::<_, String>(4)?,
+            ))
+        })? {
+            let (tenant, id, run, code, digest) = row?;
+            let tenant: OpaqueRef = tenant.try_into().map_err(invalid)?;
+            let id: EffectIntentId = id.try_into().map_err(invalid)?;
+            let run: OpaqueRef = run.try_into().map_err(invalid)?;
+            let state = snapshot(&c, &tenant)?;
+            let effect =
+                state.effects.get(&id).ok_or_else(|| invalid("dispatch fault without effect"))?;
+            if !["wi.effect.pre_start_error", "wi.effect.pre_start_exhausted"]
+                .contains(&code.as_str())
+                || ContentHash::of(&canonical_data(&(&tenant, &id, &run, &code)).map_err(invalid)?)
+                    .as_str()
+                    != digest
+                || !effect.dispatches.iter().any(|d| {
+                    d.admission.as_ref().is_some_and(|a| {
+                        a.acknowledged_sequence.is_some() && a.observed_runs.contains(&run)
+                    })
+                })
+            {
+                return Err(invalid("dispatch fault source or digest mismatch"));
             }
         }
         let mut q = c.prepare(

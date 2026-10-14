@@ -8580,5 +8580,110 @@
     "target": "conformance/wi-fabric-2/completion",
     "rationale": "Reuse the bounded crash-child guard for G2 admission exits; kill and reap on failure or timeout",
     "source": "docs/work-items/WIP-04.md; accepted WI-05 crash matrix"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/effect.rs::::struct:DispatchFault",
+    "disposition": "retain-align",
+    "target": "effect-storage",
+    "rationale": "Trusted-host journal-derived dispatch diagnostics and effect-specific phase provenance; no ambient authorization",
+    "source": "docs/work-items/WIP-04.md remediation of S-001/R-001/S-008/S-013; WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/effect.rs::::struct:EffectExecutionTimes",
+    "disposition": "retain-align",
+    "target": "effect-storage",
+    "rationale": "Trusted-host journal-derived dispatch diagnostics and effect-specific phase provenance; no ambient authorization",
+    "source": "docs/work-items/WIP-04.md remediation of S-001/R-001/S-008/S-013; WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/proof.rs::::module:tests@10d1b0eff34c",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "WI-05 remediation evidence and guarded child-process helpers",
+    "source": "docs/work-items/WIP-04.md remediation of S-001/R-001/S-008/S-013; WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::module:child_guard",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "WI-05 remediation evidence and guarded child-process helpers",
+    "source": "docs/work-items/WIP-04.md remediation of S-001/R-001/S-008/S-013; WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::module:support",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "WI-05 remediation evidence and guarded child-process helpers",
+    "source": "docs/work-items/WIP-04.md remediation of S-001/R-001/S-008/S-013; WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::source-module:crates/worldinterface-runtime/tests/completion_regressions.rs",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "WI-05 remediation evidence and guarded child-process helpers",
+    "source": "docs/work-items/WIP-04.md remediation of S-001/R-001/S-008/S-013; WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::struct:BrokenCompletionClock",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "WI-05 remediation evidence and guarded child-process helpers",
+    "source": "docs/work-items/WIP-04.md remediation of S-001/R-001/S-008/S-013; WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::struct:Clock",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "WI-05 remediation evidence and guarded child-process helpers",
+    "source": "docs/work-items/WIP-04.md remediation of S-001/R-001/S-008/S-013; WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::struct:Evidence",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "WI-05 remediation evidence and guarded child-process helpers",
+    "source": "docs/work-items/WIP-04.md remediation of S-001/R-001/S-008/S-013; WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::struct:Noop",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "WI-05 remediation evidence and guarded child-process helpers",
+    "source": "docs/work-items/WIP-04.md remediation of S-001/R-001/S-008/S-013; WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::struct:Port",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "WI-05 remediation evidence and guarded child-process helpers",
+    "source": "docs/work-items/WIP-04.md remediation of S-001/R-001/S-008/S-013; WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::struct:Prepared",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "WI-05 remediation evidence and guarded child-process helpers",
+    "source": "docs/work-items/WIP-04.md remediation of S-001/R-001/S-008/S-013; WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::struct:SequenceClock",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "WI-05 remediation evidence and guarded child-process helpers",
+    "source": "docs/work-items/WIP-04.md remediation of S-001/R-001/S-008/S-013; WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::invocation_fence_rechecks_after_supersession::struct:Forbidden",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "WI-05 remediation evidence and guarded child-process helpers",
+    "source": "docs/work-items/WIP-04.md remediation of S-001/R-001/S-008/S-013; WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::support::module:effect_fixture",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "WI-05 remediation evidence and guarded child-process helpers",
+    "source": "docs/work-items/WIP-04.md remediation of S-001/R-001/S-008/S-013; WI-ADR-007/008/009/010"
   }
 ]

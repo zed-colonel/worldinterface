@@ -112,3 +112,34 @@ published checksum checks are retained.
 WI-05, WI-WORKER-G2 and WI-AQ-G2 closure records become effective only on
 reviewed integration with passing adopted checks. The controller performs that
 integration; this implementation branch is neither pushed nor merged.
+
+## Remediation of review 362d95d3
+
+The clean inherited head was `9ff4ce8`; its independent review and separate
+security pass reported no blocking or major findings. The recovery journal did
+not supply reusable verification artifacts, so this remediation reruns checks.
+The dispositions below are implementation claims for the next reviewer to verify.
+
+| Finding | Disposition and review evidence |
+|---|---|
+| S-001 | Fixed: failures recording a post-Start observation fall back inline to an Uncertain receipt with a bounded reason artifact. Recording failures have a distinct possible-commit AQ code. `invalid_port_observations_commit_inline_uncertainty_without_reinvocation` covers contradictory, incomplete, oversized and missing evidence; `completion_clock_failure_records_inferred_uncertainty_with_effect_phase_times` covers clock failure. Unavailable storage can still prevent the fallback; the handler then reports `wi.effect.uncertain_recording_error` and reopen retains uncertainty convergence. |
+| R-001 | Fixed: pre-Start errors use AQ's retryable disposition and durable, reference-only dispatch faults. Reopen records exhausted pre-Start runs without inventing an outcome or receipt. `expired_dispatch_authorization_retries_and_keeps_a_durable_diagnostic` exercises all three real AQ attempts and terminal reopen. |
+| S-010 | Fixed: immediately before invocation, re-check Running, the original attempt, and absence of that attempt's outcome. Supersession cancels the handler's existing token. `invocation_fence_rechecks_after_supersession` pauses a process after durable Start, records uncertainty in a second delivery, then resumes it and proves no invocation. Cancellation remains cooperative; this check does not make the external port call atomic with a Fabric transaction. |
+| S-012 | Fixed: terminal disposition requires the current attempt and immutable receipt source dispatch, AQ store, task, request digest, execution binding and observed run. Authorized retries prepare a new dispatch while preserving the previous admission bytes. `retry_dispatch_does_not_reuse_the_previous_attempt_disposition` completes a later permitted dispatch and rejects an old run. |
+| S-002 | Fixed: storage proof inspection now requires a separate evidence authorizer callback for every additional evidence reference, as well as receipt ownership. `proof_bundles_bind_receipts_and_authorize_every_member` tests storage and runtime denial and the exact grant. |
+| S-004 | Fixed: proof-bundle, trace and telemetry identities are unique within `(tenant,id)`; proof lookup includes the tenant. Unknown and foreign-principal receipts both return unavailable. `proof_and_diagnostic_ids_are_unique_within_each_tenant` and `authenticated_redaction_and_cross_tenant_principal_denials` exercise these boundaries. |
+| S-008 | Fixed: receipt admission and Start timestamps come from the effect journal, with submission as receipt arrival. Commit time is present only for ConfirmedCommitted. Inferred recovery observations carry an inferred assurance and a capped unknown-uncertainty sentinel, never a fabricated precise commit time. `successful_completion_preserves_distinct_journal_phase_times` and the clock-failure regression verify distinct phases. |
+| S-003 | Fixed: the storage crate explicitly documents every public API as trusted-host persistence; snapshot, enumeration, append and ReceiptAccess construction require host authentication and authorization before disclosure. The runtime inspector remains the remote disclosure boundary. |
+| S-005 | Fixed: cross-direction receipt identities reject writes and reopen. Plain effect transactions reject outcomes that bypass the atomic receipt transaction; every historical outcome must have exactly one authoritative receipt on reopen. `plain_effect_transaction_cannot_persist_a_receiptless_outcome` and `reopen_rejects_outcomes_without_receipts_and_cross_direction_receipt_ids` cover these invariants. |
+| S-006 | Fixed: crash-feature validation scans every repository Cargo manifest, including examples, workspace dependencies, patch and replace tables, while excluding build output. Negative checker fixtures cover foreign normal/dev/workspace activation and storage overrides. |
+| S-007 | Fixed: enabling crash-points without debug assertions fails compilation, including non-test shipping artifacts. All-features verification artifacts retain hooks; normal production feature exclusion is independently checked from Cargo compiler artifacts. |
+| S-009 | Deferred: explicit routing metadata belongs to host composition. Current strict effect locators and text ingress payloads are disjoint, and both handlers validate durable bindings. No broader router change is included here. |
+| S-011 | Fixed by operator documentation: older feature profiles and interim incompatible SQLite layouts fail closed without mutation. The `local-receipt-3` profile remains explicit and no migration is introduced. Persisted old-policy admission requests in a compatible store remain byte-identical. |
+| S-013 | Fixed: completion lookups are fallible. A journal-derived, replay-validated run index selects one tenant/effect instead of enumerating every tenant and effect; observation conflicts reject transactionally. Rebuild, restore and process-kill tests validate the index along with other projections. |
+
+Schema additions and scoped uniqueness are explicit reviewed source changes. The
+store's exact-schema validation rejects incompatible interim stores rather than
+silently upgrading them. Operators should preserve such stores for an explicit
+future migration; this work does not rewrite them. Inventory additions cover the
+run index diagnostic types, temporal lookup and regression helpers by source
+family, with explicit dispositions and canonical source hash refresh.

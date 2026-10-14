@@ -11,8 +11,11 @@ def check_manifests(manifests):
         features = manifest.get("features", {})
         if name == "worldinterface-storage":
             assert features == {"crash-points": []}, "storage crash feature must be exactly empty"
-        elif name.startswith("worldinterface-"):
+        elif name in {"worldinterface-protocol", "worldinterface-capability", "worldinterface-domain",
+                      "worldinterface-ingress", "worldinterface-egress", "worldinterface-worker", "worldinterface-runtime"}:
             assert features == {}, "new features require isolation review"
+        else:
+            assert "crash-points" not in features, "foreign crash feature declaration"
         tables = [manifest]
         tables.extend(manifest.get("target", {}).values())
         if "workspace" in manifest:
@@ -27,13 +30,22 @@ def check_manifests(manifests):
                         assert (name, kind, package) == (
                             "worldinterface-runtime", "dev-dependencies", "worldinterface-storage"
                         ), f"forbidden crash feature activation in {path}: {kind}/{alias}"
+        # Patch/replace may redirect storage to an unreviewed hook implementation,
+        # even when that edge does not explicitly enable the feature.
+        overrides = list(manifest.get("patch", {}).values()) + [manifest.get("replace", {})]
+        for table in overrides:
+            for alias, dependency in table.items():
+                package = dependency.get("package", alias) if isinstance(dependency, dict) else alias
+                assert package.split(":", 1)[0] != "worldinterface-storage", "storage patch/replace forbidden"
+                if isinstance(dependency, dict):
+                    assert "crash-points" not in dependency.get("features", []), "override crash feature activation"
         for forwarded in features.values():
             assert not any("crash-points" in feature for feature in forwarded), "crash feature forwarding"
 
 
 def check_repository(root):
-    manifests = sorted((root / "crates/worldinterface-foundation").rglob("Cargo.toml"))
-    manifests.append(root / "crates/worldinterface-runtime/Cargo.toml")
+    manifests = sorted(path for path in root.rglob("Cargo.toml")
+                       if not {"target", "dev-output", ".git"}.intersection(path.relative_to(root).parts))
     check_manifests([(path, tomllib.loads(path.read_text())) for path in manifests])
     subprocess.run(["python3", "-B", "scripts/test_wi_crash_isolation.py"], cwd=root, check=True)
 

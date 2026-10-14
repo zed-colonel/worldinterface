@@ -44,6 +44,17 @@ class CrashIsolationTests(unittest.TestCase):
         self.storage["features"]["crash-points"] = ["dep:anything"]
         self.reject(self.storage, self.runtime)
 
+    def test_foreign_manifest_workspace_patch_and_replace_rejected(self):
+        for manifest in (
+            {"package": {"name": "example"}, "dependencies": {"worldinterface-storage": {"features": ["crash-points"]}}},
+            {"workspace": {"dependencies": {"worldinterface-storage": {"features": ["crash-points"]}}}},
+            {"patch": {"crates-io": {"worldinterface-storage": {"path": "alternate"}}}},
+            {"replace": {"worldinterface-storage:0.2.0": {"path": "alternate"}}},
+            {"patch": {"crates-io": {"alias": {"package": "worldinterface-storage", "path": "alternate"}}}},
+        ):
+            with self.assertRaises(AssertionError):
+                check_manifests([("example/Cargo.toml", manifest)])
+
     def test_compilation_evidence_rejects_activation_tests_and_missing_records(self):
         record = {"reason": "compiler-artifact", "target": {"name": "worldinterface_storage"},
                   "features": [], "profile": {"test": False}}
