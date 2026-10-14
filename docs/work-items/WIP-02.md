@@ -99,10 +99,13 @@ observed enforcement remain WIP-09/WIP-10 work; hostile-code isolation is not cl
 |---|---|---|
 | WIP02-F001: unsupported ordinary operation reported ProfileDrift instead of Unavailable | Major against WP-013's explicit result requirement | Fixed. Pre-fix runtime regression returned `[ProfileDrift]` when `[Unavailable]` was required. `worker_reason` validates ordinary qualification bindings first, then returns Unavailable for an unqualified operation. Invalid qualification remains ProfileDrift; the domain regression checks precedence. Denial is preserved. |
 | WIP02-F002: runtime worker/source evidence missing from registry; self-initiation test stopped at resolution | Major evidence gap | Fixed. Added runtime worker/claim/self-initiation tests, strengthened resource/discovery assertions and registered complete authoritative scope coverage alongside them. No checker redesign or source-matrix result edits. |
+| WIP02-F003: WIP-01 proof unit test froze the total implemented-case count at 11 | Minor verification fixture defect, discovered by adopted contract-test on `26490e6` | Fixed. Scope the baseline count to WIP-01; a separate regression asserts WIP-02's exact nine cases, runtime and retained domain references, and open G2 gates owned by WIP-04. Check definitions and validation rules stay unchanged. |
 
 No open blocking or major finding. Production change is limited to F001's reason
 classification. Interfaces, AQ request encoding and persistence schema are preserved.
-No deviation from the accepted design was necessary.
+The accepted design is preserved. The additional contract-tool test adjustment
+was required by F003's adopted-check failure when the registry advanced from 11
+to 20 implemented cases; no checker redesign or production interface change.
 
 Registry discovery requires explicit source `#[test]` functions. Two existing
 property tests now expose ordinary test functions using proptest's TestRunner

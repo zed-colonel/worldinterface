@@ -1,6 +1,7 @@
 //! Validation fixtures and executable discovery regressions, without recursive suite execution.
 use serde_json::{json, Value};
 use std::{
+    collections::BTreeSet,
     fs,
     path::{Path, PathBuf},
     process::Command,
@@ -44,10 +45,58 @@ fn baseline_records_have_precise_g1_coverage_and_no_source_result_claims() {
     let (r, g, index) = records();
     assert!(proof::validate(&root(), &r, &g, &index).unwrap().is_empty());
     assert_eq!(r.cases.len(), 55);
-    assert_eq!(r.cases.iter().filter(|c| c.status == "implemented").count(), 11);
+    // Later work items add evidence without changing WIP-01's precise G1 baseline.
+    assert_eq!(
+        r.cases.iter().filter(|c| c.owning_item == "WIP-01" && c.status == "implemented").count(),
+        11
+    );
     assert_eq!(g.iter().filter(|g| g.status == "closed").count(), 2);
     assert_eq!(r.cases.iter().find(|c| c.id == "WP-002").unwrap().tests.len(), 3);
     assert_eq!(r.cases.iter().find(|c| c.id == "WP-007").unwrap().tests.len(), 3);
+}
+#[test]
+fn wip02_admission_cases_preserve_scope_evidence_and_leave_g2_open() {
+    let (r, g, index) = records();
+    assert!(proof::validate(&root(), &r, &g, &index).unwrap().is_empty());
+    let cases: Vec<_> = r.cases.iter().filter(|c| c.owning_item == "WIP-02").collect();
+    assert_eq!(
+        cases.iter().map(|c| c.id.as_str()).collect::<BTreeSet<_>>(),
+        BTreeSet::from([
+            "AB-WI-002",
+            "AB-WI-003",
+            "AB-WI-004",
+            "WP-009",
+            "WP-010",
+            "WP-011",
+            "WP-012",
+            "WP-013",
+            "WP-014"
+        ])
+    );
+    for case in cases {
+        assert_eq!(case.status, "implemented", "{}", case.id);
+        assert!(
+            case.tests.iter().any(|t| t.manifest == "crates/worldinterface-runtime/Cargo.toml"
+                && t.package == "worldinterface-runtime"),
+            "{} requires runtime evidence",
+            case.id
+        );
+        if case.id.starts_with("WP-") {
+            assert!(
+                case.tests
+                    .iter()
+                    .any(|t| t.manifest == "crates/worldinterface-foundation/Cargo.toml"
+                        && t.package == "worldinterface-egress"),
+                "{} retains domain evidence",
+                case.id
+            );
+        }
+    }
+    for id in ["WI-AQ-G2", "WI-WORKER-G2"] {
+        let gate = g.iter().find(|gate| gate.id == id).unwrap();
+        assert_eq!(gate.status, "open");
+        assert_eq!(gate.closing_item, "WIP-04");
+    }
 }
 #[test]
 fn missing_ignored_misplaced_and_ambiguous_tests_reject() {
