@@ -8,11 +8,40 @@ use worldinterface_protocol::*;
 /// Optimistic journal conflict or SQLite writer contention. Callers must
 /// re-snapshot and revalidate the original effect fence before a bounded retry.
 pub fn is_effect_contention(error: &(dyn std::error::Error + 'static)) -> bool {
-    error.to_string() == "stale or unsupported effect journal"
+    error.is::<EffectJournalConflict>()
         || matches!(error.downcast_ref::<rusqlite::Error>(),
             Some(rusqlite::Error::SqliteFailure(code, _))
                 if matches!(code.code, rusqlite::ErrorCode::DatabaseBusy | rusqlite::ErrorCode::DatabaseLocked))
 }
+/// A validated command was prepared against a different journal snapshot.
+#[derive(Debug)]
+pub struct EffectJournalConflict;
+impl std::fmt::Display for EffectJournalConflict {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("effect journal snapshot changed")
+    }
+}
+impl std::error::Error for EffectJournalConflict {}
+
+fn replay_validated(
+    state: &EffectState,
+    command: &ValidatedEffectCommand,
+) -> Result<(EffectState, EffectIntentId)> {
+    if &worldinterface_domain::effect::state_digest(state).map_err(invalid)?
+        != command.base_digest()
+    {
+        return Err(EffectJournalConflict.into());
+    }
+    replay_command(state, command.tenant(), command.bytes()).map_err(invalid)
+}
+
+/// Prepared under the Fabric writer lock; the receipt is still domain validated.
+pub struct EffectReceiptCommand {
+    pub command: ValidatedEffectCommand,
+    pub execution: ExecutionRecord,
+    pub temporal: TemporalProvenance,
+}
+
 pub(crate) const SCHEMA: &str = "
 CREATE TABLE effect_history(seq INTEGER PRIMARY KEY, tenant TEXT NOT NULL, revision INTEGER NOT NULL, entry BLOB NOT NULL, digest TEXT NOT NULL, UNIQUE(tenant,revision));
 CREATE TRIGGER effect_no_update BEFORE UPDATE ON effect_history BEGIN SELECT RAISE(ABORT,'append only'); END;
@@ -161,7 +190,7 @@ fn transact(
     let tx = c.transaction_with_behavior(TransactionBehavior::Immediate)?;
     let tenant = command.tenant();
     let old = snapshot(&tx, tenant)?;
-    let (new, id) = replay_command(&old, tenant, command.bytes()).map_err(invalid)?;
+    let (new, id) = replay_validated(&old, command)?;
     if !old.effects.contains_key(&id) {
         let exists: bool = tx.query_row(
             "SELECT EXISTS(SELECT 1 FROM projections WHERE entity=?)",
@@ -218,6 +247,50 @@ pub struct EffectExecutionTimes {
     pub attempt: OpaqueRef,
 }
 
+fn execution_times(
+    c: &Connection,
+    tenant: &OpaqueRef,
+    id: &EffectIntentId,
+) -> Result<EffectExecutionTimes> {
+    let mut q = c.prepare("SELECT entry FROM effect_history WHERE tenant=? ORDER BY revision")?;
+    let mut received = None;
+    let mut admitted = None;
+    let mut dispatched = None;
+    let mut run = None;
+    let mut attempt = None;
+    for row in q.query_map([tenant.as_str()], |r| r.get::<_, Vec<u8>>(0))? {
+        let entry = strict_json(&row?).map_err(invalid)?;
+        let action = &entry["action"];
+        if action["id"].as_str() != Some(id.as_str()) {
+            continue;
+        }
+        let at: Timestamp = serde_json::from_value(entry["at"].clone())?;
+        match action["operation"].as_str() {
+            Some("submit") => received = Some(at),
+            Some("prepare" | "prepare_production") => {
+                admitted = None;
+                dispatched = None;
+                run = None;
+                attempt = None;
+            }
+            Some("acknowledge" | "acknowledge_production") => admitted = Some(at),
+            Some("start" | "start_production") => {
+                dispatched = Some(at);
+                attempt = Some(serde_json::from_value(action["attempt"].clone())?);
+                run = action.get("run").map(|v| serde_json::from_value(v.clone())).transpose()?;
+            }
+            _ => {}
+        }
+    }
+    Ok(EffectExecutionTimes {
+        received: received.ok_or_else(|| invalid("missing submission timestamp"))?,
+        admitted: admitted.ok_or_else(|| invalid("missing admission timestamp"))?,
+        dispatched: dispatched.ok_or_else(|| invalid("missing Start timestamp"))?,
+        run,
+        attempt: attempt.ok_or_else(|| invalid("missing Start attempt"))?,
+    })
+}
+
 impl StoreRoot {
     /// Trusted-host lookup from the journal-derived run index. This is a binding,
     /// not authorization; hosts must still check the admission and principal.
@@ -256,45 +329,7 @@ impl StoreRoot {
         id: &EffectIntentId,
     ) -> Result<EffectExecutionTimes> {
         let c = self.connect(StoreKind::Fabric)?;
-        let mut q =
-            c.prepare("SELECT entry FROM effect_history WHERE tenant=? ORDER BY revision")?;
-        let mut received = None;
-        let mut admitted = None;
-        let mut dispatched = None;
-        let mut run = None;
-        let mut attempt = None;
-        for row in q.query_map([tenant.as_str()], |r| r.get::<_, Vec<u8>>(0))? {
-            let entry = strict_json(&row?).map_err(invalid)?;
-            let action = &entry["action"];
-            if action["id"].as_str() != Some(id.as_str()) {
-                continue;
-            }
-            let at: Timestamp = serde_json::from_value(entry["at"].clone())?;
-            match action["operation"].as_str() {
-                Some("submit") => received = Some(at),
-                Some("prepare" | "prepare_production") => {
-                    admitted = None;
-                    dispatched = None;
-                    run = None;
-                    attempt = None;
-                }
-                Some("acknowledge" | "acknowledge_production") => admitted = Some(at),
-                Some("start" | "start_production") => {
-                    dispatched = Some(at);
-                    attempt = Some(serde_json::from_value(action["attempt"].clone())?);
-                    run =
-                        action.get("run").map(|v| serde_json::from_value(v.clone())).transpose()?;
-                }
-                _ => {}
-            }
-        }
-        Ok(EffectExecutionTimes {
-            received: received.ok_or_else(|| invalid("missing submission timestamp"))?,
-            admitted: admitted.ok_or_else(|| invalid("missing admission timestamp"))?,
-            dispatched: dispatched.ok_or_else(|| invalid("missing Start timestamp"))?,
-            run,
-            attempt: attempt.ok_or_else(|| invalid("missing Start attempt"))?,
-        })
+        execution_times(&c, tenant, id)
     }
 
     /// Trusted-host diagnostic for a refused dispatch. No provider ran under this
@@ -407,8 +442,7 @@ impl StoreRoot {
     }
     pub fn effect_transact(&self, command: &ValidatedEffectCommand) -> Result<EffectIntentId> {
         let state = self.effect_snapshot(command.tenant())?;
-        let (new, id) =
-            replay_command(&state, command.tenant(), command.bytes()).map_err(invalid)?;
+        let (new, id) = replay_validated(&state, command)?;
         let aggregate = new.effects.get(&id).ok_or_else(|| invalid("missing effect"))?;
         if aggregate.outcomes.len() != state.effects.get(&id).map_or(0, |e| e.outcomes.len()) {
             return Err(invalid("outcome requires atomic receipt transaction"));
@@ -435,8 +469,81 @@ impl StoreRoot {
         {
             return Ok(digest);
         }
-        let old = snapshot(&tx, tenant)?;
-        let (new, id) = replay_command(&old, tenant, command.bytes()).map_err(invalid)?;
+        let digest = self.write_receipt(&tx, command, receipt_id, execution, temporal)?;
+        tx.commit()?;
+        #[cfg(test)]
+        crate::crash::checkpoint("fabric-receipt-committed");
+        #[cfg(all(feature = "crash-points", not(test)))]
+        crate::crashpoint::checkpoint("fabric-receipt-committed");
+        Ok(digest)
+    }
+    /// Trusted-host completion seam. Snapshot, phase times, fence validation and
+    /// command preparation all run under BEGIN IMMEDIATE. The callback must not
+    /// perform I/O or re-enter storage. Publish artifacts before calling this.
+    /// None means the caller's attempt fence no longer holds; nothing is written.
+    pub fn effect_transact_receipt_with(
+        &self,
+        tenant: &OpaqueRef,
+        id: &EffectIntentId,
+        attempt: &OpaqueRef,
+        run: &OpaqueRef,
+        prepare: impl FnOnce(
+            &EffectState,
+            &EffectExecutionTimes,
+        ) -> Result<Option<EffectReceiptCommand>>,
+    ) -> Result<Option<ContentHash>> {
+        let mut c = self.connect(StoreKind::Fabric)?;
+        let tx = c.transaction_with_behavior(TransactionBehavior::Immediate)?;
+        let state = snapshot(&tx, tenant)?;
+        let effect = state.effects.get(id).ok_or_else(|| invalid("missing completion effect"))?;
+        if effect.phase != worldinterface_domain::Phase::Running
+            || effect.attempt.as_ref() != Some(attempt)
+            || effect.outcomes.iter().any(|o| &o.attempt == attempt)
+            || effect
+                .dispatches
+                .last()
+                .and_then(|d| d.admission.as_ref())
+                .is_none_or(|a| !a.observed_runs.contains(run))
+        {
+            return Ok(None);
+        }
+        let phases = execution_times(&tx, tenant, id)?;
+        if &phases.attempt != attempt || phases.run.as_ref() != Some(run) {
+            return Err(invalid("completion phase times belong to another Start"));
+        }
+        let Some(prepared) = prepare(&state, &phases)? else { return Ok(None) };
+        if prepared.command.tenant() != tenant
+            || &prepared.execution.intent_id != id
+            || &prepared.execution.attempt != attempt
+        {
+            return Err(invalid("completion tenant mismatch"));
+        }
+        let digest = self.write_receipt(
+            &tx,
+            &prepared.command,
+            ReceiptId::generate(),
+            &prepared.execution,
+            prepared.temporal,
+        )?;
+        tx.commit()?;
+        #[cfg(test)]
+        crate::crash::checkpoint("fabric-receipt-committed");
+        #[cfg(all(feature = "crash-points", not(test)))]
+        crate::crashpoint::checkpoint("fabric-receipt-committed");
+        Ok(Some(digest))
+    }
+
+    fn write_receipt(
+        &self,
+        c: &Connection,
+        command: &ValidatedEffectCommand,
+        receipt_id: ReceiptId,
+        execution: &ExecutionRecord,
+        temporal: TemporalProvenance,
+    ) -> Result<ContentHash> {
+        let tenant = command.tenant();
+        let old = snapshot(c, tenant)?;
+        let (new, id) = replay_validated(&old, command)?;
         if new.revision == old.revision {
             return Err(invalid("receipt command already applied; inspect immutable receipt"));
         }
@@ -463,7 +570,7 @@ impl StoreRoot {
         for reference in worldinterface_domain::effect::required_artifacts(aggregate) {
             self.read_artifact(reference)?;
         }
-        tx.execute(
+        c.execute(
             "INSERT INTO effect_history(tenant,revision,entry,digest) VALUES(?,?,?,?)",
             params![
                 tenant.as_str(),
@@ -476,21 +583,16 @@ impl StoreRoot {
         crate::crash::checkpoint("fabric-receipt-history");
         #[cfg(all(feature = "crash-points", not(test)))]
         crate::crashpoint::checkpoint("fabric-receipt-history");
-        write_projection(&tx, tenant, &new, None, true)?;
+        write_projection(c, tenant, &new, None, true)?;
         #[cfg(test)]
         crate::crash::checkpoint("fabric-receipt-outbox");
         #[cfg(all(feature = "crash-points", not(test)))]
         crate::crashpoint::checkpoint("fabric-receipt-outbox");
-        let digest = crate::receipt::insert(&tx, tenant, &receipt, execution)?;
+        let digest = crate::receipt::insert(c, tenant, &receipt, execution)?;
         #[cfg(test)]
         crate::crash::checkpoint("fabric-receipt-index");
         #[cfg(all(feature = "crash-points", not(test)))]
         crate::crashpoint::checkpoint("fabric-receipt-index");
-        tx.commit()?;
-        #[cfg(test)]
-        crate::crash::checkpoint("fabric-receipt-committed");
-        #[cfg(all(feature = "crash-points", not(test)))]
-        crate::crashpoint::checkpoint("fabric-receipt-committed");
         Ok(digest)
     }
 }
@@ -679,6 +781,10 @@ mod tests {
                 assert_eq!(count, old.revision);
             }
             transact(&mut c, &cmd, None).unwrap();
+            let conflict = transact(&mut c, &cmd, None).unwrap_err();
+            assert!(conflict.is::<EffectJournalConflict>());
+            assert!(is_effect_contention(conflict.as_ref()));
+            assert!(!is_effect_contention(invalid("stale or unsupported effect journal").as_ref()));
         }
         let old = snapshot_state(&c, &caller);
         let request = &old.effects[&id].dispatches[0].request;

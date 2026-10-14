@@ -8596,6 +8596,20 @@
     "source": "docs/work-items/WIP-04.md remediation of S-001/R-001/S-008/S-013; WI-ADR-007/008/009/010"
   },
   {
+    "id": "crates/worldinterface-foundation/storage/src/effect.rs::::struct:EffectReceiptCommand",
+    "disposition": "retain-align",
+    "target": "effect-storage",
+    "rationale": "Trusted-host locked completion preparation and typed journal contention",
+    "source": "docs/work-items/WIP-04.md remediation of S-018/S-019/S-021; WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/effect.rs::::struct:EffectJournalConflict",
+    "disposition": "retain-align",
+    "target": "effect-storage",
+    "rationale": "Trusted-host locked completion preparation and typed journal contention",
+    "source": "docs/work-items/WIP-04.md remediation of S-018/S-019/S-021; WI-ADR-007/008/009/010"
+  },
+  {
     "id": "crates/worldinterface-foundation/storage/src/proof.rs::::module:tests@10d1b0eff34c",
     "disposition": "test-evidence",
     "target": "conformance/wi-fabric-2/completion",
@@ -8648,8 +8662,15 @@
     "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::struct:InterleavingClock",
     "disposition": "test-evidence",
     "target": "conformance/wi-fabric-2/completion",
-    "rationale": "Deterministic same-tenant journal contention, retry exhaustion and supersession regressions",
-    "source": "docs/work-items/WIP-04.md remediation of S-014; WI-ADR-007/008/009/010"
+    "rationale": "Deterministic writer-lock serialization evidence during completion preparation",
+    "source": "docs/work-items/WIP-04.md remediation of S-018; WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::struct:InterleavingPort",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "Deterministic completion serialization and supersession evidence",
+    "source": "docs/work-items/WIP-04.md remediation of S-018/S-019/S-021; WI-ADR-007/008/009/010"
   },
   {
     "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::struct:Noop",

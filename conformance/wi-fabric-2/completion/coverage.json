@@ -14,8 +14,8 @@
     "canonical_receipt_survives_replay_rebuild_backup_restore",
     "completed_aq_run_without_fabric_receipt_or_locator_rejects_reopen",
     "completion_clock_failure_records_inferred_uncertainty_with_effect_phase_times",
-    "completion_contention_budget_is_bounded_without_reinvocation",
     "completion_kill_matrix",
+    "completion_retries_publication_contention_without_losing_provider_observation",
     "contended_completion_preserves_a_superseding_uncertain_receipt",
     "contended_completion_preserves_provider_outcome_and_published_artifacts",
     "crash::killed_fabric_receipt_transaction_recovers_all_or_none_and_retries",
@@ -41,6 +41,8 @@
     "retry_dispatch_does_not_reuse_the_previous_attempt_disposition",
     "runtime_campaign_inspection_preserves_authority_and_material_confounds",
     "successful_completion_preserves_distinct_journal_phase_times",
+    "sustained_tenant_writes_preserve_confirmed_completion_without_reinvocation",
+    "terminal_recovery_waits_for_writers_and_preserves_original_attempt",
     "three_expired_deliveries_record_convergence_fault_without_second_port_call",
     "unreadable_binding_never_claims_retry_safe_pre_start_failure",
     "worker_report_identity_mismatch_is_not_disclosed_as_bound_evidence",
@@ -190,7 +192,7 @@
       {
         "manifest": "crates/worldinterface-runtime/Cargo.toml",
         "package": "worldinterface-runtime",
-        "test": "completion_contention_budget_is_bounded_without_reinvocation"
+        "test": "sustained_tenant_writes_preserve_confirmed_completion_without_reinvocation"
       },
       {
         "manifest": "crates/worldinterface-runtime/Cargo.toml",
@@ -201,6 +203,16 @@
         "manifest": "crates/worldinterface-runtime/Cargo.toml",
         "package": "worldinterface-runtime",
         "test": "possible_commit_aq_codes_converge_without_spurious_faults"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "completion_retries_publication_contention_without_losing_provider_observation"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "terminal_recovery_waits_for_writers_and_preserves_original_attempt"
       }
     ],
     "redacted-inspection": [

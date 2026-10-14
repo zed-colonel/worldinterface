@@ -101,6 +101,18 @@ impl<F: Fn(usize)> TrustedClock for InterleavingClock<F> {
         Ok(second(2 + 2 * tick as u32))
     }
 }
+struct InterleavingPort<F>(Port, F);
+impl<F: Fn() + Send + Sync> EffectExecutionPort for InterleavingPort<F> {
+    fn invoke(
+        &self,
+        request: BoundExecution,
+        cancellation: &CancellationToken,
+    ) -> Result<PortObservation> {
+        let observation = self.0.invoke(request, cancellation)?;
+        (self.1)();
+        Ok(observation)
+    }
+}
 struct Port {
     calls: Arc<AtomicUsize>,
     variant: &'static str,
@@ -279,41 +291,67 @@ fn completion_clock_failure_records_inferred_uncertainty_with_effect_phase_times
     assert_eq!(temporal.observed_at.unwrap().uncertainty_nanos, 9_007_199_254_740_991);
     assert!(temporal.reconciled_at.is_none());
 }
+// Start a writer precisely while completion holds its snapshot. A zero-timeout
+// second connection proves BEGIN IMMEDIATE already excludes it; its real writes
+// then wait for that same lock and finish without invalidating the observation.
+fn journal_contender(
+    case: &Prepared,
+    count: usize,
+) -> (impl Fn(usize) + Send + Sync, std::thread::JoinHandle<()>) {
+    let bundle = case.bundle.clone();
+    let snapshot = case.snapshot.clone();
+    let path = case.temp.path().join("bundle/wi/fabric.sqlite");
+    let (start_tx, start_rx) = std::sync::mpsc::sync_channel(0);
+    let (probed_tx, probed_rx) = std::sync::mpsc::sync_channel(0);
+    let writer = std::thread::spawn(move || {
+        start_rx.recv_timeout(std::time::Duration::from_secs(10)).unwrap();
+        let c = rusqlite::Connection::open(path).unwrap();
+        c.busy_timeout(std::time::Duration::ZERO).unwrap();
+        let error = c.execute_batch("BEGIN IMMEDIATE").unwrap_err();
+        assert!(worldinterface_storage::is_effect_contention(&error));
+        probed_tx.send(()).unwrap();
+        for n in 0..count {
+            let (mut submission, _) = fixture();
+            submission.client_request_id = format!("contender-{n}").try_into().unwrap();
+            Egress::new(bundle.wi())
+                .apply(
+                    &caller(&snapshot),
+                    second(10 + n as u32),
+                    EffectAction::Submit {
+                        id: EffectIntentId::generate(),
+                        submission: Box::new(submission),
+                        snapshot: verified(&snapshot),
+                        link: None,
+                    },
+                )
+                .unwrap();
+        }
+    });
+    let probed_rx = std::sync::Mutex::new(probed_rx);
+    (
+        move |_| {
+            start_tx.send(()).unwrap();
+            probed_rx.lock().unwrap().recv_timeout(std::time::Duration::from_secs(10)).unwrap();
+        },
+        writer,
+    )
+}
+
 #[test]
 fn contended_completion_preserves_provider_outcome_and_published_artifacts() {
-    // S-014: commit another same-tenant effect after the completion snapshot,
-    // advancing both the tenant digest and its clock lower bound.
     for variant in ["success", "noncommit"] {
         let case = Prepared::new();
         let actor = caller(&case.snapshot);
-        let other_id = EffectIntentId::generate();
-        let (mut submission, _) = fixture();
-        submission.client_request_id = "concurrent-request".to_owned().try_into().unwrap();
-        let concurrent_bundle = case.bundle.clone();
-        let concurrent_snapshot = case.snapshot.clone();
-        let concurrent_actor = caller(&case.snapshot);
-        let concurrent_id = other_id.clone();
+        let (interleave, writer) = journal_contender(&case, 1);
         let calls = Arc::new(AtomicUsize::new(0));
         let handler = EffectAttemptHandler {
             bundle: case.bundle.clone(),
             port: Port { calls: calls.clone(), variant },
             evidence: Evidence(case.snapshot.clone()),
-            clock: InterleavingClock(AtomicUsize::new(0), 1, move |_| {
-                Egress::new(concurrent_bundle.wi())
-                    .apply(
-                        &concurrent_actor,
-                        second(5),
-                        EffectAction::Submit {
-                            id: concurrent_id.clone(),
-                            submission: Box::new(submission.clone()),
-                            snapshot: verified(&concurrent_snapshot),
-                            link: None,
-                        },
-                    )
-                    .unwrap();
-            }),
+            clock: InterleavingClock(AtomicUsize::new(0), 1, interleave),
         };
         let disposition = handler.execute(case.ctx(case.run));
+        writer.join().unwrap();
         if variant == "success" {
             assert!(matches!(disposition.outcome(), DispositionOutcome::Complete));
         } else {
@@ -326,9 +364,8 @@ fn contended_completion_preserves_provider_outcome_and_published_artifacts() {
             ExecutionOutcome::FailedBeforeCommit
         };
         let state = case.bundle.wi().effect_snapshot(actor.tenant()).unwrap();
-        assert!(state.effects.contains_key(&other_id));
+        assert_eq!(state.effects.len(), 2);
         assert_eq!(state.effects[&case.id].outcomes.len(), 1);
-        assert_eq!(state.effects[&case.id].outcomes[0].outcome, expected);
         let receipt = case.receipt();
         let ReceiptBody::Egress(body) = &receipt.body else { panic!("egress receipt") };
         assert_eq!(body.outcome, expected);
@@ -336,10 +373,9 @@ fn contended_completion_preserves_provider_outcome_and_published_artifacts() {
             assert_eq!(body.output_refs.len(), 1);
             assert_eq!(case.bundle.wi().read_artifact(&body.output_refs[0]).unwrap(), b"output");
         }
-        assert_eq!(receipt.temporal.observed_at.as_ref().unwrap().at, second(6));
+        assert_eq!(receipt.temporal.observed_at.as_ref().unwrap().at, second(4));
         assert!(receipt.temporal.reconciled_at.is_none());
         assert!(!receipt.evidence.iter().any(|e| e.schema.as_str().contains("uncertainty")));
-        // The retry reused the original publications and never re-invoked the port.
         let c =
             rusqlite::Connection::open(case.temp.path().join("bundle/wi/context.sqlite")).unwrap();
         assert_eq!(
@@ -359,45 +395,67 @@ fn contended_completion_preserves_provider_outcome_and_published_artifacts() {
 }
 
 #[test]
-fn completion_contention_budget_is_bounded_without_reinvocation() {
+fn sustained_tenant_writes_preserve_confirmed_completion_without_reinvocation() {
+    // S-018: more writes than the old optimistic retry budget cannot exhaust it.
     let case = Prepared::new();
-    let concurrent_bundle = case.bundle.clone();
-    let concurrent_snapshot = case.snapshot.clone();
-    let mutations = Arc::new(AtomicUsize::new(0));
-    let concurrent_mutations = mutations.clone();
+    let (interleave, writer) = journal_contender(&case, 40);
     let calls = Arc::new(AtomicUsize::new(0));
     let handler = EffectAttemptHandler {
         bundle: case.bundle.clone(),
         port: Port { calls: calls.clone(), variant: "success" },
         evidence: Evidence(case.snapshot.clone()),
-        clock: InterleavingClock(AtomicUsize::new(0), 32, move |tick| {
-            let (mut submission, _) = fixture();
-            submission.client_request_id = format!("contender-{tick}").try_into().unwrap();
-            Egress::new(concurrent_bundle.wi())
-                .apply(
-                    &caller(&concurrent_snapshot),
-                    second(3 + 2 * tick as u32),
-                    EffectAction::Submit {
-                        id: EffectIntentId::generate(),
-                        submission: Box::new(submission),
-                        snapshot: verified(&concurrent_snapshot),
-                        link: None,
-                    },
-                )
-                .unwrap();
-            concurrent_mutations.fetch_add(1, Ordering::SeqCst);
-        }),
+        clock: InterleavingClock(AtomicUsize::new(0), 1, interleave),
     };
-    assert_uncertain(&handler.execute(case.ctx(case.run)));
-    assert_eq!(mutations.load(Ordering::SeqCst), 32);
+    let disposition = handler.execute(case.ctx(case.run));
+    writer.join().unwrap();
+    assert!(matches!(disposition.outcome(), DispositionOutcome::Complete));
+    let state = case.bundle.wi().effect_snapshot(caller(&case.snapshot).tenant()).unwrap();
+    assert_eq!(state.effects.len(), 41);
+    assert_eq!(state.effects[&case.id].outcomes[0].outcome, ExecutionOutcome::Succeeded);
     assert_eq!(calls.load(Ordering::SeqCst), 1);
-    assert!(case
-        .receipt()
-        .evidence
-        .iter()
-        .any(|e| e.schema.as_str() == "wi.completion.uncertainty:1"));
-    assert_uncertain(&handler.execute(case.ctx(case.run)));
+    let receipt = case.receipt();
+    assert!(!receipt.evidence.iter().any(|e| e.schema.as_str().contains("uncertainty")));
+    assert_eq!(handler.execute(case.ctx(case.run)).outcome(), disposition.outcome());
+    assert_eq!(case.receipt(), receipt);
     assert_eq!(calls.load(Ordering::SeqCst), 1);
+    StoreBundle::open(&case.temp.path().join("bundle")).unwrap();
+}
+
+#[test]
+fn completion_retries_publication_contention_without_losing_provider_observation() {
+    let case = Prepared::new();
+    let path = case.temp.path().join("bundle/wi/context.sqlite");
+    let (locked_tx, locked_rx) = std::sync::mpsc::sync_channel(0);
+    let (start_tx, start_rx) = std::sync::mpsc::sync_channel(0);
+    let writer = std::thread::spawn(move || {
+        start_rx.recv_timeout(std::time::Duration::from_secs(10)).unwrap();
+        let c = rusqlite::Connection::open(path).unwrap();
+        c.execute_batch("BEGIN EXCLUSIVE").unwrap();
+        locked_tx.send(()).unwrap();
+        // Exceed the storage connection's 5s busy timeout once.
+        std::thread::sleep(std::time::Duration::from_millis(5200));
+        c.execute_batch("COMMIT").unwrap();
+    });
+    let locked_rx = std::sync::Mutex::new(locked_rx);
+    let calls = Arc::new(AtomicUsize::new(0));
+    let handler = EffectAttemptHandler {
+        bundle: case.bundle.clone(),
+        port: InterleavingPort(Port { calls: calls.clone(), variant: "success" }, move || {
+            start_tx.send(()).unwrap();
+            locked_rx.lock().unwrap().recv_timeout(std::time::Duration::from_secs(10)).unwrap();
+        }),
+        evidence: Evidence(case.snapshot.clone()),
+        clock: Clock,
+    };
+    let disposition = handler.execute(case.ctx(case.run));
+    writer.join().unwrap();
+    assert!(matches!(disposition.outcome(), DispositionOutcome::Complete));
+    assert_eq!(calls.load(Ordering::SeqCst), 1);
+    let receipt = case.receipt();
+    let ReceiptBody::Egress(body) = receipt.body else { panic!("egress receipt") };
+    assert_eq!(body.outcome, ExecutionOutcome::Succeeded);
+    assert_eq!(case.bundle.wi().read_artifact(&body.output_refs[0]).unwrap(), b"output");
+    assert!(!receipt.evidence.iter().any(|e| e.schema.as_str().contains("uncertainty")));
 }
 
 #[test]
@@ -414,11 +472,11 @@ fn contended_completion_preserves_a_superseding_uncertain_receipt() {
     let contender_ctx = case.ctx(case.run);
     let handler = EffectAttemptHandler {
         bundle: case.bundle.clone(),
-        port: Port { calls: calls.clone(), variant: "success" },
-        evidence: Evidence(case.snapshot.clone()),
-        clock: InterleavingClock(AtomicUsize::new(0), 1, move |_| {
+        port: InterleavingPort(Port { calls: calls.clone(), variant: "success" }, move || {
             assert_uncertain(&contender.execute_bound(&contender_ctx).unwrap());
         }),
+        evidence: Evidence(case.snapshot.clone()),
+        clock: Clock,
     };
     assert_uncertain(&handler.execute(case.ctx(case.run)));
     assert_eq!(calls.load(Ordering::SeqCst), 1);
@@ -576,6 +634,95 @@ fn possible_commit_aq_codes_converge_without_spurious_faults() {
         }
     }
 }
+#[test]
+fn terminal_recovery_waits_for_writers_and_preserves_original_attempt() {
+    // S-021: real AQ terminal state, overlapping same-tenant writes and reopen.
+    let case = Prepared::new();
+    let actor = caller(&case.snapshot);
+    let attempt: OpaqueRef = AttemptId::new().to_string().try_into().unwrap();
+    let run: OpaqueRef = case.run.to_string().try_into().unwrap();
+    Egress::new(case.bundle.wi())
+        .apply(
+            &actor,
+            second(2),
+            EffectAction::StartProduction {
+                id: case.id.clone(),
+                snapshot: verified(&case.snapshot),
+                run: run.clone(),
+                attempt: attempt.clone(),
+            },
+        )
+        .unwrap();
+    let mut aq = actionqueue_runtime::engine::ActionQueueEngine::new(
+        actionqueue_runtime::config::RuntimeConfig {
+            data_dir: case.bundle.aq_path(),
+            ..Default::default()
+        },
+        Noop(Some("wi.effect.uncertain_recording_error")),
+    )
+    .bootstrap()
+    .unwrap()
+    .with_host(host());
+    tokio::runtime::Builder::new_current_thread().enable_all().build().unwrap().block_on(async {
+        let _ = tokio::time::timeout(std::time::Duration::from_secs(20), aq.run_until_idle())
+            .await
+            .unwrap()
+            .unwrap();
+    });
+    aq.shutdown().unwrap();
+    let path = case.temp.path().join("bundle/wi/fabric.sqlite");
+    let bundle = case.bundle.clone();
+    let snapshot = case.snapshot.clone();
+    let (locked_tx, locked_rx) = std::sync::mpsc::sync_channel(0);
+    let writer = std::thread::spawn(move || {
+        let c = rusqlite::Connection::open(path).unwrap();
+        c.execute_batch("BEGIN IMMEDIATE").unwrap();
+        locked_tx.send(()).unwrap();
+        std::thread::sleep(std::time::Duration::from_millis(200));
+        c.execute_batch("COMMIT").unwrap();
+        for n in 0..40 {
+            let (mut submission, _) = fixture();
+            submission.client_request_id = format!("recovery-contender-{n}").try_into().unwrap();
+            Egress::new(bundle.wi())
+                .apply(
+                    &caller(&snapshot),
+                    second(10 + n),
+                    EffectAction::Submit {
+                        id: EffectIntentId::generate(),
+                        submission: Box::new(submission),
+                        snapshot: verified(&snapshot),
+                        link: None,
+                    },
+                )
+                .unwrap();
+        }
+    });
+    locked_rx.recv_timeout(std::time::Duration::from_secs(10)).unwrap();
+    let reopened = StoreBundle::open(&case.temp.path().join("bundle"));
+    writer.join().unwrap();
+    let reopened = reopened.unwrap();
+    assert!(reopened.convergence_faults().is_empty());
+    let state = reopened.wi().effect_snapshot(actor.tenant()).unwrap();
+    assert_eq!(state.effects.len(), 41);
+    let effect = &state.effects[&case.id];
+    assert_eq!(effect.phase, Phase::Uncertain);
+    assert_eq!(effect.attempt.as_ref(), Some(&attempt));
+    assert_eq!(effect.outcomes.len(), 1);
+    let receipt = case.receipt();
+    assert!(receipt.temporal.reconciled_at.is_none());
+    // A lost recovery/completion fence cannot run even its preparation callback.
+    assert!(reopened
+        .wi()
+        .effect_transact_receipt_with(actor.tenant(), &case.id, &attempt, &run, |_, _| panic!(
+            "a superseded completion must not prepare another outcome"
+        ))
+        .unwrap()
+        .is_none());
+    drop(reopened);
+    StoreBundle::open(&case.temp.path().join("bundle")).unwrap();
+    assert_eq!(case.receipt(), receipt);
+}
+
 #[test]
 fn successful_completion_preserves_distinct_journal_phase_times() {
     let case = Prepared::new();

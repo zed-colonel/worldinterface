@@ -81,6 +81,23 @@ fn terminal(code: &'static str) -> AttemptDisposition {
     })
 }
 
+// SQLite already waits for its busy timeout. Retry transient contention in every
+// completion persistence step, including publication and phase lookup. This never
+// crosses the provider boundary. Identity-bound publications resume idempotently.
+fn retry_storage<T>(mut operation: impl FnMut() -> Result<T>) -> Result<T> {
+    for retry in 0..8 {
+        match operation() {
+            Err(error)
+                if retry < 7 && worldinterface_storage::is_effect_contention(error.as_ref()) =>
+            {
+                continue;
+            }
+            result => return result,
+        }
+    }
+    unreachable!()
+}
+
 fn publish(
     root: &worldinterface_storage::StoreRoot,
     tenant: &OpaqueRef,
@@ -88,8 +105,10 @@ fn publish(
     bytes: &[u8],
 ) -> Result<ArtifactRef> {
     let id: OpaqueRef = identity.try_into()?;
-    root.stage_publication(id.clone(), tenant.clone(), bytes)?;
-    root.publish_staged(&id, bytes)
+    retry_storage(|| {
+        root.stage_publication(id.clone(), tenant.clone(), bytes)?;
+        root.publish_staged(&id, bytes)
+    })
 }
 
 fn time(
@@ -291,22 +310,6 @@ impl<P: EffectExecutionPort, V: EvidenceAuthority, C: TrustedClock> EffectAttemp
         identity_class: &'static str,
     ) -> Result<AttemptDisposition> {
         let root = self.bundle.wi();
-        let state = root.effect_snapshot(caller.tenant())?;
-        let effect = state.effects.get(id).ok_or("missing effect")?;
-        if effect
-            .dispatches
-            .last()
-            .and_then(|d| d.admission.as_ref())
-            .is_none_or(|a| !a.observed_runs.contains(run))
-        {
-            return Err("outcome run belongs to another dispatch".into());
-        }
-        if effect.phase != Phase::Running || effect.attempt.as_ref() != Some(&attempt) {
-            if let Some(disposition) = self.committed_disposition(caller, id, run)? {
-                return Ok(disposition);
-            }
-            return Err("stale effect attempt".into());
-        }
         let mut outputs = Vec::new();
         for (index, bytes) in observation.outputs.iter().enumerate() {
             outputs.push(publish(
@@ -352,110 +355,94 @@ impl<P: EffectExecutionPort, V: EvidenceAuthority, C: TrustedClock> EffectAttemp
                 .map(|artifact| EvidenceRef { artifact, schema: blob.schema })
             })
             .transpose()?;
-        // This Start's journal phase times are immutable while its fence holds.
-        // Scan once, outside the optimistic transaction window and retry loop.
-        let phases = root.effect_execution_times(caller.tenant(), id)?;
-        for _ in 0..32 {
-            let state = match root.effect_snapshot(caller.tenant()) {
-                Ok(state) => state,
-                Err(error) if worldinterface_storage::is_effect_contention(error.as_ref()) => {
-                    continue;
-                }
-                Err(error) => return Err(error),
-            };
-            let effect = state.effects.get(id).ok_or("missing effect")?;
-            if effect
-                .dispatches
-                .last()
-                .and_then(|d| d.admission.as_ref())
-                .is_none_or(|a| !a.observed_runs.contains(run))
-            {
-                return Err("outcome run belongs to another dispatch".into());
-            }
-            if effect.phase != Phase::Running
-                || effect.attempt.as_ref() != Some(&attempt)
-                || effect.outcomes.iter().any(|o| o.attempt == attempt)
-            {
-                if let Some(disposition) = self.committed_disposition(caller, id, run)? {
-                    return Ok(disposition);
-                }
-                return Err("stale effect attempt".into());
-            }
-            if phases.attempt != attempt || phases.run.as_ref() != Some(run) {
-                return Err("completion phase times belong to another Start".into());
-            }
-            let (at, inferred) = match self.clock.now() {
-                Ok(at) if state.last_at.as_ref().is_none_or(|last| &at >= last) => (at, false),
-                _ if identity_class == "fallback" || identity_class == "recovery" => {
-                    (state.last_at.clone().ok_or("missing journal clock lower bound")?, true)
-                }
-                _ => return Err("completion clock unavailable or regressed".into()),
-            };
-            let outcome = OutcomeEvidence {
-                intent: id.clone(),
-                attempt: attempt.clone(),
-                connector_semantics: effect
-                    .resolution
-                    .as_ref()
-                    .ok_or("missing resolution")?
-                    .resolved
-                    .idempotency_semantics
-                    .clone(),
-                commit: observation.commit.clone(),
-                outcome: observation.outcome.clone(),
-                evidence: evidence.clone(),
-                required_outputs: effect
-                    .authorization_inputs
-                    .as_ref()
-                    .ok_or("missing authority inputs")?
-                    .required_outputs
-                    .clone(),
-                durable_outputs: outputs.clone(),
-                boundary_record: boundary_record.clone(),
-            };
-            let command = worldinterface_domain::effect::validate_command(
-                &state,
-                caller,
-                at.clone(),
-                EffectAction::Outcome {
-                    id: id.clone(),
-                    evidence: VerifiedOutcome::from_trusted_verifier(outcome),
-                },
-            )?;
-            let execution = ExecutionRecord {
-                intent_id: id.clone(),
-                attempt: attempt.clone(),
-                outcome: observation.outcome.clone(),
-                evidence: evidence.clone(),
-                recorded_at: at.clone(),
-            };
-            let temporal = time(&phases, at, &observation.commit, inferred)?;
-            match root.effect_transact_with_receipt(
-                &command,
-                ReceiptId::generate(),
-                &execution,
-                temporal,
-            ) {
-                Ok(_) => {
-                    return self
-                        .committed_disposition(caller, id, run)?
-                        .ok_or_else(|| "missing committed outcome".into());
-                }
-                Err(error) if worldinterface_storage::is_effect_contention(error.as_ref()) => {
-                    // Reuse published bytes, revalidate the dispatch/attempt fence,
-                    // and rebuild with a fresh clock. Never re-invoke the provider.
-                    continue;
-                }
-                Err(error) => {
-                    if let Some(disposition) = self.committed_disposition(caller, id, run)? {
-                        return Ok(disposition);
+        let result = retry_storage(|| {
+            root.effect_transact_receipt_with(
+                caller.tenant(),
+                id,
+                &attempt,
+                run,
+                |state, phases| {
+                    let effect = state.effects.get(id).ok_or("missing effect")?;
+                    if effect
+                        .dispatches
+                        .last()
+                        .and_then(|d| d.admission.as_ref())
+                        .is_none_or(|a| !a.observed_runs.contains(run))
+                    {
+                        return Err("outcome run belongs to another dispatch".into());
                     }
-                    return Err(error);
-                }
-            }
+                    if effect.phase != Phase::Running
+                        || effect.attempt.as_ref() != Some(&attempt)
+                        || effect.outcomes.iter().any(|o| o.attempt == attempt)
+                    {
+                        return Ok(None);
+                    }
+                    if phases.attempt != attempt || phases.run.as_ref() != Some(run) {
+                        return Err("completion phase times belong to another Start".into());
+                    }
+                    let (at, inferred) = match self.clock.now() {
+                        Ok(at) if state.last_at.as_ref().is_none_or(|last| &at >= last) => {
+                            (at, false)
+                        }
+                        _ if identity_class == "fallback" || identity_class == "recovery" => (
+                            state.last_at.clone().ok_or("missing journal clock lower bound")?,
+                            true,
+                        ),
+                        _ => return Err("completion clock unavailable or regressed".into()),
+                    };
+                    let outcome = OutcomeEvidence {
+                        intent: id.clone(),
+                        attempt: attempt.clone(),
+                        connector_semantics: effect
+                            .resolution
+                            .as_ref()
+                            .ok_or("missing resolution")?
+                            .resolved
+                            .idempotency_semantics
+                            .clone(),
+                        commit: observation.commit.clone(),
+                        outcome: observation.outcome.clone(),
+                        evidence: evidence.clone(),
+                        required_outputs: effect
+                            .authorization_inputs
+                            .as_ref()
+                            .ok_or("missing authority inputs")?
+                            .required_outputs
+                            .clone(),
+                        durable_outputs: outputs.clone(),
+                        boundary_record: boundary_record.clone(),
+                    };
+                    let command = worldinterface_domain::effect::validate_command(
+                        state,
+                        caller,
+                        at.clone(),
+                        EffectAction::Outcome {
+                            id: id.clone(),
+                            evidence: VerifiedOutcome::from_trusted_verifier(outcome),
+                        },
+                    )?;
+                    let execution = ExecutionRecord {
+                        intent_id: id.clone(),
+                        attempt: attempt.clone(),
+                        outcome: observation.outcome.clone(),
+                        evidence: evidence.clone(),
+                        recorded_at: at.clone(),
+                    };
+                    let temporal = time(phases, at, &observation.commit, inferred)?;
+                    Ok(Some(worldinterface_storage::EffectReceiptCommand {
+                        command,
+                        execution,
+                        temporal,
+                    }))
+                },
+            )
+        });
+        // Also recover a lost commit response or a superseding delivery's receipt.
+        if let Some(disposition) = retry_storage(|| self.committed_disposition(caller, id, run))? {
+            return Ok(disposition);
         }
-        self.committed_disposition(caller, id, run)?
-            .ok_or_else(|| "effect completion contention exhausted".into())
+        result?;
+        Err("missing committed outcome or stale effect attempt".into())
     }
 
     pub fn execute_bound(&self, ctx: &ExecutorContext) -> Result<AttemptDisposition> {
@@ -614,72 +601,81 @@ pub(crate) fn record_uncertain_after_terminal_run(
     root: &worldinterface_storage::StoreRoot,
     tenant: &OpaqueRef,
     id: &EffectIntentId,
+    attempt: &OpaqueRef,
+    run: &OpaqueRef,
 ) -> Result<()> {
-    let state = root.effect_snapshot(tenant)?;
-    let effect = state.effects.get(id).ok_or("missing effect")?;
-    if effect.phase != Phase::Running
-        || effect.outcomes.iter().any(|o| Some(&o.attempt) == effect.attempt.as_ref())
-    {
-        return Ok(());
-    }
-    let attempt = effect.attempt.clone().ok_or("missing original attempt")?;
-    let caller = AuthenticatedCaller::from_trusted_authentication(
-        tenant.clone(),
-        effect.agency.binding.principal.clone(),
-    );
-    let evidence = EvidenceBytes {
-        schema: "wi.recovery.uncertainty:1".to_string().try_into()?,
-        bytes: b"AQ run became terminal while Fabric Start had no outcome".to_vec(),
-    };
     let artifact = publish(
         root,
         tenant,
         format!("effect-recovery:{}:{}", id.as_str(), attempt.as_str()),
-        &evidence.bytes,
+        b"AQ run became terminal while Fabric Start had no outcome",
     )?;
-    let reference = EvidenceRef { artifact, schema: evidence.schema };
-    let at = state.last_at.clone().ok_or("missing trusted Start timestamp")?;
-    let outcome = OutcomeEvidence {
-        intent: id.clone(),
-        attempt: attempt.clone(),
-        connector_semantics: effect
-            .resolution
-            .as_ref()
-            .ok_or("missing resolution")?
-            .resolved
-            .idempotency_semantics
-            .clone(),
-        commit: CommitObservation::Unknown,
-        outcome: ExecutionOutcome::Uncertain,
-        evidence: vec![reference.clone()],
-        required_outputs: effect
-            .authorization_inputs
-            .as_ref()
-            .ok_or("missing authority inputs")?
-            .required_outputs
-            .clone(),
-        durable_outputs: vec![],
-        boundary_record: None,
-    };
-    let command = worldinterface_domain::effect::validate_command(
-        &state,
-        &caller,
-        at.clone(),
-        EffectAction::Outcome {
-            id: id.clone(),
-            evidence: VerifiedOutcome::from_trusted_verifier(outcome),
-        },
-    )?;
-    let execution = ExecutionRecord {
-        intent_id: id.clone(),
-        attempt,
-        outcome: ExecutionOutcome::Uncertain,
-        evidence: vec![reference],
-        recorded_at: at.clone(),
-    };
-    let phases = root.effect_execution_times(tenant, id)?;
-    let temporal = time(&phases, at, &CommitObservation::Unknown, true)?;
-    root.effect_transact_with_receipt(&command, ReceiptId::generate(), &execution, temporal)?;
+    let reference =
+        EvidenceRef { artifact, schema: "wi.recovery.uncertainty:1".to_string().try_into()? };
+    retry_storage(|| {
+        root.effect_transact_receipt_with(tenant, id, attempt, run, |state, phases| {
+            let effect = state.effects.get(id).ok_or("missing effect")?;
+            if effect.phase != Phase::Running
+                || effect.attempt.as_ref() != Some(attempt)
+                || effect.outcomes.iter().any(|o| &o.attempt == attempt)
+                || effect
+                    .dispatches
+                    .last()
+                    .and_then(|d| d.admission.as_ref())
+                    .is_none_or(|a| !a.observed_runs.contains(run))
+            {
+                return Ok(None);
+            }
+            if &phases.attempt != attempt || phases.run.as_ref() != Some(run) {
+                return Err("recovery phase times belong to another Start".into());
+            }
+            let caller = AuthenticatedCaller::from_trusted_authentication(
+                tenant.clone(),
+                effect.agency.binding.principal.clone(),
+            );
+            let at = state.last_at.clone().ok_or("missing trusted Start timestamp")?;
+            let outcome = OutcomeEvidence {
+                intent: id.clone(),
+                attempt: attempt.clone(),
+                connector_semantics: effect
+                    .resolution
+                    .as_ref()
+                    .ok_or("missing resolution")?
+                    .resolved
+                    .idempotency_semantics
+                    .clone(),
+                commit: CommitObservation::Unknown,
+                outcome: ExecutionOutcome::Uncertain,
+                evidence: vec![reference.clone()],
+                required_outputs: effect
+                    .authorization_inputs
+                    .as_ref()
+                    .ok_or("missing authority inputs")?
+                    .required_outputs
+                    .clone(),
+                durable_outputs: vec![],
+                boundary_record: None,
+            };
+            let command = worldinterface_domain::effect::validate_command(
+                state,
+                &caller,
+                at.clone(),
+                EffectAction::Outcome {
+                    id: id.clone(),
+                    evidence: VerifiedOutcome::from_trusted_verifier(outcome),
+                },
+            )?;
+            let execution = ExecutionRecord {
+                intent_id: id.clone(),
+                attempt: attempt.clone(),
+                outcome: ExecutionOutcome::Uncertain,
+                evidence: vec![reference.clone()],
+                recorded_at: at.clone(),
+            };
+            let temporal = time(phases, at, &CommitObservation::Unknown, true)?;
+            Ok(Some(worldinterface_storage::EffectReceiptCommand { command, execution, temporal }))
+        })
+    })?;
     Ok(())
 }
 

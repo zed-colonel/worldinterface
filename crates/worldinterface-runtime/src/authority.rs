@@ -15,6 +15,8 @@ pub trait Authentication {
     fn authenticate(&self, session: &Self::Session) -> Result<(OpaqueRef, PrincipalId)>;
 }
 /// Host-owned time source; timestamps are never accepted from an effect request.
+/// Completion samples it while holding the Fabric writer lock. Implementations
+/// must return promptly and must not re-enter storage or contact a provider.
 pub trait TrustedClock {
     fn now(&self) -> Result<Timestamp>;
 }

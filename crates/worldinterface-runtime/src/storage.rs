@@ -161,19 +161,23 @@ impl StoreBundle {
                 else {
                     continue;
                 };
-                let mut terminal = false;
+                let mut terminal_run = None;
                 for run in &admission.observed_runs {
-                    terminal |= matches!(
+                    if matches!(
                         references.run_state(run.as_str())?,
                         Some(
                             actionqueue_core::run::state::RunState::Completed
                                 | actionqueue_core::run::state::RunState::Failed
                                 | actionqueue_core::run::state::RunState::Canceled
                         )
-                    );
+                    ) {
+                        terminal_run = Some(run);
+                    }
                 }
-                if terminal {
-                    crate::completion::record_uncertain_after_terminal_run(&wi, &tenant, id)?;
+                if let (Some(run), Some(attempt)) = (terminal_run, effect.attempt.as_ref()) {
+                    crate::completion::record_uncertain_after_terminal_run(
+                        &wi, &tenant, id, attempt, run,
+                    )?;
                 }
             }
         }

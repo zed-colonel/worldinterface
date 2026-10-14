@@ -32,4 +32,7 @@ mod receipt;
 #[path = "../tests/support/crash.rs"]
 mod crash;
 
-pub use effect::{is_effect_contention, DispatchFault, EffectExecutionTimes};
+pub use effect::{
+    is_effect_contention, DispatchFault, EffectExecutionTimes, EffectJournalConflict,
+    EffectReceiptCommand,
+};

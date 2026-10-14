@@ -441,10 +441,15 @@ struct Entry {
 pub struct ValidatedEffectCommand {
     bytes: Vec<u8>,
     tenant: OpaqueRef,
+    before: ContentHash,
 }
 impl ValidatedEffectCommand {
     pub fn bytes(&self) -> &[u8] {
         &self.bytes
+    }
+    /// Digest of the exact journal state against which this command was validated.
+    pub fn base_digest(&self) -> &ContentHash {
+        &self.before
     }
     pub fn tenant(&self) -> &OpaqueRef {
         &self.tenant
@@ -465,7 +470,11 @@ pub fn validate_command(
         action: action.into(),
     };
     apply(state, &entry)?;
-    Ok(ValidatedEffectCommand { bytes: canonical_data(&entry)?, tenant: caller.tenant.clone() })
+    Ok(ValidatedEffectCommand {
+        bytes: canonical_data(&entry)?,
+        tenant: caller.tenant.clone(),
+        before: entry.before,
+    })
 }
 pub fn state_digest(s: &EffectState) -> Result<ContentHash> {
     Ok(ContentHash::of(&canonical_collection(s)?))

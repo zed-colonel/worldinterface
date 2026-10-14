@@ -169,3 +169,40 @@ Verification and separate correctness/security self-review evidence for this run
 live under `a79fc357-c82e-4e8a-a29d-6101a32c9455/scratch/verification` and
 `scratch/review`. Qualifying independent review, including its separate security
 pass, remains with CraftingTable before WI-05 and G2 closure takes effect.
+
+
+## Remediation of review 8f44c4c6
+
+The inherited head is `3b1e3e3`. The initial status contained only a foundation
+lockfile change removing unused AQ patch entries. The preceding implementation
+journal ended clean; the following review journal and its preserved verification
+script show supplemental Cargo runs. That generated lockfile change was saved to
+this run's verification evidence and restored, without changing dependencies.
+There were no untracked source files or test artifacts to reconcile.
+
+These dispositions are claims for independent reviewer verification, superseding
+the earlier optimistic-retry description above.
+
+| Finding | Disposition and executable evidence |
+|---|---|
+| S-018 | Fixed: the new trusted-host `effect_transact_receipt_with` seam takes `BEGIN IMMEDIATE` before loading the tenant state, checking the original attempt/run fence, scanning phase times, sampling the clock and validating the Outcome command. Concurrent writes cannot stale that snapshot before receipt commit. Publication and the complete locked transaction retry transient SQLite contention up to eight times; SQLite's existing busy timeout supplies the wait, with no provider reinvocation. `sustained_tenant_writes_preserve_confirmed_completion_without_reinvocation` queues 40 same-tenant writes, beyond the old retry budget, and proves a competing writer is excluded during preparation. The success/noncommit artifact regression also probes that lock. `completion_retries_publication_contention_without_losing_provider_observation` holds an exclusive context lock beyond the 5-second busy timeout and retains the confirmed outcome and output. Supersession still preserves the winning uncertainty receipt. |
+| S-019 | Fixed: validated commands retain their base state digest; storage emits the typed `EffectJournalConflict` marker on a mismatch before domain replay. Both Egress and completion use the typed/SQLite classifier, without matching error text. `effect::tests::effect_journal_faults_roll_back_every_projection` verifies actual stale transactions carry the marker and a text-only lookalike does not count as contention. Receipt exact-retry checking still precedes conflict checking. |
+| S-021 | Fixed: terminal-run recovery uses the same locked receipt seam and bounded contention retries, including publication. Reopen passes the observed original attempt and terminal run into recovery; the lock protects their revalidation, so a superseded attempt cannot acquire a receipt. `terminal_recovery_waits_for_writers_and_preserves_original_attempt` overlaps real AQ terminal recovery with 40 same-tenant writes, retains one original-attempt Uncertain receipt across reopen, and proves a lost fence cannot invoke even the preparation callback. |
+| S-020 | Deferred: phase_unknown diagnostics still combine unreadable storage with binding failures, and a failed pre-Start run can retain the exhausted label. This is diagnostic only; it neither grants authority nor invokes a provider. Keep a distinct terminal-code/allowlist cleanup as a follow-up. |
+| S-009 | Deferred as accepted in prior reviews: explicit router metadata belongs to host composition. Payload forms remain strict and disjoint, with durable binding validation failing closed. |
+
+The three added inventory types are explicitly dispositioned: the trusted-host
+receipt preparation and conflict types remain in the storage family; the port
+interleaving helper is test evidence. All added/renamed tests map to WI-05 crash
+convergence in `completion/coverage.json`. No request bytes, queue constraints,
+receipt wire format, SQLite layout or adopted check definitions change here.
+Clock implementations must return promptly without storage reentry or provider
+I/O because completion now samples the clock while holding the writer lock.
+Permanent I/O failures or exhaustion of SQLite's contention waits can still
+prevent recording; the existing explicit uncertainty behavior remains in force.
+
+This run records a separate security self-review under `scratch/review`, covering
+publication ordering, canonicalization, disclosure, tenant/attempt/run fences and
+recovery authority. It does not replace CraftingTable's independent review and
+separate security pass. Verification logs belong to this run's
+`scratch/verification`; the controller alone integrates reviewed work.
