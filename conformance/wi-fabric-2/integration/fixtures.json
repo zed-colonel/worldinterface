@@ -5,7 +5,8 @@
     "AB-WI-001": {
       "source_record_sha256": "abeefc555e395a4dc1242d30e3537bd89541f271410a91e9589bef3267ac4ebf",
       "required_tests": [
-        "ab_wi_001_store_formats_fresh_lineage_and_profile_rejection"
+        "ab_wi_001_store_formats_fresh_lineage_and_profile_rejection",
+        "ab_wi_001_published_identity_rejects_substitutions"
       ]
     },
     "AB-WI-002": {

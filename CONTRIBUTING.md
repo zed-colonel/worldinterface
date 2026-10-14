@@ -3,87 +3,66 @@
 Thank you for your interest in contributing to WorldInterface! This document covers the
 development workflow, coding standards, and submission process.
 
-## WI-FABRIC-2 development contract
+## WI-WORKER-PROOF-1 development contract
 
-This section governs WI-FABRIC-2 contributions and supersedes incompatible
-instructions in the historical section below, including its `main` PR target and
-universal `run_id` idempotency rule. The retained baseline instructions describe
-the experimental implementation, not the target architecture.
+Work proceeds on managed whole-item branches targeting `wi-worker-proof-1`.
+CraftingTable alone integrates after qualifying review of the exact source and
+integration commits, under operator approval or recorded integration policy.
+Repository policy settings version 1, observed 2026-10-13, retains the local
+freeze of `main` at `f48df82e98203fa94c86eecae60425205c3e00e9`. Final promotion
+requires explicit operator approval. Remote protection and publication remain
+operator-owned before first publication and final release approval, as described
+in [publication staging](docs/release/publication-staging.md).
 
-The authority is adopted `craftingtable-repository-policy.json` policy version 1,
-branch settings version 1, adopted `2026-09-18T00:41:03.548Z`. Work proceeds on
-controller-managed work-item/slice branches targeting the single `wi-fabric-2`
-integration branch. Only the controller may integrate after qualifying review of
-the exact current source and target commits, under operator approval or recorded
-integration policy. Final promotion requires explicit operator approval.
+The active workspaces are the AQ-free `crates/worldinterface-foundation` and the
+AQ-linked `crates/worldinterface-runtime`. AQ resolves from crates.io at exactly
+0.2.0, with published checksums and source identity pinned in
+`contracts/aq-integration-target.json`. No path, git or patch AQ override is
+permitted. The legacy root workspace remains historical during this plan.
 
-Experimental `main` and the `worldinterface/pre-wi-fabric-2` evidence tag identify
-the frozen baseline `f48df82e98203fa94c86eecae60425205c3e00e9`. Extract historical
-evidence without further feature work on `main`. These controller-local controls
-are not remote hosting protections; matching Git refs are observations, not proof
-of protection. Remote branch/review protections remain unverified and must be
-configured and independently verified by the operator before the first remote
-publication and final release approval. Publication and repository administration
-follow [publication staging](docs/release/publication-staging.md).
+Every item records maturity, invariants, evidence, decisions and retained work
+in `docs/work-items/<item>.md`. Register implemented cases in
+[proof/cases.json](conformance/wi-fabric-2/proof/cases.json), referencing existing
+scope coverage and exact `{manifest, package, test}` names. Test eligibility is
+checked against Cargo metadata and compiled harnesses under each adopted test
+configuration. Ignored, ambiguous, disabled, unreachable and misplaced tests
+cannot count. Review must assess assertions against the source criterion.
 
-For target identity and idempotency, follow the approved implementation plan's
-[§1.2 identity separation](contracts/sources/wi-fabric-2-foundational-implementation-plan.md#12-current-surgical-points)
-and [§12.3 explicit mapping requirement](contracts/sources/wi-fabric-2-foundational-implementation-plan.md#123-static-architecture-checks),
-with the repository-owned [WI contract](contracts/wi-fabric-2.yaml).
-ActionQueue `RunId` supports queue replay identity; it is not actor identity,
-effect identity, authorization, provider idempotency identity, or proof identity.
-Use of `RunId` as provider idempotency identity requires an explicit mapping record.
-The historical connector examples do not establish that target contract or prove
-provider deduplication or crash safety.
+Run all checks defined in `.craftingtable/checks.json` on the committed head.
+CraftingTable establishes passage offline in a private clone. The Rust 1.89.0
+scripts `scripts/check-wi-domain.sh`, `scripts/check-wi-integration.sh` and
+`scripts/check-wi-contract.sh` are local preparation. Fetch missing dependencies
+with `cargo fetch --locked --manifest-path <workspace>/Cargo.toml` first.
+Keep `CARGO_TARGET_DIR`, `TMPDIR`, logs and evidence outside the checkout.
+There is no map Cargo launcher or supplied dependency environment. The new
+`contract-test` check is operator-approved for adoption at WIP-01 merge.
 
-Every PR records maturity (Independent, Assumption-bound, Contract-blocked or
-Integration-only), invariants, evidence and exact upstream identities. Use the PR
-and upstream-requirement templates. Changes to connectors update the complete
-inventory and dispositions. Pure state changes require property tests, durable
-changes replay tests, and external/cross-store changes crash tests. WI-01 changes
-only development contracts; it does not implement new runtime recovery.
+Refresh source hashes after edits:
 
-Run `ct-check -- scripts/check-wi-contract.sh` using the supplied controller Cargo
-launcher natively; CI uses explicit `CRAFTINGTABLE_CARGO_CONFIG`. Keep
-`CARGO_TARGET_DIR` and verification artifacts outside the checkout. Local CI is
-`ct-act -W .github/workflows/wi-contract.yml -j contract`. Controller `ct-check`
-retains repository check evidence. Historical runtime characterization is separate
-from these independent checks; exact-pin AQ integration requires its own native
-build and test receipt from `scripts/check-wi-integration.sh`.
+```sh
+cargo run --locked --manifest-path tools/wi-contract-check/Cargo.toml -- hashes refresh
+```
 
-Generated inventory is reviewable source; regenerate with
-`wi-contract-check inventory generate > inventory/current.json`, then review every
-changed disposition in `inventory/dispositions.json`. Do not auto-accept target
-ownership or ADR decisions. Milestone advancement is controller-owned: externally
-supplied `WI_MILESTONE_STATE` requires `WI_APPROVED_MILESTONE_SHA256` and a
-set of unique approved milestone IDs including WI-01 entry. Each rule activates
-only when its own milestone is present; WI-04 and WI-05 need no WI-03 entry.
-Scheduling, dependency admission and rollback protection remain controller-owned.
-The checked-in state admits WI-01 only and asserts no completed milestone. Do not weaken policy files to make deletion gates pass.
+This refresh updates only inventory and catalog/disposition source hashes. It
+rejects structural drift and preserves families, ownership, destinations,
+registration sites and treatments. Structural additions require an explicit
+reviewed inventory/disposition change. It never refreshes normative-source or
+approval pins. Do not edit `contracts/sources/` to claim results.
 
-### WI-02, WI-03, and WI-04 integration verification
+Gate records under `proof/gates/` preserve the pinned retired-map criteria and
+complete prerequisites. Closed records become effective through reviewed merge
+with adopted checks passing. Historical submissions are provenance, not current
+passage. `evidence check` remains historical tooling. ADR approvals are byte-pinned
+operator decisions, not implementation results. `contracts/milestones.json` stays
+at `WI-01`; legacy clean-break deletions and full-parent release obligations are
+deferred, as documented in [the plan ledger](docs/work-items/wi-worker-proof-1.md).
 
-For the active integration slice, use Rust 1.89.0 and the supplied controller
-Cargo launcher. Run `ct-check -- scripts/check-wi-domain.sh`,
-`ct-check -- scripts/check-wi-contract.sh`, and
-`ct-check -- scripts/check-wi-integration.sh`; run each corresponding scoped
-workflow with `ct-act -W .github/workflows/wi-<scope>.yml -j <scope>`.
-Set the supplied manifest/config paths and `CRAFTINGTABLE_VERIFICATION_MODE` for
-native scripts. CI receives them from the controller and uses explicit Cargo
-configuration. The updated controller launcher supports AQ-free foundation/checker
-graphs and records them as supplementary checks, including in
-`current-upstream-build` mode. Use that launcher through `ct-check` normally;
-no native explicit-config bypass or artificial AQ dependency is needed.
-Supplementary receipts do not satisfy the current-upstream requirement: integration
-must still produce a successful controller Cargo build/test receipt against the
-exact supplied AQ pins. CI logs supplement those native receipts.
-
-Keep evidence outside build caches. Candidate case results require independent
-review before WI-AQ-G1/G2/G3 acceptance as applicable; repeat verification at the actual merged or
-rebased revision. Repository policy version 1 (adopted 2026-09-18) governs local
-integration and freeze controls. The operator owns remote protections before
-first publication and final release approval. Historical public maintenance and
-release obligations below remain due at their recorded milestones.
+Use the source identity and idempotency mappings in the approved source plan and
+`contracts/wi-fabric-2.yaml`. AQ RunId is queue replay identity; effect identity,
+authority and provider replay identity remain distinct. Pure state changes need
+property tests, durable changes replay tests, and external/cross-store changes
+crash tests. Publication and full legacy maintenance requirements remain due at
+their recorded milestones.
 
 ## License
 

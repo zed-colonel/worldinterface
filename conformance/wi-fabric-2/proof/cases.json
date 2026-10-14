@@ -1,0 +1,723 @@
+{
+  "version": 1,
+  "cases": [
+    {
+      "id": "WP-001",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "a5502c52a1bf369cc46fb94a7b1ff186874c229544a968a25ffde32536b35281",
+      "gate": "WI-WORKER-G1",
+      "owning_item": "WIP-01",
+      "status": "implemented",
+      "coverage_refs": [
+        "conformance/wi-fabric-2/worker/coverage.json"
+      ],
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-worker",
+          "test": "wp_001_profile_and_binding_drift"
+        }
+      ]
+    },
+    {
+      "id": "WP-002",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "fc386359d28da8dc3d08c6e8d003f085a6777679bc58a3ff9fea616335887a9b",
+      "gate": "WI-WORKER-G1",
+      "owning_item": "WIP-01",
+      "status": "implemented",
+      "coverage_refs": [
+        "conformance/wi-fabric-2/domain/coverage.json"
+      ],
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-protocol",
+          "test": "wp002_process_image_and_enclosing_evidence_are_distinct"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-protocol",
+          "test": "wp002_existing_seams_bind_process_configuration_and_control_artifacts"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-protocol",
+          "test": "wp002_rejects_mismatched_profile_and_resolver_bindings"
+        }
+      ]
+    },
+    {
+      "id": "WP-003",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "e505cd67c93cdcd24c24d14702316b22f0c358cf05526dd1f2e5f3ff38bd9132",
+      "gate": "WI-WORKER-G1",
+      "owning_item": "WIP-01",
+      "status": "implemented",
+      "coverage_refs": [
+        "conformance/wi-fabric-2/worker/coverage.json"
+      ],
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-worker",
+          "test": "wp_003_independent_vm_cannot_inherit_enclosing_kata"
+        }
+      ]
+    },
+    {
+      "id": "WP-004",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "4b2e8c8f89297e933a156d302ddfbbcf952ec1c26ee9c9fb329f56536e9778c8",
+      "gate": "WI-WORKER-G1",
+      "owning_item": "WIP-01",
+      "status": "implemented",
+      "coverage_refs": [
+        "conformance/wi-fabric-2/worker/coverage.json"
+      ],
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-worker",
+          "test": "wp_004_opaque_consumer_artifacts_and_controls"
+        }
+      ]
+    },
+    {
+      "id": "WP-005",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "76389a29de21f72cd34a1d3ef9d52feb937a1a84d05617d7f99adf9c1e8fb59d",
+      "gate": "WI-WORKER-G1",
+      "owning_item": "WIP-01",
+      "status": "implemented",
+      "coverage_refs": [
+        "conformance/wi-fabric-2/worker/coverage.json"
+      ],
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-worker",
+          "test": "wp_005_lifecycle_and_unavailable_operations"
+        }
+      ]
+    },
+    {
+      "id": "WP-006",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "4355a6d757cd2ac2dcbd3e754d9615bff4b52a131208f71a3d5eb946a6864c70",
+      "gate": "WI-WORKER-G1",
+      "owning_item": "WIP-01",
+      "status": "implemented",
+      "coverage_refs": [
+        "conformance/wi-fabric-2/worker/coverage.json"
+      ],
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-worker",
+          "test": "wp_006_aq_free_portable_contract_and_strict_codec"
+        }
+      ]
+    },
+    {
+      "id": "WP-007",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "1aef05085fc4a465b1af16a7a817bc361dfca80832ca0467d8bd17e423279636",
+      "gate": "WI-WORKER-G1",
+      "owning_item": "WIP-01",
+      "status": "implemented",
+      "coverage_refs": [
+        "contracts/wi10-obligations.json"
+      ],
+      "tests": [
+        {
+          "manifest": "tools/wi-contract-check/Cargo.toml",
+          "package": "wi-contract-check",
+          "test": "wp007_unqualified_and_evaluation_table"
+        },
+        {
+          "manifest": "tools/wi-contract-check/Cargo.toml",
+          "package": "wi-contract-check",
+          "test": "qualification_drift_and_revocation"
+        },
+        {
+          "manifest": "tools/wi-contract-check/Cargo.toml",
+          "package": "wi-contract-check",
+          "test": "quarantine_and_discovery"
+        }
+      ]
+    },
+    {
+      "id": "WP-008",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "88c9915230c72acf6c3ff91014fe6f1474ed84b60aeb3f1d30f02120c77dd905",
+      "gate": "WI-WORKER-G1",
+      "owning_item": "WIP-01",
+      "status": "implemented",
+      "coverage_refs": [
+        "conformance/wi-fabric-2/worker/coverage.json"
+      ],
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-worker",
+          "test": "wp_008_mediation_does_not_elevate_containment"
+        }
+      ]
+    },
+    {
+      "id": "WP-009",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "dc6946ef4ea28eb03d95eb92ae830f9c2b2f19f491d2e177cf27aceb927a967c",
+      "gate": "WI-WORKER-G2",
+      "owning_item": "WIP-02",
+      "status": "planned",
+      "coverage_refs": [
+        "conformance/wi-fabric-2/egress/coverage.json"
+      ],
+      "tests": []
+    },
+    {
+      "id": "WP-010",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "a89213f864e8b98160a3904a9c55e8d115c3868e2f09d90212a29216d90b280e",
+      "gate": "WI-WORKER-G2",
+      "owning_item": "WIP-02",
+      "status": "planned",
+      "coverage_refs": [
+        "conformance/wi-fabric-2/egress/coverage.json"
+      ],
+      "tests": []
+    },
+    {
+      "id": "WP-011",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "ce7ba45b617d0a87e4fef1d4cdfeda0307556935fc475fd38529386a58bbdc27",
+      "gate": "WI-WORKER-G2",
+      "owning_item": "WIP-02",
+      "status": "planned",
+      "coverage_refs": [
+        "conformance/wi-fabric-2/egress/coverage.json"
+      ],
+      "tests": []
+    },
+    {
+      "id": "WP-012",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "3ffa62097b75745831489791bae6a9e5be3355f0d9312c663943c662fa7e0bca",
+      "gate": "WI-WORKER-G2",
+      "owning_item": "WIP-02",
+      "status": "planned",
+      "coverage_refs": [
+        "conformance/wi-fabric-2/egress/coverage.json"
+      ],
+      "tests": []
+    },
+    {
+      "id": "WP-013",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "c25988cfdfd4be855b6948e6ea32c78ffcfc5584482c376841d556e67a404972",
+      "gate": "WI-WORKER-G2",
+      "owning_item": "WIP-02",
+      "status": "planned",
+      "coverage_refs": [
+        "conformance/wi-fabric-2/egress/coverage.json"
+      ],
+      "tests": []
+    },
+    {
+      "id": "WP-014",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "ada06f6fd970d259617415866247bbc59c8fa3cd22e6360e986531138e0eb6ba",
+      "gate": "WI-WORKER-G2",
+      "owning_item": "WIP-02",
+      "status": "planned",
+      "coverage_refs": [
+        "conformance/wi-fabric-2/egress/coverage.json"
+      ],
+      "tests": []
+    },
+    {
+      "id": "WP-015",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "0663a1b0a5b3870f494e33beddf35e7f309c0730a24f6907d28ed9aa64848915",
+      "gate": "WI-WORKER-G2",
+      "owning_item": "WIP-04",
+      "status": "planned",
+      "coverage_refs": [
+        "conformance/wi-fabric-2/receipts/coverage.json"
+      ],
+      "tests": []
+    },
+    {
+      "id": "WP-016",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "e39ebc3e9e146db662558acad2ee886a89746dbfc51df003e9c786e2349d19d1",
+      "gate": "WI-WORKER-G2",
+      "owning_item": "WIP-04",
+      "status": "planned",
+      "coverage_refs": [
+        "conformance/wi-fabric-2/receipts/coverage.json"
+      ],
+      "tests": []
+    },
+    {
+      "id": "WP-017",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "f5e3d2b0a22ba6fbdbdef3f149f571ec4b862857ead6f336aebaf416e46008ff",
+      "gate": "WI-WORKER-G3",
+      "owning_item": "WIP-10",
+      "status": "planned",
+      "coverage_refs": [],
+      "tests": []
+    },
+    {
+      "id": "WP-018",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "7faf6c9da47441e1211fcdaebb83fe81d76ab9155a7e6794b4b0fdc112b33aeb",
+      "gate": "WI-WORKER-G3",
+      "owning_item": "WIP-10",
+      "status": "planned",
+      "coverage_refs": [],
+      "tests": []
+    },
+    {
+      "id": "WP-019",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "2baae44ed79670da424fbc41f46c9465f9cefb098ba026aa7bbcd98c4cfd5804",
+      "gate": "WI-WORKER-G3",
+      "owning_item": "WIP-10",
+      "status": "planned",
+      "coverage_refs": [],
+      "tests": []
+    },
+    {
+      "id": "WP-020",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "9a925af9711bc0450be0d8a1edb76a6200897958d677b1fcd8db141075bd9a41",
+      "gate": "WI-WORKER-G3",
+      "owning_item": "WIP-10",
+      "status": "planned",
+      "coverage_refs": [],
+      "tests": []
+    },
+    {
+      "id": "WP-021",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "baae375081e818cbcb764c97f320568d4e5dbff284f584979a72aa6d95dea383",
+      "gate": "WI-WORKER-G3",
+      "owning_item": "WIP-10",
+      "status": "planned",
+      "coverage_refs": [],
+      "tests": []
+    },
+    {
+      "id": "WP-022",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "0e491a88143a1102b2a8d203438fe065dcc3bbefa442339a450da18ab04464fd",
+      "gate": "WI-WORKER-G3",
+      "owning_item": "WIP-10",
+      "status": "planned",
+      "coverage_refs": [],
+      "tests": []
+    },
+    {
+      "id": "WP-023",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "bf027fd7988d1af1e1c5311fb6986423b88e0e7dafa5456b47d0481f85f2503a",
+      "gate": "WI-WORKER-G3",
+      "owning_item": "WIP-10",
+      "status": "planned",
+      "coverage_refs": [],
+      "tests": []
+    },
+    {
+      "id": "WP-024",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "2a2af25f5ce1f3b4546ca58f2e567056b74c09bcb9f7993eb5ac8729896be71f",
+      "gate": "WI-WORKER-G3",
+      "owning_item": "WIP-10",
+      "status": "planned",
+      "coverage_refs": [],
+      "tests": []
+    },
+    {
+      "id": "WP-025",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "60632b4198b4a4bfff7475d6cbc367cae13cac4a75afaaf2aeb09fe190816242",
+      "gate": "WI-WORKER-G3",
+      "owning_item": "WIP-10",
+      "status": "planned",
+      "coverage_refs": [],
+      "tests": []
+    },
+    {
+      "id": "WP-026",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "c7c4ea1fa0030c728588af2bbc472f93a2e030994b6b991bce7102190dfa6e67",
+      "gate": "WI-WORKER-G3",
+      "owning_item": "WIP-10",
+      "status": "planned",
+      "coverage_refs": [],
+      "tests": []
+    },
+    {
+      "id": "WP-027",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "282c3307e90881d1239051729f4136043d7e5951625ef2d6954e18bec63ffd80",
+      "gate": "WI-WORKER-G4",
+      "owning_item": "WIP-11",
+      "status": "planned",
+      "coverage_refs": [],
+      "tests": []
+    },
+    {
+      "id": "WP-028",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "4772d4d417ae8be47787253d1bf019ccdf6fbe2b2f9241e34c5b1b386402bee3",
+      "gate": "WI-WORKER-G4",
+      "owning_item": "WIP-11",
+      "status": "planned",
+      "coverage_refs": [],
+      "tests": []
+    },
+    {
+      "id": "WP-029",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "b9e4b2903e329810e399c1624d661e8223802ad6d482f45bf0e9d3c65a515994",
+      "gate": "WI-WORKER-G4",
+      "owning_item": "WIP-14",
+      "status": "planned",
+      "coverage_refs": [],
+      "tests": []
+    },
+    {
+      "id": "WP-030",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "4bcf5c2a44cff6d7caed288b627dee36e1f462a71cf6e6453d243b23e6fe23f7",
+      "gate": "WI-WORKER-G4",
+      "owning_item": "WIP-14",
+      "status": "planned",
+      "coverage_refs": [],
+      "tests": []
+    },
+    {
+      "id": "WP-031",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "4d26d23e95bd09fb87e99b4ac03e02e0ac750b8363a04a6ae38ad8a24782e647",
+      "gate": "WI-WORKER-G4",
+      "owning_item": "WIP-11",
+      "status": "planned",
+      "coverage_refs": [],
+      "tests": []
+    },
+    {
+      "id": "WP-032",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "5e5293135a46bb7be0b4779d57602659d8130c3d0ec4e9b01fba9e11b81e3869",
+      "gate": "WI-WORKER-G4",
+      "owning_item": "WIP-12",
+      "status": "planned",
+      "coverage_refs": [],
+      "tests": []
+    },
+    {
+      "id": "WP-033",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "3318d3d570bb4d9c57692d9b20f3a87582078628d56f407d9f3bbb36bb420475",
+      "gate": "WI-WORKER-G4",
+      "owning_item": "WIP-15",
+      "status": "planned",
+      "coverage_refs": [],
+      "tests": []
+    },
+    {
+      "id": "WP-034",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "6e229792f04742339a8c392f8fea4c73ce18244ef66aa2a7c229c32a2fd6ea43",
+      "gate": "WI-WORKER-G4",
+      "owning_item": "WIP-16",
+      "status": "planned",
+      "coverage_refs": [],
+      "tests": []
+    },
+    {
+      "id": "AB-WI-001",
+      "source_matrix": "contracts/sources/aq-baseline-integration-acceptance-matrix.yaml",
+      "source_record_sha256": "abeefc555e395a4dc1242d30e3537bd89541f271410a91e9589bef3267ac4ebf",
+      "gate": "WI-AQ-G1",
+      "owning_item": "WIP-01",
+      "status": "implemented",
+      "coverage_refs": [
+        "conformance/wi-fabric-2/integration/fixtures.json"
+      ],
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_001_store_formats_fresh_lineage_and_profile_rejection"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_001_published_identity_rejects_substitutions"
+        }
+      ]
+    },
+    {
+      "id": "AB-WI-002",
+      "source_matrix": "contracts/sources/aq-baseline-integration-acceptance-matrix.yaml",
+      "source_record_sha256": "0a25734a2d94cee7d2ad8d51dfcc1ce679a0f85b384b0d5a43a582906b25bd0b",
+      "gate": "WI-AQ-G2",
+      "owning_item": "WIP-02",
+      "status": "planned",
+      "coverage_refs": [
+        "conformance/wi-fabric-2/integration/fixtures.json"
+      ],
+      "tests": []
+    },
+    {
+      "id": "AB-WI-003",
+      "source_matrix": "contracts/sources/aq-baseline-integration-acceptance-matrix.yaml",
+      "source_record_sha256": "40a722ec7d187a8c3aeccfd9f595ae97353a6d58cd4b1ebb93b7ebb4162c120d",
+      "gate": "WI-AQ-G2",
+      "owning_item": "WIP-02",
+      "status": "planned",
+      "coverage_refs": [
+        "conformance/wi-fabric-2/integration/fixtures.json"
+      ],
+      "tests": []
+    },
+    {
+      "id": "AB-WI-004",
+      "source_matrix": "contracts/sources/aq-baseline-integration-acceptance-matrix.yaml",
+      "source_record_sha256": "9e878d392ef66cfd0567dced1c21d308e6eb6ea021569b3fa2f26312a98d9690",
+      "gate": "WI-AQ-G2",
+      "owning_item": "WIP-02",
+      "status": "planned",
+      "coverage_refs": [
+        "conformance/wi-fabric-2/integration/fixtures.json"
+      ],
+      "tests": []
+    },
+    {
+      "id": "AB-WI-005",
+      "source_matrix": "contracts/sources/aq-baseline-integration-acceptance-matrix.yaml",
+      "source_record_sha256": "c5ed591d6024a6ef7080edc36848ef60d0aca374f4c219030678b063c6533789",
+      "gate": "WI-AQ-G4",
+      "owning_item": "WIP-07",
+      "status": "planned",
+      "coverage_refs": [],
+      "tests": []
+    },
+    {
+      "id": "AB-WI-006",
+      "source_matrix": "contracts/sources/aq-baseline-integration-acceptance-matrix.yaml",
+      "source_record_sha256": "2eae5f9661b6c3a24b34cb44fb18fe41647f1c134542db129ba4acedab196f18",
+      "gate": "WI-AQ-G3",
+      "owning_item": "WIP-03",
+      "status": "planned",
+      "coverage_refs": [
+        "conformance/wi-fabric-2/integration/fixtures.json"
+      ],
+      "tests": []
+    },
+    {
+      "id": "AB-WI-007",
+      "source_matrix": "contracts/sources/aq-baseline-integration-acceptance-matrix.yaml",
+      "source_record_sha256": "5e28dbfd281d310109931bdc6c6ab98a97b75b9c6bcc57a0f70433bad783a3b6",
+      "gate": "WI-AQ-G3",
+      "owning_item": "WIP-03",
+      "status": "planned",
+      "coverage_refs": [
+        "conformance/wi-fabric-2/integration/fixtures.json"
+      ],
+      "tests": []
+    },
+    {
+      "id": "AB-WI-008",
+      "source_matrix": "contracts/sources/aq-baseline-integration-acceptance-matrix.yaml",
+      "source_record_sha256": "c6adcefbd069d8ded5a47f64e563429cdb677de0a4082c122a0f38b71d3beed7",
+      "gate": "WI-AQ-G3",
+      "owning_item": "WIP-08",
+      "status": "planned",
+      "coverage_refs": [],
+      "tests": []
+    },
+    {
+      "id": "AB-WI-009",
+      "source_matrix": "contracts/sources/aq-baseline-integration-acceptance-matrix.yaml",
+      "source_record_sha256": "4b1907c6eb598efc348ba0390ac93da7626fa45deb5e3805ebd5d544e950f1ee",
+      "gate": "WI-AQ-G3",
+      "owning_item": "WIP-03",
+      "status": "planned",
+      "coverage_refs": [
+        "conformance/wi-fabric-2/integration/fixtures.json"
+      ],
+      "tests": []
+    },
+    {
+      "id": "AB-WI-010",
+      "source_matrix": "contracts/sources/aq-baseline-integration-acceptance-matrix.yaml",
+      "source_record_sha256": "4aef27823939c49b59856111146c1345c2a246a44a8c41c681ba573b294f0958",
+      "gate": "WI-AQ-G3",
+      "owning_item": "WIP-07",
+      "status": "planned",
+      "coverage_refs": [],
+      "tests": []
+    },
+    {
+      "id": "AB-WI-011",
+      "source_matrix": "contracts/sources/aq-baseline-integration-acceptance-matrix.yaml",
+      "source_record_sha256": "03f81152fcde241dbab356e1ec9051dae6acbe9db194892ca6c3c7c0c01f0d65",
+      "gate": "WI-AQ-G3",
+      "owning_item": "WIP-08",
+      "status": "planned",
+      "coverage_refs": [],
+      "tests": []
+    },
+    {
+      "id": "AB-WI-012",
+      "source_matrix": "contracts/sources/aq-baseline-integration-acceptance-matrix.yaml",
+      "source_record_sha256": "5a379dcd8220d0ee324563e8903472e79bb2e4e4ac9a8bbf618258d2e4e927c6",
+      "gate": "WI-AQ-G4",
+      "owning_item": "WIP-05",
+      "status": "planned",
+      "coverage_refs": [],
+      "tests": []
+    },
+    {
+      "id": "AB-WI-013",
+      "source_matrix": "contracts/sources/aq-baseline-integration-acceptance-matrix.yaml",
+      "source_record_sha256": "735b29144504e56f502c4c80366cba10b5c36ee82871491362a241fb78d4285c",
+      "gate": "WI-AQ-G4",
+      "owning_item": "WIP-07",
+      "status": "planned",
+      "coverage_refs": [],
+      "tests": []
+    },
+    {
+      "id": "AB-WI-014",
+      "source_matrix": "contracts/sources/aq-baseline-integration-acceptance-matrix.yaml",
+      "source_record_sha256": "66853e83d481ec4755d888e2459413c3cfa7ca2932f8cc4702e47bb00b81ea04",
+      "gate": "WI-AQ-G4",
+      "owning_item": "WIP-05",
+      "status": "planned",
+      "coverage_refs": [],
+      "tests": []
+    },
+    {
+      "id": "AB-WI-015",
+      "source_matrix": "contracts/sources/aq-baseline-integration-acceptance-matrix.yaml",
+      "source_record_sha256": "468730e76d4f44c133ceb65ff48b4efda113d03b1be3026ac4c58727e5dee6d1",
+      "gate": "WI-AQ-G1",
+      "owning_item": "WIP-01",
+      "status": "implemented",
+      "coverage_refs": [
+        "conformance/wi-fabric-2/integration/fixtures.json"
+      ],
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_015_bounds_and_unsupported_overrides_reject_without_truncation"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_015_016_real_child_execution_replay_and_foreign_provenance"
+        }
+      ]
+    },
+    {
+      "id": "AB-WI-016",
+      "source_matrix": "contracts/sources/aq-baseline-integration-acceptance-matrix.yaml",
+      "source_record_sha256": "e9aae8a4df1330cd2ed265aef210847f82adf0bb7444a69cb689a9aeb8843a01",
+      "gate": "WI-AQ-G1",
+      "owning_item": "WIP-01",
+      "status": "implemented",
+      "coverage_refs": [
+        "conformance/wi-fabric-2/integration/fixtures.json"
+      ],
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_016_authorization_and_integrity"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_015_016_real_child_execution_replay_and_foreign_provenance"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "backup_retains_both_store_locks_and_rejects_missing_references"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_016_nested_destinations_leave_source_unchanged"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_016_single_component_relative_destinations"
+        }
+      ]
+    },
+    {
+      "id": "AB-WI-019",
+      "source_matrix": "contracts/sources/aq-baseline-integration-acceptance-matrix.yaml",
+      "source_record_sha256": "f70c3b2ce740051245605dc5792bab0d24629dd97e19568ca160fe8ea1b211a0",
+      "gate": "WI-WORKER-G4",
+      "owning_item": "WIP-14",
+      "status": "planned",
+      "coverage_refs": [],
+      "tests": []
+    },
+    {
+      "id": "AB-WI-020",
+      "source_matrix": "contracts/sources/aq-baseline-integration-acceptance-matrix.yaml",
+      "source_record_sha256": "0e3eae4a4ce475fcb8cd1799f0790093b81d57590fc893f2fbdeb81e1cdd545a",
+      "gate": "WI-AQ-G4",
+      "owning_item": "WIP-05",
+      "status": "planned",
+      "coverage_refs": [],
+      "tests": []
+    },
+    {
+      "id": "AB-WI-021",
+      "source_matrix": "contracts/sources/aq-baseline-integration-acceptance-matrix.yaml",
+      "source_record_sha256": "85adcb125b508c21508139010c9b3c14ecfb6d2b424b9699b3d91857e8405129",
+      "gate": "WI-WORKER-G3",
+      "owning_item": "WIP-10",
+      "status": "planned",
+      "coverage_refs": [],
+      "tests": []
+    },
+    {
+      "id": "AB-WI-022",
+      "source_matrix": "contracts/sources/aq-baseline-integration-acceptance-matrix.yaml",
+      "source_record_sha256": "39053f56f805b7c942cd07602c7c202227e7f00259f1f6897fe19cd71bf67d81",
+      "gate": "WI-AQ-G3",
+      "owning_item": "WIP-03",
+      "status": "planned",
+      "coverage_refs": [
+        "conformance/wi-fabric-2/integration/fixtures.json"
+      ],
+      "tests": []
+    },
+    {
+      "id": "AB-WI-023",
+      "source_matrix": "contracts/sources/aq-baseline-integration-acceptance-matrix.yaml",
+      "source_record_sha256": "a501fb9b18d7d222d26b48e37350e907a218dddb215a8f87654a87db7560c23c",
+      "gate": "WI-AQ-G4",
+      "owning_item": "WIP-05",
+      "status": "planned",
+      "coverage_refs": [],
+      "tests": []
+    }
+  ]
+}

@@ -1,0 +1,36 @@
+{
+  "submissionId": "a61cff0e-9c73-470a-bf64-921fc73c9f52",
+  "checkpoint": "WI-ADR-011",
+  "definitionId": "0ebcb7cf-9686-4bc1-9b9d-bb85a1d0b4c9",
+  "bindingRevision": 4,
+  "decision": {
+    "coverage": "full",
+    "proposal": "WorldInterface shall admit outbound HTTP through the versioned resolve, authorize, invoke and reconcile connector contract. Resolve and authorize the exact canonical scheme, host, port, path scope, method, tenant and credential purpose before dispatch. Centralized and sandbox egress is denied by default. Reject unsafe URL forms and loopback, link-local, private, metadata and platform-control destinations unless a separately governed capability authorizes a specific internal target. Validate all resolved addresses and connect only to an address that passed policy; re-evaluate changed resolution or connection targets to prevent DNS rebinding. Disable automatic redirects. Treat each redirect as a new target requiring fresh resolution and exact authorization within a bounded hop count; do not forward credentials, authorization headers or request bodies across origins by default. Inject credentials only through reference-based brokerage after authorization, bound to destination and purpose; keep secret values out of receipts, artifacts and diagnostics. Enforce TLS verification, protocol, port and path restrictions, request and streamed-response size limits and an overall deadline. Record canonical destination, resolver and policy versions, selected-address and redirect evidence, credential reference metadata, provider request identity and outcome without secret values. Derive provider replay keys from stable effect or operation identity under the declared connector mapping, never ActionQueue AttemptId; HTTP method alone does not establish idempotency. If timeout, connection loss, crash or incomplete response could follow external commit, persist Uncertain and reconcile without blind invocation. Repeat the effect only after evidence of non-commit, explicit policy permission and current exact authorization.",
+    "sourceReferences": "Imported map EXO-STACK-CONCURRENCY-DRAFT-1 0.3.0; exact plan binding 4; checkpoint WI-ADR-011.\n{\"source_id\":\"wi-plan\",\"section\":\"\u00a74 ADR queue\",\"start_line\":364,\"end_line\":364}\ndecision-preparation/context.json, checkpoint WI-ADR-011 and consumers\nwi-fabric-2-foundational-implementation-plan.md, \u00a74 WI-ADR-011, WI-06, \u00a7\u00a713.2\u201313.5\nworldinterface-v2-foundational-design.md, \u00a7\u00a711.2\u201311.4 and 21.7\ndocs/adr/approvals/WI-ADR-010.json, accepted decision\nAttached source run affc0da7-9584-4a77-bd40-39652351f4c1; SHA-256 a8942b30fc943ac3029b6fa2c0763dc6d9f0fb7628a505388928c7dcd8859b9e.",
+    "retainedObligations": "Implement the approved policy in the mapped WI-06 slices and target HTTP adapters; complete descriptor admission, security and crash/reconciliation tests, exact AQ-pin and parent verification, independent review and controller integration at their mapped gates. Preserve separate release and operator-owned remote-protection/publication obligations under adopted policy version 1.",
+    "consumers": [],
+    "kind": "architecture-decision-v1",
+    "bindingDigest": "8cae5ff3253d493fce0527aa42381a551c40014440ab3d05270ae8d822d11295"
+  },
+  "approval": {
+    "submissionId": "a61cff0e-9c73-470a-bf64-921fc73c9f52",
+    "outcome": "accepted",
+    "rationale": "I approve this recommended approach.",
+    "id": "bb208f8d-50f6-42a3-b666-ca2d0c7d43f9",
+    "workspaceId": "6bf6915a-6cd0-47cc-b853-fcbc04f02f3d",
+    "decidedAt": "2026-09-29T16:19:14.088Z",
+    "decidedByUserId": "0698a39b-dda2-4870-8f3f-97ef94784ae9"
+  },
+  "sourceRunId": "affc0da7-9584-4a77-bd40-39652351f4c1",
+  "sourceRunDigest": "a8942b30fc943ac3029b6fa2c0763dc6d9f0fb7628a505388928c7dcd8859b9e",
+  "artifacts": [
+    {
+      "name": "decision-review-packet",
+      "digest": "66de4c9d1db930bdb1a0735386ee8374a6669bef05aa1d631e33fce76742866b"
+    },
+    {
+      "name": "source-design-proposal-not-approval",
+      "digest": "a8942b30fc943ac3029b6fa2c0763dc6d9f0fb7628a505388928c7dcd8859b9e"
+    }
+  ]
+}

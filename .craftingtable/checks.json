@@ -160,6 +160,21 @@
         "fixtures/pre-wi-fabric-2/source/rust-toolchain.toml",
         "rust-toolchain.toml"
       ]
+    },
+    {
+      "id": "contract-test",
+      "argv": [
+        "cargo",
+        "test",
+        "--locked",
+        "--manifest-path",
+        "tools/wi-contract-check/Cargo.toml"
+      ],
+      "definitionPaths": [
+        ".cargo/config.toml",
+        "fixtures/pre-wi-fabric-2/source/rust-toolchain.toml",
+        "rust-toolchain.toml"
+      ]
     }
   ]
 }

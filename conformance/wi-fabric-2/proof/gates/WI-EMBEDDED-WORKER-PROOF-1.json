@@ -1,0 +1,156 @@
+{
+  "version": 1,
+  "id": "WI-EMBEDDED-WORKER-PROOF-1",
+  "source_record_sha256": "12869aa762f74514c21d37affaffdef3572bec02c54f1a60c6c02dc437c150cd",
+  "pass_criteria": [
+    "All named checkpoint evidence is reviewed and valid on one compatible bound generation.",
+    "This partial milestone does not accept parent work items, publish a release, or qualify unimplemented platform/external/hostile-code profiles."
+  ],
+  "requires": [
+    {
+      "id": "STACK-PLAN-ACCEPTED",
+      "kind": "checkpoint",
+      "state": "passed"
+    },
+    {
+      "id": "WI-WORKER-G1",
+      "kind": "checkpoint",
+      "state": "passed"
+    },
+    {
+      "id": "WI-WORKER-G2",
+      "kind": "checkpoint",
+      "state": "passed"
+    },
+    {
+      "id": "WI-WORKER-G3",
+      "kind": "checkpoint",
+      "state": "passed"
+    },
+    {
+      "id": "WI-WORKER-G4",
+      "kind": "checkpoint",
+      "state": "passed"
+    }
+  ],
+  "required_cases": [
+    "AB-WI-001",
+    "AB-WI-002",
+    "AB-WI-003",
+    "AB-WI-004",
+    "AB-WI-005",
+    "AB-WI-006",
+    "AB-WI-007",
+    "AB-WI-008",
+    "AB-WI-009",
+    "AB-WI-010",
+    "AB-WI-011",
+    "AB-WI-012",
+    "AB-WI-013",
+    "AB-WI-014",
+    "AB-WI-015",
+    "AB-WI-016",
+    "AB-WI-019",
+    "AB-WI-020",
+    "AB-WI-021",
+    "AB-WI-022",
+    "AB-WI-023",
+    "WP-001",
+    "WP-002",
+    "WP-003",
+    "WP-004",
+    "WP-005",
+    "WP-006",
+    "WP-007",
+    "WP-008",
+    "WP-009",
+    "WP-010",
+    "WP-011",
+    "WP-012",
+    "WP-013",
+    "WP-014",
+    "WP-015",
+    "WP-016",
+    "WP-017",
+    "WP-018",
+    "WP-019",
+    "WP-020",
+    "WP-021",
+    "WP-022",
+    "WP-023",
+    "WP-024",
+    "WP-025",
+    "WP-026",
+    "WP-027",
+    "WP-028",
+    "WP-029",
+    "WP-030",
+    "WP-031",
+    "WP-032",
+    "WP-033",
+    "WP-034"
+  ],
+  "closing_item": "WIP-16",
+  "status": "open",
+  "effective_on": "reviewed-merge-with-adopted-checks",
+  "historical_evidence": [],
+  "requirement_bindings": [
+    {
+      "requirement": {
+        "id": "STACK-PLAN-ACCEPTED",
+        "kind": "checkpoint",
+        "state": "passed"
+      },
+      "binding": {
+        "kind": "plan-import",
+        "plan_version": "9212604c-4873-4cd5-b492-1ee3141b8b0b",
+        "date": "2026-10-13",
+        "historical_acceptance": "2026-10-01"
+      }
+    },
+    {
+      "requirement": {
+        "id": "WI-WORKER-G1",
+        "kind": "checkpoint",
+        "state": "passed"
+      },
+      "binding": {
+        "kind": "closed-gate",
+        "record": "conformance/wi-fabric-2/proof/gates/WI-WORKER-G1.json"
+      }
+    },
+    {
+      "requirement": {
+        "id": "WI-WORKER-G2",
+        "kind": "checkpoint",
+        "state": "passed"
+      },
+      "binding": {
+        "kind": "closed-gate",
+        "record": "conformance/wi-fabric-2/proof/gates/WI-WORKER-G2.json"
+      }
+    },
+    {
+      "requirement": {
+        "id": "WI-WORKER-G3",
+        "kind": "checkpoint",
+        "state": "passed"
+      },
+      "binding": {
+        "kind": "closed-gate",
+        "record": "conformance/wi-fabric-2/proof/gates/WI-WORKER-G3.json"
+      }
+    },
+    {
+      "requirement": {
+        "id": "WI-WORKER-G4",
+        "kind": "checkpoint",
+        "state": "passed"
+      },
+      "binding": {
+        "kind": "closed-gate",
+        "record": "conformance/wi-fabric-2/proof/gates/WI-WORKER-G4.json"
+      }
+    }
+  ]
+}

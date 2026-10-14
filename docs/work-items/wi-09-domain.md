@@ -1,5 +1,10 @@
 # WI-09 domain worker boundary
 
+Historical slice record. Active work follows [WI-WORKER-PROOF-1](wi-worker-proof-1.md):
+crates.io AQ 0.2.0, adopted checks and in-repo gate records supersede the
+map-era launcher, slice receipts and controller-only verification wording below.
+Historical evidence and retained implementation obligations are preserved.
+
 This slice defines an inactive WI-owned worker contract in `worldinterface-worker`. It uses strict, bounded versioned artifacts through the existing effect input, resolved resource, authorization, evidence, and artifact references. Existing record envelopes and `ControlValues` remain unchanged. The process profile definition is pinned to `contracts/sources/wi-fabric-2-worker-execution-profile.yaml` SHA-256 `6523baf56d14dafa4b199c7493dc030461cc061754c180b4c83006308e633986` and full WI-ADR-016 approval `10a13b9c-cbfc-4469-9e03-9011adbdd507`.
 
 `WorkerRequestV1` supplies operation, profile, input, and control bindings. Its digest is derived from validated canonical request bytes, including request identity and every field; `ResolvedWorkerV1` checks that digest together with provider, run, and controls. An adapter must use the existing `ImmutableArtifactManifest` and `ResolvedEffect` and persist only the non-secret credential binding. Typed control evidence keeps requested, advertised, applied, and observed states separate and rejects applied limits weaker than requested limits. The consumer sees opaque handles and scoped artifact references. Local PID, boot/birth, ownership nonce, process-tree and path data are private adapter facts.

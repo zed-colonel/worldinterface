@@ -440,3 +440,108 @@ fn ab_wi_016_single_component_relative_destinations() {
         String::from_utf8_lossy(&output.stderr)
     );
 }
+
+/// AB-WI-001: actual resolved crates.io graph plus independently pinned source identity.
+#[test]
+fn ab_wi_001_published_identity_rejects_substitutions() {
+    use serde_json::Value;
+    use std::{fs, path::Path, process::Command};
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..").canonicalize().unwrap();
+    let temp = tempfile::TempDir::new().unwrap();
+    let output = Command::new("cargo")
+        .current_dir(&root)
+        .args([
+            "metadata",
+            "--offline",
+            "--locked",
+            "--manifest-path",
+            "crates/worldinterface-runtime/Cargo.toml",
+            "--format-version",
+            "1",
+        ])
+        .output()
+        .unwrap();
+    assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    let metadata: Value = serde_json::from_slice(&output.stdout).unwrap();
+    let contract: Value = serde_json::from_slice(
+        &fs::read(root.join("contracts/aq-integration-target.json")).unwrap(),
+    )
+    .unwrap();
+    let check = |meta: &Value, target: &Value| {
+        let m = temp.path().join("metadata.json");
+        let t = temp.path().join("contract.json");
+        fs::write(&m, serde_json::to_vec(meta).unwrap()).unwrap();
+        fs::write(&t, serde_json::to_vec(target).unwrap()).unwrap();
+        Command::new("python3")
+            .arg(root.join("scripts/check-wi-integration.py"))
+            .arg(m)
+            .arg(root.join("crates/worldinterface-runtime/Cargo.lock"))
+            .arg(t)
+            .output()
+            .unwrap()
+    };
+    let valid = check(&metadata, &contract);
+    assert!(valid.status.success(), "{}", String::from_utf8_lossy(&valid.stderr));
+    let reject = |meta: &Value, target: &Value, expected: &str| {
+        let output = check(meta, target);
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        assert!(!output.status.success(), "accepted substitution; expected {expected}");
+        assert!(
+            stderr.contains(&format!("AssertionError: {expected}")),
+            "expected rejection {expected:?}, got:\n{stderr}"
+        );
+    };
+    for (field, expected) in [
+        ("implementation_commit", "historical or substituted source commit"),
+        ("git_tree", "wrong source tree"),
+        ("source_tree_sha256", "wrong complete source tree digest"),
+        ("conformance_revision", "wrong conformance revision"),
+    ] {
+        let mut c = contract.clone();
+        c["target"][field] = if field == "conformance_revision" {
+            serde_json::json!(15)
+        } else {
+            serde_json::json!("97c9dc26c19c697dbfb204ed503e82c5f053394f")
+        };
+        if field == "implementation_commit" {
+            c["published_release"]["source_commit"] = c["target"][field].clone();
+        }
+        reject(&metadata, &c, expected);
+    }
+    let mut c = contract.clone();
+    c["published_release"]["crates"]["actionqueue-core"]["checksum"] =
+        serde_json::json!("0".repeat(64));
+    reject(&metadata, &c, "published checksums changed");
+    for (field, value, expected) in [
+        ("version", "0.1.1", "actionqueue-core is not 0.2.0"),
+        (
+            "source",
+            "git+https://example.invalid/aq",
+            "actionqueue-core does not come from crates.io: git+https://example.invalid/aq",
+        ),
+        (
+            "source",
+            "path+file:///tmp/aq",
+            "actionqueue-core does not come from crates.io: path+file:///tmp/aq",
+        ),
+    ] {
+        let mut m = metadata.clone();
+        let p = m["packages"]
+            .as_array_mut()
+            .unwrap()
+            .iter_mut()
+            .find(|p| p["name"] == "actionqueue-core")
+            .unwrap();
+        p[field] = serde_json::json!(value);
+        reject(&m, &contract, expected);
+    }
+    let mut m = metadata.clone();
+    let id =
+        m["packages"].as_array().unwrap().iter().find(|p| p["name"] == "actionqueue-core").unwrap()
+            ["id"]
+            .clone();
+    let n =
+        m["resolve"]["nodes"].as_array_mut().unwrap().iter_mut().find(|n| n["id"] == id).unwrap();
+    n["features"].as_array_mut().unwrap().push(serde_json::json!("platform"));
+    reject(&m, &contract, "actionqueue-core: unsupported feature profile");
+}

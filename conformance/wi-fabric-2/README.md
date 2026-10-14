@@ -1,28 +1,36 @@
 # WI-FABRIC-2 conformance package, revision 1
 
-The package is partially implemented. AB-WI-001, AB-WI-015 and AB-WI-016 register
-WI-02 G1 consumer tests; AB-WI-006, AB-WI-007, AB-WI-009 and AB-WI-022
-register WI-03 ingress candidate tests under `crates/worldinterface-runtime`. The unrelated
-W1–W59 skeleton slots and historical store scenario inputs remain unimplemented;
-they are coverage obligations, not passing runtime evidence. Foundation source
-PR tests and WP-002 definitions remain registered separately in `domain/`.
+The active off-map proof registry is [proof/cases.json](proof/cases.json): 55
+in-scope cases from the immutable source matrices. WIP-01 registers WP-001–008
+and AB-WI-001/015/016 as implemented. Every other case remains planned. Source
+matrix result flags and unrelated W1–W59 skeleton slots remain unchanged.
 
-`integration/fixtures.json` binds case filters and the locator golden vector.
-Each baseline source hash binds the imported case using recursively sorted
-compact JSON. Runtime receipts separately bind current AQ identity, consumer
-revision, executable source, fixtures, resolved package/features, toolchain,
-environment, logs, nonempty case results and independent review. The checker
-rejects planned cases, stale pins, altered artifacts and self-review.
+[proof/gates/](proof/gates/) contains ten gate records. Their pass criteria and
+complete requirements come verbatim from the independently byte-pinned
+[retired-map export](proof/wi-retired-map-gates-2026-10-13.json). Worker G1 and AQ
+G1 are closed for reviewed integration; closure becomes effective through the
+operator-approved merge with adopted checks passing. Eight gates remain open.
+AB-WI-019 is required by worker G4; AB-WI-021 by worker G3.
 
-Implementation registration does not assert passing independently accepted case
-receipts. Preserve those external artifacts with the exact candidate revision;
-rerun after integration/rebase. WI-AQ-G1/G2/G3 and parent acceptance remain controller
-obligations. Native checks use the controller Cargo launcher, which records
-AQ-free foundation/checker graphs as supplementary checks. Integration still
-requires a separate successful build/test receipt against the exact AQ pins.
-All scoped CI jobs use the controller's explicit Cargo configuration.
+Run `wi-contract-check proof check` or `all check`. The checker binds case IDs,
+source-record digests (recursively key-sorted compact JSON, array source order),
+allocations, complete prerequisites and authoritative scope coverage files. It
+builds tests with `--no-run` and uses Cargo metadata, compiled harness listings,
+ignored-test listings and Rust test attributes to establish eligibility under
+foundation all-workspace/all-features, runtime default members/default features,
+and checker default test configurations. It never recursively executes the checker
+suite. Exact unambiguous test names and selected package ownership are required.
 
-WI-02/domain and WI-03/domain supply independent local fixtures in `domain/`
-and `ingress/`. They preserve unrelated runtime skeleton slots and do not satisfy
-AQ cases. Candidate, merged, and post-rebase evidence are separate. Use
-`wi-contract-check evidence check RECEIPT.json` to validate execution receipts.
+Adopted `foundation-test`, `runtime-test` and `contract-test` execute those tests;
+review establishes that assertions cover each criterion. The new contract test
+check is approved for adoption at WIP-01 merge. AB-WI-001 additionally tests the
+published AQ 0.2.0 identity, checksums, complete source tree, conformance revision
+16 and feature profile against substitutions. `runtime-aq-graph` validates the
+actual dependency graph. Store lineage and AB-WI-015/016 real AQ tests remain.
+
+Existing `domain/`, `egress/`, `receipts/`, `worker/`, `ingress/` and
+`integration/` coverage stays authoritative. Implementation registration never
+asserts provider qualification or source-matrix runtime passage. Historical
+`evidence check RECEIPT.json` tooling validates old external receipt shapes; it is
+not an off-map acceptance gate. Historical records remain separate from current
+adopted-check passage. See [the active ledger](../../docs/work-items/wi-worker-proof-1.md).

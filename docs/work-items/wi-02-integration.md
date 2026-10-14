@@ -1,5 +1,10 @@
 # WI-02 G1 integration
 
+Historical slice record. Active work follows [WI-WORKER-PROOF-1](wi-worker-proof-1.md):
+crates.io AQ 0.2.0, adopted checks and in-repo gate records supersede the
+map-era launcher, slice receipts and controller-only verification wording below.
+Historical evidence and retained implementation obligations are preserved.
+
 The production runtime is `crates/worldinterface-runtime`, an independent Cargo
 workspace using AQ 0.2.0 at commit 29e096c4f06985d1a9bd9d5fe5a3a6a5db8a6860,
 tree 1c0c85dd700bd9d0c75de223dada911ffeadbb5b, conformance revision 16.

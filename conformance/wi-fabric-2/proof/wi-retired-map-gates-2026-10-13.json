@@ -1,0 +1,640 @@
+{
+  "bindingRevision": 4,
+  "checkpoints": [
+    {
+      "decision_refs": [
+        "CS-D11",
+        "CS-D12",
+        "CS-D13",
+        "CS-D14",
+        "CS-D15",
+        "CS-D16"
+      ],
+      "evidence_owners": [
+        "wi/WI-02",
+        "wi/WI-09",
+        "wi/WI-10"
+      ],
+      "evidence_profile": "profile-checkpoint",
+      "id": "WI-WORKER-G1",
+      "invalidation": "active-pin-or-evidence-change",
+      "kind": "profile",
+      "owner": "wi",
+      "pass_criteria": [
+        "WI-ADR-016 and referenced authorization/evidence ADR clauses reviewed; limitations, field mapping and operation capability contract frozen.",
+        "Source-owned evidence cases are bound in acceptance_coverage; owner PR IDs attribute work and are not automatic accepted-parent prerequisites."
+      ],
+      "requires": [
+        {
+          "id": "STACK-PLAN-ACCEPTED",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "wi/WI-02/domain",
+          "kind": "slice",
+          "state": "verified"
+        },
+        {
+          "id": "wi/WI-09/domain",
+          "kind": "slice",
+          "state": "verified"
+        },
+        {
+          "id": "wi/WI-10/domain",
+          "kind": "slice",
+          "state": "verified"
+        },
+        {
+          "id": "WI-ADR-016",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "WI-ADR-005",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "WI-ADR-006",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "WI-ADR-008",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "WI-ADR-010",
+          "kind": "checkpoint",
+          "state": "passed"
+        }
+      ],
+      "source_refs": [
+        {
+          "section": "WI-WORKER-G1",
+          "source_id": "wi-worker-profile"
+        }
+      ],
+      "status_on_import": "unresolved",
+      "title": "Provider definition and representation"
+    },
+    {
+      "decision_refs": [
+        "CS-D11",
+        "CS-D12",
+        "CS-D13",
+        "CS-D14",
+        "CS-D15",
+        "CS-D16"
+      ],
+      "evidence_owners": [
+        "wi/WI-04",
+        "wi/WI-05"
+      ],
+      "evidence_profile": "profile-checkpoint",
+      "id": "WI-WORKER-G2",
+      "invalidation": "active-pin-or-evidence-change",
+      "kind": "profile",
+      "owner": "wi",
+      "pass_criteria": [
+        "Exact-profile admission, unsupported-control denials and worker/instance evidence separation proven in producer fixtures.",
+        "Source-owned evidence cases are bound in acceptance_coverage; owner PR IDs attribute work and are not automatic accepted-parent prerequisites."
+      ],
+      "requires": [
+        {
+          "id": "STACK-PLAN-ACCEPTED",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "WI-WORKER-G1",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "wi/WI-04/domain",
+          "kind": "slice",
+          "state": "verified"
+        },
+        {
+          "id": "wi/WI-05/domain",
+          "kind": "slice",
+          "state": "verified"
+        }
+      ],
+      "source_refs": [
+        {
+          "section": "WI-WORKER-G2",
+          "source_id": "wi-worker-profile"
+        }
+      ],
+      "status_on_import": "unresolved",
+      "title": "Qualified-profile admission and truthful evidence"
+    },
+    {
+      "decision_refs": [
+        "CS-D11",
+        "CS-D12",
+        "CS-D13",
+        "CS-D14",
+        "CS-D15",
+        "CS-D16"
+      ],
+      "evidence_owners": [
+        "wi/WI-06",
+        "wi/WI-08",
+        "wi/WI-09"
+      ],
+      "evidence_profile": "profile-checkpoint",
+      "id": "WI-WORKER-G3",
+      "invalidation": "active-pin-or-evidence-change",
+      "kind": "profile",
+      "owner": "wi",
+      "pass_criteria": [
+        "Reviewed processes supervised via real WI/AQ; idempotent start, process ownership, event durability and termination/recovery proved.",
+        "Source-owned evidence cases are bound in acceptance_coverage; owner PR IDs attribute work and are not automatic accepted-parent prerequisites."
+      ],
+      "requires": [
+        {
+          "id": "STACK-PLAN-ACCEPTED",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "WI-WORKER-G1",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "WI-WORKER-G2",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "wi/WI-09/process-provider",
+          "kind": "slice",
+          "state": "verified"
+        },
+        {
+          "id": "WI-AQ-G1",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "WI-AQ-G2",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "WI-AQ-G3",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "WI-AQ-G4",
+          "kind": "checkpoint",
+          "state": "passed"
+        }
+      ],
+      "source_refs": [
+        {
+          "section": "WI-WORKER-G3",
+          "source_id": "wi-worker-profile"
+        }
+      ],
+      "status_on_import": "unresolved",
+      "title": "Real process lifecycle and crash convergence"
+    },
+    {
+      "decision_refs": [
+        "CS-D11",
+        "CS-D12",
+        "CS-D13",
+        "CS-D14",
+        "CS-D15",
+        "CS-D16"
+      ],
+      "evidence_owners": [
+        "wi/WI-09",
+        "wi/WI-10",
+        "wi/WI-11",
+        "wi/WI-13",
+        "wi/WI-14"
+      ],
+      "evidence_profile": "profile-checkpoint",
+      "id": "WI-WORKER-G4",
+      "invalidation": "active-pin-or-evidence-change",
+      "kind": "profile",
+      "owner": "wi",
+      "pass_criteria": [
+        "WI-owned embedded harness, artifacts and external-provider seam pass without EXO/platform/Kata dependency or inflated assurance claims.",
+        "Source-owned evidence cases are bound in acceptance_coverage; owner PR IDs attribute work and are not automatic accepted-parent prerequisites."
+      ],
+      "requires": [
+        {
+          "id": "STACK-PLAN-ACCEPTED",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "WI-WORKER-G3",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "wi/WI-09/process-provider",
+          "kind": "slice",
+          "state": "verified"
+        },
+        {
+          "id": "wi/WI-10/process-catalog",
+          "kind": "slice",
+          "state": "verified"
+        },
+        {
+          "id": "wi/WI-11/embedded-runtime",
+          "kind": "slice",
+          "state": "verified"
+        },
+        {
+          "id": "wi/WI-13/worker-conformance",
+          "kind": "slice",
+          "state": "verified"
+        },
+        {
+          "id": "wi/WI-14/worker-handoff",
+          "kind": "slice",
+          "state": "verified"
+        },
+        {
+          "id": "WI-AQ-G1",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "WI-AQ-G2",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "WI-AQ-G3",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "WI-AQ-G4",
+          "kind": "checkpoint",
+          "state": "passed"
+        }
+      ],
+      "source_refs": [
+        {
+          "section": "WI-WORKER-G4",
+          "source_id": "wi-worker-profile"
+        }
+      ],
+      "status_on_import": "unresolved",
+      "title": "Embedded provider proof and portable handoff"
+    },
+    {
+      "decision_refs": [
+        "CS-D18"
+      ],
+      "evidence_profile": "contract-checkpoint",
+      "historical_producer_work_items": [
+        "aq/AQ-02",
+        "aq/AQ-03"
+      ],
+      "id": "WI-AQ-G1",
+      "invalidation": "active-pin-or-evidence-change",
+      "kind": "contract",
+      "owner": "aq",
+      "pass_criteria": [
+        "Target reference, data/artifact and causal mappings reconciled.",
+        "Fresh persistence and rejection/replay checks pass.",
+        "wi reviews its own mappings and applicable assumptions; a similarly named gate for another consumer is not an automatic pass.",
+        "Historical AQ-NN references identify retained capability/evidence obligations of the completed source; they are not runnable work. Review actual consumer candidate-branch fixtures on the exact accepted AQ build; independent gate attestation is still required and is not inferred from source presence."
+      ],
+      "requires": [
+        {
+          "id": "STACK-PLAN-ACCEPTED",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "AQ-BASELINE-ACCEPTED",
+          "kind": "checkpoint",
+          "state": "passed"
+        }
+      ],
+      "source_refs": [
+        {
+          "section": "\u00a73.2",
+          "source_id": "wi-plan"
+        },
+        {
+          "section": "6. Gate interpretation and required evidence",
+          "source_id": "wi-aq-alignment"
+        }
+      ],
+      "status_on_import": "unresolved",
+      "title": "Core vocabulary and fresh persistence lineage"
+    },
+    {
+      "decision_refs": [
+        "CS-D18"
+      ],
+      "evidence_profile": "contract-checkpoint",
+      "historical_producer_work_items": [
+        "aq/AQ-04"
+      ],
+      "id": "WI-AQ-G2",
+      "invalidation": "active-pin-or-evidence-change",
+      "kind": "contract",
+      "owner": "aq",
+      "pass_criteria": [
+        "Created/AlreadyExists preserve durable identities; mismatched digest conflicts.",
+        "Admission and local outbox retry behavior pass race/crash tests.",
+        "wi reviews its own mappings and applicable assumptions; a similarly named gate for another consumer is not an automatic pass.",
+        "Historical AQ-NN references identify retained capability/evidence obligations of the completed source; they are not runnable work. Review actual consumer candidate-branch fixtures on the exact accepted AQ build; independent gate attestation is still required and is not inferred from source presence."
+      ],
+      "requires": [
+        {
+          "id": "STACK-PLAN-ACCEPTED",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "AQ-BASELINE-ACCEPTED",
+          "kind": "checkpoint",
+          "state": "passed"
+        }
+      ],
+      "source_refs": [
+        {
+          "section": "\u00a73.2",
+          "source_id": "wi-plan"
+        },
+        {
+          "section": "6. Gate interpretation and required evidence",
+          "source_id": "wi-aq-alignment"
+        }
+      ],
+      "status_on_import": "unresolved",
+      "title": "Idempotent compound task admission"
+    },
+    {
+      "decision_refs": [
+        "CS-D18"
+      ],
+      "evidence_profile": "contract-checkpoint",
+      "historical_producer_work_items": [
+        "aq/AQ-05",
+        "aq/AQ-06",
+        "aq/AQ-07"
+      ],
+      "id": "WI-AQ-G3",
+      "invalidation": "active-pin-or-evidence-change",
+      "kind": "contract",
+      "owner": "aq",
+      "pass_criteria": [
+        "Early/late/duplicate signals, wait establishment, deadline/cancel races and restart converge.",
+        "Checkpoint and matched-signal references survive; no process-local fallback.",
+        "wi reviews its own mappings and applicable assumptions; a similarly named gate for another consumer is not an automatic pass.",
+        "Historical AQ-NN references identify retained capability/evidence obligations of the completed source; they are not runnable work. Review actual consumer candidate-branch fixtures on the exact accepted AQ build; independent gate attestation is still required and is not inferred from source presence."
+      ],
+      "requires": [
+        {
+          "id": "STACK-PLAN-ACCEPTED",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "AQ-BASELINE-ACCEPTED",
+          "kind": "checkpoint",
+          "state": "passed"
+        }
+      ],
+      "source_refs": [
+        {
+          "section": "\u00a73.2",
+          "source_id": "wi-plan"
+        },
+        {
+          "section": "6. Gate interpretation and required evidence",
+          "source_id": "wi-aq-alignment"
+        }
+      ],
+      "status_on_import": "unresolved",
+      "title": "Durable signals, waits, deadlines, checkpoints and resume"
+    },
+    {
+      "decision_refs": [
+        "CS-D18"
+      ],
+      "evidence_profile": "contract-checkpoint",
+      "historical_producer_work_items": [
+        "aq/AQ-08",
+        "aq/AQ-09"
+      ],
+      "id": "WI-AQ-G4",
+      "invalidation": "active-pin-or-evidence-change",
+      "kind": "contract",
+      "owner": "aq",
+      "pass_criteria": [
+        "Lease-fenced dispositions and atomic child-admission/parent-wait behavior pass.",
+        "Completion, cancellation, and output publication recover without semantic reinterpretation.",
+        "wi reviews its own mappings and applicable assumptions; a similarly named gate for another consumer is not an automatic pass.",
+        "Historical AQ-NN references identify retained capability/evidence obligations of the completed source; they are not runnable work. Review actual consumer candidate-branch fixtures on the exact accepted AQ build; independent gate attestation is still required and is not inferred from source presence."
+      ],
+      "requires": [
+        {
+          "id": "STACK-PLAN-ACCEPTED",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "AQ-BASELINE-ACCEPTED",
+          "kind": "checkpoint",
+          "state": "passed"
+        }
+      ],
+      "source_refs": [
+        {
+          "section": "\u00a73.2",
+          "source_id": "wi-plan"
+        },
+        {
+          "section": "6. Gate interpretation and required evidence",
+          "source_id": "wi-aq-alignment"
+        }
+      ],
+      "status_on_import": "unresolved",
+      "title": "Attempt disposition and transactional child workflow"
+    },
+    {
+      "decision_refs": [
+        "CS-D12",
+        "CS-D17"
+      ],
+      "evidence_profile": "profile-checkpoint",
+      "id": "WI-EMBEDDED-CORE-1",
+      "invalidation": "active-pin-or-evidence-change",
+      "kind": "profile",
+      "owner": "wi",
+      "pass_criteria": [
+        "Real embedded protocol/store/ingress/intent/receipt/executor/Flow/continuation conformance on exact AQ/WI implementation and fixture pins; no mock substitutes.",
+        "Consumer assumption reconciliation covers the actual embedded surfaces. This is a newly scoped evidence barrier, never an alias for EXO-WI-G3 or accepted WI-06/07/08 parents.",
+        "Parent-owned worker and supervisor cases remain mandatory at full parent acceptance; production activation needs ordinary authority and qualified profiles."
+      ],
+      "requires": [
+        {
+          "id": "STACK-PLAN-ACCEPTED",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "wi/WI-02/integration",
+          "kind": "slice",
+          "state": "verified"
+        },
+        {
+          "id": "wi/WI-03/integration",
+          "kind": "slice",
+          "state": "verified"
+        },
+        {
+          "id": "wi/WI-04/integration",
+          "kind": "slice",
+          "state": "verified"
+        },
+        {
+          "id": "wi/WI-05/integration",
+          "kind": "slice",
+          "state": "verified"
+        },
+        {
+          "id": "wi/WI-06/integration",
+          "kind": "slice",
+          "state": "verified"
+        },
+        {
+          "id": "wi/WI-07/integration",
+          "kind": "slice",
+          "state": "verified"
+        },
+        {
+          "id": "wi/WI-08/integration",
+          "kind": "slice",
+          "state": "verified"
+        },
+        {
+          "id": "WI-AQ-G1",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "WI-AQ-G2",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "WI-AQ-G3",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "WI-AQ-G4",
+          "kind": "checkpoint",
+          "state": "passed"
+        }
+      ],
+      "source_refs": [
+        {
+          "section": "\u00a79 partial evidence and preserved full gates",
+          "source_id": "wi-worker-profile-md"
+        },
+        {
+          "section": "explicit partial-slice guidance",
+          "source_id": "wi-worker-rebinding"
+        },
+        {
+          "section": "\u00a78 embedded viability staging",
+          "source_id": "exo-execution-md"
+        }
+      ],
+      "status_on_import": "unresolved",
+      "title": "Verified embedded core, distinct from full WI parent acceptance"
+    },
+    {
+      "decision_refs": [
+        "CS-D11",
+        "CS-D12",
+        "CS-D13",
+        "CS-D14",
+        "CS-D15",
+        "CS-D16"
+      ],
+      "evidence_profile": "profile-checkpoint",
+      "id": "WI-EMBEDDED-WORKER-PROOF-1",
+      "invalidation": "active-pin-or-evidence-change",
+      "kind": "partial_milestone",
+      "owner": "wi",
+      "pass_criteria": [
+        "All named checkpoint evidence is reviewed and valid on one compatible bound generation.",
+        "This partial milestone does not accept parent work items, publish a release, or qualify unimplemented platform/external/hostile-code profiles."
+      ],
+      "requires": [
+        {
+          "id": "STACK-PLAN-ACCEPTED",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "WI-WORKER-G1",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "WI-WORKER-G2",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "WI-WORKER-G3",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "WI-WORKER-G4",
+          "kind": "checkpoint",
+          "state": "passed"
+        }
+      ],
+      "source_refs": [
+        {
+          "section": "WI-EMBEDDED-WORKER-PROOF-1",
+          "source_id": "wi-worker-profile"
+        }
+      ],
+      "status_on_import": "unresolved",
+      "title": "WI-owned real embedded process-provider proof"
+    }
+  ],
+  "definitionDigest": "51563f70c37bd7ca696f22833ec81d37acfa4918ba380dec679198c0a4f36cff",
+  "definitionId": "0ebcb7cf-9686-4bc1-9b9d-bb85a1d0b4c9",
+  "exportedAt": "2026-10-13",
+  "kind": "retired-map-gate-export-v1",
+  "mapId": "EXO-STACK-CONCURRENCY-DRAFT-1",
+  "planningTarget": [
+    {
+      "checkpoint": "WI-EMBEDDED-WORKER-PROOF-1",
+      "id": "WI-EMBEDDED-WORKER-PROOF-1",
+      "is_release": false,
+      "scope": "Producer-owned native process-provider qualification. No Exoskeleton, Kata or platform prerequisite."
+    }
+  ],
+  "revision": "0.3.0"
+}
