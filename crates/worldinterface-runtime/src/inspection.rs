@@ -36,6 +36,16 @@ pub trait ReceiptDisclosure<A: Authentication> {
         tenant: &OpaqueRef,
         id: &OpaqueRef,
     ) -> Result<bool>;
+    /// Additional bundle evidence has its own disclosure decision. Receipt
+    /// ownership and artifact availability do not authorize these references.
+    fn evidence_allowed(
+        &self,
+        _session: &A::Session,
+        _tenant: &OpaqueRef,
+        _reference: &EvidenceRef,
+    ) -> Result<bool> {
+        Ok(false)
+    }
 }
 
 pub struct ReceiptInspector<'a, A, D> {
@@ -105,6 +115,11 @@ impl<A: Authentication, D: ReceiptDisclosure<A>> ReceiptInspector<'_, A, D> {
                 || self.root.inspect_receipt(&member_access, &member)?.is_none()
             {
                 return Err("proof bundle member disclosure denied".into());
+            }
+        }
+        for reference in &bundle.evidence {
+            if !self.disclosure.evidence_allowed(session, access.tenant(), reference)? {
+                return Err("proof bundle evidence disclosure denied".into());
             }
         }
         Ok(Some(bundle))

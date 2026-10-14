@@ -27,6 +27,7 @@ impl Authentication for Auth {
 struct Disclosure {
     profile: DisclosureProfile,
     restricted: Option<ReceiptId>,
+    evidence: Option<EvidenceRef>,
 }
 impl ReceiptDisclosure<Auth> for Disclosure {
     fn profile(
@@ -51,6 +52,14 @@ impl ReceiptDisclosure<Auth> for Disclosure {
     }
     fn bundle_allowed(&self, _: &Session, _: &OpaqueRef, _: &OpaqueRef) -> Result<bool> {
         Ok(true)
+    }
+    fn evidence_allowed(
+        &self,
+        _: &Session,
+        _: &OpaqueRef,
+        reference: &EvidenceRef,
+    ) -> Result<bool> {
+        Ok(self.evidence.as_ref() == Some(reference))
     }
 }
 struct Case {
@@ -88,7 +97,7 @@ impl Case {
     }
 }
 fn full() -> Disclosure {
-    Disclosure { profile: DisclosureProfile::Full, restricted: None }
+    Disclosure { profile: DisclosureProfile::Full, restricted: None, evidence: None }
 }
 
 #[test]
@@ -130,7 +139,8 @@ fn authenticated_redaction_and_cross_tenant_principal_denials() {
     let inspector =
         ReceiptInspector { root: case.bundle.wi(), authentication: &auth, disclosure: &full };
     let original = inspector.receipt(&case.session(), &case.receipt).unwrap().unwrap();
-    let redacted = Disclosure { profile: DisclosureProfile::Redacted, restricted: None };
+    let redacted =
+        Disclosure { profile: DisclosureProfile::Redacted, restricted: None, evidence: None };
     let redactor =
         ReceiptInspector { root: case.bundle.wi(), authentication: &auth, disclosure: &redacted };
     let view = redactor.receipt(&case.session(), &case.receipt).unwrap().unwrap();
@@ -190,8 +200,11 @@ fn proof_bundles_bind_receipts_and_authorize_every_member() {
         inspector.proof_bundle(&case.session(), &id, &case.receipt).unwrap(),
         Some(bundle.clone())
     );
-    let restricted =
-        Disclosure { profile: DisclosureProfile::Full, restricted: Some(second_receipt.clone()) };
+    let restricted = Disclosure {
+        profile: DisclosureProfile::Full,
+        restricted: Some(second_receipt.clone()),
+        evidence: None,
+    };
     let restricted_inspector =
         ReceiptInspector { root: case.bundle.wi(), authentication: &auth, disclosure: &restricted };
     assert!(restricted_inspector.proof_bundle(&case.session(), &id, &case.receipt).is_err());
@@ -219,7 +232,29 @@ fn proof_bundles_bind_receipts_and_authorize_every_member() {
     assert!(case.bundle.wi().append_proof_bundle(&tenant, &id, &single).is_err());
     single.records = vec![ContentHash::of(b"absent")];
     assert!(case.bundle.wi().append_proof_bundle(&tenant, &single_id, &single).is_err());
-    assert_eq!(inspector.proof_bundle(&case.session(), &id, &case.receipt).unwrap(), Some(bundle));
+    assert_eq!(
+        inspector.proof_bundle(&case.session(), &id, &case.receipt).unwrap(),
+        Some(bundle.clone())
+    );
+    // A Full receipt decision and bundle membership do not disclose additional
+    // evidence references. The authorizer must approve the exact reference.
+    let extra = EvidenceRef {
+        artifact: case.bundle.wi().publish(tenant.clone(), b"restricted bundle fixture").unwrap(),
+        schema: "extra-evidence:1".to_owned().try_into().unwrap(),
+    };
+    let extra_id: OpaqueRef = "bundle:extra-evidence".to_owned().try_into().unwrap();
+    let mut with_extra = bundle;
+    with_extra.evidence.push(extra.clone());
+    case.bundle.wi().append_proof_bundle(&tenant, &extra_id, &with_extra).unwrap();
+    assert!(inspector.proof_bundle(&case.session(), &extra_id, &case.receipt).is_err());
+    let allowed =
+        Disclosure { profile: DisclosureProfile::Full, restricted: None, evidence: Some(extra) };
+    let allowed_inspector =
+        ReceiptInspector { root: case.bundle.wi(), authentication: &auth, disclosure: &allowed };
+    assert_eq!(
+        allowed_inspector.proof_bundle(&case.session(), &extra_id, &case.receipt).unwrap(),
+        Some(with_extra)
+    );
 }
 
 #[test]
@@ -247,7 +282,8 @@ fn detached_proofs_are_restricted_provenance_and_leave_receipts_immutable() {
     case.bundle.wi().append_receipt_proof(&tenant, &case.receipt, &proof).unwrap();
     assert_eq!(inspector.receipt_proofs(&case.session(), &case.receipt).unwrap()[0].1, proof);
     assert_eq!(inspector.receipt(&case.session(), &case.receipt).unwrap(), before);
-    let restricted = Disclosure { profile: DisclosureProfile::Redacted, restricted: None };
+    let restricted =
+        Disclosure { profile: DisclosureProfile::Redacted, restricted: None, evidence: None };
     assert!(ReceiptInspector {
         root: case.bundle.wi(),
         authentication: &auth,

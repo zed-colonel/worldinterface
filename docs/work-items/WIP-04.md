@@ -97,7 +97,9 @@ review of the exact candidate and target, including its security pass.
 
 The selective port needed disclosure hardening beyond the parked code: receipt
 ownership, requested-receipt membership, every bundle member's disclosure,
-restricted detached-proof reads and exact worker report source checks. No
+restricted detached-proof reads and exact worker report source checks. Additional
+bundle evidence references require a separate exact disclosure decision; the new
+host hook denies by default even when every receipt member permits Full disclosure. No
 provider/signer authority is inferred from a proof or artifact.
 
 The inventory additions were reviewed by source family: completion/inspection,
