@@ -26,7 +26,7 @@
     "AB-WI-004"
   ],
   "closing_item": "WIP-04",
-  "status": "open",
+  "status": "closed",
   "effective_on": "reviewed-merge-with-adopted-checks",
   "historical_evidence": [
     "7cdecc06",

@@ -14,6 +14,9 @@ import sys
 import tomllib
 
 CRATES_IO = 'registry+https://github.com/rust-lang/crates.io-index'
+sys.dont_write_bytecode = True
+from wi_crash_isolation import check_repository, check_production_build
+
 root = pathlib.Path(__file__).resolve().parent.parent
 meta = json.loads(pathlib.Path(sys.argv[1]).read_text())
 lock_path = pathlib.Path(sys.argv[2]) if len(sys.argv) > 2 else root / 'crates/worldinterface-runtime/Cargo.lock'
@@ -52,7 +55,7 @@ assert {p['name'] for p in aq} >= {'actionqueue-core', 'actionqueue-storage', 'a
 wi = next(p for p in meta['packages'] if p['name'] == 'worldinterface-runtime')
 pending = [wi['id']]
 seen = set()
-allowed = {'worldinterface-runtime', 'worldinterface-storage', 'worldinterface-domain', 'worldinterface-protocol', 'worldinterface-egress', 'worldinterface-ingress'}
+allowed = {'worldinterface-runtime', 'worldinterface-storage', 'worldinterface-domain', 'worldinterface-protocol', 'worldinterface-egress', 'worldinterface-ingress', 'worldinterface-worker', 'worldinterface-capability'}
 while pending:
     key = pending.pop()
     if key in seen:
@@ -65,6 +68,9 @@ while pending:
     for d in nodes[key]['deps']:
         if any(k['kind'] != 'dev' for k in d['dep_kinds']):
             pending.append(d['pkg'])
+check_repository(root)
+production = check_production_build(root, "runtime")
+print(json.dumps(production, sort_keys=True))
 print(json.dumps({'upstream': target, 'registry': published['registry'], 'tag': published['tag'],
                   'resolved_aq': sorted(aq, key=lambda p: p['name']), 'production_graph': 'passed'},
                  sort_keys=True))

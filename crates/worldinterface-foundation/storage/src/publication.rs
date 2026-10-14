@@ -108,6 +108,8 @@ impl StoreRoot {
         tx.commit()?;
         #[cfg(test)]
         crate::crash::checkpoint("publication-identified");
+        #[cfg(all(feature = "crash-points", not(test)))]
+        crate::crashpoint::checkpoint("publication-identified");
         Ok(publication)
     }
     pub fn publication(&self, identity: &OpaqueRef) -> Result<Option<Publication>> {
@@ -146,8 +148,12 @@ impl StoreRoot {
         sync_dir(&dir)?;
         #[cfg(test)]
         crate::crash::checkpoint("artifact-durable");
+        #[cfg(all(feature = "crash-points", not(test)))]
+        crate::crashpoint::checkpoint("artifact-durable");
         #[cfg(test)]
         crate::crash::checkpoint("publication-durable");
+        #[cfg(all(feature = "crash-points", not(test)))]
+        crate::crashpoint::checkpoint("publication-durable");
         let durable = if current.state == PublicationState::Identified {
             let next = current.advance(PublicationState::Durable).map_err(invalid)?;
             let mut c = self.connect(StoreKind::Context)?;
@@ -160,6 +166,8 @@ impl StoreRoot {
         };
         #[cfg(test)]
         crate::crash::checkpoint("publication-availability");
+        #[cfg(all(feature = "crash-points", not(test)))]
+        crate::crashpoint::checkpoint("publication-availability");
         let available = durable.advance(PublicationState::Available).map_err(invalid)?;
         let mut c = self.connect(StoreKind::Context)?;
         let tx = c.transaction_with_behavior(TransactionBehavior::Immediate)?;

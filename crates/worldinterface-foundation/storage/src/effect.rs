@@ -48,9 +48,25 @@ pub(crate) fn snapshot_at_revision(
     Ok(state)
 }
 fn write(c: &Connection, tenant: &OpaqueRef, s: &EffectState, fault: Option<&str>) -> Result<()> {
+    write_projection(c, tenant, s, fault, false)
+}
+fn write_projection(
+    c: &Connection,
+    tenant: &OpaqueRef,
+    s: &EffectState,
+    fault: Option<&str>,
+    receipt: bool,
+) -> Result<()> {
+    let _ = receipt;
     c.execute("INSERT INTO effect_state VALUES(?,?) ON CONFLICT(tenant) DO UPDATE SET state=excluded.state",params![tenant.as_str(),canonical_collection(s).map_err(invalid)?])?;
     if fault == Some("state") {
         return Err(invalid("injected effect state"));
+    }
+    if receipt {
+        #[cfg(test)]
+        crate::crash::checkpoint("fabric-receipt-state");
+        #[cfg(all(feature = "crash-points", not(test)))]
+        crate::crashpoint::checkpoint("fabric-receipt-state");
     }
     for (id, e) in &s.effects {
         // An empty list is the durable non-dispatch-ready source outbox. Queue delivery cannot read
@@ -100,6 +116,45 @@ fn transact(
     Ok(id)
 }
 impl StoreRoot {
+    /// A cross-store diagnostic. It never changes an outcome or receipt.
+    pub fn record_convergence_fault(
+        &self,
+        tenant: &OpaqueRef,
+        id: &EffectIntentId,
+        run: &OpaqueRef,
+        fabric: &ExecutionOutcome,
+        queue: &str,
+    ) -> Result<()> {
+        if !["completed", "failed", "canceled"].contains(&queue) {
+            return Err(invalid("invalid AQ terminal state"));
+        }
+        let state = self.effect_snapshot(tenant)?;
+        let effect = state.effects.get(id).ok_or_else(|| invalid("fault without effect"))?;
+        if effect.outcomes.last().is_none_or(|o| &o.outcome != fabric)
+            || effect
+                .dispatches
+                .last()
+                .and_then(|d| d.admission.as_ref())
+                .is_none_or(|a| !a.observed_runs.contains(run))
+        {
+            return Err(invalid("fault source binding"));
+        }
+        let bytes = canonical_data(&(tenant, id, run, fabric, queue)).map_err(invalid)?;
+        let c = self.connect(StoreKind::Fabric)?;
+        c.execute("INSERT OR IGNORE INTO convergence_fault_history(tenant,intent,run,fabric,queue,digest) VALUES(?,?,?,?,?,?)",
+            params![tenant.as_str(), id.as_str(), run.as_str(),
+                serde_json::to_string(fabric)?, queue, ContentHash::of(&bytes).as_str()])?;
+        Ok(())
+    }
+    pub fn effect_tenants(&self) -> Result<Vec<OpaqueRef>> {
+        let c = self.connect(StoreKind::Fabric)?;
+        let mut q = c.prepare("SELECT tenant FROM effect_state ORDER BY tenant")?;
+        let tenants = q
+            .query_map([], |r| r.get::<_, String>(0))?
+            .map(|r| r?.try_into().map_err(invalid))
+            .collect();
+        tenants
+    }
     pub fn effect_snapshot(&self, tenant: &OpaqueRef) -> Result<EffectState> {
         snapshot(&self.connect(StoreKind::Fabric)?, tenant)
     }
@@ -168,15 +223,23 @@ impl StoreRoot {
         )?;
         #[cfg(test)]
         crate::crash::checkpoint("fabric-receipt-history");
-        write(&tx, tenant, &new, None)?;
+        #[cfg(all(feature = "crash-points", not(test)))]
+        crate::crashpoint::checkpoint("fabric-receipt-history");
+        write_projection(&tx, tenant, &new, None, true)?;
         #[cfg(test)]
         crate::crash::checkpoint("fabric-receipt-outbox");
+        #[cfg(all(feature = "crash-points", not(test)))]
+        crate::crashpoint::checkpoint("fabric-receipt-outbox");
         let digest = crate::receipt::insert(&tx, tenant, &receipt, execution)?;
         #[cfg(test)]
         crate::crash::checkpoint("fabric-receipt-index");
+        #[cfg(all(feature = "crash-points", not(test)))]
+        crate::crashpoint::checkpoint("fabric-receipt-index");
         tx.commit()?;
         #[cfg(test)]
         crate::crash::checkpoint("fabric-receipt-committed");
+        #[cfg(all(feature = "crash-points", not(test)))]
+        crate::crashpoint::checkpoint("fabric-receipt-committed");
         Ok(digest)
     }
 }
@@ -195,6 +258,48 @@ impl StoreRoot {
                 for reference in worldinterface_domain::effect::required_artifacts(e) {
                     self.read_artifact(reference)?;
                 }
+            }
+        }
+        let mut q = c.prepare(
+            "SELECT tenant,intent,run,fabric,queue,digest FROM convergence_fault_history",
+        )?;
+        let rows = q.query_map([], |r| {
+            Ok((
+                r.get::<_, String>(0)?,
+                r.get::<_, String>(1)?,
+                r.get::<_, String>(2)?,
+                r.get::<_, String>(3)?,
+                r.get::<_, String>(4)?,
+                r.get::<_, String>(5)?,
+            ))
+        })?;
+        for row in rows {
+            let (tenant, intent, run, fabric, queue, digest) = row?;
+            let tenant: OpaqueRef = tenant.try_into().map_err(invalid)?;
+            let intent: EffectIntentId = intent.try_into().map_err(invalid)?;
+            let run: OpaqueRef = run.try_into().map_err(invalid)?;
+            let outcome: ExecutionOutcome = serde_json::from_str(&fabric)?;
+            if !["completed", "failed", "canceled"].contains(&queue.as_str())
+                || ContentHash::of(
+                    &canonical_data(&(&tenant, &intent, &run, &outcome, &queue))
+                        .map_err(invalid)?,
+                )
+                .as_str()
+                    != digest
+            {
+                return Err(invalid("convergence fault record corrupt"));
+            }
+            let state = snapshot(&c, &tenant)?;
+            let effect =
+                state.effects.get(&intent).ok_or_else(|| invalid("fault without effect"))?;
+            if effect.outcomes.last().is_none_or(|o| o.outcome != outcome)
+                || effect
+                    .dispatches
+                    .last()
+                    .and_then(|d| d.admission.as_ref())
+                    .is_none_or(|a| !a.observed_runs.contains(&run))
+            {
+                return Err(invalid("convergence fault source mismatch"));
             }
         }
         Ok(())

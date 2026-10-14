@@ -291,6 +291,12 @@ pub enum EffectAction {
         snapshot: VerifiedSnapshot,
         attempt: OpaqueRef,
     },
+    StartProduction {
+        id: EffectIntentId,
+        snapshot: VerifiedSnapshot,
+        run: OpaqueRef,
+        attempt: OpaqueRef,
+    },
     Cancel {
         id: EffectIntentId,
     },
@@ -358,6 +364,12 @@ enum JournalAction {
         snapshot: AuthorizationSnapshot,
         attempt: OpaqueRef,
     },
+    StartProduction {
+        id: EffectIntentId,
+        snapshot: AuthorizationSnapshot,
+        run: OpaqueRef,
+        attempt: OpaqueRef,
+    },
     Cancel {
         id: EffectIntentId,
     },
@@ -397,6 +409,9 @@ impl From<EffectAction> for JournalAction {
             }
             EffectAction::Start { id, snapshot, attempt } => {
                 Self::Start { id, snapshot: snapshot.0, attempt }
+            }
+            EffectAction::StartProduction { id, snapshot, run, attempt } => {
+                Self::StartProduction { id, snapshot: snapshot.0, run, attempt }
             }
             EffectAction::Acknowledge { id, acknowledgment } => {
                 Self::Acknowledge { id, acknowledgment }
@@ -585,6 +600,7 @@ fn apply(state: &EffectState, entry: &Entry) -> Result<(EffectState, EffectInten
         | JournalAction::AdvanceDiscovery { id, .. }
         | JournalAction::Acknowledge { id, .. }
         | JournalAction::Start { id, .. }
+        | JournalAction::StartProduction { id, .. }
         | JournalAction::Cancel { id }
         | JournalAction::Outcome { id, .. }
         | JournalAction::Reconcile { id, .. }
@@ -771,10 +787,24 @@ fn apply(state: &EffectState, entry: &Entry) -> Result<(EffectState, EffectInten
             }
             d.acknowledgment = Some(acknowledgment.clone());
         }
-        JournalAction::Start { snapshot, attempt, .. } => {
+        JournalAction::Start { snapshot, attempt, .. }
+        | JournalAction::StartProduction { snapshot, attempt, .. } => {
             current(e, snapshot, now)?;
+            let acknowledged = match &entry.action {
+                JournalAction::StartProduction { run, .. } => {
+                    e.dispatches.last().is_some_and(|d| {
+                        d.admission.as_ref().is_some_and(|a| {
+                            a.acknowledged_sequence.is_some() && a.observed_runs.contains(run)
+                        })
+                    })
+                }
+                _ => e
+                    .dispatches
+                    .last()
+                    .is_some_and(|d| d.admission.is_none() && d.acknowledgment.is_some()),
+            };
             if e.phase != Phase::DispatchPending
-                || e.dispatches.last().is_none_or(|d| d.acknowledgment.is_none())
+                || !acknowledged
                 || e.outcomes.iter().any(|o| &o.attempt == attempt)
             {
                 return Err("execution start evidence".into());

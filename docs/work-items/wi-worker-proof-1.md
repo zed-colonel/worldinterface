@@ -45,7 +45,17 @@ AQ 0.2.0, registers AB-WI-002/003/004 and WP-009–WP-014 with domain/runtime te
 and resolves WP-A02 at runtime admission. The WI-04 source-test and ADR-004/005/006/007
 assessment, fixed findings and candidate evidence are in [WIP-02](WIP-02.md).
 Independent CraftingTable review and merged-head verification remain due. Both
-G2 gate records stay open for WIP-04; the historical ledger below is unchanged.
+G2 gate records are prepared for closure by WIP-04, effective only on reviewed
+integration with adopted checks; the historical ledger below is unchanged.
+
+WIP-04 selectively takes over completion from c507031, retains WIP-02/WIP-03,
+registers receipt-level WP-015/016 and the whole WI-05 obligation matrix, and
+resolves WP-A06. New admissions use the approved 3/Idempotent policy; persisted
+1/Transactional requests remain byte-identical. The operator approved the dev-only
+empty crash-points feature and amended-check adoption in cycle 10a42bb3. Publication,
+receipt/domain/outbox, real AQ signals and attempt dispositions have process-kill
+coverage. See [WIP-04](WIP-04.md) for evidence and scope. WI-05 and both G2 gates
+close on qualifying reviewed integration; WIP-07 retains WI-AQ-G4 closure.
 
 Every `wi-fabric-2` merge, with the evidence the retired roadmap recorded for it. "Verified" means a slice-verification scope receipt on the merged commit, where an independent agent reviewed it and ran checks. WIP-01 commits this ledger to `docs/work-items/wi-worker-proof-1.md` so that finalization reviewers can see which inherited code was independently verified.
 

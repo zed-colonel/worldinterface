@@ -50,12 +50,12 @@ fn baseline_records_have_precise_g1_coverage_and_no_source_result_claims() {
         r.cases.iter().filter(|c| c.owning_item == "WIP-01" && c.status == "implemented").count(),
         11
     );
-    assert_eq!(g.iter().filter(|g| g.status == "closed").count(), 2);
+    assert_eq!(g.iter().filter(|g| g.status == "closed").count(), 4);
     assert_eq!(r.cases.iter().find(|c| c.id == "WP-002").unwrap().tests.len(), 3);
     assert_eq!(r.cases.iter().find(|c| c.id == "WP-007").unwrap().tests.len(), 3);
 }
 #[test]
-fn wip02_admission_cases_preserve_scope_evidence_and_leave_g2_open() {
+fn wip02_admission_cases_preserve_scope_evidence_and_wip04_closes_g2() {
     let (r, g, index) = records();
     assert!(proof::validate(&root(), &r, &g, &index).unwrap().is_empty());
     let cases: Vec<_> = r.cases.iter().filter(|c| c.owning_item == "WIP-02").collect();
@@ -94,8 +94,53 @@ fn wip02_admission_cases_preserve_scope_evidence_and_leave_g2_open() {
     }
     for id in ["WI-AQ-G2", "WI-WORKER-G2"] {
         let gate = g.iter().find(|gate| gate.id == id).unwrap();
-        assert_eq!(gate.status, "open");
+        assert_eq!(gate.status, "closed");
         assert_eq!(gate.closing_item, "WIP-04");
+    }
+}
+
+#[test]
+fn wi05_obligations_require_every_nonignored_test_and_preserve_domain_wp_coverage() {
+    let coverage = read(&root().join("conformance/wi-fabric-2/completion/coverage.json")).unwrap();
+    let obligations: std::collections::BTreeMap<String, Vec<TestRef>> =
+        serde_json::from_value(coverage["required_obligations"].clone()).unwrap();
+    let index: TestIndex = obligations.values().flatten().cloned().map(|t| (t, 1)).collect();
+    assert!(proof::validate_completion(&root(), &index).unwrap().is_empty());
+    let reference = obligations["crash-convergence"][0].clone();
+    for count in [0, 2] {
+        let mut index = index.clone();
+        index.insert(reference.clone(), count);
+        assert!(proof::validate_completion(&root(), &index)
+            .unwrap()
+            .iter()
+            .any(|f| f.rule == "PROOF-WI05"));
+    }
+    let t = fixture();
+    let mut missing = coverage.clone();
+    missing["required_obligations"].as_object_mut().unwrap().remove("redacted-inspection");
+    fs::write(
+        t.path().join("conformance/wi-fabric-2/completion/coverage.json"),
+        serde_json::to_vec(&missing).unwrap(),
+    )
+    .unwrap();
+    assert!(proof::validate_completion(t.path(), &index)
+        .unwrap()
+        .iter()
+        .any(|f| f.rule == "PROOF-WI05"));
+    let (registry, _, _) = records();
+    for id in ["WP-015", "WP-016"] {
+        let case = registry.cases.iter().find(|c| c.id == id).unwrap();
+        assert_eq!(case.status, "implemented");
+        assert!(case
+            .tests
+            .iter()
+            .any(|t| t.manifest == "crates/worldinterface-foundation/Cargo.toml"
+                && t.package == "worldinterface-worker"));
+        assert!(case
+            .tests
+            .iter()
+            .any(|t| t.manifest == "crates/worldinterface-runtime/Cargo.toml"
+                && t.package == "worldinterface-runtime"));
     }
 }
 #[test]

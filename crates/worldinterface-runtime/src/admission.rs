@@ -91,10 +91,11 @@ fn prepare_at(
         .map_err(|e| -> Box<dyn std::error::Error + Send + Sync> { e.into() })?;
     let key = AdmissionKey::new(format!("wi-effect:{}", identity.as_str()))?;
     let payload = TaskInputLocator::new(view.intent.submission.input.artifact.clone()).payload()?;
-    // Effect retries require WI provider noncommit evidence; AQ must not independently retry.
+    // AQ redelivery reaches only the deduplicating completion handler; provider
+    // re-invocation is fenced by the durable Fabric Start record.
     let timeout = view.intent.submission.budget.timeout_millis.div_ceil(1000).max(1);
-    let mut constraints = TaskConstraints::new(1, Some(timeout), None)?;
-    constraints.set_safety_level(SafetyLevel::Transactional);
+    let mut constraints = TaskConstraints::new(3, Some(timeout), None)?;
+    constraints.set_safety_level(SafetyLevel::Idempotent);
     let spec = TaskSpec::new(task, payload, RunPolicy::Once, constraints, TaskMetadata::default())?;
     let causal = CausalContext::new(
         TraceId::new(format!("wi/effect/{}", id.as_str()))?,

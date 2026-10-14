@@ -6,6 +6,9 @@ import pathlib
 import re
 import sys
 
+sys.dont_write_bytecode = True
+from wi_crash_isolation import check_repository, check_production_build
+
 root = pathlib.Path(__file__).resolve().parent.parent
 meta = json.loads(pathlib.Path(sys.argv[1]).read_text())
 allowed = {
@@ -38,7 +41,7 @@ for p in packages.values():
         for d in p["dependencies"]:
             if d["name"].startswith("worldinterface"):
                 assert d["name"] in allowed[name], (name, d["name"])
-        assert p["features"] == {}, "new features require isolation review"
+        assert p["features"] == ({"crash-points": []} if name == "worldinterface-storage" else {}), "new features require isolation review"
         assert not any(t["kind"] == ["bin"] for t in p["targets"]), "inactive library scope only"
 for p in (root / "crates/worldinterface-foundation").rglob("*.rs"):
     # Only crate sources: judged relative to the repository, so a checkout whose own path
@@ -91,6 +94,9 @@ for obligation in receipt_coverage["obligations"]:
     directory = root / "crates/worldinterface-foundation" / obligation["package"]
     assert any(re.search(r"#\[test\]\s*fn\s+" + re.escape(obligation["test"]) + r"\s*\(", p.read_text())
                for p in directory.rglob("*.rs")), obligation
+check_repository(root)
+production = check_production_build(root, "foundation")
+print(json.dumps(production, sort_keys=True))
 print(json.dumps({"scopes": ["wi/WI-02/domain", "wi/WI-03/domain", "wi/WI-04/domain", "wi/WI-05/domain", "wi/WI-09/domain"], "isolation": "passed", "aq_packages": [],
                   "production_adapter": False, "runtime_conformance": False,
                   "fixtures": {str(p.relative_to(fixture_dir.parent)): hashlib.sha256(p.read_bytes()).hexdigest()

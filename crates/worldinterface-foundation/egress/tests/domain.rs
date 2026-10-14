@@ -1390,9 +1390,23 @@ fn unsupported_store_profile_is_rejected_without_upgrade() {
     drop(root(&t));
     let path = t.path().join("root/manifest.json");
     let bytes = std::fs::read(&path).unwrap();
-    let s = String::from_utf8(bytes).unwrap().replace("local-receipt-2", "local-ingress-1");
+    let s = String::from_utf8(bytes).unwrap().replace("local-receipt-3", "local-ingress-1");
     std::fs::write(&path, &s).unwrap();
+    fn files(path: &std::path::Path) -> std::collections::BTreeMap<std::path::PathBuf, Vec<u8>> {
+        let mut snapshot = std::collections::BTreeMap::new();
+        for entry in std::fs::read_dir(path).unwrap() {
+            let entry = entry.unwrap().path();
+            if entry.is_dir() {
+                snapshot.extend(files(&entry));
+            } else {
+                snapshot.insert(entry.clone(), std::fs::read(&entry).unwrap());
+            }
+        }
+        snapshot
+    }
+    let before = files(&t.path().join("root"));
     assert!(StoreRoot::open_existing(t.path().join("root")).is_err());
+    assert_eq!(files(&t.path().join("root")), before);
     assert_eq!(std::fs::read_to_string(path).unwrap(), s);
 }
 #[test]

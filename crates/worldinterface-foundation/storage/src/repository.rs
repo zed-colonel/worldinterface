@@ -29,6 +29,21 @@ CREATE TABLE receipt_history(seq INTEGER PRIMARY KEY, id TEXT NOT NULL UNIQUE, t
 CREATE TRIGGER receipt_no_update BEFORE UPDATE ON receipt_history BEGIN SELECT RAISE(ABORT,'append only'); END;
 CREATE TRIGGER receipt_no_delete BEFORE DELETE ON receipt_history BEGIN SELECT RAISE(ABORT,'append only'); END;
 CREATE TABLE receipt_index(id TEXT PRIMARY KEY, digest TEXT NOT NULL, tenant TEXT NOT NULL, intent TEXT NOT NULL);
+CREATE TABLE receipt_proofs(seq INTEGER PRIMARY KEY, tenant TEXT NOT NULL, receipt TEXT NOT NULL, digest TEXT NOT NULL, canonical BLOB NOT NULL, UNIQUE(tenant,receipt,digest));
+CREATE TRIGGER receipt_proofs_no_update BEFORE UPDATE ON receipt_proofs BEGIN SELECT RAISE(ABORT,'append only'); END;
+CREATE TRIGGER receipt_proofs_no_delete BEFORE DELETE ON receipt_proofs BEGIN SELECT RAISE(ABORT,'append only'); END;
+CREATE TABLE proof_bundles(seq INTEGER PRIMARY KEY, tenant TEXT NOT NULL, id TEXT NOT NULL UNIQUE, digest TEXT NOT NULL, canonical BLOB NOT NULL);
+CREATE TRIGGER proof_bundles_no_update BEFORE UPDATE ON proof_bundles BEGIN SELECT RAISE(ABORT,'append only'); END;
+CREATE TRIGGER proof_bundles_no_delete BEFORE DELETE ON proof_bundles BEGIN SELECT RAISE(ABORT,'append only'); END;
+CREATE TABLE workflow_trace(seq INTEGER PRIMARY KEY, tenant TEXT NOT NULL, id TEXT NOT NULL UNIQUE, receipt TEXT NOT NULL, retention TEXT NOT NULL, digest TEXT NOT NULL);
+CREATE TRIGGER workflow_trace_no_update BEFORE UPDATE ON workflow_trace BEGIN SELECT RAISE(ABORT,'append only'); END;
+CREATE TRIGGER workflow_trace_no_delete BEFORE DELETE ON workflow_trace BEGIN SELECT RAISE(ABORT,'append only'); END;
+CREATE TABLE telemetry(seq INTEGER PRIMARY KEY, tenant TEXT NOT NULL, id TEXT NOT NULL UNIQUE, receipt TEXT NOT NULL, retention TEXT NOT NULL, digest TEXT NOT NULL);
+CREATE TRIGGER telemetry_no_update BEFORE UPDATE ON telemetry BEGIN SELECT RAISE(ABORT,'append only'); END;
+CREATE TRIGGER telemetry_no_delete BEFORE DELETE ON telemetry BEGIN SELECT RAISE(ABORT,'append only'); END;
+CREATE TABLE convergence_fault_history(seq INTEGER PRIMARY KEY, tenant TEXT NOT NULL, intent TEXT NOT NULL, run TEXT NOT NULL, fabric TEXT NOT NULL, queue TEXT NOT NULL, digest TEXT NOT NULL, UNIQUE(tenant,intent,run,fabric,queue));
+CREATE TRIGGER convergence_fault_no_update BEFORE UPDATE ON convergence_fault_history BEGIN SELECT RAISE(ABORT,'append only'); END;
+CREATE TRIGGER convergence_fault_no_delete BEFORE DELETE ON convergence_fault_history BEGIN SELECT RAISE(ABORT,'append only'); END;
 ";
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -151,6 +166,8 @@ fn apply(c: &Connection, b: &Batch, fault: Option<&str>) -> Result<()> {
     }
     #[cfg(test)]
     crate::crash::checkpoint("after-records");
+    #[cfg(all(feature = "crash-points", not(test)))]
+    crate::crashpoint::checkpoint("after-records");
     if fault == Some("records") {
         return Err(invalid("injected after records"));
     }
@@ -197,6 +214,8 @@ fn apply(c: &Connection, b: &Batch, fault: Option<&str>) -> Result<()> {
     }
     #[cfg(test)]
     crate::crash::checkpoint("after-outbox");
+    #[cfg(all(feature = "crash-points", not(test)))]
+    crate::crashpoint::checkpoint("after-outbox");
     if fault == Some("outbox") {
         return Err(invalid("injected after outbox"));
     }
@@ -215,6 +234,8 @@ fn append(c: &mut Connection, b: &Batch, fault: Option<&str>) -> Result<()> {
     tx.commit()?;
     #[cfg(test)]
     crate::crash::checkpoint("after-commit");
+    #[cfg(all(feature = "crash-points", not(test)))]
+    crate::crashpoint::checkpoint("after-commit");
     Ok(())
 }
 fn append_in(c: &Connection, b: &Batch, fault: Option<&str>) -> Result<()> {
@@ -270,6 +291,8 @@ impl Repository<'_> {
         tx.commit()?;
         #[cfg(test)]
         crate::crash::checkpoint("after-commit");
+        #[cfg(all(feature = "crash-points", not(test)))]
+        crate::crashpoint::checkpoint("after-commit");
         Ok(entity)
     }
     pub fn projection(&self, entity: &EntityId) -> Result<Option<Projection>> {
@@ -332,7 +355,7 @@ impl Repository<'_> {
     pub fn rebuild(&self) -> Result<()> {
         let mut c = self.root.connect(self.kind)?;
         let tx = c.transaction_with_behavior(TransactionBehavior::Immediate)?;
-        tx.execute_batch("DELETE FROM projections; DELETE FROM records; DELETE FROM admissions; DELETE FROM outbox; DELETE FROM ingress_state; DELETE FROM effect_state; DELETE FROM effect_outbox; DELETE FROM publication_index; DELETE FROM receipt_index;")?;
+        tx.execute_batch("DELETE FROM projections; DELETE FROM records; DELETE FROM admissions; DELETE FROM outbox; DELETE FROM ingress_state; DELETE FROM ingress_receipt_index; DELETE FROM effect_state; DELETE FROM effect_outbox; DELETE FROM publication_index; DELETE FROM receipt_index;")?;
         replay_into(&tx, &tx)?;
         crate::ingress::replay(&tx, &tx)?;
         crate::effect::replay(&tx, &tx)?;
@@ -341,6 +364,8 @@ impl Repository<'_> {
         tx.commit()?;
         #[cfg(test)]
         crate::crash::checkpoint("after-commit");
+        #[cfg(all(feature = "crash-points", not(test)))]
+        crate::crashpoint::checkpoint("after-commit");
         Ok(())
     }
 }
@@ -382,7 +407,7 @@ pub(crate) fn validate_database(c: &Connection) -> Result<()> {
     crate::effect::replay(c, &expected)?;
     crate::publication::replay(c, &expected)?;
     crate::receipt::replay(c, &expected)?;
-    for query in ["SELECT tenant,state FROM effect_state ORDER BY tenant", "SELECT tenant,intent,dispatch FROM effect_outbox ORDER BY tenant,intent", "SELECT tenant,state FROM ingress_state ORDER BY tenant", "SELECT entity,revision,state FROM projections ORDER BY entity", "SELECT entity,digest,canonical FROM records ORDER BY seq", "SELECT scope,principal,class,request,digest,entity FROM admissions ORDER BY scope,principal,class,request", "SELECT key,entity,payload,delivered FROM outbox ORDER BY key", "SELECT identity,scope,content,size,state FROM publication_index ORDER BY identity", "SELECT id,digest,tenant,intent FROM receipt_index ORDER BY id"] {
+    for query in ["SELECT tenant,state FROM effect_state ORDER BY tenant", "SELECT tenant,intent,dispatch FROM effect_outbox ORDER BY tenant,intent", "SELECT tenant,state FROM ingress_state ORDER BY tenant", "SELECT id,tenant,identity,digest,canonical FROM ingress_receipt_index ORDER BY id", "SELECT entity,revision,state FROM projections ORDER BY entity", "SELECT entity,digest,canonical FROM records ORDER BY seq", "SELECT scope,principal,class,request,digest,entity FROM admissions ORDER BY scope,principal,class,request", "SELECT key,entity,payload,delivered FROM outbox ORDER BY key", "SELECT identity,scope,content,size,state FROM publication_index ORDER BY identity", "SELECT id,digest,tenant,intent FROM receipt_index ORDER BY id"] {
   fn values(c: &Connection, sql: &str) -> Result<Vec<Vec<rusqlite::types::Value>>> {
    let mut q=c.prepare(sql)?; let n=q.column_count();
    let rows=q.query_map([],|r|(0..n).map(|i|r.get(i)).collect::<rusqlite::Result<Vec<_>>>())?;

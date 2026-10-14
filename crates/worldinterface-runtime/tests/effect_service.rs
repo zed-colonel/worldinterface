@@ -14,11 +14,12 @@ use worldinterface_domain::{
         approval_binding, Approval, AuthorizationSnapshot, Credential, Enforcement, InputClass,
         OrdinaryQualification, Reason, VerifiedSnapshot,
     },
-    effect::CommitObservation,
+    effect::{CommitObservation, EffectAction},
     ingress::digest,
     resource::{ResolutionFact, ResolverSnapshot, Target, TargetDocument},
     Phase,
 };
+use worldinterface_egress::Egress;
 use worldinterface_protocol::{
     ActorId, ArtifactRef, ContentHash, Decision, EffectIntentId, EffectSubmission, EvidenceRef,
     InformationUseEnvelope, InstanceId, OpaqueRef, PrincipalId, RedistributionPolicy, Timestamp,
@@ -894,6 +895,43 @@ fn production_facade_authenticates_verifies_and_rechecks_live_target() {
     clock.expired.set(false);
     assert_eq!(service.dispatch_pending(&"good", &mut queue, 1).unwrap().acknowledged, 1);
     assert_eq!(queue.engine().projection().task_count(), 1);
+    let progress = service.discover_runs(&"good", &id, &queue, 8).unwrap();
+    assert!(progress.complete);
+    let view = Egress::new(bundle.wi()).inspect(&caller(&auth, &"good").unwrap(), &id).unwrap();
+    let admission = view.dispatch.unwrap().admission.unwrap();
+    let run = admission.observed_runs.first().expect("AQ run observed").clone();
+    let principal = caller(&auth, &"good").unwrap();
+    let start = EffectAction::StartProduction {
+        id: id.clone(),
+        snapshot: VerifiedSnapshot::from_trusted_verifier(snapshot.clone()).unwrap(),
+        run: run.clone(),
+        attempt: "attempt:production".to_owned().try_into().unwrap(),
+    };
+    assert!(Egress::new(bundle.wi())
+        .apply(
+            &principal,
+            at(),
+            EffectAction::StartProduction {
+                id: id.clone(),
+                snapshot: VerifiedSnapshot::from_trusted_verifier(snapshot.clone()).unwrap(),
+                run: "forged-run".to_owned().try_into().unwrap(),
+                attempt: "attempt:forged".to_owned().try_into().unwrap(),
+            }
+        )
+        .is_err());
+    assert!(Egress::new(bundle.wi())
+        .apply(
+            &principal,
+            at(),
+            EffectAction::Start {
+                id: id.clone(),
+                snapshot: VerifiedSnapshot::from_trusted_verifier(snapshot.clone()).unwrap(),
+                attempt: "attempt:legacy".to_owned().try_into().unwrap(),
+            }
+        )
+        .is_err());
+    Egress::new(bundle.wi()).apply(&principal, at(), start.clone()).unwrap();
+    assert!(Egress::new(bundle.wi()).apply(&principal, at(), start).is_err());
     queue.shutdown().unwrap();
     wrong_queue.shutdown().unwrap();
 }

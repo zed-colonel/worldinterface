@@ -489,11 +489,23 @@
       "source_record_sha256": "0663a1b0a5b3870f494e33beddf35e7f309c0730a24f6907d28ed9aa64848915",
       "gate": "WI-WORKER-G2",
       "owning_item": "WIP-04",
-      "status": "planned",
+      "status": "implemented",
       "coverage_refs": [
+        "conformance/wi-fabric-2/completion/coverage.json",
         "conformance/wi-fabric-2/receipts/coverage.json"
       ],
-      "tests": []
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-worker",
+          "test": "wp015_host_provenance_cannot_certify_worker_enforcement"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp015_runtime_receipt_separates_enclosing_provenance_from_worker_enforcement"
+        }
+      ]
     },
     {
       "id": "WP-016",
@@ -501,11 +513,23 @@
       "source_record_sha256": "e39ebc3e9e146db662558acad2ee886a89746dbfc51df003e9c786e2349d19d1",
       "gate": "WI-WORKER-G2",
       "owning_item": "WIP-04",
-      "status": "planned",
+      "status": "implemented",
       "coverage_refs": [
+        "conformance/wi-fabric-2/completion/coverage.json",
         "conformance/wi-fabric-2/receipts/coverage.json"
       ],
-      "tests": []
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-worker",
+          "test": "wp016_missing_control_is_recorded_and_never_promoted"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp016_runtime_receipt_retains_requested_advertised_applied_observed_missing_unknown"
+        }
+      ]
     },
     {
       "id": "WP-017",
@@ -760,6 +784,11 @@
           "manifest": "crates/worldinterface-runtime/Cargo.toml",
           "package": "worldinterface-runtime",
           "test": "self_initiated_and_external_requests_follow_the_same_authorization_path"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "persisted_old_policy_request_is_retried_without_rewriting"
         }
       ]
     },

@@ -11,7 +11,10 @@ pub(crate) fn invalid(s: impl Into<String>) -> Box<dyn std::error::Error + Send 
 
 mod ingress;
 
+#[cfg(feature = "crash-points")]
+mod crashpoint;
 mod effect;
+mod proof;
 mod publication;
 mod receipt;
 
