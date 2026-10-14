@@ -43,7 +43,10 @@
       "required_tests": [
         "ab_wi_007_commit_replay_identity_and_subscriber_ack",
         "captured_fanout_routes_each_delivery_to_its_trusted_subscriber",
-        "process_death_after_wi_commit_recovers_aq_obligation"
+        "process_death_after_wi_commit_recovers_aq_obligation",
+        "partial_audience_http_isolates_subscribers",
+        "partial_audience_stream_isolates_subscribers",
+        "process_death_after_subscriber_storage_redelivers_same_id"
       ]
     },
     "AB-WI-009": {
@@ -72,7 +75,15 @@
     "AB-WI-022": {
       "source_record_sha256": "39053f56f805b7c942cd07602c7c202227e7f00259f1f6897fe19cd71bf67d81",
       "required_tests": [
-        "ab_wi_022_retirement_keeps_resident_capacity_and_alarm"
+        "ab_wi_022_retirement_keeps_resident_capacity_and_alarm",
+        "wi03p_f001_expired_pending_delivery_stops_recovery",
+        "wi03p_f001_admitted_delivery_completes_after_expiry",
+        "expiration_during_ack_wait_completes_without_recovery_generation",
+        "recovery_generation_budget_bounds_mismatch_binding_churn_and_capacity_after_restart",
+        "owner_churn_reuses_wake_capacity_and_other_owner_can_deliver_and_ack_after_restart",
+        "terminal_wait_capacity_recovers_from_journaled_generation",
+        "previously_journaled_generation_wake_is_reused_without_migration_after_restart",
+        "retired_wake_deadletters_without_replacement_after_restart"
       ]
     }
   },

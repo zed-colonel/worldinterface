@@ -213,6 +213,7 @@ fn setup_with_event_quarantine(
         binding_lifetime_ms,
         quarantine_content,
         2,
+        1_000,
     )
 }
 fn setup_with_recovery_budget(
@@ -222,6 +223,7 @@ fn setup_with_recovery_budget(
     binding_lifetime_ms: u64,
     quarantine_content: bool,
     max_attempts: u32,
+    backoff_ms: u64,
 ) -> (Arc<StoreBundle>, IngressBinding, DeliveryId) {
     let bundle = Arc::new(
         StoreBundle::initialize(
@@ -241,7 +243,7 @@ fn setup_with_recovery_budget(
     binding.expires_at_ms = current + binding_lifetime_ms;
     binding.policy.retention_ms = retention_ms;
     binding.policy.acknowledgment_timeout_ms = acknowledgment_timeout_ms;
-    binding.policy.backoff_ms = 1_000;
+    binding.policy.backoff_ms = backoff_ms;
     binding.policy.max_attempts = max_attempts;
     let root = bundle.wi();
     root.publish(binding.profile.scope.tenant.clone(), b"authorization").unwrap();
@@ -301,6 +303,142 @@ fn setup_with_recovery_budget(
         _ => panic!("admission failed"),
     };
     (bundle, binding, id)
+}
+
+/// WI03P-F001: the preserved one-second, zero-backoff probe must expire before
+/// first dispatch without admitting any AQ work or replacement wake.
+#[tokio::test]
+async fn wi03p_f001_expired_pending_delivery_stops_recovery() {
+    wi03p_f001_expiration(false).await;
+}
+
+/// WI03P-F001: work admitted before expiry must complete on its first physical
+/// execution after expiry, without spending retry or recovery capacity.
+#[tokio::test]
+async fn wi03p_f001_admitted_delivery_completes_after_expiry() {
+    wi03p_f001_expiration(true).await;
+}
+
+async fn wi03p_f001_expiration(admit_before_expiry: bool) {
+    let temp = tempfile::tempdir().unwrap();
+    let path = temp.path().join("bundle");
+    let (mut bundle, binding, id) =
+        setup_with_recovery_budget(&path, 100, 1_000, 1_000_000, false, 2, 0);
+    let tenant = binding.profile.scope.tenant.clone();
+    let initial = bundle.wi().ingress_snapshot(&tenant).unwrap();
+    let original_queue = initial.queue[&id].clone();
+    let task: actionqueue_core::admission::EnsureTaskRequest =
+        serde_json::from_slice(&original_queue.task_request).unwrap();
+    assert_eq!(initial.deliveries[&id].state, DeliveryState::Pending);
+    assert_eq!(initial.deliveries[&id].policy.retention_ms, 1_000);
+    assert_eq!(initial.deliveries[&id].policy.acknowledgment_timeout_ms, 100);
+    assert_eq!(initial.deliveries[&id].policy.backoff_ms, 0);
+    assert!(original_queue.prior.is_empty());
+    let recorder = Arc::new(Recorder::default());
+    let mut resident = None;
+    for restart in 0..2 {
+        let delivery_handler = handler(&bundle, &binding, recorder.clone());
+        let registry = delivery_handler.subscriber_registry();
+        let mut aq = ActionQueueEngine::new(
+            RuntimeConfig {
+                data_dir: bundle.aq_path(),
+                backoff_strategy: actionqueue_runtime::config::BackoffStrategyConfig::Fixed {
+                    interval: Duration::ZERO,
+                },
+                tick_interval: Duration::from_millis(1),
+                ..Default::default()
+            },
+            delivery_handler,
+        )
+        .bootstrap()
+        .unwrap()
+        .with_host(host());
+        let service = IngressRuntime::new(bundle.wi(), tenant.clone());
+        if restart == 0 {
+            if admit_before_expiry {
+                assert_eq!(
+                    service
+                        .dispatch_pending(
+                            &mut BoundAqIngress::new(&mut aq, tenant.clone())
+                                .with_subscriber_registry(registry.clone()),
+                            10,
+                            now(),
+                        )
+                        .unwrap(),
+                    1
+                );
+            }
+            let stats = aq.signal_statistics();
+            assert_eq!(stats.retained, usize::from(admit_before_expiry));
+            resident = Some((stats.retained, stats.bytes));
+            // Real elapsed retention reproduces the review probe's boundary.
+            tokio::time::sleep(Duration::from_millis(1_200)).await;
+            assert!(now() >= initial.deliveries[&id].expires_at_ms);
+            if !admit_before_expiry {
+                assert_eq!(
+                    service
+                        .dispatch_pending(
+                            &mut BoundAqIngress::new(&mut aq, tenant.clone())
+                                .with_subscriber_registry(registry.clone()),
+                            10,
+                            now(),
+                        )
+                        .unwrap(),
+                    0
+                );
+            }
+        }
+        let _ = tokio::time::timeout(Duration::from_secs(20), aq.run_until_idle())
+            .await
+            .expect("expired ingress work must converge")
+            .unwrap();
+        let closed = bundle.wi().ingress_snapshot(&tenant).unwrap();
+        assert_eq!(closed.deliveries[&id].state, DeliveryState::Expired);
+        assert!(closed.deliveries[&id].token_invalidated);
+        assert!(closed.deliveries[&id].attempts.is_empty());
+        assert_eq!(closed.queue[&id].generation, 0);
+        assert_eq!(closed.queue[&id].prior, original_queue.prior);
+        if !admit_before_expiry {
+            assert_eq!(closed.queue[&id], original_queue);
+        }
+        let runs = aq.projection().run_ids_for_task(task.task_spec().id());
+        assert_eq!(runs.len(), usize::from(admit_before_expiry));
+        if admit_before_expiry {
+            let run = aq.get_run(runs[0]).unwrap();
+            assert_eq!(run.state, actionqueue_core::run::state::RunState::Completed);
+            assert_eq!(run.attempt_count, 1);
+            assert_eq!(run.failure_attempt_count, 0);
+        }
+        for _ in 0..3 {
+            assert_eq!(
+                service
+                    .dispatch_pending(
+                        &mut BoundAqIngress::new(&mut aq, tenant.clone())
+                            .with_subscriber_registry(registry.clone()),
+                        10,
+                        now(),
+                    )
+                    .unwrap(),
+                0
+            );
+            assert_eq!(bundle.wi().ingress_snapshot(&tenant).unwrap(), closed);
+            let stats = aq.signal_statistics();
+            assert_eq!(Some((stats.retained, stats.bytes)), resident);
+            assert_eq!(aq.projection().run_ids_for_task(task.task_spec().id()).len(), runs.len());
+        }
+        assert!(recorder.0.lock().unwrap().is_empty());
+        assert!(recorder.1.lock().unwrap().is_empty());
+        let subscriber =
+            AuthenticatedScope { tenant: tenant.clone(), principal: binding.subscriber.clone() };
+        assert!(service.claim(&subscriber, &id, now()).is_err());
+        assert!(Ingress::new(bundle.wi()).inspect_delivery(&subscriber, &id, now()).is_err());
+        aq.shutdown().unwrap();
+        drop(service);
+        if restart == 0 {
+            drop(bundle);
+            bundle = Arc::new(StoreBundle::open(&path).unwrap());
+        }
+    }
 }
 
 #[tokio::test]
@@ -1078,7 +1216,7 @@ async fn owner_churn_reuses_wake_capacity_and_other_owner_can_deliver_and_ack_af
     let temp = tempfile::tempdir().unwrap();
     let path = temp.path().join("bundle");
     let (mut bundle, binding, id) =
-        setup_with_recovery_budget(&path, 10_000, 1_000_000, 1_000_000, false, 100);
+        setup_with_recovery_budget(&path, 10_000, 1_000_000, 1_000_000, false, 100, 1_000);
     let tenant = binding.profile.scope.tenant.clone();
     let owner = AuthenticatedScope { tenant: tenant.clone(), principal: binding.principal.clone() };
     let mut other = binding.clone();

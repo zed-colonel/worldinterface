@@ -785,6 +785,29 @@ fn quarantine_and_typed_lifecycle_evidence_do_not_create_authority() {
     assert_eq!(i.inspect_delivery(&s.subscriber(), &id, 1000).unwrap().attachments, vec![artifact]);
     assert_eq!(view.receipt.admitting_binding.id, s.b.id);
     assert_eq!(view.receipt.authorization, s.b.authorization);
+    let state = s.state();
+    let admission =
+        state.admissions.values().find(|a| a.observation.id == view.observation).unwrap();
+    assert_eq!(admission.observation.asserted_sender, e.asserted_sender);
+    let ReceiptBody::Ingress(receipt) = &admission.receipt.body else {
+        panic!("expected ingress provenance receipt");
+    };
+    assert_eq!(receipt.validation.as_str(), "transport-validated-no-semantic-authority");
+    assert_eq!(
+        receipt.observation_digest,
+        Envelope::new(Record::BoundaryObservation(admission.observation.clone())).digest().unwrap()
+    );
+    // Transport validation and asserted role evidence confer no application
+    // semantics. Each forbidden claim is absent and rejected by the wire schema.
+    let body = serde_json::to_value(receipt).unwrap();
+    let canonical_receipt = serde_json::to_value(&admission.receipt).unwrap();
+    for claim in ["content_truth", "truth", "urgency", "conversation_membership", "authority"] {
+        assert!(body.get(claim).is_none(), "receipt body must not claim {claim}");
+        assert!(canonical_receipt.get(claim).is_none(), "receipt must not claim {claim}");
+        let mut forged = body.clone();
+        forged[claim] = serde_json::Value::Bool(true);
+        assert!(serde_json::from_value::<IngressReceipt>(forged).is_err(), "reject {claim}");
+    }
     let mut e = s.event("commission", 1);
     e.profile = ObservationProfile::Commissioning { evidence: s.b.authorization.clone() };
     let id = delivery(s.admit(&e, 1000));

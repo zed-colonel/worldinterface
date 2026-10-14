@@ -3780,41 +3780,6 @@
     "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
   },
   {
-    "id": "crates/worldinterface-foundation/domain/src/developmental.rs::::enum:Comparison",
-    "disposition": "retain-align",
-    "target": "WI-05 receipt/evidence domain",
-    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
-    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/developmental.rs::::source-module:crates/worldinterface-foundation/domain/src/developmental.rs",
-    "disposition": "retain-align",
-    "target": "WI-05 receipt/evidence domain",
-    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
-    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/developmental.rs::::struct:CampaignArmV1",
-    "disposition": "retain-align",
-    "target": "WI-05 receipt/evidence domain",
-    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
-    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/developmental.rs::::struct:DevelopmentalComparisonV1",
-    "disposition": "retain-align",
-    "target": "WI-05 receipt/evidence domain",
-    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
-    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/developmental.rs::::struct:DevelopmentalSnapshotV1",
-    "disposition": "retain-align",
-    "target": "WI-05 receipt/evidence domain",
-    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
-    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
-  },
-  {
     "id": "crates/worldinterface-foundation/domain/src/effect.rs::::enum:CommitObservation",
     "disposition": "retain-align",
     "target": "egress-domain",
@@ -3955,25 +3920,11 @@
     "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
   },
   {
-    "id": "crates/worldinterface-foundation/domain/src/ingress.rs::::struct:AcknowledgmentSignal",
-    "disposition": "retain-align",
-    "target": "WI-03 AQ-neutral ingress journal extension",
-    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
-    "rationale": "Persist immutable queue and acknowledgment obligations in the authoritative Fabric transaction; AQ types remain outside foundation."
-  },
-  {
     "id": "crates/worldinterface-foundation/domain/src/ingress.rs::::struct:IngressState",
     "disposition": "retain-align",
     "target": "ingress-domain",
     "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
     "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/ingress.rs::::struct:QueueObligation",
-    "disposition": "retain-align",
-    "target": "WI-03 AQ-neutral ingress journal extension",
-    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
-    "rationale": "Persist immutable queue and acknowledgment obligations in the authoritative Fabric transaction; AQ types remain outside foundation."
   },
   {
     "id": "crates/worldinterface-foundation/domain/src/ingress.rs::::type:Result",
@@ -4025,13 +3976,6 @@
     "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
   },
   {
-    "id": "crates/worldinterface-foundation/domain/src/lib.rs::::module:developmental",
-    "disposition": "retain-align",
-    "target": "WI-05 receipt/evidence domain",
-    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
-    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
-  },
-  {
     "id": "crates/worldinterface-foundation/domain/src/lib.rs::::module:effect",
     "disposition": "retain-align",
     "target": "egress-domain",
@@ -4051,20 +3995,6 @@
     "target": "worldinterface-domain",
     "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
     "rationale": "Pure reducer and named internal queue ports; no production adapters."
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/lib.rs::::module:publication",
-    "disposition": "retain-align",
-    "target": "WI-05 receipt/evidence domain",
-    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
-    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/lib.rs::::module:receipt",
-    "disposition": "retain-align",
-    "target": "WI-05 receipt/evidence domain",
-    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
-    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
   },
   {
     "id": "crates/worldinterface-foundation/domain/src/lib.rs::::module:resource",
@@ -4165,62 +4095,6 @@
     "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
   },
   {
-    "id": "crates/worldinterface-foundation/domain/src/publication.rs::::enum:PublicationState",
-    "disposition": "retain-align",
-    "target": "WI-05 receipt/evidence domain",
-    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
-    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/publication.rs::::source-module:crates/worldinterface-foundation/domain/src/publication.rs",
-    "disposition": "retain-align",
-    "target": "WI-05 receipt/evidence domain",
-    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
-    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/publication.rs::::struct:Publication",
-    "disposition": "retain-align",
-    "target": "WI-05 receipt/evidence domain",
-    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
-    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/receipt.rs::::enum:DisclosureProfile",
-    "disposition": "retain-align",
-    "target": "WI-05 receipt/evidence domain",
-    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
-    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/receipt.rs::::source-module:crates/worldinterface-foundation/domain/src/receipt.rs",
-    "disposition": "retain-align",
-    "target": "WI-05 receipt/evidence domain",
-    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
-    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/receipt.rs::::struct:ReceiptAccess",
-    "disposition": "retain-align",
-    "target": "WI-05 receipt/evidence domain",
-    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
-    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/receipt.rs::::struct:ReceiptView",
-    "disposition": "retain-align",
-    "target": "WI-05 receipt/evidence domain",
-    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
-    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/src/receipt.rs::::struct:ValidatedReceipt",
-    "disposition": "retain-align",
-    "target": "WI-05 receipt/evidence domain",
-    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
-    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
-  },
-  {
     "id": "crates/worldinterface-foundation/domain/src/resource.rs::::enum:Target",
     "disposition": "retain-align",
     "target": "egress-domain",
@@ -4268,13 +4142,6 @@
     "target": "egress-domain",
     "rationale": "Inactive WI-04 agency, exact authorization, typed lifecycle journal and test admission; no production authority path",
     "source": "implementation plan WI-04, \u00a7\u00a78.4\u20138.6/9.1\u20139.4; full ADR-004\u2013007 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/domain/tests/developmental.rs::::source-module:crates/worldinterface-foundation/domain/tests/developmental.rs",
-    "disposition": "retain-align",
-    "target": "WI-05 receipt/evidence domain",
-    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
-    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
   },
   {
     "id": "crates/worldinterface-foundation/domain/tests/transitions.rs::::source-module:crates/worldinterface-foundation/domain/tests/transitions.rs",
@@ -4390,13 +4257,6 @@
   },
   {
     "id": "crates/worldinterface-foundation/ingress/src/lib.rs::::struct:IssuedDelivery",
-    "disposition": "retain-align",
-    "target": "ingress-domain",
-    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/ingress/src/lib.rs::::struct:SubscriberReceiptView",
     "disposition": "retain-align",
     "target": "ingress-domain",
     "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
@@ -4548,41 +4408,6 @@
     "target": "worldinterface-protocol",
     "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
     "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/evidence.rs::::enum:EvidenceClass",
-    "disposition": "retain-align",
-    "target": "WI-05 receipt/evidence domain",
-    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
-    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/evidence.rs::::source-module:crates/worldinterface-foundation/protocol/src/evidence.rs",
-    "disposition": "retain-align",
-    "target": "WI-05 receipt/evidence domain",
-    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
-    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/evidence.rs::::struct:ClassifiedEvidenceV1",
-    "disposition": "retain-align",
-    "target": "WI-05 receipt/evidence domain",
-    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
-    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/evidence.rs::::struct:CompletenessClaimV1",
-    "disposition": "retain-align",
-    "target": "WI-05 receipt/evidence domain",
-    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
-    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/evidence.rs::::struct:EvidenceGapV1",
-    "disposition": "retain-align",
-    "target": "WI-05 receipt/evidence domain",
-    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
-    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
   },
   {
     "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::source-module:crates/worldinterface-foundation/protocol/src/identity.rs",
@@ -4879,13 +4704,6 @@
     "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
   },
   {
-    "id": "crates/worldinterface-foundation/protocol/src/lib.rs::::module:evidence",
-    "disposition": "retain-align",
-    "target": "WI-05 receipt/evidence domain",
-    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
-    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
-  },
-  {
     "id": "crates/worldinterface-foundation/protocol/src/lib.rs::::module:identity",
     "disposition": "retain-align",
     "target": "worldinterface-protocol",
@@ -4898,13 +4716,6 @@
     "target": "ingress-domain",
     "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
     "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/lib.rs::::module:receipt",
-    "disposition": "retain-align",
-    "target": "WI-05 receipt/evidence domain",
-    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
-    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
   },
   {
     "id": "crates/worldinterface-foundation/protocol/src/lib.rs::::module:records",
@@ -4926,34 +4737,6 @@
     "target": "worldinterface-protocol",
     "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
     "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/receipt.rs::::enum:ProofBundleKind",
-    "disposition": "retain-align",
-    "target": "WI-05 receipt/evidence domain",
-    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
-    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/receipt.rs::::source-module:crates/worldinterface-foundation/protocol/src/receipt.rs",
-    "disposition": "retain-align",
-    "target": "WI-05 receipt/evidence domain",
-    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
-    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/receipt.rs::::struct:ProofBundleV1",
-    "disposition": "retain-align",
-    "target": "WI-05 receipt/evidence domain",
-    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
-    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
-  },
-  {
-    "id": "crates/worldinterface-foundation/protocol/src/receipt.rs::::struct:SigningProofV1",
-    "disposition": "retain-align",
-    "target": "WI-05 receipt/evidence domain",
-    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
-    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
   },
   {
     "id": "crates/worldinterface-foundation/protocol/src/records.rs::::enum:Decision",
@@ -5355,20 +5138,6 @@
     "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
   },
   {
-    "id": "crates/worldinterface-foundation/storage/src/lib.rs::::module:publication",
-    "disposition": "retain-align",
-    "target": "WI-05 receipt/evidence domain",
-    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
-    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
-  },
-  {
-    "id": "crates/worldinterface-foundation/storage/src/lib.rs::::module:receipt",
-    "disposition": "retain-align",
-    "target": "WI-05 receipt/evidence domain",
-    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
-    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
-  },
-  {
     "id": "crates/worldinterface-foundation/storage/src/lib.rs::::module:repository",
     "disposition": "retain-align",
     "target": "worldinterface-storage",
@@ -5395,34 +5164,6 @@
     "target": "worldinterface-storage",
     "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
     "rationale": "Fresh local persistence and query/backup primitives; no legacy readers or external effects."
-  },
-  {
-    "id": "crates/worldinterface-foundation/storage/src/publication.rs::::source-module:crates/worldinterface-foundation/storage/src/publication.rs",
-    "disposition": "retain-align",
-    "target": "WI-05 receipt/evidence domain",
-    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
-    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
-  },
-  {
-    "id": "crates/worldinterface-foundation/storage/src/receipt.rs::::source-module:crates/worldinterface-foundation/storage/src/receipt.rs",
-    "disposition": "retain-align",
-    "target": "WI-05 receipt/evidence domain",
-    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
-    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
-  },
-  {
-    "id": "crates/worldinterface-foundation/storage/src/receipt.rs::::type:ExistingRow",
-    "disposition": "retain-align",
-    "target": "WI-05 receipt/evidence domain",
-    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
-    "rationale": "Retain private durable receipt transaction row binding; no runtime admission or production authority is introduced."
-  },
-  {
-    "id": "crates/worldinterface-foundation/storage/src/receipt.rs::::type:RetryRow",
-    "disposition": "retain-align",
-    "target": "WI-05 receipt/evidence domain",
-    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
-    "rationale": "Retain private durable receipt transaction row binding; no runtime admission or production authority is introduced."
   },
   {
     "id": "crates/worldinterface-foundation/storage/src/repository.rs::::module:tests@10d1b0eff34c",
@@ -5635,41 +5376,6 @@
     "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
   },
   {
-    "id": "crates/worldinterface-foundation/worker/src/evidence.rs::::enum:VerificationStatus",
-    "disposition": "retain-align",
-    "target": "WI-05 worker evidence domain WP-015/WP-016",
-    "source": "implementation plan WI-05; WI-WORKER-EXECUTION-1 WP-015/WP-016; WI-ADR-016",
-    "rationale": "Keep exact-profile incomplete worker and enclosing-instance evidence separate; fixture proof grants no ordinary provider admission."
-  },
-  {
-    "id": "crates/worldinterface-foundation/worker/src/evidence.rs::::source-module:crates/worldinterface-foundation/worker/src/evidence.rs",
-    "disposition": "retain-align",
-    "target": "WI-05 worker evidence domain WP-015/WP-016",
-    "source": "implementation plan WI-05; WI-WORKER-EXECUTION-1 WP-015/WP-016; WI-ADR-016",
-    "rationale": "Keep exact-profile incomplete worker and enclosing-instance evidence separate; fixture proof grants no ordinary provider admission."
-  },
-  {
-    "id": "crates/worldinterface-foundation/worker/src/evidence.rs::::struct:EnclosingInstanceEvidenceV1",
-    "disposition": "retain-align",
-    "target": "WI-05 worker evidence domain WP-015/WP-016",
-    "source": "implementation plan WI-05; WI-WORKER-EXECUTION-1 WP-015/WP-016; WI-ADR-016",
-    "rationale": "Keep exact-profile incomplete worker and enclosing-instance evidence separate; fixture proof grants no ordinary provider admission."
-  },
-  {
-    "id": "crates/worldinterface-foundation/worker/src/evidence.rs::::struct:ExactWorkerBindingV1",
-    "disposition": "retain-align",
-    "target": "WI-05 worker evidence domain WP-015/WP-016",
-    "source": "implementation plan WI-05; WI-WORKER-EXECUTION-1 WP-015/WP-016; WI-ADR-016",
-    "rationale": "Keep exact-profile incomplete worker and enclosing-instance evidence separate; fixture proof grants no ordinary provider admission."
-  },
-  {
-    "id": "crates/worldinterface-foundation/worker/src/evidence.rs::::struct:WorkerEvidenceReportV1",
-    "disposition": "retain-align",
-    "target": "WI-05 worker evidence domain WP-015/WP-016",
-    "source": "implementation plan WI-05; WI-WORKER-EXECUTION-1 WP-015/WP-016; WI-ADR-016",
-    "rationale": "Keep exact-profile incomplete worker and enclosing-instance evidence separate; fixture proof grants no ordinary provider admission."
-  },
-  {
     "id": "crates/worldinterface-foundation/worker/src/lib.rs::::module:artifacts",
     "disposition": "retain-align",
     "target": "worldinterface-worker",
@@ -5689,13 +5395,6 @@
     "target": "worldinterface-worker",
     "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
     "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
-  },
-  {
-    "id": "crates/worldinterface-foundation/worker/src/lib.rs::::module:evidence",
-    "disposition": "retain-align",
-    "target": "WI-05 worker evidence domain WP-015/WP-016",
-    "source": "implementation plan WI-05; WI-WORKER-EXECUTION-1 WP-015/WP-016; WI-ADR-016",
-    "rationale": "Keep exact-profile incomplete worker and enclosing-instance evidence separate; fixture proof grants no ordinary provider admission."
   },
   {
     "id": "crates/worldinterface-foundation/worker/src/lib.rs::::module:lifecycle",
@@ -5941,13 +5640,6 @@
     "target": "worldinterface-worker",
     "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
     "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
-  },
-  {
-    "id": "crates/worldinterface-foundation/worker/tests/evidence.rs::::source-module:crates/worldinterface-foundation/worker/tests/evidence.rs",
-    "disposition": "retain-align",
-    "target": "WI-05 worker evidence domain WP-015/WP-016",
-    "source": "implementation plan WI-05; WI-WORKER-EXECUTION-1 WP-015/WP-016; WI-ADR-016",
-    "rationale": "Keep exact-profile incomplete worker and enclosing-instance evidence separate; fixture proof grants no ordinary provider admission."
   },
   {
     "id": "crates/worldinterface-host/Cargo.toml::workspace-crate:worldinterface-host",
@@ -6678,111 +6370,6 @@
     "source": "implementation plan WI-04 and Appendix A; accepted ADR-004\u2013007; AQ G2 source contracts"
   },
   {
-    "id": "crates/worldinterface-runtime/src/ingress.rs::::enum:AdmissionOutcome",
-    "disposition": "retain-align",
-    "target": "WI-03 typed AQ admission and wake outcomes",
-    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
-    "rationale": "Keep conflict, capacity, uncertainty and durable identities distinct while replaying Fabric queue obligations; independent review remains due."
-  },
-  {
-    "id": "crates/worldinterface-runtime/src/ingress.rs::::enum:AqDispatchFailure",
-    "disposition": "retain-align",
-    "target": "WI-03 typed AQ admission and wake outcomes",
-    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
-    "rationale": "Keep conflict, capacity, uncertainty and durable identities distinct while replaying Fabric queue obligations; independent review remains due."
-  },
-  {
-    "id": "crates/worldinterface-runtime/src/ingress.rs::::enum:DeliveryReadiness",
-    "disposition": "retain-align",
-    "target": "WI-03 production ingress and exact AQ consumer tests",
-    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
-    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
-  },
-  {
-    "id": "crates/worldinterface-runtime/src/ingress.rs::::module:http",
-    "disposition": "retain-align",
-    "target": "WI-03 bounded HTTP and streaming transport adapters",
-    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
-    "rationale": "Read exact signed bytes within provider limits before durable admission; streaming returns only the committed contiguous offset."
-  },
-  {
-    "id": "crates/worldinterface-runtime/src/ingress.rs::::module:streaming",
-    "disposition": "retain-align",
-    "target": "WI-03 bounded HTTP and streaming transport adapters",
-    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
-    "rationale": "Read exact signed bytes within provider limits before durable admission; streaming returns only the committed contiguous offset."
-  },
-  {
-    "id": "crates/worldinterface-runtime/src/ingress.rs::::source-module:crates/worldinterface-runtime/src/ingress.rs",
-    "disposition": "retain-align",
-    "target": "WI-03 production ingress and exact AQ consumer tests",
-    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
-    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
-  },
-  {
-    "id": "crates/worldinterface-runtime/src/ingress.rs::::struct:BoundAqIngress",
-    "disposition": "retain-align",
-    "target": "WI-03 production ingress and exact AQ consumer tests",
-    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
-    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
-  },
-  {
-    "id": "crates/worldinterface-runtime/src/ingress.rs::::struct:IngressDeliveryHandler",
-    "disposition": "retain-align",
-    "target": "WI-03 production ingress and exact AQ consumer tests",
-    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
-    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
-  },
-  {
-    "id": "crates/worldinterface-runtime/src/ingress.rs::::struct:IngressRuntime",
-    "disposition": "retain-align",
-    "target": "WI-03 production ingress and exact AQ consumer tests",
-    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
-    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
-  },
-  {
-    "id": "crates/worldinterface-runtime/src/ingress.rs::::struct:SubscriberRegistry",
-    "disposition": "retain-align",
-    "target": "WI-03 production ingress and exact AQ consumer tests",
-    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
-    "rationale": "Immutable tenant-bound transport registry shares actual handler registrations with AQ recovery; journaled policy bounds replacement generations."
-  },
-  {
-    "id": "crates/worldinterface-runtime/src/ingress.rs::::struct:WakeOutcome",
-    "disposition": "retain-align",
-    "target": "WI-03 typed AQ admission and wake outcomes",
-    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
-    "rationale": "Keep conflict, capacity, uncertainty and durable identities distinct while replaying Fabric queue obligations; independent review remains due."
-  },
-  {
-    "id": "crates/worldinterface-runtime/src/ingress.rs::::trait:AqIngressPort",
-    "disposition": "retain-align",
-    "target": "WI-03 production ingress and exact AQ consumer tests",
-    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
-    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
-  },
-  {
-    "id": "crates/worldinterface-runtime/src/ingress.rs::::trait:SubscriberTransport",
-    "disposition": "retain-align",
-    "target": "WI-03 production ingress and exact AQ consumer tests",
-    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
-    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
-  },
-  {
-    "id": "crates/worldinterface-runtime/src/ingress/http.rs::::source-module:crates/worldinterface-runtime/src/ingress/http.rs",
-    "disposition": "retain-align",
-    "target": "WI-03 bounded HTTP and streaming transport adapters",
-    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
-    "rationale": "Read exact signed bytes within provider limits before durable admission; streaming returns only the committed contiguous offset."
-  },
-  {
-    "id": "crates/worldinterface-runtime/src/ingress/streaming.rs::::source-module:crates/worldinterface-runtime/src/ingress/streaming.rs",
-    "disposition": "retain-align",
-    "target": "WI-03 bounded HTTP and streaming transport adapters",
-    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
-    "rationale": "Read exact signed bytes within provider limits before durable admission; streaming returns only the committed contiguous offset."
-  },
-  {
     "id": "crates/worldinterface-runtime/src/lib.rs::::module:admission",
     "disposition": "retain-align",
     "target": "WI-04 G2 runtime integration",
@@ -6823,13 +6410,6 @@
     "target": "WI-04 G2 runtime integration",
     "rationale": "Production effect and AQ admission boundary with exact request binding; independent review remains required.",
     "source": "implementation plan WI-04 and Appendix A; accepted ADR-004\u2013007; AQ G2 source contracts"
-  },
-  {
-    "id": "crates/worldinterface-runtime/src/lib.rs::::module:ingress",
-    "disposition": "retain-align",
-    "target": "WI-03 production ingress and exact AQ consumer tests",
-    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
-    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
   },
   {
     "id": "crates/worldinterface-runtime/src/lib.rs::::module:resolution",
@@ -6944,27 +6524,6 @@
     "source": "implementation plan WI-04 and Appendix A; accepted ADR-004\u2013007; AQ G2 source contracts"
   },
   {
-    "id": "crates/worldinterface-runtime/tests/effect_service.rs::::struct:Complete",
-    "disposition": "retain-align",
-    "target": "WI-04 G2 source tests",
-    "rationale": "Production facade and resource-boundary tests; independent review remains required.",
-    "source": "implementation plan WI-04 and Appendix A; accepted ADR-004\u2013007; AQ G2 source contracts"
-  },
-  {
-    "id": "crates/worldinterface-runtime/tests/effect_service.rs::::struct:CurrentEvidence",
-    "disposition": "retain-align",
-    "target": "WI-04 G2 source tests",
-    "rationale": "WIP-02 reviewed runtime admission test harness: mutable trusted evidence and facade type alias; no production interface or authority. Independent review remains required.",
-    "source": "docs/work-items/WIP-02.md; accepted WIP-02 design; ADR-004/005/006/007"
-  },
-  {
-    "id": "crates/worldinterface-runtime/tests/effect_service.rs::::struct:Evidence",
-    "disposition": "retain-align",
-    "target": "WI-04 G2 source tests",
-    "rationale": "Production facade and resource-boundary tests; independent review remains required.",
-    "source": "implementation plan WI-04 and Appendix A; accepted ADR-004\u2013007; AQ G2 source contracts"
-  },
-  {
     "id": "crates/worldinterface-runtime/tests/effect_service.rs::::struct:ExpireAtDeliveryClock",
     "disposition": "retain-align",
     "target": "WI-04 G2 source tests",
@@ -6979,18 +6538,25 @@
     "source": "implementation plan WI-04 and Appendix A; accepted ADR-004\u2013007; AQ G2 source contracts"
   },
   {
-    "id": "crates/worldinterface-runtime/tests/effect_service.rs::::struct:Observer",
+    "id": "crates/worldinterface-runtime/tests/effect_service.rs::::struct:Complete",
     "disposition": "retain-align",
     "target": "WI-04 G2 source tests",
     "rationale": "Production facade and resource-boundary tests; independent review remains required.",
     "source": "implementation plan WI-04 and Appendix A; accepted ADR-004\u2013007; AQ G2 source contracts"
   },
   {
-    "id": "crates/worldinterface-runtime/tests/effect_service.rs::::type:Service",
+    "id": "crates/worldinterface-runtime/tests/effect_service.rs::::struct:Evidence",
     "disposition": "retain-align",
     "target": "WI-04 G2 source tests",
-    "rationale": "WIP-02 reviewed runtime admission test harness: mutable trusted evidence and facade type alias; no production interface or authority. Independent review remains required.",
-    "source": "docs/work-items/WIP-02.md; accepted WIP-02 design; ADR-004/005/006/007"
+    "rationale": "Production facade and resource-boundary tests; independent review remains required.",
+    "source": "implementation plan WI-04 and Appendix A; accepted ADR-004\u2013007; AQ G2 source contracts"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/effect_service.rs::::struct:Observer",
+    "disposition": "retain-align",
+    "target": "WI-04 G2 source tests",
+    "rationale": "Production facade and resource-boundary tests; independent review remains required.",
+    "source": "implementation plan WI-04 and Appendix A; accepted ADR-004\u2013007; AQ G2 source contracts"
   },
   {
     "id": "crates/worldinterface-runtime/tests/g2_admission.rs::::source-module:crates/worldinterface-runtime/tests/g2_admission.rs",
@@ -7005,118 +6571,6 @@
     "target": "WI-04 G2 source tests",
     "rationale": "Candidate AQ admission, retry, canonical vector and discovery tests; independent review remains required.",
     "source": "implementation plan WI-04 and Appendix A; accepted ADR-004\u2013007; AQ G2 source contracts"
-  },
-  {
-    "id": "crates/worldinterface-runtime/tests/ingress.rs::::source-module:crates/worldinterface-runtime/tests/ingress.rs",
-    "disposition": "retain-align",
-    "target": "WI-03 production ingress and exact AQ consumer tests",
-    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
-    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
-  },
-  {
-    "id": "crates/worldinterface-runtime/tests/ingress.rs::::struct:Authority",
-    "disposition": "retain-align",
-    "target": "WI-03 production ingress and exact AQ consumer tests",
-    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
-    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
-  },
-  {
-    "id": "crates/worldinterface-runtime/tests/ingress.rs::::struct:Complete",
-    "disposition": "retain-align",
-    "target": "WI-03 production ingress and exact AQ consumer tests",
-    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
-    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
-  },
-  {
-    "id": "crates/worldinterface-runtime/tests/ingress.rs::::struct:CursorHandler",
-    "disposition": "retain-align",
-    "target": "WI-03 production ingress and exact AQ consumer tests",
-    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
-    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
-  },
-  {
-    "id": "crates/worldinterface-runtime/tests/ingress.rs::::struct:LostAcknowledgment",
-    "disposition": "retain-align",
-    "target": "WI-03 production ingress and exact AQ consumer tests",
-    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
-    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
-  },
-  {
-    "id": "crates/worldinterface-runtime/tests/ingress.rs::::struct:Subscriber",
-    "disposition": "retain-align",
-    "target": "WI-03 production ingress and exact AQ consumer tests",
-    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
-    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
-  },
-  {
-    "id": "crates/worldinterface-runtime/tests/ingress_recovery.rs::::source-module:crates/worldinterface-runtime/tests/ingress_recovery.rs",
-    "disposition": "retain-align",
-    "target": "WI-03 production ingress and exact AQ consumer tests",
-    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
-    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
-  },
-  {
-    "id": "crates/worldinterface-runtime/tests/ingress_recovery.rs::::struct:Authority",
-    "disposition": "retain-align",
-    "target": "WI-03 production ingress and exact AQ consumer tests",
-    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
-    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
-  },
-  {
-    "id": "crates/worldinterface-runtime/tests/ingress_recovery.rs::::struct:ConcurrentWriter",
-    "disposition": "retain-align",
-    "target": "WI-03 production ingress and exact AQ consumer tests",
-    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
-    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
-  },
-  {
-    "id": "crates/worldinterface-runtime/tests/ingress_recovery.rs::::struct:DelayedOldCompletion",
-    "disposition": "retain-align",
-    "target": "WI-03 production ingress and exact AQ consumer tests",
-    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
-    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
-  },
-  {
-    "id": "crates/worldinterface-runtime/tests/ingress_recovery.rs::::struct:DelayedOldTaskCompletion",
-    "disposition": "retain-align",
-    "target": "WI-03 production ingress and exact AQ consumer tests",
-    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
-    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
-  },
-  {
-    "id": "crates/worldinterface-runtime/tests/ingress_recovery.rs::::struct:DurableStop",
-    "disposition": "retain-align",
-    "target": "WI-03 production ingress and exact AQ consumer tests",
-    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
-    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
-  },
-  {
-    "id": "crates/worldinterface-runtime/tests/ingress_recovery.rs::::struct:InterruptedWake",
-    "disposition": "retain-align",
-    "target": "WI-03 production ingress and exact AQ consumer tests",
-    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
-    "rationale": "Exercise partial AQ task admission and bounded initial waits; independent case review and gate attestation remain due."
-  },
-  {
-    "id": "crates/worldinterface-runtime/tests/ingress_recovery.rs::::struct:PauseRecoveryWake",
-    "disposition": "retain-align",
-    "target": "WI-03 production ingress and exact AQ consumer tests",
-    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
-    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
-  },
-  {
-    "id": "crates/worldinterface-runtime/tests/ingress_recovery.rs::::struct:Recorder",
-    "disposition": "retain-align",
-    "target": "WI-03 production ingress and exact AQ consumer tests",
-    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
-    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
-  },
-  {
-    "id": "crates/worldinterface-runtime/tests/ingress_recovery.rs::::struct:RetireDuringWake",
-    "disposition": "retain-align",
-    "target": "WI-03 production ingress and exact AQ consumer tests",
-    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
-    "rationale": "Exercise host retirement during wake admission and durable dead-letter cause recording, including lost completion and restart; independent case review and gate attestation remain due."
   },
   {
     "id": "crates/worldinterface-runtime/tests/integration.rs::::source-module:crates/worldinterface-runtime/tests/integration.rs",
@@ -8216,5 +7670,551 @@
     "target": "capability admission / WASM adapter",
     "rationale": "Each high-value semantic connector requires admission review before target retention",
     "source": "implementation plan \u00a71.1 and Appendix E"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/ingress.rs::::struct:AcknowledgmentSignal",
+    "disposition": "retain-align",
+    "target": "WI-03 AQ-neutral ingress journal extension",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Persist immutable queue and acknowledgment obligations in the authoritative Fabric transaction; AQ types remain outside foundation."
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/ingress.rs::::struct:QueueObligation",
+    "disposition": "retain-align",
+    "target": "WI-03 AQ-neutral ingress journal extension",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Persist immutable queue and acknowledgment obligations in the authoritative Fabric transaction; AQ types remain outside foundation."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/ingress.rs::::source-module:crates/worldinterface-runtime/src/ingress.rs",
+    "disposition": "retain-align",
+    "target": "WI-03 production ingress and exact AQ consumer tests",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/ingress.rs::::struct:BoundAqIngress",
+    "disposition": "retain-align",
+    "target": "WI-03 production ingress and exact AQ consumer tests",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/ingress.rs::::struct:IngressDeliveryHandler",
+    "disposition": "retain-align",
+    "target": "WI-03 production ingress and exact AQ consumer tests",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/ingress.rs::::struct:IngressRuntime",
+    "disposition": "retain-align",
+    "target": "WI-03 production ingress and exact AQ consumer tests",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/ingress.rs::::trait:AqIngressPort",
+    "disposition": "retain-align",
+    "target": "WI-03 production ingress and exact AQ consumer tests",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/ingress.rs::::trait:SubscriberTransport",
+    "disposition": "retain-align",
+    "target": "WI-03 production ingress and exact AQ consumer tests",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/lib.rs::::module:ingress",
+    "disposition": "retain-align",
+    "target": "WI-03 production ingress and exact AQ consumer tests",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/ingress.rs::::source-module:crates/worldinterface-runtime/tests/ingress.rs",
+    "disposition": "retain-align",
+    "target": "WI-03 production ingress and exact AQ consumer tests",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/ingress.rs::::struct:Authority",
+    "disposition": "retain-align",
+    "target": "WI-03 production ingress and exact AQ consumer tests",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/ingress.rs::::struct:Complete",
+    "disposition": "retain-align",
+    "target": "WI-03 production ingress and exact AQ consumer tests",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/ingress.rs::::struct:CursorHandler",
+    "disposition": "retain-align",
+    "target": "WI-03 production ingress and exact AQ consumer tests",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/ingress.rs::::struct:LostAcknowledgment",
+    "disposition": "retain-align",
+    "target": "WI-03 production ingress and exact AQ consumer tests",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/ingress.rs::::struct:Subscriber",
+    "disposition": "retain-align",
+    "target": "WI-03 production ingress and exact AQ consumer tests",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/ingress.rs::::enum:AdmissionOutcome",
+    "disposition": "retain-align",
+    "target": "WI-03 typed AQ admission and wake outcomes",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Keep conflict, capacity, uncertainty and durable identities distinct while replaying Fabric queue obligations; independent review remains due."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/ingress.rs::::enum:AqDispatchFailure",
+    "disposition": "retain-align",
+    "target": "WI-03 typed AQ admission and wake outcomes",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Keep conflict, capacity, uncertainty and durable identities distinct while replaying Fabric queue obligations; independent review remains due."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/ingress.rs::::struct:WakeOutcome",
+    "disposition": "retain-align",
+    "target": "WI-03 typed AQ admission and wake outcomes",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Keep conflict, capacity, uncertainty and durable identities distinct while replaying Fabric queue obligations; independent review remains due."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/ingress.rs::::module:http",
+    "disposition": "retain-align",
+    "target": "WI-03 bounded HTTP and streaming transport adapters",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Read exact signed bytes within provider limits before durable admission; streaming returns only the committed contiguous offset."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/ingress.rs::::module:streaming",
+    "disposition": "retain-align",
+    "target": "WI-03 bounded HTTP and streaming transport adapters",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Read exact signed bytes within provider limits before durable admission; streaming returns only the committed contiguous offset."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/ingress/http.rs::::source-module:crates/worldinterface-runtime/src/ingress/http.rs",
+    "disposition": "retain-align",
+    "target": "WI-03 bounded HTTP and streaming transport adapters",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Read exact signed bytes within provider limits before durable admission; streaming returns only the committed contiguous offset."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/ingress/streaming.rs::::source-module:crates/worldinterface-runtime/src/ingress/streaming.rs",
+    "disposition": "retain-align",
+    "target": "WI-03 bounded HTTP and streaming transport adapters",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Read exact signed bytes within provider limits before durable admission; streaming returns only the committed contiguous offset."
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/ingress_recovery.rs::::source-module:crates/worldinterface-runtime/tests/ingress_recovery.rs",
+    "disposition": "retain-align",
+    "target": "WI-03 production ingress and exact AQ consumer tests",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/ingress_recovery.rs::::struct:Authority",
+    "disposition": "retain-align",
+    "target": "WI-03 production ingress and exact AQ consumer tests",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/ingress_recovery.rs::::struct:ConcurrentWriter",
+    "disposition": "retain-align",
+    "target": "WI-03 production ingress and exact AQ consumer tests",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/ingress_recovery.rs::::struct:DurableStop",
+    "disposition": "retain-align",
+    "target": "WI-03 production ingress and exact AQ consumer tests",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/ingress_recovery.rs::::struct:Recorder",
+    "disposition": "retain-align",
+    "target": "WI-03 production ingress and exact AQ consumer tests",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/ingress_recovery.rs::::struct:PauseRecoveryWake",
+    "disposition": "retain-align",
+    "target": "WI-03 production ingress and exact AQ consumer tests",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/ingress_recovery.rs::::struct:DelayedOldCompletion",
+    "disposition": "retain-align",
+    "target": "WI-03 production ingress and exact AQ consumer tests",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/ingress_recovery.rs::::struct:DelayedOldTaskCompletion",
+    "disposition": "retain-align",
+    "target": "WI-03 production ingress and exact AQ consumer tests",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/developmental.rs::::enum:Comparison",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/developmental.rs::::source-module:crates/worldinterface-foundation/domain/src/developmental.rs",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/developmental.rs::::struct:CampaignArmV1",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/developmental.rs::::struct:DevelopmentalComparisonV1",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/developmental.rs::::struct:DevelopmentalSnapshotV1",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/lib.rs::::module:developmental",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/lib.rs::::module:publication",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/lib.rs::::module:receipt",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/publication.rs::::enum:PublicationState",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/publication.rs::::source-module:crates/worldinterface-foundation/domain/src/publication.rs",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/publication.rs::::struct:Publication",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/receipt.rs::::enum:DisclosureProfile",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/receipt.rs::::source-module:crates/worldinterface-foundation/domain/src/receipt.rs",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/receipt.rs::::struct:ReceiptAccess",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/receipt.rs::::struct:ReceiptView",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/receipt.rs::::struct:ValidatedReceipt",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/tests/developmental.rs::::source-module:crates/worldinterface-foundation/domain/tests/developmental.rs",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/evidence.rs::::enum:EvidenceClass",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/evidence.rs::::source-module:crates/worldinterface-foundation/protocol/src/evidence.rs",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/evidence.rs::::struct:ClassifiedEvidenceV1",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/evidence.rs::::struct:CompletenessClaimV1",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/evidence.rs::::struct:EvidenceGapV1",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/lib.rs::::module:evidence",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/lib.rs::::module:receipt",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/receipt.rs::::enum:ProofBundleKind",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/receipt.rs::::source-module:crates/worldinterface-foundation/protocol/src/receipt.rs",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/receipt.rs::::struct:ProofBundleV1",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/receipt.rs::::struct:SigningProofV1",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/lib.rs::::module:publication",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/lib.rs::::module:receipt",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/publication.rs::::source-module:crates/worldinterface-foundation/storage/src/publication.rs",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/receipt.rs::::source-module:crates/worldinterface-foundation/storage/src/receipt.rs",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain canonical receipts, publication obligations and developmental causal evidence within the independent foundation; integration and parent gates remain separate."
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/receipt.rs::::type:ExistingRow",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain private durable receipt transaction row binding; no runtime admission or production authority is introduced."
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/receipt.rs::::type:RetryRow",
+    "disposition": "retain-align",
+    "target": "WI-05 receipt/evidence domain",
+    "source": "implementation plan WI-05 and \u00a7\u00a713.1\u201313.11; WI-ADR-008 and WI-ADR-009",
+    "rationale": "Retain private durable receipt transaction row binding; no runtime admission or production authority is introduced."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/evidence.rs::::enum:VerificationStatus",
+    "disposition": "retain-align",
+    "target": "WI-05 worker evidence domain WP-015/WP-016",
+    "source": "implementation plan WI-05; WI-WORKER-EXECUTION-1 WP-015/WP-016; WI-ADR-016",
+    "rationale": "Keep exact-profile incomplete worker and enclosing-instance evidence separate; fixture proof grants no ordinary provider admission."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/evidence.rs::::source-module:crates/worldinterface-foundation/worker/src/evidence.rs",
+    "disposition": "retain-align",
+    "target": "WI-05 worker evidence domain WP-015/WP-016",
+    "source": "implementation plan WI-05; WI-WORKER-EXECUTION-1 WP-015/WP-016; WI-ADR-016",
+    "rationale": "Keep exact-profile incomplete worker and enclosing-instance evidence separate; fixture proof grants no ordinary provider admission."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/evidence.rs::::struct:EnclosingInstanceEvidenceV1",
+    "disposition": "retain-align",
+    "target": "WI-05 worker evidence domain WP-015/WP-016",
+    "source": "implementation plan WI-05; WI-WORKER-EXECUTION-1 WP-015/WP-016; WI-ADR-016",
+    "rationale": "Keep exact-profile incomplete worker and enclosing-instance evidence separate; fixture proof grants no ordinary provider admission."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/evidence.rs::::struct:ExactWorkerBindingV1",
+    "disposition": "retain-align",
+    "target": "WI-05 worker evidence domain WP-015/WP-016",
+    "source": "implementation plan WI-05; WI-WORKER-EXECUTION-1 WP-015/WP-016; WI-ADR-016",
+    "rationale": "Keep exact-profile incomplete worker and enclosing-instance evidence separate; fixture proof grants no ordinary provider admission."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/evidence.rs::::struct:WorkerEvidenceReportV1",
+    "disposition": "retain-align",
+    "target": "WI-05 worker evidence domain WP-015/WP-016",
+    "source": "implementation plan WI-05; WI-WORKER-EXECUTION-1 WP-015/WP-016; WI-ADR-016",
+    "rationale": "Keep exact-profile incomplete worker and enclosing-instance evidence separate; fixture proof grants no ordinary provider admission."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/lib.rs::::module:evidence",
+    "disposition": "retain-align",
+    "target": "WI-05 worker evidence domain WP-015/WP-016",
+    "source": "implementation plan WI-05; WI-WORKER-EXECUTION-1 WP-015/WP-016; WI-ADR-016",
+    "rationale": "Keep exact-profile incomplete worker and enclosing-instance evidence separate; fixture proof grants no ordinary provider admission."
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/tests/evidence.rs::::source-module:crates/worldinterface-foundation/worker/tests/evidence.rs",
+    "disposition": "retain-align",
+    "target": "WI-05 worker evidence domain WP-015/WP-016",
+    "source": "implementation plan WI-05; WI-WORKER-EXECUTION-1 WP-015/WP-016; WI-ADR-016",
+    "rationale": "Keep exact-profile incomplete worker and enclosing-instance evidence separate; fixture proof grants no ordinary provider admission."
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/effect_service.rs::::struct:CurrentEvidence",
+    "disposition": "retain-align",
+    "target": "WI-04 G2 source tests",
+    "rationale": "WIP-02 reviewed runtime admission test harness: mutable trusted evidence and facade type alias; no production interface or authority. Independent review remains required.",
+    "source": "docs/work-items/WIP-02.md; accepted WIP-02 design; ADR-004/005/006/007"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/effect_service.rs::::type:Service",
+    "disposition": "retain-align",
+    "target": "WI-04 G2 source tests",
+    "rationale": "WIP-02 reviewed runtime admission test harness: mutable trusted evidence and facade type alias; no production interface or authority. Independent review remains required.",
+    "source": "docs/work-items/WIP-02.md; accepted WIP-02 design; ADR-004/005/006/007"
+  },
+  {
+    "id": "crates/worldinterface-foundation/ingress/src/lib.rs::::struct:SubscriberReceiptView",
+    "disposition": "retain-align",
+    "target": "ingress-domain",
+    "rationale": "Inactive WI-03 ingress protocol, pure transitions or Fabric persistence; no production adapter",
+    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/ingress.rs::::enum:DeliveryReadiness",
+    "disposition": "retain-align",
+    "target": "WI-03 production ingress and exact AQ consumer tests",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Store-before-wake AQ requests and protected subscriber acknowledgment are runtime-owned; independent case review and gate attestation remain due."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/ingress.rs::::struct:SubscriberRegistry",
+    "disposition": "retain-align",
+    "target": "WI-03 production ingress and exact AQ consumer tests",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Immutable tenant-bound transport registry shares actual handler registrations with AQ recovery; journaled policy bounds replacement generations."
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/ingress_recovery.rs::::struct:InterruptedWake",
+    "disposition": "retain-align",
+    "target": "WI-03 production ingress and exact AQ consumer tests",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Exercise partial AQ task admission and bounded initial waits; independent case review and gate attestation remain due."
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/ingress_recovery.rs::::struct:RetireDuringWake",
+    "disposition": "retain-align",
+    "target": "WI-03 production ingress and exact AQ consumer tests",
+    "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
+    "rationale": "Exercise host retirement during wake admission and durable dead-letter cause recording, including lost completion and restart; independent case review and gate attestation remain due."
   }
 ]

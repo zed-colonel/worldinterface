@@ -2,9 +2,11 @@
 
 HTTP and streaming transports commit authenticated observations, ingress receipts,
 captured subscriber deliveries, and immutable AQ requests before dispatch. The
-production adapter uses AQ `29e096c4f06985d1a9bd9d5fe5a3a6a5db8a6860`, tree
-`1c0c85dd700bd9d0c75de223dada911ffeadbb5b`, conformance revision 16. Archive and
-source-tree identities remain in `contracts/aq-integration-target.json`.
+production adapter uses crates.io AQ `=0.2.0`, whose published checksums are pinned
+in `contracts/aq-integration-target.json`. The historical source commit
+`29e096c4f06985d1a9bd9d5fe5a3a6a5db8a6860`, tree
+`1c0c85dd700bd9d0c75de223dada911ffeadbb5b`, and conformance revision 16 remain
+provenance for that published release.
 WI-AQ-005/006 map to retained durable signals, bounded waits and real-AQ restart
 tests, rather than process-local matching. The four assigned baseline cases and
 their source-record hashes are in `conformance/wi-fabric-2/integration/fixtures.json`.
@@ -173,11 +175,14 @@ journals still replay. The new AQ-neutral command belongs to the existing ingres
 journal, with state and cursor committed or rolled back together. No retention
 policy, generation budget, token authority or second matching authority is added.
 
-Use the supplied Cargo launcher for native runtime build/test and the AQ-free
-supplementary domain/contract checks. Run all four adopted foundation checks with
-`ct-check --declared`, the integration/domain/contract scripts through `ct-check`,
-and their scoped jobs through `ct-act`. Rust 1.89.0 and the supplied explicit CI
-Cargo config remain required. Logs and digest-indexed results belong outside source.
+Since WIP-01, verification uses Rust 1.89.0 and every adopted check in
+`.craftingtable/checks.json`, offline in a private clone of the committed candidate.
+The run-provided `ct-check --declared <id>` records those checks; supplemental
+commands do not replace them. There is no controller Cargo launcher, `ct-act`,
+`ct-native`, or supplied AQ pin. Fetch dependencies with Cargo when needed; keep
+AQ at crates.io `=0.2.0` without path/patch overrides. Run Cargo checks serially
+with the run-provided external `CARGO_TARGET_DIR` and scratch `TMPDIR`; preserve
+logs under `scratch/verification` and review notes under `scratch/review`.
 
 Repository policy revision 1 and branch-settings revision 1 specify controller-local
 exact-commit review and controller-mediated integration. Remote protection is due
@@ -186,3 +191,9 @@ review of case results on this candidate, a distinct security review, controller
 integration, merged-target verification and parent acceptance remain separate gates.
 This owning slice changes no plan, acceptance criteria, scheduling authority or
 other work item's implementation.
+
+The current takeover and complete WI-03 required-test mapping are recorded in
+[WIP-03](WIP-03.md). Its exact WI03P-F001 regression retains the one-second
+retention, 100 ms acknowledgment timeout, zero WI/AQ backoff and 1 ms AQ tick.
+WI-AQ-G3 stays open for WIP-08 under the active worker-proof plan. Historical
+map attestation and CI references above describe provenance only.
