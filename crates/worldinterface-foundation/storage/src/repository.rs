@@ -355,12 +355,13 @@ impl Repository<'_> {
     pub fn rebuild(&self) -> Result<()> {
         let mut c = self.root.connect(self.kind)?;
         let tx = c.transaction_with_behavior(TransactionBehavior::Immediate)?;
-        tx.execute_batch("DELETE FROM projections; DELETE FROM records; DELETE FROM admissions; DELETE FROM outbox; DELETE FROM ingress_state; DELETE FROM ingress_receipt_index; DELETE FROM effect_state; DELETE FROM effect_outbox; DELETE FROM publication_index; DELETE FROM receipt_index;")?;
+        tx.execute_batch("DELETE FROM projections; DELETE FROM records; DELETE FROM admissions; DELETE FROM outbox; DELETE FROM ingress_state; DELETE FROM ingress_receipt_index; DELETE FROM effect_state; DELETE FROM effect_outbox; DELETE FROM publication_index; DELETE FROM receipt_index; DELETE FROM flow_state;")?;
         replay_into(&tx, &tx)?;
         crate::ingress::replay(&tx, &tx)?;
         crate::effect::replay(&tx, &tx)?;
         crate::publication::replay(&tx, &tx)?;
         crate::receipt::replay(&tx, &tx)?;
+        crate::flow::replay(&tx, &tx)?;
         tx.commit()?;
         #[cfg(test)]
         crate::crash::checkpoint("after-commit");
@@ -402,12 +403,14 @@ pub(crate) fn validate_database(c: &Connection) -> Result<()> {
     expected.execute_batch(SCHEMA)?;
     expected.execute_batch(crate::ingress::SCHEMA)?;
     expected.execute_batch(crate::effect::SCHEMA)?;
+    expected.execute_batch(crate::flow::SCHEMA)?;
     replay_into(c, &expected)?;
     crate::ingress::replay(c, &expected)?;
     crate::effect::replay(c, &expected)?;
     crate::publication::replay(c, &expected)?;
     crate::receipt::replay(c, &expected)?;
-    for query in ["SELECT run,tenant,intent,task FROM effect_run_index ORDER BY run", "SELECT tenant,state FROM effect_state ORDER BY tenant", "SELECT tenant,intent,dispatch FROM effect_outbox ORDER BY tenant,intent", "SELECT tenant,state FROM ingress_state ORDER BY tenant", "SELECT id,tenant,identity,digest,canonical FROM ingress_receipt_index ORDER BY id", "SELECT entity,revision,state FROM projections ORDER BY entity", "SELECT entity,digest,canonical FROM records ORDER BY seq", "SELECT scope,principal,class,request,digest,entity FROM admissions ORDER BY scope,principal,class,request", "SELECT key,entity,payload,delivered FROM outbox ORDER BY key", "SELECT identity,scope,content,size,state FROM publication_index ORDER BY identity", "SELECT id,digest,tenant,intent FROM receipt_index ORDER BY id"] {
+    crate::flow::replay(c, &expected)?;
+    for query in ["SELECT tenant,state FROM flow_state ORDER BY tenant", "SELECT run,tenant,intent,task FROM effect_run_index ORDER BY run", "SELECT tenant,state FROM effect_state ORDER BY tenant", "SELECT tenant,intent,dispatch FROM effect_outbox ORDER BY tenant,intent", "SELECT tenant,state FROM ingress_state ORDER BY tenant", "SELECT id,tenant,identity,digest,canonical FROM ingress_receipt_index ORDER BY id", "SELECT entity,revision,state FROM projections ORDER BY entity", "SELECT entity,digest,canonical FROM records ORDER BY seq", "SELECT scope,principal,class,request,digest,entity FROM admissions ORDER BY scope,principal,class,request", "SELECT key,entity,payload,delivered FROM outbox ORDER BY key", "SELECT identity,scope,content,size,state FROM publication_index ORDER BY identity", "SELECT id,digest,tenant,intent FROM receipt_index ORDER BY id"] {
   fn values(c: &Connection, sql: &str) -> Result<Vec<Vec<rusqlite::types::Value>>> {
    let mut q=c.prepare(sql)?; let n=q.column_count();
    let rows=q.query_map([],|r|(0..n).map(|i|r.get(i)).collect::<rusqlite::Result<Vec<_>>>())?;
@@ -439,6 +442,7 @@ mod tests {
             c.execute_batch(SCHEMA).unwrap();
             c.execute_batch(crate::ingress::SCHEMA).unwrap();
             c.execute_batch(crate::effect::SCHEMA).unwrap();
+            c.execute_batch(crate::flow::SCHEMA).unwrap();
             let entity = EntityId::generate();
             let mut b = Batch::new(entity.clone(), Machine::Effect, 0);
             b.events.push(Event {

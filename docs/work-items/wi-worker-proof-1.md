@@ -164,3 +164,10 @@ domain coverage and independent vectors are in `conformance/wi-fabric-2/flow`;
 [WIP-06](WIP-06.md) records the profile and WIP-07/08 handoff. No acceptance-case
 ownership or runtime gate state changes. Independent review, committed-head
 adopted checks and CraftingTable integration remain required.
+
+WIP-07 implements the bounded AQ transactional-child coordinator and one plan
+execution path for Direct and Flow submissions. The runtime obligation matrix is
+separate from WIP-06's pure compiler proof. AB-WI-005/010/013 have executable
+candidate mappings; WI-AQ-G4 is drafted closed, effective on reviewed merge with
+all adopted checks. WI-AQ-G3 remains WIP-08-owned and open. See [WIP-07](WIP-07.md)
+for the persistence profile, admission provenance, recovery boundaries and evidence.

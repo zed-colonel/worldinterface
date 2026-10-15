@@ -583,3 +583,505 @@ async fn ab_wi_020_queue_cancel_keeps_started_external_effect_uncertain() {
     assert_eq!(h.case().status, CaseStatus::ConfirmedCommitted);
     assert_eq!(h.connector.commits(), 1);
 }
+
+fn replay_log(path: &std::path::Path) -> ReplayReducer {
+    let mut p = ReplayReducer::new();
+    for line in std::io::BufReader::new(std::fs::File::open(path).unwrap()).lines() {
+        p.apply(&serde_json::from_str::<WalEvent>(&line.unwrap()).unwrap()).unwrap();
+    }
+    p
+}
+struct At(u64);
+impl actionqueue_core::time::clock::Clock for At {
+    fn now(&self) -> u64 {
+        self.0
+    }
+}
+fn child_set(parent: TaskId, count: usize) -> Vec<ChildAdmission> {
+    let ids: Vec<_> = (0..count).map(|_| TaskId::new()).collect();
+    ids.iter()
+        .enumerate()
+        .map(|(i, id)| {
+            ChildAdmission::new(
+                AdmissionKey::new(format!("child:{i}")).unwrap(),
+                TaskSpec::new(
+                    *id,
+                    TaskPayload::new(b"node".to_vec()),
+                    RunPolicy::Once,
+                    TaskConstraints::default(),
+                    TaskMetadata::default(),
+                )
+                .unwrap()
+                .with_parent(parent),
+                if i == 0 { vec![] } else { vec![ids[i - 1]] },
+                CausalOverride::default(),
+            )
+            .unwrap()
+        })
+        .collect()
+}
+fn compound(attempt: AttemptId, children: Vec<ChildAdmission>) -> AttemptDisposition {
+    AttemptDisposition::new(
+        DispositionOutcome::Awaiting,
+        DispositionParts {
+            wait: Some(
+                WaitSpec::children(
+                    WaitId::new(),
+                    children.iter().map(|c| c.task_spec().id()).collect(),
+                    ChildWaitPolicy::AllTerminal,
+                    None,
+                )
+                .unwrap(),
+            ),
+            checkpoint: Some(checkpoint(attempt)),
+            child_admissions: children,
+            ..Default::default()
+        },
+    )
+    .unwrap()
+}
+#[test]
+fn ab_wi_005_bounds_are_enforced_by_aq_admission_and_disposition() {
+    // Initial runs: exercise the service, not only policy construction.
+    for count in [64, 65] {
+        let (_t, mut a) = authority();
+        let s = TaskSpec::new(
+            TaskId::new(),
+            TaskPayload::new(vec![]),
+            RunPolicy::repeat(count, 1).unwrap(),
+            TaskConstraints::default(),
+            TaskMetadata::default(),
+        )
+        .unwrap();
+        let req = EnsureTaskRequest::new(
+            AdmissionKey::new("bound").unwrap(),
+            s,
+            vec![],
+            CausalContext::new(
+                TraceId::new("proof").unwrap(),
+                CorrelationId::new("proof").unwrap(),
+            ),
+            None,
+        );
+        let result = req.map_err(|e| e.to_string()).and_then(|req| {
+            actionqueue_runtime::admission::ensure_task(&mut a, req, &Clock)
+                .map_err(|e| e.to_string())
+        });
+        assert_eq!(result.is_ok(), count == 64);
+        assert_eq!(a.projection().run_count(), if count == 64 { 64 } else { 0 });
+    }
+    for count in [64, 65] {
+        let (_t, mut a) = authority();
+        let deps: Vec<_> = (0..count)
+            .map(|_| {
+                let s = spec();
+                let id = s.id();
+                admit(&mut a, request(s, vec![]));
+                id
+            })
+            .collect();
+        let s = spec();
+        let task = s.id();
+        match EnsureTaskRequest::new(
+            AdmissionKey::new("dependencies").unwrap(),
+            s,
+            deps,
+            CausalContext::new(
+                TraceId::new("proof").unwrap(),
+                CorrelationId::new("proof").unwrap(),
+            ),
+            None,
+        ) {
+            Ok(req) => {
+                assert_eq!(count, 64);
+                actionqueue_runtime::admission::ensure_task(&mut a, req, &Clock).unwrap();
+                assert!(a.projection().task_admission(task).is_some());
+            }
+            Err(_) => {
+                assert_eq!(count, 65);
+                assert!(a.projection().task_admission(task).is_none());
+            }
+        }
+    }
+    for size in [65_536, 65_537] {
+        let (_t, mut a) = authority();
+        let s = TaskSpec::new(
+            TaskId::new(),
+            TaskPayload::new(vec![0; size]),
+            RunPolicy::Once,
+            TaskConstraints::default(),
+            TaskMetadata::default(),
+        )
+        .unwrap();
+        let req = EnsureTaskRequest::new(
+            AdmissionKey::new("bound").unwrap(),
+            s,
+            vec![],
+            CausalContext::new(
+                TraceId::new("proof").unwrap(),
+                CorrelationId::new("proof").unwrap(),
+            ),
+            None,
+        );
+        let result = req.map_err(|e| e.to_string()).and_then(|req| {
+            actionqueue_runtime::admission::ensure_task(&mut a, req, &Clock)
+                .map_err(|e| e.to_string())
+        });
+        assert_eq!(result.is_ok(), size == 65_536);
+        assert_eq!(a.projection().task_count(), usize::from(size == 65_536));
+    }
+    for count in [64, 65] {
+        let (_t, mut a) = authority();
+        let parent = spec();
+        let task = parent.id();
+        let run = admit(&mut a, request(parent, vec![]));
+        let expected = begin(&mut a, run, "local");
+        let children = child_set(task, count);
+        let mut limits = a.continuation_limits();
+        limits.disposition_bytes = 1024 * 1024;
+        a.set_continuation_limits(limits);
+        let d = AttemptDisposition::new(
+            DispositionOutcome::Awaiting,
+            DispositionParts {
+                wait: Some(wait()),
+                checkpoint: Some(checkpoint(expected.attempt_id())),
+                child_admissions: children.clone(),
+                ..Default::default()
+            },
+        );
+        if count == 64 {
+            disposition::commit(&mut a, expected, d.unwrap(), 101).unwrap();
+            assert_eq!(a.projection().task_count(), 65);
+            assert_eq!(a.projection().waits().active_count(), 1);
+        } else {
+            assert!(d.is_err());
+            assert_eq!(a.projection().task_count(), 1);
+            assert_eq!(a.projection().waits().active_count(), 0);
+        }
+        assert_eq!(
+            WaitSpec::children(
+                WaitId::new(),
+                children.iter().map(|c| c.task_spec().id()).collect(),
+                ChildWaitPolicy::AllTerminal,
+                None
+            )
+            .is_ok(),
+            count == 64
+        );
+    }
+    for count in [32, 33] {
+        let (_t, mut a) = authority();
+        let run = admit(&mut a, request(spec(), vec![]));
+        let expected = begin(&mut a, run, "local");
+        let d = AttemptDisposition::new(
+            DispositionOutcome::Complete,
+            DispositionParts {
+                emitted_signals: (0..count).map(|_| signal()).collect(),
+                ..Default::default()
+            },
+        );
+        if count == 32 {
+            disposition::commit(&mut a, expected, d.unwrap(), 101).unwrap();
+            assert_eq!(a.projection().signals().statistics().retained, 32);
+        } else {
+            assert!(d.is_err());
+            assert_eq!(a.projection().signals().statistics().retained, 0);
+        }
+    }
+    let (_t, mut a) = authority();
+    let root = spec();
+    let mut parent = root.id();
+    admit(&mut a, request(root, vec![]));
+    for depth in 1..=9 {
+        let s = spec().with_parent(parent);
+        let id = s.id();
+        let req = EnsureTaskRequest::new(
+            AdmissionKey::new(format!("depth:{depth}")).unwrap(),
+            s,
+            vec![],
+            CausalContext::new(
+                TraceId::new("proof").unwrap(),
+                CorrelationId::new("proof").unwrap(),
+            ),
+            None,
+        );
+        let result = req.map_err(|e| e.to_string()).and_then(|req| {
+            actionqueue_runtime::admission::ensure_task(&mut a, req, &Clock)
+                .map_err(|e| e.to_string())
+        });
+        assert_eq!(result.is_ok(), depth <= 8, "depth {depth}");
+        if depth <= 8 {
+            parent = id;
+        } else {
+            assert!(a.projection().task_admission(id).is_none());
+        }
+    }
+}
+#[test]
+fn ab_wi_005_compound_commit_replay_is_all_or_none_with_stable_children() {
+    for lost_ack in [false, true] {
+        let (t, mut a) = authority();
+        let parent = spec();
+        let task = parent.id();
+        let run = admit(&mut a, request(parent, vec![]));
+        let expected = begin(&mut a, run, "local");
+        let mut limits = a.continuation_limits();
+        limits.disposition_bytes = 1024 * 1024;
+        a.set_continuation_limits(limits);
+        let children = child_set(task, 64);
+        let d = compound(expected.attempt_id(), children.clone());
+        // A prepared WI proposal alone has no AQ effects, including after replay.
+        let before = replay_log(&t.path().join("wal.jsonl"));
+        assert_eq!(before.task_count(), 1);
+        assert_eq!(before.waits().active_count(), 0);
+        let (writer, p) = a.into_parts();
+        writer.fail.store(lost_ack, Ordering::SeqCst);
+        let path = writer.path.clone();
+        let mut a = StorageMutationAuthority::new(writer, p).with_host(host());
+        let mut limits = a.continuation_limits();
+        limits.disposition_bytes = 1024 * 1024;
+        a.set_continuation_limits(limits);
+        let result = disposition::commit(&mut a, expected, d.clone(), 101);
+        assert_eq!(result.is_err(), lost_ack);
+        let recovered = replay_log(&path);
+        assert_eq!(recovered.task_count(), 65);
+        assert_eq!(recovered.waits().active_count(), 1);
+        assert_eq!(recovered.get_run_state(&run), Some(&RunState::Awaiting));
+        let record = recovered
+            .get_attempt_history(&run)
+            .unwrap()
+            .last()
+            .unwrap()
+            .disposition
+            .as_ref()
+            .unwrap();
+        assert_eq!(record.disposition, d);
+        assert_eq!(recovered.parent_child_mappings().count(), 64);
+        assert_eq!(
+            recovered.dependency_declarations().filter(|(_, deps)| !deps.is_empty()).count(),
+            63
+        );
+        for child in children {
+            assert!(recovered.task_admission(child.task_spec().id()).is_some());
+            assert_eq!(recovered.run_ids_for_task(child.task_spec().id()).len(), 1);
+        }
+    }
+}
+#[test]
+fn ab_wi_010_deadline_signal_orders_and_timeout_policies_survive_replay() {
+    use actionqueue_storage::mutation::wait::WaitResolutionKind;
+    for policy in [
+        WaitTimeoutPolicy::ResumeWithTimeout,
+        WaitTimeoutPolicy::FailRun {
+            code: actionqueue_core::bounded::BoundedCode::new("deadline").unwrap(),
+        },
+        WaitTimeoutPolicy::CancelRun,
+    ] {
+        for order in ["early", "signal-first", "deadline-first"] {
+            let (t, mut a) = authority();
+            let run = admit(&mut a, request(spec(), vec![]));
+            let expected = begin(&mut a, run, "local");
+            let id = WaitId::new();
+            let mut w = wait();
+            w = WaitSpec::new(
+                id,
+                w.filter().unwrap().clone(),
+                WaitMatchPolicy::FirstMatch,
+                SignalEligibility::AnyRetained,
+                Some(WaitDeadline { at: 200, policy: policy.clone() }),
+            )
+            .unwrap();
+            let s = AdmitSignalRequest::new(
+                SignalId::new(format!("race:{order}")).unwrap(),
+                SignalNamespace::new("proof").unwrap(),
+                SignalKind::new("never").unwrap(),
+                Some(CorrelationId::new("proof").unwrap()),
+                None,
+                None,
+                None,
+                None,
+                None,
+            )
+            .unwrap();
+            if order == "early" {
+                control::execute_control(
+                    &mut a,
+                    &host(),
+                    ControlOperation::AdmitSignal(s.clone()),
+                    &Clock,
+                )
+                .unwrap();
+            }
+            let expected = AttemptCommitExpectation::new(
+                a.projection().latest_sequence() + 1,
+                run,
+                expected.attempt_id(),
+                RunState::Running,
+                expected.expected_lease().clone(),
+            );
+            disposition::commit(&mut a, expected, AttemptDisposition::awaiting(w, None), 101)
+                .unwrap();
+            if order != "early" {
+                assert_eq!(waits::reconcile(&mut a, 199).unwrap(), 0);
+            }
+            if order == "deadline-first" {
+                assert_eq!(waits::reconcile(&mut a, 200).unwrap(), 1);
+            }
+            if order != "early" {
+                control::execute_control(
+                    &mut a,
+                    &host(),
+                    ControlOperation::AdmitSignal(s),
+                    &At(200),
+                )
+                .unwrap();
+            }
+            waits::reconcile(&mut a, 200).unwrap();
+            let resolution = a.projection().waits().get(id).unwrap().resolution.clone().unwrap();
+            assert_eq!(
+                matches!(resolution.kind, WaitResolutionKind::Deadline),
+                order == "deadline-first"
+            );
+            let before = a.projection().latest_sequence();
+            waits::reconcile(&mut a, 500).unwrap();
+            assert_eq!(a.projection().latest_sequence(), before);
+            let p = replay_log(&t.path().join("wal.jsonl"));
+            assert_eq!(p.waits().get(id).unwrap().resolution.as_ref(), Some(&resolution));
+            assert_eq!(
+                p.get_run_state(&run),
+                Some(
+                    &if order != "deadline-first" || policy == WaitTimeoutPolicy::ResumeWithTimeout
+                    {
+                        RunState::Ready
+                    } else if matches!(policy, WaitTimeoutPolicy::FailRun { .. }) {
+                        RunState::Failed
+                    } else {
+                        RunState::Canceled
+                    }
+                )
+            );
+        }
+    }
+}
+#[test]
+fn ab_wi_013_required_detached_closure_cancel_and_mixed_runs() {
+    use actionqueue_core::{
+        continuation::TaskTerminalStatus, task::task_spec::ChildLifecyclePolicy,
+    };
+    for failed in [false, true] {
+        let (_t, mut a) = authority();
+        let parent = spec();
+        let parent_task = parent.id();
+        let run = admit(&mut a, request(parent, vec![]));
+        let expected = begin(&mut a, run, "local");
+        let children = child_set(parent_task, 1);
+        let child_task = children[0].task_spec().id();
+        let detached = spec().with_parent_policy(parent_task, ChildLifecyclePolicy::Detached);
+        let detached_task = detached.id();
+        let mut d = compound(expected.attempt_id(), children.clone());
+        d = AttemptDisposition::new(
+            DispositionOutcome::Awaiting,
+            DispositionParts {
+                checkpoint: d.checkpoint().cloned(),
+                wait: d.wait().cloned(),
+                child_admissions: vec![
+                    children[0].clone(),
+                    ChildAdmission::new(
+                        AdmissionKey::new("detached").unwrap(),
+                        detached,
+                        vec![],
+                        CausalOverride::default(),
+                    )
+                    .unwrap(),
+                ],
+                ..Default::default()
+            },
+        )
+        .unwrap();
+        disposition::commit(&mut a, expected, d, 101).unwrap();
+        let child_run = a.projection().run_ids_for_task(child_task)[0];
+        assert!(!a.projection().required_children_terminal(parent_task));
+        if failed {
+            let expected = begin(&mut a, child_run, "local");
+            disposition::commit(
+                &mut a,
+                expected,
+                AttemptDisposition::terminal_failure(BoundedError {
+                    code: BoundedCode::new("domain-denied").unwrap(),
+                    message: BoundedMessage::new("denied").unwrap(),
+                }),
+                102,
+            )
+            .unwrap();
+        } else {
+            control::execute_control(
+                &mut a,
+                &host(),
+                ControlOperation::Cancel(CancelTarget::Task(child_task)),
+                &At(103),
+            )
+            .unwrap();
+        }
+        waits::reconcile(&mut a, 103).unwrap();
+        assert!(a.projection().required_children_terminal(parent_task));
+        assert_eq!(a.projection().get_run_state(&run), Some(&RunState::Ready));
+        assert!(a.projection().task_terminal_status(detached_task).is_none());
+        // Cascading parent cancellation reaches required children, never detached ones.
+        control::execute_control(
+            &mut a,
+            &host(),
+            ControlOperation::Cancel(CancelTarget::Task(parent_task)),
+            &At(104),
+        )
+        .unwrap();
+        waits::reconcile(&mut a, 104).unwrap();
+        assert!(!a.projection().is_task_canceled(detached_task));
+    }
+    let (_t, mut a) = authority();
+    let parent = spec();
+    let parent_id = parent.id();
+    admit(&mut a, request(parent, vec![]));
+    let required = spec().with_parent(parent_id);
+    let required_id = required.id();
+    admit(&mut a, request(required, vec![]));
+    let detached = spec().with_parent_policy(parent_id, ChildLifecyclePolicy::Detached);
+    let detached_id = detached.id();
+    admit(&mut a, request(detached, vec![]));
+    control::execute_control(
+        &mut a,
+        &host(),
+        ControlOperation::Cancel(CancelTarget::Task(parent_id)),
+        &At(105),
+    )
+    .unwrap();
+    waits::reconcile(&mut a, 105).unwrap();
+    assert!(a.projection().is_task_canceled(required_id));
+    assert!(!a.projection().is_task_canceled(detached_id));
+    let (_t, mut a) = authority();
+    let task = TaskSpec::new(
+        TaskId::new(),
+        TaskPayload::new(vec![]),
+        RunPolicy::repeat(2, 1).unwrap(),
+        TaskConstraints::default(),
+        TaskMetadata::default(),
+    )
+    .unwrap();
+    let id = task.id();
+    admit(&mut a, request(task, vec![]));
+    let runs = a.projection().run_ids_for_task(id);
+    let e = begin(&mut a, runs[0], "local");
+    disposition::commit(&mut a, e, AttemptDisposition::complete(None), 101).unwrap();
+    let e = begin(&mut a, runs[1], "local");
+    disposition::commit(
+        &mut a,
+        e,
+        AttemptDisposition::terminal_failure(BoundedError {
+            code: BoundedCode::new("denied").unwrap(),
+            message: BoundedMessage::new("denied").unwrap(),
+        }),
+        102,
+    )
+    .unwrap();
+    assert_eq!(a.projection().task_terminal_status(id), Some(TaskTerminalStatus::Succeeded));
+    assert!(runs.iter().any(|r| a.projection().get_run_state(r) == Some(&RunState::Failed)));
+}

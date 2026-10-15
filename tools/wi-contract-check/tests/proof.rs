@@ -50,7 +50,7 @@ fn baseline_records_have_precise_g1_coverage_and_no_source_result_claims() {
         r.cases.iter().filter(|c| c.owning_item == "WIP-01" && c.status == "implemented").count(),
         11
     );
-    assert_eq!(g.iter().filter(|g| g.status == "closed").count(), 4);
+    assert_eq!(g.iter().filter(|g| g.status == "closed").count(), 5);
     assert_eq!(r.cases.iter().find(|c| c.id == "WP-002").unwrap().tests.len(), 3);
     assert_eq!(r.cases.iter().find(|c| c.id == "WP-007").unwrap().tests.len(), 3);
 }
@@ -420,7 +420,7 @@ fn wi06_core_requires_exact_nonignored_tests_and_retains_deferred_parent() {
         assert_eq!(case.status, "implemented");
         assert_eq!(case.owning_item, "WIP-05");
     }
-    assert_ne!(gates.iter().find(|g| g.id == "WI-AQ-G4").unwrap().status, "closed");
+    assert_eq!(gates.iter().find(|g| g.id == "WI-AQ-G4").unwrap().status, "closed");
 }
 
 #[test]
@@ -463,7 +463,46 @@ fn wi07_domain_requires_complete_exact_executable_tests_and_no_runtime_claim() {
     assert_eq!(registry.cases.len(), 55);
     for id in ["AB-WI-005", "AB-WI-010", "AB-WI-013"] {
         let case = registry.cases.iter().find(|c| c.id == id).unwrap();
-        assert_ne!(case.status, "implemented");
+        assert_eq!(case.status, "implemented");
         assert_eq!(case.owning_item, "WIP-07");
+    }
+}
+
+#[test]
+fn flow_runtime_matrix_rejects_missing_ignored_foreign_and_ambiguous_evidence() {
+    let path = "conformance/wi-fabric-2/flow/integration-coverage.json";
+    let coverage = read(&root().join(path)).unwrap();
+    let obligations: std::collections::BTreeMap<String, Vec<TestRef>> =
+        serde_json::from_value(coverage["required_obligations"].clone()).unwrap();
+    let mut index: TestIndex = obligations.values().flatten().cloned().map(|t| (t, 1)).collect();
+    assert!(proof::validate_flow_integration(&root(), &index).unwrap().is_empty());
+    let chosen = index.keys().next().unwrap().clone();
+    for count in [0, 2] {
+        index.insert(chosen.clone(), count);
+        assert!(!proof::validate_flow_integration(&root(), &index).unwrap().is_empty());
+    }
+    index.insert(chosen, 1);
+    for mode in ["missing", "foreign", "duplicate", "case"] {
+        let t = fixture();
+        let mut changed = coverage.clone();
+        match mode {
+            "missing" => {
+                changed["required_obligations"]
+                    .as_object_mut()
+                    .unwrap()
+                    .remove("compound-recovery");
+            }
+            "foreign" => {
+                changed["required_obligations"]["shared-execution"][0]["manifest"] =
+                    "Cargo.toml".into()
+            }
+            "duplicate" => {
+                let r = changed["required_obligations"]["shared-execution"][0].clone();
+                changed["required_obligations"]["shared-execution"] = json!([r, r]);
+            }
+            _ => changed["assigned_cases"]["AB-WI-005"] = json!([]),
+        }
+        fs::write(t.path().join(path), serde_json::to_vec_pretty(&changed).unwrap()).unwrap();
+        assert!(!proof::validate_flow_integration(t.path(), &index).unwrap().is_empty(), "{mode}");
     }
 }

@@ -43,6 +43,7 @@ pub struct DeterministicConnector {
     pub after_invoke: Option<Arc<dyn Fn() + Send + Sync>>,
     pub cancel_observation: Option<CancelObservation>,
     pub cancel_calls: Arc<AtomicU64>,
+    pub invocation_calls: Arc<AtomicU64>,
 }
 impl DeterministicConnector {
     pub fn new(db: PathBuf, class: IdempotencyClass, mode: Mode) -> Self {
@@ -55,6 +56,7 @@ impl DeterministicConnector {
             after_invoke: None,
             cancel_observation: Some(CancelObservation::Unsupported),
             cancel_calls: Arc::new(AtomicU64::new(0)),
+            invocation_calls: Arc::new(AtomicU64::new(0)),
             descriptor: ConnectorDescriptor {
                 version: 1,
                 connector: "deterministic:1".to_string().try_into().unwrap(),
@@ -109,6 +111,15 @@ impl Connector for DeterministicConnector {
     fn descriptor(&self) -> &ConnectorDescriptor {
         &self.descriptor
     }
+    fn validate_artifact(&self, schema: &ContentHash, bytes: &[u8]) -> Result<()> {
+        if (schema == &ContentHash::of(b"input:1") && bytes == b"input")
+            || (schema == &ContentHash::of(b"output:1") && bytes == b"output")
+        {
+            Ok(())
+        } else {
+            Err("fixture artifact schema mismatch".into())
+        }
+    }
     fn resolve(&self, r: ResolveRequest) -> Result<ResolveObservation> {
         let mut resource = r.resource;
         if self.mode == Mode::Widen {
@@ -131,6 +142,7 @@ impl Connector for DeterministicConnector {
         r: PreparedInvocation,
         cancellation: &CancellationToken,
     ) -> Result<PortObservation> {
+        self.invocation_calls.fetch_add(1, Ordering::SeqCst);
         assert_eq!(r.input, b"input");
         assert_eq!(r.execution().binding.descriptor, self.descriptor);
         let (commit, outcome) = match self.mode {

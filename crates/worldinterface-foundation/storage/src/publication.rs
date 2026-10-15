@@ -154,16 +154,27 @@ impl StoreRoot {
         crate::crash::checkpoint("publication-durable");
         #[cfg(all(feature = "crash-points", not(test)))]
         crate::crashpoint::checkpoint("publication-durable");
-        let durable = if current.state == PublicationState::Identified {
-            let next = current.advance(PublicationState::Durable).map_err(invalid)?;
-            let mut c = self.connect(StoreKind::Context)?;
-            let tx = c.transaction_with_behavior(TransactionBehavior::Immediate)?;
+        // Another publisher may have advanced this immutable identity while
+        // bytes were being synced. Reload under the writer transaction; never
+        // append a duplicate or regress an already available publication.
+        let mut c = self.connect(StoreKind::Context)?;
+        let tx = c.transaction_with_behavior(TransactionBehavior::Immediate)?;
+        let fresh = load(&tx, identity)?.ok_or_else(|| invalid("missing publication identity"))?;
+        if fresh.artifact != current.artifact {
+            return Err(invalid("publication identity conflict"));
+        }
+        let durable = if fresh.state == PublicationState::Identified {
+            let next = fresh.advance(PublicationState::Durable).map_err(invalid)?;
             append(&tx, &next)?;
-            tx.commit()?;
             next
         } else {
-            current
+            fresh
         };
+        tx.commit()?;
+        if durable.state == PublicationState::Available {
+            self.read_artifact(&durable.artifact)?;
+            return Ok(durable.artifact);
+        }
         #[cfg(test)]
         crate::crash::checkpoint("publication-availability");
         #[cfg(all(feature = "crash-points", not(test)))]
@@ -171,7 +182,13 @@ impl StoreRoot {
         let available = durable.advance(PublicationState::Available).map_err(invalid)?;
         let mut c = self.connect(StoreKind::Context)?;
         let tx = c.transaction_with_behavior(TransactionBehavior::Immediate)?;
-        append(&tx, &available)?;
+        let fresh = load(&tx, identity)?.ok_or_else(|| invalid("missing publication identity"))?;
+        if fresh.artifact != available.artifact {
+            return Err(invalid("publication identity conflict"));
+        }
+        if fresh.state != PublicationState::Available {
+            append(&tx, &available)?;
+        }
         tx.execute(
             "INSERT INTO artifacts VALUES(?,?,?) ON CONFLICT(scope,content) DO NOTHING",
             params![

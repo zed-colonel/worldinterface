@@ -128,6 +128,7 @@ fn prepare_at(
         .map_err(|e| -> Box<dyn std::error::Error + Send + Sync> { e.into() })?
     };
     let admission = ProductionAdmission {
+        child: None,
         version: 1,
         queue_store: queue_store.to_string().try_into()?,
         task: task.to_string().try_into()?,
@@ -176,7 +177,11 @@ pub fn load_request(
     let request = decode_request(&bytes)?;
     if encode_request(&request)? != bytes
         || request.task_spec().id().to_string() != admission.task.as_str()
-        || request.admission_key().as_str() != admission.admission_key.as_str()
+        || request.admission_key().as_str()
+            != admission
+                .child
+                .as_ref()
+                .map_or(admission.admission_key.as_str(), |c| c.admission_key.as_str())
         || request.digest()?.canonical_version() != admission.canonical_version
         || aq_digest(&request)? != admission.canonical_digest
     {

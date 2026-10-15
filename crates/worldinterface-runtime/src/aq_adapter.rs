@@ -69,7 +69,14 @@ impl<'a, H: ExecutorHandler + 'static> QueueEngine<'a, H> {
         let store = QueueStoreId::from_session(&session);
         drop(session);
         let engine = ActionQueueEngine::new(
-            RuntimeConfig { data_dir: bundle.aq_path(), ..Default::default() },
+            RuntimeConfig {
+                data_dir: bundle.aq_path(),
+                continuation_limits: actionqueue_core::limits::ContinuationLimits {
+                    disposition_bytes: 1024 * 1024,
+                    ..Default::default()
+                },
+                ..Default::default()
+            },
             handler,
         )
         .bootstrap()?
@@ -107,6 +114,28 @@ impl<'a, H: ExecutorHandler + 'static> QueueEngine<'a, H> {
         &mut self,
     ) -> (&worldinterface_storage::StoreRoot, &mut BootstrappedEngine<H>, uuid::Uuid) {
         (self.bundle.wi(), &mut self.engine, self.store.as_uuid())
+    }
+    /// Host-owned reconciliation surrounds each scheduling tick, including restart.
+    pub async fn tick(&mut self) -> Result<actionqueue_runtime::dispatch::TickResult> {
+        crate::flow_coordinator::reconcile(
+            self.bundle.wi(),
+            self.store.as_uuid(),
+            &mut self.engine,
+        )?;
+        let result = self.engine.tick().await?;
+        crate::flow_coordinator::reconcile(
+            self.bundle.wi(),
+            self.store.as_uuid(),
+            &mut self.engine,
+        )?;
+        Ok(result)
+    }
+    /// Trusted host cancellation retains AQ's normal child lifecycle semantics.
+    pub fn cancel_task(&mut self, task: TaskId) -> Result<()> {
+        self.engine.control(actionqueue_runtime::control::ControlOperation::Cancel(
+            actionqueue_core::mutation::CancelTarget::Task(task),
+        ))?;
+        Ok(())
     }
     pub fn shutdown(self) -> Result<()> {
         Ok(self.engine.shutdown()?)
@@ -175,6 +204,11 @@ impl QueueReferences {
     /// Checks ingress task and signal references through AQ's recovered public models.
     /// External checkpoint artifact closure remains a separate G4 obligation.
     pub fn validate_artifacts(&self, wi: &worldinterface_storage::StoreRoot) -> Result<()> {
+        crate::flow_coordinator::validate_references(
+            wi,
+            self.store_id().as_uuid(),
+            &self.projection,
+        )?;
         for tenant in wi.ingress_tenants()? {
             let state = wi.ingress_snapshot(&tenant)?;
             for (id, q) in &state.queue {

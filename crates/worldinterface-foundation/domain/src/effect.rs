@@ -102,10 +102,25 @@ pub struct Dispatch {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub acknowledgment: Option<EffectAcknowledgment>,
 }
+/// Verified transactional-child origin; never a top-level acknowledgment substitute.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ChildAdmissionProvenance {
+    pub admission_key: String,
+    pub version: u32,
+    pub flow: OpaqueRef,
+    pub node: OpaqueRef,
+    pub parent_task: OpaqueRef,
+    pub parent_run: OpaqueRef,
+    pub producing_attempt: OpaqueRef,
+    pub disposition_hash: ContentHash,
+}
 /// AQ-neutral, immutable record of the complete request published as a scoped artifact.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ProductionAdmission {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub child: Option<ChildAdmissionProvenance>,
     pub version: u32,
     pub queue_store: OpaqueRef,
     pub task: OpaqueRef,
@@ -265,6 +280,7 @@ pub fn inspect_effect(e: &EffectAggregate) -> Result<EffectView> {
         if d.request.intent != e.intent.id
             || d.admission.as_ref().is_some_and(|a| {
                 a.version != 1
+                    || a.child.as_ref().is_some_and(|c| c.version != 1)
                     || a.canonical_version != 2
                     || a.execution != d.request.execution
                     || a.admission_key != d.request.admission_key
@@ -842,6 +858,19 @@ fn apply(state: &EffectState, entry: &Entry) -> Result<(EffectState, EffectInten
                 return Err("attempt budget".into());
             }
             let request = admission_request(&entry.tenant, e, snapshot, index)?;
+            if let JournalAction::PrepareProduction { admission, .. } = &entry.action {
+                if let Some(child) = &admission.child {
+                    if child.version != 1 {
+                        return Err("unsupported child admission provenance".into());
+                    }
+                    if child.admission_key.len() != 73
+                        || !child.admission_key.starts_with("child/v1/")
+                        || !child.admission_key[9..].bytes().all(|b| b.is_ascii_hexdigit())
+                    {
+                        return Err("invalid scoped child admission key".into());
+                    }
+                }
+            }
             let admission =
                 if let JournalAction::PrepareProduction { admission, .. } = &entry.action {
                     if admission.version != 1

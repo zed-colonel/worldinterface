@@ -397,6 +397,11 @@ fn coverage(root: &Path, id: &str) -> Result<(Vec<String>, BTreeSet<TestRef>)> {
     if let Some(names) = v["assigned_cases"].get(id) {
         add(path, RUNTIME, "worldinterface-runtime", serde_json::from_value(names.clone())?);
     }
+    let path = "conformance/wi-fabric-2/flow/integration-coverage.json";
+    let v = read(&root.join(path))?;
+    if let Some(names) = v["assigned_cases"].get(id) {
+        add(path, RUNTIME, "worldinterface-runtime", serde_json::from_value(names.clone())?);
+    }
     refs.sort();
     Ok((refs, tests))
 }
@@ -710,6 +715,7 @@ pub fn check(root: &Path) -> Result<Vec<Finding>> {
     findings.extend(validate_completion(root, &tests)?);
     findings.extend(validate_connectors(root, &tests)?);
     findings.extend(validate_flow(root, &tests)?);
+    findings.extend(validate_flow_integration(root, &tests)?);
     Ok(findings)
 }
 
@@ -894,6 +900,77 @@ pub fn validate_flow(root: &Path, tests: &TestIndex) -> Result<Vec<Finding>> {
                 "WIP-06 required tests",
                 "exact non-ignored unambiguous foundation test required",
             ));
+        }
+    }
+    Ok(findings)
+}
+
+/// WI-07 runtime evidence is separate from the sealed pure compiler proof.
+pub fn validate_flow_integration(root: &Path, tests: &TestIndex) -> Result<Vec<Finding>> {
+    let path = "conformance/wi-fabric-2/flow/integration-coverage.json";
+    let v = read(&root.join(path))?;
+    let obligations: BTreeMap<String, Vec<TestRef>> =
+        serde_json::from_value(v["required_obligations"].clone())?;
+    let required = BTreeSet::from([
+        "shared-execution",
+        "pinned-admission",
+        "immutable-versions",
+        "authority-and-purity",
+        "bounded-children",
+        "compound-recovery",
+        "binding-readiness",
+        "domain-acceptance",
+        "branch-receipts",
+        "storage-replay-and-artifacts",
+        "deadline-race",
+        "production-wait-profile",
+    ]);
+    let assigned: BTreeMap<String, Vec<String>> =
+        serde_json::from_value(v["assigned_cases"].clone())?;
+    let mut findings = Vec::new();
+    if v["version"] != 1
+        || v["scope"] != "wi/WI-07/integration:embedded-proof"
+        || v["upstream_conformance"] != false
+        || v["runtime_profile"] != "aq-0.2.0-wip07-flat-required-children"
+        || obligations.keys().map(String::as_str).collect::<BTreeSet<_>>() != required
+        || assigned.keys().map(String::as_str).collect::<BTreeSet<_>>()
+            != BTreeSet::from(["AB-WI-005", "AB-WI-010", "AB-WI-013"])
+    {
+        findings.push(finding(
+            "PROOF-WI07-RUNTIME",
+            path,
+            "scope",
+            "WIP-07",
+            "complete runtime obligation matrix and exact owned cases required",
+        ));
+    }
+    for (obligation, refs) in &obligations {
+        if refs.is_empty()
+            || refs.iter().collect::<BTreeSet<_>>().len() != refs.len()
+            || refs.iter().any(|t| {
+                !((t.manifest == RUNTIME && t.package == "worldinterface-runtime")
+                    || (t.manifest == FOUNDATION && t.package == "worldinterface-storage"))
+                    || tests.get(t) != Some(&1)
+            })
+        {
+            findings.push(finding(
+                "PROOF-WI07-RUNTIME",
+                path,
+                obligation,
+                "WIP-07 required tests",
+                "exact non-ignored unambiguous adopted runtime/storage test required",
+            ));
+        }
+    }
+    for (case, names) in assigned {
+        let fixtures = read(&root.join("conformance/wi-fabric-2/integration/fixtures.json"))?;
+        if names.is_empty()
+            || serde_json::to_value(&names)? != fixtures["cases"][&case]["required_tests"]
+            || names.iter().any(|name| {
+                !obligations.values().flatten().any(|t| t.test == *name && t.manifest == RUNTIME)
+            })
+        {
+            findings.push(finding("PROOF-WI07-RUNTIME", path, &case, "WIP-07 case matrix", "case evidence must agree with authoritative integration fixtures and runtime obligations"));
         }
     }
     Ok(findings)

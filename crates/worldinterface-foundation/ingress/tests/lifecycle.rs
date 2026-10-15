@@ -980,8 +980,7 @@ fn old_manifest_profile_rejects_without_modification() {
     let path = s.temp.path().join("root");
     drop(s.root);
     let manifest = path.join("manifest.json");
-    let old =
-        std::fs::read_to_string(&manifest).unwrap().replace("local-receipt-3", "local-domain-1");
+    let old = std::fs::read_to_string(&manifest).unwrap().replace("local-flow-4", "local-domain-1");
     std::fs::write(&manifest, &old).unwrap();
     let db = std::fs::read(path.join("fabric.sqlite")).unwrap();
     assert!(StoreRoot::open_existing(&path).is_err());
