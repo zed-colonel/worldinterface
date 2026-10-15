@@ -375,6 +375,23 @@ fn coverage(root: &Path, id: &str) -> Result<(Vec<String>, BTreeSet<TestRef>)> {
                 .collect::<std::result::Result<_, _>>()?,
         );
     }
+    let path = "conformance/wi-fabric-2/completion/coverage.json";
+    if root.join(path).is_file() {
+        let v = read(&root.join(path))?;
+        if let Some(names) = v["assigned_cases"].get(id) {
+            add(
+                path,
+                RUNTIME,
+                "worldinterface-runtime",
+                names
+                    .as_array()
+                    .ok_or("invalid completion case")?
+                    .iter()
+                    .map(|n| n.as_str().map(str::to_owned).ok_or("invalid completion test"))
+                    .collect::<std::result::Result<Vec<_>, _>>()?,
+            );
+        }
+    }
     refs.sort();
     Ok((refs, tests))
 }
@@ -683,5 +700,51 @@ pub fn load(root: &Path) -> Result<(Registry, Vec<Gate>)> {
 }
 pub fn check(root: &Path) -> Result<Vec<Finding>> {
     let (registry, gates) = load(root)?;
-    validate(root, &registry, &gates, &discover(root)?)
+    let tests = discover(root)?;
+    let mut findings = validate(root, &registry, &gates, &tests)?;
+    findings.extend(validate_completion(root, &tests)?);
+    Ok(findings)
+}
+
+/// The whole WI-05 parent exit gate needs executable evidence beyond its WP cases.
+pub fn validate_completion(root: &Path, tests: &TestIndex) -> Result<Vec<Finding>> {
+    let path = "conformance/wi-fabric-2/completion/coverage.json";
+    let v = read(&root.join(path))?;
+    let obligations: BTreeMap<String, Vec<TestRef>> =
+        serde_json::from_value(v["required_obligations"].clone())?;
+    let required = BTreeSet::from([
+        "canonical-replay",
+        "authoritative-source-resource",
+        "publication-before-completion",
+        "crash-convergence",
+        "redacted-inspection",
+        "signature-provenance",
+        "campaign-noninterference",
+        "no-success-quality-claims",
+        "material-differences",
+    ]);
+    let mut findings = Vec::new();
+    if v["scope"] != "wi/WI-05/integration"
+        || obligations.keys().map(String::as_str).collect::<BTreeSet<_>>() != required
+    {
+        findings.push(finding(
+            "PROOF-WI05",
+            path,
+            "obligations",
+            "WI-05 required tests",
+            "complete WI-05 obligation matrix required",
+        ));
+    }
+    for (obligation, references) in obligations {
+        if references.is_empty() || references.iter().any(|t| tests.get(t) != Some(&1)) {
+            findings.push(finding(
+                "PROOF-WI05",
+                path,
+                &obligation,
+                "WI-05 required tests",
+                "test missing, ignored, ambiguous or outside adopted configuration",
+            ));
+        }
+    }
+    Ok(findings)
 }

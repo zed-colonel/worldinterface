@@ -67,6 +67,14 @@ pub(crate) fn insert(
     if effect.intent_id != *receipt.source_intent() {
         return Err(invalid("receipt intent mismatch"));
     }
+    let collision: bool = c.query_row(
+        "SELECT EXISTS(SELECT 1 FROM ingress_receipt_index WHERE id=?)",
+        [body.id.as_str()],
+        |r| r.get(0),
+    )?;
+    if collision {
+        return Err(invalid("cross-direction receipt identity collision"));
+    }
     let bytes = envelope.canonical_bytes().map_err(invalid)?;
     Envelope::parse_receipt(&bytes).map_err(invalid)?;
     let digest = envelope.digest().map_err(invalid)?;
@@ -107,10 +115,35 @@ impl StoreRoot {
     ) -> Result<Option<ReceiptView>> {
         let c = self.connect(StoreKind::Fabric)?;
         let bytes: Option<Vec<u8>> = c.query_row("SELECT h.canonical FROM receipt_history h JOIN receipt_index i ON i.id=h.id WHERE h.id=? AND i.tenant=?", params![id.as_str(), access.tenant().as_str()], |r| r.get(0)).optional()?;
+        let bytes = match bytes {
+            Some(bytes) => Some(bytes),
+            None => c
+                .query_row(
+                    "SELECT canonical FROM ingress_receipt_index WHERE id=? AND tenant=?",
+                    params![id.as_str(), access.tenant().as_str()],
+                    |r| r.get(0),
+                )
+                .optional()?,
+        };
         bytes
             .map(|b| {
                 let envelope = Envelope::parse_receipt(&b).map_err(invalid)?;
                 let Record::BoundaryReceipt(ref receipt) = envelope.record else { unreachable!() };
+                let owner = match &receipt.body {
+                    ReceiptBody::Egress(body) => {
+                        crate::effect::snapshot_for_replay(&c, access.tenant())?
+                            .effects
+                            .get(&body.intent_id)
+                            .map(|e| e.agency.binding.principal.clone())
+                    }
+                    ReceiptBody::Ingress(body) => crate::ingress::snapshot(&c, access.tenant())?
+                        .bindings
+                        .get(&body.binding_id)
+                        .map(|b| b.principal.clone()),
+                };
+                if owner.as_ref() != Some(access.principal()) {
+                    return Ok(None);
+                }
                 let (direction, intent_id, observation_id) = match &receipt.body {
                     ReceiptBody::Ingress(body) => {
                         ("ingress", None, Some(body.observation_id.clone()))
@@ -118,7 +151,7 @@ impl StoreRoot {
                     ReceiptBody::Egress(body) => ("egress", Some(body.intent_id.clone()), None),
                 };
                 let full = access.disclosure() == DisclosureProfile::Full;
-                Ok(ReceiptView {
+                Ok(Some(ReceiptView {
                     id: receipt.id.clone(),
                     direction: direction.to_string().try_into().map_err(invalid)?,
                     digest: Some(envelope.digest().map_err(invalid)?),
@@ -131,15 +164,40 @@ impl StoreRoot {
                         receipt.evidence.iter().map(|e| e.artifact.content.clone()).collect()
                     },
                     canonical: if full { Some(envelope) } else { None },
-                })
+                }))
             })
             .transpose()
+            .map(Option::flatten)
+    }
+    /// Trusted-host lookup: authorize tenant and principal before disclosure.
+    /// Committed egress receipts for one authoritative effect, ordered by journal sequence.
+    pub fn effect_receipts(
+        &self,
+        tenant: &OpaqueRef,
+        intent: &EffectIntentId,
+    ) -> Result<Vec<(ReceiptId, ContentHash, u64)>> {
+        let c = self.connect(StoreKind::Fabric)?;
+        let mut query = c.prepare("SELECT id,digest,source_revision FROM receipt_history WHERE tenant=? AND intent=? ORDER BY seq")?;
+        let rows = query.query_map(params![tenant.as_str(), intent.as_str()], |r| {
+            Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?, r.get::<_, u64>(2)?))
+        })?;
+        rows.map(|row| {
+            let (id, digest, revision) = row?;
+            Ok((id.try_into().map_err(invalid)?, digest.try_into().map_err(invalid)?, revision))
+        })
+        .collect()
     }
     pub(crate) fn validate_receipt_artifacts(&self) -> Result<()> {
         let c = Connection::open_with_flags(
             self.db_path(StoreKind::Fabric),
             OpenFlags::SQLITE_OPEN_READ_ONLY,
         )?;
+        let collision: bool = c.query_row(
+            "SELECT EXISTS(SELECT 1 FROM receipt_index e JOIN ingress_receipt_index i ON e.id=i.id)", [], |r| r.get(0),
+        )?;
+        if collision {
+            return Err(invalid("cross-direction receipt identity collision"));
+        }
         let mut q = c.prepare("SELECT id,tenant,intent,source_revision,canonical,digest,execution,execution_digest FROM receipt_history")?;
         let rows = q.query_map([], |r| {
             Ok((
@@ -213,6 +271,67 @@ impl StoreRoot {
                 if reference.artifact.scope != tenant {
                     return Err(invalid("receipt evidence scope"));
                 }
+                self.read_artifact(&reference.artifact)?;
+            }
+        }
+        let mut tenants = c.prepare("SELECT tenant FROM effect_state")?;
+        for tenant in tenants.query_map([], |r| r.get::<_, String>(0))? {
+            let tenant: OpaqueRef = tenant?.try_into().map_err(invalid)?;
+            let state = crate::effect::snapshot_for_replay(&c, &tenant)?;
+            for (id, effect) in &state.effects {
+                let mut query =
+                    c.prepare("SELECT execution FROM receipt_history WHERE tenant=? AND intent=?")?;
+                let records = query
+                    .query_map(params![tenant.as_str(), id.as_str()], |r| r.get::<_, Vec<u8>>(0))?
+                    .map(|bytes| -> Result<ExecutionRecord> {
+                        Ok(serde_json::from_value(strict_collection(&bytes?).map_err(invalid)?)?)
+                    })
+                    .collect::<Result<Vec<_>>>()?;
+                for outcome in &effect.outcomes {
+                    if records
+                        .iter()
+                        .filter(|r| r.attempt == outcome.attempt && r.outcome == outcome.outcome)
+                        .count()
+                        != 1
+                    {
+                        return Err(invalid("outcome without exactly one authoritative receipt"));
+                    }
+                }
+            }
+        }
+        let mut q =
+            c.prepare("SELECT id,tenant,identity,digest,canonical FROM ingress_receipt_index")?;
+        let rows = q.query_map([], |r| {
+            Ok((
+                r.get::<_, String>(0)?,
+                r.get::<_, String>(1)?,
+                r.get::<_, String>(2)?,
+                r.get::<_, String>(3)?,
+                r.get::<_, Vec<u8>>(4)?,
+            ))
+        })?;
+        for row in rows {
+            let (id, tenant, identity, digest, bytes) = row?;
+            let envelope = Envelope::parse_receipt(&bytes).map_err(invalid)?;
+            let actual_digest = envelope.digest().map_err(invalid)?;
+            let Record::BoundaryReceipt(receipt) = envelope.record else { unreachable!() };
+            let ReceiptBody::Ingress(_) = &receipt.body else {
+                return Err(invalid("ingress receipt direction"));
+            };
+            let tenant: OpaqueRef = tenant.try_into().map_err(invalid)?;
+            let identity: ContentHash = identity.try_into().map_err(invalid)?;
+            let state = crate::ingress::snapshot(&c, &tenant)?;
+            let source = state
+                .admissions
+                .get(&identity)
+                .ok_or_else(|| invalid("ingress receipt without source"))?;
+            if receipt.id.as_str() != id
+                || source.receipt != receipt
+                || actual_digest.as_str() != digest
+            {
+                return Err(invalid("ingress receipt source mismatch"));
+            }
+            for reference in &receipt.evidence {
                 self.read_artifact(&reference.artifact)?;
             }
         }

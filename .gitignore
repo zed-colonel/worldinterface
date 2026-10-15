@@ -42,3 +42,6 @@ scripts/*
 !scripts/check-wi-domain-isolation.py
 !scripts/check-wi-integration.sh
 !scripts/check-wi-integration.py
+
+!scripts/wi_crash_isolation.py
+!scripts/test_wi_crash_isolation.py

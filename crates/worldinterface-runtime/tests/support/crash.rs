@@ -1,4 +1,7 @@
+#[path = "child.rs"]
+mod child_guard;
 use crate::storage::StoreBundle;
+use child_guard::KillOnDrop;
 use std::{
     fs,
     path::Path,
@@ -68,6 +71,7 @@ fn killed_bundle_publication_never_exposes_incomplete_destination() {
             .env("WI_BUNDLE_READY", &ready)
             .stdout(Stdio::null())
             .spawn()
+            .map(KillOnDrop)
             .unwrap();
         // CI may start the helper while another crash case is doing durable
         // bundle I/O. Give the child time to reach the explicit fault point.
@@ -124,6 +128,7 @@ fn destination_racing_publication_is_never_replaced() {
             .stdout(Stdio::null())
             .stderr(Stdio::null())
             .spawn()
+            .map(KillOnDrop)
             .unwrap();
         let deadline = Instant::now() + Duration::from_secs(30);
         while !ready.exists() && Instant::now() < deadline {

@@ -1,5 +1,5 @@
 {
-  "scope": "wi/WI-04/integration",
+  "scope": "wi/WI-05/integration",
   "status": "candidate-implementation-independent-review-pending",
   "upstream": {
     "contract": "AQ-CONT-1",
@@ -11,7 +11,7 @@
   },
   "assumptions": {
     "WI-AQ-012": "QueueReferences binds ancestry to a recovered same-store session. Foreign claims encode only external_ref. AQ owns child inheritance and permits only CausalOverride fields. References never authorize reads.",
-    "WI-AQ-015": "TaskInputLocator version 1 encodes a scoped artifact in task bytes. ExternalDataRef is used separately at output APIs. Runtime authorizes before ContextStore integrity/read. Bundle backup retains WI/AQ offline locks and validates artifact closure.",
+    "WI-AQ-015": "TaskInputLocator version 1 encodes a scoped artifact in task bytes. ExternalDataRef is used separately at output APIs. Runtime authorizes before ContextStore integrity/read. Bundle backup retains WI/AQ offline locks and validates artifact closure. WI-05 completion publishes a versioned CompletionLocator only after the Fabric outcome and receipt commit; reopen validates AQ Completed against that receipt and the published artifact.",
     "WI-AQ-001": "Production binding persists the complete EnsureTaskRequest with a preallocated task UUID. High-level ensure_task computes CanonicalAdmissionV2.",
     "WI-AQ-002": "The same persisted key/request retries after uncertain acknowledgment. Changed in-scope digest-bearing fields conflict; a changed tenant ID is rejected by AQ host scope before conflict lookup, preserving the admitted task and projection (operator-approved AB-WI-003 interpretation).",
     "WI-AQ-004": "AQ task acknowledgment closes delivery. Authorized paginated inspection discovers run mappings separately."
@@ -19,7 +19,10 @@
   "additional_consumers": {
     "wi/WI-03/integration": {
       "gate": "WI-AQ-G2",
-      "assumptions": ["WI-AQ-001", "WI-AQ-002"],
+      "assumptions": [
+        "WI-AQ-001",
+        "WI-AQ-002"
+      ],
       "adapter": "crates/worldinterface-runtime/src/ingress.rs::BoundAqIngress::ensure_delivery_task",
       "mapping": "Observation admission atomically journals each delivery's complete EnsureTaskRequest::for_task. RecoverQueue journals a replacement task request before AQ admission. The task/{TaskId} key and all request bytes are immutable within a generation; uncertain acknowledgments retry the saved bytes. Created and AlreadyExists must return the request's task ID, key, canonical version/digest and a nonzero durable sequence before WI records task_admitted. AQ conflicts propagate without local completion.",
       "tests": [
@@ -41,5 +44,19 @@
       "authority": "Operator approval for wi/WI-04/integration on 2026-09-29"
     }
   },
-  "later_owners": "G3 wake/signal adapters and G4 executor/continuation integration retain their mapped owners."
+  "later_owners": "G3 wake/signal adapters and G4 executor/continuation integration retain their mapped owners.",
+  "admission_policy_decision": {
+    "cycle": "dd3d1012",
+    "decided_at": "2026-10-01",
+    "closing_item": "WIP-04",
+    "new_requests": {
+      "max_attempts": 3,
+      "safety_level": "Idempotent"
+    },
+    "persisted_requests": "Preserve exact bytes, artifact hash, CanonicalAdmissionV2 digest, key and TaskId. Fabric Start fences provider reinvocation.",
+    "tests": [
+      "persisted_old_policy_request_is_retried_without_rewriting",
+      "ab_wi_002_003_004_persist_retry_ack_and_discover"
+    ]
+  }
 }

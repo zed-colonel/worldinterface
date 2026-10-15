@@ -5,6 +5,30 @@ use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use worldinterface_protocol::*;
 
+pub const MAX_OUTCOME_OUTPUTS: usize = 64;
+pub const MAX_OUTCOME_EVIDENCE: usize = 64;
+/// Local completion profile: outputs, evidence and boundary bytes together.
+pub const MAX_OUTCOME_BYTES: u64 = 16 * 1024 * 1024;
+
+/// Shared by domain reference validation and the runtime's pre-publication check.
+pub fn validate_outcome_bounds(
+    output_count: usize,
+    evidence_count: usize,
+    sizes: impl IntoIterator<Item = u64>,
+) -> Result<()> {
+    if output_count > MAX_OUTCOME_OUTPUTS || evidence_count > MAX_OUTCOME_EVIDENCE {
+        return Err("outcome artifact count bound".into());
+    }
+    let mut total = 0u64;
+    for size in sizes {
+        total = total.checked_add(size).ok_or("outcome artifact byte bound")?;
+        if total > MAX_OUTCOME_BYTES {
+            return Err("outcome artifact byte bound".into());
+        }
+    }
+    Ok(())
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum CommitObservation {
@@ -126,6 +150,31 @@ pub struct EffectState {
     pub effects: BTreeMap<EffectIntentId, EffectAggregate>,
     pub requests: BTreeMap<ContentHash, EffectIntentId>,
     pub uses: BTreeMap<ContentHash, u32>,
+}
+
+/// Deterministic request identity for one dispatch. This computes bindings only;
+/// authorization, reservation and phase validation remain in command validation.
+pub fn admission_request(
+    tenant: &OpaqueRef,
+    effect: &EffectAggregate,
+    snapshot: &AuthorizationSnapshot,
+    index: u32,
+) -> Result<EffectAdmissionRequest> {
+    let id = &effect.intent.id;
+    let authorization = effect.authorization.as_ref().ok_or("no authorization")?;
+    let identity = digest(&(tenant, id, index))?;
+    Ok(EffectAdmissionRequest {
+        version: 1,
+        task: format!("wi-task:{}", identity.as_str()).try_into()?,
+        admission_key: format!("wi-effect:{}", identity.as_str()).try_into()?,
+        intent: id.clone(),
+        operation_index: index,
+        submission: digest(&effect.intent.submission)?,
+        agency: digest(&effect.agency)?,
+        resolution: digest(&effect.resolution)?,
+        authorization: digest(authorization)?,
+        execution: digest(&(&effect.intent, &effect.resolution, authorization, snapshot, index))?,
+    })
 }
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct EffectView {
@@ -291,6 +340,12 @@ pub enum EffectAction {
         snapshot: VerifiedSnapshot,
         attempt: OpaqueRef,
     },
+    StartProduction {
+        id: EffectIntentId,
+        snapshot: VerifiedSnapshot,
+        run: OpaqueRef,
+        attempt: OpaqueRef,
+    },
     Cancel {
         id: EffectIntentId,
     },
@@ -358,6 +413,12 @@ enum JournalAction {
         snapshot: AuthorizationSnapshot,
         attempt: OpaqueRef,
     },
+    StartProduction {
+        id: EffectIntentId,
+        snapshot: AuthorizationSnapshot,
+        run: OpaqueRef,
+        attempt: OpaqueRef,
+    },
     Cancel {
         id: EffectIntentId,
     },
@@ -398,6 +459,9 @@ impl From<EffectAction> for JournalAction {
             EffectAction::Start { id, snapshot, attempt } => {
                 Self::Start { id, snapshot: snapshot.0, attempt }
             }
+            EffectAction::StartProduction { id, snapshot, run, attempt } => {
+                Self::StartProduction { id, snapshot: snapshot.0, run, attempt }
+            }
             EffectAction::Acknowledge { id, acknowledgment } => {
                 Self::Acknowledge { id, acknowledgment }
             }
@@ -426,10 +490,15 @@ struct Entry {
 pub struct ValidatedEffectCommand {
     bytes: Vec<u8>,
     tenant: OpaqueRef,
+    before: ContentHash,
 }
 impl ValidatedEffectCommand {
     pub fn bytes(&self) -> &[u8] {
         &self.bytes
+    }
+    /// Digest of the exact journal state against which this command was validated.
+    pub fn base_digest(&self) -> &ContentHash {
+        &self.before
     }
     pub fn tenant(&self) -> &OpaqueRef {
         &self.tenant
@@ -450,7 +519,11 @@ pub fn validate_command(
         action: action.into(),
     };
     apply(state, &entry)?;
-    Ok(ValidatedEffectCommand { bytes: canonical_data(&entry)?, tenant: caller.tenant.clone() })
+    Ok(ValidatedEffectCommand {
+        bytes: canonical_data(&entry)?,
+        tenant: caller.tenant.clone(),
+        before: entry.before,
+    })
 }
 pub fn state_digest(s: &EffectState) -> Result<ContentHash> {
     Ok(ContentHash::of(&canonical_collection(s)?))
@@ -491,13 +564,60 @@ fn reserve(uses: &mut BTreeMap<ContentHash, u32>, a: &AuthorizationEvaluation) -
 }
 fn check_evidence(refs: &[EvidenceRef], tenant: &OpaqueRef) -> Result<()> {
     if refs.is_empty()
-        || refs.len() > 64
+        || refs.len() > MAX_OUTCOME_EVIDENCE
         || refs.iter().any(|r| &r.artifact.scope != tenant || r.artifact.size == 0)
     {
         return Err("missing or wrong-scope evidence".into());
     }
     Ok(())
 }
+/// Validates an outcome's reference structure, scope, size and commit claims.
+/// This does not authorize execution or assert that any artifact is published.
+/// Runtimes can check content-derived references before publishing bytes; the
+/// journal repeats these rules after checking the current attempt and manifest.
+pub fn validate_outcome_publication(tenant: &OpaqueRef, o: &OutcomeEvidence) -> Result<Phase> {
+    check_evidence(&o.evidence, tenant)?;
+    validate_outcome_bounds(
+        o.durable_outputs.len(),
+        o.evidence.len(),
+        o.durable_outputs
+            .iter()
+            .map(|r| r.size)
+            .chain(o.evidence.iter().chain(&o.boundary_record).map(|r| r.artifact.size)),
+    )?;
+    if o.required_outputs.len() > MAX_OUTCOME_OUTPUTS
+        || o.required_outputs.iter().chain(&o.durable_outputs).any(|r| r.scope != *tenant)
+    {
+        return Err("output scope or bound".into());
+    }
+    let phase = match (&o.commit, &o.outcome) {
+        (CommitObservation::ConfirmedCommitted, ExecutionOutcome::Succeeded)
+            if o.boundary_record
+                .as_ref()
+                .is_some_and(|r| r.artifact.scope == *tenant && r.artifact.size > 0)
+                && o.required_outputs == o.durable_outputs =>
+        {
+            Phase::Succeeded
+        }
+        (
+            CommitObservation::ProvenImpossible | CommitObservation::ConfirmedNotCommitted,
+            ExecutionOutcome::FailedBeforeCommit,
+        ) => Phase::Failed,
+        (
+            CommitObservation::ProvenImpossible | CommitObservation::ConfirmedNotCommitted,
+            ExecutionOutcome::CanceledBeforeCommit,
+        ) => Phase::Canceled,
+        (
+            CommitObservation::Possible
+            | CommitObservation::Unknown
+            | CommitObservation::ConfirmedCommitted,
+            ExecutionOutcome::Uncertain,
+        ) => Phase::Uncertain,
+        _ => return Err("contradictory commit/outcome or incomplete publication".into()),
+    };
+    Ok(phase)
+}
+
 fn apply(state: &EffectState, entry: &Entry) -> Result<(EffectState, EffectIntentId)> {
     if entry.version != 1
         || entry.before != state_digest(state)?
@@ -585,6 +705,7 @@ fn apply(state: &EffectState, entry: &Entry) -> Result<(EffectState, EffectInten
         | JournalAction::AdvanceDiscovery { id, .. }
         | JournalAction::Acknowledge { id, .. }
         | JournalAction::Start { id, .. }
+        | JournalAction::StartProduction { id, .. }
         | JournalAction::Cancel { id }
         | JournalAction::Outcome { id, .. }
         | JournalAction::Reconcile { id, .. }
@@ -672,19 +793,7 @@ fn apply(state: &EffectState, entry: &Entry) -> Result<(EffectState, EffectInten
             if index >= e.intent.submission.budget.max_attempts {
                 return Err("attempt budget".into());
             }
-            let identity = digest(&(&entry.tenant, id, index))?;
-            let request = EffectAdmissionRequest {
-                version: 1,
-                task: format!("wi-task:{}", identity.as_str()).try_into()?,
-                admission_key: format!("wi-effect:{}", identity.as_str()).try_into()?,
-                intent: id.clone(),
-                operation_index: index,
-                submission: digest(&e.intent.submission)?,
-                agency: digest(&e.agency)?,
-                resolution: digest(&e.resolution)?,
-                authorization: digest(a)?,
-                execution: digest(&(&e.intent, &e.resolution, a, snapshot, index))?,
-            };
+            let request = admission_request(&entry.tenant, e, snapshot, index)?;
             let admission =
                 if let JournalAction::PrepareProduction { admission, .. } = &entry.action {
                     if admission.version != 1
@@ -737,6 +846,9 @@ fn apply(state: &EffectState, entry: &Entry) -> Result<(EffectState, EffectInten
             a.observed_runs.sort();
         }
         JournalAction::AdvanceDiscovery { previous, next, .. } => {
+            if e.phase != Phase::DispatchPending {
+                return Err("discovery phase".into());
+            }
             let a = e
                 .dispatches
                 .last_mut()
@@ -747,6 +859,9 @@ fn apply(state: &EffectState, entry: &Entry) -> Result<(EffectState, EffectInten
                 || next.as_ref().is_some_and(|v| v.len() > 4096)
             {
                 return Err("discovery cursor conflict".into());
+            }
+            if previous == next {
+                return Ok((state.clone(), id.clone()));
             }
             a.discovery_cursor = next.clone();
         }
@@ -771,10 +886,24 @@ fn apply(state: &EffectState, entry: &Entry) -> Result<(EffectState, EffectInten
             }
             d.acknowledgment = Some(acknowledgment.clone());
         }
-        JournalAction::Start { snapshot, attempt, .. } => {
+        JournalAction::Start { snapshot, attempt, .. }
+        | JournalAction::StartProduction { snapshot, attempt, .. } => {
             current(e, snapshot, now)?;
+            let acknowledged = match &entry.action {
+                JournalAction::StartProduction { run, .. } => {
+                    e.dispatches.last().is_some_and(|d| {
+                        d.admission.as_ref().is_some_and(|a| {
+                            a.acknowledged_sequence.is_some() && a.observed_runs.contains(run)
+                        })
+                    })
+                }
+                _ => e
+                    .dispatches
+                    .last()
+                    .is_some_and(|d| d.admission.is_none() && d.acknowledgment.is_some()),
+            };
             if e.phase != Phase::DispatchPending
-                || e.dispatches.last().is_none_or(|d| d.acknowledgment.is_none())
+                || !acknowledged
                 || e.outcomes.iter().any(|o| &o.attempt == attempt)
             {
                 return Err("execution start evidence".into());
@@ -805,46 +934,13 @@ fn apply(state: &EffectState, entry: &Entry) -> Result<(EffectState, EffectInten
             {
                 return Err("outcome binding or phase".into());
             }
-            check_evidence(&o.evidence, &entry.tenant)?;
             if e.authorization_inputs
                 .as_ref()
                 .is_none_or(|s| s.required_outputs != o.required_outputs)
             {
                 return Err("required output manifest mismatch".into());
             }
-            if o.required_outputs.len() > 64
-                || o.durable_outputs.len() > 64
-                || o.required_outputs
-                    .iter()
-                    .chain(&o.durable_outputs)
-                    .any(|r| r.scope != entry.tenant)
-            {
-                return Err("output scope or bound".into());
-            }
-            e.phase = match (&o.commit, &o.outcome) {
-                (CommitObservation::ConfirmedCommitted, ExecutionOutcome::Succeeded)
-                    if o.boundary_record.as_ref().is_some_and(|r| {
-                        r.artifact.scope == entry.tenant && r.artifact.size > 0
-                    }) && o.required_outputs == o.durable_outputs =>
-                {
-                    Phase::Succeeded
-                }
-                (
-                    CommitObservation::ProvenImpossible | CommitObservation::ConfirmedNotCommitted,
-                    ExecutionOutcome::FailedBeforeCommit,
-                ) => Phase::Failed,
-                (
-                    CommitObservation::ProvenImpossible | CommitObservation::ConfirmedNotCommitted,
-                    ExecutionOutcome::CanceledBeforeCommit,
-                ) => Phase::Canceled,
-                (
-                    CommitObservation::Possible
-                    | CommitObservation::Unknown
-                    | CommitObservation::ConfirmedCommitted,
-                    ExecutionOutcome::Uncertain,
-                ) => Phase::Uncertain,
-                _ => return Err("contradictory commit/outcome or incomplete publication".into()),
-            };
+            e.phase = validate_outcome_publication(&entry.tenant, o)?;
             e.commit = o.commit.clone();
             e.outcomes.push(o.clone());
         }

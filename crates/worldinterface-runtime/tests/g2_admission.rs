@@ -1,3 +1,5 @@
+#[path = "support/child.rs"]
+mod child_guard;
 use actionqueue_core::{
     admission::{canonical::CanonicalAdmissionV2, EnsureTaskRequest},
     bounded::OpaqueRef as AqOpaqueRef,
@@ -12,7 +14,14 @@ use actionqueue_core::{
         task_spec::{TaskPayload, TaskSpec},
     },
 };
-use actionqueue_executor_local::handler::{ExecutorContext, ExecutorHandler};
+use actionqueue_executor_local::handler::{
+    AttemptMetadata, CancellationContext, ExecutorContext, ExecutorHandler, HandlerInput,
+};
+use child_guard::KillOnDrop;
+use std::sync::{
+    atomic::{AtomicUsize, Ordering},
+    Arc,
+};
 use worldinterface_domain::{
     agency::AuthenticatedCaller,
     authorization::{AuthorizationSnapshot, VerifiedSnapshot},
@@ -20,9 +29,20 @@ use worldinterface_domain::{
     Phase,
 };
 use worldinterface_egress::Egress;
-use worldinterface_protocol::{EffectSubmission, InstanceId, Timestamp};
+use worldinterface_protocol::{
+    ContentHash, EffectSubmission, EvidenceRef, InstanceId, OpaqueRef, Timestamp,
+};
 use worldinterface_runtime::aq_adapter::QueueEngine;
-use worldinterface_runtime::{admission, run_discovery, storage::StoreBundle};
+use worldinterface_runtime::{
+    admission,
+    authority::{EvidenceAuthority, TrustedClock},
+    completion::{
+        BoundExecution, EffectAttemptHandler, EffectExecutionPort, EvidenceBytes, PortObservation,
+    },
+    run_discovery,
+    storage::StoreBundle,
+    Result,
+};
 use worldinterface_storage::StoreProfile;
 
 fn at() -> Timestamp {
@@ -57,6 +77,49 @@ struct Complete;
 impl ExecutorHandler for Complete {
     fn execute(&self, _: ExecutorContext) -> AttemptDisposition {
         AttemptDisposition::complete(None)
+    }
+}
+struct SafeClock;
+impl TrustedClock for SafeClock {
+    fn now(&self) -> Result<Timestamp> {
+        Ok(at())
+    }
+}
+struct SafeEvidence(AuthorizationSnapshot);
+impl EvidenceAuthority for SafeEvidence {
+    fn current_snapshot(
+        &self,
+        _: &OpaqueRef,
+        _: &EffectSubmission,
+    ) -> Result<AuthorizationSnapshot> {
+        Ok(self.0.clone())
+    }
+    fn verify(&self, _: &OpaqueRef, reference: &EvidenceRef, _: &Timestamp) -> Result<ContentHash> {
+        if reference == &self.0.facts[0].evidence {
+            Ok(self.0.facts[0].attested_document.clone())
+        } else {
+            Ok(ContentHash::of(b"verified"))
+        }
+    }
+}
+struct MockUncertainPort(Arc<AtomicUsize>);
+impl EffectExecutionPort for MockUncertainPort {
+    fn invoke(
+        &self,
+        _: BoundExecution,
+        _: &actionqueue_executor_local::handler::CancellationToken,
+    ) -> Result<PortObservation> {
+        self.0.fetch_add(1, Ordering::SeqCst);
+        Ok(PortObservation {
+            commit: worldinterface_domain::effect::CommitObservation::Unknown,
+            outcome: worldinterface_protocol::ExecutionOutcome::Uncertain,
+            outputs: vec![],
+            evidence: vec![EvidenceBytes {
+                schema: "mock-port:1".to_string().try_into()?,
+                bytes: b"provider commit unknown".to_vec(),
+            }],
+            boundary_record: None,
+        })
     }
 }
 #[test]
@@ -130,6 +193,11 @@ fn ab_wi_002_003_004_persist_retry_ack_and_discover() {
     assert!(prepared.iter().all(|item| item == &prepared[0]));
     let binding = prepared[0].clone();
     let request = admission::load_request(bundle.wi(), &binding).unwrap();
+    assert_eq!(request.task_spec().constraints().max_attempts(), 3);
+    assert_eq!(
+        request.task_spec().constraints().safety_level(),
+        actionqueue_core::task::safety::SafetyLevel::Idempotent
+    );
     assert_eq!(request.task_spec().id().to_string(), binding.task.as_str());
     assert_eq!(
         hex::encode(request.digest().unwrap().hash().bytes()),
@@ -144,6 +212,28 @@ fn ab_wi_002_003_004_persist_retry_ack_and_discover() {
     // AQ commit without WI acknowledgment: retry uses the persisted request and returns AlreadyExists.
     let first = queue.ensure_task(request.clone()).unwrap();
     assert!(first.is_created());
+    // These conflict mutations are relative to the newly approved request bytes.
+    for (field, value) in [
+        ("max_attempts", serde_json::json!(4)),
+        ("safety_level", serde_json::json!("Transactional")),
+    ] {
+        let mut value_request = serde_json::to_value(&request).unwrap();
+        assert_ne!(value_request["task_spec"]["constraints"][field], value);
+        value_request["task_spec"]["constraints"][field] = value;
+        let mutated: EnsureTaskRequest = serde_json::from_value(value_request).unwrap();
+        assert_ne!(mutated.digest().unwrap(), request.digest().unwrap());
+        let before = queue.engine().projection().projection_digest().unwrap();
+        let error = queue.ensure_task(mutated).unwrap_err();
+        assert!(matches!(
+            error,
+            actionqueue_runtime::control::ServiceError::Admission(
+                actionqueue_runtime::admission::AdmissionError::Rejected(
+                    actionqueue_core::admission::AdmissionRejection::Conflict { .. }
+                )
+            )
+        ));
+        assert_eq!(queue.engine().projection().projection_digest().unwrap(), before);
+    }
     let changed = EnsureTaskRequest::new(
         request.admission_key().clone(),
         TaskSpec::new(
@@ -294,7 +384,158 @@ fn ab_wi_002_003_004_persist_retry_ack_and_discover() {
     let state = bundle.wi().effect_snapshot(subject.tenant()).unwrap();
     assert_eq!(state.effects[&id].dispatches[0].admission.as_ref().unwrap().observed_runs.len(), 1);
     assert_eq!(state.effects[&id].phase, Phase::DispatchPending);
+    let run = state.effects[&id].dispatches[0].admission.as_ref().unwrap().observed_runs[0]
+        .as_str()
+        .parse()
+        .unwrap();
     queue.shutdown().unwrap();
+    let bundle = Arc::new(bundle);
+    let calls = Arc::new(AtomicUsize::new(0));
+    let handler = EffectAttemptHandler {
+        bundle: bundle.clone(),
+        port: MockUncertainPort(calls.clone()),
+        evidence: SafeEvidence(snapshot.clone()),
+        clock: SafeClock,
+    };
+    let make_context = || ExecutorContext {
+        input: HandlerInput {
+            resume_context: None,
+            causal_context: None,
+            run_id: run,
+            attempt_id: actionqueue_core::ids::AttemptId::new(),
+            payload: request.task_spec().task_payload().bytes().to_vec(),
+            metadata: AttemptMetadata {
+                failure_attempt_count: 0,
+                max_attempts: 3,
+                attempt_number: 1,
+                timeout_secs: Some(60),
+                safety_level: actionqueue_core::task::safety::SafetyLevel::Idempotent,
+            },
+            cancellation_context: CancellationContext::new(),
+        },
+        children: None,
+    };
+    let mut forged_run = make_context();
+    forged_run.input.run_id = actionqueue_core::ids::RunId::new();
+    assert!(handler.execute_bound(&forged_run).is_err());
+    let mut forged_payload = make_context();
+    forged_payload.input.payload = b"forged task payload".to_vec();
+    assert!(handler.execute_bound(&forged_payload).is_err());
+    assert_eq!(calls.load(Ordering::SeqCst), 0);
+    handler.execute_bound(&make_context()).unwrap();
+    handler.execute_bound(&make_context()).unwrap();
+    assert_eq!(calls.load(Ordering::SeqCst), 1);
+    let receipts = bundle.wi().effect_receipts(subject.tenant(), &id).unwrap();
+    assert_eq!(receipts.len(), 1);
+    let crypto = tempfile::tempdir().unwrap();
+    let key = crypto.path().join("key.pem");
+    let public = crypto.path().join("public.pem");
+    let input = crypto.path().join("input.bin");
+    let signature = crypto.path().join("signature.bin");
+    let openssl = |args: &[&std::ffi::OsStr]| {
+        assert!(std::process::Command::new("openssl").args(args).status().unwrap().success());
+    };
+    openssl(&[
+        "genpkey".as_ref(),
+        "-algorithm".as_ref(),
+        "Ed25519".as_ref(),
+        "-out".as_ref(),
+        key.as_os_str(),
+    ]);
+    openssl(&[
+        "pkey".as_ref(),
+        "-in".as_ref(),
+        key.as_os_str(),
+        "-pubout".as_ref(),
+        "-out".as_ref(),
+        public.as_os_str(),
+    ]);
+    let public_artifact =
+        bundle.wi().publish(subject.tenant().clone(), &std::fs::read(&public).unwrap()).unwrap();
+    let mut signing = worldinterface_protocol::receipt::SigningProofV1 {
+        version: 1,
+        receipt_digest: receipts[0].1.clone(),
+        suite: "ed25519:1".to_owned().try_into().unwrap(),
+        purpose: "receipt-provenance".to_owned().try_into().unwrap(),
+        signed_at: at(),
+        key_state: EvidenceRef {
+            artifact: public_artifact,
+            schema: "ed25519-public-key:1".to_owned().try_into().unwrap(),
+        },
+        signature: worldinterface_protocol::ArtifactRef {
+            scope: subject.tenant().clone(),
+            content: ContentHash::of(b"placeholder"),
+            size: 11,
+        },
+    };
+    std::fs::write(&input, signing.signing_input().unwrap()).unwrap();
+    openssl(&[
+        "pkeyutl".as_ref(),
+        "-sign".as_ref(),
+        "-inkey".as_ref(),
+        key.as_os_str(),
+        "-rawin".as_ref(),
+        "-in".as_ref(),
+        input.as_os_str(),
+        "-out".as_ref(),
+        signature.as_os_str(),
+    ]);
+    openssl(&[
+        "pkeyutl".as_ref(),
+        "-verify".as_ref(),
+        "-pubin".as_ref(),
+        "-inkey".as_ref(),
+        public.as_os_str(),
+        "-rawin".as_ref(),
+        "-in".as_ref(),
+        input.as_os_str(),
+        "-sigfile".as_ref(),
+        signature.as_os_str(),
+    ]);
+    signing.signature =
+        bundle.wi().publish(subject.tenant().clone(), &std::fs::read(&signature).unwrap()).unwrap();
+    bundle.wi().append_receipt_proof(subject.tenant(), &receipts[0].0, &signing).unwrap();
+    let access = worldinterface_domain::receipt::ReceiptAccess::from_trusted_authorizer(
+        subject.tenant().clone(),
+        subject.principal().clone(),
+        worldinterface_domain::receipt::DisclosureProfile::Full,
+    );
+    assert_eq!(bundle.wi().receipt_proofs(&access, &receipts[0].0).unwrap().len(), 1);
+    assert_eq!(bundle.wi().effect_receipts(subject.tenant(), &id).unwrap()[0].1, receipts[0].1);
+    let proof = worldinterface_protocol::receipt::ProofBundleV1 {
+        version: 1,
+        kind: worldinterface_protocol::receipt::ProofBundleKind::Trial,
+        candidate: worldinterface_protocol::CandidateId::generate(),
+        records: vec![receipts[0].1.clone()],
+        evidence: vec![],
+    };
+    let bundle_id: OpaqueRef = "proof:fixture".to_owned().try_into().unwrap();
+    assert!(bundle
+        .wi()
+        .append_proof_bundle(&"tenant:other".to_owned().try_into().unwrap(), &bundle_id, &proof)
+        .is_err());
+    bundle.wi().append_proof_bundle(subject.tenant(), &bundle_id, &proof).unwrap();
+    assert!(bundle
+        .wi()
+        .append_diagnostic_reference(
+            &"tenant:other".to_owned().try_into().unwrap(),
+            true,
+            &"trace:foreign".to_owned().try_into().unwrap(),
+            &receipts[0].0,
+            &"short".to_owned().try_into().unwrap()
+        )
+        .is_err());
+    bundle
+        .wi()
+        .append_diagnostic_reference(
+            subject.tenant(),
+            true,
+            &"trace:fixture".to_owned().try_into().unwrap(),
+            &receipts[0].0,
+            &"short".to_owned().try_into().unwrap(),
+        )
+        .unwrap();
+    drop(handler);
     drop(bundle);
     let reopened = StoreBundle::open(&temp.path().join("bundle")).unwrap();
     let recorded =
@@ -650,13 +891,28 @@ fn ab_wi_002_subprocess_crash_cuts() {
     for cut in ["after-intent", "after-aq"] {
         let temp = tempfile::tempdir().unwrap();
         let root = temp.path().join("bundle");
-        let output = std::process::Command::new(std::env::current_exe().unwrap())
+        let stderr = temp.path().join("child-stderr");
+        let mut child = std::process::Command::new(std::env::current_exe().unwrap())
             .args(["--exact", "ab_wi_002_subprocess_crash_cuts", "--nocapture"])
             .env(CUT, cut)
             .env(PATH, &root)
-            .output()
+            .stdout(std::process::Stdio::null())
+            .stderr(std::fs::File::create(&stderr).unwrap())
+            .spawn()
+            .map(KillOnDrop)
             .unwrap();
-        assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(30);
+        let status = loop {
+            if let Some(status) = child.try_wait().unwrap() {
+                break status;
+            }
+            assert!(
+                std::time::Instant::now() < deadline,
+                "admission crash helper timed out at {cut}"
+            );
+            std::thread::sleep(std::time::Duration::from_millis(5));
+        };
+        assert!(status.success(), "{}", std::fs::read_to_string(stderr).unwrap());
         let bundle = StoreBundle::open(&root).unwrap();
         let (_, snapshot) = fixture();
         let subject = caller(&snapshot);
@@ -697,4 +953,155 @@ fn ab_wi_002_subprocess_crash_cuts() {
             1
         );
     }
+}
+
+#[test]
+fn persisted_old_policy_request_is_retried_without_rewriting() {
+    let temp = tempfile::tempdir().unwrap();
+    let bundle = StoreBundle::initialize(
+        &temp.path().join("bundle"),
+        StoreProfile { instance: InstanceId::generate(), created_at: at(), platform: false },
+    )
+    .unwrap();
+    let (submission, snapshot) = fixture();
+    for name in [
+        "input",
+        "executable",
+        "dependency",
+        "configuration",
+        "profile-definition",
+        "adapter",
+        "resolution",
+        "grant",
+        "fixture-review",
+        "worker",
+    ] {
+        bundle
+            .wi()
+            .publish("tenant:fixture".to_owned().try_into().unwrap(), name.as_bytes())
+            .unwrap();
+    }
+    let subject = caller(&snapshot);
+    let egress = Egress::new(bundle.wi());
+    let id = egress
+        .apply(
+            &subject,
+            at(),
+            EffectAction::Submit {
+                id: worldinterface_protocol::EffectIntentId::generate(),
+                submission: Box::new(submission),
+                snapshot: verified(&snapshot),
+                link: None,
+            },
+        )
+        .unwrap();
+    assert_eq!(egress.inspect(&subject, &id).unwrap().phase, Phase::Submitted);
+    egress
+        .apply(
+            &subject,
+            at(),
+            EffectAction::Resolve { id: id.clone(), snapshot: verified(&snapshot) },
+        )
+        .unwrap();
+    egress
+        .apply(
+            &subject,
+            at(),
+            EffectAction::Authorize { id: id.clone(), snapshot: verified(&snapshot) },
+        )
+        .unwrap();
+
+    let state = bundle.wi().effect_snapshot(subject.tenant()).unwrap();
+    let effect = &state.effects[&id];
+    let execution = worldinterface_domain::ingress::digest(&(
+        &effect.intent,
+        &effect.resolution,
+        effect.authorization.as_ref().unwrap(),
+        verified(&snapshot).facts(),
+        0u32,
+    ))
+    .unwrap();
+    let task = TaskId::new();
+    let key = AdmissionKey::new(format!(
+        "wi-effect:{}",
+        worldinterface_domain::ingress::digest(&(subject.tenant(), &id, 0u32)).unwrap().as_str()
+    ))
+    .unwrap();
+    let mut constraints = TaskConstraints::new(1, Some(30), None).unwrap();
+    constraints.set_safety_level(actionqueue_core::task::safety::SafetyLevel::Transactional);
+    let spec = TaskSpec::new(
+        task,
+        worldinterface_runtime::aq_adapter::TaskInputLocator::new(
+            effect.intent.submission.input.artifact.clone(),
+        )
+        .payload()
+        .unwrap(),
+        RunPolicy::Once,
+        constraints,
+        TaskMetadata::default(),
+    )
+    .unwrap();
+    let causal = actionqueue_core::causal::CausalContext::new(
+        TraceId::new(format!("wi/effect/{}", id.as_str())).unwrap(),
+        CorrelationId::new(format!("wi/effect/{}", id.as_str())).unwrap(),
+    )
+    .with_authorization_ref(
+        AqOpaqueRef::new(effect.authorization.as_ref().unwrap().exact_binding.as_str()).unwrap(),
+    )
+    .with_submitting_principal_ref(AqOpaqueRef::new(subject.principal().as_str()).unwrap());
+    let request = EnsureTaskRequest::new(key, spec, vec![], causal, None).unwrap();
+    let bytes = serde_json::to_vec(&request).unwrap();
+    let old = worldinterface_domain::effect::ProductionAdmission {
+        version: 1,
+        queue_store: bundle.aq_store_id().unwrap().to_string().try_into().unwrap(),
+        task: task.to_string().try_into().unwrap(),
+        admission_key: request.admission_key().as_str().to_owned().try_into().unwrap(),
+        execution,
+        request_artifact: bundle.wi().publish(subject.tenant().clone(), &bytes).unwrap(),
+        request_hash: ContentHash::of(&bytes),
+        canonical_version: request.digest().unwrap().canonical_version(),
+        canonical_digest: hex::encode(request.digest().unwrap().hash().bytes()).try_into().unwrap(),
+        acknowledged_sequence: None,
+        observed_runs: vec![],
+        discovery_cursor: None,
+    };
+    egress
+        .apply(
+            &subject,
+            at(),
+            EffectAction::PrepareProduction {
+                id: id.clone(),
+                snapshot: verified(&snapshot),
+                admission: Box::new(old.clone()),
+            },
+        )
+        .unwrap();
+    let mut queue = QueueEngine::bootstrap(&bundle, Complete, host()).unwrap();
+    let created = queue.ensure_task(request.clone()).unwrap();
+    queue.shutdown().unwrap();
+    drop(bundle);
+    let bundle = StoreBundle::open(&temp.path().join("bundle")).unwrap();
+    assert_eq!(admission::prepare(&bundle, &subject, at(), &id, verified(&snapshot)).unwrap(), old);
+    let mut queue = QueueEngine::bootstrap(&bundle, Complete, host()).unwrap();
+    let recovered =
+        admission::deliver(&mut queue, &subject, at(), &id, verified(&snapshot)).unwrap();
+    assert!(!recovered.is_created());
+    assert_eq!(created.sequence(), recovered.sequence());
+    let persisted = bundle.wi().effect_snapshot(subject.tenant()).unwrap().effects[&id].dispatches
+        [0]
+    .admission
+    .as_ref()
+    .unwrap()
+    .clone();
+    assert_eq!(bundle.wi().read_artifact(&persisted.request_artifact).unwrap(), bytes);
+    assert_eq!(persisted.canonical_digest, old.canonical_digest);
+    assert_eq!(persisted.admission_key, old.admission_key);
+    assert_eq!(persisted.task, old.task);
+    let loaded = admission::load_request(bundle.wi(), &persisted).unwrap();
+    assert_eq!(loaded.task_spec().constraints().max_attempts(), 1);
+    assert_eq!(
+        loaded.task_spec().constraints().safety_level(),
+        actionqueue_core::task::safety::SafetyLevel::Transactional
+    );
+    queue.shutdown().unwrap();
 }

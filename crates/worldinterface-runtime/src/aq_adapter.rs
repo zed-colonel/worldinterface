@@ -2,6 +2,7 @@
 use crate::storage::StoreBundle;
 use crate::Result;
 use actionqueue_core::control::HostControlContext;
+use actionqueue_core::disposition::AttemptDisposition;
 use actionqueue_core::{
     admission::{EnsureTaskOutcome, EnsureTaskRequest},
     bounded::{ContentHash, DataScheme, HashAlgorithm, OpaqueRef},
@@ -10,6 +11,7 @@ use actionqueue_core::{
     ids::{AttemptId, CorrelationId, RunId, TaskId, TraceId},
     task::task_spec::TaskPayload,
 };
+use actionqueue_executor_local::handler::ExecutorContext;
 use actionqueue_executor_local::handler::ExecutorHandler;
 use actionqueue_runtime::{
     config::RuntimeConfig,
@@ -38,6 +40,21 @@ pub struct QueueEngine<'a, H: ExecutorHandler + 'static> {
     bundle: &'a StoreBundle,
     store: QueueStoreId,
     engine: BootstrappedEngine<H>,
+}
+/// Dispatches by the immutable admitted payload shape. The effect handler still
+/// verifies the persisted AQ admission and observed run before invoking a port.
+pub struct TaskRouter<I, E> {
+    pub ingress: I,
+    pub effect: E,
+}
+impl<I: ExecutorHandler, E: ExecutorHandler> ExecutorHandler for TaskRouter<I, E> {
+    fn execute(&self, ctx: ExecutorContext) -> AttemptDisposition {
+        if TaskInputLocator::decode(&ctx.input.payload).is_ok() {
+            self.effect.execute(ctx)
+        } else {
+            self.ingress.execute(ctx)
+        }
+    }
 }
 impl<'a, H: ExecutorHandler + 'static> QueueEngine<'a, H> {
     pub fn bootstrap(
@@ -111,6 +128,24 @@ pub struct QueueReferences {
     projection: ReplayReducer,
 }
 impl QueueReferences {
+    pub fn run_state(&self, run: &str) -> Result<Option<actionqueue_core::run::state::RunState>> {
+        let run: RunId = run.parse()?;
+        Ok(self.projection.get_run_state(&run).copied())
+    }
+    pub fn terminal_failure_code(&self, run: &str) -> Result<Option<String>> {
+        let run: RunId = run.parse()?;
+        Ok(self
+            .projection
+            .get_attempt_history(&run)
+            .and_then(|history| history.last())
+            .and_then(|attempt| attempt.disposition.as_ref())
+            .and_then(|record| match record.disposition.outcome() {
+                actionqueue_core::disposition::DispositionOutcome::TerminalFailure { error } => {
+                    Some(error.code.as_str().to_owned())
+                }
+                _ => None,
+            }))
+    }
     pub fn open(path: &std::path::Path) -> Result<Self> {
         let session = actionqueue_storage::store::open_store(
             path,
@@ -220,7 +255,20 @@ impl QueueReferences {
                 wi.read_artifact(Self::locator(task.payload())?.artifact())?;
             }
         }
+        let mut effect_tasks = std::collections::BTreeSet::new();
+        for tenant in wi.effect_tenants()? {
+            for effect in wi.effect_snapshot(&tenant)?.effects.values() {
+                for dispatch in &effect.dispatches {
+                    if let Some(admission) = &dispatch.admission {
+                        effect_tasks.insert(admission.task.as_str().to_owned());
+                    }
+                }
+            }
+        }
         for run in self.projection.run_instances() {
+            self.projection.get_task(&run.task_id()).ok_or("missing AQ run task")?;
+            let effect_task = effect_tasks.contains(&run.task_id().to_string());
+            let mut completed_locator = false;
             for attempt in self.projection.get_attempt_history(&run.id()).unwrap_or(&[]) {
                 if let Some(actionqueue_core::data_ref::DataRef::External(external)) =
                     attempt.output_ref()
@@ -239,8 +287,48 @@ impl QueueReferences {
                         let bytes = wi.read_artifact(&artifact)?;
                         actionqueue_core::data_ref::DataRef::External(external.clone())
                             .verify_bytes(&bytes)?;
+                        if effect_task {
+                            let locator: crate::completion::CompletionLocator =
+                                serde_json::from_value(strict_json(&bytes)?)?;
+                            if locator.version != 1
+                                || locator.outcome
+                                    != worldinterface_protocol::ExecutionOutcome::Succeeded
+                            {
+                                return Err("invalid effect completion locator".into());
+                            }
+                            let state = wi.effect_snapshot(&artifact.scope)?;
+                            let effect = state
+                                .effects
+                                .get(&locator.intent)
+                                .ok_or("completion without effect")?;
+                            if effect
+                                .dispatches
+                                .last()
+                                .and_then(|d| d.admission.as_ref())
+                                .is_none_or(|a| a.task.as_str() != run.task_id().to_string())
+                                || effect
+                                    .outcomes
+                                    .last()
+                                    .is_none_or(|o| o.outcome != locator.outcome)
+                                || !wi
+                                    .effect_receipts(&artifact.scope, &locator.intent)?
+                                    .iter()
+                                    .any(|(id, digest, _)| {
+                                        id == &locator.receipt && digest == &locator.receipt_digest
+                                    })
+                            {
+                                return Err("AQ completion disagrees with Fabric receipt".into());
+                            }
+                            completed_locator = true;
+                        }
                     }
                 }
+            }
+            if effect_task
+                && run.state() == actionqueue_core::run::state::RunState::Completed
+                && !completed_locator
+            {
+                return Err("AQ completed effect without published Fabric locator".into());
             }
         }
         Ok(())

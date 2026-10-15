@@ -1,3 +1,5 @@
+#[path = "support/child.rs"]
+mod child_guard;
 use actionqueue_core::{
     admission::EnsureTaskRequest,
     bounded::OpaqueRef as AqRef,
@@ -23,6 +25,7 @@ use actionqueue_runtime::{
     config::RuntimeConfig,
     engine::{ActionQueueEngine, BootstrappedEngine},
 };
+use child_guard::KillOnDrop;
 use hmac::{Hmac, Mac};
 use sha2::Sha256;
 use worldinterface_domain::ingress::{provider_artifact_scope, IngressResult};
@@ -41,7 +44,7 @@ use worldinterface_runtime::{
     },
     storage::StoreBundle,
 };
-use worldinterface_storage::StoreProfile;
+use worldinterface_storage::{StoreKind, StoreProfile};
 
 struct Authority(IngressBinding);
 impl BindingAuthority for Authority {
@@ -381,6 +384,45 @@ async fn fanout_routes(partial_audience: bool, stream: bool) {
     aq.shutdown().unwrap();
 }
 
+struct CrashSignalPort<'a> {
+    aq: &'a mut actionqueue_runtime::engine::BootstrappedEngine<Complete>,
+    tenant: OpaqueRef,
+}
+impl AqIngressPort for CrashSignalPort<'_> {
+    fn bound_tenant(&self) -> &OpaqueRef {
+        &self.tenant
+    }
+    fn retired_wake_sequence(
+        &mut self,
+        request: &AdmitSignalRequest,
+    ) -> std::result::Result<Option<u64>, AqDispatchFailure> {
+        BoundAqIngress::new(&mut *self.aq, self.tenant.clone()).retired_wake_sequence(request)
+    }
+    fn ensure_delivery_task(
+        &mut self,
+        request: EnsureTaskRequest,
+    ) -> std::result::Result<AdmissionOutcome, AqDispatchFailure> {
+        BoundAqIngress::new(&mut *self.aq, self.tenant.clone()).ensure_delivery_task(request)
+    }
+    fn admit_wake(
+        &mut self,
+        request: AdmitSignalRequest,
+    ) -> std::result::Result<WakeOutcome, AqDispatchFailure> {
+        let outcome =
+            BoundAqIngress::new(&mut *self.aq, self.tenant.clone()).admit_wake(request)?;
+        if std::env::var("WI_INGRESS_SIGNAL_CUT").as_deref() == Ok("aq-signal-admitted") {
+            ingress_signal_barrier();
+        }
+        Ok(outcome)
+    }
+}
+fn ingress_signal_barrier() {
+    std::fs::write(std::env::var_os("WI_INGRESS_CRASH_READY").unwrap(), b"committed").unwrap();
+    loop {
+        std::thread::park();
+    }
+}
+
 #[test]
 fn process_death_after_wi_commit_recovers_aq_obligation() {
     if let Some(path) = std::env::var_os("WI_INGRESS_CRASH_BUNDLE") {
@@ -440,55 +482,112 @@ fn process_death_after_wi_commit_recovers_aq_obligation() {
         };
         let body = canonical_data(&event).unwrap();
         let credential = ProviderCredentials::new(binding.profile.clone(), vec![7; 32]).unwrap();
-        IngressRuntime::new(root, binding.profile.scope.tenant)
+        IngressRuntime::new(root, binding.profile.scope.tenant.clone())
             .accept_http(&credential, &body, &sign(&body), current)
             .unwrap();
-        std::fs::write(std::env::var_os("WI_INGRESS_CRASH_READY").unwrap(), b"committed").unwrap();
-        loop {
-            std::thread::sleep(std::time::Duration::from_secs(1));
+        let cut = std::env::var("WI_INGRESS_SIGNAL_CUT").unwrap();
+        if cut != "fabric-committed" {
+            let mut aq = ActionQueueEngine::new(
+                RuntimeConfig { data_dir: bundle.aq_path(), ..Default::default() },
+                Complete,
+            )
+            .bootstrap()
+            .unwrap()
+            .with_host(host());
+            let tenant = binding.profile.scope.tenant.clone();
+            IngressRuntime::new(root, tenant.clone())
+                .dispatch_pending(&mut CrashSignalPort { aq: &mut aq, tenant }, 10, now())
+                .unwrap();
         }
+        ingress_signal_barrier();
     }
-    let temp = tempfile::tempdir().unwrap();
-    let path = temp.path().join("bundle");
-    let ready = temp.path().join("ready");
-    let mut child = std::process::Command::new(std::env::current_exe().unwrap())
-        .args(["--exact", "process_death_after_wi_commit_recovers_aq_obligation", "--nocapture"])
-        .env("WI_INGRESS_CRASH_BUNDLE", &path)
-        .env("WI_INGRESS_CRASH_READY", &ready)
-        .stdout(std::process::Stdio::null())
-        .spawn()
-        .unwrap();
-    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(10);
-    while !ready.exists() && std::time::Instant::now() < deadline {
-        assert!(child.try_wait().unwrap().is_none(), "child exited before WI commit");
-        std::thread::sleep(std::time::Duration::from_millis(5));
+    for point in ["fabric-committed", "aq-signal-admitted", "local-signal-acknowledged"] {
+        let temp = tempfile::tempdir().unwrap();
+        let path = temp.path().join("bundle");
+        let ready = temp.path().join("ready");
+        let mut child = std::process::Command::new(std::env::current_exe().unwrap())
+            .args([
+                "--exact",
+                "process_death_after_wi_commit_recovers_aq_obligation",
+                "--nocapture",
+            ])
+            .env("WI_INGRESS_CRASH_BUNDLE", &path)
+            .env("WI_INGRESS_CRASH_READY", &ready)
+            .env("WI_INGRESS_SIGNAL_CUT", point)
+            .stdout(std::process::Stdio::null())
+            .spawn()
+            .map(KillOnDrop)
+            .unwrap();
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(30);
+        while !ready.exists() && std::time::Instant::now() < deadline {
+            assert!(child.try_wait().unwrap().is_none(), "child exited before WI commit");
+            std::thread::sleep(std::time::Duration::from_millis(5));
+        }
+        let committed = ready.exists();
+        child.kill().unwrap();
+        child.wait().unwrap();
+        assert!(committed, "child did not reach committed state");
+        let bundle = StoreBundle::open(&path).unwrap();
+        let tenant: OpaqueRef = "tenant-a".to_owned().try_into().unwrap();
+        let state = bundle.wi().ingress_snapshot(&tenant).unwrap();
+        assert_eq!(state.admissions.len(), 1);
+        let receipt = state.admissions.values().next().unwrap().receipt.id.clone();
+        let access = worldinterface_domain::receipt::ReceiptAccess::from_trusted_authorizer(
+            tenant.clone(),
+            state.bindings.values().next().unwrap().principal.clone(),
+            worldinterface_domain::receipt::DisclosureProfile::Redacted,
+        );
+        let before = bundle.wi().inspect_receipt(&access, &receipt).unwrap().unwrap();
+        assert_eq!(before.direction.as_str(), "ingress");
+        bundle.wi().repository(StoreKind::Fabric).unwrap().rebuild().unwrap();
+        assert_eq!(bundle.wi().inspect_receipt(&access, &receipt).unwrap().unwrap(), before);
+        assert_eq!(state.queue.len(), 1);
+        let original = state.queue.values().next().unwrap().clone();
+        assert_eq!(original.signal_sequence.is_some(), point == "local-signal-acknowledged");
+        assert_eq!(original.task_admitted, point != "fabric-committed");
+        let mut aq = ActionQueueEngine::new(
+            RuntimeConfig { data_dir: bundle.aq_path(), ..Default::default() },
+            Complete,
+        )
+        .bootstrap()
+        .unwrap()
+        .with_host(host());
+        assert_eq!(
+            IngressRuntime::new(bundle.wi(), tenant.clone())
+                .dispatch_pending(&mut BoundAqIngress::new(&mut aq, tenant.clone()), 10, now())
+                .unwrap(),
+            usize::from(point != "local-signal-acknowledged")
+        );
+        let replayed = bundle.wi().ingress_snapshot(&tenant).unwrap();
+        assert!(replayed.queue.values().all(|q| q.task_admitted && q.signal_sequence.is_some()));
+        let obligation = replayed.queue.values().next().unwrap();
+        assert_eq!(obligation.signal_request, original.signal_request);
+        assert_eq!(obligation.signal_digest, original.signal_digest);
+        assert_eq!(obligation.task_request, original.task_request);
+        assert_eq!(obligation.generation, 0);
+        assert!(obligation.prior.is_empty());
+        let request: AdmitSignalRequest = serde_json::from_slice(&original.signal_request).unwrap();
+        assert_eq!(
+            aq.admit_signal(request).unwrap().sequence().get(),
+            obligation.signal_sequence.unwrap()
+        );
+        assert!(aq
+            .projection()
+            .signals()
+            .by_sequence(actionqueue_core::ids::SignalSequence::new(2))
+            .is_none());
+        assert_eq!(
+            IngressRuntime::new(bundle.wi(), tenant.clone())
+                .dispatch_pending(&mut BoundAqIngress::new(&mut aq, tenant.clone()), 10, now())
+                .unwrap(),
+            0
+        );
+        assert_eq!(bundle.wi().inspect_receipt(&access, &receipt).unwrap().unwrap(), before);
+        aq.shutdown().unwrap();
+        drop(bundle);
+        let reopened = StoreBundle::open(&path).unwrap();
+        assert_eq!(reopened.wi().ingress_snapshot(&tenant).unwrap().queue, replayed.queue);
     }
-    let committed = ready.exists();
-    child.kill().unwrap();
-    child.wait().unwrap();
-    assert!(committed, "child did not reach committed state");
-    let bundle = StoreBundle::open(&path).unwrap();
-    let tenant: OpaqueRef = "tenant-a".to_owned().try_into().unwrap();
-    let state = bundle.wi().ingress_snapshot(&tenant).unwrap();
-    assert_eq!(state.admissions.len(), 1);
-    assert_eq!(state.queue.len(), 1);
-    assert!(state.queue.values().all(|q| !q.task_admitted && q.signal_sequence.is_none()));
-    let mut aq = ActionQueueEngine::new(
-        RuntimeConfig { data_dir: bundle.aq_path(), ..Default::default() },
-        Complete,
-    )
-    .bootstrap()
-    .unwrap()
-    .with_host(host());
-    assert_eq!(
-        IngressRuntime::new(bundle.wi(), tenant.clone())
-            .dispatch_pending(&mut BoundAqIngress::new(&mut aq, tenant.clone()), 10, now())
-            .unwrap(),
-        1
-    );
-    let replayed = bundle.wi().ingress_snapshot(&tenant).unwrap();
-    assert!(replayed.queue.values().all(|q| q.task_admitted && q.signal_sequence.is_some()));
-    aq.shutdown().unwrap();
 }
 #[tokio::test]
 async fn ab_wi_007_commit_replay_identity_and_subscriber_ack() {
@@ -802,6 +901,23 @@ async fn ab_wi_007_commit_replay_identity_and_subscriber_ack() {
         .unwrap();
     assert_eq!(subscriber.0.lock().unwrap().len(), 2);
     aq.shutdown().unwrap();
+    let receipt = bundle
+        .wi()
+        .ingress_snapshot(&binding.profile.scope.tenant)
+        .unwrap()
+        .admissions
+        .values()
+        .next()
+        .unwrap()
+        .receipt
+        .id
+        .clone();
+    let access = worldinterface_domain::receipt::ReceiptAccess::from_trusted_authorizer(
+        binding.profile.scope.tenant.clone(),
+        binding.principal.clone(),
+        worldinterface_domain::receipt::DisclosureProfile::Redacted,
+    );
+    let inspected = bundle.wi().inspect_receipt(&access, &receipt).unwrap().unwrap();
     drop(service);
     drop(bundle);
     let backup = temp.path().join("backup");
@@ -809,6 +925,7 @@ async fn ab_wi_007_commit_replay_identity_and_subscriber_ack() {
     let restored = temp.path().join("restored");
     StoreBundle::restore(&backup, &restored).unwrap();
     let reopened = StoreBundle::open(&restored).unwrap();
+    assert_eq!(reopened.wi().inspect_receipt(&access, &receipt).unwrap().unwrap(), inspected);
     assert!(reopened
         .wi()
         .ingress_snapshot(&binding.profile.scope.tenant)

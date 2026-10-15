@@ -71,7 +71,9 @@
         "scripts/check-wi-domain-isolation.py",
         ".cargo/config.toml",
         "fixtures/pre-wi-fabric-2/source/rust-toolchain.toml",
-        "rust-toolchain.toml"
+        "rust-toolchain.toml",
+        "scripts/wi_crash_isolation.py",
+        "scripts/test_wi_crash_isolation.py"
       ]
     },
     {
@@ -140,7 +142,9 @@
         "contracts/aq-integration-target.json",
         ".cargo/config.toml",
         "fixtures/pre-wi-fabric-2/source/rust-toolchain.toml",
-        "rust-toolchain.toml"
+        "rust-toolchain.toml",
+        "scripts/wi_crash_isolation.py",
+        "scripts/test_wi_crash_isolation.py"
       ]
     },
     {

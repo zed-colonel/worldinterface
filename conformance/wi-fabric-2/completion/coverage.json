@@ -1,0 +1,366 @@
+{
+  "scope": "wi/WI-05/integration",
+  "upstream_implementation": "29e096c4f06985d1a9bd9d5fe5a3a6a5db8a6860",
+  "upstream_tree": "1c0c85dd700bd9d0c75de223dada911ffeadbb5b",
+  "upstream_conformance_revision": 16,
+  "assigned_aq_baseline_cases": [],
+  "source_tests": [
+    "ab_wi_002_003_004_persist_retry_ack_and_discover",
+    "aq_completion_exposes_only_published_locator",
+    "aq_disposition_process_kills_replay_the_original_locator",
+    "authenticated_redaction_and_cross_tenant_principal_denials",
+    "campaign_labels_are_attribution_and_material_differences_remain_visible",
+    "canceled_pre_start_run_retains_cancellation_diagnostic_on_reopen",
+    "canonical_receipt_survives_replay_rebuild_backup_restore",
+    "committed_disposition_rejects_request_admission_and_outcome_binding_drift",
+    "completed_aq_run_without_fabric_receipt_or_locator_rejects_reopen",
+    "completion_and_redelivery_bound_latency_and_writer_delay_with_long_history",
+    "completion_clock_failure_records_inferred_uncertainty_with_effect_phase_times",
+    "completion_kill_matrix",
+    "completion_retries_publication_contention_without_losing_provider_observation",
+    "contended_completion_preserves_a_superseding_uncertain_receipt",
+    "contended_completion_preserves_provider_outcome_and_published_artifacts",
+    "crash::killed_fabric_receipt_transaction_recovers_all_or_none_and_retries",
+    "crash::killed_publication_resumes_from_each_durable_boundary",
+    "detached_proofs_are_restricted_provenance_and_leave_receipts_immutable",
+    "discovery_noops_preserve_history_and_start_freezes_the_cursor",
+    "effect::tests::missing_phase_index_rejects_interim_schema_without_mutation",
+    "effect::tests::phase_times_seek_one_intent_and_preserve_dispatch_and_tenant_boundaries",
+    "effect::tests::receipt_source_seeks_one_intent_and_fences_revision_tenant_dispatch_and_start",
+    "expired_dispatch_authorization_retries_and_keeps_a_durable_diagnostic",
+    "invalid_port_observations_commit_inline_uncertainty_without_reinvocation",
+    "invocation_fence_rechecks_after_supersession",
+    "killed_fabric_receipt_transaction_recovers_all_or_none_and_retries",
+    "killed_publication_resumes_from_each_durable_boundary",
+    "outcome_artifact_bounds_include_boundary_bytes_and_checked_totals",
+    "overlapping_delivery_preserves_uncertainty_and_single_port_call",
+    "oversized_observations_publish_no_port_artifacts",
+    "persisted_old_policy_request_is_retried_without_rewriting",
+    "plain_effect_transaction_cannot_persist_a_receiptless_outcome",
+    "possible_commit_aq_codes_converge_without_spurious_faults",
+    "process_death_after_wi_commit_recovers_aq_obligation",
+    "production_facade_authenticates_verifies_and_rechecks_live_target",
+    "proof::tests::proof_and_diagnostic_ids_are_unique_within_each_tenant",
+    "proof_bundles_bind_receipts_and_authorize_every_member",
+    "receipt_execution_evidence_is_bounded_by_authoritative_outcome",
+    "receipt_import_requires_exact_canonical_bytes_and_supported_profile",
+    "receipt_outcome_and_outbox_commit_after_scoped_publication",
+    "receipt_transaction_rejects_a_command_without_a_new_outcome",
+    "reopen_rejects_outcomes_without_receipts_and_cross_direction_receipt_ids",
+    "retry_dispatch_does_not_reuse_the_previous_attempt_disposition",
+    "runtime_campaign_inspection_preserves_authority_and_material_confounds",
+    "sibling_run_cannot_publish_or_reuse_the_start_runs_receipt",
+    "structurally_invalid_observations_publish_no_port_artifacts",
+    "successful_completion_preserves_distinct_journal_phase_times",
+    "sustained_tenant_writes_preserve_confirmed_completion_without_reinvocation",
+    "terminal_recovery_selects_start_among_multiple_terminal_runs",
+    "terminal_recovery_uses_start_run_and_skips_other_observed_terminal_runs",
+    "terminal_recovery_waits_for_writers_and_preserves_original_attempt",
+    "three_expired_deliveries_record_convergence_fault_without_second_port_call",
+    "unreadable_binding_never_claims_retry_safe_pre_start_failure",
+    "worker_report_identity_mismatch_is_not_disclosed_as_bound_evidence",
+    "wp015_runtime_receipt_separates_enclosing_provenance_from_worker_enforcement",
+    "wp016_runtime_receipt_retains_requested_advertised_applied_observed_missing_unknown"
+  ],
+  "independent_security_review": "pending",
+  "contributes_gate": "WI-AQ-G4",
+  "gate_closed_by": "WIP-07",
+  "closing_item": "WIP-04",
+  "assigned_cases": {
+    "WP-015": [
+      "wp015_runtime_receipt_separates_enclosing_provenance_from_worker_enforcement"
+    ],
+    "WP-016": [
+      "wp016_runtime_receipt_retains_requested_advertised_applied_observed_missing_unknown"
+    ]
+  },
+  "required_obligations": {
+    "canonical-replay": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "canonical_receipt_survives_replay_rebuild_backup_restore"
+      },
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-protocol",
+        "test": "receipt_import_requires_exact_canonical_bytes_and_supported_profile"
+      }
+    ],
+    "authoritative-source-resource": [
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-egress",
+        "test": "receipt_outcome_and_outbox_commit_after_scoped_publication"
+      },
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-egress",
+        "test": "receipt_execution_evidence_is_bounded_by_authoritative_outcome"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "successful_completion_preserves_distinct_journal_phase_times"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "expired_dispatch_authorization_retries_and_keeps_a_durable_diagnostic"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "retry_dispatch_does_not_reuse_the_previous_attempt_disposition"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "reopen_rejects_outcomes_without_receipts_and_cross_direction_receipt_ids"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "plain_effect_transaction_cannot_persist_a_receiptless_outcome"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "contended_completion_preserves_provider_outcome_and_published_artifacts"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "unreadable_binding_never_claims_retry_safe_pre_start_failure"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "canceled_pre_start_run_retains_cancellation_diagnostic_on_reopen"
+      },
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-storage",
+        "test": "effect::tests::receipt_source_seeks_one_intent_and_fences_revision_tenant_dispatch_and_start"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "committed_disposition_rejects_request_admission_and_outcome_binding_drift"
+      },
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-egress",
+        "test": "receipt_transaction_rejects_a_command_without_a_new_outcome"
+      }
+    ],
+    "publication-before-completion": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "aq_completion_exposes_only_published_locator"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "completed_aq_run_without_fabric_receipt_or_locator_rejects_reopen"
+      },
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-domain",
+        "test": "outcome_artifact_bounds_include_boundary_bytes_and_checked_totals"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "oversized_observations_publish_no_port_artifacts"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "sibling_run_cannot_publish_or_reuse_the_start_runs_receipt"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "structurally_invalid_observations_publish_no_port_artifacts"
+      }
+    ],
+    "crash-convergence": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "completion_kill_matrix"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "aq_disposition_process_kills_replay_the_original_locator"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "overlapping_delivery_preserves_uncertainty_and_single_port_call"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "three_expired_deliveries_record_convergence_fault_without_second_port_call"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "process_death_after_wi_commit_recovers_aq_obligation"
+      },
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-storage",
+        "test": "crash::killed_fabric_receipt_transaction_recovers_all_or_none_and_retries"
+      },
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-storage",
+        "test": "crash::killed_publication_resumes_from_each_durable_boundary"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "invalid_port_observations_commit_inline_uncertainty_without_reinvocation"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "completion_clock_failure_records_inferred_uncertainty_with_effect_phase_times"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "invocation_fence_rechecks_after_supersession"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "sustained_tenant_writes_preserve_confirmed_completion_without_reinvocation"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "contended_completion_preserves_a_superseding_uncertain_receipt"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "possible_commit_aq_codes_converge_without_spurious_faults"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "completion_retries_publication_contention_without_losing_provider_observation"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "terminal_recovery_waits_for_writers_and_preserves_original_attempt"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "terminal_recovery_uses_start_run_and_skips_other_observed_terminal_runs"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "terminal_recovery_selects_start_among_multiple_terminal_runs"
+      },
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-storage",
+        "test": "effect::tests::phase_times_seek_one_intent_and_preserve_dispatch_and_tenant_boundaries"
+      },
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-storage",
+        "test": "effect::tests::missing_phase_index_rejects_interim_schema_without_mutation"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "completion_and_redelivery_bound_latency_and_writer_delay_with_long_history"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "discovery_noops_preserve_history_and_start_freezes_the_cursor"
+      }
+    ],
+    "redacted-inspection": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "authenticated_redaction_and_cross_tenant_principal_denials"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "proof_bundles_bind_receipts_and_authorize_every_member"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "worker_report_identity_mismatch_is_not_disclosed_as_bound_evidence"
+      }
+    ],
+    "signature-provenance": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "ab_wi_002_003_004_persist_retry_ack_and_discover"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "detached_proofs_are_restricted_provenance_and_leave_receipts_immutable"
+      }
+    ],
+    "campaign-noninterference": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "runtime_campaign_inspection_preserves_authority_and_material_confounds"
+      },
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-domain",
+        "test": "campaign_labels_are_attribution_and_material_differences_remain_visible"
+      }
+    ],
+    "no-success-quality-claims": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "wp016_runtime_receipt_retains_requested_advertised_applied_observed_missing_unknown"
+      }
+    ],
+    "material-differences": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "runtime_campaign_inspection_preserves_authority_and_material_confounds"
+      },
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-domain",
+        "test": "campaign_labels_are_attribution_and_material_differences_remain_visible"
+      }
+    ]
+  },
+  "crash_feature_approval": {
+    "source_cycle": "10a42bb3-5c5d-4300-8ec2-afde9c238211",
+    "decision": "dev-only empty storage crash-points feature; amended checks adopted at merge",
+    "checks": [
+      "foundation-isolation",
+      "runtime-aq-graph"
+    ]
+  },
+  "wp_a06": "resolved: receipt-bound runtime reports preserve enclosing provenance, worker claims and missing/unknown evidence separately"
+}

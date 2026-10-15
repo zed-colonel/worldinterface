@@ -162,7 +162,7 @@ impl StoreRoot {
             contract: CONTRACT.into(),
             schema: 1,
             canonical_profile: CANONICAL_PROFILE.into(),
-            feature_profile: "local-receipt-2".into(),
+            feature_profile: "local-receipt-3".into(),
             stores: kinds(profile.platform),
             profile,
             complete: true,
@@ -182,6 +182,8 @@ impl StoreRoot {
             write_new(&path.join(format!("{}.json", kind.name())), &identity)?;
             #[cfg(test)]
             crate::crash::checkpoint("initialization-store");
+            #[cfg(all(feature = "crash-points", not(test)))]
+            crate::crashpoint::checkpoint("initialization-store");
             if interrupt_after == Some(i) {
                 return Err(invalid("injected initialization interruption"));
             }
@@ -192,6 +194,8 @@ impl StoreRoot {
         write_new(&path.join("manifest.pending"), &canonical_data(&manifest).map_err(invalid)?)?;
         #[cfg(test)]
         crate::crash::checkpoint("initialization-publish");
+        #[cfg(all(feature = "crash-points", not(test)))]
+        crate::crashpoint::checkpoint("initialization-publish");
         fs::rename(path.join("manifest.pending"), path.join("manifest.json"))?;
         sync_dir(path)?;
         if let Some(parent) = parent_dir(path) {
@@ -224,7 +228,7 @@ impl StoreRoot {
             || manifest.contract != CONTRACT
             || manifest.schema != 1
             || manifest.canonical_profile != CANONICAL_PROFILE
-            || manifest.feature_profile != "local-receipt-2"
+            || manifest.feature_profile != "local-receipt-3"
             || !manifest.complete
             || manifest.stores != kinds(manifest.profile.platform)
             || path.join("initializing").exists()
@@ -347,6 +351,7 @@ impl StoreRoot {
         root.validate_artifacts()?;
         root.validate_effect_artifacts()?;
         root.validate_receipt_artifacts()?;
+        crate::proof::validate(&root)?;
         Ok(root)
     }
     pub fn profile(&self) -> &StoreProfile {
@@ -408,9 +413,13 @@ impl StoreRoot {
             // Publish the complete directory without a visible reservation window.
             #[cfg(test)]
             crate::crash::checkpoint("backup-publish");
+            #[cfg(all(feature = "crash-points", not(test)))]
+            crate::crashpoint::checkpoint("backup-publish");
             publish_directory(&staging, dest)?;
             #[cfg(test)]
             crate::crash::checkpoint("backup-renamed");
+            #[cfg(all(feature = "crash-points", not(test)))]
+            crate::crashpoint::checkpoint("backup-renamed");
             sync_dir(parent)
         })();
         if result.is_err() {

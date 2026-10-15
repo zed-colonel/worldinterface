@@ -83,7 +83,16 @@ fn staging(dest: &Path) -> Result<tempfile::TempDir> {
 pub struct StoreBundle {
     wi: StoreRoot,
     path: std::path::PathBuf,
+    convergence_faults: Vec<ConvergenceFault>,
     _lock: File,
+}
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct ConvergenceFault {
+    pub tenant: worldinterface_protocol::OpaqueRef,
+    pub intent: worldinterface_protocol::EffectIntentId,
+    pub run: worldinterface_protocol::OpaqueRef,
+    pub fabric: worldinterface_protocol::ExecutionOutcome,
+    pub queue: actionqueue_core::run::state::RunState,
 }
 impl StoreBundle {
     pub fn initialize(path: &Path, profile: StoreProfile) -> Result<Self> {
@@ -117,10 +126,154 @@ impl StoreBundle {
             return Err("WI bundle identity mismatch".into());
         }
         references.validate_artifacts(&wi)?;
-        Ok(Self { wi, path: path.to_path_buf(), _lock: lock })
+        // AQ may have spent its interruption budget after Fabric Start. Its
+        // terminal run cannot prove noncommit, so preserve Uncertain and the
+        // original attempt without re-admission or a second port call.
+        for tenant in wi.effect_tenants()? {
+            let state = wi.effect_snapshot(&tenant)?;
+            for (id, effect) in &state.effects {
+                if effect.phase == worldinterface_domain::Phase::DispatchPending
+                    && effect.attempt.is_none()
+                {
+                    if let Some(admission) =
+                        effect.dispatches.last().and_then(|d| d.admission.as_ref())
+                    {
+                        for run in &admission.observed_runs {
+                            let code = match references.run_state(run.as_str())? {
+                                Some(actionqueue_core::run::state::RunState::Failed) => {
+                                    "wi.effect.pre_start_exhausted"
+                                }
+                                Some(actionqueue_core::run::state::RunState::Canceled) => {
+                                    "wi.effect.pre_start_canceled"
+                                }
+                                _ => continue,
+                            };
+                            wi.record_dispatch_fault(&tenant, id, run, code)?;
+                        }
+                    }
+                }
+                if effect.phase != worldinterface_domain::Phase::Running
+                    || effect.outcomes.iter().any(|o| Some(&o.attempt) == effect.attempt.as_ref())
+                {
+                    continue;
+                }
+                let Some(admission) = effect.dispatches.last().and_then(|d| d.admission.as_ref())
+                else {
+                    continue;
+                };
+                let phases = wi.effect_execution_times(&tenant, id)?;
+                let Some(run) = phases.run.as_ref() else { continue };
+                if effect.attempt.as_ref() == Some(&phases.attempt)
+                    && admission.observed_runs.contains(run)
+                    && matches!(
+                        references.run_state(run.as_str())?,
+                        Some(
+                            actionqueue_core::run::state::RunState::Completed
+                                | actionqueue_core::run::state::RunState::Failed
+                                | actionqueue_core::run::state::RunState::Canceled
+                        )
+                    )
+                {
+                    crate::completion::record_uncertain_after_terminal_run(
+                        &wi,
+                        &tenant,
+                        id,
+                        &phases.attempt,
+                        run,
+                    )?;
+                }
+            }
+        }
+        let mut convergence_faults = Vec::new();
+        for tenant in wi.effect_tenants()? {
+            let state = wi.effect_snapshot(&tenant)?;
+            for (id, effect) in &state.effects {
+                let Some(outcome) = effect.outcomes.last() else {
+                    continue;
+                };
+                if effect.attempt.as_ref() != Some(&outcome.attempt)
+                    || matches!(
+                        effect.phase,
+                        worldinterface_domain::Phase::Authorized
+                            | worldinterface_domain::Phase::DispatchPending
+                            | worldinterface_domain::Phase::Running
+                    )
+                {
+                    continue;
+                }
+                let Some(admission) = effect.dispatches.last().and_then(|d| d.admission.as_ref())
+                else {
+                    continue;
+                };
+                for run in &admission.observed_runs {
+                    let Some(queue) = references.run_state(run.as_str())? else {
+                        continue;
+                    };
+                    let expected_code = match outcome.outcome {
+                        worldinterface_protocol::ExecutionOutcome::FailedBeforeCommit => {
+                            Some("wi.effect.failed_before_commit")
+                        }
+                        worldinterface_protocol::ExecutionOutcome::CanceledBeforeCommit => {
+                            Some("wi.effect.canceled_before_commit")
+                        }
+                        worldinterface_protocol::ExecutionOutcome::Uncertain => {
+                            Some("wi.effect.uncertain")
+                        }
+                        worldinterface_protocol::ExecutionOutcome::Succeeded => None,
+                    };
+                    if matches!(
+                        queue,
+                        actionqueue_core::run::state::RunState::Completed
+                            | actionqueue_core::run::state::RunState::Failed
+                            | actionqueue_core::run::state::RunState::Canceled
+                    ) && match expected_code {
+                        None => queue != actionqueue_core::run::state::RunState::Completed,
+                        Some(code) => {
+                            let actual = references.terminal_failure_code(run.as_str())?;
+                            let expected_uncertainty = outcome.outcome
+                                == worldinterface_protocol::ExecutionOutcome::Uncertain
+                                && matches!(
+                                    actual.as_deref(),
+                                    Some(
+                                        "wi.effect.uncertain_recording_error"
+                                            | "wi.effect.phase_unknown"
+                                    )
+                                );
+                            queue != actionqueue_core::run::state::RunState::Failed
+                                || (actual.as_deref() != Some(code) && !expected_uncertainty)
+                        }
+                    } {
+                        let queue_label = match queue {
+                            actionqueue_core::run::state::RunState::Completed => "completed",
+                            actionqueue_core::run::state::RunState::Failed => "failed",
+                            actionqueue_core::run::state::RunState::Canceled => "canceled",
+                            _ => unreachable!(),
+                        };
+                        wi.record_convergence_fault(
+                            &tenant,
+                            id,
+                            run,
+                            &outcome.outcome,
+                            queue_label,
+                        )?;
+                        convergence_faults.push(ConvergenceFault {
+                            tenant: tenant.clone(),
+                            intent: id.clone(),
+                            run: run.clone(),
+                            fabric: outcome.outcome.clone(),
+                            queue,
+                        });
+                    }
+                }
+            }
+        }
+        Ok(Self { wi, path: path.to_path_buf(), convergence_faults, _lock: lock })
     }
     pub fn wi(&self) -> &StoreRoot {
         &self.wi
+    }
+    pub fn convergence_faults(&self) -> &[ConvergenceFault] {
+        &self.convergence_faults
     }
     pub fn aq_path(&self) -> std::path::PathBuf {
         self.path.join("aq")

@@ -18,6 +18,24 @@ use worldinterface_domain::{
 };
 use worldinterface_domain::{Action, Event, Machine};
 use worldinterface_protocol::*;
+struct KillOnDrop(std::process::Child);
+impl std::ops::Deref for KillOnDrop {
+    type Target = std::process::Child;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+impl std::ops::DerefMut for KillOnDrop {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+impl Drop for KillOnDrop {
+    fn drop(&mut self) {
+        let _ = self.0.kill();
+        let _ = self.0.wait();
+    }
+}
 pub(crate) fn checkpoint(name: &str) {
     if std::env::var("WI_CRASH_POINT").as_deref() == Ok(name) {
         fs::write(std::env::var_os("WI_CRASH_READY").unwrap(), b"ready").unwrap();
@@ -258,6 +276,7 @@ fn fabric_receipt_inputs(
 fn killed_fabric_receipt_transaction_recovers_all_or_none_and_retries() {
     for point in [
         "fabric-receipt-history",
+        "fabric-receipt-state",
         "fabric-receipt-outbox",
         "fabric-receipt-index",
         "fabric-receipt-committed",
@@ -346,7 +365,7 @@ fn kill_at_with_preload(path: &Path, point: &str, preload: Option<&Path>) {
     if let Some(preload) = preload {
         command.env("LD_PRELOAD", preload);
     }
-    let mut child = command.spawn().unwrap();
+    let mut child = KillOnDrop(command.spawn().unwrap());
     let deadline = Instant::now() + Duration::from_secs(10);
     while !ready.exists() && Instant::now() < deadline {
         if let Some(status) = child.try_wait().unwrap() {

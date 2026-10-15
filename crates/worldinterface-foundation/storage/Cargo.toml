@@ -4,6 +4,9 @@ version = "0.2.0"
 edition = "2021"
 publish = false
 
+[features]
+crash-points = []
+
 [dependencies]
 fs2 = "0.4"
 rustix = { version = "1", features = ["fs"] }

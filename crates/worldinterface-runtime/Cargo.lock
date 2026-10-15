@@ -772,6 +772,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "worldinterface-capability"
+version = "0.2.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "worldinterface-protocol",
+]
+
+[[package]]
 name = "worldinterface-domain"
 version = "0.2.0"
 dependencies = [
@@ -837,6 +846,7 @@ dependencies = [
  "worldinterface-ingress",
  "worldinterface-protocol",
  "worldinterface-storage",
+ "worldinterface-worker",
 ]
 
 [[package]]
@@ -850,6 +860,16 @@ dependencies = [
  "serde_json",
  "tempfile",
  "worldinterface-domain",
+ "worldinterface-protocol",
+]
+
+[[package]]
+name = "worldinterface-worker"
+version = "0.2.0"
+dependencies = [
+ "serde",
+ "serde_json",
+ "worldinterface-capability",
  "worldinterface-protocol",
 ]
 

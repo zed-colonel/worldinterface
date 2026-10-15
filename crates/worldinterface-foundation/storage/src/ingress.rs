@@ -13,6 +13,7 @@ CREATE TABLE ingress_history(seq INTEGER PRIMARY KEY, tenant TEXT NOT NULL, revi
 CREATE TRIGGER ingress_no_update BEFORE UPDATE ON ingress_history BEGIN SELECT RAISE(ABORT,'append only'); END;
 CREATE TRIGGER ingress_no_delete BEFORE DELETE ON ingress_history BEGIN SELECT RAISE(ABORT,'append only'); END;
 CREATE TABLE ingress_state(tenant TEXT PRIMARY KEY, state BLOB NOT NULL);
+CREATE TABLE ingress_receipt_index(id TEXT PRIMARY KEY, tenant TEXT NOT NULL, identity TEXT NOT NULL, digest TEXT NOT NULL, canonical BLOB NOT NULL);
 ";
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -25,7 +26,7 @@ struct Entry {
 fn decode<T: serde::de::DeserializeOwned>(bytes: &[u8]) -> Result<T> {
     Ok(serde_json::from_value(strict_collection(bytes).map_err(invalid)?)?)
 }
-fn snapshot(c: &Connection, tenant: &OpaqueRef) -> Result<IngressState> {
+pub(crate) fn snapshot(c: &Connection, tenant: &OpaqueRef) -> Result<IngressState> {
     let bytes: Option<Vec<u8>> = c
         .query_row("SELECT state FROM ingress_state WHERE tenant=?", [tenant.as_str()], |r| {
             r.get(0)
@@ -45,9 +46,47 @@ fn write_state(c: &Connection, tenant: &OpaqueRef, s: &IngressState) -> Result<(
     c.execute("INSERT INTO ingress_state VALUES(?,?) ON CONFLICT(tenant) DO UPDATE SET state=excluded.state",params![tenant.as_str(),canonical_collection(s).map_err(invalid)?])?;
     Ok(())
 }
+fn index_new_receipts(
+    c: &Connection,
+    tenant: &OpaqueRef,
+    old: &IngressState,
+    new: &IngressState,
+) -> Result<()> {
+    for (identity, admission) in &new.admissions {
+        if old.admissions.contains_key(identity) {
+            continue;
+        }
+        let envelope = worldinterface_protocol::Envelope::new(
+            worldinterface_protocol::Record::BoundaryReceipt(admission.receipt.clone()),
+        );
+        let canonical = envelope.canonical_bytes().map_err(invalid)?;
+        let digest = envelope.digest().map_err(invalid)?;
+        let collision: bool = c.query_row(
+            "SELECT EXISTS(SELECT 1 FROM receipt_index WHERE id=?)",
+            [admission.receipt.id.as_str()],
+            |r| r.get(0),
+        )?;
+        if collision {
+            return Err(invalid("cross-direction receipt identity collision"));
+        }
+        c.execute(
+            "INSERT INTO ingress_receipt_index VALUES(?,?,?,?,?)",
+            params![
+                admission.receipt.id.as_str(),
+                tenant.as_str(),
+                identity.as_str(),
+                digest.as_str(),
+                canonical
+            ],
+        )?;
+    }
+    Ok(())
+}
 fn record(c: &Connection, e: &Entry, fault: Option<&str>) -> Result<(IngressState, IngressResult)> {
+    let old = snapshot(c, &e.tenant)?;
     let (new, result) = apply(c, e)?;
     if new.revision != e.expected {
+        index_new_receipts(c, &e.tenant, &old, &new)?;
         let bytes = canonical_data(e).map_err(invalid)?;
         c.execute(
             "INSERT INTO ingress_history(tenant,revision,entry,digest) VALUES(?,?,?,?)",
@@ -208,11 +247,13 @@ pub(crate) fn replay(source: &Connection, target: &Connection) -> Result<()> {
         {
             return Err(invalid("corrupt ingress history"));
         }
+        let old = snapshot(target, &e.tenant)?;
         let (s, _) = apply(target, &e)?;
         if s.revision != revision {
             return Err(invalid("nonmutating ingress history"));
         }
         write_state(target, &e.tenant, &s)?;
+        index_new_receipts(target, &e.tenant, &old, &s)?;
     }
     Ok(())
 }

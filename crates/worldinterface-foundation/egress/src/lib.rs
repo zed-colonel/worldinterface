@@ -29,7 +29,7 @@ impl<'a> Egress<'a> {
                 validate_command(&state, caller, at.clone(), action.clone()).map_err(invalid)?;
             match self.root.effect_transact(&command) {
                 Ok(id) => return Ok(id),
-                Err(e) if e.to_string().contains("stale or unsupported effect journal") => continue,
+                Err(e) if worldinterface_storage::is_effect_contention(e.as_ref()) => continue,
                 Err(e) => return Err(e),
             }
         }

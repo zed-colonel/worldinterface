@@ -715,14 +715,30 @@ fn outcome(
     if !o.durable_outputs.is_empty() {
         r.publish(opaque("tenant:fixture"), b"output").unwrap();
     }
-    Egress::new(r).apply(
+    let state = r.effect_snapshot(caller(p).tenant())?;
+    let execution = ExecutionRecord {
+        intent_id: id.clone(),
+        attempt: o.attempt.clone(),
+        outcome: o.outcome.clone(),
+        evidence: o.evidence.clone(),
+        recorded_at: now(),
+    };
+    let command = validate_command(
+        &state,
         &caller(p),
         now(),
         EffectAction::Outcome {
             id: id.clone(),
             evidence: VerifiedOutcome::from_trusted_verifier(o),
         },
-    )
+    )?;
+    r.effect_transact_with_receipt(
+        &command,
+        ReceiptId::generate(),
+        &execution,
+        receipt_temporal(),
+    )?;
+    Ok(id.clone())
 }
 fn reconciliation(
     p: &AuthorizationSnapshot,
@@ -1065,6 +1081,55 @@ fn exact_receipt_retry_and_conflicting_bindings() {
 }
 
 #[test]
+fn receipt_transaction_rejects_a_command_without_a_new_outcome() {
+    let (s, p) = fixture();
+    let t = tempfile::tempdir().unwrap();
+    let r = root(&t);
+    let (id, o) = start(&r, &s, &p);
+    let execution = execution_for(&o, o.evidence.clone());
+    r.effect_transact_with_receipt(
+        &receipt_command(&r, &p, &o),
+        ReceiptId::generate(),
+        &execution,
+        receipt_temporal(),
+    )
+    .unwrap();
+    let before = r.effect_snapshot(caller(&p).tenant()).unwrap();
+    let receipts = r.effect_receipts(caller(&p).tenant(), &id).unwrap();
+    let command = validate_command(
+        &before,
+        &caller(&p),
+        now(),
+        EffectAction::Reconcile {
+            id: id.clone(),
+            evidence: VerifiedReconciliation::from_trusted_verifier(reconciliation(
+                &p,
+                &o,
+                ReconciliationResult::ConfirmedNotCommitted,
+            )),
+        },
+    )
+    .unwrap();
+    let error = r
+        .effect_transact_with_receipt(
+            &command,
+            ReceiptId::generate(),
+            &execution,
+            receipt_temporal(),
+        )
+        .unwrap_err();
+    assert!(error.to_string().contains("receipt requires exactly one new outcome"));
+    assert_eq!(r.effect_snapshot(caller(&p).tenant()).unwrap(), before);
+    assert_eq!(r.effect_receipts(caller(&p).tenant(), &id).unwrap(), receipts);
+    // The rejected receipt write did not consume the valid reconciliation.
+    r.effect_transact(&command).unwrap();
+    drop(r);
+    let r = StoreRoot::open_existing(t.path().join("root")).unwrap();
+    assert_eq!(r.effect_receipts(caller(&p).tenant(), &id).unwrap(), receipts);
+    assert_eq!(r.effect_snapshot(caller(&p).tenant()).unwrap().revision, before.revision + 1);
+}
+
+#[test]
 fn receipt_execution_evidence_is_bounded_by_authoritative_outcome() {
     let (s, p) = fixture();
     let t = tempfile::tempdir().unwrap();
@@ -1390,9 +1455,23 @@ fn unsupported_store_profile_is_rejected_without_upgrade() {
     drop(root(&t));
     let path = t.path().join("root/manifest.json");
     let bytes = std::fs::read(&path).unwrap();
-    let s = String::from_utf8(bytes).unwrap().replace("local-receipt-2", "local-ingress-1");
+    let s = String::from_utf8(bytes).unwrap().replace("local-receipt-3", "local-ingress-1");
     std::fs::write(&path, &s).unwrap();
+    fn files(path: &std::path::Path) -> std::collections::BTreeMap<std::path::PathBuf, Vec<u8>> {
+        let mut snapshot = std::collections::BTreeMap::new();
+        for entry in std::fs::read_dir(path).unwrap() {
+            let entry = entry.unwrap().path();
+            if entry.is_dir() {
+                snapshot.extend(files(&entry));
+            } else {
+                snapshot.insert(entry.clone(), std::fs::read(&entry).unwrap());
+            }
+        }
+        snapshot
+    }
+    let before = files(&t.path().join("root"));
     assert!(StoreRoot::open_existing(t.path().join("root")).is_err());
+    assert_eq!(files(&t.path().join("root")), before);
     assert_eq!(std::fs::read_to_string(path).unwrap(), s);
 }
 #[test]

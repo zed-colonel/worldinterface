@@ -8216,5 +8216,509 @@
     "target": "WI-03 production ingress and exact AQ consumer tests",
     "source": "implementation plan WI-03 and Appendix A; accepted WI-03 integration design",
     "rationale": "Exercise host retirement during wake admission and durable dead-letter cause recording, including lost completion and restart; independent case review and gate attestation remain due."
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/crashpoint.rs::::source-module:crates/worldinterface-foundation/storage/src/crashpoint.rs",
+    "disposition": "retain-align",
+    "target": "fabric-storage/crash-tests",
+    "rationale": "Operator-approved dev-only empty crash-points feature; guarded checkpoints excluded from production compiler artifacts",
+    "source": "docs/work-items/WIP-04.md; accepted WI-05 takeover plan and WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/lib.rs::::module:crashpoint@0917a31a6f53",
+    "disposition": "retain-align",
+    "target": "fabric-storage",
+    "rationale": "Wire target detached proof persistence and conditionally compiled crash checkpoints",
+    "source": "docs/work-items/WIP-04.md; accepted WI-05 takeover plan and WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/lib.rs::::module:proof",
+    "disposition": "retain-align",
+    "target": "fabric-storage",
+    "rationale": "Wire target detached proof persistence and conditionally compiled crash checkpoints",
+    "source": "docs/work-items/WIP-04.md; accepted WI-05 takeover plan and WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/proof.rs::::source-module:crates/worldinterface-foundation/storage/src/proof.rs",
+    "disposition": "retain-align",
+    "target": "fabric-storage/proofs",
+    "rationale": "Persist detached immutable provenance and reference-only diagnostics with receipt and tenant bindings",
+    "source": "docs/work-items/WIP-04.md; accepted WI-05 takeover plan and WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/tests/support/crash.rs::::struct:KillOnDrop",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "Executable WI-05 receipt, admission or process-kill evidence; helpers always kill and reap child processes",
+    "source": "docs/work-items/WIP-04.md; accepted WI-05 takeover plan and WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/aq_adapter.rs::::struct:TaskRouter",
+    "disposition": "retain-align",
+    "target": "runtime/aq-adapter",
+    "rationale": "Route immutable task inputs and validate published completion against Fabric receipts on reopen",
+    "source": "docs/work-items/WIP-04.md; accepted WI-05 takeover plan and WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/completion.rs::::source-module:crates/worldinterface-runtime/src/completion.rs",
+    "disposition": "retain-align",
+    "target": "runtime/effect-completion",
+    "rationale": "Fence invocation with Fabric Start; publish artifacts and bind AQ completion to the immutable authoritative receipt",
+    "source": "docs/work-items/WIP-04.md; accepted WI-05 takeover plan and WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/completion.rs::::struct:BoundExecution",
+    "disposition": "retain-align",
+    "target": "runtime/effect-completion",
+    "rationale": "Fence invocation with Fabric Start; publish artifacts and bind AQ completion to the immutable authoritative receipt",
+    "source": "docs/work-items/WIP-04.md; accepted WI-05 takeover plan and WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/completion.rs::::struct:CompletionLocator",
+    "disposition": "retain-align",
+    "target": "runtime/effect-completion",
+    "rationale": "Fence invocation with Fabric Start; publish artifacts and bind AQ completion to the immutable authoritative receipt",
+    "source": "docs/work-items/WIP-04.md; accepted WI-05 takeover plan and WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/completion.rs::::struct:EffectAttemptHandler",
+    "disposition": "retain-align",
+    "target": "runtime/effect-completion",
+    "rationale": "Fence invocation with Fabric Start; publish artifacts and bind AQ completion to the immutable authoritative receipt",
+    "source": "docs/work-items/WIP-04.md; accepted WI-05 takeover plan and WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/completion.rs::::struct:EvidenceBytes",
+    "disposition": "retain-align",
+    "target": "runtime/effect-completion",
+    "rationale": "Fence invocation with Fabric Start; publish artifacts and bind AQ completion to the immutable authoritative receipt",
+    "source": "docs/work-items/WIP-04.md; accepted WI-05 takeover plan and WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/completion.rs::::struct:PortObservation",
+    "disposition": "retain-align",
+    "target": "runtime/effect-completion",
+    "rationale": "Fence invocation with Fabric Start; publish artifacts and bind AQ completion to the immutable authoritative receipt",
+    "source": "docs/work-items/WIP-04.md; accepted WI-05 takeover plan and WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/completion.rs::::trait:EffectExecutionPort",
+    "disposition": "retain-align",
+    "target": "runtime/effect-completion",
+    "rationale": "Fence invocation with Fabric Start; publish artifacts and bind AQ completion to the immutable authoritative receipt",
+    "source": "docs/work-items/WIP-04.md; accepted WI-05 takeover plan and WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/inspection.rs::::source-module:crates/worldinterface-runtime/src/inspection.rs",
+    "disposition": "retain-align",
+    "target": "runtime/receipt-inspection",
+    "rationale": "Authenticate disclosure and preserve causal structure, worker evidence gaps and per-member proof authorization",
+    "source": "docs/work-items/WIP-04.md; accepted WI-05 takeover plan and WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/inspection.rs::::struct:EffectChain",
+    "disposition": "retain-align",
+    "target": "runtime/receipt-inspection",
+    "rationale": "Authenticate disclosure and preserve causal structure, worker evidence gaps and per-member proof authorization",
+    "source": "docs/work-items/WIP-04.md; accepted WI-05 takeover plan and WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/inspection.rs::::struct:ReceiptInspector",
+    "disposition": "retain-align",
+    "target": "runtime/receipt-inspection",
+    "rationale": "Authenticate disclosure and preserve causal structure, worker evidence gaps and per-member proof authorization",
+    "source": "docs/work-items/WIP-04.md; accepted WI-05 takeover plan and WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/inspection.rs::::struct:WorkerControlInspection",
+    "disposition": "retain-align",
+    "target": "runtime/receipt-inspection",
+    "rationale": "Authenticate disclosure and preserve causal structure, worker evidence gaps and per-member proof authorization",
+    "source": "docs/work-items/WIP-04.md; accepted WI-05 takeover plan and WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/inspection.rs::::trait:ReceiptDisclosure",
+    "disposition": "retain-align",
+    "target": "runtime/receipt-inspection",
+    "rationale": "Authenticate disclosure and preserve causal structure, worker evidence gaps and per-member proof authorization",
+    "source": "docs/work-items/WIP-04.md; accepted WI-05 takeover plan and WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/lib.rs::::module:completion",
+    "disposition": "retain-align",
+    "target": "runtime",
+    "rationale": "Expose target completion and receipt inspection modules",
+    "source": "docs/work-items/WIP-04.md; accepted WI-05 takeover plan and WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/lib.rs::::module:inspection",
+    "disposition": "retain-align",
+    "target": "runtime",
+    "rationale": "Expose target completion and receipt inspection modules",
+    "source": "docs/work-items/WIP-04.md; accepted WI-05 takeover plan and WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/storage.rs::::struct:ConvergenceFault",
+    "disposition": "retain-align",
+    "target": "runtime/store-bundle",
+    "rationale": "Record explicit terminal AQ/Fabric convergence faults without provider reinvocation",
+    "source": "docs/work-items/WIP-04.md; accepted WI-05 takeover plan and WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/completion_crash.rs::::module:child_guard",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "Executable WI-05 receipt, admission or process-kill evidence; helpers always kill and reap child processes",
+    "source": "docs/work-items/WIP-04.md; accepted WI-05 takeover plan and WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/completion_crash.rs::::source-module:crates/worldinterface-runtime/tests/completion_crash.rs",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "Executable WI-05 receipt, admission or process-kill evidence; helpers always kill and reap child processes",
+    "source": "docs/work-items/WIP-04.md; accepted WI-05 takeover plan and WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/completion_crash.rs::::struct:AqClock",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "Executable WI-05 receipt, admission or process-kill evidence; helpers always kill and reap child processes",
+    "source": "docs/work-items/WIP-04.md; accepted WI-05 takeover plan and WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/completion_crash.rs::::struct:Clock",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "Executable WI-05 receipt, admission or process-kill evidence; helpers always kill and reap child processes",
+    "source": "docs/work-items/WIP-04.md; accepted WI-05 takeover plan and WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/completion_crash.rs::::struct:CrashBeforeDisposition",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "Executable WI-05 receipt, admission or process-kill evidence; helpers always kill and reap child processes",
+    "source": "docs/work-items/WIP-04.md; accepted WI-05 takeover plan and WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/completion_crash.rs::::struct:Evidence",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "Executable WI-05 receipt, admission or process-kill evidence; helpers always kill and reap child processes",
+    "source": "docs/work-items/WIP-04.md; accepted WI-05 takeover plan and WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/completion_crash.rs::::struct:HeldResultPort",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "Executable WI-05 receipt, admission or process-kill evidence; helpers always kill and reap child processes",
+    "source": "docs/work-items/WIP-04.md; accepted WI-05 takeover plan and WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/completion_crash.rs::::struct:MockSuccessfulPort",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "Executable WI-05 receipt, admission or process-kill evidence; helpers always kill and reap child processes",
+    "source": "docs/work-items/WIP-04.md; accepted WI-05 takeover plan and WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/completion_crash.rs::::struct:Noop",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "Executable WI-05 receipt, admission or process-kill evidence; helpers always kill and reap child processes",
+    "source": "docs/work-items/WIP-04.md; accepted WI-05 takeover plan and WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/completion_crash.rs::::struct:SignalAfterDisposition",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "Executable WI-05 receipt, admission or process-kill evidence; helpers always kill and reap child processes",
+    "source": "docs/work-items/WIP-04.md; accepted WI-05 takeover plan and WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/g2_admission.rs::::struct:MockUncertainPort",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "Executable WI-05 receipt, admission or process-kill evidence; helpers always kill and reap child processes",
+    "source": "docs/work-items/WIP-04.md; accepted WI-05 takeover plan and WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/g2_admission.rs::::struct:SafeClock",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "Executable WI-05 receipt, admission or process-kill evidence; helpers always kill and reap child processes",
+    "source": "docs/work-items/WIP-04.md; accepted WI-05 takeover plan and WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/g2_admission.rs::::struct:SafeEvidence",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "Executable WI-05 receipt, admission or process-kill evidence; helpers always kill and reap child processes",
+    "source": "docs/work-items/WIP-04.md; accepted WI-05 takeover plan and WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/ingress.rs::::module:child_guard",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "Executable WI-05 receipt, admission or process-kill evidence; helpers always kill and reap child processes",
+    "source": "docs/work-items/WIP-04.md; accepted WI-05 takeover plan and WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/ingress.rs::::struct:CrashSignalPort",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "Executable WI-05 receipt, admission or process-kill evidence; helpers always kill and reap child processes",
+    "source": "docs/work-items/WIP-04.md; accepted WI-05 takeover plan and WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/receipt_inspection.rs::::module:support",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "Executable WI-05 receipt, admission or process-kill evidence; helpers always kill and reap child processes",
+    "source": "docs/work-items/WIP-04.md; accepted WI-05 takeover plan and WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/receipt_inspection.rs::::source-module:crates/worldinterface-runtime/tests/receipt_inspection.rs",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "Executable WI-05 receipt, admission or process-kill evidence; helpers always kill and reap child processes",
+    "source": "docs/work-items/WIP-04.md; accepted WI-05 takeover plan and WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/receipt_inspection.rs::::struct:Auth",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "Executable WI-05 receipt, admission or process-kill evidence; helpers always kill and reap child processes",
+    "source": "docs/work-items/WIP-04.md; accepted WI-05 takeover plan and WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/receipt_inspection.rs::::struct:Case",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "Executable WI-05 receipt, admission or process-kill evidence; helpers always kill and reap child processes",
+    "source": "docs/work-items/WIP-04.md; accepted WI-05 takeover plan and WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/receipt_inspection.rs::::struct:Disclosure",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "Executable WI-05 receipt, admission or process-kill evidence; helpers always kill and reap child processes",
+    "source": "docs/work-items/WIP-04.md; accepted WI-05 takeover plan and WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/receipt_inspection.rs::::type:Session",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "Executable WI-05 receipt, admission or process-kill evidence; helpers always kill and reap child processes",
+    "source": "docs/work-items/WIP-04.md; accepted WI-05 takeover plan and WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/receipt_inspection.rs::support::module:effect_fixture",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "Executable WI-05 receipt, admission or process-kill evidence; helpers always kill and reap child processes",
+    "source": "docs/work-items/WIP-04.md; accepted WI-05 takeover plan and WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/child.rs::::source-module:crates/worldinterface-runtime/tests/support/child.rs",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "Executable WI-05 receipt, admission or process-kill evidence; helpers always kill and reap child processes",
+    "source": "docs/work-items/WIP-04.md; accepted WI-05 takeover plan and WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/child.rs::::struct:KillOnDrop",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "Executable WI-05 receipt, admission or process-kill evidence; helpers always kill and reap child processes",
+    "source": "docs/work-items/WIP-04.md; accepted WI-05 takeover plan and WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/crash.rs::::module:child_guard",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "Executable WI-05 receipt, admission or process-kill evidence; helpers always kill and reap child processes",
+    "source": "docs/work-items/WIP-04.md; accepted WI-05 takeover plan and WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/effect_fixture.rs::::source-module:crates/worldinterface-runtime/tests/support/effect_fixture.rs",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "Executable WI-05 receipt, admission or process-kill evidence; helpers always kill and reap child processes",
+    "source": "docs/work-items/WIP-04.md; accepted WI-05 takeover plan and WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/effect_fixture.rs::::struct:Clock",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "Executable WI-05 receipt, admission or process-kill evidence; helpers always kill and reap child processes",
+    "source": "docs/work-items/WIP-04.md; accepted WI-05 takeover plan and WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/effect_fixture.rs::::struct:Evidence",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "Executable WI-05 receipt, admission or process-kill evidence; helpers always kill and reap child processes",
+    "source": "docs/work-items/WIP-04.md; accepted WI-05 takeover plan and WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/effect_fixture.rs::::struct:FixturePort",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "Executable WI-05 receipt, admission or process-kill evidence; helpers always kill and reap child processes",
+    "source": "docs/work-items/WIP-04.md; accepted WI-05 takeover plan and WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/effect_fixture.rs::::struct:Noop",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "Executable WI-05 receipt, admission or process-kill evidence; helpers always kill and reap child processes",
+    "source": "docs/work-items/WIP-04.md; accepted WI-05 takeover plan and WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/g2_admission.rs::::module:child_guard",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "Reuse the bounded crash-child guard for G2 admission exits; kill and reap on failure or timeout",
+    "source": "docs/work-items/WIP-04.md; accepted WI-05 crash matrix"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/effect.rs::::struct:DispatchFault",
+    "disposition": "retain-align",
+    "target": "effect-storage",
+    "rationale": "Trusted-host journal-derived dispatch diagnostics and effect-specific phase provenance; no ambient authorization",
+    "source": "docs/work-items/WIP-04.md remediation of S-001/R-001/S-008/S-013; WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/effect.rs::::struct:EffectExecutionTimes",
+    "disposition": "retain-align",
+    "target": "effect-storage",
+    "rationale": "Trusted-host journal-derived dispatch diagnostics and effect-specific phase provenance; no ambient authorization",
+    "source": "docs/work-items/WIP-04.md remediation of S-001/R-001/S-008/S-013; WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/effect.rs::::struct:EffectReceiptCommand",
+    "disposition": "retain-align",
+    "target": "effect-storage",
+    "rationale": "Trusted-host locked completion preparation and typed journal contention",
+    "source": "docs/work-items/WIP-04.md remediation of S-018/S-019/S-021; WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/effect.rs::::struct:EffectJournalConflict",
+    "disposition": "retain-align",
+    "target": "effect-storage",
+    "rationale": "Trusted-host locked completion preparation and typed journal contention",
+    "source": "docs/work-items/WIP-04.md remediation of S-018/S-019/S-021; WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/proof.rs::::module:tests@10d1b0eff34c",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "WI-05 remediation evidence and guarded child-process helpers",
+    "source": "docs/work-items/WIP-04.md remediation of S-001/R-001/S-008/S-013; WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::module:child_guard",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "WI-05 remediation evidence and guarded child-process helpers",
+    "source": "docs/work-items/WIP-04.md remediation of S-001/R-001/S-008/S-013; WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::module:support",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "WI-05 remediation evidence and guarded child-process helpers",
+    "source": "docs/work-items/WIP-04.md remediation of S-001/R-001/S-008/S-013; WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::source-module:crates/worldinterface-runtime/tests/completion_regressions.rs",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "WI-05 remediation evidence and guarded child-process helpers",
+    "source": "docs/work-items/WIP-04.md remediation of S-001/R-001/S-008/S-013; WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::struct:BrokenCompletionClock",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "WI-05 remediation evidence and guarded child-process helpers",
+    "source": "docs/work-items/WIP-04.md remediation of S-001/R-001/S-008/S-013; WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::struct:Clock",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "WI-05 remediation evidence and guarded child-process helpers",
+    "source": "docs/work-items/WIP-04.md remediation of S-001/R-001/S-008/S-013; WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::struct:Evidence",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "WI-05 remediation evidence and guarded child-process helpers",
+    "source": "docs/work-items/WIP-04.md remediation of S-001/R-001/S-008/S-013; WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::struct:InterleavingClock",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "Deterministic writer-lock serialization evidence during completion preparation",
+    "source": "docs/work-items/WIP-04.md remediation of S-018; WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::struct:InterleavingPort",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "Deterministic completion serialization and supersession evidence",
+    "source": "docs/work-items/WIP-04.md remediation of S-018/S-019/S-021; WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::struct:Noop",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "WI-05 remediation evidence and guarded child-process helpers",
+    "source": "docs/work-items/WIP-04.md remediation of S-001/R-001/S-008/S-013; WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::struct:Port",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "WI-05 remediation evidence and guarded child-process helpers",
+    "source": "docs/work-items/WIP-04.md remediation of S-001/R-001/S-008/S-013; WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::struct:Prepared",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "WI-05 remediation evidence and guarded child-process helpers",
+    "source": "docs/work-items/WIP-04.md remediation of S-001/R-001/S-008/S-013; WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::struct:SequenceClock",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "WI-05 remediation evidence and guarded child-process helpers",
+    "source": "docs/work-items/WIP-04.md remediation of S-001/R-001/S-008/S-013; WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::invocation_fence_rechecks_after_supersession::struct:Forbidden",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "WI-05 remediation evidence and guarded child-process helpers",
+    "source": "docs/work-items/WIP-04.md remediation of S-001/R-001/S-008/S-013; WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::support::module:effect_fixture",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "WI-05 remediation evidence and guarded child-process helpers",
+    "source": "docs/work-items/WIP-04.md remediation of S-001/R-001/S-008/S-013; WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/effect.rs::::struct:EffectReceiptSource",
+    "disposition": "retain-align",
+    "target": "effect-storage",
+    "rationale": "Trusted-host receipt source lookup over indexed immutable intent history; binds dispatch, admission, Start and outcome without replaying tenant state",
+    "source": "docs/work-items/WIP-04.md remediation of S-026; WI-ADR-007/008/009/010"
   }
 ]

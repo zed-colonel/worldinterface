@@ -13,7 +13,8 @@
       "source_record_sha256": "0a25734a2d94cee7d2ad8d51dfcc1ce679a0f85b384b0d5a43a582906b25bd0b",
       "required_tests": [
         "ab_wi_002_003_004_persist_retry_ack_and_discover",
-        "ab_wi_002_subprocess_crash_cuts"
+        "ab_wi_002_subprocess_crash_cuts",
+        "persisted_old_policy_request_is_retried_without_rewriting"
       ]
     },
     "AB-WI-003": {
