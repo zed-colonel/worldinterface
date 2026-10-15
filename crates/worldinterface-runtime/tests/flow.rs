@@ -782,8 +782,11 @@ async fn skipped_boundary_has_no_effect_or_receipt_while_selected_boundary_compl
     let mut demands = vec![worldinterface_domain::ingress::digest(&f.submission).unwrap()];
     for node in ["selected", "skipped"] {
         let mut s = f.submission.clone();
-        s.client_request_id =
-            format!("{}:node:{node}", s.client_request_id.as_str()).try_into().unwrap();
+        s.client_request_id = worldinterface_runtime::flow::node_request_id(
+            &s.client_request_id,
+            &node.to_string().try_into().unwrap(),
+        )
+        .unwrap();
         demands.push(worldinterface_domain::ingress::digest(&s).unwrap());
     }
     for b in &mut f.snapshot.bindings {
@@ -974,5 +977,75 @@ async fn host_artifact_authorization_is_required_at_submission_and_execution() {
     assert_eq!(f.run(&id).outcome, Some(FlowOutcome::Failed));
     assert_eq!(f.connector.invocation_calls.load(std::sync::atomic::Ordering::SeqCst), 0);
     assert!(service.inspect_run(&(), &id).is_err());
+    q.shutdown().unwrap();
+}
+
+#[tokio::test]
+async fn maximum_length_flow_identities_have_bounded_aq_and_effect_keys() {
+    assert_ne!(
+        worldinterface_runtime::flow::node_request_id(
+            &"a:node:b".to_string().try_into().unwrap(),
+            &"c".to_string().try_into().unwrap()
+        )
+        .unwrap(),
+        worldinterface_runtime::flow::node_request_id(
+            &"a".to_string().try_into().unwrap(),
+            &"b:node:c".to_string().try_into().unwrap()
+        )
+        .unwrap()
+    );
+
+    let mut f = Fixture::new();
+    f.submission.client_request_id = "r".repeat(256).try_into().unwrap();
+    let ids: Vec<OpaqueRef> =
+        ['a', 'b'].into_iter().map(|c| c.to_string().repeat(256).try_into().unwrap()).collect();
+    let mut demands = vec![worldinterface_domain::ingress::digest(&f.submission).unwrap()];
+    for node in &ids {
+        let mut s = f.submission.clone();
+        s.client_request_id =
+            worldinterface_runtime::flow::node_request_id(&s.client_request_id, node).unwrap();
+        assert!(s.client_request_id.as_str().len() <= 256);
+        demands.push(worldinterface_domain::ingress::digest(&s).unwrap());
+    }
+    for b in &mut f.snapshot.bindings {
+        b.principal_authority = demands.iter().cloned().collect();
+        b.capacity_authority = b.principal_authority.clone();
+    }
+    f.snapshot.policy.platform = demands.iter().cloned().collect();
+    f.snapshot.policy.resource = f.snapshot.policy.platform.clone();
+    f.snapshot.policy.information_use = f.snapshot.policy.platform.clone();
+    for g in &mut f.snapshot.grants {
+        g.authority = demands.iter().cloned().collect();
+    }
+    let plan = f.direct();
+    let nodes: Vec<_> = ids
+        .iter()
+        .map(|id| {
+            let mut n = plan.document().body.nodes[0].clone();
+            n.id = id.clone();
+            n
+        })
+        .collect();
+    let d = FlowDefinition {
+        id: "f".repeat(256).try_into().unwrap(),
+        version: 1,
+        predecessor: None,
+        body: FlowBody {
+            entries: ids,
+            nodes,
+            outputs: BTreeMap::new(),
+            authority: f.config.0.run_authority.clone(),
+            causal_metadata: BTreeMap::new(),
+        },
+    };
+    let evidence = Evidence(f.snapshot.clone());
+    let service = f.service(&evidence);
+    service.activate_flow_version(&(), d.clone(), None).unwrap();
+    let mut q = QueueEngine::bootstrap(&f.bundle, f.handler(), host()).unwrap();
+    let id = service.submit_flow(&(), &d.id, f.submission.clone(), &mut q).unwrap();
+    f.drive(&mut q, &id).await;
+    assert_eq!(f.run(&id).outcome, Some(FlowOutcome::Succeeded));
+    assert_eq!(f.connector.invocation_calls.load(std::sync::atomic::Ordering::SeqCst), 2);
+    assert!(q.engine().projection().admissions().all(|a| a.key().as_str().len() <= 256));
     q.shutdown().unwrap();
 }

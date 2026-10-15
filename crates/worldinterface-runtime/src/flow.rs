@@ -24,8 +24,17 @@ use worldinterface_domain::{
     agency::{resolve_agency, AuthenticatedCaller},
     flow::*,
 };
-use worldinterface_protocol::{canonical_data, strict_json, EffectSubmission, OpaqueRef};
+use worldinterface_protocol::{
+    canonical_data, strict_json, ClientRequestId, ContentHash, EffectSubmission, OpaqueRef,
+};
 use worldinterface_storage::{flow::*, StoreRoot};
+
+/// Stable bounded identity for an exact materialized node demand. Hosts can
+/// derive it before admission when issuing exact-demand credentials.
+pub fn node_request_id(request: &ClientRequestId, node: &OpaqueRef) -> Result<ClientRequestId> {
+    let hash = ContentHash::of(&canonical_data(&("wi-flow-node-request-1", request, node))?);
+    Ok(format!("wi-flow-node:{}", hash.as_str()).try_into()?)
+}
 
 /// Trusted host configuration, scoped to the authenticated caller, never request data.
 pub trait PlanConfiguration:

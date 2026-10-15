@@ -49,8 +49,8 @@ Code-forced choices within the accepted design:
 - Native WAL fault injection lives in `tests/flow_crash.rs`; AQ contract fixtures
   extend `tests/executor_aq_contract.rs` to reuse its published mutation seams.
 - Flow submission uses the original submission as the agency/policy template. A
-  multi-node boundary uses a deterministic client key derived from that request and
-  node ID. Fresh authorization must cover the complete materialized demand.
+  multi-node boundary uses a bounded, domain-separated hash of the original client request ID and
+  node ID for its client key. AQ local child keys use the persisted task UUID. Fresh authorization must cover the complete materialized demand.
 - Production Wait/Timer lowering rejects before coordinator admission. WIP-08 owns
   those nodes; AB-WI-010 is proven separately through actual AQ continuation APIs.
 
@@ -98,3 +98,8 @@ outputs and inspection use the authenticated submitting principal with the exist
 ArtifactResolver. Journal/admission evidence remains host-internal validation.
 A denied same-tenant artifact prevents admission or connector invocation; persisted
 attribution and artifact scope alone do not supply read authority.
+
+The maximum-length identity regression executes two boundary nodes with 256-byte
+node, definition and original client request IDs. Derived effect keys hash a
+canonical tuple, avoiding concatenation collisions and overflow; AQ local keys
+use already-persisted UUIDs. Stable identities never depend on truncating user IDs.

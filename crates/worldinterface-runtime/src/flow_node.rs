@@ -307,12 +307,8 @@ impl<
                 let mut submission = r.submission.clone();
                 if !matches!(r.origin, PlanOrigin::Direct) {
                     if p.document().body.nodes.len() > 1 {
-                        submission.client_request_id = format!(
-                            "{}:node:{}",
-                            r.submission.client_request_id.as_str(),
-                            node.as_str()
-                        )
-                        .try_into()?;
+                        submission.client_request_id =
+                            crate::flow::node_request_id(&r.submission.client_request_id, node)?;
                     }
                     submission.resource = resource;
                     submission.effect_class = connector.descriptor.effect_class.clone();

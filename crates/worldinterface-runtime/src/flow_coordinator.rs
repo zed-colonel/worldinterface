@@ -51,7 +51,7 @@ pub(crate) fn children(r: &FlowRun) -> Result<Vec<ChildAdmission>> {
             )?
             .with_parent(r.coordinator_task.as_str().parse()?);
             Ok(ChildAdmission::new(
-                AdmissionKey::new(format!("node:{}", n.id.as_str()))?,
+                AdmissionKey::new(format!("node:{}", r.node_tasks[&n.id].as_str()))?,
                 spec,
                 n.dependencies
                     .iter()

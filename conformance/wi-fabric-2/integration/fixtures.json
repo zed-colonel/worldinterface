@@ -93,7 +93,8 @@
         "ab_wi_005_bounds_are_enforced_by_aq_admission_and_disposition",
         "ab_wi_005_compound_commit_replay_is_all_or_none_with_stable_children",
         "child_transaction_native_wal_process_death_cuts_replay_all_or_none",
-        "bounded_64_node_plan_commits_flat_children_and_rejects_65_before_admission"
+        "bounded_64_node_plan_commits_flat_children_and_rejects_65_before_admission",
+        "maximum_length_flow_identities_have_bounded_aq_and_effect_keys"
       ]
     },
     "AB-WI-010": {
