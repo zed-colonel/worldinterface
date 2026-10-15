@@ -1069,6 +1069,11 @@
           "manifest": "crates/worldinterface-runtime/Cargo.toml",
           "package": "worldinterface-runtime",
           "test": "publication_failure_retries_durable_success_without_reinvocation"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "rejected_aq_cancel_does_not_mutate_flow_and_authorized_execution_continues"
         }
       ]
     },

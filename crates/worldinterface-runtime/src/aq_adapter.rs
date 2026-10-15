@@ -142,25 +142,31 @@ impl<'a, H: ExecutorHandler + 'static> QueueEngine<'a, H> {
     }
     /// Trusted host cancellation retains AQ's normal child lifecycle semantics.
     pub fn cancel_task(&mut self, task: TaskId) -> Result<()> {
-        for tenant in self.bundle.wi().flow_tenants()? {
-            let state = self.bundle.wi().flow_snapshot(&tenant)?;
+        let root = self.bundle.wi();
+        // AQ authorizes the control first. Holding the WI guard across control
+        // and the cancel journal write prevents Start in the cross-store gap.
+        let guard = root.flow_dispatch_guard()?;
+        self.engine.control(actionqueue_runtime::control::ControlOperation::Cancel(
+            actionqueue_core::mutation::CancelTarget::Task(task),
+        ))?;
+        let task = task.to_string();
+        for tenant in root.flow_tenants()? {
+            let state = root.flow_snapshot(&tenant)?;
             for r in state.runs.values().filter(|r| {
                 r.outcome.is_none()
-                    && (r.coordinator_task.as_str() == task.to_string()
-                        || r.node_tasks.values().any(|t| t.as_str() == task.to_string()))
+                    && (r.coordinator_task.as_str() == task
+                        || r.node_tasks.values().any(|t| t.as_str() == task))
             }) {
-                crate::flow::transact(
-                    self.bundle.wi(),
+                root.flow_transact_guarded(
+                    &guard,
                     &tenant,
+                    root.flow_snapshot(&tenant)?.revision,
                     worldinterface_storage::flow::FlowCommand::CancelRequested {
                         run: r.id.clone(),
                     },
                 )?;
             }
         }
-        self.engine.control(actionqueue_runtime::control::ControlOperation::Cancel(
-            actionqueue_core::mutation::CancelTarget::Task(task),
-        ))?;
         Ok(())
     }
     pub fn shutdown(self) -> Result<()> {

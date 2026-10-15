@@ -4666,37 +4666,37 @@
         },
         {
           "id": "crates/worldinterface-runtime/src/aq_adapter.rs::::source-module:crates/worldinterface-runtime/src/aq_adapter.rs",
-          "source_sha256": "a439a5bfb9e2e3ac150350b095c793ec09b99c84cc7c868b81543f85efbc4669",
+          "source_sha256": "7444728e431feaa382a02490cf977c566ca8f1cb4376b8a44c1782313b535066",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/aq_adapter.rs::::struct:QueueEngine",
-          "source_sha256": "a439a5bfb9e2e3ac150350b095c793ec09b99c84cc7c868b81543f85efbc4669",
+          "source_sha256": "7444728e431feaa382a02490cf977c566ca8f1cb4376b8a44c1782313b535066",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/aq_adapter.rs::::struct:QueueProvenance",
-          "source_sha256": "a439a5bfb9e2e3ac150350b095c793ec09b99c84cc7c868b81543f85efbc4669",
+          "source_sha256": "7444728e431feaa382a02490cf977c566ca8f1cb4376b8a44c1782313b535066",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/aq_adapter.rs::::struct:QueueReferences",
-          "source_sha256": "a439a5bfb9e2e3ac150350b095c793ec09b99c84cc7c868b81543f85efbc4669",
+          "source_sha256": "7444728e431feaa382a02490cf977c566ca8f1cb4376b8a44c1782313b535066",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/aq_adapter.rs::::struct:QueueStoreId",
-          "source_sha256": "a439a5bfb9e2e3ac150350b095c793ec09b99c84cc7c868b81543f85efbc4669",
+          "source_sha256": "7444728e431feaa382a02490cf977c566ca8f1cb4376b8a44c1782313b535066",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/aq_adapter.rs::::struct:TaskInputLocator",
-          "source_sha256": "a439a5bfb9e2e3ac150350b095c793ec09b99c84cc7c868b81543f85efbc4669",
+          "source_sha256": "7444728e431feaa382a02490cf977c566ca8f1cb4376b8a44c1782313b535066",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/aq_adapter.rs::::struct:TaskRouter",
-          "source_sha256": "a439a5bfb9e2e3ac150350b095c793ec09b99c84cc7c868b81543f85efbc4669",
+          "source_sha256": "7444728e431feaa382a02490cf977c566ca8f1cb4376b8a44c1782313b535066",
           "registration_sites": []
         },
         {
@@ -4861,7 +4861,7 @@
         },
         {
           "id": "crates/worldinterface-runtime/src/flow_coordinator.rs::::source-module:crates/worldinterface-runtime/src/flow_coordinator.rs",
-          "source_sha256": "4a0a0dd75abf687168ce2b9070961db0d78990c0c257dce4452bd8a4f1b10ed4",
+          "source_sha256": "52eb81e6baa4754b386f3d10fa1c8164e18e9baac94e3dcf0ccd2cd102d1178f",
           "registration_sites": []
         },
         {
@@ -5386,82 +5386,82 @@
         },
         {
           "id": "crates/worldinterface-runtime/tests/flow.rs::::module:child_guard",
-          "source_sha256": "793e91fd514ae42a4fa75f7098ca336c509679a2d50cf92f017ac8cb8d455d3b",
+          "source_sha256": "4cda0bc695440a691a933ef351f166197f44b12e73c57d3bc5219f75aa486ebc",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/flow.rs::::module:support",
-          "source_sha256": "793e91fd514ae42a4fa75f7098ca336c509679a2d50cf92f017ac8cb8d455d3b",
+          "source_sha256": "4cda0bc695440a691a933ef351f166197f44b12e73c57d3bc5219f75aa486ebc",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/flow.rs::::source-module:crates/worldinterface-runtime/tests/flow.rs",
-          "source_sha256": "793e91fd514ae42a4fa75f7098ca336c509679a2d50cf92f017ac8cb8d455d3b",
+          "source_sha256": "4cda0bc695440a691a933ef351f166197f44b12e73c57d3bc5219f75aa486ebc",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/flow.rs::::struct:Auth",
-          "source_sha256": "793e91fd514ae42a4fa75f7098ca336c509679a2d50cf92f017ac8cb8d455d3b",
+          "source_sha256": "4cda0bc695440a691a933ef351f166197f44b12e73c57d3bc5219f75aa486ebc",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/flow.rs::::struct:Config",
-          "source_sha256": "793e91fd514ae42a4fa75f7098ca336c509679a2d50cf92f017ac8cb8d455d3b",
+          "source_sha256": "4cda0bc695440a691a933ef351f166197f44b12e73c57d3bc5219f75aa486ebc",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/flow.rs::::struct:DeniedArtifacts",
-          "source_sha256": "793e91fd514ae42a4fa75f7098ca336c509679a2d50cf92f017ac8cb8d455d3b",
+          "source_sha256": "4cda0bc695440a691a933ef351f166197f44b12e73c57d3bc5219f75aa486ebc",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/flow.rs::::struct:FinishGate",
-          "source_sha256": "793e91fd514ae42a4fa75f7098ca336c509679a2d50cf92f017ac8cb8d455d3b",
+          "source_sha256": "4cda0bc695440a691a933ef351f166197f44b12e73c57d3bc5219f75aa486ebc",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/flow.rs::::struct:Fixture",
-          "source_sha256": "793e91fd514ae42a4fa75f7098ca336c509679a2d50cf92f017ac8cb8d455d3b",
+          "source_sha256": "4cda0bc695440a691a933ef351f166197f44b12e73c57d3bc5219f75aa486ebc",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/flow.rs::::struct:InvalidEvidence",
-          "source_sha256": "793e91fd514ae42a4fa75f7098ca336c509679a2d50cf92f017ac8cb8d455d3b",
+          "source_sha256": "4cda0bc695440a691a933ef351f166197f44b12e73c57d3bc5219f75aa486ebc",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/flow.rs::::struct:Latch",
-          "source_sha256": "793e91fd514ae42a4fa75f7098ca336c509679a2d50cf92f017ac8cb8d455d3b",
+          "source_sha256": "4cda0bc695440a691a933ef351f166197f44b12e73c57d3bc5219f75aa486ebc",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/flow.rs::::struct:PretendNodes",
-          "source_sha256": "793e91fd514ae42a4fa75f7098ca336c509679a2d50cf92f017ac8cb8d455d3b",
+          "source_sha256": "4cda0bc695440a691a933ef351f166197f44b12e73c57d3bc5219f75aa486ebc",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/flow.rs::::struct:Resolver",
-          "source_sha256": "793e91fd514ae42a4fa75f7098ca336c509679a2d50cf92f017ac8cb8d455d3b",
+          "source_sha256": "4cda0bc695440a691a933ef351f166197f44b12e73c57d3bc5219f75aa486ebc",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/flow.rs::::struct:SessionAuth",
-          "source_sha256": "793e91fd514ae42a4fa75f7098ca336c509679a2d50cf92f017ac8cb8d455d3b",
+          "source_sha256": "4cda0bc695440a691a933ef351f166197f44b12e73c57d3bc5219f75aa486ebc",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/flow.rs::flow_cancellation_after_start_preserves_external_uncertainty::struct:Release",
-          "source_sha256": "793e91fd514ae42a4fa75f7098ca336c509679a2d50cf92f017ac8cb8d455d3b",
+          "source_sha256": "4cda0bc695440a691a933ef351f166197f44b12e73c57d3bc5219f75aa486ebc",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/flow.rs::support::module:connectors",
-          "source_sha256": "793e91fd514ae42a4fa75f7098ca336c509679a2d50cf92f017ac8cb8d455d3b",
+          "source_sha256": "4cda0bc695440a691a933ef351f166197f44b12e73c57d3bc5219f75aa486ebc",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/flow.rs::support::module:spi_harness",
-          "source_sha256": "793e91fd514ae42a4fa75f7098ca336c509679a2d50cf92f017ac8cb8d455d3b",
+          "source_sha256": "4cda0bc695440a691a933ef351f166197f44b12e73c57d3bc5219f75aa486ebc",
           "registration_sites": []
         },
         {
@@ -6589,7 +6589,7 @@
         {
           "path": "crates/worldinterface-runtime/src/aq_adapter.rs",
           "treatment": "Retain target integration source and tests; audit shared declarations before any later selective removal.",
-          "source_sha256": "a439a5bfb9e2e3ac150350b095c793ec09b99c84cc7c868b81543f85efbc4669"
+          "source_sha256": "7444728e431feaa382a02490cf977c566ca8f1cb4376b8a44c1782313b535066"
         },
         {
           "path": "crates/worldinterface-runtime/src/artifact.rs",
@@ -6623,7 +6623,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/src/flow_coordinator.rs",
-          "source_sha256": "4a0a0dd75abf687168ce2b9070961db0d78990c0c257dce4452bd8a4f1b10ed4",
+          "source_sha256": "52eb81e6baa4754b386f3d10fa1c8164e18e9baac94e3dcf0ccd2cd102d1178f",
           "treatment": "Retain WIP-07 Flow execution, journal, publication and conformance support; preserve shared infrastructure during any legacy connector removal."
         },
         {
@@ -6703,7 +6703,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/tests/flow.rs",
-          "source_sha256": "793e91fd514ae42a4fa75f7098ca336c509679a2d50cf92f017ac8cb8d455d3b",
+          "source_sha256": "4cda0bc695440a691a933ef351f166197f44b12e73c57d3bc5219f75aa486ebc",
           "treatment": "Retain WIP-07 Flow execution, journal, publication and conformance support; preserve shared infrastructure during any legacy connector removal."
         },
         {

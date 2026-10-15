@@ -21,7 +21,8 @@
       "aq_success_without_wi_acceptance_cannot_complete_flow",
       "flow_cancellation_after_start_preserves_external_uncertainty",
       "cancellation_before_start_and_failed_node_redelivery_cannot_invoke",
-      "publication_failure_retries_durable_success_without_reinvocation"
+      "publication_failure_retries_durable_success_without_reinvocation",
+      "rejected_aq_cancel_does_not_mutate_flow_and_authorized_execution_continues"
     ]
   },
   "required_obligations": {
@@ -101,6 +102,11 @@
         "manifest": "crates/worldinterface-runtime/Cargo.toml",
         "package": "worldinterface-runtime",
         "test": "artifact_output_size_and_json_input_schema_are_enforced_on_actual_bytes"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "exported_json_schema_validates_artifact_bytes_instead_of_reference_metadata"
       }
     ],
     "bounded-children": [
@@ -204,6 +210,11 @@
         "manifest": "crates/worldinterface-runtime/Cargo.toml",
         "package": "worldinterface-runtime",
         "test": "outcome_recording_error_marks_node_uncertain_and_blocks_dependents"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "rejected_aq_cancel_does_not_mutate_flow_and_authorized_execution_continues"
       }
     ],
     "branch-receipts": [

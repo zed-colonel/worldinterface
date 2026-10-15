@@ -2334,3 +2334,77 @@ async fn outcome_recording_error_marks_node_uncertain_and_blocks_dependents() {
     assert_eq!(f.connector.invocation_calls.load(std::sync::atomic::Ordering::SeqCst), 1);
     q.shutdown().unwrap();
 }
+
+#[tokio::test]
+async fn rejected_aq_cancel_does_not_mutate_flow_and_authorized_execution_continues() {
+    let f = Fixture::new();
+    let evidence = Evidence(f.snapshot.clone());
+    let mut q = QueueEngine::bootstrap(&f.bundle, f.handler(), host()).unwrap();
+    let id = f
+        .service(&evidence)
+        .submit_direct(&(), f.submission.clone(), f.selection(), &mut q)
+        .unwrap();
+    let before = f.run(&id);
+    q.set_host_control_context(None);
+    assert!(q.cancel_task(before.coordinator_task.as_str().parse().unwrap()).is_err());
+    assert_eq!(f.run(&id), before);
+    q.set_host_control_context(Some(host()));
+    f.drive(&mut q, &id).await;
+    assert_eq!(f.run(&id).outcome, Some(FlowOutcome::Succeeded));
+    assert_eq!(f.connector.commits(), 1);
+    q.shutdown().unwrap();
+}
+
+#[tokio::test]
+async fn exported_json_schema_validates_artifact_bytes_instead_of_reference_metadata() {
+    for valid in [false, true] {
+        let mut f = Fixture::new();
+        let mut d = branching();
+        let artifact = if valid {
+            f.bundle.wi().publish(f.auth.0.clone(), b"true").unwrap()
+        } else {
+            f.submission.input.artifact.clone()
+        };
+        let schema: OpaqueRef = "export".to_string().try_into().unwrap();
+        f.config.0.schemas.insert(
+            schema.clone(),
+            if valid {
+                Schema::Boolean {}
+            } else {
+                Schema::Object {
+                    properties: BTreeMap::from([
+                        (
+                            "content".to_string().try_into().unwrap(),
+                            Schema::String { max_bytes: 64 },
+                        ),
+                        (
+                            "scope".to_string().try_into().unwrap(),
+                            Schema::String { max_bytes: 256 },
+                        ),
+                        ("size".to_string().try_into().unwrap(), Schema::Integer {}),
+                    ]),
+                }
+            },
+        );
+        d.body.outputs = BTreeMap::from([(
+            "export".to_string().try_into().unwrap(),
+            PlanInput { schema, source: InputSource::Artifact { reference: artifact.clone() } },
+        )]);
+        let evidence = Evidence(f.snapshot.clone());
+        let service = f.service(&evidence);
+        service.activate_flow_version(&(), d.clone(), None).unwrap();
+        let mut q = QueueEngine::bootstrap(&f.bundle, f.handler(), host()).unwrap();
+        let id = service.submit_flow(&(), &d.id, f.submission.clone(), &mut q).unwrap();
+        f.drive(&mut q, &id).await;
+        let r = f.run(&id);
+        if valid {
+            assert_eq!(r.outcome, Some(FlowOutcome::Succeeded));
+            assert_eq!(r.exports.values().next(), Some(&artifact));
+        } else {
+            assert_eq!(r.outcome, Some(FlowOutcome::Failed));
+            assert!(r.exports.is_empty());
+        }
+        assert_eq!(f.connector.invocation_calls.load(std::sync::atomic::Ordering::SeqCst), 0);
+        q.shutdown().unwrap();
+    }
+}

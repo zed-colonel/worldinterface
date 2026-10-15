@@ -112,7 +112,8 @@
         "aq_success_without_wi_acceptance_cannot_complete_flow",
         "flow_cancellation_after_start_preserves_external_uncertainty",
         "cancellation_before_start_and_failed_node_redelivery_cannot_invoke",
-        "publication_failure_retries_durable_success_without_reinvocation"
+        "publication_failure_retries_durable_success_without_reinvocation",
+        "rejected_aq_cancel_does_not_mutate_flow_and_authorized_execution_continues"
       ]
     }
   },

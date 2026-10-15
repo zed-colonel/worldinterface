@@ -126,8 +126,19 @@ pub(crate) fn coordinate(
         let mut exports = std::collections::BTreeMap::new();
         if outcome == FlowOutcome::Succeeded {
             for (name, input) in &p.document().body.outputs {
-                let (value, artifact) =
+                let (mut value, artifact) =
                     crate::flow_node::materialize(root, r, &input.source, artifacts)?;
+                if !matches!(
+                    p.document().schemas[&input.schema].schema,
+                    worldinterface_domain::flow::Schema::Artifact { .. }
+                ) {
+                    if let Some(reference) = &artifact {
+                        value = worldinterface_protocol::strict_json(
+                            &artifact_reader.read(&caller, reference)?,
+                        )
+                        .map_err(|_| "export JSON schema requires JSON bytes")?;
+                    }
+                }
                 if !matches!(
                     p.document().schemas[&input.schema].schema,
                     worldinterface_domain::flow::Schema::Artifact { .. }
@@ -266,7 +277,17 @@ pub(crate) fn reconcile<H: actionqueue_executor_local::handler::ExecutorHandler 
                     let outcome = domain_outcome(root, r, fallback)?;
                     // AQ completion without a WI publication is never promoted to success.
                     let outcome = if outcome == FlowOutcome::Succeeded {
-                        FlowOutcome::Failed
+                        // A terminal coordinator may have been canceled after an
+                        // owned effect committed, before its Finish publication.
+                        let effects = root.effect_snapshot(&tenant)?;
+                        if effects.effects.values().any(|e| {
+                            e.owner.as_ref().is_some_and(|o| o.flow == r.id)
+                                && e.phase == worldinterface_domain::Phase::Succeeded
+                        }) {
+                            FlowOutcome::Uncertain
+                        } else {
+                            FlowOutcome::Failed
+                        }
                     } else {
                         outcome
                     };
