@@ -206,3 +206,43 @@ publication ordering, canonicalization, disclosure, tenant/attempt/run fences an
 recovery authority. It does not replace CraftingTable's independent review and
 separate security pass. Verification logs belong to this run's
 `scratch/verification`; the controller alone integrates reviewed work.
+
+## Remediation of review 80c831a5
+
+The inherited head was `f6e4585`. Initial status, including untracked files, was
+clean. The source review journal records completed verification, superseding the
+older interrupted runs; no generated artifacts or intended new files needed
+reconciliation. Historical checks do not verify this candidate.
+
+These are implementation claims for the next independent reviewer.
+
+| Finding | Disposition and executable evidence |
+|---|---|
+| S-022 | Fixed: reopen selects the journal's original Start run and attempt, checks that run's membership in the current dispatch and AQ terminal state, and skips other runs. The locked receipt seam returns no result on a Start/run mismatch before invoking preparation. `terminal_recovery_selects_start_among_multiple_terminal_runs` exercises two real terminal AQ runs mapped into the model's permitted multi-run shape and selects the lower-sorting Start. `terminal_recovery_uses_start_run_and_skips_other_observed_terminal_runs` leaves Start without terminal evidence while a higher-sorting observed run is terminal, and verifies repeated reopen remains available without fabricating a receipt. The existing contended recovery test still proves one original-attempt receipt when Start is terminal. |
+| S-023 | Fixed: an expression index on tenant, the journal action's intent ID and revision lets phase-time queries seek only that intent's ordered history. `write_receipt` reuses the snapshot already held by the transaction rather than deserializing the tenant state twice. `effect::tests::phase_times_seek_one_intent_and_preserve_dispatch_and_tenant_boundaries` puts 2,000 unrelated entries in the same tenant, preserves the latest dispatch's phase times across preparation, separates same-ID foreign-tenant history and verifies the query plan uses the two-key index without a scan or temporary sort. Existing contention and crash/rebuild/restore tests continue to verify transactional ordering. |
+| S-024 | Fixed: a bounded-retry read-only attempt/dispatch fence precedes output, evidence and boundary publication. A superseding receipt supplies the disposition immediately. The locked seam retains the final fence after publication; redundant checks inside its callbacks are removed. `contended_completion_preserves_a_superseding_uncertain_receipt` now also queries publication identities and asserts no stale port output, evidence or boundary publication exists. |
+| S-020 | Deferred as accepted in review: diagnostic distinctions for phase_unknown remain a follow-up. Existing codes neither grant authority nor invoke providers. |
+| S-009 | Deferred as accepted in review: explicit router metadata belongs to host composition; strict payloads remain disjoint and durable binding checks fail closed. |
+
+The phase index is an explicit SQLite layout change within the interim
+`local-receipt-3` profile. Exact-schema validation rejects pre-index interim
+stores without modification; there is no automatic index creation, migration or
+admission-request rewrite. Preserve such stores for a separately designed
+migration. `effect::tests::missing_phase_index_rejects_interim_schema_without_mutation`
+asserts repeated rejection leaves the database bytes unchanged. Newly created
+compatible stores retain persisted old-policy admission bytes unchanged, as
+covered by the existing admission regression.
+
+This reduces work under the database-wide Fabric writer lock; it does not bound
+tenant aggregate size or eliminate domain replay and artifact validation there.
+Clock implementations must still return promptly without storage reentry. A
+fence can also be lost during publication, so the final transactional check
+remains necessary and that interleaving can still leave unreferenced artifacts.
+The new preflight avoids publication when supersession is already observable.
+
+New tests are non-ignored and registered in `completion/coverage.json`. Source
+hashes are refreshed without changing inventory treatments or adopted check
+definitions. Correctness and a separate security self-review are recorded under
+this run's `scratch/review`; verification is under `scratch/verification`.
+CraftingTable's independent review with its separate security pass remains due
+before the controller integrates WI-05 and G2 closure.

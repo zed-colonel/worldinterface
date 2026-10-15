@@ -161,22 +161,25 @@ impl StoreBundle {
                 else {
                     continue;
                 };
-                let mut terminal_run = None;
-                for run in &admission.observed_runs {
-                    if matches!(
+                let phases = wi.effect_execution_times(&tenant, id)?;
+                let Some(run) = phases.run.as_ref() else { continue };
+                if effect.attempt.as_ref() == Some(&phases.attempt)
+                    && admission.observed_runs.contains(run)
+                    && matches!(
                         references.run_state(run.as_str())?,
                         Some(
                             actionqueue_core::run::state::RunState::Completed
                                 | actionqueue_core::run::state::RunState::Failed
                                 | actionqueue_core::run::state::RunState::Canceled
                         )
-                    ) {
-                        terminal_run = Some(run);
-                    }
-                }
-                if let (Some(run), Some(attempt)) = (terminal_run, effect.attempt.as_ref()) {
+                    )
+                {
                     crate::completion::record_uncertain_after_terminal_run(
-                        &wi, &tenant, id, attempt, run,
+                        &wi,
+                        &tenant,
+                        id,
+                        &phases.attempt,
+                        run,
                     )?;
                 }
             }

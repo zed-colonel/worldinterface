@@ -486,6 +486,18 @@ fn contended_completion_preserves_a_superseding_uncertain_receipt() {
     assert!(!receipt.evidence.iter().any(|e| e.schema.as_str() == "wi.completion.uncertainty:1"));
     assert_uncertain(&handler.execute(case.ctx(case.run)));
     assert_eq!(case.receipt(), receipt);
+    // S-024: a provider observation superseded before publication leaves no
+    // orphan output/evidence/boundary publications behind.
+    let context =
+        rusqlite::Connection::open(case.temp.path().join("bundle/wi/context.sqlite")).unwrap();
+    let orphaned: u64 = context
+        .query_row(
+            "SELECT count(*) FROM publication_index WHERE identity LIKE 'effect-output:port:%' OR identity LIKE 'effect-evidence:port:%' OR identity LIKE 'effect-boundary:port:%'",
+            [],
+            |r| r.get(0),
+        )
+        .unwrap();
+    assert_eq!(orphaned, 0);
 }
 
 #[test]
@@ -634,6 +646,165 @@ fn possible_commit_aq_codes_converge_without_spurious_faults() {
         }
     }
 }
+#[test]
+fn terminal_recovery_uses_start_run_and_skips_other_observed_terminal_runs() {
+    // S-022: the model permits multiple observed runs. A terminal sibling
+    // cannot prove that the run which recorded Start has become terminal.
+    let case = Prepared::new();
+    let actor = caller(&case.snapshot);
+    let attempt: OpaqueRef = AttemptId::new().to_string().try_into().unwrap();
+    let started_run: OpaqueRef =
+        "00000000-0000-0000-0000-000000000001".to_owned().try_into().unwrap();
+    let terminal_run: OpaqueRef = case.run.to_string().try_into().unwrap();
+    assert!(started_run < terminal_run);
+    let egress = Egress::new(case.bundle.wi());
+    egress
+        .apply(
+            &actor,
+            second(2),
+            EffectAction::ObserveRun { id: case.id.clone(), run: started_run.clone() },
+        )
+        .unwrap();
+    egress
+        .apply(
+            &actor,
+            second(2),
+            EffectAction::StartProduction {
+                id: case.id.clone(),
+                snapshot: verified(&case.snapshot),
+                run: started_run.clone(),
+                attempt: attempt.clone(),
+            },
+        )
+        .unwrap();
+    let mut aq = actionqueue_runtime::engine::ActionQueueEngine::new(
+        actionqueue_runtime::config::RuntimeConfig {
+            data_dir: case.bundle.aq_path(),
+            ..Default::default()
+        },
+        Noop(Some("wi.effect.uncertain_recording_error")),
+    )
+    .bootstrap()
+    .unwrap()
+    .with_host(host());
+    tokio::runtime::Builder::new_current_thread().enable_all().build().unwrap().block_on(async {
+        tokio::time::timeout(std::time::Duration::from_secs(20), aq.run_until_idle())
+            .await
+            .unwrap()
+            .unwrap();
+    });
+    aq.shutdown().unwrap();
+    for _ in 0..2 {
+        let reopened = StoreBundle::open(&case.temp.path().join("bundle")).unwrap();
+        let state = reopened.wi().effect_snapshot(actor.tenant()).unwrap();
+        assert_eq!(state.effects[&case.id].phase, Phase::Running);
+        assert!(reopened.wi().effect_receipts(actor.tenant(), &case.id).unwrap().is_empty());
+        assert!(reopened
+            .wi()
+            .effect_transact_receipt_with(
+                actor.tenant(),
+                &case.id,
+                &attempt,
+                &terminal_run,
+                |_, _| panic!("a sibling run must not prepare a receipt for Start"),
+            )
+            .unwrap()
+            .is_none());
+        assert_eq!(
+            reopened.wi().effect_execution_times(actor.tenant(), &case.id).unwrap().run,
+            Some(started_run.clone())
+        );
+    }
+}
+
+#[test]
+fn terminal_recovery_selects_start_among_multiple_terminal_runs() {
+    use actionqueue_core::{
+        admission::EnsureTaskRequest,
+        causal::CausalContext,
+        ids::{AdmissionKey, CorrelationId, TaskId, TraceId},
+        task::{
+            constraints::TaskConstraints,
+            metadata::TaskMetadata,
+            run_policy::RunPolicy,
+            task_spec::{TaskPayload, TaskSpec},
+        },
+    };
+    let case = Prepared::new();
+    let actor = caller(&case.snapshot);
+    let mut aq = actionqueue_runtime::engine::ActionQueueEngine::new(
+        actionqueue_runtime::config::RuntimeConfig {
+            data_dir: case.bundle.aq_path(),
+            ..Default::default()
+        },
+        Noop(Some("wi.effect.uncertain_recording_error")),
+    )
+    .bootstrap()
+    .unwrap()
+    .with_host(host());
+    // Admission currently uses Once. Build the model's permitted multi-run
+    // shape explicitly using another real AQ run, without altering its policy.
+    let sibling_task = TaskId::new();
+    aq.ensure_task(
+        EnsureTaskRequest::new(
+            AdmissionKey::new("terminal-sibling").unwrap(),
+            TaskSpec::new(
+                sibling_task,
+                TaskPayload::new(vec![]),
+                RunPolicy::Once,
+                TaskConstraints::default(),
+                TaskMetadata::default(),
+            )
+            .unwrap(),
+            vec![],
+            CausalContext::new(
+                TraceId::new("terminal-sibling").unwrap(),
+                CorrelationId::new("terminal-sibling").unwrap(),
+            ),
+            None,
+        )
+        .unwrap(),
+    )
+    .unwrap();
+    let sibling: OpaqueRef =
+        aq.projection().run_ids_for_task(sibling_task)[0].to_string().try_into().unwrap();
+    let original: OpaqueRef = case.run.to_string().try_into().unwrap();
+    let started = std::cmp::min(&sibling, &original).clone();
+    let attempt: OpaqueRef = AttemptId::new().to_string().try_into().unwrap();
+    let egress = Egress::new(case.bundle.wi());
+    egress
+        .apply(&actor, second(2), EffectAction::ObserveRun { id: case.id.clone(), run: sibling })
+        .unwrap();
+    egress
+        .apply(
+            &actor,
+            second(2),
+            EffectAction::StartProduction {
+                id: case.id.clone(),
+                snapshot: verified(&case.snapshot),
+                run: started,
+                attempt: attempt.clone(),
+            },
+        )
+        .unwrap();
+    tokio::runtime::Builder::new_current_thread().enable_all().build().unwrap().block_on(async {
+        tokio::time::timeout(std::time::Duration::from_secs(20), aq.run_until_idle())
+            .await
+            .unwrap()
+            .unwrap();
+    });
+    aq.shutdown().unwrap();
+    for _ in 0..2 {
+        let reopened = StoreBundle::open(&case.temp.path().join("bundle")).unwrap();
+        assert!(reopened.convergence_faults().is_empty());
+        let state = reopened.wi().effect_snapshot(actor.tenant()).unwrap();
+        assert_eq!(state.effects[&case.id].phase, Phase::Uncertain);
+        assert_eq!(state.effects[&case.id].attempt.as_ref(), Some(&attempt));
+        let ReceiptBody::Egress(receipt) = case.receipt().body else { panic!("egress receipt") };
+        assert_eq!(receipt.attempt, attempt);
+    }
+}
+
 #[test]
 fn terminal_recovery_waits_for_writers_and_preserves_original_attempt() {
     // S-021: real AQ terminal state, overlapping same-tenant writes and reopen.

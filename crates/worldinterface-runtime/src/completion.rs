@@ -310,6 +310,23 @@ impl<P: EffectExecutionPort, V: EvidenceAuthority, C: TrustedClock> EffectAttemp
         identity_class: &'static str,
     ) -> Result<AttemptDisposition> {
         let root = self.bundle.wi();
+        // Avoid publishing an already superseded provider observation. The
+        // transactional seam rechecks this fence after publication as well.
+        let state = retry_storage(|| root.effect_snapshot(caller.tenant()))?;
+        let effect = state.effects.get(id).ok_or("missing completion effect")?;
+        if effect.phase != Phase::Running
+            || effect.attempt.as_ref() != Some(&attempt)
+            || effect.outcomes.iter().any(|o| o.attempt == attempt)
+            || effect
+                .dispatches
+                .last()
+                .and_then(|d| d.admission.as_ref())
+                .is_none_or(|a| !a.observed_runs.contains(run))
+        {
+            return retry_storage(|| self.committed_disposition(caller, id, run))?
+                .ok_or_else(|| "stale effect attempt before publication".into());
+        }
+        drop(state);
         let mut outputs = Vec::new();
         for (index, bytes) in observation.outputs.iter().enumerate() {
             outputs.push(publish(
@@ -363,23 +380,6 @@ impl<P: EffectExecutionPort, V: EvidenceAuthority, C: TrustedClock> EffectAttemp
                 run,
                 |state, phases| {
                     let effect = state.effects.get(id).ok_or("missing effect")?;
-                    if effect
-                        .dispatches
-                        .last()
-                        .and_then(|d| d.admission.as_ref())
-                        .is_none_or(|a| !a.observed_runs.contains(run))
-                    {
-                        return Err("outcome run belongs to another dispatch".into());
-                    }
-                    if effect.phase != Phase::Running
-                        || effect.attempt.as_ref() != Some(&attempt)
-                        || effect.outcomes.iter().any(|o| o.attempt == attempt)
-                    {
-                        return Ok(None);
-                    }
-                    if phases.attempt != attempt || phases.run.as_ref() != Some(run) {
-                        return Err("completion phase times belong to another Start".into());
-                    }
                     let (at, inferred) = match self.clock.now() {
                         Ok(at) if state.last_at.as_ref().is_none_or(|last| &at >= last) => {
                             (at, false)
@@ -615,20 +615,6 @@ pub(crate) fn record_uncertain_after_terminal_run(
     retry_storage(|| {
         root.effect_transact_receipt_with(tenant, id, attempt, run, |state, phases| {
             let effect = state.effects.get(id).ok_or("missing effect")?;
-            if effect.phase != Phase::Running
-                || effect.attempt.as_ref() != Some(attempt)
-                || effect.outcomes.iter().any(|o| &o.attempt == attempt)
-                || effect
-                    .dispatches
-                    .last()
-                    .and_then(|d| d.admission.as_ref())
-                    .is_none_or(|a| !a.observed_runs.contains(run))
-            {
-                return Ok(None);
-            }
-            if &phases.attempt != attempt || phases.run.as_ref() != Some(run) {
-                return Err("recovery phase times belong to another Start".into());
-            }
             let caller = AuthenticatedCaller::from_trusted_authentication(
                 tenant.clone(),
                 effect.agency.binding.principal.clone(),

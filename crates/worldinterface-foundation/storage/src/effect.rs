@@ -44,6 +44,7 @@ pub struct EffectReceiptCommand {
 
 pub(crate) const SCHEMA: &str = "
 CREATE TABLE effect_history(seq INTEGER PRIMARY KEY, tenant TEXT NOT NULL, revision INTEGER NOT NULL, entry BLOB NOT NULL, digest TEXT NOT NULL, UNIQUE(tenant,revision));
+CREATE INDEX effect_history_intent ON effect_history(tenant,json_extract(CAST(entry AS TEXT),'$.action.id'),revision);
 CREATE TRIGGER effect_no_update BEFORE UPDATE ON effect_history BEGIN SELECT RAISE(ABORT,'append only'); END;
 CREATE TRIGGER effect_no_delete BEFORE DELETE ON effect_history BEGIN SELECT RAISE(ABORT,'append only'); END;
 CREATE TABLE effect_run_index(run TEXT PRIMARY KEY, tenant TEXT NOT NULL, intent TEXT NOT NULL, task TEXT NOT NULL);
@@ -252,18 +253,15 @@ fn execution_times(
     tenant: &OpaqueRef,
     id: &EffectIntentId,
 ) -> Result<EffectExecutionTimes> {
-    let mut q = c.prepare("SELECT entry FROM effect_history WHERE tenant=? ORDER BY revision")?;
+    let mut q = c.prepare("SELECT entry FROM effect_history WHERE tenant=? AND json_extract(CAST(entry AS TEXT),'$.action.id')=? ORDER BY revision")?;
     let mut received = None;
     let mut admitted = None;
     let mut dispatched = None;
     let mut run = None;
     let mut attempt = None;
-    for row in q.query_map([tenant.as_str()], |r| r.get::<_, Vec<u8>>(0))? {
+    for row in q.query_map(params![tenant.as_str(), id.as_str()], |r| r.get::<_, Vec<u8>>(0))? {
         let entry = strict_json(&row?).map_err(invalid)?;
         let action = &entry["action"];
-        if action["id"].as_str() != Some(id.as_str()) {
-            continue;
-        }
         let at: Timestamp = serde_json::from_value(entry["at"].clone())?;
         match action["operation"].as_str() {
             Some("submit") => received = Some(at),
@@ -469,7 +467,8 @@ impl StoreRoot {
         {
             return Ok(digest);
         }
-        let digest = self.write_receipt(&tx, command, receipt_id, execution, temporal)?;
+        let state = snapshot(&tx, tenant)?;
+        let digest = self.write_receipt(&tx, &state, command, receipt_id, execution, temporal)?;
         tx.commit()?;
         #[cfg(test)]
         crate::crash::checkpoint("fabric-receipt-committed");
@@ -509,7 +508,7 @@ impl StoreRoot {
         }
         let phases = execution_times(&tx, tenant, id)?;
         if &phases.attempt != attempt || phases.run.as_ref() != Some(run) {
-            return Err(invalid("completion phase times belong to another Start"));
+            return Ok(None);
         }
         let Some(prepared) = prepare(&state, &phases)? else { return Ok(None) };
         if prepared.command.tenant() != tenant
@@ -520,6 +519,7 @@ impl StoreRoot {
         }
         let digest = self.write_receipt(
             &tx,
+            &state,
             &prepared.command,
             ReceiptId::generate(),
             &prepared.execution,
@@ -536,14 +536,14 @@ impl StoreRoot {
     fn write_receipt(
         &self,
         c: &Connection,
+        old: &EffectState,
         command: &ValidatedEffectCommand,
         receipt_id: ReceiptId,
         execution: &ExecutionRecord,
         temporal: TemporalProvenance,
     ) -> Result<ContentHash> {
         let tenant = command.tenant();
-        let old = snapshot(c, tenant)?;
-        let (new, id) = replay_validated(&old, command)?;
+        let (new, id) = replay_validated(old, command)?;
         if new.revision == old.revision {
             return Err(invalid("receipt command already applied; inspect immutable receipt"));
         }
@@ -725,6 +725,98 @@ pub(crate) fn reject_generic(c: &Connection, batch: &Batch) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn phase_times_seek_one_intent_and_preserve_dispatch_and_tenant_boundaries() {
+        // S-023: completion must not scan/deserialize the entire tenant journal
+        // while holding the shared Fabric writer lock.
+        let c = Connection::open_in_memory().unwrap();
+        c.execute_batch(SCHEMA).unwrap();
+        let tenant: OpaqueRef = "tenant-a".to_owned().try_into().unwrap();
+        let id = EffectIntentId::generate();
+        let tx = c.unchecked_transaction().unwrap();
+        for revision in 1..=2000 {
+            let entry = serde_json::json!({"action": {"id": EffectIntentId::generate(), "operation": "submit"}});
+            let bytes = canonical_data(&entry).unwrap();
+            tx.execute(
+                "INSERT INTO effect_history(tenant,revision,entry,digest) VALUES(?,?,?,?)",
+                params![tenant.as_str(), revision, &bytes, ContentHash::of(&bytes).as_str()],
+            )
+            .unwrap();
+        }
+        let times: Vec<Timestamp> = (0..6)
+            .map(|n| format!("2026-09-21T00:00:0{n}.000000000Z").try_into().unwrap())
+            .collect();
+        for (n, operation) in [
+            "submit",
+            "acknowledge_production",
+            "start_production",
+            "prepare_production",
+            "acknowledge_production",
+            "start_production",
+        ]
+        .into_iter()
+        .enumerate()
+        {
+            for scope in [tenant.as_str(), "tenant-b"] {
+                let entry = serde_json::json!({
+                    "at": times[n],
+                    "action": {"id": id, "operation": operation, "attempt": if scope == tenant.as_str() { format!("attempt-{n}") } else { format!("foreign-attempt-{n}") }, "run": format!("run-{n}")}
+                });
+                let bytes = canonical_data(&entry).unwrap();
+                tx.execute(
+                    "INSERT INTO effect_history(tenant,revision,entry,digest) VALUES(?,?,?,?)",
+                    params![scope, 2001 + n, &bytes, ContentHash::of(&bytes).as_str()],
+                )
+                .unwrap();
+            }
+        }
+        tx.commit().unwrap();
+        let phases = execution_times(&c, &tenant, &id).unwrap();
+        assert_eq!(phases.received, times[0]);
+        assert_eq!(phases.admitted, times[4]);
+        assert_eq!(phases.dispatched, times[5]);
+        assert_eq!(phases.attempt.as_str(), "attempt-5");
+        assert_eq!(phases.run.unwrap().as_str(), "run-5");
+        let mut q = c.prepare("EXPLAIN QUERY PLAN SELECT entry FROM effect_history WHERE tenant=? AND json_extract(CAST(entry AS TEXT),'$.action.id')=? ORDER BY revision").unwrap();
+        let plan = q
+            .query_map(params![tenant.as_str(), id.as_str()], |r| r.get::<_, String>(3))
+            .unwrap()
+            .collect::<rusqlite::Result<Vec<_>>>()
+            .unwrap();
+        assert!(
+            plan.iter().any(|s| s.contains("effect_history_intent (tenant=? AND <expr>=?)")),
+            "{plan:?}"
+        );
+        assert!(!plan.iter().any(|s| s.contains("SCAN") || s.contains("TEMP B-TREE")), "{plan:?}");
+    }
+
+    #[test]
+    fn missing_phase_index_rejects_interim_schema_without_mutation() {
+        let temp = tempfile::tempdir().unwrap();
+        let path = temp.path().join("wi");
+        let root = StoreRoot::create_empty(
+            &path,
+            crate::StoreProfile {
+                instance: InstanceId::generate(),
+                created_at: "2026-09-21T00:00:00.000000000Z".to_owned().try_into().unwrap(),
+                platform: false,
+            },
+        )
+        .unwrap();
+        let fabric = root.db_path(StoreKind::Fabric);
+        root.connect(StoreKind::Fabric)
+            .unwrap()
+            .execute_batch("DROP INDEX effect_history_intent")
+            .unwrap();
+        drop(root);
+        let before = std::fs::read(&fabric).unwrap();
+        for _ in 0..2 {
+            let error = StoreRoot::open_existing(&path).err().expect("incompatible interim layout");
+            assert_eq!(error.to_string(), "unsupported schema");
+            assert_eq!(std::fs::read(&fabric).unwrap(), before);
+        }
+    }
+
     #[test]
     fn effect_journal_faults_roll_back_every_projection() {
         let fixture: serde_json::Value = serde_json::from_str(include_str!(

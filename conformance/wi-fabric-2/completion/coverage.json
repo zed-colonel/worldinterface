@@ -21,6 +21,8 @@
     "crash::killed_fabric_receipt_transaction_recovers_all_or_none_and_retries",
     "crash::killed_publication_resumes_from_each_durable_boundary",
     "detached_proofs_are_restricted_provenance_and_leave_receipts_immutable",
+    "effect::tests::missing_phase_index_rejects_interim_schema_without_mutation",
+    "effect::tests::phase_times_seek_one_intent_and_preserve_dispatch_and_tenant_boundaries",
     "expired_dispatch_authorization_retries_and_keeps_a_durable_diagnostic",
     "invalid_port_observations_commit_inline_uncertainty_without_reinvocation",
     "invocation_fence_rechecks_after_supersession",
@@ -42,6 +44,8 @@
     "runtime_campaign_inspection_preserves_authority_and_material_confounds",
     "successful_completion_preserves_distinct_journal_phase_times",
     "sustained_tenant_writes_preserve_confirmed_completion_without_reinvocation",
+    "terminal_recovery_selects_start_among_multiple_terminal_runs",
+    "terminal_recovery_uses_start_run_and_skips_other_observed_terminal_runs",
     "terminal_recovery_waits_for_writers_and_preserves_original_attempt",
     "three_expired_deliveries_record_convergence_fault_without_second_port_call",
     "unreadable_binding_never_claims_retry_safe_pre_start_failure",
@@ -213,6 +217,26 @@
         "manifest": "crates/worldinterface-runtime/Cargo.toml",
         "package": "worldinterface-runtime",
         "test": "terminal_recovery_waits_for_writers_and_preserves_original_attempt"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "terminal_recovery_uses_start_run_and_skips_other_observed_terminal_runs"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "terminal_recovery_selects_start_among_multiple_terminal_runs"
+      },
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-storage",
+        "test": "effect::tests::phase_times_seek_one_intent_and_preserve_dispatch_and_tenant_boundaries"
+      },
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-storage",
+        "test": "effect::tests::missing_phase_index_rejects_interim_schema_without_mutation"
       }
     ],
     "redacted-inspection": [
