@@ -1,5 +1,6 @@
 //! One handler for both plan entry points; pure nodes never cross a boundary.
 use crate::{
+    artifact::{ArtifactAuthorization, ArtifactResolver},
     authority::{verify_snapshot, EvidenceAuthority, TrustedClock},
     completion::EffectAttemptHandler,
     connector::Connector,
@@ -33,6 +34,9 @@ use worldinterface_storage::{flow::*, StoreRoot};
 pub struct FlowAttemptHandler<P, V, R, C> {
     pub effect: EffectAttemptHandler<P, V, C>,
     pub resolver: R,
+    pub artifacts: std::sync::Arc<
+        dyn ArtifactAuthorization<AuthenticatedContext = AuthenticatedCaller> + Send + Sync,
+    >,
 }
 pub(crate) fn selected<'a>(
     r: &'a FlowRun,
@@ -70,14 +74,18 @@ pub(crate) fn materialize(
     root: &StoreRoot,
     r: &FlowRun,
     source: &InputSource,
+    authorization: &dyn ArtifactAuthorization<AuthenticatedContext = AuthenticatedCaller>,
 ) -> Result<(Value, Option<ArtifactRef>)> {
-    match source {
+    let caller =
+        AuthenticatedCaller::from_trusted_authentication(r.tenant.clone(), r.principal.clone());
+    let resolver = ArtifactResolver::new(root, authorization);
+    let result = match source {
         InputSource::Literal { value } => Ok((value.clone(), None)),
         InputSource::Artifact { reference } => {
             if reference.scope != r.tenant {
                 return Err("foreign input artifact".into());
             }
-            let b = root.read_artifact(reference)?;
+            let b = resolver.read(&caller, reference)?;
             // Opaque bytes remain artifacts and are validated by the connector contract.
             let value = strict_json(&b).unwrap_or(serde_json::to_value(reference)?);
             Ok((value, Some(reference.clone())))
@@ -86,7 +94,11 @@ pub(crate) fn materialize(
         InputSource::Exclusive { branch, when_true, when_false } => {
             output(r, selected(r, branch, when_true, when_false)?)
         }
+    }?;
+    if let Some(reference) = &result.1 {
+        resolver.read(&caller, reference)?;
     }
+    Ok(result)
 }
 fn empty_result(disposition: NodeDisposition) -> NodeResult {
     NodeResult {
@@ -134,6 +146,9 @@ impl<
     ) -> Result<AttemptDisposition> {
         let root = self.effect.bundle.wi();
         let p = r.restore()?;
+        let caller =
+            AuthenticatedCaller::from_trusted_authentication(r.tenant.clone(), r.principal.clone());
+        let artifact_reader = ArtifactResolver::new(root, self.artifacts.as_ref());
         let n =
             p.document().body.nodes.iter().find(|n| &n.id == node).ok_or("unknown Flow node")?;
         let Some(binding) = r.bindings.get(node) else {
@@ -153,6 +168,12 @@ impl<
         }
         if let Some(result) = r.results.get(node) {
             if result.effect.is_some() && !matches!(result.disposition, NodeDisposition::Denied) {
+                let state = root.effect_snapshot(&r.tenant)?;
+                let effect = state
+                    .effects
+                    .get(result.effect.as_ref().unwrap())
+                    .ok_or("missing Flow effect")?;
+                artifact_reader.read(&caller, &effect.intent.submission.input.artifact)?;
                 return Ok(self.effect.execute_context(ctx));
             }
             return Ok(
@@ -188,9 +209,9 @@ impl<
         let mut inputs = BTreeMap::new();
         let mut artifacts = BTreeMap::new();
         for (port, input) in &n.inputs {
-            let (value, artifact) = materialize(root, r, &input.source)?;
+            let (value, artifact) = materialize(root, r, &input.source, self.artifacts.as_ref())?;
             if let Some(a) = artifact {
-                root.read_artifact(&a)?;
+                artifact_reader.read(&caller, &a)?;
                 artifacts.insert(port.clone(), a);
             }
             inputs.insert(port.clone(), value);
@@ -214,12 +235,26 @@ impl<
             PlanOperation::Boundary { binding: connector, resource, policy } => {
                 let resource = match resource {
                     ResourceBinding::Fixed { resource } => resource.clone(),
-                    ResourceBinding::Produced { producers } => {
-                        serde_json::from_value(output(r, &producers[0])?.0)?
-                    }
+                    ResourceBinding::Produced { producers } => serde_json::from_value(
+                        materialize(
+                            root,
+                            r,
+                            &InputSource::Output { source: producers[0].clone() },
+                            self.artifacts.as_ref(),
+                        )?
+                        .0,
+                    )?,
                     ResourceBinding::Exclusive { branch, when_true, when_false } => {
                         serde_json::from_value(
-                            output(r, selected(r, branch, when_true, when_false)?)?.0,
+                            materialize(
+                                root,
+                                r,
+                                &InputSource::Output {
+                                    source: selected(r, branch, when_true, when_false)?.clone(),
+                                },
+                                self.artifacts.as_ref(),
+                            )?
+                            .0,
                         )?
                     }
                 };
@@ -254,7 +289,7 @@ impl<
                 } else {
                     root.publish(r.tenant.clone(), &canonical_data(&inputs[port])?)?
                 };
-                let bytes = root.read_artifact(&artifact)?;
+                let bytes = artifact_reader.read(&caller, &artifact)?;
                 let schema = &p.document().schemas[&input.schema].schema;
                 match schema {
                     Schema::Artifact { max_bytes, schema_hash } if artifact.size <= *max_bytes => {
@@ -421,6 +456,7 @@ impl<
                         EffectAction::ObserveRun { id: id.clone(), run: binding.run.clone() },
                     )?;
                 }
+                artifact_reader.read(&caller, &submission.input.artifact)?;
                 let disposition = self.effect.execute_context(ctx);
                 if matches!(
                     disposition.outcome(),
@@ -452,7 +488,7 @@ impl<
                     }
                     for ((port, output), artifact) in n.outputs.iter().zip(outcome.durable_outputs)
                     {
-                        let b = root.read_artifact(&artifact)?;
+                        let b = artifact_reader.read(&caller, &artifact)?;
                         let value = match &p.document().schemas[&output.schema].schema {
                             Schema::Artifact { max_bytes, schema_hash }
                                 if artifact.size <= *max_bytes =>
@@ -499,7 +535,12 @@ impl<
         if let Some(node) = payload.node {
             self.node(&r, &node, ctx)
         } else {
-            crate::flow_coordinator::coordinate(self.effect.bundle.wi(), &r, ctx)
+            crate::flow_coordinator::coordinate(
+                self.effect.bundle.wi(),
+                &r,
+                ctx,
+                self.artifacts.as_ref(),
+            )
         }
     }
 }

@@ -77,7 +77,7 @@ integration to CraftingTable after qualifying review. This branch is committed f
 review and never merged or pushed by the implementation agent. Independent review
 and its blocking/major-finding disposition remain controller responsibilities.
 
-Structural review adds 43 inventory declarations/modules to the existing retained
+Structural review adds 44 inventory declarations/modules to the existing retained
 infrastructure family; no inventory item or existing treatment is removed. Seven
 new source/test surfaces and the crash fixture's selective filesystem-write
 surface are dispositioned explicitly. Source hashes are then refreshed with the
@@ -90,3 +90,11 @@ strict append-only replay algebra and publishes no duplicate transitions. An
 8-writer regression and real 64-child Flow execution cover the repair. The
 Flow-specific process-death-after-Start fixture also reopens the paired stores and
 proves the original child binding and external commit survive without reinvocation.
+
+Final boundary review made host artifact authorization mandatory: PlanConfiguration
+implements the existing ArtifactAuthorization contract, and FlowAttemptHandler
+requires a host authorizer. Submission, materialized inputs/resources, boundary
+outputs and inspection use the authenticated submitting principal with the existing
+ArtifactResolver. Journal/admission evidence remains host-internal validation.
+A denied same-tenant artifact prevents admission or connector invocation; persisted
+attribution and artifact scope alone do not supply read authority.

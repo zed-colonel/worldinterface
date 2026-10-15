@@ -1,6 +1,7 @@
 //! Authenticated plan admission. Direct and Flow enter the same coordinator.
 use crate::{
     aq_adapter::QueueEngine,
+    artifact::{ArtifactAuthorization, ArtifactResolver},
     authority::{caller, verify_snapshot, Authentication, EvidenceAuthority, TrustedClock},
     Result,
 };
@@ -27,7 +28,9 @@ use worldinterface_protocol::{canonical_data, strict_json, EffectSubmission, Opa
 use worldinterface_storage::{flow::*, StoreRoot};
 
 /// Trusted host configuration, scoped to the authenticated caller, never request data.
-pub trait PlanConfiguration {
+pub trait PlanConfiguration:
+    ArtifactAuthorization<AuthenticatedContext = AuthenticatedCaller>
+{
     fn pins(&self, caller: &AuthenticatedCaller) -> Result<FlowPins>;
 }
 pub struct PlanService<'a, A, V, C, P> {
@@ -155,17 +158,18 @@ impl<A: Authentication, V: EvidenceAuthority, C: TrustedClock, P: PlanConfigurat
         let at = self.clock.now()?;
         let snapshot = verify_snapshot(self.root, self.evidence, c.tenant(), &submission, &at)?;
         let agency = resolve_agency(&c, &submission, &snapshot.facts().bindings, &at)?;
-        self.root.read_artifact(&submission.input.artifact)?;
         if submission.input.artifact.scope != *c.tenant() {
             return Err("foreign Flow submission artifact".into());
         }
+        let artifacts = ArtifactResolver::new(self.root, self.configuration);
+        artifacts.read(&c, &submission.input.artifact)?;
         for n in &plan.document().body.nodes {
             for (port, input) in &n.inputs {
                 if let InputSource::Artifact { reference } = &input.source {
                     if reference.scope != *c.tenant() {
                         return Err("foreign plan artifact".into());
                     }
-                    let b = self.root.read_artifact(reference)?;
+                    let b = artifacts.read(&c, reference)?;
                     plan.verify_input_artifact(&n.id, port, &b)?;
                 }
             }
@@ -270,7 +274,23 @@ impl<A: Authentication, V: EvidenceAuthority, C: TrustedClock, P: PlanConfigurat
         let s = self.root.flow_snapshot(c.tenant())?;
         let r =
             s.runs.get(run).filter(|r| r.principal == *c.principal()).ok_or("unknown Flow run")?;
-        r.restore()?;
+        let plan = r.restore()?;
+        let artifacts = ArtifactResolver::new(self.root, self.configuration);
+        for reference in plan
+            .document()
+            .body
+            .nodes
+            .iter()
+            .flat_map(|n| n.inputs.values())
+            .filter_map(|i| match &i.source {
+                InputSource::Artifact { reference } => Some(reference),
+                _ => None,
+            })
+            .chain(r.results.values().flat_map(|v| v.outputs.values()))
+            .chain(r.exports.values())
+        {
+            artifacts.read(&c, reference)?;
+        }
         Ok(r.clone())
     }
 }

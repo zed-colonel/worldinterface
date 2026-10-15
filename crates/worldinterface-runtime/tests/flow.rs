@@ -34,6 +34,12 @@ impl Authentication for Auth {
 }
 #[derive(Clone)]
 struct Config(FlowPins);
+impl worldinterface_runtime::artifact::ArtifactAuthorization for Config {
+    type AuthenticatedContext = AuthenticatedCaller;
+    fn authorize_read(&self, caller: &AuthenticatedCaller, artifact: &ArtifactRef) -> bool {
+        &artifact.scope == caller.tenant()
+    }
+}
 impl PlanConfiguration for Config {
     fn pins(&self, _: &AuthenticatedCaller) -> Result<FlowPins> {
         Ok(self.0.clone())
@@ -134,6 +140,7 @@ impl Fixture {
                 clock: self.clock.clone(),
             },
             resolver: Resolver(self.snapshot.facts[0].clone()),
+            artifacts: Arc::new(self.config.clone()),
         }
     }
     fn service<'a>(
@@ -927,5 +934,45 @@ async fn flow_child_start_restart_preserves_binding_and_never_reinvokes_boundary
     assert_eq!(f.run(&id).bindings, before);
     assert_eq!(f.connector.commits(), 1);
     assert_eq!(f.connector.invocation_calls.load(std::sync::atomic::Ordering::SeqCst), 0);
+    q.shutdown().unwrap();
+}
+
+struct DeniedArtifacts(Config);
+impl worldinterface_runtime::artifact::ArtifactAuthorization for DeniedArtifacts {
+    type AuthenticatedContext = AuthenticatedCaller;
+    fn authorize_read(&self, _: &AuthenticatedCaller, _: &ArtifactRef) -> bool {
+        false
+    }
+}
+impl PlanConfiguration for DeniedArtifacts {
+    fn pins(&self, caller: &AuthenticatedCaller) -> Result<FlowPins> {
+        self.0.pins(caller)
+    }
+}
+#[tokio::test]
+async fn host_artifact_authorization_is_required_at_submission_and_execution() {
+    let f = Fixture::new();
+    let evidence = Evidence(f.snapshot.clone());
+    let denied = DeniedArtifacts(f.config.clone());
+    let service = PlanService {
+        root: f.bundle.wi(),
+        authentication: &f.auth,
+        evidence: &evidence,
+        clock: &f.clock,
+        configuration: &denied,
+    };
+    let mut handler = f.handler();
+    handler.artifacts = Arc::new(DeniedArtifacts(f.config.clone()));
+    let mut q = QueueEngine::bootstrap(&f.bundle, handler, host()).unwrap();
+    assert!(service.submit_direct(&(), f.submission.clone(), f.selection(), &mut q).is_err());
+    assert_eq!(q.engine().projection().task_count(), 0);
+    let id = f
+        .service(&evidence)
+        .submit_direct(&(), f.submission.clone(), f.selection(), &mut q)
+        .unwrap();
+    f.drive(&mut q, &id).await;
+    assert_eq!(f.run(&id).outcome, Some(FlowOutcome::Failed));
+    assert_eq!(f.connector.invocation_calls.load(std::sync::atomic::Ordering::SeqCst), 0);
+    assert!(service.inspect_run(&(), &id).is_err());
     q.shutdown().unwrap();
 }

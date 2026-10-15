@@ -66,8 +66,16 @@ pub(crate) fn coordinate(
     root: &StoreRoot,
     r: &FlowRun,
     ctx: &ExecutorContext,
+    artifacts: &dyn crate::artifact::ArtifactAuthorization<
+        AuthenticatedContext = worldinterface_domain::agency::AuthenticatedCaller,
+    >,
 ) -> Result<AttemptDisposition> {
     let p = r.restore()?;
+    let caller = worldinterface_domain::agency::AuthenticatedCaller::from_trusted_authentication(
+        r.tenant.clone(),
+        r.principal.clone(),
+    );
+    let artifact_reader = crate::artifact::ArtifactResolver::new(root, artifacts);
     if r.parent_run.as_ref().map(OpaqueRef::as_str) != Some(ctx.input.run_id.to_string().as_str()) {
         return Err("unbound coordinator run".into());
     }
@@ -84,7 +92,8 @@ pub(crate) fn coordinate(
         let mut exports = std::collections::BTreeMap::new();
         if outcome == FlowOutcome::Succeeded {
             for (name, input) in &p.document().body.outputs {
-                let (value, artifact) = crate::flow_node::materialize(root, r, &input.source)?;
+                let (value, artifact) =
+                    crate::flow_node::materialize(root, r, &input.source, artifacts)?;
                 if !matches!(
                     p.document().schemas[&input.schema].schema,
                     worldinterface_domain::flow::Schema::Artifact { .. }
@@ -96,7 +105,7 @@ pub(crate) fn coordinate(
                 }
                 let artifact = artifact
                     .map_or_else(|| root.publish(r.tenant.clone(), &canonical_data(&value)?), Ok)?;
-                root.read_artifact(&artifact)?;
+                artifact_reader.read(&caller, &artifact)?;
                 exports.insert(name.clone(), artifact);
             }
         }

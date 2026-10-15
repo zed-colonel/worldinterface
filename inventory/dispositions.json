@@ -9854,5 +9854,12 @@
     "target": "Flow runtime and persistence conformance evidence",
     "rationale": "WIP-07 executable admission, transactional child, replay, authority, lifecycle and crash evidence; retained independently of legacy connector deletion",
     "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/flow.rs::::struct:DeniedArtifacts",
+    "disposition": "retain-align",
+    "target": "Flow artifact authorization conformance evidence",
+    "rationale": "WIP-07 host read authorization rejects same-tenant denied artifacts at submission, execution and inspection without connector invocation",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
   }
 ]

@@ -61,6 +61,11 @@
         "manifest": "crates/worldinterface-runtime/Cargo.toml",
         "package": "worldinterface-runtime",
         "test": "revoked_stale_registry_and_schema_bindings_prevent_connector_invocation"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "host_artifact_authorization_is_required_at_submission_and_execution"
       }
     ],
     "bounded-children": [
