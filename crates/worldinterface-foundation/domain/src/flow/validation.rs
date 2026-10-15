@@ -153,6 +153,22 @@ pub(super) fn validate(p: &PlanDocument, c: &CompilationContext) -> Result<(), C
             e.node = Some(n.id.clone());
             e
         })?;
+        for dependency in &n.dependencies {
+            let producer = graph[dependency];
+            if !guards_subset(&producer.guards, &n.guards)
+                && !selected_dependency(dependency, n, &graph)
+            {
+                return Err(error(
+                    if exclusive(producer, n) {
+                        ErrorKind::Unreachable
+                    } else {
+                        ErrorKind::Reference
+                    },
+                    Some(&n.id),
+                    "dependency guards must hold or be explicitly selected at an exhaustive join",
+                ));
+            }
+        }
     }
     // A public Flow output is consumed after the graph, outside branch guards.
     let terminal = PlanNode {
@@ -246,6 +262,32 @@ fn guards_subset(a: &BTreeMap<OpaqueRef, OpaqueRef>, b: &BTreeMap<OpaqueRef, Opa
 fn exclusive(a: &PlanNode, b: &PlanNode) -> bool {
     a.guards.iter().any(|(k, v)| b.guards.get(k).is_some_and(|w| v != w))
 }
+// Called only after every exclusive selection has passed selection(). A join
+// waits for both alternatives to settle, then reads only the chosen producer.
+fn selected_dependency(dependency: &OpaqueRef, n: &PlanNode, g: &Graph<'_>) -> bool {
+    let selected = |branch: &OpaqueRef, a: &OutputRef, b: &OutputRef| {
+        let PlanOperation::Branch { when_true, when_false, .. } = &g[branch].operation else {
+            return false;
+        };
+        [(a, when_true), (b, when_false)].iter().any(|(r, label)| {
+            let mut required = n.guards.clone();
+            required.insert(branch.clone(), (*label).clone());
+            &r.node == dependency && guards_subset(&g[dependency].guards, &required)
+        })
+    };
+    n.inputs.values().any(|i| match &i.source {
+        InputSource::Exclusive { branch, when_true, when_false } => {
+            selected(branch, when_true, when_false)
+        }
+        _ => false,
+    }) || match &n.operation {
+        PlanOperation::Boundary {
+            resource: ResourceBinding::Exclusive { branch, when_true, when_false },
+            ..
+        } => selected(branch, when_true, when_false),
+        _ => false,
+    }
+}
 fn schema<'a>(p: &'a PlanDocument, id: &OpaqueRef) -> Result<&'a Schema, CompileError> {
     p.schemas
         .get(id)
@@ -329,7 +371,18 @@ fn check_input(
         }
         InputSource::Artifact { reference } => {
             // Only a reference is checked. Materialized bytes must be checked by WIP-07.
-            if reference.size > super::MAX_VALUE_BYTES as u64 || target == &(Schema::Resource {}) {
+            let limit = if matches!(
+                n.operation,
+                PlanOperation::Transform { .. } | PlanOperation::Branch { .. }
+            ) {
+                super::MAX_VALUE_BYTES as u64
+            } else {
+                match target {
+                    Schema::Artifact { max_bytes, .. } => *max_bytes,
+                    _ => MAX_BOUNDARY_ARTIFACT_BYTES,
+                }
+            };
+            if reference.size > limit || target == &(Schema::Resource {}) {
                 return Err(error(
                     ErrorKind::Bound,
                     Some(&n.id),

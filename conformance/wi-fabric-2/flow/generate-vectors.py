@@ -28,11 +28,54 @@ body = dict(entries=["timer"], nodes=[dict(id="timer", dependencies=[], guards={
             authority=dict(alternatives=[]), fan_out=dict(kind="expanded"), operation=dict(kind="timer", deadline=dict(inclusive_at="2030-01-01T00:00:00.000000000Z", action="fail")))],
             outputs={}, authority=dict(alternatives=[]), causal_metadata={})
 definition = dict(id="golden", version=1, body=body)
-plan = dict(version=1, origin=dict(kind="flow", id="golden", version=1, definition_digest=digest(["wi-flow-definition-1", definition])),
-            registry_digest=digest(["wi-connector-registry:1", [descriptor]]),
-            schemas={k: dict(schema=v, digest=digest(["wi-schema-1", v])) for k, v in schemas.items()},
-            submitting_authority=authority, run_authority=authority, body=body)
-envelope = dict(contract="WI-FABRIC-2", canonical_profile="wi-json-1", schema=1, record_kind="execution_plan", plan=plan)
-encoded = canonical(envelope)
-(BASE / "plan.canonical.json").write_bytes(encoded)
-(BASE / "plan.sha256").write_text(hashlib.sha256(b"WI-FABRIC-2\0wi-json-1\0execution-plan-1\0" + encoded).hexdigest() + "\n")
+
+registry_digest = digest(["wi-connector-registry:1", [descriptor]])
+schema_pins = {k: dict(schema=v, digest=digest(["wi-schema-1", v])) for k, v in schemas.items()}
+
+def write_plan(name, body, origin):
+    plan = dict(version=1, origin=origin, registry_digest=registry_digest, schemas=schema_pins,
+                submitting_authority=authority, run_authority=authority, body=body)
+    envelope = dict(contract="WI-FABRIC-2", canonical_profile="wi-json-1", schema=1, record_kind="execution_plan", plan=plan)
+    encoded = canonical(envelope)
+    (BASE / f"{name}.canonical.json").write_bytes(encoded)
+    (BASE / f"{name}.sha256").write_text(hashlib.sha256(b"WI-FABRIC-2\0wi-json-1\0execution-plan-1\0" + encoded).hexdigest() + "\n")
+
+def flow_origin(definition):
+    return dict(kind="flow", id=definition["id"], version=definition["version"],
+                definition_digest=digest(["wi-flow-definition-1", definition]))
+
+write_plan("plan", body, flow_origin(definition))
+
+# F-003: independently cover all boundary fields and the Direct origin.
+binding = dict(version=1, descriptor=descriptor, descriptor_hash=digest(descriptor), registry_digest=registry_digest)
+policy = dict(budget=dict(max_attempts=3, timeout_millis=100), receipt_profile="receipt-1",
+              deadline="2030-01-01T00:00:00.000000000Z", expected_outcome="written")
+def boundary(name, resource_binding, dependencies=None):
+    return dict(id=name, dependencies=dependencies or [], guards={},
+                inputs=dict(input=dict(schema="bool", source=dict(kind="literal", value=True))),
+                outputs=dict(output=dict(schema="bool", resources=[])), authority=authority,
+                fan_out=dict(kind="expanded"), operation=dict(kind="boundary", binding=binding,
+                resource=resource_binding, policy=policy))
+
+direct = boundary("direct", dict(kind="fixed", resource=resource("a")))
+direct["inputs"]["input"]["source"] = dict(kind="artifact", reference=dict(scope="tenant", content=hashlib.sha256(b"true").hexdigest(), size=4))
+write_plan("direct", dict(entries=["direct"], nodes=[direct], outputs={}, authority=authority, causal_metadata={}), dict(kind="direct"))
+
+# Programs, guard labels, resource outputs, an exhaustive join, causal metadata.
+def program(expression):
+    return dict(evaluator="wi-expr-1", runtime_hash=hashlib.sha256(b"wi-expr-1").hexdigest(),
+                implementation_hash=digest(["wi-expr-1", expression]), expression=expression, requested_access=[])
+
+def producer(name, label):
+    return dict(id=name, dependencies=["branch"], guards=dict(branch=label), inputs={},
+                outputs=dict(value=dict(schema="resource", resources=[resource(name)])),
+                authority=dict(alternatives=[]), fan_out=dict(kind="expanded"),
+                operation=dict(kind="transform", program=program(dict(op="literal", value=resource(name)))))
+
+branch = dict(id="branch", dependencies=[], guards={}, inputs={}, outputs={}, authority=dict(alternatives=[]),
+              fan_out=dict(kind="expanded"), operation=dict(kind="branch", program=program(dict(op="literal", value=True)), when_true="yes", when_false="no"))
+selection = dict(kind="exclusive", branch="branch", when_true=dict(node="a", port="value"), when_false=dict(node="b", port="value"))
+body = dict(entries=["branch"], nodes=[producer("a", "yes"), producer("b", "no"), branch,
+            boundary("c", selection, ["a", "b"])], outputs={}, authority=authority, causal_metadata=dict(cause="golden-cause"))
+definition = dict(id="golden-branch", version=1, body=body)
+write_plan("branch", body, flow_origin(definition))

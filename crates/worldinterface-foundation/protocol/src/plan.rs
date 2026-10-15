@@ -9,6 +9,8 @@ pub const MAX_PLAN_NODES: usize = 64;
 pub const MAX_PLAN_PORTS: usize = 32;
 pub const MAX_PLAN_ALTERNATIVES: usize = 64;
 pub const EVALUATOR: &str = "wi-expr-1";
+/// Current local publication ceiling; worker export manifests have a separate limit.
+pub const MAX_BOUNDARY_ARTIFACT_BYTES: u64 = 16 * 1024 * 1024;
 
 /// A finite structural ceiling, never an authorization envelope or a grant.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -30,16 +32,30 @@ impl AuthorityUpperBound {
     }
 }
 
-/// Closed schema subset. Object properties are all required; extra properties reject.
+/// Closed expression schemas or a pinned external connector artifact contract.
+/// Object properties are all required; extra properties reject.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "type", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Schema {
     Boolean {},
     Integer {},
-    String { max_bytes: u32 },
-    Object { properties: BTreeMap<OpaqueRef, Schema> },
-    Array { items: Box<Schema>, max_items: u32 },
+    String {
+        max_bytes: u32,
+    },
+    Object {
+        properties: BTreeMap<OpaqueRef, Schema>,
+    },
+    Array {
+        items: Box<Schema>,
+        max_items: u32,
+    },
     Resource {},
+    /// Opaque bytes, never an expression value. The connector must validate the
+    /// schema identified by this hash before dispatch; compilation cannot do so.
+    Artifact {
+        schema_hash: ContentHash,
+        max_bytes: u64,
+    },
 }
 impl Schema {
     pub fn digest(&self) -> Result<ContentHash> {
@@ -199,6 +215,10 @@ pub enum PlanOperation {
 #[serde(deny_unknown_fields)]
 pub struct PlanNode {
     pub id: OpaqueRef,
+    /// Dependencies settle before this node executes or records a guard skip.
+    /// A guarded dependency requires the same guards here, except an explicit
+    /// validated exhaustive input/resource selection may await both alternatives.
+    /// Failures are not skips; only the selected alternative supplies a join value.
     pub dependencies: Vec<OpaqueRef>,
     /// Conjunction of declared branch outcomes required for this node to run.
     pub guards: BTreeMap<OpaqueRef, OpaqueRef>,

@@ -50,7 +50,8 @@ The initial closed profile uses these limits:
 | Resource possibilities per output or boundary selector | 64 |
 | Schemas / connector registrations | 64 / 32 |
 | Expression depth / evaluation steps | 16 / 256 |
-| Materialized value / referenced input artifact | 16 KiB |
+| Pure materialized value / pure referenced input artifact | 16 KiB |
+| Boundary artifact (local publication ceiling) | 16 MiB, further limited by its schema |
 | Schema depth / schema nodes | 16 / 256 |
 | Object properties / array items / string bytes | 32 / 32 / 4,096 |
 | Boundary attempts / timeout | 32 / 86,400,000 ms |
@@ -61,7 +62,8 @@ paths may exceed eight edges: AQ's child hierarchy depth is a different limit.
 The profile is a WI restriction, not a claim about the maximum complete AQ workflow.
 All bounds compose with the 64 KiB envelope limit; 64 large nodes may exceed it.
 
-Schemas form a closed tagged language: Boolean, canonical integer, bounded string,
+Expression schemas form a closed tagged language: Boolean, canonical integer,
+bounded string,
 fixed object (every property required, no extra properties), bounded homogeneous
 array, and resource selector. No null, floating point, coercion, unions, arbitrary
 JSON Schema keyword or fetch is supported. Schema definitions are pinned by
@@ -69,6 +71,22 @@ JSON Schema keyword or fetch is supported. Schema definitions are pinned by
 nonempty and have an inferable homogeneous type; declared empty input arrays are
 accepted by their pinned array schema. Artifact inputs retain only their
 scope/hash/size reference; compilation cannot claim unseen bytes were validated.
+Boundary ports may instead pin `Artifact { schema_hash, max_bytes }`: an immutable
+external connector schema contract for arbitrary bytes, including non-JSON inputs.
+Its positive byte bound cannot exceed the local publication ceiling of 16 MiB
+(the separate 64 MiB worker export-manifest ceiling does not apply here). It cannot
+be nested in expression schemas or used by pure programs, even as an unused input.
+Artifact contracts must match across edges, including their schema hash and bound.
+Boundary references using closed schemas also allow up to 16 MiB; the 16 KiB
+materialization limit applies only to pure programs. `verify_input_artifact` checks
+pinned boundary bytes against their size/hash and validates closed JSON schemas
+without expression size limits. For an external artifact schema it returns the
+pinned contract, whose `schema_hash` **still requires connector schema validation**
+before dispatch. `validate_inputs`/`validate_outputs` reject opaque contracts as
+JSON values; they cannot substitute for connector validation. WIP-07 must check
+artifact scope/access, integrity and the applicable operation/artifact limits,
+validate the pinned connector schema, and perform exact authorization immediately
+before dispatch. Compilation and byte verification grant no authority.
 Resource artifacts are unsupported because they lack finite declared possibilities.
 A direct operation whose output schema is `resource` requires a Flow with explicit
 output possibilities in this initial profile.
@@ -77,17 +95,29 @@ output possibilities in this initial profile.
 equality, AND, OR and NOT. It pins its runtime hash and expression implementation
 hash. Any access request or unknown evaluator rejects. Evaluation validates inputs,
 preserves pinned literals, checks outputs and finite resource possibilities, and
-returns value/input hash/output hash/branch outcome. It returns no boundary
-receipt or authorization. WIP-07 must verify artifact content hashes, materialize
+returns value/input hash/output hash/branch outcome. Trace input hashes are
+`SHA-256(canonical(["wi-eval-input-1", inputs]))`; output hashes are
+`SHA-256(canonical(["wi-eval-output-1", value]))`, using wi-json-1 canonical bytes.
+It returns no boundary receipt or authorization. WIP-07 must verify artifact content hashes, materialize
 inputs from the actual selected checkpoint producers, and record these results in
 workflow traces. `validate_inputs` and `validate_outputs` expose the same pinned
 contracts for boundary dispatch/results.
 
 A branch evaluates a Boolean into two distinct declared labels. Node guards are
 conjunctions of ancestor branch outcomes. Ordinary references require their
-producer's guards to hold at the consumer. Joins may explicitly select both
+producer's guards to hold at the consumer. Every dependency must also have its
+guards included by the dependent node; contradictory guards reject as unreachable,
+and missing guards reject as unavailable. The sole exception is a direct producer
+named by a validated exclusive selection on the dependent node. Joins may
+explicitly select both
 exclusive, exhaustive producer alternatives; unsupported conditional availability
-rejects. Resource outputs declare finite possibilities. An ordinary resource
+rejects. Dependencies require settlement: successful execution or a guard skip
+recorded **after all of that node's dependencies settle**. A skipped dependency
+never satisfies success for an ordinary consumer. Only validated exhaustive joins
+can await guarded alternatives; they wait for all dependencies to settle and read
+only the selected producer. Failures remain failures, not guard skips. These rules
+preserve ordering through skipped alternatives and underpin wait serialization.
+Resource outputs declare finite possibilities. An ordinary resource
 selector names exactly one producer; multiple producers require an explicit
 exclusive selection. Resource transforms require a provable literal or input
 passthrough; arbitrary resource computation rejects.
@@ -121,7 +151,8 @@ are rejected rather than rounded. No clock is read, timer executed, or signal se
 AQ lowering, checkpointing, event outboxes and race/recovery semantics remain WIP-08.
 
 `generate-vectors.py` independently constructs the fixture context, canonical
-plan and domain-separated digest with Python's standard library. Run it from any
-working directory to reproduce `context.json`, `plan.canonical.json` and
-`plan.sha256`; it does not call Rust or consume compiler output. Compile-fail
+timer-only, direct boundary, and branch/transform/boundary plans and their
+domain-separated digests with Python's standard library. Run it from any
+working directory to reproduce `context.json` and the `plan`, `direct`, and
+`branch` `.canonical.json` / `.sha256` pairs; it does not call Rust or consume compiler output. Compile-fail
 Rust documentation tests establish executable-plan construction restrictions.

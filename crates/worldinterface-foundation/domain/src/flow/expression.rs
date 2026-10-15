@@ -12,6 +12,9 @@ pub fn validate_schema(schema: &Schema) -> bool {
             return false;
         }
         match s {
+            Schema::Artifact { max_bytes, .. } => {
+                depth == 0 && *max_bytes > 0 && *max_bytes <= MAX_BOUNDARY_ARTIFACT_BYTES
+            }
             Schema::String { max_bytes } => *max_bytes <= 4096,
             Schema::Array { items, max_items } => *max_items <= 32 && walk(items, depth + 1, steps),
             Schema::Object { properties } => {
@@ -39,24 +42,32 @@ pub fn validate_value(schema: &Schema, value: &Value) -> bool {
     if canonical_data(value).map_or(true, |b| b.len() > MAX_VALUE_BYTES) {
         return false;
     }
+    matches_value(schema, value)
+}
+fn matches_value(schema: &Schema, value: &Value) -> bool {
     match (schema, value) {
         (Schema::Boolean {}, Value::Bool(_)) => true,
         (Schema::Integer {}, Value::Number(v)) => v.as_i64().is_some(),
         (Schema::String { max_bytes }, Value::String(v)) => v.len() <= *max_bytes as usize,
         (Schema::Array { items, max_items }, Value::Array(v)) => {
-            v.len() <= *max_items as usize && v.iter().all(|v| validate_value(items, v))
+            v.len() <= *max_items as usize && v.iter().all(|v| matches_value(items, v))
         }
         (Schema::Object { properties }, Value::Object(v)) => {
             v.len() == properties.len()
                 && properties
                     .iter()
-                    .all(|(k, s)| v.get(k.as_str()).is_some_and(|v| validate_value(s, v)))
+                    .all(|(k, s)| v.get(k.as_str()).is_some_and(|v| matches_value(s, v)))
         }
         (Schema::Resource {}, _) => {
             serde_json::from_value::<ResourceSelector>(value.clone()).is_ok()
         }
         _ => false,
     }
+}
+fn boundary_value(schema: &Schema, value: &Value) -> bool {
+    worldinterface_protocol::canonical_collection(value)
+        .is_ok_and(|b| b.len() as u64 <= MAX_BOUNDARY_ARTIFACT_BYTES)
+        && matches_value(schema, value)
 }
 fn literal_schema(value: &Value, depth: usize) -> Result<Schema, CompileError> {
     if depth > 16 {
@@ -107,6 +118,13 @@ pub(super) fn infer(
     program: &Program,
     inputs: &BTreeMap<OpaqueRef, Schema>,
 ) -> Result<Schema, CompileError> {
+    if inputs.values().any(|s| matches!(s, Schema::Artifact { .. })) {
+        return Err(error(
+            ErrorKind::Schema,
+            None,
+            "opaque connector artifacts cannot enter pure evaluation",
+        ));
+    }
     fn expr(
         e: &Expression,
         inputs: &BTreeMap<OpaqueRef, Schema>,
@@ -229,8 +247,57 @@ pub struct Evaluation {
     pub branch_outcome: Option<OpaqueRef>,
 }
 impl ExecutionPlan {
+    /// Verify bytes against a pinned boundary input artifact's size and hash.
+    /// Closed schemas are also checked here, without expression value limits.
+    /// For Schema::Artifact the returned schema_hash still REQUIRES connector
+    /// schema validation before dispatch. This is neither admission nor authority.
+    pub fn verify_input_artifact(
+        &self,
+        node: &OpaqueRef,
+        port: &OpaqueRef,
+        bytes: &[u8],
+    ) -> Result<&Schema, CompileError> {
+        let n = self
+            .document()
+            .body
+            .nodes
+            .iter()
+            .find(|n| &n.id == node)
+            .ok_or_else(|| error(ErrorKind::Reference, Some(node), "unknown operation"))?;
+        if !matches!(n.operation, PlanOperation::Boundary { .. }) {
+            return Err(error(
+                ErrorKind::Schema,
+                Some(node),
+                "artifact verification requires boundary",
+            ));
+        }
+        let input = n
+            .inputs
+            .get(port)
+            .ok_or_else(|| error(ErrorKind::Reference, Some(node), "unknown input"))?;
+        let InputSource::Artifact { reference } = &input.source else {
+            return Err(error(ErrorKind::Reference, Some(node), "input is not a pinned artifact"));
+        };
+        if bytes.len() as u64 != reference.size || ContentHash::of(bytes) != reference.content {
+            return Err(error(
+                ErrorKind::Schema,
+                Some(node),
+                "artifact size or content hash mismatch",
+            ));
+        }
+        let schema = &self.document().schemas[&input.schema].schema;
+        if !matches!(schema, Schema::Artifact { .. }) {
+            let value = serde_json::from_slice(bytes)
+                .map_err(|_| error(ErrorKind::Schema, Some(node), "artifact is not JSON"))?;
+            if !boundary_value(schema, &value) {
+                return Err(error(ErrorKind::Schema, Some(node), "artifact schema mismatch"));
+            }
+        }
+        Ok(schema)
+    }
     /// Validate supplied values against pinned contracts. WIP-07 must also verify
     /// artifact bytes/hashes and select the actual producer from its checkpoint.
+    /// Opaque artifact contracts require connector schema validation, not Value.
     pub fn validate_inputs(
         &self,
         node: &OpaqueRef,
@@ -245,9 +312,14 @@ impl ExecutionPlan {
             .ok_or_else(|| error(ErrorKind::Reference, Some(node), "unknown operation"))?;
         if inputs.len() != n.inputs.len()
             || n.inputs.iter().any(|(p, i)| {
-                inputs
-                    .get(p)
-                    .is_none_or(|v| !validate_value(&self.document().schemas[&i.schema].schema, v))
+                inputs.get(p).is_none_or(|v| {
+                    let schema = &self.document().schemas[&i.schema].schema;
+                    if matches!(n.operation, PlanOperation::Boundary { .. }) {
+                        !boundary_value(schema, v)
+                    } else {
+                        !validate_value(schema, v)
+                    }
+                })
             })
         {
             return Err(error(ErrorKind::Schema, Some(node), "invalid materialized input"));
@@ -302,7 +374,13 @@ impl ExecutionPlan {
             let value = outputs.get(port).ok_or_else(|| {
                 error(ErrorKind::Schema, Some(node), "missing materialized output")
             })?;
-            if !validate_value(&self.document().schemas[&output.schema].schema, value) {
+            let schema = &self.document().schemas[&output.schema].schema;
+            let valid = if matches!(n.operation, PlanOperation::Boundary { .. }) {
+                boundary_value(schema, value)
+            } else {
+                validate_value(schema, value)
+            };
+            if !valid {
                 return Err(error(ErrorKind::Schema, Some(node), "output schema"));
             }
             if !output.resources.is_empty()
@@ -354,8 +432,12 @@ impl ExecutionPlan {
             None
         };
         Ok(Evaluation {
-            input_hash: ContentHash::of(&canonical_data(inputs).map_err(wire)?),
-            output_hash: ContentHash::of(&canonical_data(&value).map_err(wire)?),
+            input_hash: ContentHash::of(
+                &canonical_data(&("wi-eval-input-1", inputs)).map_err(wire)?,
+            ),
+            output_hash: ContentHash::of(
+                &canonical_data(&("wi-eval-output-1", &value)).map_err(wire)?,
+            ),
             value,
             branch_outcome,
         })

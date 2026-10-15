@@ -909,3 +909,265 @@ fn flow_exact_envelope_byte_bound_is_inclusive() {
     }
     assert!(compile_flow(&d, &c).is_err());
 }
+
+// F-001: connector references and closed JSON validation do not inherit evaluator limits.
+#[test]
+fn flow_large_boundary_artifacts_preserve_schema_integrity_and_authority_checks() {
+    let mut s = snapshot();
+    s.schemas.insert(
+        o("payload"),
+        Schema::Array { items: Box::new(Schema::String { max_bytes: 4096 }), max_items: 32 },
+    );
+    s.descriptors[0].input_schema = o("payload");
+    let c =
+        CompilationContext::new(s.descriptors, s.schemas, s.submitting_authority, s.run_authority)
+            .unwrap();
+    let value = json!(vec!["x".repeat(4096); 32]);
+    let bytes = serde_json::to_vec(&value).unwrap();
+    assert!(bytes.len() > 65536);
+    let mut s = submission();
+    s.input.artifact.size = bytes.len() as u64;
+    s.input.artifact.content = ContentHash::of(&bytes);
+    let selection = DirectOperationSelection { connector: o("fixture"), operation: o("write") };
+    let p = compile_direct(&s, &selection, &c).unwrap();
+    assert_eq!(p.document().body.nodes.len(), 1);
+    assert!(p.canonical_bytes().len() < MAX_VALUE_BYTES);
+    p.verify_input_artifact(&o("direct"), &o("input"), &bytes).unwrap();
+    p.validate_inputs(&o("direct"), &BTreeMap::from([(o("input"), value.clone())])).unwrap();
+    assert!(!validate_value(&p.document().schemas[&o("payload")].schema, &value));
+    let mut pure = transform("pure");
+    pure.inputs.insert(
+        o("x"),
+        PlanInput {
+            schema: o("payload"),
+            source: InputSource::Artifact { reference: s.input.artifact.clone() },
+        },
+    );
+    assert_eq!(
+        compile_flow(&definition(vec![pure.clone()]), &c).unwrap_err().kind,
+        ErrorKind::Bound
+    );
+    if let InputSource::Artifact { reference } = &mut pure.inputs.get_mut(&o("x")).unwrap().source {
+        reference.size = 4;
+    }
+    let pure = compile_flow(&definition(vec![pure]), &c).unwrap();
+    assert!(pure.evaluate(&o("pure"), &BTreeMap::from([(o("x"), value)])).is_err());
+    assert!(p.verify_input_artifact(&o("direct"), &o("input"), &bytes[..bytes.len() - 1]).is_err());
+    let mut corrupt = bytes.clone();
+    corrupt[2] = b'y';
+    assert!(p.verify_input_artifact(&o("direct"), &o("input"), &corrupt).is_err());
+    let wrong = b"true";
+    s.input.artifact.size = wrong.len() as u64;
+    s.input.artifact.content = ContentHash::of(wrong);
+    let p = compile_direct(&s, &selection, &c).unwrap();
+    assert!(p.verify_input_artifact(&o("direct"), &o("input"), wrong).is_err());
+    s.resource = resource("forbidden");
+    assert_eq!(compile_direct(&s, &selection, &c).unwrap_err().kind, ErrorKind::Authority);
+}
+
+// F-001: non-JSON connector contracts remain references and cannot enter expressions.
+#[test]
+fn flow_opaque_connector_artifacts_are_pinned_bounded_and_never_evaluated() {
+    let mut s = snapshot();
+    let contract = Schema::Artifact {
+        schema_hash: ContentHash::of(b"binary-contract-1"),
+        max_bytes: MAX_BOUNDARY_ARTIFACT_BYTES,
+    };
+    s.schemas.insert(o("binary"), contract.clone());
+    s.descriptors[0].input_schema = o("binary");
+    s.descriptors[0].output_schema = o("binary");
+    let c = CompilationContext::new(
+        s.descriptors.clone(),
+        s.schemas.clone(),
+        s.submitting_authority.clone(),
+        s.run_authority.clone(),
+    )
+    .unwrap();
+    let bytes = vec![0xff; 20_000];
+    let mut submission = submission();
+    submission.input.artifact.size = bytes.len() as u64;
+    submission.input.artifact.content = ContentHash::of(&bytes);
+    let selection = DirectOperationSelection { connector: o("fixture"), operation: o("write") };
+    let p = compile_direct(&submission, &selection, &c).unwrap();
+    // Returning the contract requires the caller to validate it at the connector.
+    assert_eq!(p.verify_input_artifact(&o("direct"), &o("input"), &bytes).unwrap(), &contract);
+    assert!(p
+        .validate_inputs(&o("direct"), &BTreeMap::from([(o("input"), json!(bytes))]))
+        .is_err());
+    let mut n = transform("t");
+    n.inputs.insert(
+        o("x"),
+        PlanInput {
+            schema: o("binary"),
+            source: InputSource::Artifact { reference: submission.input.artifact.clone() },
+        },
+    );
+    assert_eq!(compile_flow(&definition(vec![n.clone()]), &c).unwrap_err().kind, ErrorKind::Bound);
+    if let InputSource::Artifact { reference } = &mut n.inputs.get_mut(&o("x")).unwrap().source {
+        reference.size = 4;
+    }
+    assert_eq!(compile_flow(&definition(vec![n]), &c).unwrap_err().kind, ErrorKind::Schema);
+    submission.input.artifact.size = MAX_BOUNDARY_ARTIFACT_BYTES;
+    compile_direct(&submission, &selection, &c).unwrap();
+    submission.input.artifact.size += 1;
+    assert_eq!(compile_direct(&submission, &selection, &c).unwrap_err().kind, ErrorKind::Bound);
+    s.schemas.insert(
+        o("binary"),
+        Schema::Artifact { schema_hash: ContentHash::of(b"binary-contract-1"), max_bytes: 19_999 },
+    );
+    let smaller =
+        CompilationContext::new(s.descriptors, s.schemas, s.submitting_authority, s.run_authority)
+            .unwrap();
+    submission.input.artifact.size = 20_000;
+    assert_eq!(
+        compile_direct(&submission, &selection, &smaller).unwrap_err().kind,
+        ErrorKind::Bound
+    );
+    assert!(restore_plan(p.canonical_bytes(), p.hash(), &smaller).is_err());
+    for invalid in [
+        Schema::Artifact { schema_hash: ContentHash::of(b"contract"), max_bytes: 0 },
+        Schema::Artifact {
+            schema_hash: ContentHash::of(b"contract"),
+            max_bytes: MAX_BOUNDARY_ARTIFACT_BYTES + 1,
+        },
+        Schema::Array { items: Box::new(contract), max_items: 1 },
+    ] {
+        let mut s = snapshot();
+        s.schemas.insert(o("invalid"), invalid);
+        assert!(CompilationContext::new(
+            s.descriptors,
+            s.schemas,
+            s.submitting_authority,
+            s.run_authority
+        )
+        .is_err());
+    }
+}
+
+// F-002: contradictory and missing guards on plain dependencies must reject.
+#[test]
+fn flow_dependency_guards_reject_dead_nodes_and_unguarded_consumers() {
+    let mut m = transform("m");
+    m.dependencies = vec![o("br")];
+    m.guards.insert(o("br"), o("no"));
+    let mut n = transform("n");
+    n.dependencies = vec![o("m")];
+    n.guards.insert(o("br"), o("yes"));
+    rejects(&definition(vec![branch("br"), m.clone(), n.clone()]), ErrorKind::Unreachable);
+    n.guards.clear();
+    let mut consumer = transform("consumer");
+    consumer.dependencies = vec![o("n")];
+    consumer.inputs.insert(
+        o("x"),
+        PlanInput {
+            schema: o("bool"),
+            source: InputSource::Output { source: output_ref("n", "value") },
+        },
+    );
+    rejects(&definition(vec![branch("br"), m.clone(), n.clone(), consumer]), ErrorKind::Reference);
+    n.guards = m.guards.clone();
+    compile_flow(&definition(vec![branch("br"), m, n]), &context()).unwrap();
+}
+
+// F-002: ordering cannot be inferred through nodes skipped on another branch.
+#[test]
+fn flow_dependency_guards_preserve_wait_ordering_and_explicit_value_joins() {
+    let mut wait = signal("wait");
+    wait.dependencies = vec![o("br")];
+    wait.guards.insert(o("br"), o("yes"));
+    let mut middle = transform("middle");
+    middle.dependencies = vec![o("wait")];
+    middle.guards.insert(o("br"), o("no"));
+    let mut after = timer("after");
+    after.dependencies = vec![o("middle")];
+    after.guards = middle.guards.clone();
+    rejects(
+        &definition(vec![branch("br"), wait.clone(), middle.clone(), after.clone()]),
+        ErrorKind::Unreachable,
+    );
+    middle.guards = wait.guards.clone();
+    after.guards.clear();
+    rejects(
+        &definition(vec![branch("br"), wait.clone(), middle.clone(), after.clone()]),
+        ErrorKind::Reference,
+    );
+    after.guards = wait.guards.clone();
+    compile_flow(&definition(vec![branch("br"), wait, middle, after]), &context()).unwrap();
+    let mut a = transform("a");
+    a.dependencies = vec![o("br")];
+    a.guards.insert(o("br"), o("yes"));
+    let mut b = transform("b");
+    b.dependencies = vec![o("br")];
+    b.guards.insert(o("br"), o("no"));
+    let mut join = transform("join");
+    join.dependencies = vec![o("a"), o("b")];
+    join.inputs.insert(
+        o("x"),
+        PlanInput {
+            schema: o("bool"),
+            source: InputSource::Exclusive {
+                branch: o("br"),
+                when_true: output_ref("a", "value"),
+                when_false: output_ref("b", "value"),
+            },
+        },
+    );
+    join.operation = PlanOperation::Transform {
+        program: Program::closed(Expression::Input { port: o("x") }).unwrap(),
+    };
+    compile_flow(&definition(vec![branch("br"), a, b, join]), &context()).unwrap();
+}
+
+// F-004: trace hashes have distinct, exact wi-json-1 domains.
+#[test]
+fn flow_evaluation_hashes_use_distinct_input_and_output_domains() {
+    let mut n = transform("t");
+    n.inputs.insert(o("x"), literal("bool", json!(true)));
+    let p = compile_flow(&definition(vec![n]), &context()).unwrap();
+    let inputs = BTreeMap::from([(o("x"), json!(true))]);
+    let evaluation = p.evaluate(&o("t"), &inputs).unwrap();
+    assert_eq!(evaluation.input_hash, ContentHash::of(br#"["wi-eval-input-1",{"x":true}]"#));
+    assert_eq!(evaluation.output_hash, ContentHash::of(br#"["wi-eval-output-1",true]"#));
+    assert_ne!(evaluation.input_hash, ContentHash::of(&canonical_data(&inputs).unwrap()));
+    assert_ne!(evaluation.output_hash, ContentHash::of(b"true"));
+    assert_ne!(evaluation.output_hash, ContentHash::of(br#"["wi-eval-input-1",true]"#));
+}
+
+// F-003: these bytes and hashes are constructed by stdlib-only Python, not Rust.
+#[test]
+fn flow_independent_direct_and_branch_boundary_vectors() {
+    fn assert_vector(p: &ExecutionPlan, bytes: &[u8], hash: &str) {
+        let hash: ContentHash = hash.trim().to_string().try_into().unwrap();
+        assert_eq!(p.canonical_bytes(), bytes);
+        assert_eq!(p.hash(), &hash);
+        let restored = restore_plan(bytes, &hash, &context()).unwrap();
+        assert_eq!(restored.canonical_bytes(), bytes);
+    }
+    let mut submission = submission();
+    submission.deadline = Some("2030-01-01T00:00:00.000000000Z".to_string().try_into().unwrap());
+    submission.expected_outcome = Some(o("written"));
+    let direct = compile_direct(
+        &submission,
+        &DirectOperationSelection { connector: o("fixture"), operation: o("write") },
+        &context(),
+    )
+    .unwrap();
+    assert_vector(
+        &direct,
+        include_bytes!("../../../../conformance/wi-fabric-2/flow/direct.canonical.json"),
+        include_str!("../../../../conformance/wi-fabric-2/flow/direct.sha256"),
+    );
+    let mut d = exclusive_resources();
+    d.id = o("golden-branch");
+    d.body.causal_metadata.insert(o("cause"), o("golden-cause"));
+    if let PlanOperation::Boundary { policy, .. } = &mut d.body.nodes[3].operation {
+        policy.deadline = submission.deadline;
+        policy.expected_outcome = submission.expected_outcome;
+    }
+    let flow = compile_flow(&d, &context()).unwrap();
+    assert_vector(
+        &flow,
+        include_bytes!("../../../../conformance/wi-fabric-2/flow/branch.canonical.json"),
+        include_str!("../../../../conformance/wi-fabric-2/flow/branch.sha256"),
+    );
+}

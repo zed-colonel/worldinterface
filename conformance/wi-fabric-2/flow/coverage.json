@@ -17,6 +17,11 @@
         "manifest": "crates/worldinterface-foundation/Cargo.toml",
         "package": "worldinterface-domain",
         "test": "flow_rejects_unreachable_nodes"
+      },
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-domain",
+        "test": "flow_dependency_guards_reject_dead_nodes_and_unguarded_consumers"
       }
     ],
     "graph-identities": [
@@ -73,6 +78,11 @@
         "manifest": "crates/worldinterface-foundation/Cargo.toml",
         "package": "worldinterface-domain",
         "test": "flow_sequential_and_exclusive_waits_pass_repeat_progress_is_required"
+      },
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-domain",
+        "test": "flow_dependency_guards_preserve_wait_ordering_and_explicit_value_joins"
       }
     ],
     "direct-equivalence": [
@@ -87,6 +97,11 @@
         "manifest": "crates/worldinterface-foundation/Cargo.toml",
         "package": "worldinterface-domain",
         "test": "flow_independent_canonical_vector_and_plan_digest"
+      },
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-domain",
+        "test": "flow_independent_direct_and_branch_boundary_vectors"
       }
     ],
     "hash-normalization": [
@@ -122,6 +137,11 @@
         "manifest": "crates/worldinterface-foundation/Cargo.toml",
         "package": "worldinterface-domain",
         "test": "flow_pure_transform_and_branch_replay_have_identical_hashes"
+      },
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-domain",
+        "test": "flow_evaluation_hashes_use_distinct_input_and_output_domains"
       }
     ],
     "branch-resource-scope": [
@@ -182,6 +202,16 @@
         "manifest": "crates/worldinterface-foundation/Cargo.toml",
         "package": "worldinterface-domain",
         "test": "flow_expression_projection_equality_and_boolean_composition_are_closed"
+      },
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-domain",
+        "test": "flow_large_boundary_artifacts_preserve_schema_integrity_and_authority_checks"
+      },
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-domain",
+        "test": "flow_opaque_connector_artifacts_are_pinned_bounded_and_never_evaluated"
       }
     ],
     "execution-field-tampering": [

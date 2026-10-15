@@ -28,8 +28,9 @@ Implementation choices resolve the accepted design's bounded initial profile:
   require an explicit exhaustive selection at joins. Resource transforms support
   only provable literals/input passthrough. These choices close ambiguity without
   claiming general-purpose program analysis.
-- Schemas use a closed, versioned structural subset rather than arbitrary JSON
-  Schema. Unknown constructs/coercions reject. Artifact bytes are never fetched;
+- Expression schemas use a closed, versioned structural subset. Connector ports
+  can pin an external artifact schema hash and byte limit for non-JSON payloads.
+  Unknown expression constructs/coercions reject. Artifact bytes are never fetched;
   resource artifacts and direct resource-producing outputs require explicit Flow
   declarations instead. Materialized value checks are exposed for WIP-07.
 - Full direct submissions are retained separately from plan identity. WIP-07 must
@@ -70,3 +71,19 @@ this run's `scratch/verification`; no test output is a source artifact. WIP-07
 must persist and verify bytes/hash before execution, use the exact existing
 resource-resolution/authorization path immediately before each dispatch, and
 record pure evaluation hashes/outcomes separately from boundary receipts.
+
+
+Review remediation (F-001–F-004): boundary artifact references use the 16 MiB local
+publication ceiling or their tighter pinned connector contract, independently of
+pure evaluation's 16 KiB limit. Closed boundary JSON and opaque external schema
+contracts are supported; opaque contracts still require connector validation at
+dispatch, plus scope/integrity and exact authorization in WIP-07. Dependencies
+must preserve guards, with an explicit exhaustive-selection exception for joins;
+skips settle only after dependencies settle. Independent vectors now include
+Direct and guarded resource-producing Flow boundary plans. Evaluation trace
+hashes have separate input/output domain tags. Regression tests and exact scope
+coverage references accompany all four findings; the case registry is unchanged.
+The added artifact schema variant and byte-verification method extend the existing
+pure protocol/domain inventory items, retained under their current dispositions;
+no inventoried identity, registration site or ownership changes. Source hashes are
+refreshed after reviewing these changes.
