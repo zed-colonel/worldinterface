@@ -156,3 +156,11 @@ review decisions and retained work in the item note. Structural inventory change
 need explicit review. Approval records and closure drafts become effective only
 through their authorized reviewed merge. Security review obligations and deferred
 full-parent work remain as specified by the imported plan.
+
+WIP-06 implements the pure WI-07 domain compiler, sealed versioned ExecutionPlan,
+canonical identity/recovery, immutable definition versions, finite paired authority
+analysis and bounded deterministic expressions/wait declarations. Exact executable
+domain coverage and independent vectors are in `conformance/wi-fabric-2/flow`;
+[WIP-06](WIP-06.md) records the profile and WIP-07/08 handoff. No acceptance-case
+ownership or runtime gate state changes. Independent review, committed-head
+adopted checks and CraftingTable integration remain required.

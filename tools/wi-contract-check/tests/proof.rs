@@ -422,3 +422,48 @@ fn wi06_core_requires_exact_nonignored_tests_and_retains_deferred_parent() {
     }
     assert_ne!(gates.iter().find(|g| g.id == "WI-AQ-G4").unwrap().status, "closed");
 }
+
+#[test]
+fn wi07_domain_requires_complete_exact_executable_tests_and_no_runtime_claim() {
+    let path = "conformance/wi-fabric-2/flow/coverage.json";
+    let coverage = read(&root().join(path)).unwrap();
+    let obligations: std::collections::BTreeMap<String, Vec<TestRef>> =
+        serde_json::from_value(coverage["required_obligations"].clone()).unwrap();
+    let index: TestIndex = obligations.values().flatten().cloned().map(|t| (t, 1)).collect();
+    assert!(proof::validate_flow(&root(), &index).unwrap().is_empty());
+    let chosen = obligations["cycles"][0].clone();
+    for count in [0, 2] {
+        let mut index = index.clone();
+        index.insert(chosen.clone(), count);
+        assert!(!proof::validate_flow(&root(), &index).unwrap().is_empty());
+    }
+    let mut absent = index.clone();
+    absent.remove(&chosen);
+    assert!(!proof::validate_flow(&root(), &absent).unwrap().is_empty());
+    let t = fixture();
+    for mutation in 0..6 {
+        let mut changed = coverage.clone();
+        match mutation {
+            0 => {
+                changed["required_obligations"].as_object_mut().unwrap().remove("cycles");
+            }
+            1 => changed["runtime_conformance"] = json!(true),
+            2 => changed["assigned_cases"] = json!({"AB-WI-005":[]}),
+            3 => changed["required_obligations"]["cycles"] = json!([]),
+            4 => {
+                changed["required_obligations"]["cycles"][0]["manifest"] =
+                    json!("crates/worldinterface-runtime/Cargo.toml")
+            }
+            _ => changed["required_obligations"]["cycles"] = json!([chosen, chosen]),
+        }
+        fs::write(t.path().join(path), serde_json::to_vec(&changed).unwrap()).unwrap();
+        assert!(!proof::validate_flow(t.path(), &index).unwrap().is_empty());
+    }
+    let (registry, _, _) = records();
+    assert_eq!(registry.cases.len(), 55);
+    for id in ["AB-WI-005", "AB-WI-010", "AB-WI-013"] {
+        let case = registry.cases.iter().find(|c| c.id == id).unwrap();
+        assert_ne!(case.status, "implemented");
+        assert_eq!(case.owning_item, "WIP-07");
+    }
+}

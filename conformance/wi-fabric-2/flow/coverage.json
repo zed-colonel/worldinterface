@@ -1,0 +1,232 @@
+{
+  "version": 1,
+  "scope": "wi/WI-07/domain",
+  "upstream_conformance": false,
+  "runtime_conformance": false,
+  "assigned_cases": {},
+  "required_obligations": {
+    "cycles": [
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-domain",
+        "test": "flow_rejects_cycles"
+      }
+    ],
+    "unreachable": [
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-domain",
+        "test": "flow_rejects_unreachable_nodes"
+      },
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-domain",
+        "test": "flow_dependency_guards_reject_dead_nodes_and_unguarded_consumers"
+      }
+    ],
+    "graph-identities": [
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-domain",
+        "test": "flow_rejects_duplicate_ids_and_missing_references"
+      }
+    ],
+    "schema-compatibility": [
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-domain",
+        "test": "flow_rejects_schema_mismatch_and_unavailable_outputs"
+      }
+    ],
+    "closed-purity": [
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-domain",
+        "test": "flow_rejects_hidden_io_and_unpinned_programs"
+      }
+    ],
+    "authority-ceilings": [
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-domain",
+        "test": "flow_rejects_authority_enlargement"
+      }
+    ],
+    "ambiguous-resources": [
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-domain",
+        "test": "flow_rejects_ambiguous_resource_production"
+      }
+    ],
+    "bounded-fan-out": [
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-domain",
+        "test": "flow_rejects_unbounded_fan_out"
+      }
+    ],
+    "wait-rejection": [
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-domain",
+        "test": "flow_rejects_invalid_waits"
+      }
+    ],
+    "wait-sequencing": [
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-domain",
+        "test": "flow_sequential_and_exclusive_waits_pass_repeat_progress_is_required"
+      },
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-domain",
+        "test": "flow_dependency_guards_preserve_wait_ordering_and_explicit_value_joins"
+      }
+    ],
+    "direct-equivalence": [
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-domain",
+        "test": "flow_direct_is_one_operation_and_preserves_admission_separately"
+      }
+    ],
+    "canonical-vector": [
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-domain",
+        "test": "flow_independent_canonical_vector_and_plan_digest"
+      },
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-domain",
+        "test": "flow_independent_direct_and_branch_boundary_vectors"
+      }
+    ],
+    "hash-normalization": [
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-domain",
+        "test": "flow_hash_stable_under_set_order_and_changes_with_semantics"
+      }
+    ],
+    "strict-recovery": [
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-domain",
+        "test": "flow_recovery_rejects_versions_duplicate_unknown_noncanonical_and_oversize"
+      }
+    ],
+    "snapshot-drift": [
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-domain",
+        "test": "flow_registry_descriptor_and_schema_drift_reject"
+      }
+    ],
+    "paired-authority": [
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-domain",
+        "test": "flow_paired_authority_never_forms_a_cross_product"
+      }
+    ],
+    "deterministic-replay": [
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-domain",
+        "test": "flow_pure_transform_and_branch_replay_have_identical_hashes"
+      },
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-domain",
+        "test": "flow_evaluation_hashes_use_distinct_input_and_output_domains"
+      }
+    ],
+    "branch-resource-scope": [
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-domain",
+        "test": "flow_branch_resources_are_explicit_exclusive_and_authority_bounded"
+      }
+    ],
+    "branch-value-availability": [
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-domain",
+        "test": "flow_branch_value_join_requires_exhaustive_selection"
+      }
+    ],
+    "profile-bounds": [
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-domain",
+        "test": "flow_bounds_allow_64_operations_and_reject_immediately_excessive_limits"
+      },
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-domain",
+        "test": "flow_expression_depth_steps_and_schema_limits_are_enforced"
+      },
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-domain",
+        "test": "flow_exact_envelope_byte_bound_is_inclusive"
+      }
+    ],
+    "immutable-revision": [
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-domain",
+        "test": "flow_revision_preserves_original_and_changes_definition_and_plan_identity"
+      },
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-domain",
+        "test": "flow_validated_version_revision_keeps_the_activated_value_immutable"
+      }
+    ],
+    "artifact-and-schema-profile": [
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-domain",
+        "test": "flow_artifact_references_are_not_materialized_or_coerced"
+      },
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-domain",
+        "test": "flow_materialized_contracts_preserve_literals_and_resource_possibilities"
+      },
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-domain",
+        "test": "flow_expression_projection_equality_and_boolean_composition_are_closed"
+      },
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-domain",
+        "test": "flow_large_boundary_artifacts_preserve_schema_integrity_and_authority_checks"
+      },
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-domain",
+        "test": "flow_opaque_connector_artifacts_are_pinned_bounded_and_never_evaluated"
+      }
+    ],
+    "execution-field-tampering": [
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-domain",
+        "test": "flow_every_execution_field_is_hashed_and_recovery_revalidates"
+      }
+    ],
+    "registry-compatibility": [
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-capability",
+        "test": "flow_shared_registry_validation_preserves_wip05_bytes_and_bindings"
+      }
+    ]
+  }
+}

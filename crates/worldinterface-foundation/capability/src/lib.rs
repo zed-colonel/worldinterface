@@ -45,33 +45,7 @@ impl ResourceScope {
 pub use worldinterface_protocol::{ConnectorBinding, ConnectorDescriptor, IdempotencyClass};
 /// Validate declarations before accepting an executable implementation.
 pub fn validate_connector(d: &ConnectorDescriptor) -> Result<(), String> {
-    if d.version != 1
-        || d.secret_refs.len() > 32
-        || d.max_evidence_bytes == 0
-        || d.max_evidence_bytes > 1024 * 1024
-        || d.reconciliation.max_observations == 0
-        || d.reconciliation.max_observations > 32
-        || d.reconciliation.timeout_millis == 0
-        || d.reconciliation.timeout_millis > 86_400_000
-        || d.reconciliation.backoff_millis == 0
-        || d.reconciliation.backoff_millis > d.reconciliation.timeout_millis
-    {
-        return Err("unsupported or unbounded connector declaration".into());
-    }
-    if (d.effect_class != EffectClass::Read
-        && matches!(d.idempotency, IdempotencyClass::ReadOnly | IdempotencyClass::Unknown))
-        || (d.idempotency == IdempotencyClass::ExternallyKeyed && d.provider_key.is_none())
-        || (d.provider_key.is_some() && d.idempotency != IdempotencyClass::ExternallyKeyed)
-        || d.provider_key.as_ref().is_some_and(|k| k.version != 1)
-        || d.reconciliation.automatic && !d.observes_commit
-    {
-        return Err("contradictory connector declaration".into());
-    }
-    let mut refs = std::collections::BTreeSet::new();
-    if d.secret_refs.iter().any(|r| !refs.insert(r)) {
-        return Err("duplicate secret reference".into());
-    }
-    Ok(())
+    worldinterface_protocol::validate_connector_descriptor(d)
 }
 /// Canonical immutable snapshot. No mutable replacement or fallback selection.
 #[derive(Clone, Debug)]
@@ -81,23 +55,7 @@ pub struct ConnectorRegistry {
 }
 impl ConnectorRegistry {
     pub fn new(mut descriptors: Vec<ConnectorDescriptor>) -> Result<Self, String> {
-        if descriptors.is_empty() || descriptors.len() > 32 {
-            return Err("registry bound".into());
-        }
-        for d in &descriptors {
-            validate_connector(d)?;
-        }
-        descriptors.sort_by(|a, b| (&a.connector, &a.operation).cmp(&(&b.connector, &b.operation)));
-        if descriptors
-            .windows(2)
-            .any(|w| w[0].connector == w[1].connector && w[0].operation == w[1].operation)
-        {
-            return Err("duplicate connector operation".into());
-        }
-        let digest = ContentHash::of(&worldinterface_protocol::canonical_data(&(
-            "wi-connector-registry:1",
-            &descriptors,
-        ))?);
+        let digest = worldinterface_protocol::validate_registry_snapshot(&mut descriptors)?;
         Ok(Self { descriptors, digest })
     }
     pub fn digest(&self) -> &ContentHash {
