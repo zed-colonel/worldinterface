@@ -841,6 +841,7 @@ dependencies = [
  "tempfile",
  "tokio",
  "uuid",
+ "worldinterface-capability",
  "worldinterface-domain",
  "worldinterface-egress",
  "worldinterface-ingress",

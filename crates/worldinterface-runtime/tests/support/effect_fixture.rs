@@ -1,3 +1,8 @@
+use worldinterface_runtime::connector::{
+    Connector as EffectExecutionPort, PreparedInvocation as BoundExecution,
+};
+#[path = "spi_fixture.rs"]
+pub(crate) mod spi_fixture;
 use actionqueue_core::{
     bounded::OpaqueRef as AqRef,
     causal::ControlMutationContext,
@@ -19,9 +24,7 @@ use worldinterface_runtime::{
     admission,
     aq_adapter::QueueEngine,
     authority::{EvidenceAuthority, TrustedClock},
-    completion::{
-        BoundExecution, EffectAttemptHandler, EffectExecutionPort, EvidenceBytes, PortObservation,
-    },
+    completion::{EffectAttemptHandler, EvidenceBytes, PortObservation},
     run_discovery,
     storage::StoreBundle,
     Result,
@@ -37,7 +40,7 @@ pub(crate) fn fixture() -> (EffectSubmission, AuthorizationSnapshot) {
     .unwrap();
     (
         serde_json::from_value(data["submission"].clone()).unwrap(),
-        serde_json::from_value(data["snapshot"].clone()).unwrap(),
+        spi_fixture::pin(serde_json::from_value(data["snapshot"].clone()).unwrap()),
     )
 }
 pub(crate) fn caller(snapshot: &AuthorizationSnapshot) -> AuthenticatedCaller {
@@ -130,6 +133,34 @@ impl EvidenceAuthority for Evidence {
 }
 struct FixturePort(Vec<(OpaqueRef, Vec<u8>)>);
 impl EffectExecutionPort for FixturePort {
+    fn descriptor(&self) -> &worldinterface_protocol::ConnectorDescriptor {
+        spi_fixture::descriptor()
+    }
+    fn resolve(
+        &self,
+        r: worldinterface_runtime::connector::ResolveRequest,
+    ) -> Result<worldinterface_runtime::connector::ResolveObservation> {
+        Ok(worldinterface_runtime::connector::ResolveObservation { resource: r.resource })
+    }
+    fn prepare(
+        &self,
+        _: &worldinterface_runtime::connector::AuthorizedInvocation,
+    ) -> worldinterface_runtime::connector::PrepareOutcome {
+        worldinterface_runtime::connector::PrepareOutcome::Ready
+    }
+    fn reconcile(
+        &self,
+        _: worldinterface_runtime::connector::ReconcileRequest,
+    ) -> Result<worldinterface_runtime::connector::ReconcileOutcome> {
+        Ok(worldinterface_runtime::connector::ReconcileOutcome::Unknown(vec![]))
+    }
+    fn cancel(
+        &self,
+        _: worldinterface_runtime::connector::ReconcileRequest,
+    ) -> Result<worldinterface_runtime::connector::CancelObservation> {
+        Ok(worldinterface_runtime::connector::CancelObservation::Unsupported)
+    }
+
     fn invoke(&self, bound: BoundExecution, _: &CancellationToken) -> Result<PortObservation> {
         assert_eq!(bound.intent, bound.resolved.intent_id);
         Ok(PortObservation {

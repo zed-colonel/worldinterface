@@ -571,6 +571,11 @@ impl From<Timestamp> for String {
 }
 
 impl Timestamp {
+    pub fn from_epoch_millis(millis: u64) -> Result<Self> {
+        let millis = i64::try_from(millis).map_err(|_| "timestamp overflow")?;
+        let time = chrono::DateTime::from_timestamp_millis(millis).ok_or("timestamp overflow")?;
+        time.format("%Y-%m-%dT%H:%M:%S%.9fZ").to_string().try_into()
+    }
     pub fn epoch_millis(&self) -> Result<u64> {
         let time =
             chrono::DateTime::parse_from_rfc3339(self.as_str()).map_err(|e| e.to_string())?;

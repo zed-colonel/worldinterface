@@ -694,6 +694,8 @@ fn start(
         )
         .unwrap();
     let o = OutcomeEvidence {
+        classification: None,
+        reconciliation_admission: None,
         intent: id.clone(),
         attempt,
         connector_semantics: p.registry.entries[0].semantics.clone(),
@@ -717,6 +719,8 @@ fn outcome(
     }
     let state = r.effect_snapshot(caller(p).tenant())?;
     let execution = ExecutionRecord {
+        classification: None,
+        connector_execution: None,
         intent_id: id.clone(),
         attempt: o.attempt.clone(),
         outcome: o.outcome.clone(),
@@ -829,6 +833,8 @@ fn receipt_outcome_and_outbox_commit_after_scoped_publication() {
         .unwrap()
     };
     let execution = ExecutionRecord {
+        classification: None,
+        connector_execution: None,
         intent_id: id.clone(),
         attempt: o.attempt.clone(),
         outcome: o.outcome.clone(),
@@ -982,6 +988,8 @@ fn receipt_command(
 
 fn execution_for(o: &OutcomeEvidence, evidence: Vec<EvidenceRef>) -> ExecutionRecord {
     ExecutionRecord {
+        classification: None,
+        connector_execution: None,
         intent_id: o.intent.clone(),
         attempt: o.attempt.clone(),
         outcome: o.outcome.clone(),

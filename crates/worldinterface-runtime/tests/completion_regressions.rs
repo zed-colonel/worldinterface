@@ -1,3 +1,7 @@
+use support::effect_fixture::spi_fixture;
+use worldinterface_runtime::connector::{
+    Connector as EffectExecutionPort, PreparedInvocation as BoundExecution,
+};
 mod support {
     pub mod effect_fixture;
 }
@@ -16,7 +20,7 @@ use std::sync::{
 use support::effect_fixture::*;
 use worldinterface_domain::{
     authorization::AuthorizationSnapshot,
-    effect::{CommitObservation, EffectAction, ReconciliationEvidence, VerifiedReconciliation},
+    effect::{CommitObservation, EffectAction},
     receipt::{DisclosureProfile, ReceiptAccess},
     Phase,
 };
@@ -26,9 +30,7 @@ use worldinterface_runtime::{
     admission,
     aq_adapter::QueueEngine,
     authority::{EvidenceAuthority, TrustedClock},
-    completion::{
-        BoundExecution, EffectAttemptHandler, EffectExecutionPort, EvidenceBytes, PortObservation,
-    },
+    completion::{EffectAttemptHandler, EvidenceBytes, PortObservation},
     run_discovery,
     storage::StoreBundle,
     Result,
@@ -95,7 +97,7 @@ struct InterleavingClock<F>(AtomicUsize, usize, F);
 impl<F: Fn(usize)> TrustedClock for InterleavingClock<F> {
     fn now(&self) -> Result<Timestamp> {
         let tick = self.0.fetch_add(1, Ordering::SeqCst);
-        if tick > 0 && tick <= self.1 {
+        if tick > 1 && tick <= self.1 + 1 {
             (self.2)(tick);
         }
         Ok(second(2 + 2 * tick as u32))
@@ -103,6 +105,34 @@ impl<F: Fn(usize)> TrustedClock for InterleavingClock<F> {
 }
 struct InterleavingPort<F>(Port, F);
 impl<F: Fn() + Send + Sync> EffectExecutionPort for InterleavingPort<F> {
+    fn descriptor(&self) -> &worldinterface_protocol::ConnectorDescriptor {
+        spi_fixture::descriptor()
+    }
+    fn resolve(
+        &self,
+        r: worldinterface_runtime::connector::ResolveRequest,
+    ) -> Result<worldinterface_runtime::connector::ResolveObservation> {
+        Ok(worldinterface_runtime::connector::ResolveObservation { resource: r.resource })
+    }
+    fn prepare(
+        &self,
+        _: &worldinterface_runtime::connector::AuthorizedInvocation,
+    ) -> worldinterface_runtime::connector::PrepareOutcome {
+        worldinterface_runtime::connector::PrepareOutcome::Ready
+    }
+    fn reconcile(
+        &self,
+        _: worldinterface_runtime::connector::ReconcileRequest,
+    ) -> Result<worldinterface_runtime::connector::ReconcileOutcome> {
+        Ok(worldinterface_runtime::connector::ReconcileOutcome::Unknown(vec![]))
+    }
+    fn cancel(
+        &self,
+        _: worldinterface_runtime::connector::ReconcileRequest,
+    ) -> Result<worldinterface_runtime::connector::CancelObservation> {
+        Ok(worldinterface_runtime::connector::CancelObservation::Unsupported)
+    }
+
     fn invoke(
         &self,
         request: BoundExecution,
@@ -118,6 +148,34 @@ struct Port {
     variant: &'static str,
 }
 impl EffectExecutionPort for Port {
+    fn descriptor(&self) -> &worldinterface_protocol::ConnectorDescriptor {
+        spi_fixture::descriptor()
+    }
+    fn resolve(
+        &self,
+        r: worldinterface_runtime::connector::ResolveRequest,
+    ) -> Result<worldinterface_runtime::connector::ResolveObservation> {
+        Ok(worldinterface_runtime::connector::ResolveObservation { resource: r.resource })
+    }
+    fn prepare(
+        &self,
+        _: &worldinterface_runtime::connector::AuthorizedInvocation,
+    ) -> worldinterface_runtime::connector::PrepareOutcome {
+        worldinterface_runtime::connector::PrepareOutcome::Ready
+    }
+    fn reconcile(
+        &self,
+        _: worldinterface_runtime::connector::ReconcileRequest,
+    ) -> Result<worldinterface_runtime::connector::ReconcileOutcome> {
+        Ok(worldinterface_runtime::connector::ReconcileOutcome::Unknown(vec![]))
+    }
+    fn cancel(
+        &self,
+        _: worldinterface_runtime::connector::ReconcileRequest,
+    ) -> Result<worldinterface_runtime::connector::CancelObservation> {
+        Ok(worldinterface_runtime::connector::CancelObservation::Unsupported)
+    }
+
     fn invoke(&self, _: BoundExecution, _: &CancellationToken) -> Result<PortObservation> {
         self.calls.fetch_add(1, Ordering::SeqCst);
         let mut o = PortObservation {
@@ -288,7 +346,7 @@ fn invalid_port_observations_commit_inline_uncertainty_without_reinvocation() {
         let state = case.bundle.wi().effect_snapshot(caller(&case.snapshot).tenant()).unwrap();
         assert_eq!(state.effects[&case.id].phase, Phase::Uncertain, "{variant}");
         let receipt = case.receipt();
-        assert!(receipt.temporal.committed_at.is_none());
+        assert_eq!(receipt.temporal.committed_at.is_some(), variant != "contradictory");
         assert!(receipt
             .evidence
             .iter()
@@ -780,7 +838,7 @@ fn contended_completion_preserves_provider_outcome_and_published_artifacts() {
             assert_eq!(body.output_refs.len(), 1);
             assert_eq!(case.bundle.wi().read_artifact(&body.output_refs[0]).unwrap(), b"output");
         }
-        assert_eq!(receipt.temporal.observed_at.as_ref().unwrap().at, second(4));
+        assert_eq!(receipt.temporal.observed_at.as_ref().unwrap().at, second(6));
         assert!(receipt.temporal.reconciled_at.is_none());
         assert!(!receipt.evidence.iter().any(|e| e.schema.as_str().contains("uncertainty")));
         let c =
@@ -1315,7 +1373,7 @@ fn successful_completion_preserves_distinct_journal_phase_times() {
     assert_eq!(temporal.received_at.at, at());
     assert_eq!(temporal.admitted_at.at, second(1));
     assert_eq!(temporal.dispatched_at.unwrap().at, second(2));
-    assert_eq!(temporal.committed_at.unwrap().at, second(3));
+    assert_eq!(temporal.committed_at.unwrap().at, second(4));
     assert!(temporal.reconciled_at.is_none());
 }
 #[test]
@@ -1392,7 +1450,6 @@ fn retry_dispatch_does_not_reuse_the_previous_attempt_disposition() {
     let actor = caller(&case.snapshot);
     let state = case.bundle.wi().effect_snapshot(actor.tenant()).unwrap();
     let e = &state.effects[&case.id];
-    let attempt = e.attempt.clone().unwrap();
     let original_receipt = case.receipt();
     let original_source_revision =
         case.bundle.wi().effect_receipts(actor.tenant(), &case.id).unwrap()[0].2;
@@ -1430,26 +1487,32 @@ fn retry_dispatch_does_not_reuse_the_previous_attempt_disposition() {
         StoreBundle::open(&case.temp.path().join("bundle")).unwrap().convergence_faults().len(),
         1
     );
-    Egress::new(case.bundle.wi())
-        .apply(
+    let original_case = case.bundle.wi().reconciliation_cases(&actor, &case.id).unwrap().remove(0);
+    case.bundle
+        .wi()
+        .reconciliation_apply(
             &actor,
             second(2),
-            EffectAction::Reconcile {
-                id: case.id.clone(),
-                evidence: VerifiedReconciliation::from_trusted_verifier(ReconciliationEvidence {
-                    intent: case.id.clone(),
-                    attempt,
-                    connector_semantics: e
-                        .resolution
-                        .as_ref()
-                        .unwrap()
-                        .resolved
-                        .idempotency_semantics
-                        .clone(),
-                    result: ReconciliationResult::ConfirmedNotCommitted,
+            &original_case,
+            worldinterface_domain::reconciliation::VerifiedCaseAction::from_trusted_runtime(
+                worldinterface_domain::reconciliation::CaseAction::Start,
+            ),
+        )
+        .unwrap();
+    let running_case = case.bundle.wi().reconciliation_cases(&actor, &case.id).unwrap().remove(0);
+    case.bundle
+        .wi()
+        .reconciliation_apply(
+            &actor,
+            second(2),
+            &running_case,
+            worldinterface_domain::reconciliation::VerifiedCaseAction::from_trusted_runtime(
+                worldinterface_domain::reconciliation::CaseAction::Observe {
+                    result:
+                        worldinterface_domain::reconciliation::CaseStatus::ConfirmedNotCommitted,
                     evidence: e.outcomes[0].evidence.clone(),
-                }),
-            },
+                },
+            ),
         )
         .unwrap();
     let mut snapshot = case.snapshot.clone();
@@ -1584,6 +1647,34 @@ fn invocation_fence_rechecks_after_supersession() {
         };
         struct Forbidden;
         impl EffectExecutionPort for Forbidden {
+            fn descriptor(&self) -> &worldinterface_protocol::ConnectorDescriptor {
+                spi_fixture::descriptor()
+            }
+            fn resolve(
+                &self,
+                r: worldinterface_runtime::connector::ResolveRequest,
+            ) -> Result<worldinterface_runtime::connector::ResolveObservation> {
+                Ok(worldinterface_runtime::connector::ResolveObservation { resource: r.resource })
+            }
+            fn prepare(
+                &self,
+                _: &worldinterface_runtime::connector::AuthorizedInvocation,
+            ) -> worldinterface_runtime::connector::PrepareOutcome {
+                worldinterface_runtime::connector::PrepareOutcome::Ready
+            }
+            fn reconcile(
+                &self,
+                _: worldinterface_runtime::connector::ReconcileRequest,
+            ) -> Result<worldinterface_runtime::connector::ReconcileOutcome> {
+                Ok(worldinterface_runtime::connector::ReconcileOutcome::Unknown(vec![]))
+            }
+            fn cancel(
+                &self,
+                _: worldinterface_runtime::connector::ReconcileRequest,
+            ) -> Result<worldinterface_runtime::connector::CancelObservation> {
+                Ok(worldinterface_runtime::connector::CancelObservation::Unsupported)
+            }
+
             fn invoke(&self, _: BoundExecution, _: &CancellationToken) -> Result<PortObservation> {
                 panic!("port reached after supersession")
             }
@@ -1668,6 +1759,8 @@ fn plain_effect_transaction_cannot_persist_a_receiptless_outcome() {
             id: case.id.clone(),
             evidence: worldinterface_domain::effect::VerifiedOutcome::from_trusted_verifier(
                 worldinterface_domain::effect::OutcomeEvidence {
+                    classification: None,
+                    reconciliation_admission: None,
                     intent: case.id.clone(),
                     attempt,
                     connector_semantics: state.effects[&case.id]
@@ -1728,6 +1821,8 @@ fn plain_effect_transaction_cannot_persist_a_receiptless_outcome() {
         sequence: None,
     };
     let execution = ExecutionRecord {
+        classification: None,
+        connector_execution: None,
         intent_id: case.id.clone(),
         attempt: state.effects[&case.id].attempt.clone().unwrap(),
         outcome: ExecutionOutcome::Uncertain,

@@ -114,3 +114,24 @@ impl ResolvedWorkerV1 {
         Ok(())
     }
 }
+
+/// Target SPI mapping; this does not upgrade a historical descriptor or authorize execution.
+pub fn validate_spi_descriptor(
+    op: Operation,
+    descriptor: &worldinterface_protocol::ConnectorDescriptor,
+) -> Result<()> {
+    worldinterface_capability::validate_connector(descriptor)?;
+    let class = if op == Operation::Inspect {
+        worldinterface_protocol::IdempotencyClass::ReadOnly
+    } else {
+        worldinterface_protocol::IdempotencyClass::ExternallyKeyed
+    };
+    if !op.available()
+        || descriptor.operation.as_str() != op.name()
+        || descriptor.idempotency != class
+        || !descriptor.observes_commit
+    {
+        return Err("worker SPI declaration mismatch".into());
+    }
+    Ok(())
+}

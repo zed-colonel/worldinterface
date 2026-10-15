@@ -449,3 +449,20 @@ impl<A: Authentication, D: ReceiptDisclosure<A>> ReceiptInspector<'_, A, D> {
         Ok(claim)
     }
 }
+
+impl<A: Authentication, D: ReceiptDisclosure<A>> ReceiptInspector<'_, A, D> {
+    /// Full disclosure is required for provider observations and escalation details.
+    pub fn reconciliation_cases(
+        &self,
+        session: &A::Session,
+        intent: &EffectIntentId,
+    ) -> Result<Vec<worldinterface_domain::reconciliation::ReconciliationCase>> {
+        let principal = caller(self.authentication, session)?;
+        if self.disclosure.effect_profile(session, principal.tenant(), intent)?
+            != DisclosureProfile::Full
+        {
+            return Err("reconciliation evidence disclosure denied".into());
+        }
+        self.root.reconciliation_cases(&principal, intent)
+    }
+}

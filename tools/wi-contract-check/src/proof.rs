@@ -392,6 +392,11 @@ fn coverage(root: &Path, id: &str) -> Result<(Vec<String>, BTreeSet<TestRef>)> {
             );
         }
     }
+    let path = "conformance/wi-fabric-2/connectors/coverage.json";
+    let v = read(&root.join(path))?;
+    if let Some(names) = v["assigned_cases"].get(id) {
+        add(path, RUNTIME, "worldinterface-runtime", serde_json::from_value(names.clone())?);
+    }
     refs.sort();
     Ok((refs, tests))
 }
@@ -703,6 +708,7 @@ pub fn check(root: &Path) -> Result<Vec<Finding>> {
     let tests = discover(root)?;
     let mut findings = validate(root, &registry, &gates, &tests)?;
     findings.extend(validate_completion(root, &tests)?);
+    findings.extend(validate_connectors(root, &tests)?);
     Ok(findings)
 }
 
@@ -743,6 +749,66 @@ pub fn validate_completion(root: &Path, tests: &TestIndex) -> Result<Vec<Finding
                 &obligation,
                 "WI-05 required tests",
                 "test missing, ignored, ambiguous or outside adopted configuration",
+            ));
+        }
+    }
+    Ok(findings)
+}
+
+/// WI-06 producer-core evidence remains separate from full-parent adapter obligations.
+pub fn validate_connectors(root: &Path, tests: &TestIndex) -> Result<Vec<Finding>> {
+    let path = "conformance/wi-fabric-2/connectors/coverage.json";
+    let v = read(&root.join(path))?;
+    let obligations: BTreeMap<String, Vec<TestRef>> =
+        serde_json::from_value(v["required_obligations"].clone())?;
+    let required = BTreeSet::from([
+        "descriptor-conformance",
+        "stable-provider-key",
+        "executor-classification",
+        "external-key-crash",
+        "nonrepeatable-ambiguity",
+        "exact-envelope",
+        "bounded-reconciliation",
+        "reconciliation-crash",
+        "replay-and-inspection",
+    ]);
+    let deferred: BTreeSet<String> = serde_json::from_value(v["deferred_full_parent"].clone())?;
+    let mut findings = Vec::new();
+    if v["version"] != 1
+        || v["scope"] != "wi/WI-06/integration:embedded-proof"
+        || obligations.keys().map(String::as_str).collect::<BTreeSet<_>>() != required
+        || deferred
+            != BTreeSet::from([
+                "filesystem-reference".into(),
+                "http-reference".into(),
+                "semantic-communication-reference".into(),
+                "wasm-alignment".into(),
+                "legacy-deletion".into(),
+                "worker-supervisor-integration".into(),
+            ])
+    {
+        findings.push(finding(
+            "PROOF-WI06",
+            path,
+            "scope",
+            "WIP-05 embedded-proof",
+            "complete core and deferred-parent obligation matrix required",
+        ));
+    }
+    for (obligation, references) in obligations {
+        if references.is_empty()
+            || references.iter().any(|t| {
+                t.manifest != RUNTIME
+                    || t.package != "worldinterface-runtime"
+                    || tests.get(t) != Some(&1)
+            })
+        {
+            findings.push(finding(
+                "PROOF-WI06",
+                path,
+                &obligation,
+                "WIP-05 core required tests",
+                "exact non-ignored runtime test required",
             ));
         }
     }

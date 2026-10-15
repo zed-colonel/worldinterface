@@ -57,6 +57,12 @@ receipt/domain/outbox, real AQ signals and attempt dispositions have process-kil
 coverage. See [WIP-04](WIP-04.md) for evidence and scope. WI-05 and both G2 gates
 close on qualifying reviewed integration; WIP-07 retains WI-AQ-G4 closure.
 
+WIP-05 adds the registered connector SPI, stable provider keys, explicit executor
+classifications and durable AQ reconciliation. AB-WI-012/014/020/023 and WI-06 core
+obligations have exact executable references; full-parent adapter obligations
+remain deferred. See [WIP-05](WIP-05.md). Review and exact-head adopted checks
+remain integration requirements; WI-AQ-G4 remains open for WIP-07.
+
 Every `wi-fabric-2` merge, with the evidence the retired roadmap recorded for it. "Verified" means a slice-verification scope receipt on the merged commit, where an independent agent reviewed it and ran checks. WIP-01 commits this ledger to `docs/work-items/wi-worker-proof-1.md` so that finalization reviewers can see which inherited code was independently verified.
 
 | Merge | Source scope | Diff | Retired-roadmap evidence |

@@ -128,6 +128,21 @@ pub struct QueueReferences {
     projection: ReplayReducer,
 }
 impl QueueReferences {
+    pub fn task_terminal(&self, task: &str) -> Result<bool> {
+        let task: TaskId = task.parse()?;
+        let runs = self.projection.run_ids_for_task(task);
+        Ok(!runs.is_empty()
+            && runs.iter().all(|id| {
+                self.projection.get_run_state(id).is_some_and(|s| {
+                    matches!(
+                        s,
+                        actionqueue_core::run::state::RunState::Completed
+                            | actionqueue_core::run::state::RunState::Failed
+                            | actionqueue_core::run::state::RunState::Canceled
+                    )
+                })
+            }))
+    }
     pub fn run_state(&self, run: &str) -> Result<Option<actionqueue_core::run::state::RunState>> {
         let run: RunId = run.parse()?;
         Ok(self.projection.get_run_state(&run).copied())
@@ -258,6 +273,38 @@ impl QueueReferences {
         let mut effect_tasks = std::collections::BTreeSet::new();
         for tenant in wi.effect_tenants()? {
             for effect in wi.effect_snapshot(&tenant)?.effects.values() {
+                for case in &effect.reconciliation_cases {
+                    if case.queue_store.as_str() != self.store_id().as_uuid().to_string() {
+                        return Err("reconciliation queue store mismatch".into());
+                    }
+                    if let Some(bytes) = &case.admission_request {
+                        let expected = crate::reconciliation::request(case)?;
+                        if &serde_json::to_vec(&expected)? != bytes {
+                            return Err("invalid reconciliation admission bytes".into());
+                        }
+                        if case.admission_sequence.is_some()
+                            && self.projection.task_admission(expected.task_spec().id()).is_none_or(
+                                |a| {
+                                    a.digest() != &expected.digest().expect("validated request")
+                                        || Some(a.sequence()) != case.admission_sequence
+                                },
+                            )
+                        {
+                            return Err("missing reconciliation admission".into());
+                        }
+                    }
+                    if let Some(run) = &case.aq_run {
+                        let run_id: RunId = run.as_str().parse()?;
+                        let expected = crate::reconciliation::request(case)?;
+                        if !self
+                            .projection
+                            .run_ids_for_task(expected.task_spec().id())
+                            .contains(&run_id)
+                        {
+                            return Err("reconciliation run belongs to another task".into());
+                        }
+                    }
+                }
                 for dispatch in &effect.dispatches {
                     if let Some(admission) = &dispatch.admission {
                         effect_tasks.insert(admission.task.as_str().to_owned());

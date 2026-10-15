@@ -1,5 +1,9 @@
 //! Effect completion owns the Fabric Start fence and publication before AQ disposition.
-//! The execution port is supplied by trusted host composition (WI-06).
+//! Every provider invocation crosses a validated, pinned connector registration.
+use crate::connector::{
+    check_installed, AuthorizedInvocation, CancelObservation, Connector, PrepareOutcome,
+    PreparedInvocation, ReconcileRequest, ResolveRequest,
+};
 use crate::{
     aq_adapter::TaskInputLocator,
     authority::{verify_snapshot, EvidenceAuthority, TrustedClock},
@@ -14,7 +18,7 @@ use actionqueue_core::{
     data_ref::{DataRef, ExternalDataRef},
     disposition::AttemptDisposition,
 };
-use actionqueue_executor_local::handler::{CancellationToken, ExecutorContext, ExecutorHandler};
+use actionqueue_executor_local::handler::{ExecutorContext, ExecutorHandler};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use worldinterface_domain::{
@@ -55,15 +59,6 @@ pub struct PortObservation {
     pub boundary_record: Option<EvidenceBytes>,
 }
 
-/// Implementations must not infer noncommit from cancellation after invocation.
-pub trait EffectExecutionPort: Send + Sync {
-    fn invoke(
-        &self,
-        request: BoundExecution,
-        cancellation: &CancellationToken,
-    ) -> Result<PortObservation>;
-}
-
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct CompletionLocator {
@@ -84,7 +79,7 @@ fn terminal(code: &'static str) -> AttemptDisposition {
 // SQLite already waits for its busy timeout. Retry transient contention in every
 // completion persistence step, including publication and phase lookup. This never
 // crosses the provider boundary. Identity-bound publications resume idempotently.
-fn retry_storage<T>(mut operation: impl FnMut() -> Result<T>) -> Result<T> {
+pub(crate) fn retry_storage<T>(mut operation: impl FnMut() -> Result<T>) -> Result<T> {
     for retry in 0..8 {
         match operation() {
             Err(error)
@@ -168,7 +163,7 @@ pub struct EffectAttemptHandler<P, V, C> {
     pub clock: C,
 }
 
-impl<P: EffectExecutionPort, V: EvidenceAuthority, C: TrustedClock> EffectAttemptHandler<P, V, C> {
+impl<P: Connector, V: EvidenceAuthority, C: TrustedClock> EffectAttemptHandler<P, V, C> {
     fn bind(
         &self,
         ctx: &ExecutorContext,
@@ -229,8 +224,19 @@ impl<P: EffectExecutionPort, V: EvidenceAuthority, C: TrustedClock> EffectAttemp
             root.read_artifact(reference)?;
         }
         let receipts = root.effect_receipts(caller.tenant(), id)?;
+        let mut selected = None;
+        for candidate in receipts.iter().rev() {
+            let source = root.effect_receipt_source(caller.tenant(), id, candidate.2)?;
+            if source.outcome.attempt == outcome.attempt
+                && source.run == *run
+                && source.dispatch_index == effect.dispatches.len() - 1
+            {
+                selected = Some(candidate.clone());
+                break;
+            }
+        }
         let (receipt, receipt_digest, revision) =
-            receipts.last().ok_or("terminal outcome without receipt")?.clone();
+            selected.ok_or("terminal outcome without execution receipt")?;
         let access = worldinterface_domain::receipt::ReceiptAccess::from_trusted_authorizer(
             caller.tenant().clone(),
             caller.principal().clone(),
@@ -277,6 +283,12 @@ impl<P: EffectExecutionPort, V: EvidenceAuthority, C: TrustedClock> EffectAttemp
         }
         if outcome.outcome != ExecutionOutcome::Succeeded {
             let code = match outcome.outcome {
+                ExecutionOutcome::TerminalFailure
+                    if outcome.commit == CommitObservation::ConfirmedCommitted =>
+                {
+                    "wi.effect.terminal_provider_failure_committed"
+                }
+                ExecutionOutcome::TerminalFailure => "wi.effect.terminal_provider_failure",
                 ExecutionOutcome::FailedBeforeCommit => "wi.effect.failed_before_commit",
                 ExecutionOutcome::CanceledBeforeCommit => "wi.effect.canceled_before_commit",
                 ExecutionOutcome::Uncertain => "wi.effect.uncertain",
@@ -321,6 +333,7 @@ impl<P: EffectExecutionPort, V: EvidenceAuthority, C: TrustedClock> EffectAttemp
         observation: PortObservation,
         identity_class: &'static str,
     ) -> Result<AttemptDisposition> {
+        let classification = observation.classification();
         let root = self.bundle.wi();
         // Avoid publishing an already superseded provider observation. The
         // transactional seam rechecks this fence after publication as well.
@@ -341,6 +354,18 @@ impl<P: EffectExecutionPort, V: EvidenceAuthority, C: TrustedClock> EffectAttemp
         let phases = retry_storage(|| root.effect_execution_times(caller.tenant(), id))?;
         if phases.run.as_ref() != Some(run) || phases.attempt != attempt {
             return Err("stale Start binding before publication".into());
+        }
+        if let Some(execution) =
+            effect.resolution.as_ref().and_then(|r| r.resolved.connector_execution.as_ref())
+        {
+            if observation
+                .evidence
+                .iter()
+                .chain(&observation.boundary_record)
+                .any(|e| e.bytes.len() as u64 > execution.binding.descriptor.max_evidence_bytes)
+            {
+                return Err("connector evidence profile bound".into());
+            }
         }
         // Bound the complete observation before publishing even its first blob.
         // A rejected provider assertion falls back to one bounded uncertainty
@@ -370,6 +395,8 @@ impl<P: EffectExecutionPort, V: EvidenceAuthority, C: TrustedClock> EffectAttemp
             schema: blob.schema.clone(),
         };
         let preview = OutcomeEvidence {
+            classification: Some(classification),
+            reconciliation_admission: None,
             intent: id.clone(),
             attempt: attempt.clone(),
             connector_semantics: effect
@@ -456,7 +483,9 @@ impl<P: EffectExecutionPort, V: EvidenceAuthority, C: TrustedClock> EffectAttemp
                         ),
                         _ => return Err("completion clock unavailable or regressed".into()),
                     };
-                    let outcome = OutcomeEvidence {
+                    let mut outcome = OutcomeEvidence {
+                        classification: Some(classification),
+                        reconciliation_admission: None,
                         intent: id.clone(),
                         attempt: attempt.clone(),
                         connector_semantics: effect
@@ -478,6 +507,12 @@ impl<P: EffectExecutionPort, V: EvidenceAuthority, C: TrustedClock> EffectAttemp
                         durable_outputs: outputs.clone(),
                         boundary_record: boundary_record.clone(),
                     };
+                    outcome.reconciliation_admission = crate::reconciliation::admission_bytes(
+                        effect,
+                        &outcome,
+                        state.revision + 1,
+                        &at,
+                    )?;
                     let command = worldinterface_domain::effect::validate_command(
                         state,
                         caller,
@@ -488,6 +523,12 @@ impl<P: EffectExecutionPort, V: EvidenceAuthority, C: TrustedClock> EffectAttemp
                         },
                     )?;
                     let execution = ExecutionRecord {
+                        classification: Some(classification),
+                        connector_execution: effect
+                            .resolution
+                            .as_ref()
+                            .and_then(|r| r.resolved.connector_execution.clone())
+                            .map(Box::new),
                         intent_id: id.clone(),
                         attempt: attempt.clone(),
                         outcome: observation.outcome.clone(),
@@ -549,6 +590,55 @@ impl<P: EffectExecutionPort, V: EvidenceAuthority, C: TrustedClock> EffectAttemp
             );
         }
         let attempt: OpaqueRef = ctx.input.attempt_id.to_string().try_into()?;
+        let state = root.effect_snapshot(caller.tenant())?;
+        let effect = state.effects.get(&id).ok_or("missing pre-dispatch effect")?;
+        let bound = BoundExecution {
+            tenant: caller.tenant().clone(),
+            intent: id.clone(),
+            run: run.clone(),
+            attempt: attempt.clone(),
+            input,
+            authorization: worldinterface_domain::ingress::digest(
+                effect.authorization.as_ref().ok_or("no authorization")?,
+            )?,
+            execution_binding: effect
+                .dispatches
+                .last()
+                .and_then(|d| d.admission.as_ref())
+                .ok_or("no production admission")?
+                .execution
+                .clone(),
+            idempotency: effect.intent.stable_idempotency_identity.clone(),
+            resolved: effect.resolution.as_ref().ok_or("missing resolution")?.resolved.clone(),
+        };
+        let reject = || -> Result<AttemptDisposition> {
+            root.record_dispatch_fault(caller.tenant(), &id, &run, "wi.effect.pre_start_error")?;
+            Ok(terminal("wi.effect.pre_dispatch_rejected"))
+        };
+        let Some(execution) = bound.resolved.connector_execution.clone() else {
+            return reject();
+        };
+        if check_installed(&self.port, &execution).is_err() {
+            return reject();
+        }
+        let observed = self.port.resolve(ResolveRequest {
+            selector: effect.intent.submission.resource.clone(),
+            resource: bound.resolved.resource.clone(),
+        })?;
+        if observed.resource != bound.resolved.resource {
+            return reject();
+        }
+        let authorized = AuthorizedInvocation::new(
+            bound,
+            execution,
+            effect.intent.submission.deadline.clone(),
+            effect.intent.submission.budget.clone(),
+        );
+        let preparation = self.port.prepare(&authorized);
+        if preparation == PrepareOutcome::TransientFailure {
+            return Err("transient failure before dispatch".into());
+        }
+        drop(state);
         let start = (|| -> Result<()> {
             let at = self.clock.now()?;
             let snapshot = verify_snapshot(
@@ -577,6 +667,7 @@ impl<P: EffectExecutionPort, V: EvidenceAuthority, C: TrustedClock> EffectAttemp
             return Err(error);
         }
         *started = true;
+        let mut provider_commit = CommitObservation::Unknown;
         let result = (|| -> Result<AttemptDisposition> {
             let state = root.effect_snapshot(caller.tenant())?;
             let effect = state.effects.get(&id).ok_or("missing effect at invocation fence")?;
@@ -591,25 +682,6 @@ impl<P: EffectExecutionPort, V: EvidenceAuthority, C: TrustedClock> EffectAttemp
                     .committed_disposition(&caller, &id, &run)?
                     .ok_or_else(|| "lost invocation fence".into());
             }
-            let bound = BoundExecution {
-                tenant: caller.tenant().clone(),
-                intent: id.clone(),
-                run: run.clone(),
-                attempt: attempt.clone(),
-                input,
-                authorization: worldinterface_domain::ingress::digest(
-                    effect.authorization.as_ref().ok_or("no authorization")?,
-                )?,
-                execution_binding: effect
-                    .dispatches
-                    .last()
-                    .and_then(|d| d.admission.as_ref())
-                    .ok_or("no production admission")?
-                    .execution
-                    .clone(),
-                idempotency: effect.intent.stable_idempotency_identity.clone(),
-                resolved: effect.resolution.as_ref().ok_or("missing resolution")?.resolved.clone(),
-            };
             // Re-check after constructing the request, immediately before crossing the port.
             let current = root.effect_snapshot(caller.tenant())?;
             let current = current.effects.get(&id).ok_or("missing invocation effect")?;
@@ -622,7 +694,56 @@ impl<P: EffectExecutionPort, V: EvidenceAuthority, C: TrustedClock> EffectAttemp
                     .committed_disposition(&caller, &id, &run)?
                     .ok_or_else(|| "lost invocation fence".into());
             }
-            let observation = if ctx.input.cancellation_context.token().is_cancelled() {
+            let fresh_at = self.clock.now()?;
+            let fresh = verify_snapshot(
+                root,
+                &self.evidence,
+                caller.tenant(),
+                &current.intent.submission,
+                &fresh_at,
+            )?;
+            let evaluation = worldinterface_domain::authorization::authorize(
+                &current.intent,
+                &current.agency,
+                current.resolution.as_ref().ok_or("no resolution")?,
+                &fresh,
+                &fresh_at,
+            )?;
+            let refused = preparation == PrepareOutcome::PermanentRejection
+                || evaluation.decision != worldinterface_protocol::Decision::Allow
+                || Some(&evaluation) != current.authorization.as_ref()
+                || check_installed(&self.port, authorized.execution()).is_err()
+                || self
+                    .port
+                    .resolve(ResolveRequest {
+                        selector: current.intent.submission.resource.clone(),
+                        resource: authorized.resolved.resource.clone(),
+                    })
+                    .map_or(true, |r| r.resource != authorized.resolved.resource);
+            let final_state = root.effect_snapshot(caller.tenant())?;
+            let final_effect =
+                final_state.effects.get(&id).ok_or("missing final invocation fence")?;
+            if final_effect.phase != Phase::Running
+                || final_effect.attempt.as_ref() != Some(&attempt)
+                || final_effect.outcomes.iter().any(|o| o.attempt == attempt)
+            {
+                ctx.input.cancellation_context.cancel();
+                return self
+                    .committed_disposition(&caller, &id, &run)?
+                    .ok_or_else(|| "lost final invocation fence".into());
+            }
+            let observation = if refused {
+                PortObservation {
+                    commit: CommitObservation::ProvenImpossible,
+                    outcome: ExecutionOutcome::FailedBeforeCommit,
+                    outputs: vec![],
+                    evidence: vec![EvidenceBytes {
+                        schema: "wi.pre-dispatch:1".to_string().try_into()?,
+                        bytes: b"dispatch rejected before invocation".to_vec(),
+                    }],
+                    boundary_record: None,
+                }
+            } else if ctx.input.cancellation_context.token().is_cancelled() {
                 PortObservation {
                     commit: CommitObservation::ProvenImpossible,
                     outcome: ExecutionOutcome::CanceledBeforeCommit,
@@ -634,10 +755,90 @@ impl<P: EffectExecutionPort, V: EvidenceAuthority, C: TrustedClock> EffectAttemp
                     boundary_record: None,
                 }
             } else {
-                self.port.invoke(bound, ctx.input.cancellation_context.token()).unwrap_or(
-                    uncertainty("wi.port.uncertainty:1", b"port did not return commit evidence")?,
-                )
+                let cancel_request = ReconcileRequest {
+                    tenant: caller.tenant().clone(),
+                    intent: id.clone(),
+                    execution: authorized.execution().clone(),
+                    resource: authorized.resolved.resource.clone(),
+                };
+                let cancellation_supported =
+                    authorized.execution().binding.descriptor.cancellation_supported;
+                let mut observed = self
+                    .port
+                    .invoke(
+                        PreparedInvocation::new(authorized),
+                        ctx.input.cancellation_context.token(),
+                    )
+                    .unwrap_or(uncertainty(
+                        "wi.port.uncertainty:1",
+                        b"port did not return commit evidence",
+                    )?);
+                // The token requests cooperation; only the connector's typed
+                // response may prove noncommit after crossing the boundary.
+                // A definitive invoke observation needs no cancellation and must
+                // not trigger a provider action that could reverse a known commit.
+                if cancellation_supported
+                    && ctx.input.cancellation_context.token().is_cancelled()
+                    && matches!(
+                        observed.commit,
+                        CommitObservation::Unknown | CommitObservation::Possible
+                    )
+                {
+                    let canceled = self.port.cancel(cancel_request);
+                    let bytes: &[u8] = match &canceled {
+                        Ok(CancelObservation::Unsupported) => b"unsupported",
+                        Ok(CancelObservation::Requested) => b"requested",
+                        Ok(CancelObservation::ConfirmedNotCommitted) => b"confirmed_not_committed",
+                        Err(_) => b"cancel_observation_unavailable",
+                    };
+                    observed.evidence.push(EvidenceBytes {
+                        schema: "wi.connector-cancel:1".to_string().try_into()?,
+                        bytes: bytes.to_vec(),
+                    });
+                    if matches!(canceled, Ok(CancelObservation::ConfirmedNotCommitted)) {
+                        observed.commit = CommitObservation::ConfirmedNotCommitted;
+                        observed.outcome = ExecutionOutcome::CanceledBeforeCommit;
+                    }
+                }
+                observed
             };
+            provider_commit = observation.commit.clone();
+            let mut observation = observation;
+            if observation.outcome == ExecutionOutcome::TerminalFailure
+                && !matches!(
+                    observation.commit,
+                    CommitObservation::ConfirmedCommitted
+                        | CommitObservation::ConfirmedNotCommitted
+                )
+            {
+                observation.outcome = ExecutionOutcome::Uncertain;
+                observation.commit = CommitObservation::Unknown;
+            }
+            if observation.commit == CommitObservation::ConfirmedCommitted
+                && observation.outcome == ExecutionOutcome::Succeeded
+                && (observation.boundary_record.is_none()
+                    || observation.outputs.len()
+                        != current
+                            .authorization_inputs
+                            .as_ref()
+                            .ok_or("no manifest")?
+                            .required_outputs
+                            .len())
+            {
+                let mut incomplete = uncertainty(
+                    "wi.completion.uncertainty:1",
+                    b"confirmed commit lacks required publication",
+                )?;
+                incomplete.commit = CommitObservation::ConfirmedCommitted;
+                return self.record_outcome(
+                    &caller,
+                    &id,
+                    attempt.clone(),
+                    &run,
+                    incomplete,
+                    "fallback",
+                );
+            }
             self.record_outcome(&caller, &id, attempt.clone(), &run, observation, "port")
         })();
         match result {
@@ -650,10 +851,16 @@ impl<P: EffectExecutionPort, V: EvidenceAuthority, C: TrustedClock> EffectAttemp
                     &id,
                     attempt,
                     &run,
-                    uncertainty(
-                        "wi.completion.uncertainty:1",
-                        b"completion could not be durably recorded after Start",
-                    )?,
+                    {
+                        let mut incomplete = uncertainty(
+                            "wi.completion.uncertainty:1",
+                            b"completion could not be durably recorded after Start",
+                        )?;
+                        if provider_commit == CommitObservation::ConfirmedCommitted {
+                            incomplete.commit = CommitObservation::ConfirmedCommitted;
+                        }
+                        incomplete
+                    },
                     "fallback",
                 )
             }
@@ -686,7 +893,11 @@ pub(crate) fn record_uncertain_after_terminal_run(
                 effect.agency.binding.principal.clone(),
             );
             let at = state.last_at.clone().ok_or("missing trusted Start timestamp")?;
-            let outcome = OutcomeEvidence {
+            let mut outcome = OutcomeEvidence {
+                classification: Some(
+                    worldinterface_protocol::ExecutorClassification::AmbiguousCommit,
+                ),
+                reconciliation_admission: None,
                 intent: id.clone(),
                 attempt: attempt.clone(),
                 connector_semantics: effect
@@ -708,6 +919,8 @@ pub(crate) fn record_uncertain_after_terminal_run(
                 durable_outputs: vec![],
                 boundary_record: None,
             };
+            outcome.reconciliation_admission =
+                crate::reconciliation::admission_bytes(effect, &outcome, state.revision + 1, &at)?;
             let command = worldinterface_domain::effect::validate_command(
                 state,
                 &caller,
@@ -718,6 +931,14 @@ pub(crate) fn record_uncertain_after_terminal_run(
                 },
             )?;
             let execution = ExecutionRecord {
+                classification: Some(
+                    worldinterface_protocol::ExecutorClassification::AmbiguousCommit,
+                ),
+                connector_execution: effect
+                    .resolution
+                    .as_ref()
+                    .and_then(|r| r.resolved.connector_execution.clone())
+                    .map(Box::new),
                 intent_id: id.clone(),
                 attempt: attempt.clone(),
                 outcome: ExecutionOutcome::Uncertain,
@@ -732,7 +953,7 @@ pub(crate) fn record_uncertain_after_terminal_run(
 }
 
 impl<
-        P: EffectExecutionPort + 'static,
+        P: Connector + 'static,
         V: EvidenceAuthority + Send + Sync + 'static,
         C: TrustedClock + Send + Sync + 'static,
     > ExecutorHandler for EffectAttemptHandler<P, V, C>
