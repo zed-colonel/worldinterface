@@ -23,6 +23,7 @@
     "crash::killed_fabric_receipt_transaction_recovers_all_or_none_and_retries",
     "crash::killed_publication_resumes_from_each_durable_boundary",
     "detached_proofs_are_restricted_provenance_and_leave_receipts_immutable",
+    "discovery_noops_preserve_history_and_start_freezes_the_cursor",
     "effect::tests::missing_phase_index_rejects_interim_schema_without_mutation",
     "effect::tests::phase_times_seek_one_intent_and_preserve_dispatch_and_tenant_boundaries",
     "effect::tests::receipt_source_seeks_one_intent_and_fences_revision_tenant_dispatch_and_start",
@@ -44,10 +45,12 @@
     "receipt_execution_evidence_is_bounded_by_authoritative_outcome",
     "receipt_import_requires_exact_canonical_bytes_and_supported_profile",
     "receipt_outcome_and_outbox_commit_after_scoped_publication",
+    "receipt_transaction_rejects_a_command_without_a_new_outcome",
     "reopen_rejects_outcomes_without_receipts_and_cross_direction_receipt_ids",
     "retry_dispatch_does_not_reuse_the_previous_attempt_disposition",
     "runtime_campaign_inspection_preserves_authority_and_material_confounds",
     "sibling_run_cannot_publish_or_reuse_the_start_runs_receipt",
+    "structurally_invalid_observations_publish_no_port_artifacts",
     "successful_completion_preserves_distinct_journal_phase_times",
     "sustained_tenant_writes_preserve_confirmed_completion_without_reinvocation",
     "terminal_recovery_selects_start_among_multiple_terminal_runs",
@@ -144,6 +147,11 @@
         "manifest": "crates/worldinterface-runtime/Cargo.toml",
         "package": "worldinterface-runtime",
         "test": "committed_disposition_rejects_request_admission_and_outcome_binding_drift"
+      },
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-egress",
+        "test": "receipt_transaction_rejects_a_command_without_a_new_outcome"
       }
     ],
     "publication-before-completion": [
@@ -171,6 +179,11 @@
         "manifest": "crates/worldinterface-runtime/Cargo.toml",
         "package": "worldinterface-runtime",
         "test": "sibling_run_cannot_publish_or_reuse_the_start_runs_receipt"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "structurally_invalid_observations_publish_no_port_artifacts"
       }
     ],
     "crash-convergence": [
@@ -273,6 +286,11 @@
         "manifest": "crates/worldinterface-runtime/Cargo.toml",
         "package": "worldinterface-runtime",
         "test": "completion_and_redelivery_bound_latency_and_writer_delay_with_long_history"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "discovery_noops_preserve_history_and_start_freezes_the_cursor"
       }
     ],
     "redacted-inspection": [

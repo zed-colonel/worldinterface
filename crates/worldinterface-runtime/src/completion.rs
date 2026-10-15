@@ -342,7 +342,6 @@ impl<P: EffectExecutionPort, V: EvidenceAuthority, C: TrustedClock> EffectAttemp
         if phases.run.as_ref() != Some(run) || phases.attempt != attempt {
             return Err("stale Start binding before publication".into());
         }
-        drop(state);
         // Bound the complete observation before publishing even its first blob.
         // A rejected provider assertion falls back to one bounded uncertainty
         // observation; no oversized port publications are left behind.
@@ -357,6 +356,43 @@ impl<P: EffectExecutionPort, V: EvidenceAuthority, C: TrustedClock> EffectAttemp
                     .map(|b| b.bytes.len() as u64),
             ),
         )?;
+        // Content-derived references let the domain check structural claims
+        // before publication, without validating/digesting the tenant again.
+        // The locked transaction still validates the authoritative manifest and
+        // attempt after all bytes have actually been published.
+        let reference = |bytes: &[u8]| ArtifactRef {
+            scope: caller.tenant().clone(),
+            content: ContentHash::of(bytes),
+            size: bytes.len() as u64,
+        };
+        let evidence_ref = |blob: &EvidenceBytes| EvidenceRef {
+            artifact: reference(&blob.bytes),
+            schema: blob.schema.clone(),
+        };
+        let preview = OutcomeEvidence {
+            intent: id.clone(),
+            attempt: attempt.clone(),
+            connector_semantics: effect
+                .resolution
+                .as_ref()
+                .ok_or("missing resolution")?
+                .resolved
+                .idempotency_semantics
+                .clone(),
+            commit: observation.commit.clone(),
+            outcome: observation.outcome.clone(),
+            evidence: observation.evidence.iter().map(evidence_ref).collect(),
+            required_outputs: effect
+                .authorization_inputs
+                .as_ref()
+                .ok_or("missing authority inputs")?
+                .required_outputs
+                .clone(),
+            durable_outputs: observation.outputs.iter().map(|b| reference(b)).collect(),
+            boundary_record: observation.boundary_record.as_ref().map(evidence_ref),
+        };
+        worldinterface_domain::effect::validate_outcome_publication(caller.tenant(), &preview)?;
+        drop(state);
         let mut outputs = Vec::new();
         for (index, bytes) in observation.outputs.iter().enumerate() {
             outputs.push(publish(

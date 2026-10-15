@@ -288,3 +288,86 @@ are under `da04db16-14c6-4d48-b007-a0bd876211e1/scratch/verification` and
 `scratch/review`. All ten adopted v6 checks must pass on the committed candidate.
 CraftingTable's independent review, including its separate security pass, remains
 due before integration; only the controller merges the reviewed result.
+
+## S-028 operating envelope for the local proof runtime
+
+Completion still deserializes, hashes and writes the tenant's aggregate state.
+This implementation supports a bounded local proof workload. For this profile,
+keep each tenant's serialized `effect_state.state` at or below **1 MiB**, each
+intent's journal at or below **1,000 entries**, and effect attempt timeouts at
+**30 seconds or longer** (`submission.budget.timeout_millis >= 30000`). Reserve
+at least **10 seconds** of that timeout for Fabric completion, beyond the measured
+provider execution time. The shared Fabric writer also requires bounded write
+contention; do not schedule sustained concurrent mutation on the same store.
+These are host operating limits, not new admission rules or automatic pruning.
+The accepted 3/Idempotent request policy and old persisted requests are unchanged.
+
+The host must inspect size before adding work to a tenant and monitor completion
+latency on its deployment hardware. A trusted local diagnostic, against the
+Fabric SQLite database, is:
+
+```sql
+SELECT tenant, length(state) AS state_bytes FROM effect_state;
+SELECT tenant, json_extract(CAST(entry AS TEXT), '$.action.id') AS intent,
+       count(*) AS journal_entries
+FROM effect_history GROUP BY tenant, intent;
+```
+
+Stop admission to an over-limit tenant and retain its store for inspection; do
+not delete journal rows, rewrite admission requests or fabricate a replacement
+identity to recover capacity. Keep existing AQ work and recovery enabled. For
+larger tenants or shorter deadlines, qualify a separate operating envelope on
+the deployment hardware or implement per-intent/incremental state persistence
+before expanding the supported workload. Retry/Start fencing preserves evidence
+on a timeout, but is not a latency guarantee.
+
+The previous independent review measured `e9adec1` at 2,282,418 state bytes:
+1.15 seconds completion and 330 ms maximum writer wait; at 4,554,418 bytes:
+2.03 seconds and 531 ms. Those measurements justify rejecting the 1-second
+minimum as an operating assumption, not extrapolating the parser's 16 MiB cap
+into a supported workload. Evidence is in review run
+`63b6b3d7-ae8b-4b3f-938d-e88b3084e06b/scratch/verification/bench-s026-fill-e9adec1-quiet.txt`.
+The limits above leave margin below those measured state sizes and within the
+30-second fixture timeout; they are a conservative operating policy, not a
+benchmark claim for arbitrary providers, hardware, artifacts or contention.
+
+## S-030 compatibility of interim stores
+
+The 16 MiB outcome limit counts **all** durable output, evidence and boundary
+references together, including repeated references. It applies to journal replay
+at open, rebuild and restore as well as new completions. An interim store whose
+outcomes exceeded that total, even when every individual artifact was under
+16 MiB, will fail validation. Such stores can share `local-receipt-3` with current
+stores; that profile alone does not promise compatibility across this development
+branch. No released store format is being migrated. Preserve incompatible stores
+for inspection with their matching revision; there is no in-place migration,
+outcome truncation or automatic rewriting of receipt or admission bytes.
+
+The S-029 discovery rules likewise reject old journal histories that appended
+unchanged discovery cursors or advanced discovery after Start. Compatible
+histories keep their exact bytes. Back up any interim proof store before moving
+between revisions; create new proof data on the new revision when its history is
+incompatible.
+
+## Remediation of the review on e9adec1
+
+These dispositions are implementation claims for the next independent reviewer.
+
+| Finding | Disposition and evidence |
+|---|---|
+| S-028 | Fixed by the bounded operating profile above, as the review recommended. Whole-tenant state cost remains explicit; no scalability claim is made. |
+| S-029 | Fixed: unchanged cursors return the original state without a revision; discovery is allowed only in DispatchPending. `execution_times` materializes indexed rows and drops its statement before parsing. `discovery_noops_preserve_history_and_start_freezes_the_cursor` repeats real AQ discovery and direct cursor retries, rejects stale cursors and post-Start/post-outcome changes, and checks exact state/history counts and reopen. |
+| S-030 | Fixed by the compatibility notice above, including open/rebuild/restore and same-profile interim data. |
+| S-031 | Fixed: shared domain structural validation checks content-derived references before the first provider publication. The locked transaction repeats validation against the current manifest and attempt. `structurally_invalid_observations_publish_no_port_artifacts` covers contradictory claims, missing/empty evidence, missing/empty boundaries and wrong output hashes; all leave zero port publications and one Uncertain receipt without reinvocation. |
+| S-032 | Fixed: the shared receipt writer requires exactly one newly appended Outcome. `receipt_transaction_rejects_a_command_without_a_new_outcome` rejects a valid Reconcile command through the receipt API without changing projections/receipts, then applies reconciliation normally and reopens successfully. Existing exact-retry tests preserve lost-response behavior. |
+| S-020 | Deferred as accepted by review: distinct diagnostic labels for phase_unknown remain a follow-up; current labels do not authorize or invoke a provider. |
+| S-009 | Deferred as accepted by review: explicit router metadata belongs to host composition; strict payloads and durable bindings continue to fail closed. |
+
+The three new regression references are registered in completion coverage. Source
+hash refresh preserves the reviewed inventory structure and dispositions. This
+remediation changes no check definitions, SQLite layout, admission request format,
+receipt format or crash cuts. Implementation verification and separate security
+self-review are recorded under run
+`e45f6541-e1f8-4d5f-ae3d-3fbe19726237/scratch/verification` and `scratch/review`.
+CraftingTable's qualifying independent review and separate security pass remain
+required before integration.

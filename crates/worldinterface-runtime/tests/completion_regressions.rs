@@ -160,6 +160,9 @@ impl EffectExecutionPort for Port {
                 o.evidence[0].bytes = vec![2; 8 * 1024 * 1024];
             }
             "missing-evidence" => o.evidence.clear(),
+            "empty-evidence" => o.evidence[0].bytes.clear(),
+            "empty-boundary" => o.boundary_record.as_mut().unwrap().bytes.clear(),
+            "wrong-output" => o.outputs = vec![b"different output".to_vec()],
             "noncommit" => {
                 o.commit = CommitObservation::ProvenImpossible;
                 o.outcome = ExecutionOutcome::FailedBeforeCommit;
@@ -332,6 +335,121 @@ fn oversized_observations_publish_no_port_artifacts() {
             .unwrap();
         assert_eq!(count, 0, "{variant}");
     }
+}
+
+#[test]
+fn structurally_invalid_observations_publish_no_port_artifacts() {
+    for variant in [
+        "contradictory",
+        "incomplete",
+        "missing-evidence",
+        "empty-evidence",
+        "empty-boundary",
+        "wrong-output",
+    ] {
+        let case = Prepared::new();
+        let calls = Arc::new(AtomicUsize::new(0));
+        let handler = EffectAttemptHandler {
+            bundle: case.bundle.clone(),
+            port: Port { calls: calls.clone(), variant },
+            evidence: Evidence(case.snapshot.clone()),
+            clock: Clock,
+        };
+        assert_uncertain(&handler.execute(case.ctx(case.run)));
+        assert_uncertain(&handler.execute(case.ctx(case.run)));
+        assert_eq!(calls.load(Ordering::SeqCst), 1, "{variant}");
+        let receipt = case.receipt();
+        let ReceiptBody::Egress(body) = &receipt.body else { panic!("egress") };
+        assert!(body.output_refs.is_empty(), "{variant}");
+        assert_eq!(receipt.evidence.len(), 1, "{variant}");
+        assert_eq!(receipt.evidence[0].schema.as_str(), "wi.completion.uncertainty:1");
+        let c =
+            rusqlite::Connection::open(case.temp.path().join("bundle/wi/context.sqlite")).unwrap();
+        let count: usize = c
+            .query_row(
+                "SELECT count(*) FROM publication_index WHERE identity GLOB 'effect-*:port:*'",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap();
+        assert_eq!(count, 0, "{variant}");
+    }
+}
+
+#[test]
+fn discovery_noops_preserve_history_and_start_freezes_the_cursor() {
+    let case = Prepared::new();
+    let root = case.bundle.wi();
+    let actor = caller(&case.snapshot);
+    let egress = Egress::new(root);
+    let before = root.effect_snapshot(actor.tenant()).unwrap();
+    let history_count = || {
+        let c =
+            rusqlite::Connection::open(case.temp.path().join("bundle/wi/fabric.sqlite")).unwrap();
+        c.query_row("SELECT count(*) FROM effect_history", [], |r| r.get::<_, u64>(0)).unwrap()
+    };
+    let rows = history_count();
+    let queue = QueueEngine::bootstrap(&case.bundle, Noop(None), host()).unwrap();
+    for _ in 0..50 {
+        assert!(run_discovery::discover(&queue, &actor, second(1), &case.id, 8).unwrap().complete);
+    }
+    assert_eq!(root.effect_snapshot(actor.tenant()).unwrap(), before);
+    assert_eq!(history_count(), rows);
+    queue.shutdown().unwrap();
+    let advance = |previous: Option<&str>, next: Option<&str>| {
+        egress.apply(
+            &actor,
+            second(2),
+            EffectAction::AdvanceDiscovery {
+                id: case.id.clone(),
+                previous: previous.map(str::to_owned),
+                next: next.map(str::to_owned),
+            },
+        )
+    };
+    advance(None, Some("cursor:next")).unwrap();
+    for _ in 0..50 {
+        advance(Some("cursor:next"), Some("cursor:next")).unwrap();
+    }
+    assert!(advance(None, Some("cursor:stale")).is_err());
+    assert_eq!(history_count(), rows + 1);
+    let ctx = case.ctx(case.run);
+    egress
+        .apply(
+            &actor,
+            second(2),
+            EffectAction::StartProduction {
+                id: case.id.clone(),
+                snapshot: verified(&case.snapshot),
+                run: case.run.to_string().try_into().unwrap(),
+                attempt: ctx.input.attempt_id.to_string().try_into().unwrap(),
+            },
+        )
+        .unwrap();
+    for next in [Some("cursor:next"), Some("cursor:changed"), None] {
+        assert!(advance(Some("cursor:next"), next).is_err());
+    }
+    let calls = Arc::new(AtomicUsize::new(0));
+    let handler = EffectAttemptHandler {
+        bundle: case.bundle.clone(),
+        port: Port { calls: calls.clone(), variant: "success" },
+        evidence: Evidence(case.snapshot.clone()),
+        clock: Clock,
+    };
+    // The existing Start means a redelivery must record uncertainty, never invoke.
+    assert_uncertain(&handler.execute(ctx));
+    let terminal = root.effect_snapshot(actor.tenant()).unwrap();
+    assert_eq!(terminal.revision, before.revision + 3);
+    assert!(advance(Some("cursor:next"), Some("cursor:changed")).is_err());
+    assert!(advance(Some("cursor:next"), Some("cursor:next")).is_err());
+    assert_eq!(root.effect_snapshot(actor.tenant()).unwrap(), terminal);
+    assert_eq!(history_count(), rows + 3);
+    assert_eq!(calls.load(Ordering::SeqCst), 0);
+    case.receipt();
+    let reopened =
+        worldinterface_storage::StoreRoot::open_existing(case.temp.path().join("bundle/wi"))
+            .unwrap();
+    assert_eq!(reopened.effect_snapshot(actor.tenant()).unwrap(), terminal);
 }
 
 #[test]

@@ -571,6 +571,53 @@ fn check_evidence(refs: &[EvidenceRef], tenant: &OpaqueRef) -> Result<()> {
     }
     Ok(())
 }
+/// Validates an outcome's reference structure, scope, size and commit claims.
+/// This does not authorize execution or assert that any artifact is published.
+/// Runtimes can check content-derived references before publishing bytes; the
+/// journal repeats these rules after checking the current attempt and manifest.
+pub fn validate_outcome_publication(tenant: &OpaqueRef, o: &OutcomeEvidence) -> Result<Phase> {
+    check_evidence(&o.evidence, tenant)?;
+    validate_outcome_bounds(
+        o.durable_outputs.len(),
+        o.evidence.len(),
+        o.durable_outputs
+            .iter()
+            .map(|r| r.size)
+            .chain(o.evidence.iter().chain(&o.boundary_record).map(|r| r.artifact.size)),
+    )?;
+    if o.required_outputs.len() > MAX_OUTCOME_OUTPUTS
+        || o.required_outputs.iter().chain(&o.durable_outputs).any(|r| r.scope != *tenant)
+    {
+        return Err("output scope or bound".into());
+    }
+    let phase = match (&o.commit, &o.outcome) {
+        (CommitObservation::ConfirmedCommitted, ExecutionOutcome::Succeeded)
+            if o.boundary_record
+                .as_ref()
+                .is_some_and(|r| r.artifact.scope == *tenant && r.artifact.size > 0)
+                && o.required_outputs == o.durable_outputs =>
+        {
+            Phase::Succeeded
+        }
+        (
+            CommitObservation::ProvenImpossible | CommitObservation::ConfirmedNotCommitted,
+            ExecutionOutcome::FailedBeforeCommit,
+        ) => Phase::Failed,
+        (
+            CommitObservation::ProvenImpossible | CommitObservation::ConfirmedNotCommitted,
+            ExecutionOutcome::CanceledBeforeCommit,
+        ) => Phase::Canceled,
+        (
+            CommitObservation::Possible
+            | CommitObservation::Unknown
+            | CommitObservation::ConfirmedCommitted,
+            ExecutionOutcome::Uncertain,
+        ) => Phase::Uncertain,
+        _ => return Err("contradictory commit/outcome or incomplete publication".into()),
+    };
+    Ok(phase)
+}
+
 fn apply(state: &EffectState, entry: &Entry) -> Result<(EffectState, EffectIntentId)> {
     if entry.version != 1
         || entry.before != state_digest(state)?
@@ -799,6 +846,9 @@ fn apply(state: &EffectState, entry: &Entry) -> Result<(EffectState, EffectInten
             a.observed_runs.sort();
         }
         JournalAction::AdvanceDiscovery { previous, next, .. } => {
+            if e.phase != Phase::DispatchPending {
+                return Err("discovery phase".into());
+            }
             let a = e
                 .dispatches
                 .last_mut()
@@ -809,6 +859,9 @@ fn apply(state: &EffectState, entry: &Entry) -> Result<(EffectState, EffectInten
                 || next.as_ref().is_some_and(|v| v.len() > 4096)
             {
                 return Err("discovery cursor conflict".into());
+            }
+            if previous == next {
+                return Ok((state.clone(), id.clone()));
             }
             a.discovery_cursor = next.clone();
         }
@@ -881,53 +934,13 @@ fn apply(state: &EffectState, entry: &Entry) -> Result<(EffectState, EffectInten
             {
                 return Err("outcome binding or phase".into());
             }
-            check_evidence(&o.evidence, &entry.tenant)?;
             if e.authorization_inputs
                 .as_ref()
                 .is_none_or(|s| s.required_outputs != o.required_outputs)
             {
                 return Err("required output manifest mismatch".into());
             }
-            validate_outcome_bounds(
-                o.durable_outputs.len(),
-                o.evidence.len(),
-                o.durable_outputs
-                    .iter()
-                    .map(|r| r.size)
-                    .chain(o.evidence.iter().chain(&o.boundary_record).map(|r| r.artifact.size)),
-            )?;
-            if o.required_outputs.len() > MAX_OUTCOME_OUTPUTS
-                || o.required_outputs
-                    .iter()
-                    .chain(&o.durable_outputs)
-                    .any(|r| r.scope != entry.tenant)
-            {
-                return Err("output scope or bound".into());
-            }
-            e.phase = match (&o.commit, &o.outcome) {
-                (CommitObservation::ConfirmedCommitted, ExecutionOutcome::Succeeded)
-                    if o.boundary_record.as_ref().is_some_and(|r| {
-                        r.artifact.scope == entry.tenant && r.artifact.size > 0
-                    }) && o.required_outputs == o.durable_outputs =>
-                {
-                    Phase::Succeeded
-                }
-                (
-                    CommitObservation::ProvenImpossible | CommitObservation::ConfirmedNotCommitted,
-                    ExecutionOutcome::FailedBeforeCommit,
-                ) => Phase::Failed,
-                (
-                    CommitObservation::ProvenImpossible | CommitObservation::ConfirmedNotCommitted,
-                    ExecutionOutcome::CanceledBeforeCommit,
-                ) => Phase::Canceled,
-                (
-                    CommitObservation::Possible
-                    | CommitObservation::Unknown
-                    | CommitObservation::ConfirmedCommitted,
-                    ExecutionOutcome::Uncertain,
-                ) => Phase::Uncertain,
-                _ => return Err("contradictory commit/outcome or incomplete publication".into()),
-            };
+            e.phase = validate_outcome_publication(&entry.tenant, o)?;
             e.commit = o.commit.clone();
             e.outcomes.push(o.clone());
         }

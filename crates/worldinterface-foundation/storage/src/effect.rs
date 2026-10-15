@@ -367,14 +367,21 @@ fn execution_times(
     tenant: &OpaqueRef,
     id: &EffectIntentId,
 ) -> Result<EffectExecutionTimes> {
-    let mut q = c.prepare("SELECT entry FROM effect_history WHERE tenant=? AND json_extract(CAST(entry AS TEXT),'$.action.id')=? ORDER BY revision")?;
+    // Drop the read statement before parsing, as in receipt_source. Completion
+    // must not hold a SHARED lock while interpreting a long intent history.
+    let entries = {
+        let mut q = c.prepare("SELECT entry FROM effect_history WHERE tenant=? AND json_extract(CAST(entry AS TEXT),'$.action.id')=? ORDER BY revision")?;
+        let rows =
+            q.query_map(params![tenant.as_str(), id.as_str()], |r| r.get::<_, Vec<u8>>(0))?;
+        rows.collect::<rusqlite::Result<Vec<_>>>()?
+    };
     let mut received = None;
     let mut admitted = None;
     let mut dispatched = None;
     let mut run = None;
     let mut attempt = None;
-    for row in q.query_map(params![tenant.as_str(), id.as_str()], |r| r.get::<_, Vec<u8>>(0))? {
-        let entry = strict_json(&row?).map_err(invalid)?;
+    for bytes in entries {
+        let entry = strict_json(&bytes).map_err(invalid)?;
         let action = &entry["action"];
         let at: Timestamp = serde_json::from_value(entry["at"].clone())?;
         match action["operation"].as_str() {
@@ -577,6 +584,7 @@ impl StoreRoot {
         transact(&mut self.connect(StoreKind::Fabric)?, command, None)
     }
     /// Commits a local outcome, receipt and effect outbox in one Fabric transaction.
+    /// The command must append exactly one new Outcome; other actions use effect_transact.
     /// This is a domain seam; it does not acknowledge an AQ attempt.
     pub fn effect_transact_with_receipt(
         &self,
@@ -674,6 +682,9 @@ impl StoreRoot {
             return Err(invalid("receipt command already applied; inspect immutable receipt"));
         }
         let aggregate = new.effects.get(&id).ok_or_else(|| invalid("missing effect"))?;
+        if aggregate.outcomes.len() != old.effects.get(&id).map_or(0, |e| e.outcomes.len()) + 1 {
+            return Err(invalid("receipt requires exactly one new outcome"));
+        }
         let receipt = worldinterface_domain::receipt::prepare_egress_receipt(
             aggregate,
             new.revision,

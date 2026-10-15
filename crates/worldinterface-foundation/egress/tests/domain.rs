@@ -1081,6 +1081,55 @@ fn exact_receipt_retry_and_conflicting_bindings() {
 }
 
 #[test]
+fn receipt_transaction_rejects_a_command_without_a_new_outcome() {
+    let (s, p) = fixture();
+    let t = tempfile::tempdir().unwrap();
+    let r = root(&t);
+    let (id, o) = start(&r, &s, &p);
+    let execution = execution_for(&o, o.evidence.clone());
+    r.effect_transact_with_receipt(
+        &receipt_command(&r, &p, &o),
+        ReceiptId::generate(),
+        &execution,
+        receipt_temporal(),
+    )
+    .unwrap();
+    let before = r.effect_snapshot(caller(&p).tenant()).unwrap();
+    let receipts = r.effect_receipts(caller(&p).tenant(), &id).unwrap();
+    let command = validate_command(
+        &before,
+        &caller(&p),
+        now(),
+        EffectAction::Reconcile {
+            id: id.clone(),
+            evidence: VerifiedReconciliation::from_trusted_verifier(reconciliation(
+                &p,
+                &o,
+                ReconciliationResult::ConfirmedNotCommitted,
+            )),
+        },
+    )
+    .unwrap();
+    let error = r
+        .effect_transact_with_receipt(
+            &command,
+            ReceiptId::generate(),
+            &execution,
+            receipt_temporal(),
+        )
+        .unwrap_err();
+    assert!(error.to_string().contains("receipt requires exactly one new outcome"));
+    assert_eq!(r.effect_snapshot(caller(&p).tenant()).unwrap(), before);
+    assert_eq!(r.effect_receipts(caller(&p).tenant(), &id).unwrap(), receipts);
+    // The rejected receipt write did not consume the valid reconciliation.
+    r.effect_transact(&command).unwrap();
+    drop(r);
+    let r = StoreRoot::open_existing(t.path().join("root")).unwrap();
+    assert_eq!(r.effect_receipts(caller(&p).tenant(), &id).unwrap(), receipts);
+    assert_eq!(r.effect_snapshot(caller(&p).tenant()).unwrap().revision, before.revision + 1);
+}
+
+#[test]
 fn receipt_execution_evidence_is_bounded_by_authoritative_outcome() {
     let (s, p) = fixture();
     let t = tempfile::tempdir().unwrap();
