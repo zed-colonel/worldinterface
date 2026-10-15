@@ -1,0 +1,84 @@
+{
+  "descriptors": [
+    {
+      "version": 1,
+      "connector": "fixture",
+      "implementation": "c08c6acfff81cafe379f88061e6b71bfbf2e9b5c5fcba037f0ac69a6b896d41b",
+      "operation": "write",
+      "effect_class": "mutate",
+      "resource_namespace": "fixture",
+      "resource_grammar": "fixture-1",
+      "input_schema": "bool",
+      "output_schema": "bool",
+      "isolation_profile": "in-process",
+      "secret_refs": [],
+      "idempotency": "naturally_idempotent",
+      "retry_after_noncommit": true,
+      "observes_commit": true,
+      "reconciliation": {
+        "max_observations": 3,
+        "backoff_millis": 1,
+        "timeout_millis": 100,
+        "automatic": true
+      },
+      "cancellation_supported": false,
+      "evidence_schema": "evidence-1",
+      "max_evidence_bytes": 4096
+    }
+  ],
+  "schemas": {
+    "bool": {
+      "type": "boolean"
+    },
+    "int": {
+      "type": "integer"
+    },
+    "resource": {
+      "type": "resource"
+    }
+  },
+  "submitting_authority": {
+    "alternatives": [
+      {
+        "connector": "fixture",
+        "operation": "write",
+        "effect": "mutate",
+        "resource": {
+          "namespace": "fixture",
+          "selector": "a"
+        }
+      },
+      {
+        "connector": "fixture",
+        "operation": "write",
+        "effect": "mutate",
+        "resource": {
+          "namespace": "fixture",
+          "selector": "b"
+        }
+      }
+    ]
+  },
+  "run_authority": {
+    "alternatives": [
+      {
+        "connector": "fixture",
+        "operation": "write",
+        "effect": "mutate",
+        "resource": {
+          "namespace": "fixture",
+          "selector": "a"
+        }
+      },
+      {
+        "connector": "fixture",
+        "operation": "write",
+        "effect": "mutate",
+        "resource": {
+          "namespace": "fixture",
+          "selector": "b"
+        }
+      }
+    ]
+  }
+}

@@ -9245,5 +9245,313 @@
     "target": "connector conformance evidence",
     "rationale": "WIP-05 F-001/F-002 trusted reconciliation transitions and transient failure regression evidence",
     "source": "WI-WORKER-PROOF-1 WIP-05; WI-ADR-010/011; docs/work-items/WIP-05.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/capability/tests/flow_registry.rs::::source-module:crates/worldinterface-foundation/capability/tests/flow_registry.rs",
+    "disposition": "test-evidence",
+    "target": "WI-07 pure Flow conformance",
+    "rationale": "WIP-06 executable compiler, canonical identity, registry compatibility and adversarial profile evidence; no runtime-conformance claim",
+    "source": "WI-WORKER-PROOF-1 WIP-06; WI-ADR-014; docs/work-items/WIP-06.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/flow/expression.rs::::source-module:crates/worldinterface-foundation/domain/src/flow/expression.rs",
+    "disposition": "retain-align",
+    "target": "foundation validated Flow compiler",
+    "rationale": "WIP-06 sealed executable plan/version, shared compilation and recovery validation, deterministic bounded evaluation; I/O-free and AQ-free",
+    "source": "WI-WORKER-PROOF-1 WIP-06; WI-ADR-014; docs/work-items/WIP-06.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/flow/expression.rs::::struct:Evaluation",
+    "disposition": "retain-align",
+    "target": "foundation validated Flow compiler",
+    "rationale": "WIP-06 sealed executable plan/version, shared compilation and recovery validation, deterministic bounded evaluation; I/O-free and AQ-free",
+    "source": "WI-WORKER-PROOF-1 WIP-06; WI-ADR-014; docs/work-items/WIP-06.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/flow/mod.rs::::enum:ErrorKind",
+    "disposition": "retain-align",
+    "target": "foundation validated Flow compiler",
+    "rationale": "WIP-06 sealed executable plan/version, shared compilation and recovery validation, deterministic bounded evaluation; I/O-free and AQ-free",
+    "source": "WI-WORKER-PROOF-1 WIP-06; WI-ADR-014; docs/work-items/WIP-06.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/flow/mod.rs::::module:expression",
+    "disposition": "retain-align",
+    "target": "foundation validated Flow compiler",
+    "rationale": "WIP-06 sealed executable plan/version, shared compilation and recovery validation, deterministic bounded evaluation; I/O-free and AQ-free",
+    "source": "WI-WORKER-PROOF-1 WIP-06; WI-ADR-014; docs/work-items/WIP-06.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/flow/mod.rs::::module:validation",
+    "disposition": "retain-align",
+    "target": "foundation validated Flow compiler",
+    "rationale": "WIP-06 sealed executable plan/version, shared compilation and recovery validation, deterministic bounded evaluation; I/O-free and AQ-free",
+    "source": "WI-WORKER-PROOF-1 WIP-06; WI-ADR-014; docs/work-items/WIP-06.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/flow/mod.rs::::source-module:crates/worldinterface-foundation/domain/src/flow/mod.rs",
+    "disposition": "retain-align",
+    "target": "foundation validated Flow compiler",
+    "rationale": "WIP-06 sealed executable plan/version, shared compilation and recovery validation, deterministic bounded evaluation; I/O-free and AQ-free",
+    "source": "WI-WORKER-PROOF-1 WIP-06; WI-ADR-014; docs/work-items/WIP-06.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/flow/mod.rs::::struct:CompilationContext",
+    "disposition": "retain-align",
+    "target": "foundation validated Flow compiler",
+    "rationale": "WIP-06 sealed executable plan/version, shared compilation and recovery validation, deterministic bounded evaluation; I/O-free and AQ-free",
+    "source": "WI-WORKER-PROOF-1 WIP-06; WI-ADR-014; docs/work-items/WIP-06.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/flow/mod.rs::::struct:CompileError",
+    "disposition": "retain-align",
+    "target": "foundation validated Flow compiler",
+    "rationale": "WIP-06 sealed executable plan/version, shared compilation and recovery validation, deterministic bounded evaluation; I/O-free and AQ-free",
+    "source": "WI-WORKER-PROOF-1 WIP-06; WI-ADR-014; docs/work-items/WIP-06.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/flow/mod.rs::::struct:DirectOperationSelection",
+    "disposition": "retain-align",
+    "target": "foundation validated Flow compiler",
+    "rationale": "WIP-06 sealed executable plan/version, shared compilation and recovery validation, deterministic bounded evaluation; I/O-free and AQ-free",
+    "source": "WI-WORKER-PROOF-1 WIP-06; WI-ADR-014; docs/work-items/WIP-06.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/flow/mod.rs::::struct:ExecutionPlan",
+    "disposition": "retain-align",
+    "target": "foundation validated Flow compiler",
+    "rationale": "WIP-06 sealed executable plan/version, shared compilation and recovery validation, deterministic bounded evaluation; I/O-free and AQ-free",
+    "source": "WI-WORKER-PROOF-1 WIP-06; WI-ADR-014; docs/work-items/WIP-06.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/flow/mod.rs::::struct:FlowVersion",
+    "disposition": "retain-align",
+    "target": "foundation validated Flow compiler",
+    "rationale": "WIP-06 sealed executable plan/version, shared compilation and recovery validation, deterministic bounded evaluation; I/O-free and AQ-free",
+    "source": "WI-WORKER-PROOF-1 WIP-06; WI-ADR-014; docs/work-items/WIP-06.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/flow/validation.rs::::source-module:crates/worldinterface-foundation/domain/src/flow/validation.rs",
+    "disposition": "retain-align",
+    "target": "foundation validated Flow compiler",
+    "rationale": "WIP-06 sealed executable plan/version, shared compilation and recovery validation, deterministic bounded evaluation; I/O-free and AQ-free",
+    "source": "WI-WORKER-PROOF-1 WIP-06; WI-ADR-014; docs/work-items/WIP-06.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/flow/validation.rs::::type:Ancestors",
+    "disposition": "retain-align",
+    "target": "foundation validated Flow compiler",
+    "rationale": "WIP-06 sealed executable plan/version, shared compilation and recovery validation, deterministic bounded evaluation; I/O-free and AQ-free",
+    "source": "WI-WORKER-PROOF-1 WIP-06; WI-ADR-014; docs/work-items/WIP-06.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/flow/validation.rs::::type:Graph",
+    "disposition": "retain-align",
+    "target": "foundation validated Flow compiler",
+    "rationale": "WIP-06 sealed executable plan/version, shared compilation and recovery validation, deterministic bounded evaluation; I/O-free and AQ-free",
+    "source": "WI-WORKER-PROOF-1 WIP-06; WI-ADR-014; docs/work-items/WIP-06.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/lib.rs::::module:flow",
+    "disposition": "retain-align",
+    "target": "foundation validated Flow compiler",
+    "rationale": "WIP-06 sealed executable plan/version, shared compilation and recovery validation, deterministic bounded evaluation; I/O-free and AQ-free",
+    "source": "WI-WORKER-PROOF-1 WIP-06; WI-ADR-014; docs/work-items/WIP-06.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/tests/flow.rs::::source-module:crates/worldinterface-foundation/domain/tests/flow.rs",
+    "disposition": "test-evidence",
+    "target": "WI-07 pure Flow conformance",
+    "rationale": "WIP-06 executable compiler, canonical identity, registry compatibility and adversarial profile evidence; no runtime-conformance claim",
+    "source": "WI-WORKER-PROOF-1 WIP-06; WI-ADR-014; docs/work-items/WIP-06.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/tests/flow.rs::::struct:Snapshot",
+    "disposition": "test-evidence",
+    "target": "WI-07 pure Flow conformance",
+    "rationale": "WIP-06 executable compiler, canonical identity, registry compatibility and adversarial profile evidence; no runtime-conformance claim",
+    "source": "WI-WORKER-PROOF-1 WIP-06; WI-ADR-014; docs/work-items/WIP-06.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/lib.rs::::module:plan",
+    "disposition": "retain-align",
+    "target": "foundation untrusted plan and Flow contracts",
+    "rationale": "WIP-06 versioned wi-json-1 plan data, finite paired structural ceilings and closed deterministic declarations; never executable authority",
+    "source": "WI-WORKER-PROOF-1 WIP-06; WI-ADR-014; docs/work-items/WIP-06.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/plan.rs::::enum:Expression",
+    "disposition": "retain-align",
+    "target": "foundation untrusted plan and Flow contracts",
+    "rationale": "WIP-06 versioned wi-json-1 plan data, finite paired structural ceilings and closed deterministic declarations; never executable authority",
+    "source": "WI-WORKER-PROOF-1 WIP-06; WI-ADR-014; docs/work-items/WIP-06.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/plan.rs::::enum:FanOut",
+    "disposition": "retain-align",
+    "target": "foundation untrusted plan and Flow contracts",
+    "rationale": "WIP-06 versioned wi-json-1 plan data, finite paired structural ceilings and closed deterministic declarations; never executable authority",
+    "source": "WI-WORKER-PROOF-1 WIP-06; WI-ADR-014; docs/work-items/WIP-06.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/plan.rs::::enum:InputSource",
+    "disposition": "retain-align",
+    "target": "foundation untrusted plan and Flow contracts",
+    "rationale": "WIP-06 versioned wi-json-1 plan data, finite paired structural ceilings and closed deterministic declarations; never executable authority",
+    "source": "WI-WORKER-PROOF-1 WIP-06; WI-ADR-014; docs/work-items/WIP-06.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/plan.rs::::enum:PlanOperation",
+    "disposition": "retain-align",
+    "target": "foundation untrusted plan and Flow contracts",
+    "rationale": "WIP-06 versioned wi-json-1 plan data, finite paired structural ceilings and closed deterministic declarations; never executable authority",
+    "source": "WI-WORKER-PROOF-1 WIP-06; WI-ADR-014; docs/work-items/WIP-06.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/plan.rs::::enum:PlanOrigin",
+    "disposition": "retain-align",
+    "target": "foundation untrusted plan and Flow contracts",
+    "rationale": "WIP-06 versioned wi-json-1 plan data, finite paired structural ceilings and closed deterministic declarations; never executable authority",
+    "source": "WI-WORKER-PROOF-1 WIP-06; WI-ADR-014; docs/work-items/WIP-06.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/plan.rs::::enum:ResourceBinding",
+    "disposition": "retain-align",
+    "target": "foundation untrusted plan and Flow contracts",
+    "rationale": "WIP-06 versioned wi-json-1 plan data, finite paired structural ceilings and closed deterministic declarations; never executable authority",
+    "source": "WI-WORKER-PROOF-1 WIP-06; WI-ADR-014; docs/work-items/WIP-06.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/plan.rs::::enum:Schema",
+    "disposition": "retain-align",
+    "target": "foundation untrusted plan and Flow contracts",
+    "rationale": "WIP-06 versioned wi-json-1 plan data, finite paired structural ceilings and closed deterministic declarations; never executable authority",
+    "source": "WI-WORKER-PROOF-1 WIP-06; WI-ADR-014; docs/work-items/WIP-06.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/plan.rs::::enum:SignalProgress",
+    "disposition": "retain-align",
+    "target": "foundation untrusted plan and Flow contracts",
+    "rationale": "WIP-06 versioned wi-json-1 plan data, finite paired structural ceilings and closed deterministic declarations; never executable authority",
+    "source": "WI-WORKER-PROOF-1 WIP-06; WI-ADR-014; docs/work-items/WIP-06.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/plan.rs::::enum:TimeoutAction",
+    "disposition": "retain-align",
+    "target": "foundation untrusted plan and Flow contracts",
+    "rationale": "WIP-06 versioned wi-json-1 plan data, finite paired structural ceilings and closed deterministic declarations; never executable authority",
+    "source": "WI-WORKER-PROOF-1 WIP-06; WI-ADR-014; docs/work-items/WIP-06.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/plan.rs::::source-module:crates/worldinterface-foundation/protocol/src/plan.rs",
+    "disposition": "retain-align",
+    "target": "foundation untrusted plan and Flow contracts",
+    "rationale": "WIP-06 versioned wi-json-1 plan data, finite paired structural ceilings and closed deterministic declarations; never executable authority",
+    "source": "WI-WORKER-PROOF-1 WIP-06; WI-ADR-014; docs/work-items/WIP-06.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/plan.rs::::struct:AuthorityAlternative",
+    "disposition": "retain-align",
+    "target": "foundation untrusted plan and Flow contracts",
+    "rationale": "WIP-06 versioned wi-json-1 plan data, finite paired structural ceilings and closed deterministic declarations; never executable authority",
+    "source": "WI-WORKER-PROOF-1 WIP-06; WI-ADR-014; docs/work-items/WIP-06.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/plan.rs::::struct:AuthorityUpperBound",
+    "disposition": "retain-align",
+    "target": "foundation untrusted plan and Flow contracts",
+    "rationale": "WIP-06 versioned wi-json-1 plan data, finite paired structural ceilings and closed deterministic declarations; never executable authority",
+    "source": "WI-WORKER-PROOF-1 WIP-06; WI-ADR-014; docs/work-items/WIP-06.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/plan.rs::::struct:BoundaryPolicy",
+    "disposition": "retain-align",
+    "target": "foundation untrusted plan and Flow contracts",
+    "rationale": "WIP-06 versioned wi-json-1 plan data, finite paired structural ceilings and closed deterministic declarations; never executable authority",
+    "source": "WI-WORKER-PROOF-1 WIP-06; WI-ADR-014; docs/work-items/WIP-06.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/plan.rs::::struct:Deadline",
+    "disposition": "retain-align",
+    "target": "foundation untrusted plan and Flow contracts",
+    "rationale": "WIP-06 versioned wi-json-1 plan data, finite paired structural ceilings and closed deterministic declarations; never executable authority",
+    "source": "WI-WORKER-PROOF-1 WIP-06; WI-ADR-014; docs/work-items/WIP-06.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/plan.rs::::struct:FlowBody",
+    "disposition": "retain-align",
+    "target": "foundation untrusted plan and Flow contracts",
+    "rationale": "WIP-06 versioned wi-json-1 plan data, finite paired structural ceilings and closed deterministic declarations; never executable authority",
+    "source": "WI-WORKER-PROOF-1 WIP-06; WI-ADR-014; docs/work-items/WIP-06.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/plan.rs::::struct:FlowDefinition",
+    "disposition": "retain-align",
+    "target": "foundation untrusted plan and Flow contracts",
+    "rationale": "WIP-06 versioned wi-json-1 plan data, finite paired structural ceilings and closed deterministic declarations; never executable authority",
+    "source": "WI-WORKER-PROOF-1 WIP-06; WI-ADR-014; docs/work-items/WIP-06.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/plan.rs::::struct:OutputRef",
+    "disposition": "retain-align",
+    "target": "foundation untrusted plan and Flow contracts",
+    "rationale": "WIP-06 versioned wi-json-1 plan data, finite paired structural ceilings and closed deterministic declarations; never executable authority",
+    "source": "WI-WORKER-PROOF-1 WIP-06; WI-ADR-014; docs/work-items/WIP-06.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/plan.rs::::struct:PlanDocument",
+    "disposition": "retain-align",
+    "target": "foundation untrusted plan and Flow contracts",
+    "rationale": "WIP-06 versioned wi-json-1 plan data, finite paired structural ceilings and closed deterministic declarations; never executable authority",
+    "source": "WI-WORKER-PROOF-1 WIP-06; WI-ADR-014; docs/work-items/WIP-06.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/plan.rs::::struct:PlanEnvelope",
+    "disposition": "retain-align",
+    "target": "foundation untrusted plan and Flow contracts",
+    "rationale": "WIP-06 versioned wi-json-1 plan data, finite paired structural ceilings and closed deterministic declarations; never executable authority",
+    "source": "WI-WORKER-PROOF-1 WIP-06; WI-ADR-014; docs/work-items/WIP-06.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/plan.rs::::struct:PlanInput",
+    "disposition": "retain-align",
+    "target": "foundation untrusted plan and Flow contracts",
+    "rationale": "WIP-06 versioned wi-json-1 plan data, finite paired structural ceilings and closed deterministic declarations; never executable authority",
+    "source": "WI-WORKER-PROOF-1 WIP-06; WI-ADR-014; docs/work-items/WIP-06.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/plan.rs::::struct:PlanNode",
+    "disposition": "retain-align",
+    "target": "foundation untrusted plan and Flow contracts",
+    "rationale": "WIP-06 versioned wi-json-1 plan data, finite paired structural ceilings and closed deterministic declarations; never executable authority",
+    "source": "WI-WORKER-PROOF-1 WIP-06; WI-ADR-014; docs/work-items/WIP-06.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/plan.rs::::struct:PlanOutput",
+    "disposition": "retain-align",
+    "target": "foundation untrusted plan and Flow contracts",
+    "rationale": "WIP-06 versioned wi-json-1 plan data, finite paired structural ceilings and closed deterministic declarations; never executable authority",
+    "source": "WI-WORKER-PROOF-1 WIP-06; WI-ADR-014; docs/work-items/WIP-06.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/plan.rs::::struct:Program",
+    "disposition": "retain-align",
+    "target": "foundation untrusted plan and Flow contracts",
+    "rationale": "WIP-06 versioned wi-json-1 plan data, finite paired structural ceilings and closed deterministic declarations; never executable authority",
+    "source": "WI-WORKER-PROOF-1 WIP-06; WI-ADR-014; docs/work-items/WIP-06.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/plan.rs::::struct:SchemaPin",
+    "disposition": "retain-align",
+    "target": "foundation untrusted plan and Flow contracts",
+    "rationale": "WIP-06 versioned wi-json-1 plan data, finite paired structural ceilings and closed deterministic declarations; never executable authority",
+    "source": "WI-WORKER-PROOF-1 WIP-06; WI-ADR-014; docs/work-items/WIP-06.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/plan.rs::::struct:SignalWait",
+    "disposition": "retain-align",
+    "target": "foundation untrusted plan and Flow contracts",
+    "rationale": "WIP-06 versioned wi-json-1 plan data, finite paired structural ceilings and closed deterministic declarations; never executable authority",
+    "source": "WI-WORKER-PROOF-1 WIP-06; WI-ADR-014; docs/work-items/WIP-06.md"
   }
 ]

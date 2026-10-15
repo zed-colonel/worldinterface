@@ -709,6 +709,7 @@ pub fn check(root: &Path) -> Result<Vec<Finding>> {
     let mut findings = validate(root, &registry, &gates, &tests)?;
     findings.extend(validate_completion(root, &tests)?);
     findings.extend(validate_connectors(root, &tests)?);
+    findings.extend(validate_flow(root, &tests)?);
     Ok(findings)
 }
 
@@ -809,6 +810,89 @@ pub fn validate_connectors(root: &Path, tests: &TestIndex) -> Result<Vec<Finding
                 &obligation,
                 "WIP-05 core required tests",
                 "exact non-ignored runtime test required",
+            ));
+        }
+    }
+    Ok(findings)
+}
+
+/// Complete pure WI-07 domain proof. No acceptance cases belong to WIP-06.
+pub fn validate_flow(root: &Path, tests: &TestIndex) -> Result<Vec<Finding>> {
+    #[derive(Deserialize)]
+    #[serde(deny_unknown_fields)]
+    struct Coverage {
+        version: u32,
+        scope: String,
+        upstream_conformance: bool,
+        runtime_conformance: bool,
+        assigned_cases: BTreeMap<String, Value>,
+        required_obligations: BTreeMap<String, Vec<TestRef>>,
+    }
+    let path = "conformance/wi-fabric-2/flow/coverage.json";
+    let coverage: Coverage = serde_json::from_value(read(&root.join(path))?)?;
+    let required = BTreeSet::from([
+        "cycles",
+        "unreachable",
+        "graph-identities",
+        "schema-compatibility",
+        "closed-purity",
+        "authority-ceilings",
+        "ambiguous-resources",
+        "bounded-fan-out",
+        "wait-rejection",
+        "wait-sequencing",
+        "direct-equivalence",
+        "canonical-vector",
+        "hash-normalization",
+        "strict-recovery",
+        "snapshot-drift",
+        "paired-authority",
+        "deterministic-replay",
+        "branch-resource-scope",
+        "branch-value-availability",
+        "profile-bounds",
+        "immutable-revision",
+        "artifact-and-schema-profile",
+        "execution-field-tampering",
+        "registry-compatibility",
+    ]);
+    let mut findings = Vec::new();
+    if coverage.version != 1
+        || coverage.scope != "wi/WI-07/domain"
+        || coverage.upstream_conformance
+        || coverage.runtime_conformance
+        || !coverage.assigned_cases.is_empty()
+        || coverage.required_obligations.keys().map(String::as_str).collect::<BTreeSet<_>>()
+            != required
+    {
+        findings.push(finding(
+            "PROOF-WI07",
+            path,
+            "scope",
+            "WIP-06 / WI-ADR-014",
+            "complete pure-domain obligation matrix required; no runtime or case claim",
+        ));
+    }
+    for (obligation, references) in coverage.required_obligations {
+        if references.is_empty()
+            || references.iter().collect::<BTreeSet<_>>().len() != references.len()
+            || references.iter().any(|t| {
+                t.manifest != FOUNDATION
+                    || ![
+                        "worldinterface-domain",
+                        "worldinterface-protocol",
+                        "worldinterface-capability",
+                    ]
+                    .contains(&t.package.as_str())
+                    || tests.get(t) != Some(&1)
+            })
+        {
+            findings.push(finding(
+                "PROOF-WI07",
+                path,
+                &obligation,
+                "WIP-06 required tests",
+                "exact non-ignored unambiguous foundation test required",
             ));
         }
     }
