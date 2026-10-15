@@ -246,3 +246,45 @@ definitions. Correctness and a separate security self-review are recorded under
 this run's `scratch/review`; verification is under `scratch/verification`.
 CraftingTable's independent review with its separate security pass remains due
 before the controller integrates WI-05 and G2 closure.
+
+## Remediation of review c9342461
+
+The inherited head was `f3c78e5`. Initial status, including untracked files, was
+clean. The source review journal and its preserved verification summary record
+all ten adopted v6 checks passing and the reviewer restoring its generated
+lockfile rewrite. There were no artifacts to remove or untracked sources to
+stage. The operator subsequently required S-026 to be fixed in WIP-04; the
+provisional interrupted reviews do not authorize integration.
+
+These dispositions are implementation claims for the next independent reviewer.
+
+| Finding | Disposition and executable evidence |
+|---|---|
+| S-026 | Fixed: `effect_receipt_source` seeks the existing `(tenant,intent,revision)` journal index, materializes only that intent's entries up to the receipt revision, and releases the read statement before canonicalization or interpretation. It reads the source dispatch ordinal, exact preparation snapshot/admission, original Start run/attempt and Outcome, without applying commands or digesting/cloning tenant state at each revision. Completion compares the source outcome, Start run, latest dispatch ordinal and immutable admission fields. The domain's unchanged deterministic request derivation is shared with completion, so the exact request and its execution digest still bind the original preparation snapshot. `receipt_source_seeks_one_intent_and_fences_revision_tenant_dispatch_and_start` excludes 2,000 unrelated same-tenant entries, tests foreign tenants and historical dispatches, rejects absent source revisions and damaged digests, and requires an indexed range query without a scan/sort. `retry_dispatch_does_not_reuse_the_previous_attempt_disposition` compares the new source facts against full replay for both dispatches. `committed_disposition_rejects_request_admission_and_outcome_binding_drift` rejects projection drift while retaining one receipt and one invocation. `completion_and_redelivery_bound_latency_and_writer_delay_with_long_history` batches 1,000 genuine domain-validated discovery entries, bounds completion and three redeliveries, and probes a concurrent other-tenant writer. |
+| S-027 | Fixed: before the first port publication, the runtime checks the entire observation against the same domain bounds used for Outcome references: at most 64 outputs, 64 evidence blobs, and 16 MiB total output/evidence/boundary bytes. Checked addition rejects overflow. `oversized_observations_publish_no_port_artifacts` tests excess outputs/evidence, each oversized blob class and a combined overflow of the byte budget; every case leaves zero port publication obligations, records one bounded Uncertain receipt and never reinvokes. `outcome_artifact_bounds_include_boundary_bytes_and_checked_totals` covers exact bounds and arithmetic overflow. The total-byte budget is an explicit local completion-profile bound in this remediation, including boundary bytes and counting each reference; it is stricter than the previous individual-artifact-only bound. |
+| S-025 | Fixed: the read-only pre-publication fence checks both the attempt and the original Start run. The locked completion seam retains its final recheck. `sibling_run_cannot_publish_or_reuse_the_start_runs_receipt` proves that an observed sibling cannot publish recovery artifacts, fabricate an outcome, invoke the port or use the original run's receipt. |
+| S-020 | Deferred as accepted by review: distinct phase_unknown diagnostic labels remain a follow-up. Existing labels do not authorize or invoke providers. |
+| S-009 | Deferred as accepted by review: explicit TaskRouter metadata remains host-composition work. Current strict payload forms remain disjoint and durable binding validation fails closed. |
+
+The lookup relies on the domain-validated append-only journal and its validation
+at store open; it is a trusted-host fact reader, not a command or authorization
+constructor. Full journal replay remains available for offline validation,
+rebuild and restore. Current-aggregate loading and ordinary domain command
+validation still scale with tenant state; this change removes repeated tenant
+history replay from committed completion and redelivery. The liveness regression
+uses 1,000 journal entries, not a claim that every possible tenant size meets a
+universal completion deadline.
+
+The new storage binding type is explicitly retained in `effect-storage` and in
+the existing catalog family. The latency test's reference to delay is an explicit
+shared review surface for the legacy delay family; its test evidence is retained.
+All six new regressions map to WI-05 obligations in `completion/coverage.json`;
+WP-015/016 and the AB-WI-002/003/004 admission mappings remain in force. This
+remediation changes no SQLite layout, receipt envelope, admission request bytes
+or adopted check definition.
+
+Verification and separate correctness/security self-review evidence for this run
+are under `da04db16-14c6-4d48-b007-a0bd876211e1/scratch/verification` and
+`scratch/review`. All ten adopted v6 checks must pass on the committed candidate.
+CraftingTable's independent review, including its separate security pass, remains
+due before integration; only the controller merges the reviewed result.

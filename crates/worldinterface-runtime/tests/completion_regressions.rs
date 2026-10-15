@@ -137,6 +137,28 @@ impl EffectExecutionPort for Port {
             "contradictory" => o.commit = CommitObservation::ProvenImpossible,
             "incomplete" => o.boundary_record = None,
             "oversized" => o.outputs = vec![vec![1; 16 * 1024 * 1024 + 1]],
+            "too-many-outputs" => {
+                o.outputs = vec![
+                    b"output".to_vec();
+                    worldinterface_domain::effect::MAX_OUTCOME_OUTPUTS + 1
+                ];
+            }
+            "too-many-evidence" => {
+                o.evidence = (0..=worldinterface_domain::effect::MAX_OUTCOME_EVIDENCE)
+                    .map(|_| EvidenceBytes {
+                        schema: "execution:1".to_owned().try_into().unwrap(),
+                        bytes: b"executed".to_vec(),
+                    })
+                    .collect();
+            }
+            "oversized-evidence" => o.evidence[0].bytes = vec![1; 16 * 1024 * 1024 + 1],
+            "oversized-boundary" => {
+                o.boundary_record.as_mut().unwrap().bytes = vec![1; 16 * 1024 * 1024 + 1]
+            }
+            "oversized-total" => {
+                o.outputs = vec![vec![1; 8 * 1024 * 1024]];
+                o.evidence[0].bytes = vec![2; 8 * 1024 * 1024];
+            }
             "missing-evidence" => o.evidence.clear(),
             "noncommit" => {
                 o.commit = CommitObservation::ProvenImpossible;
@@ -271,6 +293,273 @@ fn invalid_port_observations_commit_inline_uncertainty_without_reinvocation() {
         assert_uncertain(&handler.execute(case.ctx(case.run)));
         assert_eq!(calls.load(Ordering::SeqCst), 1);
     }
+}
+
+#[test]
+fn oversized_observations_publish_no_port_artifacts() {
+    for variant in [
+        "too-many-outputs",
+        "too-many-evidence",
+        "oversized",
+        "oversized-evidence",
+        "oversized-boundary",
+        "oversized-total",
+    ] {
+        let case = Prepared::new();
+        let calls = Arc::new(AtomicUsize::new(0));
+        let handler = EffectAttemptHandler {
+            bundle: case.bundle.clone(),
+            port: Port { calls: calls.clone(), variant },
+            evidence: Evidence(case.snapshot.clone()),
+            clock: Clock,
+        };
+        assert_uncertain(&handler.execute(case.ctx(case.run)));
+        assert_uncertain(&handler.execute(case.ctx(case.run)));
+        assert_eq!(calls.load(Ordering::SeqCst), 1, "{variant}");
+        let receipt = case.receipt();
+        let ReceiptBody::Egress(body) = &receipt.body else { panic!("egress") };
+        assert!(body.output_refs.is_empty(), "{variant}");
+        assert_eq!(receipt.evidence.len(), 1, "{variant}");
+        assert_eq!(receipt.evidence[0].schema.as_str(), "wi.completion.uncertainty:1");
+        let c =
+            rusqlite::Connection::open(case.temp.path().join("bundle/wi/context.sqlite")).unwrap();
+        let count: usize = c
+            .query_row(
+                "SELECT count(*) FROM publication_index WHERE identity GLOB 'effect-*:port:*'",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap();
+        assert_eq!(count, 0, "{variant}");
+    }
+}
+
+#[test]
+fn sibling_run_cannot_publish_or_reuse_the_start_runs_receipt() {
+    let case = Prepared::new();
+    let actor = caller(&case.snapshot);
+    let original = case.ctx(case.run);
+    let attempt: OpaqueRef = original.input.attempt_id.to_string().try_into().unwrap();
+    let egress = Egress::new(case.bundle.wi());
+    egress
+        .apply(
+            &actor,
+            second(2),
+            EffectAction::StartProduction {
+                id: case.id.clone(),
+                snapshot: verified(&case.snapshot),
+                run: case.run.to_string().try_into().unwrap(),
+                attempt,
+            },
+        )
+        .unwrap();
+    let sibling = RunId::new();
+    egress
+        .apply(
+            &actor,
+            second(2),
+            EffectAction::ObserveRun {
+                id: case.id.clone(),
+                run: sibling.to_string().try_into().unwrap(),
+            },
+        )
+        .unwrap();
+    let calls = Arc::new(AtomicUsize::new(0));
+    let handler = EffectAttemptHandler {
+        bundle: case.bundle.clone(),
+        port: Port { calls: calls.clone(), variant: "success" },
+        evidence: Evidence(case.snapshot.clone()),
+        clock: Clock,
+    };
+    assert!(handler.execute_bound(&case.ctx(sibling)).is_err());
+    let state = case.bundle.wi().effect_snapshot(actor.tenant()).unwrap();
+    assert_eq!(state.effects[&case.id].phase, Phase::Running);
+    assert!(state.effects[&case.id].outcomes.is_empty());
+    let c = rusqlite::Connection::open(case.temp.path().join("bundle/wi/context.sqlite")).unwrap();
+    let count: usize = c
+        .query_row(
+            "SELECT count(*) FROM publication_index WHERE identity GLOB 'effect-*'",
+            [],
+            |r| r.get(0),
+        )
+        .unwrap();
+    assert_eq!(count, 0);
+    assert_uncertain(&handler.execute(original));
+    assert!(handler.execute_bound(&case.ctx(sibling)).is_err());
+    assert_eq!(calls.load(Ordering::SeqCst), 0);
+}
+
+#[test]
+fn committed_disposition_rejects_request_admission_and_outcome_binding_drift() {
+    let case = Prepared::new();
+    let actor = caller(&case.snapshot);
+    let calls = Arc::new(AtomicUsize::new(0));
+    let handler = EffectAttemptHandler {
+        bundle: case.bundle.clone(),
+        port: Port { calls: calls.clone(), variant: "success" },
+        evidence: Evidence(case.snapshot.clone()),
+        clock: Clock,
+    };
+    let ctx = case.ctx(case.run);
+    assert!(matches!(handler.execute_bound(&ctx).unwrap().outcome(), DispositionOutcome::Complete));
+    let original = case.bundle.wi().effect_snapshot(actor.tenant()).unwrap();
+    let c = rusqlite::Connection::open(case.temp.path().join("bundle/wi/fabric.sqlite")).unwrap();
+    for drift in ["request", "index", "admission", "outcome"] {
+        // Model projection drift after open; immutable journal facts still bind
+        // completion even though this test bypasses trusted-host persistence.
+        let mut state = original.clone();
+        let e = state.effects.get_mut(&case.id).unwrap();
+        let dispatch = e.dispatches.last_mut().unwrap();
+        match drift {
+            "request" => dispatch.request.authorization = ContentHash::of(b"other-authorization"),
+            "index" => dispatch.request.operation_index += 1,
+            "admission" => {
+                dispatch.admission.as_mut().unwrap().execution = ContentHash::of(b"other-execution")
+            }
+            "outcome" => {
+                e.outcomes.last_mut().unwrap().evidence[0].schema =
+                    "other-schema:1".to_owned().try_into().unwrap()
+            }
+            _ => unreachable!(),
+        }
+        c.execute(
+            "UPDATE effect_state SET state=? WHERE tenant=?",
+            rusqlite::params![canonical_collection(&state).unwrap(), actor.tenant().as_str()],
+        )
+        .unwrap();
+        assert!(handler.execute_bound(&ctx).is_err(), "{drift}");
+    }
+    c.execute(
+        "UPDATE effect_state SET state=? WHERE tenant=?",
+        rusqlite::params![canonical_collection(&original).unwrap(), actor.tenant().as_str()],
+    )
+    .unwrap();
+    assert!(matches!(handler.execute_bound(&ctx).unwrap().outcome(), DispositionOutcome::Complete));
+    assert_eq!(calls.load(Ordering::SeqCst), 1);
+    case.receipt();
+}
+
+#[test]
+fn completion_and_redelivery_bound_latency_and_writer_delay_with_long_history() {
+    use std::time::{Duration, Instant};
+    let case = Prepared::new();
+    let actor = caller(&case.snapshot);
+    let path = case.temp.path().join("bundle/wi/fabric.sqlite");
+    let mut c = rusqlite::Connection::open(&path).unwrap();
+    let tx = c.transaction().unwrap();
+    let mut state = case.bundle.wi().effect_snapshot(actor.tenant()).unwrap();
+    // Batch genuine, domain-validated discovery entries so fixture construction
+    // does not dominate the test with a thousand fsyncs. No synthetic authority
+    // or malformed history is needed to exercise the former full replay path.
+    for n in 0..1000 {
+        let previous = state.effects[&case.id]
+            .dispatches
+            .last()
+            .unwrap()
+            .admission
+            .as_ref()
+            .unwrap()
+            .discovery_cursor
+            .clone();
+        let command = worldinterface_domain::effect::validate_command(
+            &state,
+            &actor,
+            second(1),
+            EffectAction::AdvanceDiscovery {
+                id: case.id.clone(),
+                previous,
+                next: Some(format!("history-{n}")),
+            },
+        )
+        .unwrap();
+        state =
+            worldinterface_domain::effect::replay_command(&state, actor.tenant(), command.bytes())
+                .unwrap()
+                .0;
+        tx.execute(
+            "INSERT INTO effect_history(tenant,revision,entry,digest) VALUES(?,?,?,?)",
+            rusqlite::params![
+                actor.tenant().as_str(),
+                state.revision,
+                command.bytes(),
+                ContentHash::of(command.bytes()).as_str()
+            ],
+        )
+        .unwrap();
+    }
+    tx.execute(
+        "UPDATE effect_state SET state=? WHERE tenant=?",
+        rusqlite::params![canonical_collection(&state).unwrap(), actor.tenant().as_str()],
+    )
+    .unwrap();
+    // Keep the derived outbox identical to a normal sequence of transactions.
+    tx.execute(
+        "UPDATE effect_outbox SET dispatch=? WHERE tenant=? AND intent=?",
+        rusqlite::params![
+            canonical_data(&state.effects[&case.id].dispatches).unwrap(),
+            actor.tenant().as_str(),
+            case.id.as_str()
+        ],
+    )
+    .unwrap();
+    tx.execute(
+        "INSERT INTO effect_state VALUES(?,?)",
+        rusqlite::params![
+            "other-tenant",
+            canonical_collection(&worldinterface_domain::effect::EffectState::default()).unwrap()
+        ],
+    )
+    .unwrap();
+    tx.commit().unwrap();
+    drop(c);
+    let calls = Arc::new(AtomicUsize::new(0));
+    let handler = EffectAttemptHandler {
+        bundle: case.bundle.clone(),
+        port: Port { calls: calls.clone(), variant: "success" },
+        evidence: Evidence(case.snapshot.clone()),
+        clock: Clock,
+    };
+    let ctx = case.ctx(case.run);
+    let (ready_tx, ready_rx) = std::sync::mpsc::sync_channel(0);
+    let stop = Arc::new(std::sync::atomic::AtomicBool::new(false));
+    let writer_stop = stop.clone();
+    let writer = std::thread::spawn(move || {
+        let c = rusqlite::Connection::open(path).unwrap();
+        c.busy_timeout(Duration::from_secs(10)).unwrap();
+        ready_tx.send(()).unwrap();
+        let mut max_wait = Duration::ZERO;
+        let mut writes = 0;
+        while !writer_stop.load(Ordering::SeqCst) {
+            let start = Instant::now();
+            c.execute_batch("BEGIN EXCLUSIVE; UPDATE effect_state SET state=state WHERE tenant='other-tenant'; COMMIT").unwrap();
+            max_wait = max_wait.max(start.elapsed());
+            writes += 1;
+            std::thread::sleep(Duration::from_millis(1));
+        }
+        (writes, max_wait)
+    });
+    ready_rx.recv_timeout(Duration::from_secs(5)).unwrap();
+    let start = Instant::now();
+    let disposition = handler.execute_bound(&ctx);
+    let completion_time = start.elapsed();
+    let mut redeliveries = Vec::new();
+    for _ in 0..3 {
+        let start = Instant::now();
+        redeliveries.push((handler.execute_bound(&ctx), start.elapsed()));
+    }
+    stop.store(true, Ordering::SeqCst);
+    let (writes, max_wait) = writer.join().unwrap();
+    assert!(matches!(disposition.unwrap().outcome(), DispositionOutcome::Complete));
+    assert!(completion_time < Duration::from_secs(5), "completion: {completion_time:?}");
+    for (result, elapsed) in redeliveries {
+        assert!(matches!(result.unwrap().outcome(), DispositionOutcome::Complete));
+        assert!(elapsed < Duration::from_secs(5), "redelivery: {elapsed:?}");
+    }
+    assert!(writes > 0);
+    assert!(max_wait < Duration::from_secs(1), "writer delay: {max_wait:?}");
+    assert_eq!(calls.load(Ordering::SeqCst), 1);
+    case.receipt();
+    eprintln!("S-026: 1000 journal entries; completion={completion_time:?}; cross-tenant writes={writes}; max_writer_delay={max_wait:?}");
 }
 #[test]
 fn completion_clock_failure_records_inferred_uncertainty_with_effect_phase_times() {
@@ -987,6 +1276,22 @@ fn retry_dispatch_does_not_reuse_the_previous_attempt_disposition() {
     let e = &state.effects[&case.id];
     let attempt = e.attempt.clone().unwrap();
     let original_receipt = case.receipt();
+    let original_source_revision =
+        case.bundle.wi().effect_receipts(actor.tenant(), &case.id).unwrap()[0].2;
+    let source = case
+        .bundle
+        .wi()
+        .effect_receipt_source(actor.tenant(), &case.id, original_source_revision)
+        .unwrap();
+    let replay = case
+        .bundle
+        .wi()
+        .effect_snapshot_at_revision(actor.tenant(), original_source_revision)
+        .unwrap();
+    let replay = &replay.effects[&case.id];
+    assert_eq!(source.dispatch_index, 0);
+    assert_eq!(&source.admission, replay.dispatches[0].admission.as_ref().unwrap());
+    assert_eq!(&source.outcome, replay.outcomes.last().unwrap());
     // Persist an AQ/Fabric mismatch for the old dispatch. A later legitimate
     // noncommit retry must retain this diagnostic against its immutable source.
     let mut aq = actionqueue_runtime::engine::ActionQueueEngine::new(
@@ -1069,6 +1374,23 @@ fn retry_dispatch_does_not_reuse_the_previous_attempt_disposition() {
     assert_eq!(calls.load(Ordering::SeqCst), 2);
     let receipts = case.bundle.wi().effect_receipts(actor.tenant(), &case.id).unwrap();
     assert_eq!(receipts.len(), 2);
+    for (index, (_, _, revision)) in receipts.iter().enumerate() {
+        let source =
+            case.bundle.wi().effect_receipt_source(actor.tenant(), &case.id, *revision).unwrap();
+        let replay =
+            case.bundle.wi().effect_snapshot_at_revision(actor.tenant(), *revision).unwrap();
+        let replay = &replay.effects[&case.id];
+        assert_eq!(source.dispatch_index, index);
+        assert_eq!(
+            &source.admission,
+            replay.dispatches.last().unwrap().admission.as_ref().unwrap()
+        );
+        assert_eq!(&source.outcome, replay.outcomes.last().unwrap());
+        assert_eq!(
+            source.run.as_str(),
+            if index == 0 { case.run.to_string() } else { new_run.to_string() }
+        );
+    }
     assert_ne!(receipts.last().unwrap().0, original_receipt.id);
     assert!(StoreBundle::open(&case.temp.path().join("bundle"))
         .unwrap()

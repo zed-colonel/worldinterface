@@ -238,24 +238,36 @@ impl<P: EffectExecutionPort, V: EvidenceAuthority, C: TrustedClock> EffectAttemp
         );
         let receipt_view =
             root.inspect_receipt(&access, &receipt)?.ok_or("committed receipt unavailable")?;
-        let source = root.effect_snapshot_at_revision(caller.tenant(), revision)?;
-        let source_effect = source.effects.get(id).ok_or("missing receipt source effect")?;
-        let source_dispatch =
-            source_effect.dispatches.last().ok_or("missing receipt source dispatch")?;
-        let same_admission = match (&dispatch.admission, &source_dispatch.admission) {
-            (Some(current), Some(old)) => {
-                current.task == old.task
+        let source = root.effect_receipt_source(caller.tenant(), id, revision)?;
+        let request = worldinterface_domain::effect::admission_request(
+            caller.tenant(),
+            effect,
+            &source.snapshot,
+            u32::try_from(source.dispatch_index)?,
+        )?;
+        let same_admission = match &dispatch.admission {
+            Some(current) => {
+                let old = &source.admission;
+                current.version == old.version
+                    && current.task == old.task
                     && current.queue_store == old.queue_store
                     && current.execution == old.execution
+                    && current.request_artifact == old.request_artifact
+                    && current.request_hash == old.request_hash
+                    && current.canonical_version == old.canonical_version
                     && current.canonical_digest == old.canonical_digest
                     && current.admission_key == old.admission_key
+                    && current.acknowledged_sequence == old.acknowledged_sequence
+                    && request.execution == old.execution
+                    && request.admission_key == old.admission_key
                     && old.observed_runs.contains(run)
             }
             _ => false,
         };
-        if source_effect.attempt.as_ref() != Some(&outcome.attempt)
-            || source_effect.outcomes.last() != Some(&outcome)
-            || source_dispatch.request != dispatch.request
+        if source.outcome != outcome
+            || source.run != *run
+            || source.dispatch_index != effect.dispatches.len() - 1
+            || request != dispatch.request
             || !same_admission
         {
             return Err("committed receipt belongs to another dispatch or attempt".into());
@@ -326,7 +338,25 @@ impl<P: EffectExecutionPort, V: EvidenceAuthority, C: TrustedClock> EffectAttemp
             return retry_storage(|| self.committed_disposition(caller, id, run))?
                 .ok_or_else(|| "stale effect attempt before publication".into());
         }
+        let phases = retry_storage(|| root.effect_execution_times(caller.tenant(), id))?;
+        if phases.run.as_ref() != Some(run) || phases.attempt != attempt {
+            return Err("stale Start binding before publication".into());
+        }
         drop(state);
+        // Bound the complete observation before publishing even its first blob.
+        // A rejected provider assertion falls back to one bounded uncertainty
+        // observation; no oversized port publications are left behind.
+        worldinterface_domain::effect::validate_outcome_bounds(
+            observation.outputs.len(),
+            observation.evidence.len(),
+            observation.outputs.iter().map(|b| b.len() as u64).chain(
+                observation
+                    .evidence
+                    .iter()
+                    .chain(&observation.boundary_record)
+                    .map(|b| b.bytes.len() as u64),
+            ),
+        )?;
         let mut outputs = Vec::new();
         for (index, bytes) in observation.outputs.iter().enumerate() {
             outputs.push(publish(

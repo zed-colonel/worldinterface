@@ -184,3 +184,22 @@ fn queue_ports_have_only_test_composition() {
     assert_eq!(mock.inspect(&r.task).unwrap(), QueueStatus::Pending);
     mock.wake(&r.admission_key, &r.payload_locator).unwrap();
 }
+#[test]
+fn outcome_artifact_bounds_include_boundary_bytes_and_checked_totals() {
+    use worldinterface_domain::effect::{
+        validate_outcome_bounds, MAX_OUTCOME_BYTES, MAX_OUTCOME_EVIDENCE, MAX_OUTCOME_OUTPUTS,
+    };
+    assert!(validate_outcome_bounds(
+        MAX_OUTCOME_OUTPUTS,
+        MAX_OUTCOME_EVIDENCE,
+        [MAX_OUTCOME_BYTES]
+    )
+    .is_ok());
+    assert!(validate_outcome_bounds(MAX_OUTCOME_OUTPUTS + 1, 1, [1]).is_err());
+    assert!(validate_outcome_bounds(1, MAX_OUTCOME_EVIDENCE + 1, [1]).is_err());
+    assert!(validate_outcome_bounds(1, 1, [MAX_OUTCOME_BYTES, 1]).is_err());
+    assert!(
+        validate_outcome_bounds(1, 1, [MAX_OUTCOME_BYTES / 2, MAX_OUTCOME_BYTES / 2, 1]).is_err()
+    );
+    assert!(validate_outcome_bounds(1, 1, [1, u64::MAX]).is_err());
+}

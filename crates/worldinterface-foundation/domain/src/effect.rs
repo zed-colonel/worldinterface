@@ -5,6 +5,30 @@ use serde::{Deserialize, Serialize};
 use std::collections::BTreeMap;
 use worldinterface_protocol::*;
 
+pub const MAX_OUTCOME_OUTPUTS: usize = 64;
+pub const MAX_OUTCOME_EVIDENCE: usize = 64;
+/// Local completion profile: outputs, evidence and boundary bytes together.
+pub const MAX_OUTCOME_BYTES: u64 = 16 * 1024 * 1024;
+
+/// Shared by domain reference validation and the runtime's pre-publication check.
+pub fn validate_outcome_bounds(
+    output_count: usize,
+    evidence_count: usize,
+    sizes: impl IntoIterator<Item = u64>,
+) -> Result<()> {
+    if output_count > MAX_OUTCOME_OUTPUTS || evidence_count > MAX_OUTCOME_EVIDENCE {
+        return Err("outcome artifact count bound".into());
+    }
+    let mut total = 0u64;
+    for size in sizes {
+        total = total.checked_add(size).ok_or("outcome artifact byte bound")?;
+        if total > MAX_OUTCOME_BYTES {
+            return Err("outcome artifact byte bound".into());
+        }
+    }
+    Ok(())
+}
+
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum CommitObservation {
@@ -126,6 +150,31 @@ pub struct EffectState {
     pub effects: BTreeMap<EffectIntentId, EffectAggregate>,
     pub requests: BTreeMap<ContentHash, EffectIntentId>,
     pub uses: BTreeMap<ContentHash, u32>,
+}
+
+/// Deterministic request identity for one dispatch. This computes bindings only;
+/// authorization, reservation and phase validation remain in command validation.
+pub fn admission_request(
+    tenant: &OpaqueRef,
+    effect: &EffectAggregate,
+    snapshot: &AuthorizationSnapshot,
+    index: u32,
+) -> Result<EffectAdmissionRequest> {
+    let id = &effect.intent.id;
+    let authorization = effect.authorization.as_ref().ok_or("no authorization")?;
+    let identity = digest(&(tenant, id, index))?;
+    Ok(EffectAdmissionRequest {
+        version: 1,
+        task: format!("wi-task:{}", identity.as_str()).try_into()?,
+        admission_key: format!("wi-effect:{}", identity.as_str()).try_into()?,
+        intent: id.clone(),
+        operation_index: index,
+        submission: digest(&effect.intent.submission)?,
+        agency: digest(&effect.agency)?,
+        resolution: digest(&effect.resolution)?,
+        authorization: digest(authorization)?,
+        execution: digest(&(&effect.intent, &effect.resolution, authorization, snapshot, index))?,
+    })
 }
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct EffectView {
@@ -515,7 +564,7 @@ fn reserve(uses: &mut BTreeMap<ContentHash, u32>, a: &AuthorizationEvaluation) -
 }
 fn check_evidence(refs: &[EvidenceRef], tenant: &OpaqueRef) -> Result<()> {
     if refs.is_empty()
-        || refs.len() > 64
+        || refs.len() > MAX_OUTCOME_EVIDENCE
         || refs.iter().any(|r| &r.artifact.scope != tenant || r.artifact.size == 0)
     {
         return Err("missing or wrong-scope evidence".into());
@@ -697,19 +746,7 @@ fn apply(state: &EffectState, entry: &Entry) -> Result<(EffectState, EffectInten
             if index >= e.intent.submission.budget.max_attempts {
                 return Err("attempt budget".into());
             }
-            let identity = digest(&(&entry.tenant, id, index))?;
-            let request = EffectAdmissionRequest {
-                version: 1,
-                task: format!("wi-task:{}", identity.as_str()).try_into()?,
-                admission_key: format!("wi-effect:{}", identity.as_str()).try_into()?,
-                intent: id.clone(),
-                operation_index: index,
-                submission: digest(&e.intent.submission)?,
-                agency: digest(&e.agency)?,
-                resolution: digest(&e.resolution)?,
-                authorization: digest(a)?,
-                execution: digest(&(&e.intent, &e.resolution, a, snapshot, index))?,
-            };
+            let request = admission_request(&entry.tenant, e, snapshot, index)?;
             let admission =
                 if let JournalAction::PrepareProduction { admission, .. } = &entry.action {
                     if admission.version != 1
@@ -851,8 +888,15 @@ fn apply(state: &EffectState, entry: &Entry) -> Result<(EffectState, EffectInten
             {
                 return Err("required output manifest mismatch".into());
             }
-            if o.required_outputs.len() > 64
-                || o.durable_outputs.len() > 64
+            validate_outcome_bounds(
+                o.durable_outputs.len(),
+                o.evidence.len(),
+                o.durable_outputs
+                    .iter()
+                    .map(|r| r.size)
+                    .chain(o.evidence.iter().chain(&o.boundary_record).map(|r| r.artifact.size)),
+            )?;
+            if o.required_outputs.len() > MAX_OUTCOME_OUTPUTS
                 || o.required_outputs
                     .iter()
                     .chain(&o.durable_outputs)

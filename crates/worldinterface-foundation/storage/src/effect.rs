@@ -248,6 +248,120 @@ pub struct EffectExecutionTimes {
     pub attempt: OpaqueRef,
 }
 
+/// Immutable facts at a receipt's journal revision, without replaying tenant state.
+/// This is a trusted-host binding lookup, not an authorization assertion.
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct EffectReceiptSource {
+    pub dispatch_index: usize,
+    pub snapshot: worldinterface_domain::authorization::AuthorizationSnapshot,
+    pub admission: worldinterface_domain::effect::ProductionAdmission,
+    pub run: OpaqueRef,
+    pub outcome: worldinterface_domain::effect::OutcomeEvidence,
+}
+
+fn receipt_source(
+    c: &Connection,
+    tenant: &OpaqueRef,
+    id: &EffectIntentId,
+    revision: u64,
+) -> Result<EffectReceiptSource> {
+    // Materialize only this intent's indexed history, releasing the SHARED lock
+    // before parsing. Unrelated tenant history never enters this lookup.
+    let entries = {
+        let mut q = c.prepare("SELECT revision,entry,digest FROM effect_history WHERE tenant=? AND json_extract(CAST(entry AS TEXT),'$.action.id')=? AND revision<=? ORDER BY revision")?;
+        let rows = q.query_map(params![tenant.as_str(), id.as_str(), revision], |r| {
+            Ok((r.get::<_, u64>(0)?, r.get::<_, Vec<u8>>(1)?, r.get::<_, String>(2)?))
+        })?;
+        rows.collect::<rusqlite::Result<Vec<_>>>()?
+    };
+    let mut dispatch_count = 0usize;
+    let mut admission: Option<worldinterface_domain::effect::ProductionAdmission> = None;
+    let mut snapshot = None;
+    let mut start = None;
+    let mut outcome = None;
+    for (number, bytes, digest) in entries {
+        if ContentHash::of(&bytes).as_str() != digest {
+            return Err(invalid("receipt source journal digest"));
+        }
+        let entry = strict_json(&bytes).map_err(invalid)?;
+        let action = &entry["action"];
+        if entry["version"].as_u64() != Some(1)
+            || canonical_data(&entry).map_err(invalid)? != bytes
+            || entry["tenant"].as_str() != Some(tenant.as_str())
+            || action["id"].as_str() != Some(id.as_str())
+        {
+            return Err(invalid("receipt source journal binding"));
+        }
+        match action["operation"].as_str() {
+            Some("prepare" | "prepare_production") => {
+                // Dispatches are append-only. The ordinal identifies the exact
+                // immutable request in the current aggregate's dispatch history.
+                dispatch_count += 1;
+                admission = action
+                    .get("admission")
+                    .map(|a| serde_json::from_value(a.clone()))
+                    .transpose()?;
+                snapshot = action
+                    .get("snapshot")
+                    .map(|s| serde_json::from_value(s.clone()))
+                    .transpose()?;
+                start = None;
+            }
+            Some("acknowledge_production") => {
+                if let Some(a) = &mut admission {
+                    a.acknowledged_sequence =
+                        Some(serde_json::from_value(action["sequence"].clone())?);
+                }
+            }
+            Some("observe_run") => {
+                if let Some(a) = &mut admission {
+                    a.observed_runs.push(serde_json::from_value(action["run"].clone())?);
+                }
+            }
+            Some("advance_discovery") => {
+                if let Some(a) = &mut admission {
+                    a.discovery_cursor = action
+                        .get("next")
+                        .map(|v| serde_json::from_value(v.clone()))
+                        .transpose()?;
+                }
+            }
+            Some("start_production") => {
+                start = Some((
+                    serde_json::from_value::<OpaqueRef>(action["run"].clone())?,
+                    serde_json::from_value::<OpaqueRef>(action["attempt"].clone())?,
+                ));
+            }
+            Some("outcome") if number == revision => {
+                outcome = Some(serde_json::from_value::<
+                    worldinterface_domain::effect::OutcomeEvidence,
+                >(action["evidence"].clone())?);
+            }
+            _ => {}
+        }
+    }
+    let mut admission = admission.ok_or_else(|| invalid("missing receipt source admission"))?;
+    admission.observed_runs.sort();
+    let (run, attempt) = start.ok_or_else(|| invalid("missing receipt source Start"))?;
+    let outcome = outcome.ok_or_else(|| invalid("missing receipt source outcome"))?;
+    if outcome.intent != *id
+        || outcome.attempt != attempt
+        || admission.acknowledged_sequence.is_none()
+        || !admission.observed_runs.contains(&run)
+    {
+        return Err(invalid("receipt source Start binding mismatch"));
+    }
+    Ok(EffectReceiptSource {
+        dispatch_index: dispatch_count
+            .checked_sub(1)
+            .ok_or_else(|| invalid("missing receipt source dispatch"))?,
+        snapshot: snapshot.ok_or_else(|| invalid("missing receipt source snapshot"))?,
+        admission,
+        run,
+        outcome,
+    })
+}
+
 fn execution_times(
     c: &Connection,
     tenant: &OpaqueRef,
@@ -290,6 +404,18 @@ fn execution_times(
 }
 
 impl StoreRoot {
+    /// Trusted-host lookup of the receipt's original production dispatch, Start
+    /// and outcome. The journal was domain validated on append and reopen; this
+    /// reads its facts using the intent index, without applying commands again.
+    pub fn effect_receipt_source(
+        &self,
+        tenant: &OpaqueRef,
+        id: &EffectIntentId,
+        revision: u64,
+    ) -> Result<EffectReceiptSource> {
+        receipt_source(&self.connect(StoreKind::Fabric)?, tenant, id, revision)
+    }
+
     /// Trusted-host lookup from the journal-derived run index. This is a binding,
     /// not authorization; hosts must still check the admission and principal.
     pub fn effect_run_binding(
@@ -725,6 +851,118 @@ pub(crate) fn reject_generic(c: &Connection, batch: &Batch) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn receipt_source_seeks_one_intent_and_fences_revision_tenant_dispatch_and_start() {
+        use worldinterface_domain::effect::{
+            CommitObservation, OutcomeEvidence, ProductionAdmission,
+        };
+        let c = Connection::open_in_memory().unwrap();
+        c.execute_batch(SCHEMA).unwrap();
+        let tenant: OpaqueRef = "tenant-a".to_owned().try_into().unwrap();
+        let id = EffectIntentId::generate();
+        let insert = |scope: &str, revision, action: serde_json::Value| {
+            let bytes =
+                canonical_data(&serde_json::json!({"version":1,"tenant":scope,"action":action}))
+                    .unwrap();
+            c.execute(
+                "INSERT INTO effect_history(tenant,revision,entry,digest) VALUES(?,?,?,?)",
+                params![scope, revision, &bytes, ContentHash::of(&bytes).as_str()],
+            )
+            .unwrap();
+        };
+        for revision in 1..=2000 {
+            // Deliberately irrelevant to the requested intent. A replay or a
+            // tenant scan would encounter these incomplete test entries.
+            insert(
+                tenant.as_str(),
+                revision,
+                serde_json::json!({"operation":"submit","id":EffectIntentId::generate()}),
+            );
+        }
+        let mut expected = Vec::new();
+        let fixture: serde_json::Value = serde_json::from_str(include_str!(
+            "../../../../conformance/wi-fabric-2/egress/fixture.json"
+        ))
+        .unwrap();
+        let snapshot: worldinterface_domain::authorization::AuthorizationSnapshot =
+            serde_json::from_value(fixture["snapshot"].clone()).unwrap();
+        for dispatch in 0..2 {
+            let admission = ProductionAdmission {
+                version: 1,
+                queue_store: "queue-store".to_owned().try_into().unwrap(),
+                task: format!("task-{dispatch}").try_into().unwrap(),
+                admission_key: format!("admission-{dispatch}").try_into().unwrap(),
+                execution: ContentHash::of(format!("execution-{dispatch}").as_bytes()),
+                request_artifact: ArtifactRef {
+                    scope: tenant.clone(),
+                    content: ContentHash::of(b"request"),
+                    size: 7,
+                },
+                request_hash: ContentHash::of(b"request"),
+                canonical_version: 2,
+                canonical_digest: ContentHash::of(b"canonical"),
+                acknowledged_sequence: None,
+                observed_runs: vec![],
+                discovery_cursor: None,
+            };
+            let run: OpaqueRef = format!("run-{dispatch}").try_into().unwrap();
+            let outcome = OutcomeEvidence {
+                intent: id.clone(),
+                attempt: format!("attempt-{dispatch}").try_into().unwrap(),
+                connector_semantics: "externally-keyed".to_owned().try_into().unwrap(),
+                commit: CommitObservation::Unknown,
+                outcome: ExecutionOutcome::Uncertain,
+                evidence: vec![],
+                required_outputs: vec![],
+                durable_outputs: vec![],
+                boundary_record: None,
+            };
+            let actions = [
+                serde_json::json!({"operation":"prepare_production","id":id,"admission":admission,"snapshot":snapshot}),
+                serde_json::json!({"operation":"acknowledge_production","id":id,"sequence":1}),
+                serde_json::json!({"operation":"observe_run","id":id,"run":run}),
+                serde_json::json!({"operation":"start_production","id":id,"run":run,"attempt":outcome.attempt}),
+                serde_json::json!({"operation":"outcome","id":id,"evidence":outcome}),
+            ];
+            for (n, action) in actions.into_iter().enumerate() {
+                insert(tenant.as_str(), 2001 + dispatch * 5 + n, action);
+            }
+            let mut admission = admission;
+            admission.acknowledged_sequence = Some(1);
+            admission.observed_runs.push(run.clone());
+            expected.push(EffectReceiptSource {
+                dispatch_index: dispatch,
+                snapshot: snapshot.clone(),
+                admission,
+                run,
+                outcome,
+            });
+        }
+        // Same ID and revision in another tenant cannot supply any source facts.
+        insert("tenant-b", 2005, serde_json::json!({"operation":"outcome","id":id}));
+        for (index, expected) in expected.into_iter().enumerate() {
+            assert_eq!(
+                receipt_source(&c, &tenant, &id, (2005 + index * 5) as u64).unwrap(),
+                expected
+            );
+        }
+        assert!(receipt_source(&c, &tenant, &id, 2004).is_err());
+        assert!(receipt_source(&c, &tenant, &id, 2011).is_err());
+        assert!(receipt_source(&c, &"tenant-b".to_owned().try_into().unwrap(), &id, 2005).is_err());
+        assert!(receipt_source(&c, &tenant, &EffectIntentId::generate(), 2005).is_err());
+        let mut q = c.prepare("EXPLAIN QUERY PLAN SELECT revision,entry,digest FROM effect_history WHERE tenant=? AND json_extract(CAST(entry AS TEXT),'$.action.id')=? AND revision<=? ORDER BY revision").unwrap();
+        let plan = q
+            .query_map(params![tenant.as_str(), id.as_str(), 2010], |r| r.get::<_, String>(3))
+            .unwrap()
+            .collect::<rusqlite::Result<Vec<_>>>()
+            .unwrap();
+        assert!(plan.iter().any(|s| s.contains("effect_history_intent (tenant=? AND <expr>=? AND revision<?)")), "{plan:?}");
+        assert!(!plan.iter().any(|s| s.contains("SCAN") || s.contains("TEMP B-TREE")), "{plan:?}");
+        drop(q);
+        c.execute_batch("DROP TRIGGER effect_no_update; UPDATE effect_history SET digest='bad' WHERE tenant='tenant-a' AND revision=2010").unwrap();
+        assert!(receipt_source(&c, &tenant, &id, 2010).is_err());
+    }
+
     #[test]
     fn phase_times_seek_one_intent_and_preserve_dispatch_and_tenant_boundaries() {
         // S-023: completion must not scan/deserialize the entire tenant journal
