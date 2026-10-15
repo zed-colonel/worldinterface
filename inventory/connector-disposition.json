@@ -2811,87 +2811,87 @@
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/effect.rs::::enum:CommitObservation",
-          "source_sha256": "a82f881cb39f806e63c240d2206d843b034ca54d2d2b85a3c0f02c6b33f9f604",
+          "source_sha256": "56c5a63dbd5f55e2c58a219b20736508f7993b4c1fd1e46b8e1d45c12ff50f0c",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/effect.rs::::enum:EffectAction",
-          "source_sha256": "a82f881cb39f806e63c240d2206d843b034ca54d2d2b85a3c0f02c6b33f9f604",
+          "source_sha256": "56c5a63dbd5f55e2c58a219b20736508f7993b4c1fd1e46b8e1d45c12ff50f0c",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/effect.rs::::enum:JournalAction",
-          "source_sha256": "a82f881cb39f806e63c240d2206d843b034ca54d2d2b85a3c0f02c6b33f9f604",
+          "source_sha256": "56c5a63dbd5f55e2c58a219b20736508f7993b4c1fd1e46b8e1d45c12ff50f0c",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/effect.rs::::enum:LinkKind",
-          "source_sha256": "a82f881cb39f806e63c240d2206d843b034ca54d2d2b85a3c0f02c6b33f9f604",
+          "source_sha256": "56c5a63dbd5f55e2c58a219b20736508f7993b4c1fd1e46b8e1d45c12ff50f0c",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/effect.rs::::source-module:crates/worldinterface-foundation/domain/src/effect.rs",
-          "source_sha256": "a82f881cb39f806e63c240d2206d843b034ca54d2d2b85a3c0f02c6b33f9f604",
+          "source_sha256": "56c5a63dbd5f55e2c58a219b20736508f7993b4c1fd1e46b8e1d45c12ff50f0c",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/effect.rs::::struct:Dispatch",
-          "source_sha256": "a82f881cb39f806e63c240d2206d843b034ca54d2d2b85a3c0f02c6b33f9f604",
+          "source_sha256": "56c5a63dbd5f55e2c58a219b20736508f7993b4c1fd1e46b8e1d45c12ff50f0c",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/effect.rs::::struct:EffectAggregate",
-          "source_sha256": "a82f881cb39f806e63c240d2206d843b034ca54d2d2b85a3c0f02c6b33f9f604",
+          "source_sha256": "56c5a63dbd5f55e2c58a219b20736508f7993b4c1fd1e46b8e1d45c12ff50f0c",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/effect.rs::::struct:EffectState",
-          "source_sha256": "a82f881cb39f806e63c240d2206d843b034ca54d2d2b85a3c0f02c6b33f9f604",
+          "source_sha256": "56c5a63dbd5f55e2c58a219b20736508f7993b4c1fd1e46b8e1d45c12ff50f0c",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/effect.rs::::struct:EffectView",
-          "source_sha256": "a82f881cb39f806e63c240d2206d843b034ca54d2d2b85a3c0f02c6b33f9f604",
+          "source_sha256": "56c5a63dbd5f55e2c58a219b20736508f7993b4c1fd1e46b8e1d45c12ff50f0c",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/effect.rs::::struct:Entry",
-          "source_sha256": "a82f881cb39f806e63c240d2206d843b034ca54d2d2b85a3c0f02c6b33f9f604",
+          "source_sha256": "56c5a63dbd5f55e2c58a219b20736508f7993b4c1fd1e46b8e1d45c12ff50f0c",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/effect.rs::::struct:IntentLink",
-          "source_sha256": "a82f881cb39f806e63c240d2206d843b034ca54d2d2b85a3c0f02c6b33f9f604",
+          "source_sha256": "56c5a63dbd5f55e2c58a219b20736508f7993b4c1fd1e46b8e1d45c12ff50f0c",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/effect.rs::::struct:OutcomeEvidence",
-          "source_sha256": "a82f881cb39f806e63c240d2206d843b034ca54d2d2b85a3c0f02c6b33f9f604",
+          "source_sha256": "56c5a63dbd5f55e2c58a219b20736508f7993b4c1fd1e46b8e1d45c12ff50f0c",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/effect.rs::::struct:ProductionAdmission",
-          "source_sha256": "a82f881cb39f806e63c240d2206d843b034ca54d2d2b85a3c0f02c6b33f9f604",
+          "source_sha256": "56c5a63dbd5f55e2c58a219b20736508f7993b4c1fd1e46b8e1d45c12ff50f0c",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/effect.rs::::struct:ReconciliationEvidence",
-          "source_sha256": "a82f881cb39f806e63c240d2206d843b034ca54d2d2b85a3c0f02c6b33f9f604",
+          "source_sha256": "56c5a63dbd5f55e2c58a219b20736508f7993b4c1fd1e46b8e1d45c12ff50f0c",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/effect.rs::::struct:ValidatedEffectCommand",
-          "source_sha256": "a82f881cb39f806e63c240d2206d843b034ca54d2d2b85a3c0f02c6b33f9f604",
+          "source_sha256": "56c5a63dbd5f55e2c58a219b20736508f7993b4c1fd1e46b8e1d45c12ff50f0c",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/effect.rs::::struct:VerifiedOutcome",
-          "source_sha256": "a82f881cb39f806e63c240d2206d843b034ca54d2d2b85a3c0f02c6b33f9f604",
+          "source_sha256": "56c5a63dbd5f55e2c58a219b20736508f7993b4c1fd1e46b8e1d45c12ff50f0c",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/effect.rs::::struct:VerifiedReconciliation",
-          "source_sha256": "a82f881cb39f806e63c240d2206d843b034ca54d2d2b85a3c0f02c6b33f9f604",
+          "source_sha256": "56c5a63dbd5f55e2c58a219b20736508f7993b4c1fd1e46b8e1d45c12ff50f0c",
           "registration_sites": []
         },
         {
@@ -3106,27 +3106,27 @@
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/reconciliation.rs::::enum:CaseAction",
-          "source_sha256": "3c4e9031bc0faf9c02375ced90efe6c8f308df53f11bb09390e90a88f7505aa0",
+          "source_sha256": "37e70e0b6a67ea13a6dcb77e0813703e3952b5d569548e2e452d5dff14ba5e21",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/reconciliation.rs::::enum:CaseStatus",
-          "source_sha256": "3c4e9031bc0faf9c02375ced90efe6c8f308df53f11bb09390e90a88f7505aa0",
+          "source_sha256": "37e70e0b6a67ea13a6dcb77e0813703e3952b5d569548e2e452d5dff14ba5e21",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/reconciliation.rs::::source-module:crates/worldinterface-foundation/domain/src/reconciliation.rs",
-          "source_sha256": "3c4e9031bc0faf9c02375ced90efe6c8f308df53f11bb09390e90a88f7505aa0",
+          "source_sha256": "37e70e0b6a67ea13a6dcb77e0813703e3952b5d569548e2e452d5dff14ba5e21",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/reconciliation.rs::::struct:ReconciliationCase",
-          "source_sha256": "3c4e9031bc0faf9c02375ced90efe6c8f308df53f11bb09390e90a88f7505aa0",
+          "source_sha256": "37e70e0b6a67ea13a6dcb77e0813703e3952b5d569548e2e452d5dff14ba5e21",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/reconciliation.rs::::struct:ReconciliationReceiptV1",
-          "source_sha256": "3c4e9031bc0faf9c02375ced90efe6c8f308df53f11bb09390e90a88f7505aa0",
+          "source_sha256": "37e70e0b6a67ea13a6dcb77e0813703e3952b5d569548e2e452d5dff14ba5e21",
           "registration_sites": []
         },
         {
@@ -4366,37 +4366,37 @@
         },
         {
           "id": "crates/worldinterface-runtime/src/aq_adapter.rs::::source-module:crates/worldinterface-runtime/src/aq_adapter.rs",
-          "source_sha256": "dabc829fada1fa5a6a429b7dcba548ac270676cc371d178873685e88336dae4e",
+          "source_sha256": "d5e627109bc3b374eaa1f75f13c42f768e4450e1aa183c3d775e43beb071e7e9",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/aq_adapter.rs::::struct:QueueEngine",
-          "source_sha256": "dabc829fada1fa5a6a429b7dcba548ac270676cc371d178873685e88336dae4e",
+          "source_sha256": "d5e627109bc3b374eaa1f75f13c42f768e4450e1aa183c3d775e43beb071e7e9",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/aq_adapter.rs::::struct:QueueProvenance",
-          "source_sha256": "dabc829fada1fa5a6a429b7dcba548ac270676cc371d178873685e88336dae4e",
+          "source_sha256": "d5e627109bc3b374eaa1f75f13c42f768e4450e1aa183c3d775e43beb071e7e9",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/aq_adapter.rs::::struct:QueueReferences",
-          "source_sha256": "dabc829fada1fa5a6a429b7dcba548ac270676cc371d178873685e88336dae4e",
+          "source_sha256": "d5e627109bc3b374eaa1f75f13c42f768e4450e1aa183c3d775e43beb071e7e9",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/aq_adapter.rs::::struct:QueueStoreId",
-          "source_sha256": "dabc829fada1fa5a6a429b7dcba548ac270676cc371d178873685e88336dae4e",
+          "source_sha256": "d5e627109bc3b374eaa1f75f13c42f768e4450e1aa183c3d775e43beb071e7e9",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/aq_adapter.rs::::struct:TaskInputLocator",
-          "source_sha256": "dabc829fada1fa5a6a429b7dcba548ac270676cc371d178873685e88336dae4e",
+          "source_sha256": "d5e627109bc3b374eaa1f75f13c42f768e4450e1aa183c3d775e43beb071e7e9",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/aq_adapter.rs::::struct:TaskRouter",
-          "source_sha256": "dabc829fada1fa5a6a429b7dcba548ac270676cc371d178873685e88336dae4e",
+          "source_sha256": "d5e627109bc3b374eaa1f75f13c42f768e4450e1aa183c3d775e43beb071e7e9",
           "registration_sites": []
         },
         {
@@ -4721,22 +4721,22 @@
         },
         {
           "id": "crates/worldinterface-runtime/src/reconciliation.rs::::source-module:crates/worldinterface-runtime/src/reconciliation.rs",
-          "source_sha256": "a7d0fdfadc7276876996d5a6aa6b77557834ab1e27298be8ad938754480b130d",
+          "source_sha256": "7c1e307a101b2140120970931211c61ea1733f3cf37b685106857ab0f8e2161c",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/reconciliation.rs::::struct:CaseLocator",
-          "source_sha256": "a7d0fdfadc7276876996d5a6aa6b77557834ab1e27298be8ad938754480b130d",
+          "source_sha256": "7c1e307a101b2140120970931211c61ea1733f3cf37b685106857ab0f8e2161c",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/reconciliation.rs::::struct:ReconciliationHandler",
-          "source_sha256": "a7d0fdfadc7276876996d5a6aa6b77557834ab1e27298be8ad938754480b130d",
+          "source_sha256": "7c1e307a101b2140120970931211c61ea1733f3cf37b685106857ab0f8e2161c",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/reconciliation.rs::::struct:ReconciliationRouter",
-          "source_sha256": "a7d0fdfadc7276876996d5a6aa6b77557834ab1e27298be8ad938754480b130d",
+          "source_sha256": "7c1e307a101b2140120970931211c61ea1733f3cf37b685106857ab0f8e2161c",
           "registration_sites": []
         },
         {
@@ -5206,22 +5206,22 @@
         },
         {
           "id": "crates/worldinterface-runtime/tests/reconciliation.rs::::module:support",
-          "source_sha256": "56cd24dcbcde802c17d31a85e76349adb19a1d96727b016af3adf2b196435109",
+          "source_sha256": "4b81805d92fd35f8a4fddca8ec0d97b934dce982fdb3b8d608f70e511841ecac",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/reconciliation.rs::::source-module:crates/worldinterface-runtime/tests/reconciliation.rs",
-          "source_sha256": "56cd24dcbcde802c17d31a85e76349adb19a1d96727b016af3adf2b196435109",
+          "source_sha256": "4b81805d92fd35f8a4fddca8ec0d97b934dce982fdb3b8d608f70e511841ecac",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/reconciliation.rs::support::module:connectors",
-          "source_sha256": "56cd24dcbcde802c17d31a85e76349adb19a1d96727b016af3adf2b196435109",
+          "source_sha256": "4b81805d92fd35f8a4fddca8ec0d97b934dce982fdb3b8d608f70e511841ecac",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/reconciliation.rs::support::module:spi_harness",
-          "source_sha256": "56cd24dcbcde802c17d31a85e76349adb19a1d96727b016af3adf2b196435109",
+          "source_sha256": "4b81805d92fd35f8a4fddca8ec0d97b934dce982fdb3b8d608f70e511841ecac",
           "registration_sites": []
         },
         {
@@ -5778,7 +5778,7 @@
         },
         {
           "path": "crates/worldinterface-foundation/domain/src/effect.rs",
-          "source_sha256": "a82f881cb39f806e63c240d2206d843b034ca54d2d2b85a3c0f02c6b33f9f604",
+          "source_sha256": "56c5a63dbd5f55e2c58a219b20736508f7993b4c1fd1e46b8e1d45c12ff50f0c",
           "treatment": "Retain WI-04 guarded domain and production admission binding; review selective changes without weakening replacement or qualification gates."
         },
         {
@@ -5808,7 +5808,7 @@
         },
         {
           "path": "crates/worldinterface-foundation/domain/src/reconciliation.rs",
-          "source_sha256": "3c4e9031bc0faf9c02375ced90efe6c8f308df53f11bb09390e90a88f7505aa0",
+          "source_sha256": "37e70e0b6a67ea13a6dcb77e0813703e3952b5d569548e2e452d5dff14ba5e21",
           "treatment": "Retain target connector contracts, executor, reconciliation and conformance evidence; edit selectively when retiring legacy surfaces."
         },
         {
@@ -6059,7 +6059,7 @@
         {
           "path": "crates/worldinterface-runtime/src/aq_adapter.rs",
           "treatment": "Retain target integration source and tests; audit shared declarations before any later selective removal.",
-          "source_sha256": "dabc829fada1fa5a6a429b7dcba548ac270676cc371d178873685e88336dae4e"
+          "source_sha256": "d5e627109bc3b374eaa1f75f13c42f768e4450e1aa183c3d775e43beb071e7e9"
         },
         {
           "path": "crates/worldinterface-runtime/src/artifact.rs",
@@ -6113,7 +6113,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/src/reconciliation.rs",
-          "source_sha256": "a7d0fdfadc7276876996d5a6aa6b77557834ab1e27298be8ad938754480b130d",
+          "source_sha256": "7c1e307a101b2140120970931211c61ea1733f3cf37b685106857ab0f8e2161c",
           "treatment": "Retain target connector contracts, executor, reconciliation and conformance evidence; edit selectively when retiring legacy surfaces."
         },
         {
@@ -6183,7 +6183,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/tests/reconciliation.rs",
-          "source_sha256": "56cd24dcbcde802c17d31a85e76349adb19a1d96727b016af3adf2b196435109",
+          "source_sha256": "4b81805d92fd35f8a4fddca8ec0d97b934dce982fdb3b8d608f70e511841ecac",
           "treatment": "Retain target connector contracts, executor, reconciliation and conformance evidence; edit selectively when retiring legacy surfaces."
         },
         {

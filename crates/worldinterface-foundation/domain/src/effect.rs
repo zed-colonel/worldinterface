@@ -1056,17 +1056,27 @@ fn apply(state: &EffectState, entry: &Entry) -> Result<(EffectState, EffectInten
                     case.admission_request = Some(request.clone());
                     case.revision += 1;
                 }
-                CaseAction::Acknowledge { sequence } => {
+                CaseAction::Acknowledge { sequence, run } => {
                     if *sequence == 0
                         || case.admission_request.is_none()
                         || case.admission_sequence.is_some_and(|old| old != *sequence)
+                        || case
+                            .aq_run
+                            .as_ref()
+                            .zip(run.as_ref())
+                            .is_some_and(|(old, new)| old != new)
                     {
                         return Err("reconciliation acknowledgment conflict".into());
                     }
-                    if case.admission_sequence == Some(*sequence) {
+                    if case.admission_sequence == Some(*sequence)
+                        && run.as_ref().is_none_or(|r| case.aq_run.as_ref() == Some(r))
+                    {
                         return Ok((state.clone(), id.clone()));
                     }
                     case.admission_sequence = Some(*sequence);
+                    if run.is_some() {
+                        case.aq_run = run.clone();
+                    }
                     case.revision += 1;
                 }
                 CaseAction::Start => case.start(*expected, now.epoch_millis()?)?,

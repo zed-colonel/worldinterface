@@ -61,6 +61,8 @@ pub struct ReconciliationCase {
     pub admission_request: Option<Vec<u8>>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub admission_sequence: Option<u64>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub aq_run: Option<OpaqueRef>,
     pub queue_store: OpaqueRef,
     pub receipts: Vec<ReconciliationReceiptV1>,
 }
@@ -133,13 +135,14 @@ impl ReconciliationCase {
             escalation: None,
             admission_request: outcome.reconciliation_admission.clone(),
             admission_sequence: None,
+            aq_run: None,
             queue_store: admission.queue_store.clone(),
             receipts: vec![],
         }))
     }
     pub fn start(&mut self, expected: u32, now: u64) -> Result<()> {
         if self.revision != expected
-            || self.status.terminal()
+            || self.status != CaseStatus::Pending
             || now < self.next_eligible_millis
             || self.observations
                 >= self.execution.binding.descriptor.reconciliation.max_observations
@@ -162,6 +165,12 @@ impl ReconciliationCase {
     ) -> Result<()> {
         if self.revision != expected
             || self.status.terminal()
+            || matches!(
+                result,
+                CaseStatus::Pending
+                    | CaseStatus::ConfirmedCommitted
+                    | CaseStatus::ConfirmedNotCommitted
+            ) && self.status != CaseStatus::Running
             || evidence.is_empty()
             || evidence.len() > 2
             || evidence.iter().any(|e| {
@@ -249,8 +258,17 @@ impl ReconciliationCase {
 #[derive(Clone, Debug, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
 pub enum CaseAction {
-    PrepareAdmission { request: Vec<u8> },
-    Acknowledge { sequence: u64 },
+    PrepareAdmission {
+        request: Vec<u8>,
+    },
+    Acknowledge {
+        sequence: u64,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        run: Option<OpaqueRef>,
+    },
     Start,
-    Observe { result: CaseStatus, evidence: Vec<EvidenceRef> },
+    Observe {
+        result: CaseStatus,
+        evidence: Vec<EvidenceRef>,
+    },
 }

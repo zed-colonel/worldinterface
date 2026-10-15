@@ -102,7 +102,7 @@ pub fn deliver<H: ExecutorHandler + 'static>(
 ) -> Result<()> {
     let cases = queue.wi().reconciliation_cases(caller, intent)?;
     for mut case in cases {
-        if case.status.terminal() || case.admission_sequence.is_some() {
+        if case.status.terminal() || (case.admission_sequence.is_some() && case.aq_run.is_some()) {
             continue;
         }
         if case.queue_store.as_str() != queue.store_id().to_string() {
@@ -124,11 +124,16 @@ pub fn deliver<H: ExecutorHandler + 'static>(
             return Err("reconciliation request binding".into());
         }
         let outcome = queue.ensure_task(prepared)?;
+        let runs = queue.engine().projection().run_ids_for_task(outcome.task_id());
+        if runs.len() != 1 {
+            return Err("reconciliation requires one immutable AQ run".into());
+        }
+        let run = runs[0].to_string().try_into()?;
         queue.wi().reconciliation_apply(
             caller,
             clock.now()?,
             &case,
-            CaseAction::Acknowledge { sequence: outcome.sequence() },
+            CaseAction::Acknowledge { sequence: outcome.sequence(), run: Some(run) },
         )?;
     }
     Ok(())
@@ -223,6 +228,7 @@ impl<P: Connector, C: TrustedClock> ReconciliationHandler<P, C> {
             || case.queue_store.as_str() != self.bundle.aq_store_id()?.to_string()
             || case.admission_request.as_ref() != Some(&serde_json::to_vec(&expected)?)
             || ctx.input.causal_context.as_ref() != Some(expected.causal_context())
+            || case.aq_run.as_ref().is_none_or(|run| run.as_str() != ctx.input.run_id.to_string())
         {
             return Err("reconciliation task binding".into());
         }

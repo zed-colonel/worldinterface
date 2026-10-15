@@ -284,10 +284,24 @@ impl QueueReferences {
                         }
                         if case.admission_sequence.is_some()
                             && self.projection.task_admission(expected.task_spec().id()).is_none_or(
-                                |a| a.digest() != &expected.digest().expect("validated request"),
+                                |a| {
+                                    a.digest() != &expected.digest().expect("validated request")
+                                        || Some(a.sequence()) != case.admission_sequence
+                                },
                             )
                         {
                             return Err("missing reconciliation admission".into());
+                        }
+                    }
+                    if let Some(run) = &case.aq_run {
+                        let run_id: RunId = run.as_str().parse()?;
+                        let expected = crate::reconciliation::request(case)?;
+                        if !self
+                            .projection
+                            .run_ids_for_task(expected.task_spec().id())
+                            .contains(&run_id)
+                        {
+                            return Err("reconciliation run belongs to another task".into());
                         }
                     }
                 }

@@ -149,6 +149,21 @@ async fn reconciliation_bounded_backoff_deadline_and_escalation() {
     for mode in [Mode::Unknown, Mode::Escalate] {
         let h = Harness::new(IdempotencyClass::NonRepeatable, mode);
         h.execute().await;
+        let mut draft = h.case();
+        let mut pending = draft.clone();
+        assert!(pending
+            .observe(
+                pending.revision,
+                CaseStatus::Pending,
+                h.effect().outcomes[0].evidence.clone(),
+                &h.clock.now().unwrap(),
+                99
+            )
+            .is_err());
+        draft.start(draft.revision, h.clock.now().unwrap().epoch_millis().unwrap()).unwrap();
+        assert!(draft
+            .start(draft.revision, h.clock.now().unwrap().epoch_millis().unwrap())
+            .is_err());
         h.reconcile().await;
         let c = h.case();
         assert_eq!(
@@ -192,4 +207,35 @@ async fn reconciliation_reopen_backup_and_projection_rebuild_preserve_case() {
     StoreBundle::restore(&backup, &restored).unwrap();
     let restored = StoreBundle::open(&restored).unwrap();
     assert_eq!(restored.wi().reconciliation_cases(&caller, &id).unwrap()[0], case);
+}
+
+#[tokio::test]
+async fn reconciliation_rejects_copied_payload_on_another_aq_run() {
+    use worldinterface_runtime::{
+        aq_adapter::QueueEngine,
+        reconciliation::{self, ReconciliationHandler},
+    };
+    let h = Harness::new(IdempotencyClass::ExternallyKeyed, Mode::Ambiguous);
+    h.execute().await;
+    let mut queue = QueueEngine::bootstrap(&h.bundle, Noop, host()).unwrap();
+    reconciliation::deliver(&mut queue, &h.caller(), &h.clock, &h.id).unwrap();
+    queue.shutdown().unwrap();
+    let case = h.case();
+    assert!(case.aq_run.is_some());
+    let mut copied = h.context();
+    let request: actionqueue_core::admission::EnsureTaskRequest =
+        serde_json::from_slice(case.admission_request.as_ref().unwrap()).unwrap();
+    copied.input.payload = request.task_spec().task_payload().bytes().to_vec();
+    copied.input.causal_context = Some(request.causal_context().clone());
+    let handler = ReconciliationHandler {
+        bundle: h.bundle.clone(),
+        connector: h.connector.clone(),
+        clock: h.clock.clone(),
+    };
+    assert!(handler.execute_bound(&copied).unwrap_err().to_string().contains("task binding"));
+    assert_eq!(h.case(), case);
+    assert_eq!(h.case().observations, 0);
+    h.reconcile().await;
+    assert_eq!(h.case().status, CaseStatus::ConfirmedCommitted);
+    assert_eq!(h.connector.commits(), 1);
 }

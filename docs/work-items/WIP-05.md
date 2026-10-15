@@ -37,7 +37,9 @@ This avoids a second independent mutable journal. Original dispatch, attempt,
 source revision, provider key, registry, policy hash, deadline, eligibility time,
 observation budget, evidence, escalation and linked reconciliation receipts are
 persisted. Admission retries reuse the stored bytes and identity after an
-acknowledgment loss. There are no replacement generations.
+acknowledgment loss. The acknowledgment pins the sole AQ run as well as the
+admission sequence; copied payloads on other runs cannot spend observation
+budget. There are no replacement generations.
 
 Reconciliation runs as a separate AQ task. It spends observation budget before
 a provider query, publishes evidence before appending its transition and linked

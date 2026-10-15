@@ -57,6 +57,11 @@
         "manifest": "crates/worldinterface-runtime/Cargo.toml",
         "package": "worldinterface-runtime",
         "test": "spi_executor_classifies_and_rejects_drift_scope_and_prepare"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "reconciliation_rejects_copied_payload_on_another_aq_run"
       }
     ],
     "bounded-reconciliation": [
