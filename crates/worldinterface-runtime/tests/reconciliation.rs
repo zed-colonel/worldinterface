@@ -7,7 +7,7 @@ use worldinterface_domain::{
     agency::AuthenticatedCaller,
     authorization::VerifiedSnapshot,
     effect::EffectAction,
-    reconciliation::{CaseAction, CaseStatus},
+    reconciliation::{CaseAction, CaseStatus, VerifiedCaseAction},
     Phase,
 };
 use worldinterface_egress::Egress;
@@ -54,10 +54,10 @@ async fn reconciliation_confirmations_preserve_original_receipt_and_stable_key()
                 &h.caller(),
                 h.clock.now().unwrap(),
                 &case,
-                CaseAction::Observe {
+                VerifiedCaseAction::from_trusted_runtime(CaseAction::Observe {
                     result: CaseStatus::ConfirmedNotCommitted,
                     evidence: case.evidence[..1].to_vec()
-                }
+                })
             )
             .is_err());
         let access = AuthenticatedCaller::from_trusted_authentication(
@@ -236,6 +236,126 @@ async fn reconciliation_rejects_copied_payload_on_another_aq_run() {
     assert_eq!(h.case(), case);
     assert_eq!(h.case().observations, 0);
     h.reconcile().await;
+    assert_eq!(h.case().status, CaseStatus::ConfirmedCommitted);
+    assert_eq!(h.connector.commits(), 1);
+}
+
+/// F-001: a principal cannot forge lifecycle, observation or admission authority.
+#[tokio::test]
+async fn reconciliation_principal_cannot_forge_case_transitions_or_enable_retry() {
+    let h = Harness::new(IdempotencyClass::NonRepeatable, Mode::Ambiguous);
+    h.execute().await;
+    let case = h.case();
+    let evidence = h.effect().outcomes[0].evidence.clone();
+    for action in [
+        CaseAction::Start,
+        CaseAction::Observe {
+            result: CaseStatus::ConfirmedNotCommitted,
+            evidence: evidence.clone(),
+        },
+        CaseAction::Observe { result: CaseStatus::ConfirmedCommitted, evidence: evidence.clone() },
+        CaseAction::Observe { result: CaseStatus::Escalated, evidence: evidence.clone() },
+        CaseAction::Observe { result: CaseStatus::StillUnknown, evidence },
+        CaseAction::Acknowledge {
+            sequence: 1,
+            run: Some("forged-run".to_string().try_into().unwrap()),
+        },
+        CaseAction::PrepareAdmission { request: b"forged-request".to_vec() },
+    ] {
+        // Raw CaseAction cannot inhabit EffectAction (compile-fail domain test).
+        // Even an erroneously attested principal request is refused by Egress.
+        let error = Egress::new(h.bundle.wi())
+            .apply(
+                &h.caller(),
+                h.clock.now().unwrap(),
+                EffectAction::ReconciliationCase {
+                    id: h.id.clone(),
+                    case: case.id.clone(),
+                    expected: case.revision,
+                    action: VerifiedCaseAction::from_trusted_runtime(action),
+                },
+            )
+            .unwrap_err();
+        assert!(error.to_string().contains("trusted runtime path"));
+        assert_eq!(h.case(), case);
+        assert!(Egress::new(h.bundle.wi())
+            .apply(
+                &h.caller(),
+                h.clock.now().unwrap(),
+                EffectAction::PermitRetry {
+                    id: h.id.clone(),
+                    snapshot: VerifiedSnapshot::from_trusted_verifier(h.snapshot.clone()).unwrap(),
+                },
+            )
+            .is_err());
+    }
+    h.execute().await;
+    assert_eq!(h.connector.commits(), 1);
+    h.reconcile().await;
+    assert_eq!(h.case().status, CaseStatus::ConfirmedCommitted);
+    assert_eq!(h.connector.commits(), 1);
+}
+
+/// F-002: transient host-clock failure retries the admitted observation run;
+/// a binding violation still produces terminal failure without spending budget.
+#[tokio::test]
+async fn reconciliation_retries_transient_clock_and_rejects_binding_errors() {
+    use actionqueue_core::disposition::DispositionOutcome;
+    use actionqueue_executor_local::handler::ExecutorHandler;
+    use std::sync::{
+        atomic::{AtomicBool, Ordering},
+        Arc,
+    };
+    use worldinterface_runtime::{
+        aq_adapter::QueueEngine,
+        reconciliation::{self, ReconciliationHandler},
+        Result,
+    };
+    struct FlakyClock {
+        failed: Arc<AtomicBool>,
+        clock: Clock,
+    }
+    impl TrustedClock for FlakyClock {
+        fn now(&self) -> Result<Timestamp> {
+            if !self.failed.swap(true, Ordering::SeqCst) {
+                return Err("temporary clock failure".into());
+            }
+            self.clock.now()
+        }
+    }
+    let h = Harness::new(IdempotencyClass::ExternallyKeyed, Mode::Ambiguous);
+    h.execute().await;
+    let mut queue = QueueEngine::bootstrap(&h.bundle, Noop, host()).unwrap();
+    reconciliation::deliver(&mut queue, &h.caller(), &h.clock, &h.id).unwrap();
+    queue.shutdown().unwrap();
+    let case = h.case();
+    let request: actionqueue_core::admission::EnsureTaskRequest =
+        serde_json::from_slice(case.admission_request.as_ref().unwrap()).unwrap();
+    let context = |run| {
+        let mut ctx = h.context();
+        ctx.input.payload = request.task_spec().task_payload().bytes().to_vec();
+        ctx.input.causal_context = Some(request.causal_context().clone());
+        ctx.input.run_id = run;
+        ctx
+    };
+    let handler = ReconciliationHandler {
+        bundle: h.bundle.clone(),
+        connector: h.connector.clone(),
+        clock: FlakyClock { failed: Arc::new(AtomicBool::new(false)), clock: h.clock.clone() },
+    };
+    assert!(matches!(
+        handler.execute(context(h.run)).outcome(),
+        DispositionOutcome::TerminalFailure { .. }
+    ));
+    let run = case.aq_run.as_ref().unwrap().as_str().parse().unwrap();
+    h.reconcile_with_clock(handler.clock).await;
+    let queue = QueueEngine::bootstrap(&h.bundle, Noop, host()).unwrap();
+    let observed_run = queue.engine().projection().run_instances().find(|r| r.id() == run).unwrap();
+    assert_eq!(observed_run.failure_attempt_count(), 1);
+    assert_eq!(observed_run.attempt_count(), 2);
+    assert_eq!(observed_run.state(), actionqueue_core::run::state::RunState::Completed);
+    queue.shutdown().unwrap();
+    assert_eq!(h.case().observations, 1);
     assert_eq!(h.case().status, CaseStatus::ConfirmedCommitted);
     assert_eq!(h.connector.commits(), 1);
 }

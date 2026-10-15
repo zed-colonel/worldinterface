@@ -1109,6 +1109,11 @@
           "manifest": "crates/worldinterface-runtime/Cargo.toml",
           "package": "worldinterface-runtime",
           "test": "ab_wi_020_queue_cancel_keeps_started_external_effect_uncertain"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "spi_cancel_phase_records_observation_and_preserves_commit_truth"
         }
       ]
     },

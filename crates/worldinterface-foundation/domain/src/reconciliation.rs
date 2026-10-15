@@ -272,3 +272,37 @@ pub enum CaseAction {
         evidence: Vec<EvidenceRef>,
     },
 }
+
+/// A case transition attested by the trusted runtime, never request deserialization.
+/// Only the reconciliation handler may attest provider observations; admission
+/// delivery and terminal recovery attest their own AQ outcomes. An authenticated
+/// effect principal alone cannot supply this authority.
+///
+/// ```compile_fail
+/// use worldinterface_domain::{effect::EffectAction, reconciliation::CaseAction};
+/// use worldinterface_protocol::{EffectIntentId, OpaqueRef};
+/// fn forge(id: EffectIntentId, case: OpaqueRef) -> EffectAction {
+///     EffectAction::ReconciliationCase { id, case, expected: 0, action: CaseAction::Start }
+/// }
+/// ```
+/// ```compile_fail
+/// use worldinterface_domain::reconciliation::VerifiedCaseAction;
+/// fn deserialize(bytes: &[u8]) {
+///     let _: VerifiedCaseAction = serde_json::from_slice(bytes).unwrap();
+/// }
+/// ```
+#[derive(Clone, Debug)]
+pub struct VerifiedCaseAction(CaseAction);
+impl VerifiedCaseAction {
+    /// Host trust boundary, analogous to VerifiedReconciliation. Never call from
+    /// an effect-principal request handler or on unverified provider input.
+    pub fn from_trusted_runtime(action: CaseAction) -> Self {
+        Self(action)
+    }
+    pub fn action(&self) -> &CaseAction {
+        &self.0
+    }
+    pub(crate) fn into_action(self) -> CaseAction {
+        self.0
+    }
+}

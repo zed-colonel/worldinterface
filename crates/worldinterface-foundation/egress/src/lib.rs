@@ -22,6 +22,11 @@ impl<'a> Egress<'a> {
         at: Timestamp,
         action: EffectAction,
     ) -> Result<EffectIntentId> {
+        // Case transitions belong to the runtime's observation/admission path.
+        // Even a host-attested action must not enter through the principal facade.
+        if matches!(&action, EffectAction::ReconciliationCase { .. }) {
+            return Err(invalid("reconciliation requires trusted runtime path"));
+        }
         // Optimistic retries revalidate against the newly committed authority/use state.
         for _ in 0..32 {
             let state = self.root.effect_snapshot(caller.tenant())?;

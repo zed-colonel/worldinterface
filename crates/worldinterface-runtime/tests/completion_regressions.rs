@@ -1494,7 +1494,9 @@ fn retry_dispatch_does_not_reuse_the_previous_attempt_disposition() {
             &actor,
             second(2),
             &original_case,
-            worldinterface_domain::reconciliation::CaseAction::Start,
+            worldinterface_domain::reconciliation::VerifiedCaseAction::from_trusted_runtime(
+                worldinterface_domain::reconciliation::CaseAction::Start,
+            ),
         )
         .unwrap();
     let running_case = case.bundle.wi().reconciliation_cases(&actor, &case.id).unwrap().remove(0);
@@ -1504,10 +1506,13 @@ fn retry_dispatch_does_not_reuse_the_previous_attempt_disposition() {
             &actor,
             second(2),
             &running_case,
-            worldinterface_domain::reconciliation::CaseAction::Observe {
-                result: worldinterface_domain::reconciliation::CaseStatus::ConfirmedNotCommitted,
-                evidence: e.outcomes[0].evidence.clone(),
-            },
+            worldinterface_domain::reconciliation::VerifiedCaseAction::from_trusted_runtime(
+                worldinterface_domain::reconciliation::CaseAction::Observe {
+                    result:
+                        worldinterface_domain::reconciliation::CaseStatus::ConfirmedNotCommitted,
+                    evidence: e.outcomes[0].evidence.clone(),
+                },
+            ),
         )
         .unwrap();
     let mut snapshot = case.snapshot.clone();

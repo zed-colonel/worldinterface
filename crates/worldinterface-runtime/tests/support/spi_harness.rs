@@ -58,9 +58,13 @@ pub struct Harness {
 }
 impl Harness {
     pub fn new(class: IdempotencyClass, mode: Mode) -> Self {
+        Self::with_cancellation(class, mode, false)
+    }
+    pub fn with_cancellation(class: IdempotencyClass, mode: Mode, supported: bool) -> Self {
         let temp = tempfile::tempdir().unwrap();
-        let connector =
+        let mut connector =
             DeterministicConnector::new(temp.path().join("provider.sqlite"), class, mode);
+        connector.descriptor.cancellation_supported = supported;
         let (submission, snapshot) = fixture(&connector.descriptor);
         let clock = Clock::new();
         let bundle = Arc::new(
@@ -213,13 +217,16 @@ impl Harness {
         );
     }
     pub async fn reconcile(&self) {
+        self.reconcile_with_clock(self.clock.clone()).await;
+    }
+    pub async fn reconcile_with_clock<C: TrustedClock + Send + Sync + 'static>(&self, clock: C) {
         let mut queue = QueueEngine::bootstrap(&self.bundle, Noop, host()).unwrap();
         reconciliation::deliver(&mut queue, &self.caller(), &self.clock, &self.id).unwrap();
         queue.shutdown().unwrap();
         let handler = ReconciliationHandler {
             bundle: self.bundle.clone(),
             connector: self.connector.clone(),
-            clock: self.clock.clone(),
+            clock,
         };
         let mut engine = ActionQueueEngine::new(
             RuntimeConfig {

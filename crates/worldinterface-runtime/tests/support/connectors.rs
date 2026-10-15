@@ -24,6 +24,7 @@ pub enum Mode {
     Ambiguous,
     NonCommit,
     Terminal,
+    TerminalCommitted,
     TerminalUnknown,
     PrepareReject,
     PrepareTransient,
@@ -38,6 +39,9 @@ pub struct DeterministicConnector {
     pub mode: Mode,
     pub after_prepare: Option<Arc<dyn Fn() + Send + Sync>>,
     pub after_commit: Option<Arc<dyn Fn() + Send + Sync>>,
+    pub after_invoke: Option<Arc<dyn Fn() + Send + Sync>>,
+    pub cancel_observation: Option<CancelObservation>,
+    pub cancel_calls: Arc<AtomicU64>,
 }
 impl DeterministicConnector {
     pub fn new(db: PathBuf, class: IdempotencyClass, mode: Mode) -> Self {
@@ -47,6 +51,9 @@ impl DeterministicConnector {
             mode,
             after_prepare: None,
             after_commit: None,
+            after_invoke: None,
+            cancel_observation: Some(CancelObservation::Unsupported),
+            cancel_calls: Arc::new(AtomicU64::new(0)),
             descriptor: ConnectorDescriptor {
                 version: 1,
                 connector: "deterministic:1".to_string().try_into().unwrap(),
@@ -156,13 +163,18 @@ impl Connector for DeterministicConnector {
                 if let Some(f) = &self.after_commit {
                     f();
                 }
-                if self.mode == Mode::Ambiguous || cancellation.is_cancelled() {
+                if self.mode == Mode::TerminalCommitted {
+                    (CommitObservation::ConfirmedCommitted, ExecutionOutcome::TerminalFailure)
+                } else if self.mode == Mode::Ambiguous || cancellation.is_cancelled() {
                     (CommitObservation::Unknown, ExecutionOutcome::Uncertain)
                 } else {
                     (CommitObservation::ConfirmedCommitted, ExecutionOutcome::Succeeded)
                 }
             }
         };
+        if let Some(f) = &self.after_invoke {
+            f();
+        }
         let success = outcome == ExecutionOutcome::Succeeded;
         Ok(PortObservation {
             commit,
@@ -199,7 +211,8 @@ impl Connector for DeterministicConnector {
         }
     }
     fn cancel(&self, _: ReconcileRequest) -> Result<CancelObservation> {
-        Ok(CancelObservation::Unsupported)
+        self.cancel_calls.fetch_add(1, Ordering::SeqCst);
+        self.cancel_observation.ok_or_else(|| "temporary cancellation failure".into())
     }
 }
 #[derive(Clone)]

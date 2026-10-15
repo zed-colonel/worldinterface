@@ -43,6 +43,15 @@ fn spi_registry_classes_keys_and_invalid_contracts() {
                     )
                     .unwrap()
             );
+            let mut renamed = mapping.clone();
+            renamed.parameter = "renamed-header".to_string().try_into().unwrap();
+            assert_eq!(
+                mapping.derive(&tenant, &d.operation, &identity).unwrap(),
+                renamed.derive(&tenant, &d.operation, &identity).unwrap()
+            );
+            let mut moved = d.clone();
+            moved.provider_key = Some(renamed);
+            assert_ne!(d.digest().unwrap(), moved.digest().unwrap());
             d.provider_key = None;
             assert!(validate_connector(&d).is_err());
         }
@@ -232,4 +241,154 @@ fn spi_preparation_cannot_substitute_current_exact_authority() {
     ));
     assert_eq!(h.connector.commits(), 0);
     assert!(h.effect().attempt.is_none());
+}
+
+/// F-003: meaningful cancellation is a connector phase; a request, unsupported
+/// cancellation or transport error never serves as evidence of noncommit.
+#[test]
+fn spi_cancel_phase_records_observation_and_preserves_commit_truth() {
+    use actionqueue_executor_local::handler::ExecutorHandler;
+    use std::sync::{atomic::Ordering, Arc};
+    for (supported, cancel, mode, expected_commit, expected_phase) in [
+        (
+            false,
+            Some(CancelObservation::ConfirmedNotCommitted),
+            Mode::Unknown,
+            CommitObservation::Unknown,
+            Phase::Uncertain,
+        ),
+        (
+            true,
+            Some(CancelObservation::Requested),
+            Mode::Unknown,
+            CommitObservation::Unknown,
+            Phase::Uncertain,
+        ),
+        (
+            true,
+            Some(CancelObservation::Unsupported),
+            Mode::Unknown,
+            CommitObservation::Unknown,
+            Phase::Uncertain,
+        ),
+        (true, None, Mode::Unknown, CommitObservation::Unknown, Phase::Uncertain),
+        (
+            true,
+            Some(CancelObservation::ConfirmedNotCommitted),
+            Mode::Unknown,
+            CommitObservation::ConfirmedNotCommitted,
+            Phase::Canceled,
+        ),
+        (
+            true,
+            Some(CancelObservation::ConfirmedNotCommitted),
+            Mode::Commit,
+            CommitObservation::ConfirmedCommitted,
+            Phase::Succeeded,
+        ),
+    ] {
+        let mut h = Harness::with_cancellation(IdempotencyClass::NonRepeatable, mode, supported);
+        h.connector.cancel_observation = cancel;
+        let ctx = h.context();
+        let token = ctx.input.cancellation_context.token().clone();
+        h.connector.after_invoke = Some(Arc::new(move || {
+            token.cancel();
+        }));
+        let _ = h.handler().execute(ctx);
+        assert_eq!(h.connector.cancel_calls.load(Ordering::SeqCst), u64::from(supported));
+        assert_eq!(h.effect().commit, expected_commit);
+        assert_eq!(h.effect().phase, expected_phase);
+        assert_eq!(h.connector.commits(), usize::from(mode == Mode::Commit));
+        let outcome = h.effect().outcomes.remove(0);
+        let cancellation =
+            outcome.evidence.iter().find(|e| e.schema.as_str() == "wi.connector-cancel:1");
+        assert_eq!(cancellation.is_some(), supported);
+        if let Some(e) = cancellation {
+            assert!(e.artifact.size > 0);
+            assert_eq!(&e.artifact.scope, h.caller().tenant());
+        }
+        let _ = h.handler().execute(h.context());
+        assert_eq!(h.connector.cancel_calls.load(Ordering::SeqCst), u64::from(supported));
+        assert_eq!(h.connector.commits(), usize::from(mode == Mode::Commit));
+    }
+    // Before dispatch there is no external operation to cancel.
+    let mut h = Harness::with_cancellation(IdempotencyClass::NonRepeatable, Mode::Commit, true);
+    let ctx = h.context();
+    let token = ctx.input.cancellation_context.token().clone();
+    h.connector.after_prepare = Some(Arc::new(move || {
+        token.cancel();
+    }));
+    let _ = h.handler().execute(ctx);
+    assert_eq!(h.effect().phase, Phase::Canceled);
+    assert_eq!(h.connector.cancel_calls.load(Ordering::SeqCst), 0);
+    assert_eq!(h.connector.commits(), 0);
+}
+
+/// F-004: terminal provider failure and provider commit are independent facts.
+#[tokio::test]
+async fn spi_terminal_failure_after_commit_is_visible_and_cannot_reinvoke() {
+    use actionqueue_core::disposition::DispositionOutcome;
+    use actionqueue_executor_local::handler::ExecutorHandler;
+    use worldinterface_domain::{
+        authorization::VerifiedSnapshot,
+        effect::EffectAction,
+        receipt::{DisclosureProfile, ReceiptAccess},
+    };
+    use worldinterface_egress::Egress;
+    use worldinterface_runtime::{authority::TrustedClock, storage::StoreBundle};
+    let h = Harness::new(IdempotencyClass::NonRepeatable, Mode::TerminalCommitted);
+    let disposition = h.handler().execute(h.context());
+    assert!(
+        matches!(disposition.outcome(), DispositionOutcome::TerminalFailure { error } if error.code.as_str() == "wi.effect.terminal_provider_failure_committed")
+    );
+    let view = Egress::new(h.bundle.wi()).inspect(&h.caller(), &h.id).unwrap();
+    assert_eq!(view.phase, Phase::Failed);
+    assert_eq!(view.commit, CommitObservation::ConfirmedCommitted);
+    assert_eq!(view.outcome.unwrap().classification, Some(ExecutorClassification::TerminalFailure));
+    let receipts = h.bundle.wi().effect_receipts(h.caller().tenant(), &h.id).unwrap();
+    assert_eq!(receipts.len(), 1);
+    let receipt = h
+        .bundle
+        .wi()
+        .inspect_receipt(
+            &ReceiptAccess::from_trusted_authorizer(
+                h.caller().tenant().clone(),
+                h.caller().principal().clone(),
+                DisclosureProfile::Full,
+            ),
+            &receipts[0].0,
+        )
+        .unwrap()
+        .unwrap();
+    let Record::BoundaryReceipt(receipt) = receipt.canonical.unwrap().record else {
+        panic!("boundary receipt")
+    };
+    assert!(receipt.temporal.committed_at.is_some());
+    let ReceiptBody::Egress(body) = receipt.body else { panic!("egress receipt") };
+    assert_eq!(body.outcome, ExecutionOutcome::TerminalFailure);
+    assert_eq!(body.classification, Some(ExecutorClassification::TerminalFailure));
+    let verified = || VerifiedSnapshot::from_trusted_verifier(h.snapshot.clone()).unwrap();
+    for action in [
+        EffectAction::PermitRetry { id: h.id.clone(), snapshot: verified() },
+        EffectAction::StartProduction {
+            id: h.id.clone(),
+            snapshot: verified(),
+            run: h.run.to_string().try_into().unwrap(),
+            attempt: "new-attempt".to_string().try_into().unwrap(),
+        },
+    ] {
+        assert!(Egress::new(h.bundle.wi())
+            .apply(&h.caller(), h.clock.now().unwrap(), action)
+            .is_err());
+    }
+    assert_eq!(h.handler().execute(h.context()), disposition);
+    h.execute().await;
+    assert_eq!(h.connector.commits(), 1);
+    assert_eq!(h.bundle.wi().effect_receipts(h.caller().tenant(), &h.id).unwrap(), receipts);
+    let reopened = StoreBundle::open(&h.temp.path().join("bundle")).unwrap();
+    assert!(reopened.convergence_faults().is_empty());
+    assert_eq!(
+        reopened.wi().effect_snapshot(h.caller().tenant()).unwrap().effects[&h.id].commit,
+        CommitObservation::ConfirmedCommitted
+    );
 }

@@ -1,8 +1,8 @@
 //! Effect completion owns the Fabric Start fence and publication before AQ disposition.
 //! Every provider invocation crosses a validated, pinned connector registration.
 use crate::connector::{
-    check_installed, AuthorizedInvocation, Connector, PrepareOutcome, PreparedInvocation,
-    ResolveRequest,
+    check_installed, AuthorizedInvocation, CancelObservation, Connector, PrepareOutcome,
+    PreparedInvocation, ReconcileRequest, ResolveRequest,
 };
 use crate::{
     aq_adapter::TaskInputLocator,
@@ -79,7 +79,7 @@ fn terminal(code: &'static str) -> AttemptDisposition {
 // SQLite already waits for its busy timeout. Retry transient contention in every
 // completion persistence step, including publication and phase lookup. This never
 // crosses the provider boundary. Identity-bound publications resume idempotently.
-fn retry_storage<T>(mut operation: impl FnMut() -> Result<T>) -> Result<T> {
+pub(crate) fn retry_storage<T>(mut operation: impl FnMut() -> Result<T>) -> Result<T> {
     for retry in 0..8 {
         match operation() {
             Err(error)
@@ -283,6 +283,11 @@ impl<P: Connector, V: EvidenceAuthority, C: TrustedClock> EffectAttemptHandler<P
         }
         if outcome.outcome != ExecutionOutcome::Succeeded {
             let code = match outcome.outcome {
+                ExecutionOutcome::TerminalFailure
+                    if outcome.commit == CommitObservation::ConfirmedCommitted =>
+                {
+                    "wi.effect.terminal_provider_failure_committed"
+                }
                 ExecutionOutcome::TerminalFailure => "wi.effect.terminal_provider_failure",
                 ExecutionOutcome::FailedBeforeCommit => "wi.effect.failed_before_commit",
                 ExecutionOutcome::CanceledBeforeCommit => "wi.effect.canceled_before_commit",
@@ -750,7 +755,16 @@ impl<P: Connector, V: EvidenceAuthority, C: TrustedClock> EffectAttemptHandler<P
                     boundary_record: None,
                 }
             } else {
-                self.port
+                let cancel_request = ReconcileRequest {
+                    tenant: caller.tenant().clone(),
+                    intent: id.clone(),
+                    execution: authorized.execution().clone(),
+                    resource: authorized.resolved.resource.clone(),
+                };
+                let cancellation_supported =
+                    authorized.execution().binding.descriptor.cancellation_supported;
+                let mut observed = self
+                    .port
                     .invoke(
                         PreparedInvocation::new(authorized),
                         ctx.input.cancellation_context.token(),
@@ -758,7 +772,29 @@ impl<P: Connector, V: EvidenceAuthority, C: TrustedClock> EffectAttemptHandler<P
                     .unwrap_or(uncertainty(
                         "wi.port.uncertainty:1",
                         b"port did not return commit evidence",
-                    )?)
+                    )?);
+                // The token requests cooperation; only the connector's typed
+                // response may prove noncommit after crossing the boundary.
+                if cancellation_supported && ctx.input.cancellation_context.token().is_cancelled() {
+                    let canceled = self.port.cancel(cancel_request);
+                    let bytes: &[u8] = match &canceled {
+                        Ok(CancelObservation::Unsupported) => b"unsupported",
+                        Ok(CancelObservation::Requested) => b"requested",
+                        Ok(CancelObservation::ConfirmedNotCommitted) => b"confirmed_not_committed",
+                        Err(_) => b"cancel_observation_unavailable",
+                    };
+                    observed.evidence.push(EvidenceBytes {
+                        schema: "wi.connector-cancel:1".to_string().try_into()?,
+                        bytes: bytes.to_vec(),
+                    });
+                    if matches!(canceled, Ok(CancelObservation::ConfirmedNotCommitted))
+                        && observed.commit != CommitObservation::ConfirmedCommitted
+                    {
+                        observed.commit = CommitObservation::ConfirmedNotCommitted;
+                        observed.outcome = ExecutionOutcome::CanceledBeforeCommit;
+                    }
+                }
+                observed
             };
             provider_commit = observation.commit.clone();
             let mut observation = observation;

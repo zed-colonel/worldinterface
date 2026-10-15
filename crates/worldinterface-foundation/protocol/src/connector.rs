@@ -17,6 +17,11 @@ pub enum IdempotencyClass {
 pub struct ProviderKeyMapping {
     pub version: u32,
     pub provider_scope: OpaqueRef,
+    /// Provider-side request field/header that receives the derived key. This is
+    /// transport metadata, not a key namespace: renaming the provider parameter
+    /// must preserve replay identity. provider_scope names the namespace. The
+    /// pinned descriptor hashes this field so an adapter cannot silently change
+    /// where it places the key.
     pub parameter: OpaqueRef,
 }
 impl ProviderKeyMapping {

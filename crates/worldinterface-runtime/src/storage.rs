@@ -211,6 +211,9 @@ impl StoreBundle {
                         continue;
                     };
                     let expected_code = match outcome.outcome {
+                        worldinterface_protocol::ExecutionOutcome::TerminalFailure if outcome.commit == worldinterface_domain::effect::CommitObservation::ConfirmedCommitted => {
+                            Some("wi.effect.terminal_provider_failure_committed")
+                        }
                         worldinterface_protocol::ExecutionOutcome::TerminalFailure => {
                             Some("wi.effect.terminal_provider_failure")
                         }

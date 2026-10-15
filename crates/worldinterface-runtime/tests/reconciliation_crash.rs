@@ -74,6 +74,10 @@ fn reconciliation_crash_child() {
     if point.starts_with("reconciliation-") && point != "reconciliation-disposition" {
         std::env::set_var("WI_CRASH_POINT", &point);
         runtime.block_on(h.reconcile());
+        if point.ends_with("-validated") {
+            let _ = h.temp.keep(); // Parent inspects the completed child bundle.
+            return;
+        }
     }
     if point == "reconciliation-disposition" {
         let mut queue = QueueEngine::bootstrap(&h.bundle, Noop, host()).unwrap();
@@ -181,5 +185,106 @@ fn spi_provider_and_reconciliation_crash_cuts_never_duplicate_commit() {
         drop(h.bundle);
         let reopened = StoreBundle::open(&m.bundle).unwrap();
         assert_eq!(reopened.wi().reconciliation_cases(&worldinterface_domain::agency::AuthenticatedCaller::from_trusted_authentication(case.tenant.clone(),h.snapshot.bindings[0].principal.clone()),&case.intent).unwrap()[0],case);
+    }
+}
+
+/// F-002: force a real same-tenant journal write between validation and append
+/// at both Start and Observe. The one admitted AQ run must retain the confirmed
+/// provider observation and finish without escalation or another invocation.
+#[test]
+fn reconciliation_journal_contention_preserves_provider_confirmation() {
+    use worldinterface_domain::{
+        agency::AuthenticatedCaller, authorization::VerifiedSnapshot, effect::EffectAction,
+        reconciliation::CaseStatus,
+    };
+    use worldinterface_egress::Egress;
+    for point in ["reconciliation-start-validated", "reconciliation-observe-validated"] {
+        let temp = tempfile::tempdir().unwrap();
+        let ready = temp.path().join("ready");
+        let release = temp.path().join("release");
+        let metadata = temp.path().join("metadata.json");
+        let log = std::fs::File::create(temp.path().join("child.log")).unwrap();
+        let mut child = Child(
+            std::process::Command::new(std::env::current_exe().unwrap())
+                .args(["--exact", "reconciliation_crash_child", "--nocapture"])
+                .env("WI_SPI_CHILD", point)
+                .env("WI_CRASH_READY", &ready)
+                .env("WI_CRASH_RELEASE", &release)
+                .env("WI_SPI_METADATA", &metadata)
+                .env("TMPDIR", temp.path())
+                .stdout(log.try_clone().unwrap())
+                .stderr(log)
+                .spawn()
+                .unwrap(),
+        );
+        let start = Instant::now();
+        while !ready.exists() {
+            assert!(
+                child.0.try_wait().unwrap().is_none(),
+                "{point}: {}",
+                std::fs::read_to_string(temp.path().join("child.log")).unwrap()
+            );
+            assert!(start.elapsed() < Duration::from_secs(30), "barrier timeout {point}");
+            std::thread::sleep(Duration::from_millis(10));
+        }
+        let m: Metadata = serde_json::from_slice(&std::fs::read(metadata).unwrap()).unwrap();
+        let root = worldinterface_storage::StoreRoot::open_existing(m.bundle.join("wi")).unwrap();
+        let caller = AuthenticatedCaller::from_trusted_authentication(
+            m.snapshot.bindings[0].tenant.clone(),
+            m.snapshot.bindings[0].principal.clone(),
+        );
+        let before = root.effect_snapshot(caller.tenant()).unwrap();
+        let mut submission = before.effects[&m.id].intent.submission.clone();
+        submission.client_request_id = "concurrent-journal-writer".to_string().try_into().unwrap();
+        Egress::new(&root)
+            .apply(
+                &caller,
+                before.last_at.clone().unwrap(),
+                EffectAction::Submit {
+                    id: EffectIntentId::generate(),
+                    submission: Box::new(submission),
+                    snapshot: VerifiedSnapshot::from_trusted_verifier(m.snapshot.clone()).unwrap(),
+                    link: None,
+                },
+            )
+            .unwrap();
+        assert_eq!(root.effect_snapshot(caller.tenant()).unwrap().revision, before.revision + 1);
+        std::fs::write(release, b"release").unwrap();
+        let start = Instant::now();
+        loop {
+            if let Some(status) = child.0.try_wait().unwrap() {
+                assert!(
+                    status.success(),
+                    "{point}: {}",
+                    std::fs::read_to_string(temp.path().join("child.log")).unwrap()
+                );
+                break;
+            }
+            assert!(start.elapsed() < Duration::from_secs(30), "completion timeout {point}");
+            std::thread::sleep(Duration::from_millis(10));
+        }
+        let effect = &root.effect_snapshot(caller.tenant()).unwrap().effects[&m.id];
+        let case = &effect.reconciliation_cases[0];
+        assert_eq!(case.status, CaseStatus::ConfirmedCommitted, "{point}");
+        assert_eq!(case.observations, 1);
+        assert_eq!(case.receipts.len(), 1);
+        assert_eq!(case.receipts[0].result, CaseStatus::ConfirmedCommitted);
+        assert!(case.escalation.is_none());
+        assert_eq!(
+            DeterministicConnector::new(m.db, IdempotencyClass::ExternallyKeyed, Mode::Ambiguous)
+                .commits(),
+            1
+        );
+        drop(root);
+        let bundle = StoreBundle::open(&m.bundle).unwrap();
+        let queue = QueueEngine::bootstrap(&bundle, Noop, host()).unwrap();
+        assert_eq!(
+            queue
+                .engine()
+                .projection()
+                .get_run_state(&case.aq_run.as_ref().unwrap().as_str().parse().unwrap()),
+            Some(&actionqueue_core::run::state::RunState::Completed)
+        );
+        queue.shutdown().unwrap();
     }
 }

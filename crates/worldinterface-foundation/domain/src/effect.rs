@@ -373,7 +373,7 @@ pub enum EffectAction {
         id: EffectIntentId,
         case: OpaqueRef,
         expected: u32,
-        action: crate::reconciliation::CaseAction,
+        action: crate::reconciliation::VerifiedCaseAction,
     },
     PermitRetry {
         id: EffectIntentId,
@@ -495,7 +495,7 @@ impl From<EffectAction> for JournalAction {
                 Self::Reconcile { id, evidence: evidence.0 }
             }
             EffectAction::ReconciliationCase { id, case, expected, action } => {
-                Self::ReconciliationCase { id, case, expected, action }
+                Self::ReconciliationCase { id, case, expected, action: action.into_action() }
             }
             EffectAction::PermitRetry { id, snapshot } => {
                 Self::PermitRetry { id, snapshot: snapshot.0 }

@@ -24,10 +24,50 @@ use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use worldinterface_domain::{
     agency::AuthenticatedCaller,
-    reconciliation::{CaseAction, CaseStatus, ReconciliationCase},
+    reconciliation::{CaseAction, CaseStatus, ReconciliationCase, VerifiedCaseAction},
 };
 use worldinterface_protocol::*;
 
+// Typed retry classification keeps binding/integrity failures terminal while
+// allowing the admitted AQ run to retry transient storage and clock failures.
+#[derive(Debug)]
+struct TransientReconciliation(Box<dyn std::error::Error + Send + Sync>);
+impl std::fmt::Display for TransientReconciliation {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        self.0.fmt(f)
+    }
+}
+impl std::error::Error for TransientReconciliation {}
+fn transient(
+    error: Box<dyn std::error::Error + Send + Sync>,
+) -> Box<dyn std::error::Error + Send + Sync> {
+    Box::new(TransientReconciliation(error))
+}
+fn storage<T>(operation: impl FnMut() -> Result<T>) -> Result<T> {
+    crate::completion::retry_storage(operation).map_err(storage_error)
+}
+fn storage_error(
+    error: Box<dyn std::error::Error + Send + Sync>,
+) -> Box<dyn std::error::Error + Send + Sync> {
+    let retryable_io = error.downcast_ref::<std::io::Error>().is_some_and(|e| {
+        matches!(
+            e.kind(),
+            std::io::ErrorKind::Interrupted
+                | std::io::ErrorKind::WouldBlock
+                | std::io::ErrorKind::TimedOut
+                | std::io::ErrorKind::WriteZero
+        )
+    });
+    if worldinterface_storage::is_effect_contention(error.as_ref()) || retryable_io {
+        transient(error)
+    } else {
+        error
+    }
+}
+
+fn now(clock: &impl TrustedClock) -> Result<Timestamp> {
+    clock.now().map_err(transient)
+}
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct CaseLocator {
@@ -88,10 +128,23 @@ fn latest(
     caller: &AuthenticatedCaller,
     case: &ReconciliationCase,
 ) -> Result<ReconciliationCase> {
-    root.reconciliation_cases(caller, &case.intent)?
+    storage(|| root.reconciliation_cases(caller, &case.intent))?
         .into_iter()
         .find(|c| c.id == case.id)
         .ok_or_else(|| "missing case".into())
+}
+// Only trusted runtime paths reach storage; no principal action is forwarded here.
+fn apply_case(
+    root: &worldinterface_storage::StoreRoot,
+    caller: &AuthenticatedCaller,
+    at: Timestamp,
+    case: &ReconciliationCase,
+    action: CaseAction,
+) -> Result<()> {
+    // reconciliation_apply already retries its atomic write; avoid multiplying
+    // its bounded retry budget with the read/publication retry helper.
+    root.reconciliation_apply(caller, at, case, VerifiedCaseAction::from_trusted_runtime(action))
+        .map_err(storage_error)
 }
 /// Retry the persisted request after any uncertain admission acknowledgment. No replacement generations.
 pub fn deliver<H: ExecutorHandler + 'static>(
@@ -110,9 +163,10 @@ pub fn deliver<H: ExecutorHandler + 'static>(
         }
         if case.admission_request.is_none() {
             let bytes = serde_json::to_vec(&request(&case)?)?;
-            queue.wi().reconciliation_apply(
+            apply_case(
+                queue.wi(),
                 caller,
-                clock.now()?,
+                now(clock)?,
                 &case,
                 CaseAction::PrepareAdmission { request: bytes },
             )?;
@@ -129,9 +183,10 @@ pub fn deliver<H: ExecutorHandler + 'static>(
             return Err("reconciliation requires one immutable AQ run".into());
         }
         let run = runs[0].to_string().try_into()?;
-        queue.wi().reconciliation_apply(
+        apply_case(
+            queue.wi(),
             caller,
-            clock.now()?,
+            now(clock)?,
             &case,
             CaseAction::Acknowledge { sequence: outcome.sequence(), run: Some(run) },
         )?;
@@ -168,12 +223,13 @@ impl<P: Connector, C: TrustedClock> ReconciliationHandler<P, C> {
             return Err("reconciliation evidence bound".into());
         }
         for e in evidence {
-            let artifact = self.bundle.wi().publish(case.tenant.clone(), &e.bytes)?;
+            let artifact = storage(|| self.bundle.wi().publish(case.tenant.clone(), &e.bytes))?;
             refs.push(EvidenceRef { artifact, schema: e.schema });
         }
-        self.bundle.wi().reconciliation_apply(
+        apply_case(
+            self.bundle.wi(),
             caller,
-            self.clock.now()?,
+            now(&self.clock)?,
             case,
             CaseAction::Observe { result, evidence: refs },
         )
@@ -202,7 +258,7 @@ impl<P: Connector, C: TrustedClock> ReconciliationHandler<P, C> {
                     at: case
                         .next_eligible_millis
                         .div_ceil(1000)
-                        .max(self.clock.now()?.epoch_millis()? / 1000 + 1),
+                        .max(now(&self.clock)?.epoch_millis()? / 1000 + 1),
                     policy: WaitTimeoutPolicy::ResumeWithTimeout,
                 }),
             )?,
@@ -211,7 +267,7 @@ impl<P: Connector, C: TrustedClock> ReconciliationHandler<P, C> {
     }
     pub fn execute_bound(&self, ctx: &ExecutorContext) -> Result<AttemptDisposition> {
         let locator = CaseLocator::decode(&ctx.input.payload)?;
-        let state = self.bundle.wi().effect_snapshot(&locator.tenant)?;
+        let state = storage(|| self.bundle.wi().effect_snapshot(&locator.tenant))?;
         let effect = state.effects.get(&locator.intent).ok_or("missing reconciliation effect")?;
         let caller = AuthenticatedCaller::from_trusted_authentication(
             locator.tenant,
@@ -225,7 +281,7 @@ impl<P: Connector, C: TrustedClock> ReconciliationHandler<P, C> {
             .clone();
         let expected = request(&case)?;
         if expected.task_spec().task_payload().bytes() != ctx.input.payload
-            || case.queue_store.as_str() != self.bundle.aq_store_id()?.to_string()
+            || case.queue_store.as_str() != storage(|| self.bundle.aq_store_id())?.to_string()
             || case.admission_request.as_ref() != Some(&serde_json::to_vec(&expected)?)
             || ctx.input.causal_context.as_ref() != Some(expected.causal_context())
             || case.aq_run.as_ref().is_none_or(|run| run.as_str() != ctx.input.run_id.to_string())
@@ -235,9 +291,9 @@ impl<P: Connector, C: TrustedClock> ReconciliationHandler<P, C> {
         if case.status.terminal() {
             return Ok(AttemptDisposition::complete(None));
         }
-        let now = self.clock.now()?.epoch_millis()?;
+        let current_millis = now(&self.clock)?.epoch_millis()?;
         let policy = &case.execution.binding.descriptor.reconciliation;
-        if now >= case.deadline_millis || case.observations >= policy.max_observations {
+        if current_millis >= case.deadline_millis || case.observations >= policy.max_observations {
             self.observe(
                 &caller,
                 &case,
@@ -251,7 +307,7 @@ impl<P: Connector, C: TrustedClock> ReconciliationHandler<P, C> {
                 CaseStatus::Escalated,
                 vec![diagnostic(b"manual reconciliation required")],
             )?;
-        } else if now < case.next_eligible_millis {
+        } else if current_millis < case.next_eligible_millis {
             return self.wait(&case);
         } else if case.status == CaseStatus::Running {
             // A prior observation was interrupted. Spend its durable budget; never infer noncommit.
@@ -262,12 +318,7 @@ impl<P: Connector, C: TrustedClock> ReconciliationHandler<P, C> {
                 vec![diagnostic(b"observation interrupted")],
             )?;
         } else {
-            self.bundle.wi().reconciliation_apply(
-                &caller,
-                self.clock.now()?,
-                &case,
-                CaseAction::Start,
-            )?;
+            apply_case(self.bundle.wi(), &caller, now(&self.clock)?, &case, CaseAction::Start)?;
             case = latest(self.bundle.wi(), &caller, &case)?;
             let observed = self.connector.reconcile(ReconcileRequest {
                 tenant: case.tenant.clone(),
@@ -275,7 +326,7 @@ impl<P: Connector, C: TrustedClock> ReconciliationHandler<P, C> {
                 execution: case.execution.clone(),
                 resource: case.resource.clone(),
             });
-            let (status, evidence) = match observed {
+            let (mut status, mut evidence) = match observed {
                 Ok(ReconcileOutcome::Committed(e)) => (CaseStatus::ConfirmedCommitted, e),
                 Ok(ReconcileOutcome::NotCommitted(e)) => (CaseStatus::ConfirmedNotCommitted, e),
                 Ok(ReconcileOutcome::Unknown(e)) => (CaseStatus::Pending, e),
@@ -284,17 +335,30 @@ impl<P: Connector, C: TrustedClock> ReconciliationHandler<P, C> {
                     (CaseStatus::Pending, vec![diagnostic(b"provider observation unavailable")])
                 }
             };
-            if self.observe(&caller, &case, status, evidence).is_err() {
+            if evidence.is_empty()
+                || evidence.len() > 2
+                || evidence.iter().any(|e| {
+                    e.bytes.is_empty()
+                        || e.bytes.len() as u64
+                            > case.execution.binding.descriptor.max_evidence_bytes
+                })
+                || status == CaseStatus::ConfirmedNotCommitted
+                    && case.commit
+                        == worldinterface_domain::effect::CommitObservation::ConfirmedCommitted
+            {
+                status = CaseStatus::Pending;
+                evidence = vec![diagnostic(b"provider evidence rejected")];
+            }
+            if let Err(error) = self.observe(&caller, &case, status, evidence) {
+                if error.is::<TransientReconciliation>() {
+                    return Err(error);
+                }
                 let current = latest(self.bundle.wi(), &caller, &case)?;
                 if current.revision != case.revision {
                     return self.wait(&current);
                 }
-                self.observe(
-                    &caller,
-                    &case,
-                    CaseStatus::Pending,
-                    vec![diagnostic(b"provider evidence rejected")],
-                )?;
+                // Persistence/integrity errors are not provider observations.
+                return Err(error);
             }
         }
         self.wait(&latest(self.bundle.wi(), &caller, &case)?)
@@ -304,12 +368,17 @@ impl<P: Connector + 'static, C: TrustedClock + Send + Sync + 'static> ExecutorHa
     for ReconciliationHandler<P, C>
 {
     fn execute(&self, ctx: ExecutorContext) -> AttemptDisposition {
-        self.execute_bound(&ctx).unwrap_or_else(|_| {
-            AttemptDisposition::terminal_failure(BoundedError {
+        self.execute_bound(&ctx).unwrap_or_else(|error| {
+            let failure = BoundedError {
                 code: BoundedCode::new("wi.reconciliation.unavailable").expect("static code"),
                 message: BoundedMessage::new("case remains uncertain; inspect durable obligation")
                     .expect("static message"),
-            })
+            };
+            if error.is::<TransientReconciliation>() {
+                AttemptDisposition::retryable_failure(failure)
+            } else {
+                AttemptDisposition::terminal_failure(failure)
+            }
         })
     }
 }
@@ -369,7 +438,8 @@ pub(crate) fn recover_terminal(
                         .effect_snapshot(&tenant)?
                         .last_at
                         .ok_or("missing reconciliation journal time")?;
-                    root.reconciliation_apply(
+                    apply_case(
+                        root,
                         &caller,
                         at,
                         case,

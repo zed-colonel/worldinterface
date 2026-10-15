@@ -9224,5 +9224,26 @@
     "target": "WI-06 connector conformance",
     "rationale": "WIP-05 target SPI conformance and crash evidence",
     "source": "WI-WORKER-PROOF-1 WIP-05; WI-ADR-010/011; docs/work-items/WIP-05.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/reconciliation.rs::::struct:VerifiedCaseAction",
+    "disposition": "retain-align",
+    "target": "foundation connector contracts",
+    "rationale": "WIP-05 F-001/F-002 trusted reconciliation transitions and transient failure regression evidence",
+    "source": "WI-WORKER-PROOF-1 WIP-05; WI-ADR-010/011; docs/work-items/WIP-05.md"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/reconciliation.rs::::struct:TransientReconciliation",
+    "disposition": "retain-align",
+    "target": "runtime connector executor and reconciliation",
+    "rationale": "WIP-05 F-001/F-002 trusted reconciliation transitions and transient failure regression evidence",
+    "source": "WI-WORKER-PROOF-1 WIP-05; WI-ADR-010/011; docs/work-items/WIP-05.md"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/reconciliation.rs::reconciliation_retries_transient_clock_and_rejects_binding_errors::struct:FlakyClock",
+    "disposition": "retain-align",
+    "target": "connector conformance evidence",
+    "rationale": "WIP-05 F-001/F-002 trusted reconciliation transitions and transient failure regression evidence",
+    "source": "WI-WORKER-PROOF-1 WIP-05; WI-ADR-010/011; docs/work-items/WIP-05.md"
   }
 ]

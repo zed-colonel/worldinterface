@@ -68,6 +68,57 @@ values. Automatic observations accept at most two bounded evidence blobs and
 32 observations, so the accumulated case evidence has a 64-reference ceiling.
 Original evidence remains reachable from the linked execution receipt.
 
+## Review remediation
+
+- **F-001 (fixed for reviewer verification):** `VerifiedCaseAction` is a
+  non-deserializable host assertion, following `VerifiedReconciliation`. Only
+  trusted runtime admission, observation and recovery paths attest transitions.
+  Storage and domain commands require that assertion; the principal-facing
+  `Egress::apply` rejects case transitions even if incorrectly attested. Raw
+  Start actions and deserialization fail to compile. The regression
+  `reconciliation_principal_cannot_forge_case_transitions_or_enable_retry`
+  rejects Start, every observation result, admission preparation and acknowledgment,
+  keeps PermitRetry unavailable, and verifies one non-repeatable provider commit.
+- **F-002 (fixed for reviewer verification):** reconciliation journal appends retry
+  bounded optimistic/SQLite contention while preserving the original case
+  revision. Journal ordering uses the later of the host sample and the last
+  journal timestamp. Reads and evidence publication also retry contention.
+  Transient storage/clock errors return retryable AQ failure; binding and integrity
+  errors remain terminal. Persistence errors cannot become provider-evidence
+  rejection. `reconciliation_journal_contention_preserves_provider_confirmation`
+  forces real same-tenant writes between validation and append at Start and
+  Observe, then asserts one confirmed observation, AQ Completed and no escalation.
+  `reconciliation_retries_transient_clock_and_rejects_binding_errors` verifies
+  an admitted AQ run retries once after clock failure and completes the same case.
+- **F-003 (fixed for reviewer verification):** when cooperative invocation returns
+  under cancellation, the executor calls the connector's cancel phase if its
+  pinned descriptor supports it. Connectors must return promptly on the token.
+  The typed cancel result is persisted as scoped `wi.connector-cancel:1` evidence.
+  Requested, unsupported and unavailable cancellation preserve uncertainty;
+  only ConfirmedNotCommitted can establish cancellation before commit. No cancel
+  result can replace a previously confirmed commit. The regression
+  `spi_cancel_phase_records_observation_and_preserves_commit_truth` covers these
+  results, unsupported declarations, cancellation before dispatch and replay.
+- **F-004 (fixed for reviewer verification):** Phase::Failed describes a terminal
+  request failure; inspection's separate `commit` field remains
+  ConfirmedCommitted when the provider committed. The immutable receipt records
+  TerminalFailure and `committed_at`; AQ returns
+  `wi.effect.terminal_provider_failure_committed`. Reopen convergence checks that
+  code. `spi_terminal_failure_after_commit_is_visible_and_cannot_reinvoke` checks
+  receipt, inspection, AQ failure, blocked retry/start, replay and one actual
+  non-repeatable provider commit.
+- **F-005 (fixed for reviewer verification):** `ProviderKeyMapping.parameter`
+  documents the provider request field/header carrying the key. It is transport
+  metadata; `provider_scope` identifies the key namespace. The existing key test
+  confirms that renaming the parameter preserves replay identity while changing
+  the pinned descriptor hash.
+
+The structural inventory change adds `VerifiedCaseAction`, the private
+`TransientReconciliation` error classifier and the regression's `FlakyClock`
+fixture to their existing foundation/runtime/test dispositions and catalog
+family. It preserves family ownership, destinations and removal gates. The
+source-hash refresh follows these explicit structural additions.
+
 ## Proof and verification
 
 `connectors/coverage.json` records WI-06 core obligations and the full-parent
