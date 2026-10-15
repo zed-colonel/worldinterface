@@ -62,6 +62,15 @@ impl<'a, H: ExecutorHandler + 'static> QueueEngine<'a, H> {
         handler: H,
         host: HostControlContext,
     ) -> Result<Self> {
+        Self::bootstrap_with_signal_limits(bundle, handler, host, Default::default())
+    }
+    /// Host capacity configuration; Flow binding checks do not allocate signals.
+    pub fn bootstrap_with_signal_limits(
+        bundle: &'a StoreBundle,
+        handler: H,
+        host: HostControlContext,
+        signal_limits: actionqueue_core::limits::SignalLimits,
+    ) -> Result<Self> {
         let session = actionqueue_storage::store::open_store(
             &bundle.aq_path(),
             actionqueue_storage::store::OpenOptions::ReadOnly,
@@ -71,6 +80,7 @@ impl<'a, H: ExecutorHandler + 'static> QueueEngine<'a, H> {
         let engine = ActionQueueEngine::new(
             RuntimeConfig {
                 data_dir: bundle.aq_path(),
+                signal_limits,
                 continuation_limits: actionqueue_core::limits::ContinuationLimits {
                     disposition_bytes: 1024 * 1024,
                     ..Default::default()
@@ -132,6 +142,22 @@ impl<'a, H: ExecutorHandler + 'static> QueueEngine<'a, H> {
     }
     /// Trusted host cancellation retains AQ's normal child lifecycle semantics.
     pub fn cancel_task(&mut self, task: TaskId) -> Result<()> {
+        for tenant in self.bundle.wi().flow_tenants()? {
+            let state = self.bundle.wi().flow_snapshot(&tenant)?;
+            for r in state.runs.values().filter(|r| {
+                r.outcome.is_none()
+                    && (r.coordinator_task.as_str() == task.to_string()
+                        || r.node_tasks.values().any(|t| t.as_str() == task.to_string()))
+            }) {
+                crate::flow::transact(
+                    self.bundle.wi(),
+                    &tenant,
+                    worldinterface_storage::flow::FlowCommand::CancelRequested {
+                        run: r.id.clone(),
+                    },
+                )?;
+            }
+        }
         self.engine.control(actionqueue_runtime::control::ControlOperation::Cancel(
             actionqueue_core::mutation::CancelTarget::Task(task),
         ))?;

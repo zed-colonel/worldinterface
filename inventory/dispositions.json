@@ -9861,5 +9861,54 @@
     "target": "Flow artifact authorization conformance evidence",
     "rationale": "WIP-07 host read authorization rejects same-tenant denied artifacts at submission, execution and inspection without connector invocation",
     "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/effect.rs::::struct:EffectOwner",
+    "disposition": "retain-align",
+    "target": "runtime Flow coordinator and node executor",
+    "rationale": "WIP-07 review remediation: immutable effect ownership, serialized Flow dispatch fences and regression fixtures; retain for independent exact-head review",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/flow.rs::::struct:FlowDispatchGuard",
+    "disposition": "retain-align",
+    "target": "runtime Flow coordinator and node executor",
+    "rationale": "WIP-07 review remediation: immutable effect ownership, serialized Flow dispatch fences and regression fixtures; retain for independent exact-head review",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/flow.rs::::struct:FinishGate",
+    "disposition": "retain-align",
+    "target": "runtime Flow coordinator and node executor",
+    "rationale": "WIP-07 review remediation: immutable effect ownership, serialized Flow dispatch fences and regression fixtures; retain for independent exact-head review",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/flow.rs::::struct:InvalidEvidence",
+    "disposition": "retain-align",
+    "target": "runtime Flow coordinator and node executor",
+    "rationale": "WIP-07 review remediation: immutable effect ownership, serialized Flow dispatch fences and regression fixtures; retain for independent exact-head review",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/flow.rs::::struct:Latch",
+    "disposition": "retain-align",
+    "target": "runtime Flow coordinator and node executor",
+    "rationale": "WIP-07 review remediation: immutable effect ownership, serialized Flow dispatch fences and regression fixtures; retain for independent exact-head review",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/flow.rs::::struct:SessionAuth",
+    "disposition": "retain-align",
+    "target": "runtime Flow coordinator and node executor",
+    "rationale": "WIP-07 review remediation: immutable effect ownership, serialized Flow dispatch fences and regression fixtures; retain for independent exact-head review",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/flow_crash.rs::::struct:Noop",
+    "disposition": "retain-align",
+    "target": "runtime Flow coordinator and node executor",
+    "rationale": "WIP-07 review remediation: immutable effect ownership, serialized Flow dispatch fences and regression fixtures; retain for independent exact-head review",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
   }
 ]

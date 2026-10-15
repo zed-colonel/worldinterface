@@ -20,7 +20,9 @@ use serde_json::Value;
 use std::collections::BTreeMap;
 use worldinterface_domain::{
     agency::{resolve_agency, AuthenticatedCaller},
-    effect::{admission_request, ChildAdmissionProvenance, EffectAction, ProductionAdmission},
+    effect::{
+        admission_request, ChildAdmissionProvenance, EffectAction, EffectOwner, ProductionAdmission,
+    },
     flow::*,
     Phase,
 };
@@ -126,7 +128,7 @@ pub(crate) fn binding_wait(r: &FlowRun, node: &OpaqueRef) -> Result<AttemptDispo
             },
             WaitMatchPolicy::FirstMatch,
             SignalEligibility::AnyRetained,
-            None,
+            Some(WaitDeadline { at: 0, policy: WaitTimeoutPolicy::ResumeWithTimeout }),
         )?,
         None,
     ))
@@ -167,12 +169,20 @@ impl<
             return Err("Flow child payload mismatch".into());
         }
         if let Some(result) = r.results.get(node) {
-            if result.effect.is_some() && !matches!(result.disposition, NodeDisposition::Denied) {
+            if result.effect.is_some() && result.disposition == NodeDisposition::Succeeded {
                 let state = root.effect_snapshot(&r.tenant)?;
                 let effect = state
                     .effects
                     .get(result.effect.as_ref().unwrap())
                     .ok_or("missing Flow effect")?;
+                if effect.phase != Phase::Succeeded
+                    || effect
+                        .outcomes
+                        .last()
+                        .is_none_or(|o| o.outcome != ExecutionOutcome::Succeeded)
+                {
+                    return Ok(terminal("wi.flow.result_evidence_mismatch"));
+                }
                 artifact_reader.read(&caller, &effect.intent.submission.input.artifact)?;
                 return Ok(self.effect.execute_context(ctx));
             }
@@ -186,6 +196,9 @@ impl<
                     terminal("wi.flow.node_failure")
                 },
             );
+        }
+        if r.outcome.is_some() || r.cancel_requested {
+            return Ok(terminal("wi.flow.closed"));
         }
         // All dependencies must have domain results. AQ task success is insufficient.
         for dependency in &n.dependencies {
@@ -215,6 +228,19 @@ impl<
                 artifacts.insert(port.clone(), a);
             }
             inputs.insert(port.clone(), value);
+        }
+        // JSON schemas must validate the actual bytes delivered to a connector.
+        for (port, artifact) in &artifacts {
+            if !matches!(
+                p.document().schemas[&n.inputs[port].schema].schema,
+                Schema::Artifact { .. }
+            ) {
+                inputs.insert(
+                    port.clone(),
+                    strict_json(&artifact_reader.read(&caller, artifact)?)
+                        .map_err(|_| "input JSON schema requires JSON bytes")?,
+                );
+            }
         }
         match &n.operation {
             PlanOperation::Transform { program } | PlanOperation::Branch { program, .. } => {
@@ -322,6 +348,25 @@ impl<
                     r.tenant.clone(),
                     r.principal.clone(),
                 );
+                let state = root.effect_snapshot(&r.tenant)?;
+                if let Some(effect) = state
+                    .effects
+                    .values()
+                    .find(|e| e.owner.as_ref().is_some_and(|o| o.flow == r.id && &o.node == node))
+                {
+                    if !effect.outcomes.is_empty() || effect.phase == Phase::Running {
+                        return self.boundary_result(
+                            r,
+                            node,
+                            n,
+                            &p,
+                            ctx,
+                            effect.intent.id.clone(),
+                            &bytes,
+                        );
+                    }
+                }
+                drop(state);
                 let at = self.effect.clock.now()?;
                 let snapshot =
                     verify_snapshot(root, &self.effect.evidence, &r.tenant, &submission, &at)?;
@@ -346,13 +391,20 @@ impl<
                 let id = egress.apply(
                     &caller,
                     at.clone(),
-                    EffectAction::Submit {
+                    EffectAction::SubmitFlow {
                         id: EffectIntentId::generate(),
                         submission: Box::new(submission.clone()),
                         snapshot: snapshot.clone(),
-                        link: None,
+                        owner: EffectOwner { flow: r.id.clone(), node: node.clone() },
                     },
                 )?;
+                let owned = root.effect_snapshot(&r.tenant)?;
+                if owned.effects.get(&id).and_then(|e| e.owner.as_ref())
+                    != Some(&EffectOwner { flow: r.id.clone(), node: node.clone() })
+                {
+                    return Err("Flow effect ownership conflict".into());
+                }
+                drop(owned);
                 let mut view = egress.inspect(&caller, &id)?;
                 if view.phase == Phase::Submitted {
                     let fact = self.resolver.observe(
@@ -453,62 +505,81 @@ impl<
                     )?;
                 }
                 artifact_reader.read(&caller, &submission.input.artifact)?;
-                let disposition = self.effect.execute_context(ctx);
-                if matches!(
-                    disposition.outcome(),
-                    DispositionOutcome::RetryableFailure { .. }
-                        | DispositionOutcome::Awaiting
-                        | DispositionOutcome::Suspended { .. }
-                ) {
-                    return Ok(disposition);
-                }
-                let view = egress.inspect(&caller, &id)?;
-                let status = match view.outcome.as_ref().map(|o| &o.outcome) {
-                    Some(ExecutionOutcome::Succeeded) => NodeDisposition::Succeeded,
-                    Some(ExecutionOutcome::Uncertain) => NodeDisposition::Uncertain,
-                    Some(ExecutionOutcome::CanceledBeforeCommit) => NodeDisposition::Canceled,
-                    _ => NodeDisposition::Failed,
-                };
-                let mut result = empty_result(status);
-                result.effect = Some(id);
-                result.input_hash = ContentHash::of(&bytes);
-                if result.disposition == NodeDisposition::Succeeded {
-                    let outcome = view.outcome.ok_or("missing boundary outcome")?;
-                    if outcome.required_outputs != outcome.durable_outputs
-                        || outcome.durable_outputs.len() != n.outputs.len()
-                        || root
-                            .effect_receipts(&r.tenant, result.effect.as_ref().unwrap())?
-                            .is_empty()
-                    {
-                        return Err("unpublished Flow boundary completion".into());
-                    }
-                    for ((port, output), artifact) in n.outputs.iter().zip(outcome.durable_outputs)
-                    {
-                        let b = artifact_reader.read(&caller, &artifact)?;
-                        let value = match &p.document().schemas[&output.schema].schema {
-                            Schema::Artifact { max_bytes, schema_hash }
-                                if artifact.size <= *max_bytes =>
-                            {
-                                self.effect.port.validate_artifact(schema_hash, &b)?;
-                                serde_json::to_value(&artifact)?
-                            }
-                            _ => strict_json(&b)?,
-                        };
-                        result.values.insert(port.clone(), value);
-                        result.outputs.insert(port.clone(), artifact);
-                    }
-                    if !n.outputs.values().any(|o| {
-                        matches!(p.document().schemas[&o.schema].schema, Schema::Artifact { .. })
-                    }) {
-                        p.validate_outputs(node, &result.values)?;
-                    }
-                    result.output_hash = ContentHash::of(&canonical_data(&result.values)?);
-                }
-                self.record(r, node, result)?;
-                Ok(disposition)
+                self.boundary_result(r, node, n, &p, ctx, id, &bytes)
             }
             _ => Err("unsupported WIP-07 execution profile".into()),
         }
+    }
+    fn boundary_result(
+        &self,
+        r: &FlowRun,
+        node: &OpaqueRef,
+        n: &PlanNode,
+        p: &ExecutionPlan,
+        ctx: &ExecutorContext,
+        id: EffectIntentId,
+        bytes: &[u8],
+    ) -> Result<AttemptDisposition> {
+        let root = self.effect.bundle.wi();
+        let caller =
+            AuthenticatedCaller::from_trusted_authentication(r.tenant.clone(), r.principal.clone());
+        let artifact_reader = ArtifactResolver::new(root, self.artifacts.as_ref());
+        let egress = Egress::new(root);
+        let disposition = self.effect.execute_context(ctx);
+        if matches!(
+            disposition.outcome(),
+            DispositionOutcome::RetryableFailure { .. }
+                | DispositionOutcome::Awaiting
+                | DispositionOutcome::Suspended { .. }
+        ) {
+            return Ok(disposition);
+        }
+        let view = egress.inspect(&caller, &id)?;
+        let status = match view.outcome.as_ref().map(|o| &o.outcome) {
+            Some(ExecutionOutcome::Succeeded) => NodeDisposition::Succeeded,
+            Some(ExecutionOutcome::Uncertain) => NodeDisposition::Uncertain,
+            Some(ExecutionOutcome::CanceledBeforeCommit) => NodeDisposition::Canceled,
+            None if view.phase == Phase::Running
+                || view.commit == worldinterface_domain::effect::CommitObservation::Unknown =>
+            {
+                NodeDisposition::Uncertain
+            }
+            _ => NodeDisposition::Failed,
+        };
+        let mut result = empty_result(status);
+        result.effect = Some(id);
+        result.input_hash = ContentHash::of(bytes);
+        if result.disposition == NodeDisposition::Succeeded {
+            let outcome = view.outcome.ok_or("missing boundary outcome")?;
+            if outcome.required_outputs != outcome.durable_outputs
+                || outcome.durable_outputs.len() != n.outputs.len()
+                || root.effect_receipts(&r.tenant, result.effect.as_ref().unwrap())?.is_empty()
+            {
+                return Err("unpublished Flow boundary completion".into());
+            }
+            for ((port, output), artifact) in n.outputs.iter().zip(outcome.durable_outputs) {
+                let b = artifact_reader.read(&caller, &artifact)?;
+                let value = match &p.document().schemas[&output.schema].schema {
+                    Schema::Artifact { max_bytes, schema_hash } if artifact.size <= *max_bytes => {
+                        self.effect.port.validate_artifact(schema_hash, &b)?;
+                        serde_json::to_value(&artifact)?
+                    }
+                    Schema::Artifact { .. } => return Err("boundary artifact output size".into()),
+                    schema => {
+                        let value = strict_json(&b)?;
+                        if !validate_value(schema, &value) {
+                            return Err("boundary output schema".into());
+                        }
+                        value
+                    }
+                };
+                result.values.insert(port.clone(), value);
+                result.outputs.insert(port.clone(), artifact);
+            }
+            result.output_hash = ContentHash::of(&canonical_data(&result.values)?);
+        }
+        self.record(r, node, result)?;
+        Ok(disposition)
     }
     fn record(
         &self,
@@ -548,6 +619,55 @@ impl<
     > ExecutorHandler for FlowAttemptHandler<P, V, R, C>
 {
     fn execute(&self, ctx: ExecutorContext) -> AttemptDisposition {
-        self.execute_bound(&ctx).unwrap_or_else(|_| terminal("wi.flow.execution_rejected"))
+        self.execute_bound(&ctx).unwrap_or_else(|error| {
+            let message = error.to_string();
+            // Invalid immutable inputs are deterministic; storage, resolver and
+            // evidence I/O failures can recover on the next AQ attempt. A durable
+            // effect outcome is reloaded on retry before recording the node.
+            if [
+                "hash mismatch",
+                "identity mismatch",
+                "schema",
+                "foreign",
+                "invalid Flow",
+                "authority enlargement",
+                "installed connector mismatch",
+                "artifact output size",
+                "artifact access denied",
+                "not authorized",
+            ]
+            .iter()
+            .any(|s| message.contains(s))
+            {
+                terminal("wi.flow.execution_rejected")
+            } else {
+                crate::flow_coordinator::retry("wi.flow.pre_start_or_publication_retry")
+            }
+        })
     }
+}
+
+/// Called with the Flow dispatch guard before Start, and again before invocation.
+pub(crate) fn require_dispatch_open(
+    root: &StoreRoot,
+    tenant: &OpaqueRef,
+    id: &EffectIntentId,
+) -> Result<()> {
+    let effects = root.effect_snapshot(tenant)?;
+    let effect = effects.effects.get(id).ok_or("missing dispatch effect")?;
+    if let Some(owner) = &effect.owner {
+        let state = root.flow_snapshot(tenant)?;
+        let run = state.runs.get(&owner.flow).ok_or("missing owning Flow")?;
+        if run.outcome.is_some()
+            || run.cancel_requested
+            || state.quarantined.contains_key(&owner.flow)
+            || run
+                .results
+                .get(&owner.node)
+                .is_some_and(|r| r.disposition != NodeDisposition::Succeeded)
+        {
+            return Err("Flow dispatch closed".into());
+        }
+    }
+    Ok(())
 }

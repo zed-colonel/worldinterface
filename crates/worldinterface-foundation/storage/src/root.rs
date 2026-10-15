@@ -55,6 +55,7 @@ struct StoreManifest {
 }
 
 pub struct StoreRoot {
+    pub(crate) flow_dispatch: std::sync::Mutex<()>,
     pub(crate) path: PathBuf,
     manifest: Manifest,
     _lock: File,
@@ -279,7 +280,13 @@ impl StoreRoot {
         } else {
             FileExt::try_lock_shared(&lock)?;
         }
-        let root = Self { path: path.to_path_buf(), manifest, _lock: lock, exclusive };
+        let root = Self {
+            flow_dispatch: std::sync::Mutex::new(()),
+            path: path.to_path_buf(),
+            manifest,
+            _lock: lock,
+            exclusive,
+        };
         // Check every source header before SQLite opens any source database,
         // including on maintenance/backup paths. Journal recovery still runs
         // on a private copy first, so a valid hot journal remains recoverable.

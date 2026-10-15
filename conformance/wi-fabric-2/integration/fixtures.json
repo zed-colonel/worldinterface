@@ -94,7 +94,9 @@
         "ab_wi_005_compound_commit_replay_is_all_or_none_with_stable_children",
         "child_transaction_native_wal_process_death_cuts_replay_all_or_none",
         "bounded_64_node_plan_commits_flat_children_and_rejects_65_before_admission",
-        "maximum_length_flow_identities_have_bounded_aq_and_effect_keys"
+        "maximum_length_flow_identities_have_bounded_aq_and_effect_keys",
+        "wi_proposal_aq_commit_and_binding_process_death_recover_stable_children",
+        "sixty_four_boundary_nodes_reject_at_wi_plan_byte_bound_before_aq_admission"
       ]
     },
     "AB-WI-010": {
@@ -108,7 +110,9 @@
       "required_tests": [
         "ab_wi_013_required_detached_closure_cancel_and_mixed_runs",
         "aq_success_without_wi_acceptance_cannot_complete_flow",
-        "flow_cancellation_after_start_preserves_external_uncertainty"
+        "flow_cancellation_after_start_preserves_external_uncertainty",
+        "cancellation_before_start_and_failed_node_redelivery_cannot_invoke",
+        "publication_failure_retries_durable_success_without_reinvocation"
       ]
     }
   },

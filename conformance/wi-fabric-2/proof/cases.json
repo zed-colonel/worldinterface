@@ -884,6 +884,16 @@
           "manifest": "crates/worldinterface-runtime/Cargo.toml",
           "package": "worldinterface-runtime",
           "test": "maximum_length_flow_identities_have_bounded_aq_and_effect_keys"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wi_proposal_aq_commit_and_binding_process_death_recover_stable_children"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "sixty_four_boundary_nodes_reject_at_wi_plan_byte_bound_before_aq_admission"
         }
       ]
     },
@@ -1049,6 +1059,16 @@
           "manifest": "crates/worldinterface-runtime/Cargo.toml",
           "package": "worldinterface-runtime",
           "test": "flow_cancellation_after_start_preserves_external_uncertainty"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "cancellation_before_start_and_failed_node_redelivery_cannot_invoke"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "publication_failure_retries_durable_success_without_reinvocation"
         }
       ]
     },

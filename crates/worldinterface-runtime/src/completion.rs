@@ -670,6 +670,8 @@ impl<P: Connector, V: EvidenceAuthority, C: TrustedClock> EffectAttemptHandler<P
                 &view.intent.submission,
                 &at,
             )?;
+            let _flow_guard = root.flow_dispatch_guard()?;
+            crate::flow_node::require_dispatch_open(root, caller.tenant(), &id)?;
             Egress::new(root).apply(
                 &caller,
                 at,
@@ -765,7 +767,9 @@ impl<P: Connector, V: EvidenceAuthority, C: TrustedClock> EffectAttemptHandler<P
                     }],
                     boundary_record: None,
                 }
-            } else if ctx.input.cancellation_context.token().is_cancelled() {
+            } else if ctx.input.cancellation_context.token().is_cancelled()
+                || crate::flow_node::require_dispatch_open(root, caller.tenant(), &id).is_err()
+            {
                 PortObservation {
                     commit: CommitObservation::ProvenImpossible,
                     outcome: ExecutionOutcome::CanceledBeforeCommit,

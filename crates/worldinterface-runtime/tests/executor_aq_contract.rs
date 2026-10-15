@@ -34,7 +34,6 @@ use actionqueue_storage::{
     },
 };
 use std::{
-    io::{BufRead, Write},
     path::PathBuf,
     sync::{
         atomic::{AtomicBool, Ordering},
@@ -43,20 +42,33 @@ use std::{
 };
 use support::spi_harness::host;
 
-#[derive(Clone)]
 struct Log {
+    inner: Option<actionqueue_storage::wal::fs_writer::WalFsWriter>,
     path: PathBuf,
     fail: Arc<AtomicBool>,
 }
 impl WalWriter for Log {
+    fn store_session(&self) -> Option<&actionqueue_storage::store::StoreSession> {
+        self.inner.as_ref().and_then(WalWriter::store_session)
+    }
     fn append(&mut self, e: &WalEvent) -> Result<(), WalWriterError> {
-        let mut f = std::fs::OpenOptions::new().append(true).create(true).open(&self.path).unwrap();
-        serde_json::to_writer(&mut f, e).unwrap();
-        f.write_all(b"\n").unwrap();
-        Ok(())
+        if let Some(inner) = &mut self.inner {
+            inner.append(e)
+        } else {
+            use std::io::Write;
+            let mut file =
+                std::fs::OpenOptions::new().append(true).create(true).open(&self.path).unwrap();
+            serde_json::to_writer(&mut file, e).unwrap();
+            file.write_all(b"\n").unwrap();
+            Ok(())
+        }
     }
     fn flush(&mut self) -> Result<(), WalWriterError> {
-        std::fs::File::open(&self.path).unwrap().sync_all().unwrap();
+        if let Some(inner) = &mut self.inner {
+            inner.flush()?;
+        } else {
+            std::fs::File::open(&self.path).unwrap().sync_all().unwrap();
+        }
         if self.fail.swap(false, Ordering::SeqCst) {
             Err(WalWriterError::IoError("injected acknowledgment loss after durable flush".into()))
         } else {
@@ -64,7 +76,23 @@ impl WalWriter for Log {
         }
     }
     fn close(self) -> Result<(), WalWriterError> {
-        Ok(())
+        self.inner.map_or(Ok(()), WalWriter::close)
+    }
+}
+fn log(path: PathBuf, initialize: bool) -> Log {
+    let session = actionqueue_storage::store::open_store(
+        &path,
+        if initialize {
+            actionqueue_storage::store::OpenOptions::Initialize { features: vec![] }
+        } else {
+            actionqueue_storage::store::OpenOptions::ReadWrite
+        },
+    )
+    .unwrap();
+    Log {
+        inner: Some(actionqueue_storage::wal::fs_writer::WalFsWriter::new(session).unwrap()),
+        path,
+        fail: Arc::new(AtomicBool::new(false)),
     }
 }
 type Authority = StorageMutationAuthority<Log, ReplayReducer>;
@@ -77,8 +105,8 @@ impl actionqueue_core::time::clock::Clock for Clock {
 fn authority() -> (tempfile::TempDir, Authority) {
     let t = tempfile::tempdir().unwrap();
     let a = StorageMutationAuthority::new(
-        Log { path: t.path().join("wal.jsonl"), fail: Arc::new(AtomicBool::new(false)) },
-        ReplayReducer::new(),
+        log(t.path().join("aq"), true),
+        replay_log(&t.path().join("aq")),
     )
     .with_host(host());
     (t, a)
@@ -332,12 +360,21 @@ fn ab_wi_014_capacity_remote_fence_stale_and_uncertain() {
     let seq = a.projection().latest_sequence();
     assert!(disposition::commit(&mut a, expected, AttemptDisposition::complete(None), 101).is_err());
     assert_eq!(a.projection().latest_sequence(), seq);
-    let (_t, mut a) = authority();
+    let _t = tempfile::tempdir().unwrap();
+    let mut a = StorageMutationAuthority::new(
+        Log {
+            inner: None,
+            path: _t.path().join("actor-mutation.jsonl"),
+            fail: Arc::new(AtomicBool::new(false)),
+        },
+        ReplayReducer::new(),
+    )
+    .with_host(host());
     let actor = ActorId::new();
     let _ = a
         .submit_command(
             MutationCommand::ActorRegister(ActorRegisterCommand::new(
-                1,
+                a.projection().latest_sequence() + 1,
                 actionqueue_core::actor::ActorRegistration::new(
                     actor,
                     "remote",
@@ -476,12 +513,9 @@ fn ab_wi_023_actual_uncertain_aq_mutation_recovers_stable_identity() {
     assert!(a.recovery_required());
     let (writer, _) = a.into_parts();
     drop(writer);
-    let mut p = ReplayReducer::new();
-    for line in std::io::BufReader::new(std::fs::File::open(&path).unwrap()).lines() {
-        p.apply(&serde_json::from_str::<WalEvent>(&line.unwrap()).unwrap()).unwrap();
-    }
+    let p = replay_log(&path);
     let seq = p.latest_sequence();
-    let writer = Log { path, fail: Arc::new(AtomicBool::new(false)) };
+    let writer = log(path, false);
     let mut recovered = StorageMutationAuthority::new(writer, p).with_host(host());
     let outcome = control::execute_control(
         &mut recovered,
@@ -585,9 +619,13 @@ async fn ab_wi_020_queue_cancel_keeps_started_external_effect_uncertain() {
 }
 
 fn replay_log(path: &std::path::Path) -> ReplayReducer {
+    use actionqueue_storage::wal::reader::WalReader;
+    let mut reader =
+        actionqueue_storage::wal::fs_reader::WalFsReader::new(path.join("wal/actionqueue.wal"))
+            .unwrap();
     let mut p = ReplayReducer::new();
-    for line in std::io::BufReader::new(std::fs::File::open(path).unwrap()).lines() {
-        p.apply(&serde_json::from_str::<WalEvent>(&line.unwrap()).unwrap()).unwrap();
+    while let Some(event) = reader.read_next().unwrap() {
+        p.apply(&event).unwrap();
     }
     p
 }
@@ -663,11 +701,18 @@ fn ab_wi_005_bounds_are_enforced_by_aq_admission_and_disposition() {
             ),
             None,
         );
-        let result = req.map_err(|e| e.to_string()).and_then(|req| {
-            actionqueue_runtime::admission::ensure_task(&mut a, req, &Clock)
-                .map_err(|e| e.to_string())
-        });
+        let result = req
+            .map_err(actionqueue_runtime::admission::AdmissionError::Rejected)
+            .and_then(|req| actionqueue_runtime::admission::ensure_task(&mut a, req, &Clock));
         assert_eq!(result.is_ok(), count == 64);
+        if count == 65 {
+            assert!(matches!(
+                result,
+                Err(actionqueue_runtime::admission::AdmissionError::Rejected(
+                    actionqueue_core::admission::AdmissionRejection::TooLarge
+                ))
+            ));
+        }
         assert_eq!(a.projection().run_count(), if count == 64 { 64 } else { 0 });
     }
     for count in [64, 65] {
@@ -697,7 +742,8 @@ fn ab_wi_005_bounds_are_enforced_by_aq_admission_and_disposition() {
                 actionqueue_runtime::admission::ensure_task(&mut a, req, &Clock).unwrap();
                 assert!(a.projection().task_admission(task).is_some());
             }
-            Err(_) => {
+            Err(e) => {
+                assert_eq!(e, actionqueue_core::admission::AdmissionRejection::TooLarge);
                 assert_eq!(count, 65);
                 assert!(a.projection().task_admission(task).is_none());
             }
@@ -723,11 +769,18 @@ fn ab_wi_005_bounds_are_enforced_by_aq_admission_and_disposition() {
             ),
             None,
         );
-        let result = req.map_err(|e| e.to_string()).and_then(|req| {
-            actionqueue_runtime::admission::ensure_task(&mut a, req, &Clock)
-                .map_err(|e| e.to_string())
-        });
+        let result = req
+            .map_err(actionqueue_runtime::admission::AdmissionError::Rejected)
+            .and_then(|req| actionqueue_runtime::admission::ensure_task(&mut a, req, &Clock));
         assert_eq!(result.is_ok(), size == 65_536);
+        if size == 65_537 {
+            assert!(matches!(
+                result,
+                Err(actionqueue_runtime::admission::AdmissionError::Rejected(
+                    actionqueue_core::admission::AdmissionRejection::TooLarge
+                ))
+            ));
+        }
         assert_eq!(a.projection().task_count(), usize::from(size == 65_536));
     }
     for count in [64, 65] {
@@ -754,20 +807,21 @@ fn ab_wi_005_bounds_are_enforced_by_aq_admission_and_disposition() {
             assert_eq!(a.projection().task_count(), 65);
             assert_eq!(a.projection().waits().active_count(), 1);
         } else {
-            assert!(d.is_err());
+            assert_eq!(d.unwrap_err(), actionqueue_core::disposition::DispositionError::TooLarge);
             assert_eq!(a.projection().task_count(), 1);
             assert_eq!(a.projection().waits().active_count(), 0);
         }
-        assert_eq!(
-            WaitSpec::children(
-                WaitId::new(),
-                children.iter().map(|c| c.task_spec().id()).collect(),
-                ChildWaitPolicy::AllTerminal,
-                None
-            )
-            .is_ok(),
-            count == 64
+        let child_wait = WaitSpec::children(
+            WaitId::new(),
+            children.iter().map(|c| c.task_spec().id()).collect(),
+            ChildWaitPolicy::AllTerminal,
+            None,
         );
+        if count == 64 {
+            child_wait.unwrap();
+        } else {
+            assert_eq!(child_wait.unwrap_err(), actionqueue_core::continuation::WaitSpecError);
+        }
     }
     for count in [32, 33] {
         let (_t, mut a) = authority();
@@ -784,7 +838,7 @@ fn ab_wi_005_bounds_are_enforced_by_aq_admission_and_disposition() {
             disposition::commit(&mut a, expected, d.unwrap(), 101).unwrap();
             assert_eq!(a.projection().signals().statistics().retained, 32);
         } else {
-            assert!(d.is_err());
+            assert_eq!(d.unwrap_err(), actionqueue_core::disposition::DispositionError::TooLarge);
             assert_eq!(a.projection().signals().statistics().retained, 0);
         }
     }
@@ -805,14 +859,19 @@ fn ab_wi_005_bounds_are_enforced_by_aq_admission_and_disposition() {
             ),
             None,
         );
-        let result = req.map_err(|e| e.to_string()).and_then(|req| {
-            actionqueue_runtime::admission::ensure_task(&mut a, req, &Clock)
-                .map_err(|e| e.to_string())
-        });
+        let result = req
+            .map_err(actionqueue_runtime::admission::AdmissionError::Rejected)
+            .and_then(|req| actionqueue_runtime::admission::ensure_task(&mut a, req, &Clock));
         assert_eq!(result.is_ok(), depth <= 8, "depth {depth}");
         if depth <= 8 {
             parent = id;
         } else {
+            assert!(matches!(
+                result,
+                Err(actionqueue_runtime::admission::AdmissionError::Rejected(
+                    actionqueue_core::admission::AdmissionRejection::HierarchyDepth
+                ))
+            ));
             assert!(a.projection().task_admission(id).is_none());
         }
     }
@@ -830,8 +889,8 @@ fn ab_wi_005_compound_commit_replay_is_all_or_none_with_stable_children() {
         a.set_continuation_limits(limits);
         let children = child_set(task, 64);
         let d = compound(expected.attempt_id(), children.clone());
-        // A prepared WI proposal alone has no AQ effects, including after replay.
-        let before = replay_log(&t.path().join("wal.jsonl"));
+        // Before disposition commit, the native AQ WAL contains only the parent.
+        let before = replay_log(&t.path().join("aq"));
         assert_eq!(before.task_count(), 1);
         assert_eq!(before.waits().active_count(), 0);
         let (writer, p) = a.into_parts();
@@ -938,14 +997,21 @@ fn ab_wi_010_deadline_signal_orders_and_timeout_policies_survive_replay() {
             }
             waits::reconcile(&mut a, 200).unwrap();
             let resolution = a.projection().waits().get(id).unwrap().resolution.clone().unwrap();
-            assert_eq!(
-                matches!(resolution.kind, WaitResolutionKind::Deadline),
-                order == "deadline-first"
-            );
+            if order == "deadline-first" {
+                assert_eq!(resolution.kind, WaitResolutionKind::Deadline);
+            } else {
+                let WaitResolutionKind::Signal(sequence) = resolution.kind else {
+                    panic!("expected signal winner");
+                };
+                assert_eq!(
+                    a.projection().signals().by_sequence(sequence).unwrap().envelope().signal_id,
+                    SignalId::new(format!("race:{order}")).unwrap()
+                );
+            }
             let before = a.projection().latest_sequence();
             waits::reconcile(&mut a, 500).unwrap();
             assert_eq!(a.projection().latest_sequence(), before);
-            let p = replay_log(&t.path().join("wal.jsonl"));
+            let p = replay_log(&t.path().join("aq"));
             assert_eq!(p.waits().get(id).unwrap().resolution.as_ref(), Some(&resolution));
             assert_eq!(
                 p.get_run_state(&run),

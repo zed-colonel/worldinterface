@@ -76,6 +76,7 @@ fn prepare_at(
     snapshot: VerifiedSnapshot,
 ) -> Result<ProductionAdmission> {
     let root = bundle.wi();
+    require_top_level(root, caller.tenant(), id)?;
     let queue_store = bundle.aq_store_id()?;
     let egress = Egress::new(root);
     let view = egress.inspect(caller, id)?;
@@ -221,6 +222,7 @@ fn deliver_at<H: ExecutorHandler + 'static>(
     id: &EffectIntentId,
     fresh: VerifiedSnapshot,
 ) -> Result<EnsureTaskOutcome> {
+    require_top_level(queue.wi(), caller.tenant(), id)?;
     let (root, engine, queue_store) = queue.parts_mut();
     let egress = Egress::new(root);
     let view: EffectView = egress.inspect(caller, id)?;
@@ -270,4 +272,15 @@ fn deliver_at<H: ExecutorHandler + 'static>(
         EffectAction::AcknowledgeProduction { id: id.clone(), sequence },
     )?;
     Ok(outcome)
+}
+
+pub(crate) fn require_top_level(
+    root: &StoreRoot,
+    tenant: &worldinterface_protocol::OpaqueRef,
+    id: &EffectIntentId,
+) -> Result<()> {
+    if root.effect_snapshot(tenant)?.effects.get(id).ok_or("missing effect")?.owner.is_some() {
+        return Err("Flow-owned effect requires the plan executor".into());
+    }
+    Ok(())
 }

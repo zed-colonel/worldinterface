@@ -38,6 +38,7 @@ pub struct DeterministicConnector {
     pub descriptor: ConnectorDescriptor,
     pub db: PathBuf,
     pub mode: Mode,
+    pub outputs_override: Option<Vec<Vec<u8>>>,
     pub after_prepare: Option<Arc<dyn Fn() + Send + Sync>>,
     pub after_commit: Option<Arc<dyn Fn() + Send + Sync>>,
     pub after_invoke: Option<Arc<dyn Fn() + Send + Sync>>,
@@ -51,6 +52,7 @@ impl DeterministicConnector {
         Self {
             db,
             mode,
+            outputs_override: None,
             after_prepare: None,
             after_commit: None,
             after_invoke: None,
@@ -112,6 +114,11 @@ impl Connector for DeterministicConnector {
         &self.descriptor
     }
     fn validate_artifact(&self, schema: &ContentHash, bytes: &[u8]) -> Result<()> {
+        if schema == &ContentHash::of(b"output:1")
+            && self.outputs_override.as_ref().is_some_and(|v| v.iter().any(|b| b == bytes))
+        {
+            return Ok(());
+        }
         if (schema == &ContentHash::of(b"input:1") && bytes == b"input")
             || (schema == &ContentHash::of(b"output:1") && bytes == b"output")
         {
@@ -193,7 +200,11 @@ impl Connector for DeterministicConnector {
         Ok(PortObservation {
             commit,
             outcome,
-            outputs: if success { vec![b"output".to_vec()] } else { vec![] },
+            outputs: if success {
+                self.outputs_override.clone().unwrap_or_else(|| vec![b"output".to_vec()])
+            } else {
+                vec![]
+            },
             evidence: vec![evidence(b"provider result")],
             boundary_record: success.then(|| evidence(b"accepted boundary")),
         })

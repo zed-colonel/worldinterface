@@ -73,8 +73,9 @@ impl FlowPayload {
         Ok(p)
     }
 }
-pub(crate) fn constraints() -> Result<TaskConstraints> {
-    let mut c = TaskConstraints::new(3, Some(60), None)?;
+pub(crate) fn constraints(timeout_millis: Option<u64>) -> Result<TaskConstraints> {
+    let timeout = timeout_millis.map_or(60, |ms| ms.div_ceil(1000).max(1));
+    let mut c = TaskConstraints::new(3, Some(timeout), None)?;
     c.set_safety_level(SafetyLevel::Idempotent);
     Ok(c)
 }
@@ -225,6 +226,7 @@ impl<A: Authentication, V: EvidenceAuthority, C: TrustedClock, P: PlanConfigurat
                 .collect::<Result<_>>()?,
             wait_id: WaitId::new().to_string().try_into()?,
             proposal: None,
+            cancel_requested: false,
             parent_run: None,
             bindings: BTreeMap::new(),
             wakes_delivered: BTreeMap::new(),
@@ -236,7 +238,7 @@ impl<A: Authentication, V: EvidenceAuthority, C: TrustedClock, P: PlanConfigurat
             task,
             TaskPayload::new(canonical_data(&FlowPayload::new(&r, None))?),
             RunPolicy::Once,
-            constraints()?,
+            constraints(None)?,
             TaskMetadata::default(),
         )?;
         let causal = CausalContext::new(

@@ -214,19 +214,11 @@ fn native_compound_crash_child() {
     )
     .unwrap();
     actionqueue_runtime::disposition::commit(&mut a, expected, d, 101).unwrap();
-    if mode == "before-wi-reconciliation" {
-        barrier(&dir.join("ready"));
-    }
     panic!("crash barrier not reached");
 }
 #[test]
 fn child_transaction_native_wal_process_death_cuts_replay_all_or_none() {
-    for mode in [
-        "before-commit",
-        "during-publication",
-        "after-durable-before-ack",
-        "before-wi-reconciliation",
-    ] {
+    for mode in ["before-commit", "during-publication", "after-durable-before-ack"] {
         let t = tempfile::tempdir().unwrap();
         let child = std::process::Command::new(std::env::current_exe().unwrap())
             .args(["--exact", "native_compound_crash_child", "--nocapture"])
@@ -245,7 +237,34 @@ fn child_transaction_native_wal_process_death_cuts_replay_all_or_none() {
         }
         child.kill().unwrap();
         child.wait().unwrap();
-        let session = open_store(&t.path().join("aq"), OpenOptions::ReadOnly).unwrap();
+        let mut session = open_store(&t.path().join("aq"), OpenOptions::ReadOnly).unwrap();
+        if mode == "during-publication" {
+            assert!(actionqueue_storage::recovery::bootstrap::recover_read_only(
+                &session,
+                actionqueue_storage::wal::repair::RepairPolicy::Strict
+            )
+            .is_err());
+            drop(session);
+            let result = actionqueue_runtime::engine::ActionQueueEngine::new(
+                actionqueue_runtime::config::RuntimeConfig {
+                    data_dir: t.path().join("aq"),
+                    ..Default::default()
+                },
+                Noop,
+            )
+            .bootstrap();
+            let Err(actionqueue_runtime::engine::BootstrapError::Recovery(error)) = result else {
+                panic!("Strict bootstrap must reject torn tail during recovery");
+            };
+            assert!(
+                matches!(
+                    error,
+                    actionqueue_storage::recovery::bootstrap::RecoveryBootstrapError::WalReplay(_)
+                ),
+                "{error}"
+            );
+            session = open_store(&t.path().join("aq"), OpenOptions::ReadOnly).unwrap();
+        }
         let recovered = actionqueue_storage::recovery::bootstrap::recover_read_only(
             &session,
             actionqueue_storage::wal::repair::RepairPolicy::TruncatePartial,
@@ -253,7 +272,7 @@ fn child_transaction_native_wal_process_death_cuts_replay_all_or_none() {
         .unwrap();
         let (parent, run, children, wait): (TaskId, RunId, Vec<TaskId>, WaitId) =
             serde_json::from_slice(&std::fs::read(t.path().join("identities")).unwrap()).unwrap();
-        let committed = matches!(mode, "after-durable-before-ack" | "before-wi-reconciliation");
+        let committed = mode == "after-durable-before-ack";
         assert_eq!(recovered.projection.task_count(), if committed { 4 } else { 1 });
         assert_eq!(
             recovered.projection.parent_child_mappings().count(),
@@ -283,5 +302,15 @@ fn child_transaction_native_wal_process_death_cuts_replay_all_or_none() {
             if committed { 2 } else { 0 }
         );
         assert_eq!(recovered.incomplete_tail.is_some(), mode == "during-publication");
+    }
+}
+
+struct Noop;
+impl actionqueue_executor_local::handler::ExecutorHandler for Noop {
+    fn execute(
+        &self,
+        _: actionqueue_executor_local::handler::ExecutorContext,
+    ) -> AttemptDisposition {
+        AttemptDisposition::complete(None)
     }
 }

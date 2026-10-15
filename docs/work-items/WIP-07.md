@@ -22,9 +22,11 @@ commits children, dependency edges, checkpoint and parent AllTerminal wait. WI's
 prepared proposal is never commitment evidence. Host reconciliation surrounds each
 QueueEngine tick; it verifies accepted children using AQ's public projection,
 producing disposition, scoped-child-key derivation and inherited causation. Binding
-and its exact readiness-signal obligation commit together. Missing bindings yield
-to a correlated retained-signal wait without a connector call or failed attempt.
-Pending coordinator requests and wakes recover from durable WI records.
+is persisted before dispatch. Missing bindings yield to an immediately eligible AQ
+deadline wait, then reload the durable binding without a connector call or failed
+attempt. This allocates no readiness signal identities. Pending coordinator requests
+and bindings recover from durable WI records; the old per-child wake outbox is no
+longer used.
 
 Boundary nodes materialize pinned inputs/resources and preserve submitting agency.
 Structural ceilings never supply authority. Current evidence, target comparison,
@@ -65,8 +67,9 @@ claim is made.
 Verification uses Rust 1.89.0, the supplied external target cache and scratch logs.
 Coverage includes real Direct/Flow boundary receipts; branch/skip/join replay;
 readiness before reconciliation and restart; authority/registry/schema rejection;
-native process death before commit, during partial WAL publication, after durable
-commit before acknowledgment and before WI reconciliation; AQ bounds, deadline
+native AQ process death before commit, during partial WAL publication and after
+durable commit before acknowledgment; real WI coordinator process death after
+PrepareChildren, after AQ commit before binding, and after binding; AQ bounds, deadline
 orders and all timeout policies; required/detached lifecycle and mixed-run task
 success; projection rebuild/tampering, immutable versions and artifact backup/restore.
 All adopted checks must run successfully on the committed candidate. Results are
@@ -103,3 +106,55 @@ The maximum-length identity regression executes two boundary nodes with 256-byte
 node, definition and original client request IDs. Derived effect keys hash a
 canonical tuple, avoiding concatenation collisions and overflow; AQ local keys
 use already-persisted UUIDs. Stable identities never depend on truncating user IDs.
+
+
+## Review remediation (F-001 through F-019)
+
+These are implementation dispositions for independent review, not reviewer closure.
+All new tests below are non-ignored in `crates/worldinterface-runtime/tests/flow.rs`
+unless another file is named. The coverage matrix preserves the authoritative AB
+case IDs and exact manifest/package/test references.
+
+| Finding | Disposition and evidence to verify |
+| --- | --- |
+| F-001 | Fixed: Start and Finish share a root-bound dispatch guard. Cancellation is journaled before AQ control; Start reloads Flow closure and node disposition, and invocation checks again. Finish waits for child terminality. Committed effects missing a successful node escalate to Uncertain. Node writes after Finish reject. `cancellation_before_start_and_failed_node_redelivery_cannot_invoke` and the existing after-Start cancellation test cover both sides. |
+| F-002 | Fixed: effect ownership is part of the initial intent journal entry, preceding resolution/authorization. Legacy advance, prepare and delivery reject owned effects; dispatch_pending skips them. `flow_owned_authorized_effect_cannot_enter_legacy_dispatch`. |
+| F-003 | Fixed: transient pre-Start and publication failures yield retryable AQ dispositions. Durable effect outcomes are recovered before current authorization is requested again. Publication retry never invokes a committed boundary twice. `pre_start_journal_failure_is_retryable_and_then_succeeds` and `publication_failure_retries_durable_success_without_reinvocation`. |
+| F-004 | Fixed: effect dedup uses the typed Flow owner (run and node), a namespace distinct from client request dedup. Ownership is verified before use and preparation requires matching child provenance. `node_request_collision_uses_distinct_owned_effects_and_queue_keeps_progressing`. |
+| F-005 | Fixed: readiness uses deadline waits and durable binding reloads, allocating zero signals. `full_signal_capacity_does_not_block_binding_or_flow_execution` fills AQ's configured identity budget, asserts backpressure on the next signal, then completes a Flow. |
+| F-006 | Fixed: oversized Artifact outputs reject explicitly; JSON ports validate actual JSON bytes individually. The current descriptor profile rejects mixed Artifact/JSON boundary ports at compilation because it permits exactly one output. `artifact_output_size_and_json_input_schema_are_enforced_on_actual_bytes`. |
+| F-007 | Fixed: `wi_proposal_aq_commit_and_binding_process_death_recover_stable_children` kills the real WI coordinator after PrepareChildren, after AQ commit before BindChild, and after BindChild, then uses production bootstrap and checks stable identities/proposal, bindings, zero readiness signals and exactly one invocation/commit per boundary. The obsolete before-WI-reconciliation mode was removed from the AQ-only fixture. There is no WakeDelivered cut in the new design because readiness no longer has a signal outbox. |
+| F-008 | Fixed: the hash test recomputes admission_hash after tampering and asserts the precise plan digest mismatch, including the durable quarantine diagnostic and zero commits. |
+| F-009 | Fixed: boundary child timeouts round their materialized millisecond budget up to AQ seconds, minimum one; coordinator/pure nodes retain 60 seconds. `boundary_attempt_timeout_tracks_budget_in_seconds`. |
+| F-010 | Fixed: reconciliation validates each unfinished run independently and journals a bounded quarantine diagnostic before canceling that run's AQ task. Busy/conflicting writes retry; completed runs are skipped, including completion races. Store-level snapshot/journal failures still surface. `damaged_run_is_quarantined_while_another_tenant_completes`. |
+| F-011 | Fixed within the embedded profile: each tenant retains at most 256 runs, 256 definition versions and 64 MiB of canonical Flow state. Finished/quarantined runs are excluded from tick reconciliation. `flow_capacity_is_enforced_without_losing_existing_history` fills the run budget, rejects the next admission without a journal revision, and rebuilds the complete history. Whole-tenant serialization remains bounded by this explicit envelope; unlimited retention/scalable archival is not claimed. |
+| F-012 | Fixed: artifact existence, integrity and tenant scope are checked before Flow history writes for admissions, bindings, results and exports. `flow_journal_rejects_invalid_artifacts_and_preserves_finished_admission` and `journal_finish_rejects_substituted_exports_and_stale_definition_admission`. |
+| F-013 | Fixed: AdmitRun idempotency compares verified immutable admission identity after progress; activation retries retain the exact previous precondition; admission checks activity inside the transaction; finished node/binding/wake mutations reject; exports equal recorded selected producer artifacts; child run IDs are unique. The two journal regression tests above and foundation `flow_versions_predecessors_revision_rollback_and_rebuild` cover these rules. |
+| F-014 | Fixed: production EffectService::submit_direct and PlanService::submit_flow have forged-session, invalid/revoked-evidence, caller identity/capacity and conflict regressions. Grant/approval claims are admitted as requests, then denied by authorization with zero invocations. `production_direct_and_flow_reject_forged_sessions_invalid_evidence_and_claims`, `forged_grant_and_approval_claims_do_not_authorize_production_direct_or_flow`. |
+| F-015 | Fixed: resource, operation and connector enlargement assert CompileError::Authority; a Transform requesting hidden I/O asserts HiddenIo; all produce zero commits. `runtime_compiler_rejects_connector_and_operation_authority_enlargement` and the strengthened existing authority/purity test. |
+| F-016 | Fixed: native torn-tail test asserts production AQ bootstrap fails specifically during WAL replay under Strict. TruncatePartial inspection proves the valid prefix only; it is not automatic production repair. See operator procedure below. |
+| F-017 | Fixed with the existing WI size envelope preserved: AQ limit+1 assertions name TooLarge, HierarchyDepth, DispositionError or WaitSpecError; parent mappings have cardinality 64 and exactly one Awaiting disposition contains all children. The 64-boundary-node WI case asserts its stricter 64 KiB plan rejection before AQ admission. AQ compound and deadline fixtures replay native framed WAL; deadline races assert the exact winning signal identity. |
+| F-018 | Fixed: Running/outcome-less boundary errors record NodeDisposition::Uncertain; AQ cancels dependent work and Flow outcome folding preserves the uncertainty. JSON schemas parse the bytes delivered to the connector. `outcome_recording_error_marks_node_uncertain_and_blocks_dependents` and the artifact/JSON regression. |
+| F-019 | Fixed: Direct admission destructures the boundary once; branch replay includes a guarded boundary whose skipped result cannot create an effect or receipt; the compound-test comment describes AQ only; reference validation propagates digest errors. |
+
+A quarantined run retains its diagnostic and immutable evidence for host inspection;
+it cannot dispatch new boundary work. Healthy tenants keep ticking. The host must
+repair/restore damaged evidence offline before attempting recovery. Per-tenant run,
+version or byte capacity rejects new writes without removing history. At capacity,
+archive the stopped bundle and initialize a fresh bundle; no online pruning or
+identity reuse is provided by this integration-only profile.
+
+Production bootstrap keeps AQ 0.2.0's Strict WAL policy. For an incomplete trailing
+record, stop every writer, retain a byte-for-byte copy, inspect the native WAL with
+AQ's published recovery API and TruncatePartial policy, and obtain the validated
+last-record boundary. An operator may then use AQ's `truncate_to_last_valid` API
+on that tail, sync it, and re-open with Strict validation. Never truncate a complete
+record or interior corruption. This maintenance procedure is explicit; tests do
+not claim automatic repair by QueueEngine.
+
+Remediation adds only retained ownership/guard and test-helper declarations to the
+existing fabric-support disposition family; no check definitions, AQ features,
+versions, dependencies or legacy-removal dispositions change. The remote actor
+mutation-only fixture retains its original test writer because this adopted binary
+profile does not enable AQ's actor wire feature; AB-WI-005 and AB-WI-010 use native
+WAL encoding and replay.

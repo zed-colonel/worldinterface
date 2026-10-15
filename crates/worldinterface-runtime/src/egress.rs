@@ -54,6 +54,7 @@ impl<A: Authentication, V: EvidenceAuthority, R: ResourceObserver, C: TrustedClo
         let caller = caller(self.authentication, session)?;
         let egress = Egress::new(self.root);
         let view = egress.inspect(&caller, id)?;
+        crate::admission::require_top_level(self.root, caller.tenant(), id)?;
         let snapshot = verify_snapshot(
             self.root,
             self.evidence,
@@ -126,7 +127,8 @@ impl<A: Authentication, V: EvidenceAuthority, R: ResourceObserver, C: TrustedClo
             if report.attempted == limit {
                 break;
             }
-            if effect.agency.binding.principal != *principal.principal()
+            if effect.owner.is_some()
+                || effect.agency.binding.principal != *principal.principal()
                 || !matches!(
                     effect.phase,
                     worldinterface_domain::Phase::Authorized

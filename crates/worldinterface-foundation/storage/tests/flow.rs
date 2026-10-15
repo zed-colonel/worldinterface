@@ -76,6 +76,15 @@ fn flow_versions_predecessors_revision_rollback_and_rebuild() {
             FlowCommand::ActivateVersion { id: d.id.clone(), version: 1, previous: None },
         )
         .unwrap();
+    assert!(root
+        .flow_transact(
+            &tenant,
+            s.revision,
+            FlowCommand::ActivateVersion { id: d.id.clone(), version: 1, previous: Some(99) }
+        )
+        .unwrap_err()
+        .to_string()
+        .contains("precondition conflict"));
     let s = root
         .flow_transact(
             &tenant,
