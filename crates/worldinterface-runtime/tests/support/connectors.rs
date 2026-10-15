@@ -30,6 +30,7 @@ pub enum Mode {
     PrepareTransient,
     Widen,
     Unknown,
+    Possible,
     Escalate,
 }
 #[derive(Clone)]
@@ -145,6 +146,7 @@ impl Connector for DeterministicConnector {
             Mode::Unknown | Mode::Escalate => {
                 (CommitObservation::Unknown, ExecutionOutcome::Uncertain)
             }
+            Mode::Possible => (CommitObservation::Possible, ExecutionOutcome::Uncertain),
             _ => {
                 let identity = if self.descriptor.idempotency == IdempotencyClass::NonRepeatable {
                     uuid::Uuid::new_v4().to_string()

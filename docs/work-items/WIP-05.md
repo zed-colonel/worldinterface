@@ -91,8 +91,9 @@ Original evidence remains reachable from the linked execution receipt.
   `reconciliation_retries_transient_clock_and_rejects_binding_errors` verifies
   an admitted AQ run retries once after clock failure and completes the same case.
 - **F-003 (fixed for reviewer verification):** when cooperative invocation returns
-  under cancellation, the executor calls the connector's cancel phase if its
-  pinned descriptor supports it. Connectors must return promptly on the token.
+  under cancellation with Unknown or Possible commit, the executor calls the
+  connector's cancel phase if its pinned descriptor supports it. Connectors must
+  return promptly on the token.
   The typed cancel result is persisted as scoped `wi.connector-cancel:1` evidence.
   Requested, unsupported and unavailable cancellation preserve uncertainty;
   only ConfirmedNotCommitted can establish cancellation before commit. No cancel
@@ -112,6 +113,15 @@ Original evidence remains reachable from the linked execution receipt.
   metadata; `provider_scope` identifies the key namespace. The existing key test
   confirms that renaming the parameter preserves replay identity while changing
   the pinned descriptor hash.
+- **F-006 (fixed for reviewer verification):** the executor calls cancel only
+  for Unknown or Possible commit observations. Confirmed commit and confirmed
+  noncommit skip the phase, so a late cancellation cannot reverse a known commit
+  or change a definitive failure into cancellation. The existing
+  `spi_cancel_phase_records_observation_and_preserves_commit_truth` regression
+  now requires zero cancel calls and no cancel evidence for successful commit,
+  terminal failure after commit, confirmed noncommit and terminal noncommit.
+  It also exercises Possible alongside Unknown, including confirmation of
+  noncommit, and verifies replay preserves call counts and provider commits.
 
 The structural inventory change adds `VerifiedCaseAction`, the private
 `TransientReconciliation` error classifier and the regression's `FlakyClock`

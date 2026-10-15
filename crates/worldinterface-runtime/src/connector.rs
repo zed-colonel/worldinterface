@@ -111,6 +111,8 @@ pub trait Connector: Send + Sync {
         cancellation: &CancellationToken,
     ) -> Result<PortObservation>;
     fn reconcile(&self, request: ReconcileRequest) -> Result<ReconcileOutcome>;
+    /// Called under cancellation only when invoke reported Unknown or Possible
+    /// commit. Definitive commit or noncommit observations skip this phase.
     fn cancel(&self, request: ReconcileRequest) -> Result<CancelObservation>;
 }
 impl<T: Connector + ?Sized> Connector for Arc<T> {

@@ -775,7 +775,15 @@ impl<P: Connector, V: EvidenceAuthority, C: TrustedClock> EffectAttemptHandler<P
                     )?);
                 // The token requests cooperation; only the connector's typed
                 // response may prove noncommit after crossing the boundary.
-                if cancellation_supported && ctx.input.cancellation_context.token().is_cancelled() {
+                // A definitive invoke observation needs no cancellation and must
+                // not trigger a provider action that could reverse a known commit.
+                if cancellation_supported
+                    && ctx.input.cancellation_context.token().is_cancelled()
+                    && matches!(
+                        observed.commit,
+                        CommitObservation::Unknown | CommitObservation::Possible
+                    )
+                {
                     let canceled = self.port.cancel(cancel_request);
                     let bytes: &[u8] = match &canceled {
                         Ok(CancelObservation::Unsupported) => b"unsupported",
@@ -787,9 +795,7 @@ impl<P: Connector, V: EvidenceAuthority, C: TrustedClock> EffectAttemptHandler<P
                         schema: "wi.connector-cancel:1".to_string().try_into()?,
                         bytes: bytes.to_vec(),
                     });
-                    if matches!(canceled, Ok(CancelObservation::ConfirmedNotCommitted))
-                        && observed.commit != CommitObservation::ConfirmedCommitted
-                    {
+                    if matches!(canceled, Ok(CancelObservation::ConfirmedNotCommitted)) {
                         observed.commit = CommitObservation::ConfirmedNotCommitted;
                         observed.outcome = ExecutionOutcome::CanceledBeforeCommit;
                     }

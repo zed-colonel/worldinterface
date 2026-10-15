@@ -245,17 +245,19 @@ fn spi_preparation_cannot_substitute_current_exact_authority() {
 
 /// F-003: meaningful cancellation is a connector phase; a request, unsupported
 /// cancellation or transport error never serves as evidence of noncommit.
+/// F-006: definitive invoke observations skip cancel, preserving commit truth.
 #[test]
 fn spi_cancel_phase_records_observation_and_preserves_commit_truth() {
     use actionqueue_executor_local::handler::ExecutorHandler;
     use std::sync::{atomic::Ordering, Arc};
-    for (supported, cancel, mode, expected_commit, expected_phase) in [
+    for (supported, cancel, mode, expected_commit, expected_phase, cancel_expected) in [
         (
             false,
             Some(CancelObservation::ConfirmedNotCommitted),
             Mode::Unknown,
             CommitObservation::Unknown,
             Phase::Uncertain,
+            false,
         ),
         (
             true,
@@ -263,6 +265,7 @@ fn spi_cancel_phase_records_observation_and_preserves_commit_truth() {
             Mode::Unknown,
             CommitObservation::Unknown,
             Phase::Uncertain,
+            true,
         ),
         (
             true,
@@ -270,14 +273,32 @@ fn spi_cancel_phase_records_observation_and_preserves_commit_truth() {
             Mode::Unknown,
             CommitObservation::Unknown,
             Phase::Uncertain,
+            true,
         ),
-        (true, None, Mode::Unknown, CommitObservation::Unknown, Phase::Uncertain),
+        (true, None, Mode::Unknown, CommitObservation::Unknown, Phase::Uncertain, true),
         (
             true,
             Some(CancelObservation::ConfirmedNotCommitted),
             Mode::Unknown,
             CommitObservation::ConfirmedNotCommitted,
             Phase::Canceled,
+            true,
+        ),
+        (
+            true,
+            Some(CancelObservation::Requested),
+            Mode::Possible,
+            CommitObservation::Possible,
+            Phase::Uncertain,
+            true,
+        ),
+        (
+            true,
+            Some(CancelObservation::ConfirmedNotCommitted),
+            Mode::Possible,
+            CommitObservation::ConfirmedNotCommitted,
+            Phase::Canceled,
+            true,
         ),
         (
             true,
@@ -285,6 +306,31 @@ fn spi_cancel_phase_records_observation_and_preserves_commit_truth() {
             Mode::Commit,
             CommitObservation::ConfirmedCommitted,
             Phase::Succeeded,
+            false,
+        ),
+        (
+            true,
+            Some(CancelObservation::ConfirmedNotCommitted),
+            Mode::TerminalCommitted,
+            CommitObservation::ConfirmedCommitted,
+            Phase::Failed,
+            false,
+        ),
+        (
+            true,
+            Some(CancelObservation::ConfirmedNotCommitted),
+            Mode::NonCommit,
+            CommitObservation::ConfirmedNotCommitted,
+            Phase::Failed,
+            false,
+        ),
+        (
+            true,
+            Some(CancelObservation::ConfirmedNotCommitted),
+            Mode::Terminal,
+            CommitObservation::ConfirmedNotCommitted,
+            Phase::Failed,
+            false,
         ),
     ] {
         let mut h = Harness::with_cancellation(IdempotencyClass::NonRepeatable, mode, supported);
@@ -295,21 +341,22 @@ fn spi_cancel_phase_records_observation_and_preserves_commit_truth() {
             token.cancel();
         }));
         let _ = h.handler().execute(ctx);
-        assert_eq!(h.connector.cancel_calls.load(Ordering::SeqCst), u64::from(supported));
+        let expected_commits = usize::from(matches!(mode, Mode::Commit | Mode::TerminalCommitted));
+        assert_eq!(h.connector.cancel_calls.load(Ordering::SeqCst), u64::from(cancel_expected));
         assert_eq!(h.effect().commit, expected_commit);
         assert_eq!(h.effect().phase, expected_phase);
-        assert_eq!(h.connector.commits(), usize::from(mode == Mode::Commit));
+        assert_eq!(h.connector.commits(), expected_commits);
         let outcome = h.effect().outcomes.remove(0);
         let cancellation =
             outcome.evidence.iter().find(|e| e.schema.as_str() == "wi.connector-cancel:1");
-        assert_eq!(cancellation.is_some(), supported);
+        assert_eq!(cancellation.is_some(), cancel_expected);
         if let Some(e) = cancellation {
             assert!(e.artifact.size > 0);
             assert_eq!(&e.artifact.scope, h.caller().tenant());
         }
         let _ = h.handler().execute(h.context());
-        assert_eq!(h.connector.cancel_calls.load(Ordering::SeqCst), u64::from(supported));
-        assert_eq!(h.connector.commits(), usize::from(mode == Mode::Commit));
+        assert_eq!(h.connector.cancel_calls.load(Ordering::SeqCst), u64::from(cancel_expected));
+        assert_eq!(h.connector.commits(), expected_commits);
     }
     // Before dispatch there is no external operation to cancel.
     let mut h = Harness::with_cancellation(IdempotencyClass::NonRepeatable, Mode::Commit, true);
