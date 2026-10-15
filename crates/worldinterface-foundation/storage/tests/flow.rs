@@ -80,6 +80,15 @@ fn flow_versions_predecessors_revision_rollback_and_rebuild() {
         .flow_transact(
             &tenant,
             s.revision,
+            FlowCommand::ActivateVersion { id: d.id.clone(), version: 1, previous: Some(0) }
+        )
+        .unwrap_err()
+        .to_string()
+        .contains("invalid Flow activation precondition"));
+    assert!(root
+        .flow_transact(
+            &tenant,
+            s.revision,
             FlowCommand::ActivateVersion { id: d.id.clone(), version: 1, previous: Some(99) }
         )
         .unwrap_err()

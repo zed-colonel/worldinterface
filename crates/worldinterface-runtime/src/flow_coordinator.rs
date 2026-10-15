@@ -387,7 +387,7 @@ pub(crate) fn reconcile<H: actionqueue_executor_local::handler::ExecutorHandler 
                     &tenant,
                     FlowCommand::QuarantineRun {
                         run: r.id.clone(),
-                        diagnostic: error.to_string().chars().take(1024).collect(),
+                        diagnostic: bounded_diagnostic(&error.to_string()),
                     },
                 )?;
                 if let Ok(task) = r.coordinator_task.as_str().parse() {
@@ -563,4 +563,23 @@ fn validate_run_references(
         }
     }
     Ok(())
+}
+
+fn bounded_diagnostic(message: &str) -> String {
+    message
+        .chars()
+        .scan(0, |bytes, c| {
+            *bytes += c.len_utf8();
+            (*bytes <= 1024).then_some(c)
+        })
+        .collect()
+}
+#[cfg(test)]
+#[test]
+fn quarantine_diagnostic_bounds_utf8_bytes_without_splitting_characters() {
+    let message = "界".repeat(1024);
+    let diagnostic = bounded_diagnostic(&message);
+    assert_eq!(diagnostic.len(), 1023);
+    assert!(message.starts_with(&diagnostic));
+    assert_eq!(bounded_diagnostic("short"), "short");
 }

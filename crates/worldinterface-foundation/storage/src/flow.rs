@@ -258,6 +258,9 @@ fn reduce(old: &FlowState, tenant: &OpaqueRef, cmd: &FlowCommand) -> Result<Flow
             versions.insert(d.version, d.clone());
         }
         FlowCommand::ActivateVersion { id, version, previous } => {
+            if *previous == Some(0) {
+                return Err(invalid("invalid Flow activation precondition"));
+            }
             if s.versions.get(id).and_then(|v| v.get(version)).is_none() {
                 return Err(invalid("unknown Flow version"));
             }
