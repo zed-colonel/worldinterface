@@ -4646,72 +4646,72 @@
         },
         {
           "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::module:child_guard",
-          "source_sha256": "ed71e531e0fcc0c2794b34eb791b893ff7c71b0562c112991aa09e6c65a67916",
+          "source_sha256": "75c52dab3e9b100d04239e80db35effc61ca91f79004bff042a461e4ecb86c84",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::module:support",
-          "source_sha256": "ed71e531e0fcc0c2794b34eb791b893ff7c71b0562c112991aa09e6c65a67916",
+          "source_sha256": "75c52dab3e9b100d04239e80db35effc61ca91f79004bff042a461e4ecb86c84",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::source-module:crates/worldinterface-runtime/tests/completion_regressions.rs",
-          "source_sha256": "ed71e531e0fcc0c2794b34eb791b893ff7c71b0562c112991aa09e6c65a67916",
+          "source_sha256": "75c52dab3e9b100d04239e80db35effc61ca91f79004bff042a461e4ecb86c84",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::struct:BrokenCompletionClock",
-          "source_sha256": "ed71e531e0fcc0c2794b34eb791b893ff7c71b0562c112991aa09e6c65a67916",
+          "source_sha256": "75c52dab3e9b100d04239e80db35effc61ca91f79004bff042a461e4ecb86c84",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::struct:Clock",
-          "source_sha256": "ed71e531e0fcc0c2794b34eb791b893ff7c71b0562c112991aa09e6c65a67916",
+          "source_sha256": "75c52dab3e9b100d04239e80db35effc61ca91f79004bff042a461e4ecb86c84",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::struct:Evidence",
-          "source_sha256": "ed71e531e0fcc0c2794b34eb791b893ff7c71b0562c112991aa09e6c65a67916",
+          "source_sha256": "75c52dab3e9b100d04239e80db35effc61ca91f79004bff042a461e4ecb86c84",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::struct:InterleavingClock",
-          "source_sha256": "ed71e531e0fcc0c2794b34eb791b893ff7c71b0562c112991aa09e6c65a67916",
+          "source_sha256": "75c52dab3e9b100d04239e80db35effc61ca91f79004bff042a461e4ecb86c84",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::struct:InterleavingPort",
-          "source_sha256": "ed71e531e0fcc0c2794b34eb791b893ff7c71b0562c112991aa09e6c65a67916",
+          "source_sha256": "75c52dab3e9b100d04239e80db35effc61ca91f79004bff042a461e4ecb86c84",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::struct:Noop",
-          "source_sha256": "ed71e531e0fcc0c2794b34eb791b893ff7c71b0562c112991aa09e6c65a67916",
+          "source_sha256": "75c52dab3e9b100d04239e80db35effc61ca91f79004bff042a461e4ecb86c84",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::struct:Port",
-          "source_sha256": "ed71e531e0fcc0c2794b34eb791b893ff7c71b0562c112991aa09e6c65a67916",
+          "source_sha256": "75c52dab3e9b100d04239e80db35effc61ca91f79004bff042a461e4ecb86c84",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::struct:Prepared",
-          "source_sha256": "ed71e531e0fcc0c2794b34eb791b893ff7c71b0562c112991aa09e6c65a67916",
+          "source_sha256": "75c52dab3e9b100d04239e80db35effc61ca91f79004bff042a461e4ecb86c84",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::struct:SequenceClock",
-          "source_sha256": "ed71e531e0fcc0c2794b34eb791b893ff7c71b0562c112991aa09e6c65a67916",
+          "source_sha256": "75c52dab3e9b100d04239e80db35effc61ca91f79004bff042a461e4ecb86c84",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::invocation_fence_rechecks_after_supersession::struct:Forbidden",
-          "source_sha256": "ed71e531e0fcc0c2794b34eb791b893ff7c71b0562c112991aa09e6c65a67916",
+          "source_sha256": "75c52dab3e9b100d04239e80db35effc61ca91f79004bff042a461e4ecb86c84",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::support::module:effect_fixture",
-          "source_sha256": "ed71e531e0fcc0c2794b34eb791b893ff7c71b0562c112991aa09e6c65a67916",
+          "source_sha256": "75c52dab3e9b100d04239e80db35effc61ca91f79004bff042a461e4ecb86c84",
           "registration_sites": []
         },
         {
@@ -5738,7 +5738,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/tests/completion_regressions.rs",
-          "source_sha256": "ed71e531e0fcc0c2794b34eb791b893ff7c71b0562c112991aa09e6c65a67916",
+          "source_sha256": "75c52dab3e9b100d04239e80db35effc61ca91f79004bff042a461e4ecb86c84",
           "treatment": "Retain focused WI-05 remediation evidence for uncertainty, dispatch convergence, invocation fencing, historical receipt binding and reopen invariants (WIP-04)."
         },
         {

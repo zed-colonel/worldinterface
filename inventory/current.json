@@ -9634,7 +9634,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/tests/completion_regressions.rs",
     "name": "child_guard",
-    "source_sha256": "ed71e531e0fcc0c2794b34eb791b893ff7c71b0562c112991aa09e6c65a67916",
+    "source_sha256": "75c52dab3e9b100d04239e80db35effc61ca91f79004bff042a461e4ecb86c84",
     "conditions": [],
     "registration_sites": []
   },
@@ -9643,7 +9643,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/tests/completion_regressions.rs",
     "name": "support",
-    "source_sha256": "ed71e531e0fcc0c2794b34eb791b893ff7c71b0562c112991aa09e6c65a67916",
+    "source_sha256": "75c52dab3e9b100d04239e80db35effc61ca91f79004bff042a461e4ecb86c84",
     "conditions": [],
     "registration_sites": []
   },
@@ -9652,7 +9652,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-runtime/tests/completion_regressions.rs",
     "name": "crates/worldinterface-runtime/tests/completion_regressions.rs",
-    "source_sha256": "ed71e531e0fcc0c2794b34eb791b893ff7c71b0562c112991aa09e6c65a67916",
+    "source_sha256": "75c52dab3e9b100d04239e80db35effc61ca91f79004bff042a461e4ecb86c84",
     "conditions": [],
     "registration_sites": []
   },
@@ -9661,7 +9661,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/completion_regressions.rs",
     "name": "BrokenCompletionClock",
-    "source_sha256": "ed71e531e0fcc0c2794b34eb791b893ff7c71b0562c112991aa09e6c65a67916",
+    "source_sha256": "75c52dab3e9b100d04239e80db35effc61ca91f79004bff042a461e4ecb86c84",
     "conditions": [],
     "registration_sites": []
   },
@@ -9670,7 +9670,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/completion_regressions.rs",
     "name": "Clock",
-    "source_sha256": "ed71e531e0fcc0c2794b34eb791b893ff7c71b0562c112991aa09e6c65a67916",
+    "source_sha256": "75c52dab3e9b100d04239e80db35effc61ca91f79004bff042a461e4ecb86c84",
     "conditions": [],
     "registration_sites": []
   },
@@ -9679,7 +9679,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/completion_regressions.rs",
     "name": "Evidence",
-    "source_sha256": "ed71e531e0fcc0c2794b34eb791b893ff7c71b0562c112991aa09e6c65a67916",
+    "source_sha256": "75c52dab3e9b100d04239e80db35effc61ca91f79004bff042a461e4ecb86c84",
     "conditions": [],
     "registration_sites": []
   },
@@ -9688,7 +9688,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/completion_regressions.rs",
     "name": "InterleavingClock",
-    "source_sha256": "ed71e531e0fcc0c2794b34eb791b893ff7c71b0562c112991aa09e6c65a67916",
+    "source_sha256": "75c52dab3e9b100d04239e80db35effc61ca91f79004bff042a461e4ecb86c84",
     "conditions": [],
     "registration_sites": []
   },
@@ -9697,7 +9697,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/completion_regressions.rs",
     "name": "InterleavingPort",
-    "source_sha256": "ed71e531e0fcc0c2794b34eb791b893ff7c71b0562c112991aa09e6c65a67916",
+    "source_sha256": "75c52dab3e9b100d04239e80db35effc61ca91f79004bff042a461e4ecb86c84",
     "conditions": [],
     "registration_sites": []
   },
@@ -9706,7 +9706,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/completion_regressions.rs",
     "name": "Noop",
-    "source_sha256": "ed71e531e0fcc0c2794b34eb791b893ff7c71b0562c112991aa09e6c65a67916",
+    "source_sha256": "75c52dab3e9b100d04239e80db35effc61ca91f79004bff042a461e4ecb86c84",
     "conditions": [],
     "registration_sites": []
   },
@@ -9715,7 +9715,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/completion_regressions.rs",
     "name": "Port",
-    "source_sha256": "ed71e531e0fcc0c2794b34eb791b893ff7c71b0562c112991aa09e6c65a67916",
+    "source_sha256": "75c52dab3e9b100d04239e80db35effc61ca91f79004bff042a461e4ecb86c84",
     "conditions": [],
     "registration_sites": []
   },
@@ -9724,7 +9724,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/completion_regressions.rs",
     "name": "Prepared",
-    "source_sha256": "ed71e531e0fcc0c2794b34eb791b893ff7c71b0562c112991aa09e6c65a67916",
+    "source_sha256": "75c52dab3e9b100d04239e80db35effc61ca91f79004bff042a461e4ecb86c84",
     "conditions": [],
     "registration_sites": []
   },
@@ -9733,7 +9733,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/completion_regressions.rs",
     "name": "SequenceClock",
-    "source_sha256": "ed71e531e0fcc0c2794b34eb791b893ff7c71b0562c112991aa09e6c65a67916",
+    "source_sha256": "75c52dab3e9b100d04239e80db35effc61ca91f79004bff042a461e4ecb86c84",
     "conditions": [],
     "registration_sites": []
   },
@@ -9742,7 +9742,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/completion_regressions.rs",
     "name": "Forbidden",
-    "source_sha256": "ed71e531e0fcc0c2794b34eb791b893ff7c71b0562c112991aa09e6c65a67916",
+    "source_sha256": "75c52dab3e9b100d04239e80db35effc61ca91f79004bff042a461e4ecb86c84",
     "conditions": [],
     "registration_sites": []
   },
@@ -9751,7 +9751,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/tests/completion_regressions.rs",
     "name": "effect_fixture",
-    "source_sha256": "ed71e531e0fcc0c2794b34eb791b893ff7c71b0562c112991aa09e6c65a67916",
+    "source_sha256": "75c52dab3e9b100d04239e80db35effc61ca91f79004bff042a461e4ecb86c84",
     "conditions": [],
     "registration_sites": []
   },

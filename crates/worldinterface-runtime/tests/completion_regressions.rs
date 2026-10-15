@@ -688,7 +688,7 @@ fn terminal_recovery_uses_start_run_and_skips_other_observed_terminal_runs() {
     .unwrap()
     .with_host(host());
     tokio::runtime::Builder::new_current_thread().enable_all().build().unwrap().block_on(async {
-        tokio::time::timeout(std::time::Duration::from_secs(20), aq.run_until_idle())
+        let _ = tokio::time::timeout(std::time::Duration::from_secs(20), aq.run_until_idle())
             .await
             .unwrap()
             .unwrap();
@@ -788,7 +788,7 @@ fn terminal_recovery_selects_start_among_multiple_terminal_runs() {
         )
         .unwrap();
     tokio::runtime::Builder::new_current_thread().enable_all().build().unwrap().block_on(async {
-        tokio::time::timeout(std::time::Duration::from_secs(20), aq.run_until_idle())
+        let _ = tokio::time::timeout(std::time::Duration::from_secs(20), aq.run_until_idle())
             .await
             .unwrap()
             .unwrap();
