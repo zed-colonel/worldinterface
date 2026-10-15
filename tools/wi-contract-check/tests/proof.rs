@@ -395,3 +395,30 @@ fn hash_refresh_round_trip_changes_only_hash_bytes_and_rejects_structure() {
     v[0].as_object_mut().unwrap().remove("source_sha256");
     assert!(!refresh::hash_only_change(&serde_json::from_str(original).unwrap(), &v));
 }
+
+#[test]
+fn wi06_core_requires_exact_nonignored_tests_and_retains_deferred_parent() {
+    let path = "conformance/wi-fabric-2/connectors/coverage.json";
+    let coverage = read(&root().join(path)).unwrap();
+    let obligations: std::collections::BTreeMap<String, Vec<TestRef>> =
+        serde_json::from_value(coverage["required_obligations"].clone()).unwrap();
+    let index: TestIndex = obligations.values().flatten().cloned().map(|t| (t, 1)).collect();
+    assert!(proof::validate_connectors(&root(), &index).unwrap().is_empty());
+    for count in [0, 2] {
+        let mut index = index.clone();
+        index.insert(obligations["external-key-crash"][0].clone(), count);
+        assert!(!proof::validate_connectors(&root(), &index).unwrap().is_empty());
+    }
+    let t = fixture();
+    let mut changed = coverage;
+    changed["deferred_full_parent"] = json!([]);
+    fs::write(t.path().join(path), serde_json::to_vec(&changed).unwrap()).unwrap();
+    assert!(!proof::validate_connectors(t.path(), &index).unwrap().is_empty());
+    let (registry, gates, _) = records();
+    for id in ["AB-WI-012", "AB-WI-014", "AB-WI-020", "AB-WI-023"] {
+        let case = registry.cases.iter().find(|c| c.id == id).unwrap();
+        assert_eq!(case.status, "implemented");
+        assert_eq!(case.owning_item, "WIP-05");
+    }
+    assert_ne!(gates.iter().find(|g| g.id == "WI-AQ-G4").unwrap().status, "closed");
+}

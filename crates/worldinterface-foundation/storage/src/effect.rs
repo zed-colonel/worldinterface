@@ -285,7 +285,7 @@ fn receipt_source(
         }
         let entry = strict_json(&bytes).map_err(invalid)?;
         let action = &entry["action"];
-        if entry["version"].as_u64() != Some(1)
+        if !matches!(entry["version"].as_u64(), Some(1 | 2))
             || canonical_data(&entry).map_err(invalid)? != bytes
             || entry["tenant"].as_str() != Some(tenant.as_str())
             || action["id"].as_str() != Some(id.as_str())
@@ -918,6 +918,8 @@ mod tests {
             };
             let run: OpaqueRef = format!("run-{dispatch}").try_into().unwrap();
             let outcome = OutcomeEvidence {
+                classification: None,
+                reconciliation_admission: None,
                 intent: id.clone(),
                 attempt: format!("attempt-{dispatch}").try_into().unwrap(),
                 connector_semantics: "externally-keyed".to_owned().try_into().unwrap(),

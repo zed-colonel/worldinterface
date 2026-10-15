@@ -7,6 +7,11 @@ use worldinterface_protocol::*;
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Target {
+    Connector {
+        provider: OpaqueRef,
+        resource: OpaqueRef,
+        operation: OpaqueRef,
+    },
     Filesystem {
         root: OpaqueRef,
         components: Vec<String>,
@@ -44,6 +49,7 @@ pub enum Target {
 impl Target {
     pub fn namespace(&self) -> &'static str {
         match self {
+            Self::Connector { .. } => "connector",
             Self::Filesystem { .. } => "filesystem",
             Self::Network { .. } => "network",
             Self::Communication { .. } => "communication",
@@ -135,6 +141,8 @@ fn public_ip(value: &str) -> bool {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ResolverEntry {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub connector_binding: Option<ConnectorBinding>,
     pub namespace: OpaqueRef,
     pub version: OpaqueRef,
     pub descriptor: ContentHash,
@@ -209,8 +217,43 @@ pub fn resolve_resource(
             return Err("audience widening".into());
         }
     }
+    let connector_execution = r
+        .connector_binding
+        .as_ref()
+        .map(|binding| -> Result<ConnectorExecution> {
+            binding.validate()?;
+            let d = &binding.descriptor;
+            if binding.descriptor_hash != r.descriptor
+                || d.connector != r.connector
+                || d.resource_namespace != r.namespace
+                || d.effect_class != intent.submission.effect_class
+            {
+                return Err("connector resolution binding mismatch".into());
+            }
+            if let Target::Connector { provider, operation, .. } = &f.document.target {
+                if provider != &d.connector || operation != &d.operation {
+                    return Err("connector target operation mismatch".into());
+                }
+            }
+            if let Target::Worker { operation, .. } = &f.document.target {
+                if operation != &d.operation {
+                    return Err("worker target operation mismatch".into());
+                }
+            }
+            Ok(ConnectorExecution {
+                binding: binding.clone(),
+                operation_identity: intent.stable_idempotency_identity.clone(),
+                provider_key: d
+                    .provider_key
+                    .as_ref()
+                    .map(|k| k.derive(tenant, &d.operation, &intent.stable_idempotency_identity))
+                    .transpose()?,
+            })
+        })
+        .transpose()?;
     Ok(ResolutionRecord {
         resolved: ResolvedEffect {
+            connector_execution,
             intent_id: intent.id.clone(),
             effect_class: intent.submission.effect_class.clone(),
             resource: f.document.reference(f.observed_version.clone())?,

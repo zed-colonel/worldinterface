@@ -184,6 +184,7 @@ impl StoreBundle {
                 }
             }
         }
+        crate::reconciliation::recover_terminal(&wi, &references)?;
         let mut convergence_faults = Vec::new();
         for tenant in wi.effect_tenants()? {
             let state = wi.effect_snapshot(&tenant)?;
@@ -210,6 +211,9 @@ impl StoreBundle {
                         continue;
                     };
                     let expected_code = match outcome.outcome {
+                        worldinterface_protocol::ExecutionOutcome::TerminalFailure => {
+                            Some("wi.effect.terminal_provider_failure")
+                        }
                         worldinterface_protocol::ExecutionOutcome::FailedBeforeCommit => {
                             Some("wi.effect.failed_before_commit")
                         }

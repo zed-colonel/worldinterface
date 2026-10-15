@@ -42,6 +42,11 @@ pub enum CommitObservation {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct OutcomeEvidence {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub classification: Option<ExecutorClassification>,
+
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub reconciliation_admission: Option<Vec<u8>>,
     pub intent: EffectIntentId,
     pub attempt: OpaqueRef,
     pub connector_semantics: OpaqueRef,
@@ -120,6 +125,8 @@ pub struct ProductionAdmission {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct EffectAggregate {
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub reconciliation_cases: Vec<crate::reconciliation::ReconciliationCase>,
     pub intent: EffectIntent,
     pub agency: AgencyRecord,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -221,7 +228,12 @@ pub fn inspect_effect(e: &EffectAggregate) -> Result<EffectView> {
                 }))
         || e.phase == Phase::Failed
             && e.resolution_failure.is_none()
-            && e.outcomes.last().is_none_or(|o| o.outcome != ExecutionOutcome::FailedBeforeCommit)
+            && e.outcomes.last().is_none_or(|o| {
+                !matches!(
+                    o.outcome,
+                    ExecutionOutcome::FailedBeforeCommit | ExecutionOutcome::TerminalFailure
+                )
+            })
         || e.phase == Phase::Canceled
             && !e.canceled_before_dispatch
             && e.outcomes.last().is_none_or(|o| o.outcome != ExecutionOutcome::CanceledBeforeCommit)
@@ -357,6 +369,12 @@ pub enum EffectAction {
         id: EffectIntentId,
         evidence: VerifiedReconciliation,
     },
+    ReconciliationCase {
+        id: EffectIntentId,
+        case: OpaqueRef,
+        expected: u32,
+        action: crate::reconciliation::CaseAction,
+    },
     PermitRetry {
         id: EffectIntentId,
         snapshot: VerifiedSnapshot,
@@ -430,6 +448,12 @@ enum JournalAction {
         id: EffectIntentId,
         evidence: ReconciliationEvidence,
     },
+    ReconciliationCase {
+        id: EffectIntentId,
+        case: OpaqueRef,
+        expected: u32,
+        action: crate::reconciliation::CaseAction,
+    },
     PermitRetry {
         id: EffectIntentId,
         snapshot: AuthorizationSnapshot,
@@ -469,6 +493,9 @@ impl From<EffectAction> for JournalAction {
             EffectAction::Outcome { id, evidence } => Self::Outcome { id, evidence: evidence.0 },
             EffectAction::Reconcile { id, evidence } => {
                 Self::Reconcile { id, evidence: evidence.0 }
+            }
+            EffectAction::ReconciliationCase { id, case, expected, action } => {
+                Self::ReconciliationCase { id, case, expected, action }
             }
             EffectAction::PermitRetry { id, snapshot } => {
                 Self::PermitRetry { id, snapshot: snapshot.0 }
@@ -510,13 +537,23 @@ pub fn validate_command(
     at: Timestamp,
     action: EffectAction,
 ) -> Result<ValidatedEffectCommand> {
+    let action: JournalAction = action.into();
+    let version = match &action {
+        JournalAction::ReconciliationCase { .. } => 2,
+        JournalAction::Outcome { evidence, .. }
+            if evidence.classification.is_some() || evidence.reconciliation_admission.is_some() =>
+        {
+            2
+        }
+        _ => 1,
+    };
     let entry = Entry {
-        version: 1,
+        version,
         before: state_digest(state)?,
         tenant: caller.tenant.clone(),
         principal: caller.principal.clone(),
         at,
-        action: action.into(),
+        action,
     };
     apply(state, &entry)?;
     Ok(ValidatedEffectCommand {
@@ -576,6 +613,11 @@ fn check_evidence(refs: &[EvidenceRef], tenant: &OpaqueRef) -> Result<()> {
 /// Runtimes can check content-derived references before publishing bytes; the
 /// journal repeats these rules after checking the current attempt and manifest.
 pub fn validate_outcome_publication(tenant: &OpaqueRef, o: &OutcomeEvidence) -> Result<Phase> {
+    if o.reconciliation_admission.as_ref().is_some_and(|b| {
+        o.outcome != ExecutionOutcome::Uncertain || b.is_empty() || b.len() > 16384
+    }) {
+        return Err("reconciliation admission bytes require uncertainty".into());
+    }
     check_evidence(&o.evidence, tenant)?;
     validate_outcome_bounds(
         o.durable_outputs.len(),
@@ -591,6 +633,10 @@ pub fn validate_outcome_publication(tenant: &OpaqueRef, o: &OutcomeEvidence) -> 
         return Err("output scope or bound".into());
     }
     let phase = match (&o.commit, &o.outcome) {
+        (
+            CommitObservation::ConfirmedNotCommitted | CommitObservation::ConfirmedCommitted,
+            ExecutionOutcome::TerminalFailure,
+        ) => Phase::Failed,
         (CommitObservation::ConfirmedCommitted, ExecutionOutcome::Succeeded)
             if o.boundary_record
                 .as_ref()
@@ -619,7 +665,7 @@ pub fn validate_outcome_publication(tenant: &OpaqueRef, o: &OutcomeEvidence) -> 
 }
 
 fn apply(state: &EffectState, entry: &Entry) -> Result<(EffectState, EffectIntentId)> {
-    if entry.version != 1
+    if ![1, 2].contains(&entry.version)
         || entry.before != state_digest(state)?
         || state.last_at.as_ref().is_some_and(|t| t > &entry.at)
     {
@@ -686,6 +732,7 @@ fn apply(state: &EffectState, entry: &Entry) -> Result<(EffectState, EffectInten
                 attempt: None,
                 outcomes: vec![],
                 reconciliations: vec![],
+                reconciliation_cases: vec![],
                 commit: CommitObservation::NotAttempted,
                 canceled_before_dispatch: false,
             },
@@ -709,6 +756,7 @@ fn apply(state: &EffectState, entry: &Entry) -> Result<(EffectState, EffectInten
         | JournalAction::Cancel { id }
         | JournalAction::Outcome { id, .. }
         | JournalAction::Reconcile { id, .. }
+        | JournalAction::ReconciliationCase { id, .. }
         | JournalAction::PermitRetry { id, .. } => id,
         _ => unreachable!(),
     };
@@ -943,9 +991,19 @@ fn apply(state: &EffectState, entry: &Entry) -> Result<(EffectState, EffectInten
             e.phase = validate_outcome_publication(&entry.tenant, o)?;
             e.commit = o.commit.clone();
             e.outcomes.push(o.clone());
+            if e.phase == Phase::Uncertain {
+                if let Some(case) = crate::reconciliation::ReconciliationCase::from_uncertain(
+                    e,
+                    s.revision + 1,
+                    now,
+                )? {
+                    e.reconciliation_cases.push(case);
+                }
+            }
         }
         JournalAction::Reconcile { evidence: r, .. } => {
-            if e.phase != Phase::Uncertain
+            if !e.reconciliation_cases.is_empty()
+                || e.phase != Phase::Uncertain
                 || r.intent != *id
                 || Some(&r.attempt) != e.attempt.as_ref()
                 || e.resolution
@@ -974,11 +1032,100 @@ fn apply(state: &EffectState, entry: &Entry) -> Result<(EffectState, EffectInten
             };
             e.reconciliations.push(r.clone());
         }
+        JournalAction::ReconciliationCase { case, expected, action, .. } => {
+            use crate::reconciliation::{CaseAction, CaseStatus};
+            let case = e
+                .reconciliation_cases
+                .iter_mut()
+                .find(|c| &c.id == case)
+                .ok_or("missing reconciliation case")?;
+            if case.revision != *expected {
+                return Err("stale reconciliation case".into());
+            }
+            match action {
+                CaseAction::PrepareAdmission { request } => {
+                    if request.is_empty()
+                        || request.len() > 16384
+                        || case.admission_request.as_ref().is_some_and(|old| old != request)
+                    {
+                        return Err("reconciliation admission conflict".into());
+                    }
+                    if case.admission_request.as_ref() == Some(request) {
+                        return Ok((state.clone(), id.clone()));
+                    }
+                    case.admission_request = Some(request.clone());
+                    case.revision += 1;
+                }
+                CaseAction::Acknowledge { sequence } => {
+                    if *sequence == 0
+                        || case.admission_request.is_none()
+                        || case.admission_sequence.is_some_and(|old| old != *sequence)
+                    {
+                        return Err("reconciliation acknowledgment conflict".into());
+                    }
+                    if case.admission_sequence == Some(*sequence) {
+                        return Ok((state.clone(), id.clone()));
+                    }
+                    case.admission_sequence = Some(*sequence);
+                    case.revision += 1;
+                }
+                CaseAction::Start => case.start(*expected, now.epoch_millis()?)?,
+                CaseAction::Observe { result, evidence } => {
+                    case.observe(*expected, *result, evidence.clone(), now, s.revision + 1)?;
+                    let result = match case.status {
+                        CaseStatus::ConfirmedCommitted => {
+                            Some(ReconciliationResult::ConfirmedCommitted)
+                        }
+                        CaseStatus::ConfirmedNotCommitted => {
+                            Some(ReconciliationResult::ConfirmedNotCommitted)
+                        }
+                        CaseStatus::Escalated => Some(ReconciliationResult::Escalated),
+                        _ => None,
+                    };
+                    if let Some(result) = result {
+                        let reconciled = matches!(
+                            result,
+                            ReconciliationResult::ConfirmedCommitted
+                                | ReconciliationResult::ConfirmedNotCommitted
+                        );
+                        if e.attempt.as_ref() != Some(&case.attempt) || e.phase != Phase::Uncertain
+                        {
+                            return Err("reconciliation effect fence".into());
+                        }
+                        e.reconciliations.push(ReconciliationEvidence {
+                            intent: id.clone(),
+                            attempt: case.attempt.clone(),
+                            connector_semantics: e
+                                .resolution
+                                .as_ref()
+                                .ok_or("no resolution")?
+                                .resolved
+                                .idempotency_semantics
+                                .clone(),
+                            result,
+                            evidence: evidence.clone(),
+                        });
+                        e.commit = case.commit.clone();
+                        if reconciled {
+                            e.phase = Phase::Reconciled;
+                        }
+                    }
+                }
+            }
+        }
         JournalAction::PermitRetry { snapshot, .. } => {
-            if e.phase != Phase::Reconciled
-                || e.reconciliations
+            let proven_noncommit = (e.phase == Phase::Reconciled
+                && e.reconciliations
                     .last()
-                    .is_none_or(|r| r.result != ReconciliationResult::ConfirmedNotCommitted)
+                    .is_some_and(|r| r.result == ReconciliationResult::ConfirmedNotCommitted))
+                || (e.phase == Phase::Failed
+                    && e.commit == CommitObservation::ConfirmedNotCommitted);
+            if !proven_noncommit
+                || e.dispatches.len() >= e.intent.submission.budget.max_attempts as usize
+                || e.resolution
+                    .as_ref()
+                    .and_then(|r| r.resolved.connector_execution.as_ref())
+                    .is_some_and(|x| !x.binding.descriptor.retry_after_noncommit)
                 || !snapshot.policy.retry_after_noncommit
             {
                 return Err("retry requires provider noncommit and explicit policy".into());
@@ -1044,6 +1191,9 @@ pub fn required_artifacts(e: &EffectAggregate) -> Vec<&ArtifactRef> {
     }
     for r in &e.reconciliations {
         refs.extend(r.evidence.iter().map(|e| &e.artifact));
+    }
+    for c in &e.reconciliation_cases {
+        refs.extend(c.evidence.iter().map(|e| &e.artifact));
     }
     for d in &e.dispatches {
         refs.extend(d.admission.as_ref().map(|a| &a.request_artifact));

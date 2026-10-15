@@ -99,6 +99,11 @@ pub fn prepare_egress_receipt(
         || execution.intent_id != source.intent.id
         || execution.attempt != outcome.attempt
         || execution.outcome != outcome.outcome
+        || execution.classification.is_some_and(|c| Some(c) != outcome.classification)
+        || execution
+            .connector_execution
+            .as_deref()
+            .is_some_and(|b| Some(b) != resolution.resolved.connector_execution.as_ref())
         || source.attempt.as_ref() != Some(&execution.attempt)
         || source.intent.agency != source.agency.context
         || inputs.policy.revision.as_str().is_empty()
@@ -117,22 +122,35 @@ pub fn prepare_egress_receipt(
     {
         return Err("successful receipt lacks published output evidence".into());
     }
-    let provider_profile = inputs.worker.as_ref().ok_or("missing exact provider profile")?;
+    let (provider, provider_digest) =
+        match (&inputs.worker, &resolution.resolved.connector_execution) {
+            (Some(worker), _) => (worker.provider.clone(), digest(worker)?),
+            (None, Some(execution)) => {
+                execution.binding.validate()?;
+                (
+                    execution.binding.descriptor.connector.clone(),
+                    digest(&("wi-generic-execution-profile:1", execution))?,
+                )
+            }
+            _ => return Err("missing exact provider profile".into()),
+        };
     let versions = BoundaryVersions {
         resolver: resolution.resolved.resolver_version.clone(),
         capability_descriptor: resolution.descriptor.clone(),
         policy: inputs.policy.revision.clone(),
         grant_versions: inputs.grants.iter().map(digest).collect::<Result<Vec<_>>>()?,
         connector_profile: resolution.resolved.registry_snapshot.clone(),
-        provider_profile: digest(provider_profile)?,
+        provider_profile: provider_digest,
     };
     let body = EgressReceipt {
+        classification: outcome.classification,
+        connector_execution: resolution.resolved.connector_execution.clone().map(Box::new),
         intent_id: source.intent.id.clone(),
         agency_digest: digest(&source.agency)?,
         authorization_digest: digest(authorization)?,
         resolved_effect_digest: digest(&resolution.resolved)?,
         attempt: execution.attempt.clone(),
-        executor: provider_profile.provider.clone(),
+        executor: provider,
         outcome: outcome.outcome.clone(),
         output_refs: outcome.durable_outputs.clone(),
     };

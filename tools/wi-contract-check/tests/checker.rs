@@ -80,7 +80,7 @@ fn inventory_is_complete_and_deterministic() {
         ("workspace-crate", 10),
         ("auxiliary-crate", 11),
         ("foundation-crate", 7),
-        ("connector", 25),
+        ("connector", 27),
         ("wasm-manifest", 15),
         ("generated-id", 4),
     ] {

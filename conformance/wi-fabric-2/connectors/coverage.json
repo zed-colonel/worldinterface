@@ -1,0 +1,120 @@
+{
+  "version": 1,
+  "scope": "wi/WI-06/integration:embedded-proof",
+  "required_obligations": {
+    "descriptor-conformance": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "spi_registry_classes_keys_and_invalid_contracts"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "spi_naturally_idempotent_and_nonrepeatable_are_real_connectors"
+      }
+    ],
+    "stable-provider-key": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "spi_registry_classes_keys_and_invalid_contracts"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "reconciliation_confirmations_preserve_original_receipt_and_stable_key"
+      }
+    ],
+    "executor-classification": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "spi_executor_classifies_and_rejects_drift_scope_and_prepare"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "spi_cancellation_before_and_after_dispatch_preserves_commit_truth"
+      }
+    ],
+    "external-key-crash": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "spi_provider_and_reconciliation_crash_cuts_never_duplicate_commit"
+      }
+    ],
+    "nonrepeatable-ambiguity": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "spi_naturally_idempotent_and_nonrepeatable_are_real_connectors"
+      }
+    ],
+    "exact-envelope": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "spi_executor_classifies_and_rejects_drift_scope_and_prepare"
+      }
+    ],
+    "bounded-reconciliation": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "reconciliation_bounded_backoff_deadline_and_escalation"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "reconciliation_retry_requires_policy_budget_and_fresh_exact_authorization"
+      }
+    ],
+    "reconciliation-crash": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "spi_provider_and_reconciliation_crash_cuts_never_duplicate_commit"
+      }
+    ],
+    "replay-and-inspection": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "reconciliation_reopen_backup_and_projection_rebuild_preserve_case"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "reconciliation_confirmations_preserve_original_receipt_and_stable_key"
+      }
+    ]
+  },
+  "assigned_cases": {
+    "AB-WI-012": [
+      "ab_wi_012_disposition_algebra_and_minimal_invalid_failure"
+    ],
+    "AB-WI-014": [
+      "ab_wi_014_capacity_remote_fence_stale_and_uncertain"
+    ],
+    "AB-WI-020": [
+      "ab_wi_020_terminal_cancel_is_append_free_and_has_no_late_cascade",
+      "ab_wi_020_023_provider_ack_loss_is_uncertain_until_reconciled",
+      "ab_wi_020_queue_cancel_keeps_started_external_effect_uncertain"
+    ],
+    "AB-WI-023": [
+      "ab_wi_023_actual_uncertain_aq_mutation_recovers_stable_identity",
+      "ab_wi_020_023_provider_ack_loss_is_uncertain_until_reconciled",
+      "spi_provider_and_reconciliation_crash_cuts_never_duplicate_commit"
+    ]
+  },
+  "deferred_full_parent": [
+    "filesystem-reference",
+    "http-reference",
+    "semantic-communication-reference",
+    "wasm-alignment",
+    "legacy-deletion",
+    "worker-supervisor-integration"
+  ]
+}

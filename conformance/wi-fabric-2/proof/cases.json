@@ -973,9 +973,17 @@
       "source_record_sha256": "5a379dcd8220d0ee324563e8903472e79bb2e4e4ac9a8bbf618258d2e4e927c6",
       "gate": "WI-AQ-G4",
       "owning_item": "WIP-05",
-      "status": "planned",
-      "coverage_refs": [],
-      "tests": []
+      "status": "implemented",
+      "coverage_refs": [
+        "conformance/wi-fabric-2/connectors/coverage.json"
+      ],
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_012_disposition_algebra_and_minimal_invalid_failure"
+        }
+      ]
     },
     {
       "id": "AB-WI-013",
@@ -993,9 +1001,17 @@
       "source_record_sha256": "66853e83d481ec4755d888e2459413c3cfa7ca2932f8cc4702e47bb00b81ea04",
       "gate": "WI-AQ-G4",
       "owning_item": "WIP-05",
-      "status": "planned",
-      "coverage_refs": [],
-      "tests": []
+      "status": "implemented",
+      "coverage_refs": [
+        "conformance/wi-fabric-2/connectors/coverage.json"
+      ],
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_014_capacity_remote_fence_stale_and_uncertain"
+        }
+      ]
     },
     {
       "id": "AB-WI-015",
@@ -1074,9 +1090,27 @@
       "source_record_sha256": "0e3eae4a4ce475fcb8cd1799f0790093b81d57590fc893f2fbdeb81e1cdd545a",
       "gate": "WI-AQ-G4",
       "owning_item": "WIP-05",
-      "status": "planned",
-      "coverage_refs": [],
-      "tests": []
+      "status": "implemented",
+      "coverage_refs": [
+        "conformance/wi-fabric-2/connectors/coverage.json"
+      ],
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_020_terminal_cancel_is_append_free_and_has_no_late_cascade"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_020_023_provider_ack_loss_is_uncertain_until_reconciled"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_020_queue_cancel_keeps_started_external_effect_uncertain"
+        }
+      ]
     },
     {
       "id": "AB-WI-021",
@@ -1152,9 +1186,27 @@
       "source_record_sha256": "a501fb9b18d7d222d26b48e37350e907a218dddb215a8f87654a87db7560c23c",
       "gate": "WI-AQ-G4",
       "owning_item": "WIP-05",
-      "status": "planned",
-      "coverage_refs": [],
-      "tests": []
+      "status": "implemented",
+      "coverage_refs": [
+        "conformance/wi-fabric-2/connectors/coverage.json"
+      ],
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_023_actual_uncertain_aq_mutation_recovers_stable_identity"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_020_023_provider_ack_loss_is_uncertain_until_reconciled"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "spi_provider_and_reconciliation_crash_cuts_never_duplicate_commit"
+        }
+      ]
     }
   ]
 }

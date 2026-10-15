@@ -224,6 +224,8 @@ fn fabric_receipt_inputs(
     let effect = state.effects.values().next().unwrap();
     let id = effect.intent.id.clone();
     let outcome = OutcomeEvidence {
+        classification: None,
+        reconciliation_admission: None,
         intent: id.clone(),
         attempt: "attempt:1".to_string().try_into().unwrap(),
         connector_semantics: p.registry.entries[0].semantics.clone(),
@@ -245,6 +247,8 @@ fn fabric_receipt_inputs(
     )
     .unwrap();
     let execution = ExecutionRecord {
+        classification: None,
+        connector_execution: None,
         intent_id: id,
         attempt: outcome.attempt,
         outcome: outcome.outcome,

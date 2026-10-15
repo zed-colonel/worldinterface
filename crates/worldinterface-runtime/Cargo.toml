@@ -9,6 +9,7 @@ rust-version = "1.89"
 publish = false
 
 [dependencies]
+worldinterface-capability = { path = "../worldinterface-foundation/capability" }
 actionqueue-core = { version = "=0.2.0", default-features = false, features = ["serde"] }
 actionqueue-runtime = { version = "=0.2.0", default-features = false, features = ["serde"] }
 actionqueue-storage = { version = "=0.2.0", default-features = false }

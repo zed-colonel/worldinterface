@@ -180,6 +180,8 @@ pub struct EffectIntent {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ResolvedEffect {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub connector_execution: Option<ConnectorExecution>,
     pub intent_id: EffectIntentId,
     pub effect_class: EffectClass,
     pub resource: CanonicalResourceRef,
@@ -235,6 +237,7 @@ pub struct BoundaryObservation {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case", deny_unknown_fields)]
 pub enum ExecutionOutcome {
+    TerminalFailure,
     Succeeded,
     FailedBeforeCommit,
     CanceledBeforeCommit,
@@ -243,6 +246,11 @@ pub enum ExecutionOutcome {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ExecutionRecord {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub classification: Option<ExecutorClassification>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub connector_execution: Option<Box<ConnectorExecution>>,
+
     pub intent_id: EffectIntentId,
     pub attempt: OpaqueRef,
     pub outcome: ExecutionOutcome,
@@ -278,6 +286,11 @@ pub struct IngressReceipt {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct EgressReceipt {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub classification: Option<ExecutorClassification>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub connector_execution: Option<Box<ConnectorExecution>>,
+
     pub intent_id: EffectIntentId,
     pub agency_digest: ContentHash,
     pub authorization_digest: ContentHash,
