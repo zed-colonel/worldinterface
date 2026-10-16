@@ -38,5 +38,7 @@ hmac = "0.12"
 # debug invariants or the debug-only native crash-injection seams.
 [profile.test]
 opt-level = 3
+codegen-units = 16
+lto = "thin"
 debug-assertions = true
 overflow-checks = true

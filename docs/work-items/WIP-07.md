@@ -71,8 +71,9 @@ WI-AQ-G3 stays open for WIP-08. No upstream conformance, legacy removal or relea
 claim is made.
 
 Verification uses Rust 1.89.0, the supplied external target cache and scratch logs.
-The runtime test profile uses optimization level 3 for the sustained 10,000-admission
-and recovery fixture. Debug assertions, overflow checks and debug-only crash
+The runtime test profile uses optimization level 3, 16 codegen units and thin LTO
+for the sustained 10,000-admission and recovery fixture. Debug assertions,
+overflow checks and debug-only crash
 injection remain enabled; no cases, bounds or adopted check definitions change.
 Coverage includes real Direct/Flow boundary receipts; branch/skip/join replay;
 readiness before reconciliation and restart; authority/registry/schema rejection;
