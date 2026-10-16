@@ -93,8 +93,11 @@ impl FlowPayload {
     }
 }
 pub(crate) fn constraints(timeout_millis: Option<u64>) -> Result<TaskConstraints> {
-    let timeout = timeout_millis.map_or(60, |ms| ms.div_ceil(1000).max(1));
-    let mut c = TaskConstraints::new(3, Some(timeout), None)?;
+    // The coordinator has no boundary operation budget. Its durable AQ lease,
+    // retry limit and host cancellation still apply. Only node budgets supply
+    // an attempt timeout; queue maintenance can outlast an arbitrary 60 seconds.
+    let timeout = timeout_millis.map(|ms| ms.div_ceil(1000).max(1));
+    let mut c = TaskConstraints::new(3, timeout, None)?;
     c.set_safety_level(SafetyLevel::Idempotent);
     Ok(c)
 }

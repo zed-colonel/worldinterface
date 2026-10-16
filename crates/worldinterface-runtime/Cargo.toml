@@ -37,6 +37,6 @@ hmac = "0.12"
 # Keep the sustained 10,000-admission/recovery proof practical without disabling
 # debug invariants or the debug-only native crash-injection seams.
 [profile.test]
-opt-level = 1
+opt-level = 3
 debug-assertions = true
 overflow-checks = true

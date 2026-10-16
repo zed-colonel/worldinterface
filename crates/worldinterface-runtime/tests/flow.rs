@@ -1678,6 +1678,19 @@ async fn boundary_attempt_timeout_tracks_budget_in_seconds() {
             .service(&evidence)
             .submit_direct(&(), f.submission.clone(), f.selection(), &mut q)
             .unwrap();
+        let run = f.run(&id);
+        assert_eq!(
+            q.engine()
+                .projection()
+                .task_admission(run.coordinator_task.as_str().parse().unwrap())
+                .unwrap()
+                .request()
+                .task_spec()
+                .constraints()
+                .timeout_secs(),
+            None,
+            "the coordinator has no external operation budget"
+        );
         f.drive(&mut q, &id).await;
         for task in f.run(&id).node_tasks.values() {
             assert_eq!(
@@ -2175,7 +2188,16 @@ async fn flow_capacity_is_enforced_without_losing_existing_history() {
             }
             f.drive(&mut q, &id).await;
             let run = f.run(&id);
-            assert_eq!(run.outcome, Some(FlowOutcome::Succeeded));
+            let parent: TaskId = run.coordinator_task.as_str().parse().unwrap();
+            assert_eq!(
+                run.outcome,
+                Some(FlowOutcome::Succeeded),
+                "Direct request {i}: parent history {:?}; Flow results {:?}",
+                q.engine()
+                    .projection()
+                    .get_attempt_history(&q.engine().projection().run_ids_for_task(parent)[0]),
+                run.results
+            );
             assert_eq!(run.results.len(), 1);
             let effect = run.results.values().next().unwrap().effect.as_ref().unwrap();
             assert_eq!(f.bundle.wi().effect_receipts(&f.auth.0, effect).unwrap().len(), 1);
@@ -2232,16 +2254,23 @@ async fn flow_capacity_is_enforced_without_losing_existing_history() {
     assert_eq!(state.runs.len(), MAX_FLOW_RUNS);
     assert_eq!(state.requests.len(), MAX_FLOW_RUNS);
     drop(state);
-    q.shutdown().unwrap();
-    // Rebuild and full paired recovery must retain old successes and canceled
-    // admissions; both the 257th and 10,000th requests remain idempotent.
-    f.bundle.wi().repository(worldinterface_storage::StoreKind::Flow).unwrap().rebuild().unwrap();
-    f.bundle = Arc::new(StoreBundle::open(&f._temp.path().join("bundle")).unwrap());
+    // Rebuild while the engine is quiescent: all AQ tasks are terminal and no
+    // handler can write. The full paired reopen above already verified 10,000
+    // retained admissions with the final request pending. Keep its live AQ
+    // projection to verify production idempotency after rebuilding WI history.
+    {
+        let _guard = f.bundle.wi().flow_dispatch_guard().unwrap();
+        f.bundle
+            .wi()
+            .repository(worldinterface_storage::StoreKind::Flow)
+            .unwrap()
+            .rebuild()
+            .unwrap();
+    }
     for run in &successes {
         assert_eq!(&f.run(&run.id), run);
     }
     assert_eq!(f.run(canceled.as_ref().unwrap()).outcome, Some(FlowOutcome::Canceled));
-    let mut q = QueueEngine::bootstrap(&f.bundle, handler(&f), host()).unwrap();
     let canceled_run = f.run(canceled.as_ref().unwrap());
     let resolver = Resolver(f.snapshot.facts[0].clone());
     let service = worldinterface_runtime::egress::EffectService {
