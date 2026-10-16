@@ -215,6 +215,16 @@
         "manifest": "crates/worldinterface-runtime/Cargo.toml",
         "package": "worldinterface-runtime",
         "test": "rejected_aq_cancel_does_not_mutate_flow_and_authorized_execution_continues"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "temporary_binding_artifact_io_failure_retries_without_quarantine"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "quarantine_control_failure_surfaces_and_retries_after_host_repair"
       }
     ],
     "branch-receipts": [
@@ -264,6 +274,11 @@
         "manifest": "crates/worldinterface-runtime/Cargo.toml",
         "package": "worldinterface-runtime",
         "test": "journal_finish_rejects_substituted_exports_and_stale_definition_admission"
+      },
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-storage",
+        "test": "separate_store_handles_share_the_dispatch_fence"
       }
     ],
     "deadline-race": [

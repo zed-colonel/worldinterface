@@ -174,3 +174,23 @@ fn concurrent_identical_publications_converge_without_duplicate_journal_transiti
     drop(root);
     StoreRoot::open_existing(t.path().join("root")).unwrap();
 }
+
+#[test]
+fn separate_store_handles_share_the_dispatch_fence() {
+    let dir = tempfile::tempdir().unwrap();
+    let first = std::sync::Arc::new(root(dir.path()));
+    let second = StoreRoot::open_existing(dir.path()).unwrap();
+    let guard = first.flow_dispatch_guard().unwrap();
+    let (started_tx, started_rx) = std::sync::mpsc::channel();
+    let (acquired_tx, acquired_rx) = std::sync::mpsc::channel();
+    let thread = std::thread::spawn(move || {
+        started_tx.send(()).unwrap();
+        let _guard = second.flow_dispatch_guard().unwrap();
+        acquired_tx.send(()).unwrap();
+    });
+    started_rx.recv().unwrap();
+    assert!(acquired_rx.recv_timeout(std::time::Duration::from_millis(100)).is_err());
+    drop(guard);
+    acquired_rx.recv_timeout(std::time::Duration::from_secs(5)).unwrap();
+    thread.join().unwrap();
+}

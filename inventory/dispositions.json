@@ -9910,5 +9910,40 @@
     "target": "runtime Flow coordinator and node executor",
     "rationale": "WIP-07 review remediation: immutable effect ownership, serialized Flow dispatch fences and regression fixtures; retain for independent exact-head review",
     "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/flow.rs::::enum:FlowCapacity",
+    "disposition": "retain-align",
+    "target": "runtime Flow coordinator and node executor",
+    "rationale": "WIP-07 F-020/F-022 remediation: typed validation and retry boundaries, production Direct capacity and recovery evidence; retain for independent review",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/flow.rs::::struct:FlowIntegrity",
+    "disposition": "retain-align",
+    "target": "runtime Flow coordinator and node executor",
+    "rationale": "WIP-07 F-020/F-022 remediation: typed validation and retry boundaries, production Direct capacity and recovery evidence; retain for independent review",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/flow.rs::::struct:FlowRevisionConflict",
+    "disposition": "retain-align",
+    "target": "runtime Flow coordinator and node executor",
+    "rationale": "WIP-07 F-020/F-022 remediation: typed validation and retry boundaries, production Direct capacity and recovery evidence; retain for independent review",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/flow.rs::::struct:FlowRejected",
+    "disposition": "retain-align",
+    "target": "runtime Flow coordinator and node executor",
+    "rationale": "WIP-07 F-020/F-022 remediation: typed validation and retry boundaries, production Direct capacity and recovery evidence; retain for independent review",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/flow.rs::::struct:CapacityEvidence",
+    "disposition": "retain-align",
+    "target": "runtime Flow coordinator and node executor",
+    "rationale": "WIP-07 F-020/F-022 remediation: typed validation and retry boundaries, production Direct capacity and recovery evidence; retain for independent review",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
   }
 ]

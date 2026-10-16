@@ -149,21 +149,14 @@ impl<'a, H: ExecutorHandler + 'static> QueueEngine<'a, H> {
         self.engine.control(actionqueue_runtime::control::ControlOperation::Cancel(
             actionqueue_core::mutation::CancelTarget::Task(task),
         ))?;
-        let task = task.to_string();
-        for tenant in root.flow_tenants()? {
-            let state = root.flow_snapshot(&tenant)?;
-            for r in state.runs.values().filter(|r| {
-                r.outcome.is_none()
-                    && (r.coordinator_task.as_str() == task
-                        || r.node_tasks.values().any(|t| t.as_str() == task))
-            }) {
-                root.flow_transact_guarded(
+        if let Some((tenant, run)) = root.flow_task(&task.to_string())? {
+            let state = root.flow_run_snapshot(&tenant, &run)?;
+            if state.runs.get(&run).is_some_and(|r| r.outcome.is_none()) {
+                root.flow_update_guarded(
                     &guard,
                     &tenant,
-                    root.flow_snapshot(&tenant)?.revision,
-                    worldinterface_storage::flow::FlowCommand::CancelRequested {
-                        run: r.id.clone(),
-                    },
+                    state.revision,
+                    worldinterface_storage::flow::FlowCommand::CancelRequested { run },
                 )?;
             }
         }

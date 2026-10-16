@@ -171,14 +171,13 @@ impl Fixture {
         }
     }
     fn run(&self, id: &OpaqueRef) -> FlowRun {
-        self.bundle.wi().flow_snapshot(&self.auth.0).unwrap().runs[id].clone()
+        self.bundle.wi().flow_run_snapshot(&self.auth.0, id).unwrap().runs[id].clone()
     }
-    async fn drive(
+    async fn drive<
+        V: worldinterface_runtime::authority::EvidenceAuthority + Send + Sync + 'static,
+    >(
         &self,
-        queue: &mut QueueEngine<
-            '_,
-            FlowAttemptHandler<DeterministicConnector, Evidence, Resolver, Clock>,
-        >,
+        queue: &mut QueueEngine<'_, FlowAttemptHandler<DeterministicConnector, V, Resolver, Clock>>,
         id: &OpaqueRef,
     ) {
         for _ in 0..3000 {
@@ -282,8 +281,12 @@ async fn tampered_plan_hash_snapshots_and_attribution_prevent_execution() {
         rusqlite::Connection::open(f._temp.path().join("bundle/wi/flow.sqlite")).unwrap();
     connection
         .execute(
-            "UPDATE flow_state SET state=? WHERE tenant=?",
-            rusqlite::params![canonical_collection(&state).unwrap(), f.auth.0.as_str()],
+            "UPDATE flow_runs SET state=? WHERE tenant=? AND id=?",
+            rusqlite::params![
+                canonical_collection(&state.runs[&id]).unwrap(),
+                f.auth.0.as_str(),
+                id.as_str()
+            ],
         )
         .unwrap();
     drop(connection);
@@ -1174,12 +1177,15 @@ impl Drop for Latch {
 }
 #[tokio::test]
 async fn cancellation_before_start_and_failed_node_redelivery_cannot_invoke() {
-    for cancel in [true, false] {
+    for target in ["parent", "child", "failed"] {
         let f = Fixture::new();
         let evidence = Evidence(f.snapshot.clone());
         let entered = Arc::new(std::sync::atomic::AtomicBool::new(false));
         let latch = Latch::new();
         let mut handler = f.handler();
+        // Hosts may open a separate bundle object for the handler.
+        handler.effect.bundle =
+            Arc::new(StoreBundle::open(&f._temp.path().join("bundle")).unwrap());
         handler.effect.port.after_prepare = Some(latch.hook(entered.clone()));
         let mut q = QueueEngine::bootstrap(&f.bundle, handler, host()).unwrap();
         let id = f
@@ -1195,8 +1201,13 @@ async fn cancellation_before_start_and_failed_node_redelivery_cannot_invoke() {
         }
         assert!(entered.load(std::sync::atomic::Ordering::SeqCst));
         let run = f.run(&id);
-        if cancel {
-            q.cancel_task(run.coordinator_task.as_str().parse().unwrap()).unwrap();
+        if target != "failed" {
+            let task = if target == "parent" {
+                &run.coordinator_task
+            } else {
+                run.node_tasks.values().next().unwrap()
+            };
+            q.cancel_task(task.as_str().parse().unwrap()).unwrap();
         } else {
             let node = run.node_tasks.keys().next().unwrap();
             let effect = f
@@ -1236,7 +1247,10 @@ async fn cancellation_before_start_and_failed_node_redelivery_cannot_invoke() {
         f.drive(&mut q, &id).await;
         assert_eq!(f.connector.commits(), 0);
         assert_eq!(f.connector.invocation_calls.load(std::sync::atomic::Ordering::SeqCst), 0);
-        assert_ne!(f.run(&id).outcome, Some(FlowOutcome::Succeeded));
+        assert_eq!(
+            f.run(&id).outcome,
+            Some(if target == "failed" { FlowOutcome::Failed } else { FlowOutcome::Canceled })
+        );
         q.shutdown().unwrap();
     }
 }
@@ -1287,7 +1301,7 @@ async fn pre_start_journal_failure_is_retryable_and_then_succeeds() {
         .submit_direct(&(), f.submission.clone(), f.selection(), &mut q)
         .unwrap();
     let db = rusqlite::Connection::open(f._temp.path().join("bundle/wi/flow.sqlite")).unwrap();
-    db.execute_batch("CREATE TRIGGER fail_proposal BEFORE INSERT ON flow_history WHEN CAST(NEW.entry AS TEXT) LIKE '%prepare_children%' BEGIN SELECT RAISE(ABORT,'injected journal contention'); END;").unwrap();
+    db.execute_batch("CREATE TRIGGER fail_proposal BEFORE INSERT ON flow_history WHEN CAST(NEW.entry AS TEXT) LIKE '%prepare_children%' BEGIN SELECT RAISE(ABORT,'temporary schema storage failure, foreign cache not authorized'); END;").unwrap();
     let mut retried = false;
     for _ in 0..2000 {
         let _ = q.tick().await.unwrap();
@@ -1438,8 +1452,12 @@ async fn damaged_run_is_quarantined_while_another_tenant_completes() {
     state.runs.get_mut(&bad).unwrap().plan_hash = ContentHash::of(b"wrong");
     let db = rusqlite::Connection::open(f._temp.path().join("bundle/wi/flow.sqlite")).unwrap();
     db.execute(
-        "UPDATE flow_state SET state=? WHERE tenant=?",
-        rusqlite::params![canonical_collection(&state).unwrap(), f.auth.0.as_str()],
+        "UPDATE flow_runs SET state=? WHERE tenant=? AND id=?",
+        rusqlite::params![
+            canonical_collection(&state.runs[&bad]).unwrap(),
+            f.auth.0.as_str(),
+            bad.as_str()
+        ],
     )
     .unwrap();
     // A second tenant's pure plan needs no boundary authority and remains schedulable.
@@ -2075,80 +2093,178 @@ async fn flow_journal_rejects_invalid_artifacts_and_preserves_finished_admission
     assert_eq!(f.bundle.wi().flow_snapshot(&f.auth.0).unwrap().revision, rev);
     q.shutdown().unwrap();
 }
-#[test]
-fn flow_capacity_is_enforced_without_losing_existing_history() {
-    use actionqueue_core::{
-        admission::EnsureTaskRequest,
-        causal::CausalContext,
-        ids::*,
-        task::{
-            constraints::TaskConstraints,
-            metadata::TaskMetadata,
-            run_policy::RunPolicy,
-            task_spec::{TaskPayload, TaskSpec},
-        },
-    };
-    let f = Fixture::new();
-    let evidence = Evidence(f.snapshot.clone());
-    let mut q = QueueEngine::bootstrap(&f.bundle, f.handler(), host()).unwrap();
-    let id = f
-        .service(&evidence)
-        .submit_direct(&(), f.submission.clone(), f.selection(), &mut q)
-        .unwrap();
-    let initial = f.run(&id);
-    q.shutdown().unwrap();
-    for i in 1..=MAX_FLOW_RUNS {
-        let mut run = initial.clone();
-        run.id = uuid::Uuid::new_v4().to_string().try_into().unwrap();
-        run.submission.client_request_id = format!("capacity:{i}").try_into().unwrap();
-        let task = TaskId::new();
-        run.coordinator_task = task.to_string().try_into().unwrap();
-        run.wait_id = WaitId::new().to_string().try_into().unwrap();
-        for task in run.node_tasks.values_mut() {
-            *task = TaskId::new().to_string().try_into().unwrap();
+// Issue exact-demand credentials per submission; large policy whitelists are
+// deliberately absent from both the host and the persisted admission pins.
+#[derive(Clone)]
+struct CapacityEvidence(Evidence);
+impl worldinterface_runtime::authority::EvidenceAuthority for CapacityEvidence {
+    fn current_snapshot(
+        &self,
+        tenant: &OpaqueRef,
+        submission: &EffectSubmission,
+    ) -> Result<worldinterface_domain::authorization::AuthorizationSnapshot> {
+        let mut snapshot = self.0.current_snapshot(tenant, submission)?;
+        let demand: std::collections::BTreeSet<ContentHash> =
+            [worldinterface_domain::ingress::digest(submission)?].into();
+        for b in &mut snapshot.bindings {
+            b.principal_authority = demand.clone();
+            b.capacity_authority = demand.clone();
         }
-        let payload = canonical_data(
-            &serde_json::json!({"profile":"wi-flow-1", "tenant":run.tenant, "run":run.id}),
-        )
-        .unwrap();
-        let request = EnsureTaskRequest::new(
-            AdmissionKey::new(format!("wi-flow:{}", run.id.as_str())).unwrap(),
-            TaskSpec::new(
-                task,
-                TaskPayload::new(payload),
-                RunPolicy::Once,
-                TaskConstraints::new(3, Some(60), None).unwrap(),
-                TaskMetadata::default(),
-            )
-            .unwrap(),
-            vec![],
-            CausalContext::new(
-                TraceId::new("capacity").unwrap(),
-                CorrelationId::new("capacity").unwrap(),
-            ),
-            None,
-        )
-        .unwrap();
-        run.coordinator_request = serde_json::to_vec(&request).unwrap();
-        run.admission_hash = run.admission_digest().unwrap();
-        let revision = f.bundle.wi().flow_snapshot(&f.auth.0).unwrap().revision;
-        let result = f.bundle.wi().flow_transact(
-            &f.auth.0,
-            revision,
-            FlowCommand::AdmitRun { run: Box::new(run) },
-        );
-        if i == MAX_FLOW_RUNS {
-            assert!(result.unwrap_err().to_string().contains("Flow run capacity"));
-            assert_eq!(f.bundle.wi().flow_snapshot(&f.auth.0).unwrap().revision, revision);
+        snapshot.policy.platform = demand.clone();
+        snapshot.policy.resource = demand.clone();
+        snapshot.policy.information_use = demand.clone();
+        for g in &mut snapshot.grants {
+            g.authority = demand.clone();
+        }
+        Ok(snapshot)
+    }
+    fn verify(
+        &self,
+        tenant: &OpaqueRef,
+        evidence: &EvidenceRef,
+        at: &Timestamp,
+    ) -> Result<ContentHash> {
+        self.0.verify(tenant, evidence, at)
+    }
+}
+
+#[tokio::test]
+async fn flow_capacity_is_enforced_without_losing_existing_history() {
+    let mut f = Fixture::new();
+    let evidence = CapacityEvidence(Evidence(f.snapshot.clone()));
+    let handler = |f: &Fixture| {
+        let h = f.handler();
+        FlowAttemptHandler {
+            effect: EffectAttemptHandler {
+                bundle: f.bundle.clone(),
+                port: h.effect.port,
+                evidence: evidence.clone(),
+                clock: h.effect.clock,
+            },
+            resolver: h.resolver,
+            artifacts: h.artifacts,
+        }
+    };
+    let mut q = QueueEngine::bootstrap(&f.bundle, handler(&f), host()).unwrap();
+    let mut successes = Vec::new();
+    let mut canceled = None;
+    let mut last_submission = f.submission.clone();
+    // All 10,000 admissions go through the authenticated production facade.
+    // Mix completed external effects with host cancellation; retain every run,
+    // receipt and request identity in the same bundle throughout.
+    for i in 1..=MAX_FLOW_RUNS {
+        let mut submission = f.submission.clone();
+        submission.client_request_id = format!("direct-capacity:{i}").try_into().unwrap();
+        let resolver = Resolver(f.snapshot.facts[0].clone());
+        let service = worldinterface_runtime::egress::EffectService {
+            root: f.bundle.wi(),
+            authentication: &f.auth,
+            evidence: &evidence,
+            resolver: &resolver,
+            clock: &f.clock,
+        };
+        let id = service
+            .submit_direct(&(), submission.clone(), f.selection(), &f.config, &mut q)
+            .unwrap();
+        if [1, 256, 257, 5000, 9999, 10000].contains(&i) {
+            // Leave the final admitted run unfinished across a full WI/AQ reopen.
+            if i == MAX_FLOW_RUNS {
+                q.shutdown().unwrap();
+                f.bundle = Arc::new(StoreBundle::open(&f._temp.path().join("bundle")).unwrap());
+                q = QueueEngine::bootstrap(&f.bundle, handler(&f), host()).unwrap();
+            }
+            f.drive(&mut q, &id).await;
+            let run = f.run(&id);
+            assert_eq!(run.outcome, Some(FlowOutcome::Succeeded));
+            assert_eq!(run.results.len(), 1);
+            let effect = run.results.values().next().unwrap().effect.as_ref().unwrap();
+            assert_eq!(f.bundle.wi().effect_receipts(&f.auth.0, effect).unwrap().len(), 1);
+            successes.push(run);
         } else {
-            result.unwrap();
+            let run = f.run(&id);
+            q.cancel_task(run.coordinator_task.as_str().parse().unwrap()).unwrap();
+            if canceled.is_none() {
+                canceled = Some(id.clone());
+            }
+        }
+        // Reconcile bounded batches through the real scheduling path.
+        if i % 100 == 0 {
+            let _ = q.tick().await.unwrap();
+        }
+        last_submission = submission;
+        if i == 257 {
+            q.shutdown().unwrap();
+            f.bundle = Arc::new(StoreBundle::open(&f._temp.path().join("bundle")).unwrap());
+            q = QueueEngine::bootstrap(&f.bundle, handler(&f), host()).unwrap();
+        }
+        if i % 1000 == 0 {
+            eprintln!("production Direct capacity: {i}/{}", MAX_FLOW_RUNS);
         }
     }
+    assert_eq!(f.connector.commits(), successes.len());
+    let before = f.bundle.wi().flow_catalog(&f.auth.0).unwrap().revision;
+    let resolver = Resolver(f.snapshot.facts[0].clone());
+    let service = worldinterface_runtime::egress::EffectService {
+        root: f.bundle.wi(),
+        authentication: &f.auth,
+        evidence: &evidence,
+        resolver: &resolver,
+        clock: &f.clock,
+    };
+    let last = service
+        .submit_direct(&(), last_submission.clone(), f.selection(), &f.config, &mut q)
+        .unwrap();
+    assert_eq!(last, successes.last().unwrap().id);
+    let mut conflict = last_submission.clone();
+    conflict.budget.timeout_millis += 1;
+    assert!(service
+        .submit_direct(&(), conflict, f.selection(), &f.config, &mut q)
+        .unwrap_err()
+        .to_string()
+        .contains("Flow request conflict"));
+    last_submission.client_request_id = "capacity:overflow".to_string().try_into().unwrap();
+    let error =
+        service.submit_direct(&(), last_submission, f.selection(), &f.config, &mut q).unwrap_err();
+    assert!(error.is::<FlowCapacity>(), "{error}");
+    assert_eq!(f.bundle.wi().flow_catalog(&f.auth.0).unwrap().revision, before);
+    assert!(f.bundle.wi().flow_pending_snapshot(&f.auth.0).unwrap().runs.is_empty());
     let state = f.bundle.wi().flow_snapshot(&f.auth.0).unwrap();
     assert_eq!(state.runs.len(), MAX_FLOW_RUNS);
-    assert!(canonical_collection(&state).unwrap().len() < MAX_FLOW_STATE_BYTES);
+    assert_eq!(state.requests.len(), MAX_FLOW_RUNS);
+    drop(state);
+    q.shutdown().unwrap();
+    // Rebuild and full paired recovery must retain old successes and canceled
+    // admissions; both the 257th and 10,000th requests remain idempotent.
     f.bundle.wi().repository(worldinterface_storage::StoreKind::Flow).unwrap().rebuild().unwrap();
-    assert_eq!(f.bundle.wi().flow_snapshot(&f.auth.0).unwrap(), state);
+    f.bundle = Arc::new(StoreBundle::open(&f._temp.path().join("bundle")).unwrap());
+    for run in &successes {
+        assert_eq!(&f.run(&run.id), run);
+    }
+    assert_eq!(f.run(canceled.as_ref().unwrap()).outcome, Some(FlowOutcome::Canceled));
+    let mut q = QueueEngine::bootstrap(&f.bundle, handler(&f), host()).unwrap();
+    let canceled_run = f.run(canceled.as_ref().unwrap());
+    let resolver = Resolver(f.snapshot.facts[0].clone());
+    let service = worldinterface_runtime::egress::EffectService {
+        root: f.bundle.wi(),
+        authentication: &f.auth,
+        evidence: &evidence,
+        resolver: &resolver,
+        clock: &f.clock,
+    };
+    for run in successes.iter().chain(std::iter::once(&canceled_run)) {
+        assert_eq!(
+            service
+                .submit_direct(&(), run.submission.clone(), f.selection(), &f.config, &mut q)
+                .unwrap(),
+            run.id
+        );
+    }
+    assert_eq!(q.engine().projection().admissions().count(), MAX_FLOW_RUNS + successes.len());
+    assert_eq!(
+        f.connector.invocation_calls.load(std::sync::atomic::Ordering::SeqCst) as usize,
+        successes.len()
+    );
+    q.shutdown().unwrap();
 }
 
 #[tokio::test]
@@ -2407,4 +2523,66 @@ async fn exported_json_schema_validates_artifact_bytes_instead_of_reference_meta
         assert_eq!(f.connector.invocation_calls.load(std::sync::atomic::Ordering::SeqCst), 0);
         q.shutdown().unwrap();
     }
+}
+
+#[tokio::test]
+async fn temporary_binding_artifact_io_failure_retries_without_quarantine() {
+    let f = Fixture::new();
+    let evidence = Evidence(f.snapshot.clone());
+    let mut q = QueueEngine::bootstrap(&f.bundle, f.handler(), host()).unwrap();
+    let id = f
+        .service(&evidence)
+        .submit_direct(&(), f.submission.clone(), f.selection(), &mut q)
+        .unwrap();
+    for _ in 0..2000 {
+        let _ = q.tick().await.unwrap();
+        if !f.run(&id).bindings.is_empty() {
+            break;
+        }
+        tokio::time::sleep(std::time::Duration::from_millis(1)).await;
+    }
+    let run = f.run(&id);
+    let binding = run.bindings.values().next().expect("bound child");
+    let path = f._temp.path().join("bundle/wi/artifacts").join(binding.request.content.as_str());
+    let hidden = f._temp.path().join("temporarily-unavailable-request");
+    std::fs::rename(&path, &hidden).unwrap();
+    let _ = q.tick().await.unwrap();
+    assert!(f.bundle.wi().flow_run_snapshot(&f.auth.0, &id).unwrap().quarantined.is_empty());
+    std::fs::rename(&hidden, &path).unwrap();
+    f.drive(&mut q, &id).await;
+    assert_eq!(f.run(&id).outcome, Some(FlowOutcome::Succeeded));
+    assert_eq!(f.connector.commits(), 1);
+    q.shutdown().unwrap();
+}
+
+#[tokio::test]
+async fn quarantine_control_failure_surfaces_and_retries_after_host_repair() {
+    let f = Fixture::new();
+    let evidence = Evidence(f.snapshot.clone());
+    let mut q = QueueEngine::bootstrap(&f.bundle, f.handler(), host()).unwrap();
+    let id = f
+        .service(&evidence)
+        .submit_direct(&(), f.submission.clone(), f.selection(), &mut q)
+        .unwrap();
+    let mut run = f.run(&id);
+    run.plan_hash = ContentHash::of(b"damaged");
+    let db = rusqlite::Connection::open(f._temp.path().join("bundle/wi/flow.sqlite")).unwrap();
+    db.execute(
+        "UPDATE flow_runs SET state=? WHERE tenant=? AND id=?",
+        rusqlite::params![canonical_collection(&run).unwrap(), f.auth.0.as_str(), id.as_str()],
+    )
+    .unwrap();
+    q.set_host_control_context(None);
+    assert!(q.tick().await.is_err());
+    assert!(f.bundle.wi().flow_run_snapshot(&f.auth.0, &id).unwrap().quarantined.contains_key(&id));
+    q.set_host_control_context(Some(host()));
+    let _ = q.tick().await.unwrap();
+    let task = run.coordinator_task.as_str().parse().unwrap();
+    assert!(q
+        .engine()
+        .projection()
+        .runs_for_task(task)
+        .all(|r| r.state() == actionqueue_core::run::RunState::Canceled));
+    assert_eq!(f.connector.commits(), 0);
+    q.shutdown().unwrap();
 }

@@ -355,7 +355,7 @@ impl Repository<'_> {
     pub fn rebuild(&self) -> Result<()> {
         let mut c = self.root.connect(self.kind)?;
         let tx = c.transaction_with_behavior(TransactionBehavior::Immediate)?;
-        tx.execute_batch("DELETE FROM projections; DELETE FROM records; DELETE FROM admissions; DELETE FROM outbox; DELETE FROM ingress_state; DELETE FROM ingress_receipt_index; DELETE FROM effect_state; DELETE FROM effect_outbox; DELETE FROM publication_index; DELETE FROM receipt_index; DELETE FROM flow_state;")?;
+        tx.execute_batch("DELETE FROM projections; DELETE FROM records; DELETE FROM admissions; DELETE FROM outbox; DELETE FROM ingress_state; DELETE FROM ingress_receipt_index; DELETE FROM effect_state; DELETE FROM effect_outbox; DELETE FROM publication_index; DELETE FROM receipt_index; DELETE FROM flow_state; DELETE FROM flow_runs; DELETE FROM flow_tasks;")?;
         replay_into(&tx, &tx)?;
         crate::ingress::replay(&tx, &tx)?;
         crate::effect::replay(&tx, &tx)?;
@@ -410,13 +410,27 @@ pub(crate) fn validate_database(c: &Connection) -> Result<()> {
     crate::publication::replay(c, &expected)?;
     crate::receipt::replay(c, &expected)?;
     crate::flow::replay(c, &expected)?;
-    for query in ["SELECT tenant,state FROM flow_state ORDER BY tenant", "SELECT run,tenant,intent,task FROM effect_run_index ORDER BY run", "SELECT tenant,state FROM effect_state ORDER BY tenant", "SELECT tenant,intent,dispatch FROM effect_outbox ORDER BY tenant,intent", "SELECT tenant,state FROM ingress_state ORDER BY tenant", "SELECT id,tenant,identity,digest,canonical FROM ingress_receipt_index ORDER BY id", "SELECT entity,revision,state FROM projections ORDER BY entity", "SELECT entity,digest,canonical FROM records ORDER BY seq", "SELECT scope,principal,class,request,digest,entity FROM admissions ORDER BY scope,principal,class,request", "SELECT key,entity,payload,delivered FROM outbox ORDER BY key", "SELECT identity,scope,content,size,state FROM publication_index ORDER BY identity", "SELECT id,digest,tenant,intent FROM receipt_index ORDER BY id"] {
-  fn values(c: &Connection, sql: &str) -> Result<Vec<Vec<rusqlite::types::Value>>> {
-   let mut q=c.prepare(sql)?; let n=q.column_count();
-   let rows=q.query_map([],|r|(0..n).map(|i|r.get(i)).collect::<rusqlite::Result<Vec<_>>>())?;
-   Ok(rows.collect::<rusqlite::Result<Vec<_>>>()?)
-  }
-  if values(c,query)? != values(&expected,query)? { return Err(invalid("projection differs from authoritative history")); }
+    for query in ["SELECT tenant,id,request,terminal,quarantine,state FROM flow_runs ORDER BY tenant,id", "SELECT tenant,task,run FROM flow_tasks ORDER BY tenant,task", "SELECT tenant,state FROM flow_state ORDER BY tenant", "SELECT run,tenant,intent,task FROM effect_run_index ORDER BY run", "SELECT tenant,state FROM effect_state ORDER BY tenant", "SELECT tenant,intent,dispatch FROM effect_outbox ORDER BY tenant,intent", "SELECT tenant,state FROM ingress_state ORDER BY tenant", "SELECT id,tenant,identity,digest,canonical FROM ingress_receipt_index ORDER BY id", "SELECT entity,revision,state FROM projections ORDER BY entity", "SELECT entity,digest,canonical FROM records ORDER BY seq", "SELECT scope,principal,class,request,digest,entity FROM admissions ORDER BY scope,principal,class,request", "SELECT key,entity,payload,delivered FROM outbox ORDER BY key", "SELECT identity,scope,content,size,state FROM publication_index ORDER BY identity", "SELECT id,digest,tenant,intent FROM receipt_index ORDER BY id"] {
+        // Compare one row at a time: recovery must not materialize two copies
+        // of every retained Flow run merely to compare rebuilt projections.
+        let mut actual = c.prepare(query)?;
+        let mut rebuilt = expected.prepare(query)?;
+        let columns = actual.column_count();
+        let mut rows = actual.query([])?;
+        let mut expected_rows = rebuilt.query([])?;
+        loop {
+            match (rows.next()?, expected_rows.next()?) {
+                (None,None) => break,
+                (Some(a),Some(b)) => {
+                    for i in 0..columns {
+                        if a.get::<_,rusqlite::types::Value>(i)? != b.get::<_,rusqlite::types::Value>(i)? {
+                            return Err(invalid("projection differs from authoritative history"));
+                        }
+                    }
+                }
+                _ => return Err(invalid("projection differs from authoritative history")),
+            }
+        }
  }
     // Schema SQL (including append-only triggers and unique indexes) must match exactly.
     let sql =

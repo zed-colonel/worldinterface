@@ -29,6 +29,24 @@ use worldinterface_protocol::{
 };
 use worldinterface_storage::{flow::*, StoreRoot};
 
+/// A deterministic execution contract or persisted-reference rejection.
+#[derive(Debug)]
+pub(crate) struct FlowRejected(String);
+impl std::fmt::Display for FlowRejected {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.0)
+    }
+}
+impl std::error::Error for FlowRejected {}
+pub(crate) fn rejected(
+    message: impl std::fmt::Display,
+) -> Box<dyn std::error::Error + Send + Sync> {
+    Box::new(FlowRejected(message.to_string()))
+}
+pub(crate) fn is_rejected(error: &(dyn std::error::Error + 'static)) -> bool {
+    error.is::<FlowRejected>() || error.is::<FlowIntegrity>() || error.is::<CompileError>()
+}
+
 /// Stable bounded identity for an exact materialized node demand. Hosts can
 /// derive it before admission when issuing exact-demand credentials.
 pub fn node_request_id(request: &ClientRequestId, node: &OpaqueRef) -> Result<ClientRequestId> {
@@ -64,11 +82,12 @@ impl FlowPayload {
     }
     pub fn decode(b: &[u8]) -> Result<Self> {
         if b.len() > 4096 {
-            return Err("Flow locator too large".into());
+            return Err(rejected("Flow locator too large"));
         }
-        let p: Self = serde_json::from_value(strict_json(b)?)?;
+        let p: Self =
+            serde_json::from_value(strict_json(b).map_err(rejected)?).map_err(rejected)?;
         if p.profile != "wi-flow-1" || canonical_data(&p)? != b {
-            return Err("invalid Flow locator".into());
+            return Err(rejected("invalid Flow locator"));
         }
         Ok(p)
     }
@@ -85,9 +104,9 @@ pub(crate) fn transact(
     command: FlowCommand,
 ) -> Result<FlowState> {
     for _ in 0..16 {
-        let s = root.flow_snapshot(tenant)?;
-        match root.flow_transact(tenant, s.revision, command.clone()) {
-            Err(e) if e.to_string().contains("Flow revision conflict") => continue,
+        let s = root.flow_catalog(tenant)?;
+        match root.flow_update(tenant, s.revision, command.clone()) {
+            Err(e) if e.is::<FlowRevisionConflict>() => continue,
             result => return result,
         }
     }
@@ -143,7 +162,7 @@ impl<A: Authentication, V: EvidenceAuthority, C: TrustedClock, P: PlanConfigurat
     ) -> Result<OpaqueRef> {
         let c = caller(self.authentication, session)?;
         let pins = self.configuration.pins(&c)?;
-        let s = self.root.flow_snapshot(c.tenant())?;
+        let s = self.root.flow_catalog(c.tenant())?;
         let version = s.active.get(definition).ok_or("inactive Flow")?;
         let d = &s.versions[definition][version];
         let p = compile_flow(d, &pins.context()?)?;
@@ -185,11 +204,9 @@ impl<A: Authentication, V: EvidenceAuthority, C: TrustedClock, P: PlanConfigurat
             }
         }
         // Dedup includes immutable plan and full attribution, never regenerated from a plan.
-        let state = self.root.flow_snapshot(c.tenant())?;
-        if let Some(r) = state.runs.values().find(|r| {
-            r.principal == *c.principal()
-                && r.submission.client_request_id == submission.client_request_id
-        }) {
+        if let Some(r) =
+            self.root.flow_request(c.tenant(), c.principal(), &submission.client_request_id)?
+        {
             if r.submission != submission
                 || r.plan_hash != *plan.hash()
                 || r.agency != agency
@@ -261,11 +278,10 @@ impl<A: Authentication, V: EvidenceAuthority, C: TrustedClock, P: PlanConfigurat
             transact(self.root, c.tenant(), FlowCommand::AdmitRun { run: Box::new(r.clone()) })
         {
             // A concurrent identical submit reloads the winning immutable admission.
-            let state = self.root.flow_snapshot(c.tenant())?;
-            let winner = state
-                .runs
-                .values()
-                .find(|v| {
+            let winner = self
+                .root
+                .flow_request(c.tenant(), c.principal(), &r.submission.client_request_id)?
+                .filter(|v| {
                     v.principal == r.principal
                         && v.submission == r.submission
                         && v.plan_hash == r.plan_hash
@@ -282,7 +298,7 @@ impl<A: Authentication, V: EvidenceAuthority, C: TrustedClock, P: PlanConfigurat
     }
     pub fn inspect_run(&self, session: &A::Session, run: &OpaqueRef) -> Result<FlowRun> {
         let c = caller(self.authentication, session)?;
-        let s = self.root.flow_snapshot(c.tenant())?;
+        let s = self.root.flow_run_snapshot(c.tenant(), run)?;
         let r =
             s.runs.get(run).filter(|r| r.principal == *c.principal()).ok_or("unknown Flow run")?;
         let plan = r.restore()?;

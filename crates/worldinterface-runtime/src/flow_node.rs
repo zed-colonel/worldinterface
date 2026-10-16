@@ -1,4 +1,5 @@
 //! One handler for both plan entry points; pure nodes never cross a boundary.
+use crate::flow::{is_rejected, rejected};
 use crate::{
     artifact::{ArtifactAuthorization, ArtifactResolver},
     authority::{verify_snapshot, EvidenceAuthority, TrustedClock},
@@ -47,18 +48,24 @@ pub(crate) fn selected<'a>(
     no: &'a OutputRef,
 ) -> Result<&'a OutputRef> {
     let p = r.restore()?;
-    let n = p.document().body.nodes.iter().find(|n| &n.id == branch).ok_or("unknown branch")?;
+    let n = p
+        .document()
+        .body
+        .nodes
+        .iter()
+        .find(|n| &n.id == branch)
+        .ok_or_else(|| rejected("unknown branch"))?;
     let PlanOperation::Branch { when_true, when_false, .. } = &n.operation else {
-        return Err("not branch".into());
+        return Err(rejected("not branch"));
     };
-    let result = r.results.get(branch).ok_or("unsettled branch")?;
+    let result = r.results.get(branch).ok_or_else(|| rejected("unsettled branch"))?;
     if result.disposition != NodeDisposition::Succeeded {
-        return Err("failed branch".into());
+        return Err(rejected("failed branch"));
     }
     match result.branch.as_ref() {
         Some(v) if v == when_true => Ok(yes),
         Some(v) if v == when_false => Ok(no),
-        _ => Err("invalid branch trace".into()),
+        _ => Err(rejected("invalid branch trace")),
     }
 }
 fn output(r: &FlowRun, source: &OutputRef) -> Result<(Value, Option<ArtifactRef>)> {
@@ -66,9 +73,9 @@ fn output(r: &FlowRun, source: &OutputRef) -> Result<(Value, Option<ArtifactRef>
         .results
         .get(&source.node)
         .filter(|r| r.disposition == NodeDisposition::Succeeded)
-        .ok_or("selected producer has no successful output")?;
+        .ok_or_else(|| rejected("selected producer has no successful output"))?;
     Ok((
-        v.values.get(&source.port).ok_or("missing producer value")?.clone(),
+        v.values.get(&source.port).ok_or_else(|| rejected("missing producer value"))?.clone(),
         v.outputs.get(&source.port).cloned(),
     ))
 }
@@ -85,7 +92,7 @@ pub(crate) fn materialize(
         InputSource::Literal { value } => Ok((value.clone(), None)),
         InputSource::Artifact { reference } => {
             if reference.scope != r.tenant {
-                return Err("foreign input artifact".into());
+                return Err(rejected("foreign input artifact"));
             }
             let b = resolver.read(&caller, reference)?;
             // Opaque bytes remain artifacts and are validated by the connector contract.
@@ -151,22 +158,27 @@ impl<
         let caller =
             AuthenticatedCaller::from_trusted_authentication(r.tenant.clone(), r.principal.clone());
         let artifact_reader = ArtifactResolver::new(root, self.artifacts.as_ref());
-        let n =
-            p.document().body.nodes.iter().find(|n| &n.id == node).ok_or("unknown Flow node")?;
+        let n = p
+            .document()
+            .body
+            .nodes
+            .iter()
+            .find(|n| &n.id == node)
+            .ok_or_else(|| rejected("unknown Flow node"))?;
         let Some(binding) = r.bindings.get(node) else {
             return binding_wait(r, node);
         };
         if binding.run.as_str() != ctx.input.run_id.to_string()
             || binding.queue_store.as_str() != self.effect.bundle.aq_store_id()?.to_string()
         {
-            return Err("Flow child run mismatch".into());
+            return Err(rejected("Flow child run mismatch"));
         }
         let request: EnsureTaskRequest =
-            serde_json::from_slice(&root.read_artifact(&binding.request)?)?;
+            serde_json::from_slice(&root.read_artifact(&binding.request)?).map_err(rejected)?;
         if request.task_spec().task_payload().bytes() != ctx.input.payload
             || request.task_spec().id().to_string() != r.node_tasks[node].as_str()
         {
-            return Err("Flow child payload mismatch".into());
+            return Err(rejected("Flow child payload mismatch"));
         }
         if let Some(result) = r.results.get(node) {
             if result.effect.is_some() && result.disposition == NodeDisposition::Succeeded {
@@ -174,7 +186,7 @@ impl<
                 let effect = state
                     .effects
                     .get(result.effect.as_ref().unwrap())
-                    .ok_or("missing Flow effect")?;
+                    .ok_or_else(|| rejected("missing Flow effect"))?;
                 if effect.phase != Phase::Succeeded
                     || effect
                         .outcomes
@@ -203,7 +215,7 @@ impl<
         // All dependencies must have domain results. AQ task success is insufficient.
         for dependency in &n.dependencies {
             let Some(result) = r.results.get(dependency) else {
-                return Err("missing dependency domain result".into());
+                return Err(rejected("missing dependency domain result"));
             };
             if !matches!(result.disposition, NodeDisposition::Succeeded | NodeDisposition::Skipped)
             {
@@ -211,7 +223,7 @@ impl<
             }
         }
         for (branch, expected) in &n.guards {
-            let result = r.results.get(branch).ok_or("unsettled guard")?;
+            let result = r.results.get(branch).ok_or_else(|| rejected("unsettled guard"))?;
             if result.disposition != NodeDisposition::Succeeded {
                 return self.record(r, node, empty_result(NodeDisposition::Failed));
             }
@@ -238,7 +250,7 @@ impl<
                 inputs.insert(
                     port.clone(),
                     strict_json(&artifact_reader.read(&caller, artifact)?)
-                        .map_err(|_| "input JSON schema requires JSON bytes")?,
+                        .map_err(|_| rejected("input JSON schema requires JSON bytes"))?,
                 );
             }
         }
@@ -299,15 +311,15 @@ impl<
                 .iter()
                 .all(|a| a.alternatives.contains(&exact))
                 {
-                    return Err("Flow authority enlargement".into());
+                    return Err(rejected("Flow authority enlargement"));
                 }
                 if self.effect.port.descriptor() != &connector.descriptor
                     || self.effect.port.registry_digest()? != p.document().registry_digest
                 {
-                    return Err("Flow installed connector mismatch".into());
+                    return Err(rejected("Flow installed connector mismatch"));
                 }
                 if n.inputs.len() != 1 || n.outputs.len() != 1 {
-                    return Err("boundary port profile".into());
+                    return Err(rejected("boundary port profile"));
                 }
                 let (port, input) = n.inputs.first_key_value().unwrap();
                 let artifact = if let Some(a) = artifacts.get(port) {
@@ -321,9 +333,9 @@ impl<
                     Schema::Artifact { max_bytes, schema_hash } if artifact.size <= *max_bytes => {
                         self.effect.port.validate_artifact(schema_hash, &bytes)?
                     }
-                    Schema::Artifact { .. } => return Err("boundary artifact size".into()),
+                    Schema::Artifact { .. } => return Err(rejected("boundary artifact size")),
                     _ if !validate_value(schema, &inputs[port]) => {
-                        return Err("boundary input schema".into())
+                        return Err(rejected("boundary input schema"))
                     }
                     _ => {}
                 }
@@ -375,7 +387,7 @@ impl<
                     || agency.binding.id != r.agency.binding.id
                     || agency.binding.version != r.agency.binding.version
                 {
-                    return Err("Flow admission attribution changed".into());
+                    return Err(rejected("Flow admission attribution changed"));
                 }
                 // Registry changes prevent dispatch even if the descriptor is still installed.
                 if !snapshot
@@ -385,7 +397,7 @@ impl<
                     .iter()
                     .any(|e| e.connector_binding.as_ref() == Some(connector.as_ref()))
                 {
-                    return Err("Flow registry changed".into());
+                    return Err(rejected("Flow registry changed"));
                 }
                 let egress = Egress::new(root);
                 let id = egress.apply(
@@ -402,7 +414,7 @@ impl<
                 if owned.effects.get(&id).and_then(|e| e.owner.as_ref())
                     != Some(&EffectOwner { flow: r.id.clone(), node: node.clone() })
                 {
-                    return Err("Flow effect ownership conflict".into());
+                    return Err(rejected("Flow effect ownership conflict"));
                 }
                 drop(owned);
                 let mut view = egress.inspect(&caller, &id)?;
@@ -414,7 +426,7 @@ impl<
                         &at,
                     )?;
                     if !snapshot.facts().facts.contains(&fact) {
-                        return Err("Flow resource observation mismatch".into());
+                        return Err(rejected("Flow resource observation mismatch"));
                     }
                     egress.apply(
                         &caller,
@@ -507,7 +519,7 @@ impl<
                 artifact_reader.read(&caller, &submission.input.artifact)?;
                 self.boundary_result(r, node, n, &p, ctx, id, &bytes)
             }
-            _ => Err("unsupported WIP-07 execution profile".into()),
+            _ => Err(rejected("unsupported WIP-07 execution profile")),
         }
     }
     fn boundary_result(
@@ -550,12 +562,12 @@ impl<
         result.effect = Some(id);
         result.input_hash = ContentHash::of(bytes);
         if result.disposition == NodeDisposition::Succeeded {
-            let outcome = view.outcome.ok_or("missing boundary outcome")?;
+            let outcome = view.outcome.ok_or_else(|| rejected("missing boundary outcome"))?;
             if outcome.required_outputs != outcome.durable_outputs
                 || outcome.durable_outputs.len() != n.outputs.len()
                 || root.effect_receipts(&r.tenant, result.effect.as_ref().unwrap())?.is_empty()
             {
-                return Err("unpublished Flow boundary completion".into());
+                return Err(rejected("unpublished Flow boundary completion"));
             }
             for ((port, output), artifact) in n.outputs.iter().zip(outcome.durable_outputs) {
                 let b = artifact_reader.read(&caller, &artifact)?;
@@ -564,11 +576,13 @@ impl<
                         self.effect.port.validate_artifact(schema_hash, &b)?;
                         serde_json::to_value(&artifact)?
                     }
-                    Schema::Artifact { .. } => return Err("boundary artifact output size".into()),
+                    Schema::Artifact { .. } => {
+                        return Err(rejected("boundary artifact output size"))
+                    }
                     schema => {
                         let value = strict_json(&b)?;
                         if !validate_value(schema, &value) {
-                            return Err("boundary output schema".into());
+                            return Err(rejected("boundary output schema"));
                         }
                         value
                     }
@@ -620,25 +634,9 @@ impl<
 {
     fn execute(&self, ctx: ExecutorContext) -> AttemptDisposition {
         self.execute_bound(&ctx).unwrap_or_else(|error| {
-            let message = error.to_string();
-            // Invalid immutable inputs are deterministic; storage, resolver and
-            // evidence I/O failures can recover on the next AQ attempt. A durable
-            // effect outcome is reloaded on retry before recording the node.
-            if [
-                "hash mismatch",
-                "identity mismatch",
-                "schema",
-                "foreign",
-                "invalid Flow",
-                "authority enlargement",
-                "installed connector mismatch",
-                "artifact output size",
-                "artifact access denied",
-                "not authorized",
-            ]
-            .iter()
-            .any(|s| message.contains(s))
-            {
+            // Unknown host/storage failures are retryable. Only typed contract
+            // validation can make an AQ attempt terminal.
+            if is_rejected(error.as_ref()) {
                 terminal("wi.flow.execution_rejected")
             } else {
                 crate::flow_coordinator::retry("wi.flow.pre_start_or_publication_retry")
@@ -654,10 +652,10 @@ pub(crate) fn require_dispatch_open(
     id: &EffectIntentId,
 ) -> Result<()> {
     let effects = root.effect_snapshot(tenant)?;
-    let effect = effects.effects.get(id).ok_or("missing dispatch effect")?;
+    let effect = effects.effects.get(id).ok_or_else(|| rejected("missing dispatch effect"))?;
     if let Some(owner) = &effect.owner {
-        let state = root.flow_snapshot(tenant)?;
-        let run = state.runs.get(&owner.flow).ok_or("missing owning Flow")?;
+        let state = root.flow_run_snapshot(tenant, &owner.flow)?;
+        let run = state.runs.get(&owner.flow).ok_or_else(|| rejected("missing owning Flow"))?;
         if run.outcome.is_some()
             || run.cancel_requested
             || state.quarantined.contains_key(&owner.flow)
@@ -666,7 +664,7 @@ pub(crate) fn require_dispatch_open(
                 .get(&owner.node)
                 .is_some_and(|r| r.disposition != NodeDisposition::Succeeded)
         {
-            return Err("Flow dispatch closed".into());
+            return Err(rejected("Flow dispatch closed"));
         }
     }
     Ok(())

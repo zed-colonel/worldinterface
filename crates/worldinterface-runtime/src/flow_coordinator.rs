@@ -1,4 +1,5 @@
 //! Flat bounded transactional AQ children, reconciled through the live engine.
+use crate::flow::{is_rejected, rejected};
 use crate::{
     flow::{constraints, transact, FlowPayload},
     Result,
@@ -33,13 +34,13 @@ pub(crate) fn retry(code: &str) -> AttemptDisposition {
     })
 }
 pub(crate) fn load(root: &StoreRoot, payload: &FlowPayload) -> Result<FlowRun> {
-    let state = root.flow_snapshot(&payload.tenant)?;
+    let state = root.flow_run_snapshot(&payload.tenant, &payload.run)?;
     if state.quarantined.contains_key(&payload.run) {
-        return Err("quarantined Flow run".into());
+        return Err(rejected("quarantined Flow run"));
     }
-    let r = state.runs.get(&payload.run).ok_or("unknown Flow run")?;
+    let r = state.runs.get(&payload.run).ok_or_else(|| rejected("unknown Flow run"))?;
     if r.tenant != payload.tenant {
-        return Err("foreign Flow run".into());
+        return Err(rejected("foreign Flow run"));
     }
     r.restore()?;
     Ok(r.clone())
@@ -95,7 +96,7 @@ pub(crate) fn coordinate(
     );
     let artifact_reader = crate::artifact::ArtifactResolver::new(root, artifacts);
     if r.parent_run.as_ref().map(OpaqueRef::as_str) != Some(ctx.input.run_id.to_string().as_str()) {
-        return Err("unbound coordinator run".into());
+        return Err(rejected("unbound coordinator run"));
     }
     if r.cancel_requested {
         return Ok(terminal("wi.flow.canceled"));
@@ -110,8 +111,8 @@ pub(crate) fn coordinate(
     // A wake only requests a domain evaluation. It never proves business success.
     if ctx.input.resume_context.is_some() {
         let guard = root.flow_dispatch_guard()?;
-        let fresh = root.flow_snapshot(&r.tenant)?;
-        let r = fresh.runs.get(&r.id).ok_or("missing Flow at Finish")?;
+        let fresh = root.flow_run_snapshot(&r.tenant, &r.id)?;
+        let r = fresh.runs.get(&r.id).ok_or_else(|| rejected("missing Flow at Finish"))?;
         if let Some(outcome) = &r.outcome {
             return Ok(if *outcome == FlowOutcome::Succeeded {
                 AttemptDisposition::complete(None)
@@ -136,7 +137,7 @@ pub(crate) fn coordinate(
                         value = worldinterface_protocol::strict_json(
                             &artifact_reader.read(&caller, reference)?,
                         )
-                        .map_err(|_| "export JSON schema requires JSON bytes")?;
+                        .map_err(|_| rejected("export JSON schema requires JSON bytes"))?;
                     }
                 }
                 if !matches!(
@@ -146,7 +147,7 @@ pub(crate) fn coordinate(
                     &p.document().schemas[&input.schema].schema,
                     &value,
                 ) {
-                    return Err("export schema mismatch".into());
+                    return Err(rejected("export schema mismatch"));
                 }
                 let artifact = artifact
                     .map_or_else(|| root.publish(r.tenant.clone(), &canonical_data(&value)?), Ok)?;
@@ -154,7 +155,7 @@ pub(crate) fn coordinate(
                 exports.insert(name.clone(), artifact);
             }
         }
-        root.flow_transact_guarded(
+        root.flow_update_guarded(
             &guard,
             &r.tenant,
             fresh.revision,
@@ -209,20 +210,21 @@ pub(crate) fn reconcile<H: actionqueue_executor_local::handler::ExecutorHandler 
     engine: &mut actionqueue_runtime::engine::BootstrappedEngine<H>,
 ) -> Result<()> {
     for tenant in root.flow_tenants()? {
-        let state = root.flow_snapshot(&tenant)?;
-        for r in state
-            .runs
-            .values()
-            .filter(|r| r.outcome.is_none() && !state.quarantined.contains_key(&r.id))
-        {
+        let state = root.flow_pending_snapshot(&tenant)?;
+        for r in state.runs.values() {
+            if state.quarantined.contains_key(&r.id) {
+                cancel_quarantined(engine, r)?;
+                continue;
+            }
             let result = (|| -> Result<()> {
                 validate_run_references(root, store, engine.projection(), r)?;
                 r.restore()?;
                 if r.queue_store.as_str() != store.to_string() {
-                    return Err("Flow queue store mismatch".into());
+                    return Err(rejected("Flow queue store mismatch"));
                 }
                 let parent: TaskId = r.coordinator_task.as_str().parse()?;
-                let expected: EnsureTaskRequest = serde_json::from_slice(&r.coordinator_request)?;
+                let expected: EnsureTaskRequest =
+                    serde_json::from_slice(&r.coordinator_request).map_err(rejected)?;
                 // A crash after WI admission but before AQ admission retains this outbox.
                 if engine.projection().task_admission(parent).is_none() {
                     engine.ensure_task(expected.clone())?;
@@ -230,13 +232,13 @@ pub(crate) fn reconcile<H: actionqueue_executor_local::handler::ExecutorHandler 
                 let projection = engine.projection();
                 let admission = projection
                     .task_admission(parent)
-                    .ok_or("missing Flow coordinator admission")?;
+                    .ok_or_else(|| rejected("missing Flow coordinator admission"))?;
                 if admission.digest() != &expected.digest()? {
-                    return Err("Flow coordinator admission changed".into());
+                    return Err(rejected("Flow coordinator admission changed"));
                 }
                 let runs = projection.run_ids_for_task(parent);
                 if runs.len() != 1 {
-                    return Err("Flow coordinator run cardinality".into());
+                    return Err(rejected("Flow coordinator run cardinality"));
                 }
                 let parent_run = runs[0];
                 transact(
@@ -261,16 +263,18 @@ pub(crate) fn reconcile<H: actionqueue_executor_local::handler::ExecutorHandler 
                             .all(|id| projection.get_run_state(id).is_some_and(|s| s.is_terminal()))
                     })
                 {
-                    let fallback = if projection.get_run_state(&parent_run)
-                        == Some(&actionqueue_core::run::RunState::Canceled)
+                    let fallback = if r.cancel_requested
+                        || projection.get_run_state(&parent_run)
+                            == Some(&actionqueue_core::run::RunState::Canceled)
                     {
                         FlowOutcome::Canceled
                     } else {
                         FlowOutcome::Failed
                     };
                     let guard = root.flow_dispatch_guard()?;
-                    let fresh = root.flow_snapshot(&tenant)?;
-                    let r = fresh.runs.get(&r.id).ok_or("missing Flow at Finish")?;
+                    let fresh = root.flow_run_snapshot(&tenant, &r.id)?;
+                    let r =
+                        fresh.runs.get(&r.id).ok_or_else(|| rejected("missing Flow at Finish"))?;
                     if r.outcome.is_some() {
                         return Ok(());
                     }
@@ -291,7 +295,7 @@ pub(crate) fn reconcile<H: actionqueue_executor_local::handler::ExecutorHandler 
                     } else {
                         outcome
                     };
-                    root.flow_transact_guarded(
+                    root.flow_update_guarded(
                         &guard,
                         &tenant,
                         fresh.revision,
@@ -304,9 +308,10 @@ pub(crate) fn reconcile<H: actionqueue_executor_local::handler::ExecutorHandler 
                     return Ok(());
                 }
                 let Some(proposal) = &r.proposal else { return Ok(()) };
-                let proposed: Vec<ChildAdmission> = serde_json::from_slice(proposal)?;
+                let proposed: Vec<ChildAdmission> =
+                    serde_json::from_slice(proposal).map_err(rejected)?;
                 if proposed != children(r)? {
-                    return Err("Flow proposal changed".into());
+                    return Err(rejected("Flow proposal changed"));
                 }
                 let accepted =
                     projection.get_attempt_history(&parent_run).unwrap_or(&[]).iter().find(|a| {
@@ -320,26 +325,27 @@ pub(crate) fn reconcile<H: actionqueue_executor_local::handler::ExecutorHandler 
                     || d.wait().map(|w| w.wait_id().to_string()).as_deref()
                         != Some(r.wait_id.as_str())
                 {
-                    return Err("Flow child transaction mismatch".into());
+                    return Err(rejected("Flow child transaction mismatch"));
                 }
                 for child in &proposed {
                     let task = child.task_spec().id();
-                    let actual =
-                        projection.task_admission(task).ok_or("partial AQ child transaction")?;
+                    let actual = projection
+                        .task_admission(task)
+                        .ok_or_else(|| rejected("partial AQ child transaction"))?;
                     let expected = projection.disposition_child_request(
                         parent_run,
                         accepted.attempt_id(),
                         child,
                     )?;
                     if actual.digest() != &expected.digest()? {
-                        return Err("Flow accepted child request mismatch".into());
+                        return Err(rejected("Flow accepted child request mismatch"));
                     }
                     let runs = projection.run_ids_for_task(task);
                     if runs.len() != 1 {
-                        return Err("Flow child run cardinality".into());
+                        return Err(rejected("Flow child run cardinality"));
                     }
                     let payload = FlowPayload::decode(expected.task_spec().task_payload().bytes())?;
-                    let node = payload.node.ok_or("missing child node")?;
+                    let node = payload.node.ok_or_else(|| rejected("missing child node"))?;
                     if r.bindings.contains_key(&node) {
                         continue;
                     }
@@ -365,19 +371,17 @@ pub(crate) fn reconcile<H: actionqueue_executor_local::handler::ExecutorHandler 
                 Ok(())
             })();
             if let Err(error) = result {
-                if root.flow_snapshot(&tenant)?.runs.get(&r.id).is_some_and(|r| r.outcome.is_some())
+                if root
+                    .flow_run_snapshot(&tenant, &r.id)?
+                    .runs
+                    .get(&r.id)
+                    .is_some_and(|r| r.outcome.is_some())
                 {
                     continue;
                 }
-                if [
-                    "Flow revision conflict",
-                    "Flow journal contention",
-                    "database is locked",
-                    "database is busy",
-                ]
-                .iter()
-                .any(|s| error.to_string().contains(s))
-                {
+                if !is_rejected(error.as_ref()) {
+                    // I/O, AQ service, capacity and contention failures retry on
+                    // later ticks. Their diagnostic text never establishes damage.
                     continue;
                 }
                 // Run damage cannot stop scheduling other tenants. Journal/store
@@ -390,20 +394,37 @@ pub(crate) fn reconcile<H: actionqueue_executor_local::handler::ExecutorHandler 
                         diagnostic: bounded_diagnostic(&error.to_string()),
                     },
                 )?;
-                if let Ok(task) = r.coordinator_task.as_str().parse() {
-                    let _ = engine.control(actionqueue_runtime::control::ControlOperation::Cancel(
-                        actionqueue_core::mutation::CancelTarget::Task(task),
-                    ));
-                }
+                cancel_quarantined(engine, r)?;
             }
         }
     }
     Ok(())
 }
 
+// Failed controls surface to the host; the next tick retries quarantine's
+// cancellation obligation rather than silently abandoning it.
+fn cancel_quarantined<H: actionqueue_executor_local::handler::ExecutorHandler + 'static>(
+    engine: &mut actionqueue_runtime::engine::BootstrappedEngine<H>,
+    r: &FlowRun,
+) -> Result<()> {
+    let task = r.coordinator_task.as_str().parse()?;
+    if engine
+        .projection()
+        .run_ids_for_task(task)
+        .iter()
+        .any(|id| engine.projection().get_run_state(id).is_some_and(|s| !s.is_terminal()))
+    {
+        engine.control(actionqueue_runtime::control::ControlOperation::Cancel(
+            actionqueue_core::mutation::CancelTarget::Task(task),
+        ))?;
+    }
+    Ok(())
+}
+
 /// Reload boundary evidence independently of AQ terminal-success projections.
 fn domain_outcome(root: &StoreRoot, r: &FlowRun, missing: FlowOutcome) -> Result<FlowOutcome> {
-    let mut outcome = FlowOutcome::Succeeded;
+    let mut outcome =
+        if r.cancel_requested { FlowOutcome::Canceled } else { FlowOutcome::Succeeded };
     let effects = root.effect_snapshot(&r.tenant)?;
     let mut fold = |next: FlowOutcome| {
         let rank = |o: &FlowOutcome| match o {
@@ -425,17 +446,21 @@ fn domain_outcome(root: &StoreRoot, r: &FlowRun, missing: FlowOutcome) -> Result
                     root.read_artifact(reference)?;
                 }
                 if let Some(id) = &v.effect {
-                    let effect = effects.effects.get(id).ok_or("Flow effect missing")?;
+                    let effect =
+                        effects.effects.get(id).ok_or_else(|| rejected("Flow effect missing"))?;
                     let admission = effect
                         .dispatches
                         .last()
                         .and_then(|d| d.admission.as_ref())
-                        .ok_or("Flow effect admission missing")?;
-                    let binding = r.bindings.get(node).ok_or("Flow effect child unbound")?;
+                        .ok_or_else(|| rejected("Flow effect admission missing"))?;
+                    let binding = r
+                        .bindings
+                        .get(node)
+                        .ok_or_else(|| rejected("Flow effect child unbound"))?;
                     if admission.child.as_ref().is_none_or(|c| c.flow != r.id || &c.node != node)
                         || !admission.observed_runs.contains(&binding.run)
                     {
-                        return Err("Flow effect belongs to another child".into());
+                        return Err(rejected("Flow effect belongs to another child"));
                     }
                     if effect.phase != worldinterface_domain::Phase::Succeeded
                         || effect.outcomes.last().is_none_or(|o| {
@@ -501,33 +526,34 @@ fn validate_run_references(
 ) -> Result<()> {
     r.restore()?;
     if r.queue_store.as_str() != store.to_string() {
-        return Err("Flow queue identity changed".into());
+        return Err(rejected("Flow queue identity changed"));
     }
     let task = r.coordinator_task.as_str().parse()?;
-    let expected: EnsureTaskRequest = serde_json::from_slice(&r.coordinator_request)?;
+    let expected: EnsureTaskRequest =
+        serde_json::from_slice(&r.coordinator_request).map_err(rejected)?;
     if expected.task_spec().id() != task
         || FlowPayload::decode(expected.task_spec().task_payload().bytes())?
             != FlowPayload::new(r, None)
     {
-        return Err("Flow coordinator payload changed".into());
+        return Err(rejected("Flow coordinator payload changed"));
     }
     let admission = p.task_admission(task);
     let expected_digest = expected.digest()?;
     if admission.is_some_and(|a| a.digest() != &expected_digest)
         || r.parent_run.is_some() && admission.is_none()
     {
-        return Err("Flow coordinator admission changed".into());
+        return Err(rejected("Flow coordinator admission changed"));
     }
     if let Some(run) = &r.parent_run {
         let run_id = run.as_str().parse()?;
         if p.run_ids_for_task(task) != vec![run_id] {
-            return Err("Flow parent run changed".into());
+            return Err(rejected("Flow parent run changed"));
         }
         let proposed = children(r)?;
         if r.proposal.as_ref().is_some_and(|b| {
             serde_json::from_slice::<Vec<ChildAdmission>>(b).ok().as_ref() != Some(&proposed)
         }) {
-            return Err("Flow proposal changed".into());
+            return Err(rejected("Flow proposal changed"));
         }
         for (node, b) in &r.bindings {
             let producer = p
@@ -535,15 +561,21 @@ fn validate_run_references(
                 .unwrap_or(&[])
                 .iter()
                 .find(|a| a.attempt_id().to_string() == b.producing_attempt.as_str())
-                .ok_or("missing Flow producer")?;
-            let d = &producer.disposition.as_ref().ok_or("uncommitted Flow producer")?.disposition;
-            let task = r.node_tasks.get(node).ok_or("foreign Flow binding node")?;
+                .ok_or_else(|| rejected("missing Flow producer"))?;
+            let d = &producer
+                .disposition
+                .as_ref()
+                .ok_or_else(|| rejected("uncommitted Flow producer"))?
+                .disposition;
+            let task =
+                r.node_tasks.get(node).ok_or_else(|| rejected("foreign Flow binding node"))?;
             let child = proposed
                 .iter()
                 .find(|c| c.task_spec().id().to_string() == task.as_str())
-                .ok_or("foreign Flow node")?;
-            let actual =
-                p.task_admission(child.task_spec().id()).ok_or("missing Flow child admission")?;
+                .ok_or_else(|| rejected("foreign Flow node"))?;
+            let actual = p
+                .task_admission(child.task_spec().id())
+                .ok_or_else(|| rejected("missing Flow child admission"))?;
             let expected = p.disposition_child_request(run_id, producer.attempt_id(), child)?;
             if !matches!(d.outcome(), DispositionOutcome::Awaiting)
                 || d.wait().map(|w| w.wait_id().to_string()).as_deref() != Some(r.wait_id.as_str())
@@ -558,7 +590,7 @@ fn validate_run_references(
                 || root.read_artifact(&b.request)? != serde_json::to_vec(actual.request())?
                 || p.run_ids_for_task(child.task_spec().id()) != vec![b.run.as_str().parse()?]
             {
-                return Err("Flow child binding changed".into());
+                return Err(rejected("Flow child binding changed"));
             }
         }
     }

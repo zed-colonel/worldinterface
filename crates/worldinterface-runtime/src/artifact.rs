@@ -24,7 +24,7 @@ impl<'a, A: ArtifactAuthorization + ?Sized> ArtifactResolver<'a, A> {
         artifact: &ArtifactRef,
     ) -> Result<Vec<u8>> {
         if !self.authorization.authorize_read(context, artifact) {
-            return Err("artifact access denied".into());
+            return Err(crate::flow::rejected("artifact access denied"));
         }
         self.store.read_artifact(artifact)
     }

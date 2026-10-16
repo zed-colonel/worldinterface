@@ -1,5 +1,5 @@
 //! AQ-neutral Flow journal. All methods are trusted-host persistence interfaces.
-use crate::{invalid, Result, StoreKind, StoreRoot};
+use crate::{Result, StoreKind, StoreRoot};
 use rusqlite::{params, Connection, OptionalExtension, TransactionBehavior};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -10,15 +10,57 @@ use worldinterface_protocol::{
     EffectIntentId, EffectSubmission, OpaqueRef, PrincipalId,
 };
 
-/// Bounded embedded profile: retain up to 256 runs and 64 MiB per tenant.
-/// A full tenant requires an offline archive/new bundle before new admission.
-pub const MAX_FLOW_RUNS: usize = 256;
-pub const MAX_FLOW_STATE_BYTES: usize = 64 * 1024 * 1024;
+/// Deterministic Flow journal/admission validation failure.
+#[derive(Debug)]
+pub struct FlowIntegrity(pub String);
+impl std::fmt::Display for FlowIntegrity {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(&self.0)
+    }
+}
+impl std::error::Error for FlowIntegrity {}
+fn invalid(message: impl Into<String>) -> Box<dyn std::error::Error + Send + Sync> {
+    Box::new(FlowIntegrity(message.into()))
+}
+#[derive(Debug)]
+pub struct FlowRevisionConflict;
+impl std::fmt::Display for FlowRevisionConflict {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str("Flow revision conflict")
+    }
+}
+impl std::error::Error for FlowRevisionConflict {}
+#[derive(Debug)]
+pub enum FlowCapacity {
+    Runs,
+    Versions,
+    Bytes,
+}
+impl std::fmt::Display for FlowCapacity {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            Self::Runs => "Flow run capacity",
+            Self::Versions => "Flow version capacity",
+            Self::Bytes => "Flow state byte capacity",
+        })
+    }
+}
+impl std::error::Error for FlowCapacity {}
+
+/// Match the existing per-tenant effect capacity. Runs retain complete history.
+pub const MAX_FLOW_RUNS: usize = 10_000;
+pub const MAX_FLOW_VERSIONS: usize = 256;
+/// Bounds each run plus the definition catalog, never the tenant's retained runs.
+pub const MAX_FLOW_STATE_BYTES: usize = 16 * 1024 * 1024;
 pub(crate) const SCHEMA: &str = "
 CREATE TABLE flow_history(seq INTEGER PRIMARY KEY, tenant TEXT NOT NULL, revision INTEGER NOT NULL, entry BLOB NOT NULL, digest TEXT NOT NULL, UNIQUE(tenant,revision));
 CREATE TRIGGER flow_no_update BEFORE UPDATE ON flow_history BEGIN SELECT RAISE(ABORT,'append only'); END;
 CREATE TRIGGER flow_no_delete BEFORE DELETE ON flow_history BEGIN SELECT RAISE(ABORT,'append only'); END;
 CREATE TABLE flow_state(tenant TEXT PRIMARY KEY, state BLOB NOT NULL);
+CREATE TABLE flow_runs(tenant TEXT NOT NULL, id TEXT NOT NULL, request TEXT NOT NULL, terminal INTEGER NOT NULL, quarantine TEXT, state BLOB NOT NULL, PRIMARY KEY(tenant,id), UNIQUE(tenant,request));
+CREATE INDEX flow_pending ON flow_runs(tenant,terminal);
+CREATE TABLE flow_tasks(tenant TEXT NOT NULL, task TEXT NOT NULL, run TEXT NOT NULL, PRIMARY KEY(tenant,task));
+CREATE INDEX flow_task_lookup ON flow_tasks(task);
 ";
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -236,10 +278,10 @@ fn reduce(old: &FlowState, tenant: &OpaqueRef, cmd: &FlowCommand) -> Result<Flow
             s.quarantined.entry(run.clone()).or_insert_with(|| diagnostic.clone());
         }
         FlowCommand::InsertVersion { definition: d } => {
-            if s.versions.values().map(BTreeMap::len).sum::<usize>() >= MAX_FLOW_RUNS
+            if s.versions.values().map(BTreeMap::len).sum::<usize>() >= MAX_FLOW_VERSIONS
                 && s.versions.get(&d.id).and_then(|v| v.get(&d.version)).is_none()
             {
-                return Err(invalid("Flow version capacity"));
+                return Err(FlowCapacity::Versions.into());
             }
             let versions = s.versions.entry(d.id.clone()).or_default();
             if let Some(v) = versions.get(&d.version) {
@@ -283,9 +325,6 @@ fn reduce(old: &FlowState, tenant: &OpaqueRef, cmd: &FlowCommand) -> Result<Flow
                     return Ok(s);
                 }
                 return Err(invalid("Flow run conflict"));
-            }
-            if s.runs.len() >= MAX_FLOW_RUNS {
-                return Err(invalid("Flow run capacity"));
             }
             if &r.tenant != tenant
                 || r.cancel_requested
@@ -520,8 +559,8 @@ fn reduce(old: &FlowState, tenant: &OpaqueRef, cmd: &FlowCommand) -> Result<Flow
             }
         }
     }
-    if canonical_collection(&s).map_err(invalid)?.len() > MAX_FLOW_STATE_BYTES {
-        return Err(invalid("Flow state byte capacity"));
+    if canonical_collection(&s).map_err(|_| FlowCapacity::Bytes)?.len() > MAX_FLOW_STATE_BYTES {
+        return Err(FlowCapacity::Bytes.into());
     }
     if s != *old {
         s.revision += 1;
@@ -537,16 +576,110 @@ struct Entry {
 fn decode<T: serde::de::DeserializeOwned>(b: &[u8]) -> Result<T> {
     Ok(serde_json::from_value(strict_collection(b).map_err(invalid)?)?)
 }
-fn snapshot(c: &Connection, tenant: &OpaqueRef) -> Result<FlowState> {
+fn catalog(c: &Connection, tenant: &OpaqueRef) -> Result<FlowState> {
     let b: Option<Vec<u8>> = c
         .query_row("SELECT state FROM flow_state WHERE tenant=?", [tenant.as_str()], |r| r.get(0))
         .optional()?;
     b.map_or_else(|| Ok(FlowState::default()), |b| decode(&b))
 }
+// Load only the requested run(s). Finished history never enters a scheduling write.
+fn view(
+    c: &Connection,
+    tenant: &OpaqueRef,
+    id: Option<&OpaqueRef>,
+    pending: bool,
+) -> Result<FlowState> {
+    let mut s = catalog(c, tenant)?;
+    let sql = if id.is_some() {
+        "SELECT state,quarantine FROM flow_runs WHERE tenant=?1 AND id=?2"
+    } else if pending {
+        "SELECT state,quarantine FROM flow_runs WHERE tenant=?1 AND terminal=0 AND ?2 IS NULL ORDER BY id"
+    } else {
+        "SELECT state,quarantine FROM flow_runs WHERE tenant=?1 AND ?2 IS NULL ORDER BY id"
+    };
+    let mut q = c.prepare(sql)?;
+    for row in q.query_map(params![tenant.as_str(), id.map(OpaqueRef::as_str)], |r| {
+        Ok((r.get::<_, Vec<u8>>(0)?, r.get::<_, Option<String>>(1)?))
+    })? {
+        let (bytes, quarantine) = row?;
+        let r: FlowRun = decode(&bytes)?;
+        s.requests.insert(request_key(&r)?, r.id.clone());
+        if let Some(diagnostic) = quarantine {
+            s.quarantined.insert(r.id.clone(), diagnostic);
+        }
+        s.runs.insert(r.id.clone(), r);
+    }
+    Ok(s)
+}
+fn read_view(
+    root: &StoreRoot,
+    tenant: &OpaqueRef,
+    run: Option<&OpaqueRef>,
+    pending: bool,
+) -> Result<FlowState> {
+    let c = root.connect(StoreKind::Flow)?;
+    let tx = c.unchecked_transaction()?;
+    let s = view(&tx, tenant, run, pending)?;
+    tx.commit()?;
+    Ok(s)
+}
+fn command_view(c: &Connection, tenant: &OpaqueRef, cmd: &FlowCommand) -> Result<FlowState> {
+    let id = match cmd {
+        FlowCommand::InsertVersion { .. } | FlowCommand::ActivateVersion { .. } => {
+            return catalog(c, tenant)
+        }
+        FlowCommand::AdmitRun { run } => &run.id,
+        FlowCommand::CancelRequested { run }
+        | FlowCommand::QuarantineRun { run, .. }
+        | FlowCommand::BindCoordinator { run, .. }
+        | FlowCommand::PrepareChildren { run, .. }
+        | FlowCommand::BindChild { run, .. }
+        | FlowCommand::WakeDelivered { run, .. }
+        | FlowCommand::RecordNodeResult { run, .. }
+        | FlowCommand::Finish { run, .. } => run,
+    };
+    let mut s = view(c, tenant, Some(id), false)?;
+    if let FlowCommand::AdmitRun { run } = cmd {
+        let key = request_key(run)?;
+        let winner: Option<String> = c
+            .query_row(
+                "SELECT id FROM flow_runs WHERE tenant=? AND request=?",
+                params![tenant.as_str(), key],
+                |r| r.get(0),
+            )
+            .optional()?;
+        if let Some(winner) = winner {
+            s.requests.insert(key, winner.try_into().map_err(invalid)?);
+        }
+        if !s.runs.contains_key(id)
+            && c.query_row(
+                "SELECT count(*) FROM flow_runs WHERE tenant=?",
+                [tenant.as_str()],
+                |r| r.get::<_, usize>(0),
+            )? >= MAX_FLOW_RUNS
+        {
+            return Err(FlowCapacity::Runs.into());
+        }
+    }
+    Ok(s)
+}
 fn write(c: &Connection, tenant: &OpaqueRef, s: &FlowState) -> Result<()> {
+    for r in s.runs.values() {
+        c.execute("INSERT INTO flow_runs VALUES(?,?,?,?,?,?) ON CONFLICT(tenant,id) DO UPDATE SET terminal=excluded.terminal,quarantine=excluded.quarantine,state=excluded.state", params![tenant.as_str(),r.id.as_str(),request_key(r)?,r.outcome.is_some(),s.quarantined.get(&r.id),canonical_collection(r).map_err(invalid)?])?;
+        for task in std::iter::once(&r.coordinator_task).chain(r.node_tasks.values()) {
+            c.execute(
+                "INSERT OR IGNORE INTO flow_tasks VALUES(?,?,?)",
+                params![tenant.as_str(), task.as_str(), r.id.as_str()],
+            )?;
+        }
+    }
+    let mut metadata = s.clone();
+    metadata.runs.clear();
+    metadata.requests.clear();
+    metadata.quarantined.clear();
     c.execute(
         "INSERT INTO flow_state VALUES(?,?) ON CONFLICT(tenant) DO UPDATE SET state=excluded.state",
-        params![tenant.as_str(), canonical_collection(s).map_err(invalid)?],
+        params![tenant.as_str(), canonical_collection(&metadata).map_err(invalid)?],
     )?;
     Ok(())
 }
@@ -563,7 +696,7 @@ pub(crate) fn replay(source: &Connection, target: &Connection) -> Result<()> {
     })? {
         let (tenant, rev, b, hash) = row?;
         let e: Entry = decode(&b)?;
-        let old = snapshot(target, &e.tenant)?;
+        let old = command_view(target, &e.tenant, &e.command)?;
         let new = reduce(&old, &e.tenant, &e.command)?;
         if e.tenant.as_str() != tenant
             || e.expected != old.revision
@@ -580,19 +713,16 @@ pub(crate) fn replay(source: &Connection, target: &Connection) -> Result<()> {
 }
 pub struct FlowDispatchGuard<'a> {
     root: &'a StoreRoot,
-    _guard: std::sync::MutexGuard<'a, ()>,
+    _lock: std::fs::File,
 }
 impl StoreRoot {
-    /// Serializes Start with Flow cancellation, quarantine, result and Finish writes.
-    /// StoreRoot holds the exclusive bundle lock, so all writers share this guard.
+    /// Fences Start against cancellation and Finish across all handles and
+    /// processes opening this bundle. Each guard owns a distinct file descriptor;
+    /// the shared root lock only excludes offline maintenance.
     pub fn flow_dispatch_guard(&self) -> Result<FlowDispatchGuard<'_>> {
-        Ok(FlowDispatchGuard {
-            root: self,
-            _guard: self
-                .flow_dispatch
-                .lock()
-                .map_err(|_| invalid("Flow dispatch lock poisoned"))?,
-        })
+        let lock = std::fs::File::open(self.path.join("flow-dispatch.lock"))?;
+        fs2::FileExt::lock_exclusive(&lock)?;
+        Ok(FlowDispatchGuard { root: self, _lock: lock })
     }
     fn validate_flow_command_artifacts(&self, tenant: &OpaqueRef, cmd: &FlowCommand) -> Result<()> {
         let check = |a: &ArtifactRef| -> Result<()> {
@@ -629,7 +759,44 @@ impl StoreRoot {
         Ok(())
     }
     pub fn flow_snapshot(&self, tenant: &OpaqueRef) -> Result<FlowState> {
-        snapshot(&self.connect(StoreKind::Flow)?, tenant)
+        read_view(self, tenant, None, false)
+    }
+    /// Definition catalog and revision, without retained run history.
+    pub fn flow_catalog(&self, tenant: &OpaqueRef) -> Result<FlowState> {
+        catalog(&self.connect(StoreKind::Flow)?, tenant)
+    }
+    pub fn flow_run_snapshot(&self, tenant: &OpaqueRef, run: &OpaqueRef) -> Result<FlowState> {
+        read_view(self, tenant, Some(run), false)
+    }
+    pub fn flow_pending_snapshot(&self, tenant: &OpaqueRef) -> Result<FlowState> {
+        read_view(self, tenant, None, true)
+    }
+    pub fn flow_request(
+        &self,
+        tenant: &OpaqueRef,
+        principal: &PrincipalId,
+        request: &worldinterface_protocol::ClientRequestId,
+    ) -> Result<Option<FlowRun>> {
+        let c = self.connect(StoreKind::Flow)?;
+        let key = String::from_utf8(canonical_collection(&(principal, request)).map_err(invalid)?)?;
+        let bytes: Option<Vec<u8>> = c
+            .query_row(
+                "SELECT state FROM flow_runs WHERE tenant=? AND request=?",
+                params![tenant.as_str(), key],
+                |r| r.get(0),
+            )
+            .optional()?;
+        bytes.map(|b| decode(&b)).transpose()
+    }
+    pub fn flow_task(&self, task: &str) -> Result<Option<(OpaqueRef, OpaqueRef)>> {
+        let c = self.connect(StoreKind::Flow)?;
+        let row: Option<(String, String)> = c
+            .query_row("SELECT tenant,run FROM flow_tasks WHERE task=?", [task], |r| {
+                Ok((r.get(0)?, r.get(1)?))
+            })
+            .optional()?;
+        row.map(|(t, r)| Ok((t.try_into().map_err(invalid)?, r.try_into().map_err(invalid)?)))
+            .transpose()
     }
     pub fn flow_tenants(&self) -> Result<Vec<OpaqueRef>> {
         let c = self.connect(StoreKind::Flow)?;
@@ -646,9 +813,29 @@ impl StoreRoot {
         let guard = self.flow_dispatch_guard()?;
         self.flow_transact_guarded(&guard, tenant, expected, command)
     }
+    /// Apply a command and return only its catalog and affected run.
+    pub fn flow_update(
+        &self,
+        tenant: &OpaqueRef,
+        expected: u64,
+        command: FlowCommand,
+    ) -> Result<FlowState> {
+        let guard = self.flow_dispatch_guard()?;
+        self.flow_update_guarded(&guard, tenant, expected, command)
+    }
+    pub fn flow_transact_guarded(
+        &self,
+        guard: &FlowDispatchGuard<'_>,
+        tenant: &OpaqueRef,
+        expected: u64,
+        command: FlowCommand,
+    ) -> Result<FlowState> {
+        self.flow_update_guarded(guard, tenant, expected, command)?;
+        self.flow_snapshot(tenant)
+    }
     /// Caller holds this root's dispatch guard across reading outcome evidence
     /// and writing Finish, preventing a concurrent Start from being hidden.
-    pub fn flow_transact_guarded(
+    pub fn flow_update_guarded(
         &self,
         guard: &FlowDispatchGuard<'_>,
         tenant: &OpaqueRef,
@@ -665,13 +852,13 @@ impl StoreRoot {
         self.validate_flow_command_artifacts(tenant, &command)?;
         let mut c = self.connect(StoreKind::Flow)?;
         let tx = c.transaction_with_behavior(TransactionBehavior::Immediate)?;
-        let old = snapshot(&tx, tenant)?;
+        let old = command_view(&tx, tenant, &command)?;
         let new = reduce(&old, tenant, &command)?;
         if new == old {
             return Ok(old);
         }
         if old.revision != expected {
-            return Err(invalid("Flow revision conflict"));
+            return Err(FlowRevisionConflict.into());
         }
         let e = Entry { tenant: tenant.clone(), expected, command };
         let b = canonical_collection(&e).map_err(invalid)?;
@@ -701,10 +888,10 @@ impl StoreRoot {
             self.db_path(StoreKind::Flow),
             rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY,
         )?;
-        let mut q = c.prepare("SELECT state FROM flow_state")?;
+        let mut q = c.prepare("SELECT state FROM flow_runs")?;
         for b in q.query_map([], |r| r.get::<_, Vec<u8>>(0))? {
-            let s: FlowState = decode(&b?)?;
-            for r in s.runs.values() {
+            let r: FlowRun = decode(&b?)?;
+            {
                 let p = r.restore()?;
                 self.read_artifact(&r.submission.input.artifact)?;
                 for n in &p.document().body.nodes {
