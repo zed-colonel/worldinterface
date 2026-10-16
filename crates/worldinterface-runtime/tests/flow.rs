@@ -2198,6 +2198,7 @@ async fn flow_capacity_is_enforced_without_losing_existing_history() {
                 eprintln!("capacity paired reopen starting at {:?}", started.elapsed());
                 q.shutdown().unwrap();
                 f.bundle = Arc::new(StoreBundle::open(&f._temp.path().join("bundle")).unwrap());
+                eprintln!("capacity paired store validation finished at {:?}", started.elapsed());
                 q = QueueEngine::bootstrap(&f.bundle, handler(&f), host()).unwrap();
                 eprintln!("capacity paired reopen finished at {:?}", started.elapsed());
             }

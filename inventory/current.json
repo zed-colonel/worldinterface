@@ -10993,7 +10993,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/tests/flow.rs",
     "name": "child_guard",
-    "source_sha256": "a82371330c9188a895a2a8d990cc7df01712717686ca7fca843aed28d43f041d",
+    "source_sha256": "0a42c4a80f471d2e4b94c8547c185658290ad77508e10975baa3d113a3332584",
     "conditions": [],
     "registration_sites": []
   },
@@ -11002,7 +11002,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/tests/flow.rs",
     "name": "support",
-    "source_sha256": "a82371330c9188a895a2a8d990cc7df01712717686ca7fca843aed28d43f041d",
+    "source_sha256": "0a42c4a80f471d2e4b94c8547c185658290ad77508e10975baa3d113a3332584",
     "conditions": [],
     "registration_sites": []
   },
@@ -11011,7 +11011,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-runtime/tests/flow.rs",
     "name": "crates/worldinterface-runtime/tests/flow.rs",
-    "source_sha256": "a82371330c9188a895a2a8d990cc7df01712717686ca7fca843aed28d43f041d",
+    "source_sha256": "0a42c4a80f471d2e4b94c8547c185658290ad77508e10975baa3d113a3332584",
     "conditions": [],
     "registration_sites": []
   },
@@ -11020,7 +11020,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/flow.rs",
     "name": "Auth",
-    "source_sha256": "a82371330c9188a895a2a8d990cc7df01712717686ca7fca843aed28d43f041d",
+    "source_sha256": "0a42c4a80f471d2e4b94c8547c185658290ad77508e10975baa3d113a3332584",
     "conditions": [],
     "registration_sites": []
   },
@@ -11029,7 +11029,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/flow.rs",
     "name": "CapacityEvidence",
-    "source_sha256": "a82371330c9188a895a2a8d990cc7df01712717686ca7fca843aed28d43f041d",
+    "source_sha256": "0a42c4a80f471d2e4b94c8547c185658290ad77508e10975baa3d113a3332584",
     "conditions": [],
     "registration_sites": []
   },
@@ -11038,7 +11038,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/flow.rs",
     "name": "Config",
-    "source_sha256": "a82371330c9188a895a2a8d990cc7df01712717686ca7fca843aed28d43f041d",
+    "source_sha256": "0a42c4a80f471d2e4b94c8547c185658290ad77508e10975baa3d113a3332584",
     "conditions": [],
     "registration_sites": []
   },
@@ -11047,7 +11047,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/flow.rs",
     "name": "DeniedArtifacts",
-    "source_sha256": "a82371330c9188a895a2a8d990cc7df01712717686ca7fca843aed28d43f041d",
+    "source_sha256": "0a42c4a80f471d2e4b94c8547c185658290ad77508e10975baa3d113a3332584",
     "conditions": [],
     "registration_sites": []
   },
@@ -11056,7 +11056,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/flow.rs",
     "name": "FinishGate",
-    "source_sha256": "a82371330c9188a895a2a8d990cc7df01712717686ca7fca843aed28d43f041d",
+    "source_sha256": "0a42c4a80f471d2e4b94c8547c185658290ad77508e10975baa3d113a3332584",
     "conditions": [],
     "registration_sites": []
   },
@@ -11065,7 +11065,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/flow.rs",
     "name": "Fixture",
-    "source_sha256": "a82371330c9188a895a2a8d990cc7df01712717686ca7fca843aed28d43f041d",
+    "source_sha256": "0a42c4a80f471d2e4b94c8547c185658290ad77508e10975baa3d113a3332584",
     "conditions": [],
     "registration_sites": []
   },
@@ -11074,7 +11074,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/flow.rs",
     "name": "InvalidEvidence",
-    "source_sha256": "a82371330c9188a895a2a8d990cc7df01712717686ca7fca843aed28d43f041d",
+    "source_sha256": "0a42c4a80f471d2e4b94c8547c185658290ad77508e10975baa3d113a3332584",
     "conditions": [],
     "registration_sites": []
   },
@@ -11083,7 +11083,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/flow.rs",
     "name": "Latch",
-    "source_sha256": "a82371330c9188a895a2a8d990cc7df01712717686ca7fca843aed28d43f041d",
+    "source_sha256": "0a42c4a80f471d2e4b94c8547c185658290ad77508e10975baa3d113a3332584",
     "conditions": [],
     "registration_sites": []
   },
@@ -11092,7 +11092,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/flow.rs",
     "name": "PretendNodes",
-    "source_sha256": "a82371330c9188a895a2a8d990cc7df01712717686ca7fca843aed28d43f041d",
+    "source_sha256": "0a42c4a80f471d2e4b94c8547c185658290ad77508e10975baa3d113a3332584",
     "conditions": [],
     "registration_sites": []
   },
@@ -11101,7 +11101,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/flow.rs",
     "name": "Resolver",
-    "source_sha256": "a82371330c9188a895a2a8d990cc7df01712717686ca7fca843aed28d43f041d",
+    "source_sha256": "0a42c4a80f471d2e4b94c8547c185658290ad77508e10975baa3d113a3332584",
     "conditions": [],
     "registration_sites": []
   },
@@ -11110,7 +11110,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/flow.rs",
     "name": "SessionAuth",
-    "source_sha256": "a82371330c9188a895a2a8d990cc7df01712717686ca7fca843aed28d43f041d",
+    "source_sha256": "0a42c4a80f471d2e4b94c8547c185658290ad77508e10975baa3d113a3332584",
     "conditions": [],
     "registration_sites": []
   },
@@ -11119,7 +11119,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/flow.rs",
     "name": "Release",
-    "source_sha256": "a82371330c9188a895a2a8d990cc7df01712717686ca7fca843aed28d43f041d",
+    "source_sha256": "0a42c4a80f471d2e4b94c8547c185658290ad77508e10975baa3d113a3332584",
     "conditions": [],
     "registration_sites": []
   },
@@ -11128,7 +11128,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/tests/flow.rs",
     "name": "connectors",
-    "source_sha256": "a82371330c9188a895a2a8d990cc7df01712717686ca7fca843aed28d43f041d",
+    "source_sha256": "0a42c4a80f471d2e4b94c8547c185658290ad77508e10975baa3d113a3332584",
     "conditions": [],
     "registration_sites": []
   },
@@ -11137,7 +11137,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/tests/flow.rs",
     "name": "spi_harness",
-    "source_sha256": "a82371330c9188a895a2a8d990cc7df01712717686ca7fca843aed28d43f041d",
+    "source_sha256": "0a42c4a80f471d2e4b94c8547c185658290ad77508e10975baa3d113a3332584",
     "conditions": [],
     "registration_sites": []
   },
