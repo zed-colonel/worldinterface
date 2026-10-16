@@ -33,3 +33,10 @@ worldinterface-storage = { path = "../worldinterface-foundation/storage", featur
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 rusqlite = { version = "0.32", features = ["bundled"] }
 hmac = "0.12"
+
+# Keep the sustained 10,000-admission/recovery proof practical without disabling
+# debug invariants or the debug-only native crash-injection seams.
+[profile.test]
+opt-level = 1
+debug-assertions = true
+overflow-checks = true

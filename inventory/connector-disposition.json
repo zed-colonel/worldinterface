@@ -4671,7 +4671,7 @@
         },
         {
           "id": "crates/worldinterface-runtime/Cargo.toml::auxiliary-crate:worldinterface-runtime",
-          "source_sha256": "86a738d48328688de36c4fe757387926251ac20c804c9a3e51fe57d7ffeda970",
+          "source_sha256": "3ca55e941e38bd49d0776c3b5aefb1bf274d20023a99d3bbd1fd22d961a8e06c",
           "registration_sites": []
         },
         {
@@ -6604,7 +6604,7 @@
         {
           "path": "crates/worldinterface-runtime/Cargo.toml",
           "treatment": "Retain target integration source and tests; audit shared declarations before any later selective removal.",
-          "source_sha256": "86a738d48328688de36c4fe757387926251ac20c804c9a3e51fe57d7ffeda970"
+          "source_sha256": "3ca55e941e38bd49d0776c3b5aefb1bf274d20023a99d3bbd1fd22d961a8e06c"
         },
         {
           "path": "crates/worldinterface-runtime/src/admission.rs",

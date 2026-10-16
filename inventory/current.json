@@ -9657,7 +9657,7 @@
     "kind": "auxiliary-crate",
     "path": "crates/worldinterface-runtime/Cargo.toml",
     "name": "worldinterface-runtime",
-    "source_sha256": "86a738d48328688de36c4fe757387926251ac20c804c9a3e51fe57d7ffeda970",
+    "source_sha256": "3ca55e941e38bd49d0776c3b5aefb1bf274d20023a99d3bbd1fd22d961a8e06c",
     "conditions": [],
     "registration_sites": []
   },
