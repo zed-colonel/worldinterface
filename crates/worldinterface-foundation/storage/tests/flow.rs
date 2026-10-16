@@ -133,17 +133,19 @@ fn flow_projection_tampering_and_old_profiles_reject_without_writes() {
     let before = std::fs::read(p.join("flow.sqlite")).unwrap();
     assert!(StoreRoot::open_existing(&p).is_err());
     assert_eq!(std::fs::read(p.join("flow.sqlite")).unwrap(), before);
-    let t = tempfile::tempdir().unwrap();
-    let p = t.path().join("root");
-    drop(root_at(&p));
-    let m = p.join("manifest.json");
-    let bytes = std::fs::read(&m).unwrap();
-    let mut v: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
-    v["feature_profile"] = "local-receipt-3".into();
-    std::fs::write(&m, serde_json::to_vec(&v).unwrap()).unwrap();
-    let before = std::fs::read(p.join("flow.sqlite")).unwrap();
-    assert!(StoreRoot::open_existing(&p).is_err());
-    assert_eq!(std::fs::read(p.join("flow.sqlite")).unwrap(), before);
+    for previous in ["local-receipt-3", "local-flow-5"] {
+        let t = tempfile::tempdir().unwrap();
+        let p = t.path().join("root");
+        drop(root_at(&p));
+        let m = p.join("manifest.json");
+        let bytes = std::fs::read(&m).unwrap();
+        let mut v: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+        v["feature_profile"] = previous.into();
+        std::fs::write(&m, serde_json::to_vec(&v).unwrap()).unwrap();
+        let before = std::fs::read(p.join("flow.sqlite")).unwrap();
+        assert!(StoreRoot::open_existing(&p).is_err());
+        assert_eq!(std::fs::read(p.join("flow.sqlite")).unwrap(), before);
+    }
 }
 fn root_at(path: &std::path::Path) -> StoreRoot {
     root(path)

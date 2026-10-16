@@ -162,7 +162,7 @@ impl StoreRoot {
             contract: CONTRACT.into(),
             schema: 1,
             canonical_profile: CANONICAL_PROFILE.into(),
-            feature_profile: "local-flow-5".into(),
+            feature_profile: "local-flow-6".into(),
             stores: kinds(profile.platform),
             profile,
             complete: true,
@@ -230,7 +230,7 @@ impl StoreRoot {
             || manifest.contract != CONTRACT
             || manifest.schema != 1
             || manifest.canonical_profile != CANONICAL_PROFILE
-            || manifest.feature_profile != "local-flow-5"
+            || manifest.feature_profile != "local-flow-6"
             || !manifest.complete
             || manifest.stores != kinds(manifest.profile.platform)
             || path.join("initializing").exists()

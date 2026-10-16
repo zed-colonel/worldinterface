@@ -129,6 +129,20 @@ pub enum FlowOutcome {
     Canceled,
     Uncertain,
 }
+// Plans are canonical UTF-8 JSON; serialized coordinator requests are UTF-8
+// JSON too. Keeping their exact bytes in a string avoids parsing thousands of
+// integer values each time a run projection or admission history entry is read.
+fn serialize_json_bytes<S: serde::Serializer>(
+    bytes: &[u8],
+    serializer: S,
+) -> std::result::Result<S::Ok, S::Error> {
+    serializer.serialize_str(std::str::from_utf8(bytes).map_err(serde::ser::Error::custom)?)
+}
+fn deserialize_json_bytes<'de, D: serde::Deserializer<'de>>(
+    deserializer: D,
+) -> std::result::Result<Vec<u8>, D::Error> {
+    Ok(String::deserialize(deserializer)?.into_bytes())
+}
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct FlowRun {
@@ -137,12 +151,14 @@ pub struct FlowRun {
     pub principal: PrincipalId,
     pub agency: AgencyRecord,
     pub submission: EffectSubmission,
+    #[serde(serialize_with = "serialize_json_bytes", deserialize_with = "deserialize_json_bytes")]
     pub plan: Vec<u8>,
     pub plan_hash: ContentHash,
     pub admission_hash: ContentHash,
     pub pins: FlowPins,
     pub origin: PlanOrigin,
     pub queue_store: OpaqueRef,
+    #[serde(serialize_with = "serialize_json_bytes", deserialize_with = "deserialize_json_bytes")]
     pub coordinator_request: Vec<u8>,
     pub coordinator_task: OpaqueRef,
     pub node_tasks: BTreeMap<OpaqueRef, OpaqueRef>,
@@ -159,6 +175,19 @@ pub struct FlowRun {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub outcome: Option<FlowOutcome>,
     pub exports: BTreeMap<OpaqueRef, ArtifactRef>,
+}
+
+#[cfg(test)]
+#[test]
+fn canonical_json_byte_storage_preserves_exact_bytes_and_hashes() {
+    let bytes = canonical_collection(&("é界\n\"\\", [1, 2, 3])).unwrap();
+    let encoded = serialize_json_bytes(&bytes, serde_json::value::Serializer).unwrap();
+    assert_eq!(encoded.as_str().unwrap().as_bytes(), bytes);
+    let decoded = deserialize_json_bytes(encoded).unwrap();
+    assert_eq!(decoded, bytes);
+    assert_eq!(ContentHash::of(&decoded), ContentHash::of(&bytes));
+    assert!(serialize_json_bytes(&[0xff], serde_json::value::Serializer).is_err());
+    assert!(deserialize_json_bytes(serde_json::json!([123, 125])).is_err());
 }
 impl FlowRun {
     pub fn admission_digest(&self) -> Result<ContentHash> {

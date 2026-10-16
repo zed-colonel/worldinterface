@@ -7,7 +7,7 @@ retain their original request bytes and the recovery/authorization/completion AP
 The existing recovery tests explicitly seed pre-WIP-07 effect records through a
 local fixture. No production fixture entry is added.
 
-The new `local-flow-5` fresh-store profile initializes an AQ-free Flow journal in
+The new `local-flow-6` fresh-store profile initializes an AQ-free Flow journal in
 StoreKind::Flow. Unsupported profiles reject before modification; no migration is
 implied. Immutable definitions, predecessor and activation checks, pinned plan bytes,
 hash, registry/schema and authority snapshots, complete original submissions and
@@ -157,7 +157,11 @@ These are implementation dispositions for independent review, not finding closur
 | F-022 | Fixed: `FlowRejected`, domain `CompileError` and storage `FlowIntegrity` identify deterministic validation failures. `FlowRevisionConflict` and `FlowCapacity` are distinct; I/O, SQLite and AQ service errors remain retryable irrespective of message text. Quarantine cancellation errors surface to the host and remain pending for the next tick. `pre_start_journal_failure_is_retryable_and_then_succeeds` injects a temporary SQLite error containing the former terminal keywords; `temporary_binding_artifact_io_failure_retries_without_quarantine` removes and restores accepted-request bytes; `quarantine_control_failure_surfaces_and_retries_after_host_repair` restores AQ control authority after a visible failed cancel. |
 | F-023 | Fixed: the independent outcome fold and terminal-parent fallback honor persisted cancel_requested; single-child cancellation ends Canceled unless stronger boundary evidence requires uncertainty. The separate-bundle cancellation regression asserts the exact outcome and zero invocations. |
 
-The fresh `local-flow-5` profile adds the row projections and bundle dispatch lock.
+The fresh `local-flow-6` profile adds the row projections, bundle dispatch lock,
+and compact storage of exact UTF-8 plan/request bytes as JSON strings.
+This avoids large intermediate JSON integer arrays on routine reads and replay.
+It preserves the original bytes and hashes; `local-flow-5` and earlier profiles
+reject before recovery writes, with no implicit migration.
 Earlier development profiles reject before modification; no migration is supplied.
 The per-tenant 10,000 retained-run limit matches the existing effect capacity;
 definition versions have a separate 256-version limit. Each run and catalog

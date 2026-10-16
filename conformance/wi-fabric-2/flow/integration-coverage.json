@@ -279,6 +279,11 @@
         "manifest": "crates/worldinterface-foundation/Cargo.toml",
         "package": "worldinterface-storage",
         "test": "separate_store_handles_share_the_dispatch_fence"
+      },
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-storage",
+        "test": "flow::canonical_json_byte_storage_preserves_exact_bytes_and_hashes"
       }
     ],
     "deadline-race": [
