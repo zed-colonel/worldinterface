@@ -1463,7 +1463,9 @@ fn unsupported_store_profile_is_rejected_without_upgrade() {
     drop(root(&t));
     let path = t.path().join("root/manifest.json");
     let bytes = std::fs::read(&path).unwrap();
-    let s = String::from_utf8(bytes).unwrap().replace("local-flow-5", "local-ingress-1");
+    let mut unsupported: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+    unsupported["feature_profile"] = "local-ingress-1".into();
+    let s = serde_json::to_string(&unsupported).unwrap();
     std::fs::write(&path, &s).unwrap();
     fn files(path: &std::path::Path) -> std::collections::BTreeMap<std::path::PathBuf, Vec<u8>> {
         let mut snapshot = std::collections::BTreeMap::new();

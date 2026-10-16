@@ -6111,7 +6111,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-foundation/egress/tests/domain.rs",
     "name": "crates/worldinterface-foundation/egress/tests/domain.rs",
-    "source_sha256": "eb218f9fb0d71489091d343ea412e6d56c8e999485015512f7bdf9eac9f998da",
+    "source_sha256": "37b21d959632001e427e84bb4e895ac0995a919cd626f3638b484e70cbb15040",
     "conditions": [],
     "registration_sites": []
   },
@@ -6120,7 +6120,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/egress/tests/domain.rs",
     "name": "Queue",
-    "source_sha256": "eb218f9fb0d71489091d343ea412e6d56c8e999485015512f7bdf9eac9f998da",
+    "source_sha256": "37b21d959632001e427e84bb4e895ac0995a919cd626f3638b484e70cbb15040",
     "conditions": [],
     "registration_sites": []
   },
@@ -6327,7 +6327,7 @@
     "kind": "module",
     "path": "crates/worldinterface-foundation/ingress/tests/lifecycle.rs",
     "name": "generated",
-    "source_sha256": "1e84a0720685afb672f5129bbd1309fdd74d3c4a9364ad72081f4678a6c7c3af",
+    "source_sha256": "3692a591625c49bb447fb92ca2ff2d75743a77bc36e88dc6518fffb8e70e076b",
     "conditions": [],
     "registration_sites": []
   },
@@ -6336,7 +6336,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-foundation/ingress/tests/lifecycle.rs",
     "name": "crates/worldinterface-foundation/ingress/tests/lifecycle.rs",
-    "source_sha256": "1e84a0720685afb672f5129bbd1309fdd74d3c4a9364ad72081f4678a6c7c3af",
+    "source_sha256": "3692a591625c49bb447fb92ca2ff2d75743a77bc36e88dc6518fffb8e70e076b",
     "conditions": [],
     "registration_sites": []
   },
@@ -6345,7 +6345,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/ingress/tests/lifecycle.rs",
     "name": "Authority",
-    "source_sha256": "1e84a0720685afb672f5129bbd1309fdd74d3c4a9364ad72081f4678a6c7c3af",
+    "source_sha256": "3692a591625c49bb447fb92ca2ff2d75743a77bc36e88dc6518fffb8e70e076b",
     "conditions": [],
     "registration_sites": []
   },
@@ -6354,7 +6354,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/ingress/tests/lifecycle.rs",
     "name": "MockWake",
-    "source_sha256": "1e84a0720685afb672f5129bbd1309fdd74d3c4a9364ad72081f4678a6c7c3af",
+    "source_sha256": "3692a591625c49bb447fb92ca2ff2d75743a77bc36e88dc6518fffb8e70e076b",
     "conditions": [],
     "registration_sites": []
   },
@@ -6363,7 +6363,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/ingress/tests/lifecycle.rs",
     "name": "Setup",
-    "source_sha256": "1e84a0720685afb672f5129bbd1309fdd74d3c4a9364ad72081f4678a6c7c3af",
+    "source_sha256": "3692a591625c49bb447fb92ca2ff2d75743a77bc36e88dc6518fffb8e70e076b",
     "conditions": [],
     "registration_sites": []
   },

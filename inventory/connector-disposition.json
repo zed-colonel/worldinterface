@@ -1229,7 +1229,7 @@
         },
         {
           "path": "crates/worldinterface-foundation/ingress/tests/lifecycle.rs",
-          "source_sha256": "1e84a0720685afb672f5129bbd1309fdd74d3c4a9364ad72081f4678a6c7c3af",
+          "source_sha256": "3692a591625c49bb447fb92ca2ff2d75743a77bc36e88dc6518fffb8e70e076b",
           "treatment": "Retain isolated ingress domain implementation and fixtures. Any future selective legacy removal must preserve WI-03 coverage; no runtime removal is claimed."
         },
         {
@@ -3301,12 +3301,12 @@
         },
         {
           "id": "crates/worldinterface-foundation/egress/tests/domain.rs::::source-module:crates/worldinterface-foundation/egress/tests/domain.rs",
-          "source_sha256": "eb218f9fb0d71489091d343ea412e6d56c8e999485015512f7bdf9eac9f998da",
+          "source_sha256": "37b21d959632001e427e84bb4e895ac0995a919cd626f3638b484e70cbb15040",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/egress/tests/domain.rs::::struct:Queue",
-          "source_sha256": "eb218f9fb0d71489091d343ea412e6d56c8e999485015512f7bdf9eac9f998da",
+          "source_sha256": "37b21d959632001e427e84bb4e895ac0995a919cd626f3638b484e70cbb15040",
           "registration_sites": []
         },
         {
@@ -3421,27 +3421,27 @@
         },
         {
           "id": "crates/worldinterface-foundation/ingress/tests/lifecycle.rs::::module:generated",
-          "source_sha256": "1e84a0720685afb672f5129bbd1309fdd74d3c4a9364ad72081f4678a6c7c3af",
+          "source_sha256": "3692a591625c49bb447fb92ca2ff2d75743a77bc36e88dc6518fffb8e70e076b",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/ingress/tests/lifecycle.rs::::source-module:crates/worldinterface-foundation/ingress/tests/lifecycle.rs",
-          "source_sha256": "1e84a0720685afb672f5129bbd1309fdd74d3c4a9364ad72081f4678a6c7c3af",
+          "source_sha256": "3692a591625c49bb447fb92ca2ff2d75743a77bc36e88dc6518fffb8e70e076b",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/ingress/tests/lifecycle.rs::::struct:Authority",
-          "source_sha256": "1e84a0720685afb672f5129bbd1309fdd74d3c4a9364ad72081f4678a6c7c3af",
+          "source_sha256": "3692a591625c49bb447fb92ca2ff2d75743a77bc36e88dc6518fffb8e70e076b",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/ingress/tests/lifecycle.rs::::struct:MockWake",
-          "source_sha256": "1e84a0720685afb672f5129bbd1309fdd74d3c4a9364ad72081f4678a6c7c3af",
+          "source_sha256": "3692a591625c49bb447fb92ca2ff2d75743a77bc36e88dc6518fffb8e70e076b",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/ingress/tests/lifecycle.rs::::struct:Setup",
-          "source_sha256": "1e84a0720685afb672f5129bbd1309fdd74d3c4a9364ad72081f4678a6c7c3af",
+          "source_sha256": "3692a591625c49bb447fb92ca2ff2d75743a77bc36e88dc6518fffb8e70e076b",
           "registration_sites": []
         },
         {
@@ -6383,7 +6383,7 @@
         },
         {
           "path": "crates/worldinterface-foundation/egress/tests/domain.rs",
-          "source_sha256": "eb218f9fb0d71489091d343ea412e6d56c8e999485015512f7bdf9eac9f998da",
+          "source_sha256": "37b21d959632001e427e84bb4e895ac0995a919cd626f3638b484e70cbb15040",
           "treatment": "Retain WI-04 guarded domain and production admission binding; review selective changes without weakening replacement or qualification gates."
         },
         {
@@ -6413,7 +6413,7 @@
         },
         {
           "path": "crates/worldinterface-foundation/ingress/tests/lifecycle.rs",
-          "source_sha256": "1e84a0720685afb672f5129bbd1309fdd74d3c4a9364ad72081f4678a6c7c3af",
+          "source_sha256": "3692a591625c49bb447fb92ca2ff2d75743a77bc36e88dc6518fffb8e70e076b",
           "treatment": "Retain isolated ingress domain implementation and fixtures. Any future selective legacy removal must preserve WI-03 coverage; no runtime removal is claimed."
         },
         {
