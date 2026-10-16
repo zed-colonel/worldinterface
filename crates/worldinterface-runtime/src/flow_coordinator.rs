@@ -217,11 +217,8 @@ pub(crate) fn reconcile<H: actionqueue_executor_local::handler::ExecutorHandler 
                 continue;
             }
             let result = (|| -> Result<()> {
+                // Includes complete plan/hash and queue identity validation.
                 validate_run_references(root, store, engine.projection(), r)?;
-                r.restore()?;
-                if r.queue_store.as_str() != store.to_string() {
-                    return Err(rejected("Flow queue store mismatch"));
-                }
                 let parent: TaskId = r.coordinator_task.as_str().parse()?;
                 let expected: EnsureTaskRequest =
                     serde_json::from_slice(&r.coordinator_request).map_err(rejected)?;

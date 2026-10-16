@@ -50,7 +50,7 @@ impl std::error::Error for FlowCapacity {}
 /// Match the existing per-tenant effect capacity. Runs retain complete history.
 pub const MAX_FLOW_RUNS: usize = 10_000;
 pub const MAX_FLOW_VERSIONS: usize = 256;
-/// Bounds each run plus the definition catalog, never the tenant's retained runs.
+/// Bounds each run and the definition catalog separately, never all retained runs.
 pub const MAX_FLOW_STATE_BYTES: usize = 16 * 1024 * 1024;
 pub(crate) const SCHEMA: &str = "
 CREATE TABLE flow_history(seq INTEGER PRIMARY KEY, tenant TEXT NOT NULL, revision INTEGER NOT NULL, entry BLOB NOT NULL, digest TEXT NOT NULL, UNIQUE(tenant,revision));
@@ -395,7 +395,12 @@ fn reduce(old: &FlowState, tenant: &OpaqueRef, cmd: &FlowCommand) -> Result<Flow
                 _ => unreachable!(),
             };
             let r = s.runs.get_mut(id).ok_or_else(|| invalid("unknown Flow run"))?;
-            r.restore()?;
+            // Admission validates the immutable plan in full. These commands
+            // cannot change it. Check attribution here; execution and recovery
+            // recompile against the expected hash through FlowRun::restore.
+            if r.admission_digest()? != r.admission_hash {
+                return Err(invalid("Flow admission hash mismatch"));
+            }
             if r.outcome.is_some() && !matches!(cmd, FlowCommand::Finish { .. }) {
                 return Err(invalid("Flow run finished"));
             }
@@ -559,9 +564,6 @@ fn reduce(old: &FlowState, tenant: &OpaqueRef, cmd: &FlowCommand) -> Result<Flow
             }
         }
     }
-    if canonical_collection(&s).map_err(|_| FlowCapacity::Bytes)?.len() > MAX_FLOW_STATE_BYTES {
-        return Err(FlowCapacity::Bytes.into());
-    }
     if s != *old {
         s.revision += 1;
     }
@@ -593,7 +595,9 @@ fn view(
     let sql = if id.is_some() {
         "SELECT state,quarantine FROM flow_runs WHERE tenant=?1 AND id=?2"
     } else if pending {
-        "SELECT state,quarantine FROM flow_runs WHERE tenant=?1 AND terminal=0 AND ?2 IS NULL ORDER BY id"
+        // BTreeMap supplies deterministic order. Force the unfinished-run
+        // index so SQLite cannot trade that filter for a tenant-wide sort scan.
+        "SELECT state,quarantine FROM flow_runs INDEXED BY flow_pending WHERE tenant=?1 AND terminal=0 AND ?2 IS NULL"
     } else {
         "SELECT state,quarantine FROM flow_runs WHERE tenant=?1 AND ?2 IS NULL ORDER BY id"
     };
@@ -663,9 +667,16 @@ fn command_view(c: &Connection, tenant: &OpaqueRef, cmd: &FlowCommand) -> Result
     }
     Ok(s)
 }
+fn state_bytes<T: Serialize>(state: &T) -> Result<Vec<u8>> {
+    let bytes = canonical_collection(state).map_err(|_| FlowCapacity::Bytes)?;
+    if bytes.len() > MAX_FLOW_STATE_BYTES {
+        return Err(FlowCapacity::Bytes.into());
+    }
+    Ok(bytes)
+}
 fn write(c: &Connection, tenant: &OpaqueRef, s: &FlowState) -> Result<()> {
     for r in s.runs.values() {
-        c.execute("INSERT INTO flow_runs VALUES(?,?,?,?,?,?) ON CONFLICT(tenant,id) DO UPDATE SET terminal=excluded.terminal,quarantine=excluded.quarantine,state=excluded.state", params![tenant.as_str(),r.id.as_str(),request_key(r)?,r.outcome.is_some(),s.quarantined.get(&r.id),canonical_collection(r).map_err(invalid)?])?;
+        c.execute("INSERT INTO flow_runs VALUES(?,?,?,?,?,?) ON CONFLICT(tenant,id) DO UPDATE SET terminal=excluded.terminal,quarantine=excluded.quarantine,state=excluded.state", params![tenant.as_str(),r.id.as_str(),request_key(r)?,r.outcome.is_some(),s.quarantined.get(&r.id),state_bytes(r)?])?;
         for task in std::iter::once(&r.coordinator_task).chain(r.node_tasks.values()) {
             c.execute(
                 "INSERT OR IGNORE INTO flow_tasks VALUES(?,?,?)",
@@ -679,7 +690,7 @@ fn write(c: &Connection, tenant: &OpaqueRef, s: &FlowState) -> Result<()> {
     metadata.quarantined.clear();
     c.execute(
         "INSERT INTO flow_state VALUES(?,?) ON CONFLICT(tenant) DO UPDATE SET state=excluded.state",
-        params![tenant.as_str(), canonical_collection(&metadata).map_err(invalid)?],
+        params![tenant.as_str(), state_bytes(&metadata)?],
     )?;
     Ok(())
 }
