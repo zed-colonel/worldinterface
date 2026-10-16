@@ -171,6 +171,15 @@ hits. The cache holds no execution, authorization or branch state, and boundary
 authorization remains fresh. The tamper regression populates the cache, then
 recomputes admission digests while changing bytes, hash, registry/schema/authority
 pins and attribution, so these failures reach the relevant validation checks.
+Canonical encoding writes object keys and scalar values directly into its output
+buffer, avoiding a temporary allocation for each byte in an admission digest's
+request array. Sorting, scalar validation, escaping, size limits and hash bytes
+are unchanged; the independent canonical golden vectors cover this path. The
+capacity fixture reports cumulative submission, cancellation and reconciliation
+times and the paired reopen/rebuild phases. AQ 0.2.0 clones its retained
+projection when applying admissions and cancellations, so the full-history
+fixture remains intentionally expensive; no AQ override or reduced assertion
+replaces its recovery evidence.
 Earlier development profiles reject before modification; no migration is supplied.
 The per-tenant 10,000 retained-run limit matches the existing effect capacity;
 definition versions have a separate 256-version limit. Each run and catalog

@@ -2150,6 +2150,10 @@ impl worldinterface_runtime::authority::EvidenceAuthority for CapacityEvidence {
 
 #[tokio::test]
 async fn flow_capacity_is_enforced_without_losing_existing_history() {
+    let started = std::time::Instant::now();
+    let mut submitting = std::time::Duration::ZERO;
+    let mut canceling = std::time::Duration::ZERO;
+    let mut reconciling = std::time::Duration::ZERO;
     let mut f = Fixture::new();
     let evidence = CapacityEvidence(Evidence(f.snapshot.clone()));
     let handler = |f: &Fixture| {
@@ -2183,15 +2187,19 @@ async fn flow_capacity_is_enforced_without_losing_existing_history() {
             resolver: &resolver,
             clock: &f.clock,
         };
+        let before_submit = std::time::Instant::now();
         let id = service
             .submit_direct(&(), submission.clone(), f.selection(), &f.config, &mut q)
             .unwrap();
+        submitting += before_submit.elapsed();
         if [1, 256, 257, 5000, 9999, 10000].contains(&i) {
             // Leave the final admitted run unfinished across a full WI/AQ reopen.
             if i == MAX_FLOW_RUNS {
+                eprintln!("capacity paired reopen starting at {:?}", started.elapsed());
                 q.shutdown().unwrap();
                 f.bundle = Arc::new(StoreBundle::open(&f._temp.path().join("bundle")).unwrap());
                 q = QueueEngine::bootstrap(&f.bundle, handler(&f), host()).unwrap();
+                eprintln!("capacity paired reopen finished at {:?}", started.elapsed());
             }
             f.drive(&mut q, &id).await;
             let run = f.run(&id);
@@ -2210,15 +2218,19 @@ async fn flow_capacity_is_enforced_without_losing_existing_history() {
             assert_eq!(f.bundle.wi().effect_receipts(&f.auth.0, effect).unwrap().len(), 1);
             successes.push(run);
         } else {
+            let before_cancel = std::time::Instant::now();
             let run = f.run(&id);
             q.cancel_task(run.coordinator_task.as_str().parse().unwrap()).unwrap();
+            canceling += before_cancel.elapsed();
             if canceled.is_none() {
                 canceled = Some(id.clone());
             }
         }
         // Reconcile bounded batches through the real scheduling path.
         if i % 100 == 0 {
+            let before_tick = std::time::Instant::now();
             let _ = q.tick().await.unwrap();
+            reconciling += before_tick.elapsed();
         }
         last_submission = submission;
         if i == 257 {
@@ -2227,7 +2239,11 @@ async fn flow_capacity_is_enforced_without_losing_existing_history() {
             q = QueueEngine::bootstrap(&f.bundle, handler(&f), host()).unwrap();
         }
         if i % 1000 == 0 {
-            eprintln!("production Direct capacity: {i}/{}", MAX_FLOW_RUNS);
+            eprintln!(
+                "production Direct capacity: {i}/{} at {:?} (submit {submitting:?}, cancel {canceling:?}, tick {reconciling:?})",
+                MAX_FLOW_RUNS,
+                started.elapsed()
+            );
         }
     }
     assert_eq!(f.connector.commits(), successes.len());
@@ -2266,6 +2282,7 @@ async fn flow_capacity_is_enforced_without_losing_existing_history() {
     // retained admissions with the final request pending. Keep its live AQ
     // projection to verify production idempotency after rebuilding WI history.
     {
+        eprintln!("capacity history rebuild starting at {:?}", started.elapsed());
         let _guard = f.bundle.wi().flow_dispatch_guard().unwrap();
         f.bundle
             .wi()
@@ -2273,6 +2290,7 @@ async fn flow_capacity_is_enforced_without_losing_existing_history() {
             .unwrap()
             .rebuild()
             .unwrap();
+        eprintln!("capacity history rebuild finished at {:?}", started.elapsed());
     }
     for run in &successes {
         assert_eq!(&f.run(&run.id), run);
