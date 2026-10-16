@@ -89,7 +89,7 @@ integration to CraftingTable after qualifying review. This branch is committed f
 review and never merged or pushed by the implementation agent. Independent review
 and its blocking/major-finding disposition remain controller responsibilities.
 
-Structural review adds 44 inventory declarations/modules to the existing retained
+Structural review adds 57 inventory declarations/modules to the existing retained
 infrastructure family; no inventory item or existing treatment is removed. Seven
 new source/test surfaces and the crash fixture's selective filesystem-write
 surface are dispositioned explicitly. Source hashes are then refreshed with the
@@ -162,6 +162,15 @@ and compact storage of exact UTF-8 plan/request bytes as JSON strings.
 This avoids large intermediate JSON integer arrays on routine reads and replay.
 It preserves the original bytes and hashes; `local-flow-5` and earlier profiles
 reject before recovery writes, with no implicit migration.
+
+Repeated plan restoration reuses at most 16 sealed compiler results with at most
+8 MiB of encoded plan/pin inputs. A hit compares the exact bytes, expected hash
+and complete FlowPins; any difference takes the full compiler path. Admission
+digests and per-run identity checks still run on every restore, including cache
+hits. The cache holds no execution, authorization or branch state, and boundary
+authorization remains fresh. The tamper regression populates the cache, then
+recomputes admission digests while changing bytes, hash, registry/schema/authority
+pins and attribution, so these failures reach the relevant validation checks.
 Earlier development profiles reject before modification; no migration is supplied.
 The per-tenant 10,000 retained-run limit matches the existing effect capacity;
 definition versions have a separate 256-version limit. Each run and catalog

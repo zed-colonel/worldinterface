@@ -143,6 +143,52 @@ fn deserialize_json_bytes<'de, D: serde::Deserializer<'de>>(
 ) -> std::result::Result<Vec<u8>, D::Error> {
     Ok(String::deserialize(deserializer)?.into_bytes())
 }
+/// Reuse only a sealed compiler result for identical bytes, expected hash and
+/// complete compilation pins. Run attribution is checked separately on every
+/// restore. This cache holds no execution, authorization or branch state.
+fn restore_pinned_plan(
+    bytes: &[u8],
+    expected: &ContentHash,
+    pins: &FlowPins,
+) -> Result<ExecutionPlan> {
+    use std::{
+        collections::VecDeque,
+        sync::{Mutex, OnceLock},
+    };
+    type Plans = VecDeque<(ExecutionPlan, FlowPins, usize)>;
+    static PLANS: OnceLock<Mutex<Plans>> = OnceLock::new();
+    const MAX_ENTRIES: usize = 16;
+    const MAX_ENCODED_BYTES: usize = 8 * 1024 * 1024;
+    let cache = PLANS.get_or_init(|| Mutex::new(VecDeque::new()));
+    let matches = |(p, saved, _): &(ExecutionPlan, FlowPins, usize)| {
+        p.hash() == expected && p.canonical_bytes() == bytes && saved == pins
+    };
+    if let Ok(plans) = cache.lock() {
+        if let Some((p, _, _)) = plans.iter().find(|entry| matches(entry)) {
+            return Ok(p.clone());
+        }
+    }
+    // A miss, changed pin, poisoned cache or oversized entry always takes the
+    // ordinary compiler path. Cache availability never establishes validity.
+    let plan = restore_plan(bytes, expected, &pins.context()?)?;
+    let Ok(encoded) = canonical_collection(pins) else { return Ok(plan) };
+    let cost = bytes.len().saturating_add(encoded.len());
+    if cost > MAX_ENCODED_BYTES {
+        return Ok(plan);
+    }
+    if let Ok(mut plans) = cache.lock() {
+        if plans.iter().any(matches) {
+            return Ok(plan);
+        }
+        while plans.len() >= MAX_ENTRIES
+            || plans.iter().map(|entry| entry.2).sum::<usize>() + cost > MAX_ENCODED_BYTES
+        {
+            plans.pop_front();
+        }
+        plans.push_back((plan.clone(), pins.clone(), cost));
+    }
+    Ok(plan)
+}
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct FlowRun {
@@ -215,7 +261,7 @@ impl FlowRun {
         if self.admission_digest()? != self.admission_hash {
             return Err(invalid("Flow admission hash mismatch"));
         }
-        let p = restore_plan(&self.plan, &self.plan_hash, &self.pins.context()?)?;
+        let p = restore_pinned_plan(&self.plan, &self.plan_hash, &self.pins)?;
         if p.document().origin != self.origin
             || self.agency.binding.tenant != self.tenant
             || self.agency.binding.principal != self.principal

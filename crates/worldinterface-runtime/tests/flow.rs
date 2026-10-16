@@ -249,12 +249,17 @@ async fn tampered_plan_hash_snapshots_and_attribution_prevent_execution() {
     let mut q = QueueEngine::bootstrap(&f.bundle, f.handler(), host()).unwrap();
     let id = service.submit_direct(&(), f.submission.clone(), f.selection(), &mut q).unwrap();
     let r = f.run(&id);
-    for kind in ["bytes", "hash", "snapshot", "principal", "definition"] {
+    // Populate and reuse the validation cache before every mutation below.
+    assert_eq!(r.restore().unwrap().canonical_bytes(), r.plan);
+    assert_eq!(r.restore().unwrap().hash(), &r.plan_hash);
+    for kind in ["bytes", "hash", "snapshot", "schemas", "authority", "principal", "definition"] {
         let mut bad = r.clone();
         match kind {
             "bytes" => bad.plan[0] ^= 1,
             "hash" => bad.plan_hash = ContentHash::of(b"tamper"),
             "snapshot" => bad.pins.descriptors[0].implementation = ContentHash::of(b"replacement"),
+            "schemas" => bad.pins.schemas.clear(),
+            "authority" => bad.pins.run_authority.alternatives.clear(),
             "principal" => bad.principal = PrincipalId::generate(),
             _ => {
                 bad.origin = PlanOrigin::Flow {
@@ -265,13 +270,15 @@ async fn tampered_plan_hash_snapshots_and_attribution_prevent_execution() {
                 }
             }
         }
+        // Reach plan/pin/identity validation rather than the admission digest.
+        bad.admission_hash = bad.admission_digest().unwrap();
         if kind == "hash" {
-            bad.admission_hash = bad.admission_digest().unwrap();
             let e = bad.restore().unwrap_err();
             assert!(e.to_string().contains("plan bytes or digest mismatch"), "{e}");
         } else {
             assert!(bad.restore().is_err(), "{kind}");
         }
+        assert_eq!(r.restore().unwrap().hash(), &r.plan_hash);
     }
     let mut state = f.bundle.wi().flow_snapshot(&f.auth.0).unwrap();
     let bad = state.runs.get_mut(&id).unwrap();

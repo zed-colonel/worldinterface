@@ -9945,5 +9945,12 @@
     "target": "runtime Flow coordinator and node executor",
     "rationale": "WIP-07 F-020/F-022 remediation: typed validation and retry boundaries, production Direct capacity and recovery evidence; retain for independent review",
     "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/flow.rs::restore_pinned_plan::type:Plans",
+    "disposition": "retain-align",
+    "target": "foundation immutable Flow plan validation",
+    "rationale": "WIP-07 F-020: bounded memoization of sealed compiler results for exact bytes, expected hash and complete pins; no run progress or authorization state; retain for independent review",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
   }
 ]
