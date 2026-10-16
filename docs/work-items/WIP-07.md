@@ -48,6 +48,12 @@ Code-forced choices within the accepted design:
   hard ceiling. Its default 128 KiB budget cannot hold the complete accepted
   64-child transaction with its duplicated admission plans. Payload, initial-run,
   dependency, child, wait-target, signal and hierarchy hard limits remain AQ-owned.
+- Automatic AQ snapshots are disabled through its public runtime configuration.
+  AQ 0.2.0 validates the complete WAL on recovery and replays the WAL prefix when
+  publishing each snapshot. Repeated automatic snapshots made the retained
+  10,000-run profile expensive without removing full recovery work. WI retains
+  the complete WAL and uses the same strict AQ recovery and validation APIs;
+  existing snapshots remain valid inputs to recovery and backup/restore.
 - Native WAL fault injection lives in `tests/flow_crash.rs`; AQ contract fixtures
   extend `tests/executor_aq_contract.rs` to reuse its published mutation seams.
 - Flow submission uses the original submission as the agency/policy template. A

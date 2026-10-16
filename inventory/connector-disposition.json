@@ -4681,37 +4681,37 @@
         },
         {
           "id": "crates/worldinterface-runtime/src/aq_adapter.rs::::source-module:crates/worldinterface-runtime/src/aq_adapter.rs",
-          "source_sha256": "2d357aea719a4ded7797637646f32edf4eb135a98ddfce27747632884e37578b",
+          "source_sha256": "9b7252461a1e3f69366aad0598d16174b86e49a88b1efbd5c4e9bf88592544c8",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/aq_adapter.rs::::struct:QueueEngine",
-          "source_sha256": "2d357aea719a4ded7797637646f32edf4eb135a98ddfce27747632884e37578b",
+          "source_sha256": "9b7252461a1e3f69366aad0598d16174b86e49a88b1efbd5c4e9bf88592544c8",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/aq_adapter.rs::::struct:QueueProvenance",
-          "source_sha256": "2d357aea719a4ded7797637646f32edf4eb135a98ddfce27747632884e37578b",
+          "source_sha256": "9b7252461a1e3f69366aad0598d16174b86e49a88b1efbd5c4e9bf88592544c8",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/aq_adapter.rs::::struct:QueueReferences",
-          "source_sha256": "2d357aea719a4ded7797637646f32edf4eb135a98ddfce27747632884e37578b",
+          "source_sha256": "9b7252461a1e3f69366aad0598d16174b86e49a88b1efbd5c4e9bf88592544c8",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/aq_adapter.rs::::struct:QueueStoreId",
-          "source_sha256": "2d357aea719a4ded7797637646f32edf4eb135a98ddfce27747632884e37578b",
+          "source_sha256": "9b7252461a1e3f69366aad0598d16174b86e49a88b1efbd5c4e9bf88592544c8",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/aq_adapter.rs::::struct:TaskInputLocator",
-          "source_sha256": "2d357aea719a4ded7797637646f32edf4eb135a98ddfce27747632884e37578b",
+          "source_sha256": "9b7252461a1e3f69366aad0598d16174b86e49a88b1efbd5c4e9bf88592544c8",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/aq_adapter.rs::::struct:TaskRouter",
-          "source_sha256": "2d357aea719a4ded7797637646f32edf4eb135a98ddfce27747632884e37578b",
+          "source_sha256": "9b7252461a1e3f69366aad0598d16174b86e49a88b1efbd5c4e9bf88592544c8",
           "registration_sites": []
         },
         {
@@ -6614,7 +6614,7 @@
         {
           "path": "crates/worldinterface-runtime/src/aq_adapter.rs",
           "treatment": "Retain target integration source and tests; audit shared declarations before any later selective removal.",
-          "source_sha256": "2d357aea719a4ded7797637646f32edf4eb135a98ddfce27747632884e37578b"
+          "source_sha256": "9b7252461a1e3f69366aad0598d16174b86e49a88b1efbd5c4e9bf88592544c8"
         },
         {
           "path": "crates/worldinterface-runtime/src/artifact.rs",

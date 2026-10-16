@@ -80,6 +80,10 @@ impl<'a, H: ExecutorHandler + 'static> QueueEngine<'a, H> {
         let engine = ActionQueueEngine::new(
             RuntimeConfig {
                 data_dir: bundle.aq_path(),
+                // AQ 0.2.0 validates the complete WAL even with snapshots.
+                // Avoid repeatedly replaying growing history to publish optional
+                // automatic snapshots; complete-WAL recovery remains mandatory.
+                snapshot_event_threshold: None,
                 signal_limits,
                 continuation_limits: actionqueue_core::limits::ContinuationLimits {
                     disposition_bytes: 1024 * 1024,
