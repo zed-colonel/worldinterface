@@ -50,9 +50,13 @@ Code-forced choices within the accepted design:
   dependency, child, wait-target, signal and hierarchy hard limits remain AQ-owned.
 - AQ 0.3.0 automatic snapshots use the default 10,000-event threshold and normal
   engine bootstrap. Read-only AQ preflight remains before WI recovery writes;
-  engine bootstrap remains separate. Ordinary startup validates a checkpoint and
-  replays its WAL tail. The complete WAL is retained, Strict tail handling is
-  unchanged, and backup/restore perform AQ's explicit full-history verification.
+  engine bootstrap remains separate. Ordinary startup validates the checkpoint
+  and WAL boundary frames, then replays only the WAL tail. It trusts the
+  checkpoint's commitment to the covered WAL prefix without rereading or rehashing
+  that prefix. Corruption or modification wholly inside the skipped prefix can
+  therefore go undetected if the checked boundary frames remain unchanged.
+  The complete WAL is retained and Strict tail handling is unchanged. Integrity
+  audits require the explicit full-history verification procedure below.
   Physical checkpoint damage falls back to WAL recovery; incompatible checkpoints
   and corrupt tails still follow AQ's fail-closed compatibility/integrity policy.
 - Native WAL fault injection lives in `tests/flow_crash.rs`; AQ contract fixtures
@@ -208,6 +212,16 @@ damaged bundle, and restore a known-good paired WI/AQ backup through StoreBundle
 offline restore API. Strict reopen verifies it before recovery. Preserve and
 reconcile any post-backup external outcomes with the WIP-04 procedure before new
 submissions; clearing quarantine or reusing a canceled coordinator is unsupported.
+
+For an integrity audit (F-026), stop all bundle writers and close the bundle, then
+run AQ 0.3.0's `actionqueue store verify --data-dir /path/to/bundle/aq --json`.
+This explicitly replays the complete AQ WAL and compares it with the checkpoint
+and tail. Ordinary startup or `actionqueue store inspect` does not provide this
+full-history verification. WI's offline `StoreBundle::backup(source, destination)`
+and `StoreBundle::restore(backup, destination)` also invoke AQ full-history
+verification and validate the paired WI/AQ bundle before publishing a separate
+destination; use these bundle APIs for paired backups and restores. WI journal
+replay, plan/artifact validation and cross-store checks still run on every open.
 
 Production bootstrap keeps AQ 0.3.0's Strict WAL policy. For an incomplete trailing
 record, stop every writer, retain a byte-for-byte copy, inspect the native WAL with
