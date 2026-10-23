@@ -428,7 +428,17 @@ async fn administrative_resume_reestablishes_wait_and_all_wake_forms_redeliver_i
     let f = Fixture::new();
     let evidence = Evidence(f.snapshot.clone());
     let service = f.service(&evidence);
-    let d = definition(&f, true, SignalProgress::Once {}, None);
+    // After administrative resumption, AQ carries no newly emitted checkpoint.
+    // Its real epoch-zero deadline must remain distinct from binding readiness.
+    let d = definition(
+        &f,
+        true,
+        SignalProgress::Once {},
+        Some(Deadline {
+            inclusive_at: "1970-01-01T00:00:00.000000000Z".to_string().try_into().unwrap(),
+            action: TimeoutAction::Continue,
+        }),
+    );
     service.activate_flow_version(&(), d.clone(), None).unwrap();
     let mut q = QueueEngine::bootstrap(
         &f.bundle,
@@ -453,12 +463,18 @@ async fn administrative_resume_reestablishes_wait_and_all_wake_forms_redeliver_i
     q.resume_run(child.expect("suspended child")).unwrap();
     for _ in 0..1000 {
         let _ = q.tick().await.unwrap();
-        if f.run(&id).accepted_resumes.len() == 1 {
+        if !f.run(&id).accepted_resumes.is_empty() {
             break;
         }
         tokio::time::sleep(std::time::Duration::from_millis(1)).await;
     }
-    assert!(f.run(&id).results.is_empty());
+    assert!(f.run(&id).accepted_resumes.values().any(|a| serde_json::from_slice::<
+        actionqueue_core::disposition::AttemptDisposition,
+    >(&a.disposition)
+    .is_ok_and(|d| matches!(
+        d.outcome(),
+        actionqueue_core::disposition::DispositionOutcome::Awaiting
+    ))));
     q.shutdown().unwrap();
     let mut q = QueueEngine::bootstrap(&f.bundle, f.handler(), host()).unwrap();
     emit(&f, 1);

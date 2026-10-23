@@ -4986,7 +4986,7 @@
         },
         {
           "id": "crates/worldinterface-runtime/src/flow_wait.rs::::source-module:crates/worldinterface-runtime/src/flow_wait.rs",
-          "source_sha256": "0c7c14554e32409feed5bd9719ff2fcb3b7a657952560e0bce6398526020bb1a",
+          "source_sha256": "3a7f77544b44c3d33e0a5d4f6ae9dee8ddb4da8fec1d7077e496ef1644e80bc8",
           "registration_sites": []
         },
         {
@@ -5466,37 +5466,37 @@
         },
         {
           "id": "crates/worldinterface-runtime/tests/continuations.rs::::module:support",
-          "source_sha256": "7267600bbd50cb333355a40abd185e5da112fe016d84b69db73bd34b6b7c1bf2",
+          "source_sha256": "ed96a84459519d386827ef416110dcd2e99e026751d6fc69ab918c6bebed43a6",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/continuations.rs::::source-module:crates/worldinterface-runtime/tests/continuations.rs",
-          "source_sha256": "7267600bbd50cb333355a40abd185e5da112fe016d84b69db73bd34b6b7c1bf2",
+          "source_sha256": "ed96a84459519d386827ef416110dcd2e99e026751d6fc69ab918c6bebed43a6",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/continuations.rs::::struct:SuspendWait",
-          "source_sha256": "7267600bbd50cb333355a40abd185e5da112fe016d84b69db73bd34b6b7c1bf2",
+          "source_sha256": "ed96a84459519d386827ef416110dcd2e99e026751d6fc69ab918c6bebed43a6",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/continuations.rs::support::module:connectors",
-          "source_sha256": "7267600bbd50cb333355a40abd185e5da112fe016d84b69db73bd34b6b7c1bf2",
+          "source_sha256": "ed96a84459519d386827ef416110dcd2e99e026751d6fc69ab918c6bebed43a6",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/continuations.rs::support::module:continuation_fixture",
-          "source_sha256": "7267600bbd50cb333355a40abd185e5da112fe016d84b69db73bd34b6b7c1bf2",
+          "source_sha256": "ed96a84459519d386827ef416110dcd2e99e026751d6fc69ab918c6bebed43a6",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/continuations.rs::support::module:flow_fixture",
-          "source_sha256": "7267600bbd50cb333355a40abd185e5da112fe016d84b69db73bd34b6b7c1bf2",
+          "source_sha256": "ed96a84459519d386827ef416110dcd2e99e026751d6fc69ab918c6bebed43a6",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/continuations.rs::support::module:spi_harness",
-          "source_sha256": "7267600bbd50cb333355a40abd185e5da112fe016d84b69db73bd34b6b7c1bf2",
+          "source_sha256": "ed96a84459519d386827ef416110dcd2e99e026751d6fc69ab918c6bebed43a6",
           "registration_sites": []
         },
         {
@@ -6889,7 +6889,7 @@
         {
           "path": "crates/worldinterface-runtime/src/flow_wait.rs",
           "treatment": "Retain WIP-08 target continuation contracts, runtime mappings and executable evidence; review selective legacy removal without deleting shared infrastructure.",
-          "source_sha256": "0c7c14554e32409feed5bd9719ff2fcb3b7a657952560e0bce6398526020bb1a"
+          "source_sha256": "3a7f77544b44c3d33e0a5d4f6ae9dee8ddb4da8fec1d7077e496ef1644e80bc8"
         },
         {
           "path": "crates/worldinterface-runtime/src/ingress.rs",
@@ -6959,7 +6959,7 @@
         {
           "path": "crates/worldinterface-runtime/tests/continuations.rs",
           "treatment": "Retain WIP-08 target continuation contracts, runtime mappings and executable evidence; review selective legacy removal without deleting shared infrastructure.",
-          "source_sha256": "7267600bbd50cb333355a40abd185e5da112fe016d84b69db73bd34b6b7c1bf2"
+          "source_sha256": "ed96a84459519d386827ef416110dcd2e99e026751d6fc69ab918c6bebed43a6"
         },
         {
           "path": "crates/worldinterface-runtime/tests/effect_service.rs",

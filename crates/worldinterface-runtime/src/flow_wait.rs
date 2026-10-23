@@ -251,6 +251,7 @@ pub(crate) fn execute(
     // Binding-readiness deadlines precede the real wait. They cannot decide the node.
     if matches!(context.wake, WakeReason::Deadline { deadline_at: 0, .. })
         && context.checkpoint.is_none()
+        && context.wait_id() != Some(wait.wait_id())
     {
         return Ok(AttemptDisposition::awaiting(wait, Some(checkpoint)));
     }

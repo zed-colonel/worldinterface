@@ -10217,7 +10217,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-runtime/src/flow_wait.rs",
     "name": "crates/worldinterface-runtime/src/flow_wait.rs",
-    "source_sha256": "0c7c14554e32409feed5bd9719ff2fcb3b7a657952560e0bce6398526020bb1a",
+    "source_sha256": "3a7f77544b44c3d33e0a5d4f6ae9dee8ddb4da8fec1d7077e496ef1644e80bc8",
     "conditions": [],
     "registration_sites": []
   },
@@ -11085,7 +11085,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/tests/continuations.rs",
     "name": "support",
-    "source_sha256": "7267600bbd50cb333355a40abd185e5da112fe016d84b69db73bd34b6b7c1bf2",
+    "source_sha256": "ed96a84459519d386827ef416110dcd2e99e026751d6fc69ab918c6bebed43a6",
     "conditions": [],
     "registration_sites": []
   },
@@ -11094,7 +11094,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-runtime/tests/continuations.rs",
     "name": "crates/worldinterface-runtime/tests/continuations.rs",
-    "source_sha256": "7267600bbd50cb333355a40abd185e5da112fe016d84b69db73bd34b6b7c1bf2",
+    "source_sha256": "ed96a84459519d386827ef416110dcd2e99e026751d6fc69ab918c6bebed43a6",
     "conditions": [],
     "registration_sites": []
   },
@@ -11103,7 +11103,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/continuations.rs",
     "name": "SuspendWait",
-    "source_sha256": "7267600bbd50cb333355a40abd185e5da112fe016d84b69db73bd34b6b7c1bf2",
+    "source_sha256": "ed96a84459519d386827ef416110dcd2e99e026751d6fc69ab918c6bebed43a6",
     "conditions": [],
     "registration_sites": []
   },
@@ -11112,7 +11112,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/tests/continuations.rs",
     "name": "connectors",
-    "source_sha256": "7267600bbd50cb333355a40abd185e5da112fe016d84b69db73bd34b6b7c1bf2",
+    "source_sha256": "ed96a84459519d386827ef416110dcd2e99e026751d6fc69ab918c6bebed43a6",
     "conditions": [],
     "registration_sites": []
   },
@@ -11121,7 +11121,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/tests/continuations.rs",
     "name": "continuation_fixture",
-    "source_sha256": "7267600bbd50cb333355a40abd185e5da112fe016d84b69db73bd34b6b7c1bf2",
+    "source_sha256": "ed96a84459519d386827ef416110dcd2e99e026751d6fc69ab918c6bebed43a6",
     "conditions": [],
     "registration_sites": []
   },
@@ -11130,7 +11130,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/tests/continuations.rs",
     "name": "flow_fixture",
-    "source_sha256": "7267600bbd50cb333355a40abd185e5da112fe016d84b69db73bd34b6b7c1bf2",
+    "source_sha256": "ed96a84459519d386827ef416110dcd2e99e026751d6fc69ab918c6bebed43a6",
     "conditions": [],
     "registration_sites": []
   },
@@ -11139,7 +11139,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/tests/continuations.rs",
     "name": "spi_harness",
-    "source_sha256": "7267600bbd50cb333355a40abd185e5da112fe016d84b69db73bd34b6b7c1bf2",
+    "source_sha256": "ed96a84459519d386827ef416110dcd2e99e026751d6fc69ab918c6bebed43a6",
     "conditions": [],
     "registration_sites": []
   },
