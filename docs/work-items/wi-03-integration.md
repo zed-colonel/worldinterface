@@ -2,11 +2,11 @@
 
 HTTP and streaming transports commit authenticated observations, ingress receipts,
 captured subscriber deliveries, and immutable AQ requests before dispatch. The
-production adapter uses crates.io AQ `=0.2.0`, whose published checksums are pinned
-in `contracts/aq-integration-target.json`. The historical source commit
+production adapter uses crates.io AQ `=0.3.0`, whose runtime checksums are pinned
+in `contracts/aq-integration-target.json::runtime_release`. The historical source commit
 `29e096c4f06985d1a9bd9d5fe5a3a6a5db8a6860`, tree
 `1c0c85dd700bd9d0c75de223dada911ffeadbb5b`, and conformance revision 16 remain
-provenance for that published release.
+provenance for the imported 0.2.0 baseline, separately from the current runtime.
 WI-AQ-005/006 map to retained durable signals, bounded waits and real-AQ restart
 tests, rather than process-local matching. The four assigned baseline cases and
 their source-record hashes are in `conformance/wi-fabric-2/integration/fixtures.json`.

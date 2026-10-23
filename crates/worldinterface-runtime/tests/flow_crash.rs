@@ -1,4 +1,4 @@
-//! Process death around AQ's native framed WAL, using only public 0.2.0 APIs.
+//! Process death around AQ's native framed WAL, using only public 0.3.0 APIs.
 #[path = "support/child.rs"]
 mod child_guard;
 mod support {

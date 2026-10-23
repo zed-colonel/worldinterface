@@ -894,6 +894,21 @@
           "manifest": "crates/worldinterface-runtime/Cargo.toml",
           "package": "worldinterface-runtime",
           "test": "sixty_four_boundary_nodes_reject_at_wi_plan_byte_bound_before_aq_admission"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "checkpoint_tail_and_wal_only_recovery_preserve_pending_flow_and_branch_receipts"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "flow_retained_count_rollback_replay_and_tampering"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "concurrent_flow_admissions_serialize_at_retained_capacity"
         }
       ]
     },

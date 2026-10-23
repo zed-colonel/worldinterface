@@ -289,7 +289,7 @@ fn ab_wi_001_store_formats_fresh_lineage_and_profile_rejection() {
             manifest.snapshot_schema,
             manifest.projection_version
         ),
-        (1, 1, 9, 9)
+        (1, 1, 10, 9)
     );
     assert!(manifest.features.is_empty());
     drop(bundle);
@@ -512,8 +512,16 @@ fn ab_wi_001_published_identity_rejects_substitutions() {
     c["published_release"]["crates"]["actionqueue-core"]["checksum"] =
         serde_json::json!("0".repeat(64));
     reject(&metadata, &c, "published checksums changed");
+    let mut c = contract.clone();
+    c["runtime_release"]["crates"]["actionqueue-core"]["checksum"] =
+        serde_json::json!("0".repeat(64));
+    reject(&metadata, &c, "runtime checksums changed");
+    let mut c = contract.clone();
+    c["runtime_release"]["tag"] = serde_json::json!("v0.2.0");
+    reject(&metadata, &c, "wrong runtime release");
     for (field, value, expected) in [
-        ("version", "0.1.1", "actionqueue-core is not 0.2.0"),
+        ("version", "0.1.1", "actionqueue-core is not 0.3.0"),
+        ("version", "0.2.0", "actionqueue-core is not 0.3.0"),
         (
             "source",
             "git+https://example.invalid/aq",

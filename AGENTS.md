@@ -43,8 +43,9 @@ and embedded host surfaces.
 
 - Since 2026-10-13 WorldInterface is developed as single-application work, outside the
   former cross-project map: there is no controller Cargo launcher, `ct-act`, `ct-native`
-  or supplied AQ pin. ActionQueue comes from crates.io at 0.2.0 (the published crates
-  match `contracts/aq-integration-target.json`'s `published_release`); never path- or
+  or supplied AQ pin. ActionQueue comes from crates.io at 0.3.0 (the runtime crates
+  match `contracts/aq-integration-target.json`'s `runtime_release`; the imported
+  `target` and `published_release` preserve the historical 0.2.0 baseline); never path- or
   patch-override AQ. Run `cargo fetch` first when dependencies must be downloaded.
 - Before review, run the checks CraftingTable will run from `.craftingtable/checks.json`
   (offline, in a private clone of the reviewed commit). With Rust 1.89.0:
@@ -52,7 +53,7 @@ and embedded host surfaces.
     (`crates/worldinterface-foundation`): format, Clippy, build, test, domain isolation.
   - `scripts/check-wi-integration.sh`: the runtime (`crates/worldinterface-runtime`, its
     own workspace and lock): format, Clippy, build, test, and the resolved-graph check
-    that AQ is crates.io 0.2.0 with the published checksums.
+    that AQ is crates.io 0.3.0 with the published checksums.
   - `scripts/check-wi-contract.sh`: the contract tool (`tools/wi-contract-check`).
   `CARGO_TARGET_DIR` and `TMPDIR` must be outside the worktree; they default under
   `/tmp`. Foundation stays an independent AQ-free workspace; never resolve the runtime

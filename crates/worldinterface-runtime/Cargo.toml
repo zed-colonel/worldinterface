@@ -10,10 +10,10 @@ publish = false
 
 [dependencies]
 worldinterface-capability = { path = "../worldinterface-foundation/capability" }
-actionqueue-core = { version = "=0.2.0", default-features = false, features = ["serde"] }
-actionqueue-runtime = { version = "=0.2.0", default-features = false, features = ["serde"] }
-actionqueue-storage = { version = "=0.2.0", default-features = false }
-actionqueue-executor-local = "=0.2.0"
+actionqueue-core = { version = "=0.3.0", default-features = false, features = ["serde"] }
+actionqueue-runtime = { version = "=0.3.0", default-features = false, features = ["serde"] }
+actionqueue-storage = { version = "=0.3.0", default-features = false }
+actionqueue-executor-local = "=0.3.0"
 worldinterface-protocol = { path = "../worldinterface-foundation/protocol" }
 worldinterface-storage = { path = "../worldinterface-foundation/storage" }
 worldinterface-domain = { path = "../worldinterface-foundation/domain" }
@@ -39,6 +39,5 @@ hmac = "0.12"
 [profile.test]
 opt-level = 3
 codegen-units = 16
-lto = "thin"
 debug-assertions = true
 overflow-checks = true

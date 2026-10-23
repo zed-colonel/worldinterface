@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
-"""Verify the runtime's resolved graph uses the published AQ 0.2.0 crates from crates.io.
+"""Verify the runtime's resolved graph uses the published AQ 0.3.0 crates from crates.io.
 
 Usage: check-wi-integration.py <cargo-metadata.json> [<Cargo.lock>]
 
 Outside the cross-project map, AQ comes from crates.io. Each AQ package must be version
-0.2.0 from the crates.io index, and its Cargo.lock checksum must equal the published
-.crate SHA-256 recorded in contracts/aq-integration-target.json (published_release).
+0.3.0 from the crates.io index, and its Cargo.lock checksum must equal the published
+.crate SHA-256 recorded in contracts/aq-integration-target.json (runtime_release). The imported published_release remains historical.
 """
 import hashlib
 import json
@@ -35,7 +35,10 @@ feature_profile = {
     'actionqueue-executor-local': set(), 'actionqueue-runtime': {'serde'},
     'actionqueue-storage': {'default', 'serde'}, 'actionqueue-workflow': set(),
 }
-expected = published['crates']
+runtime = target_file['runtime_release']
+assert runtime['registry'] == 'crates.io' and runtime['tag'] == 'v0.3.0', 'wrong runtime release'
+assert hashlib.sha256(json.dumps(runtime['crates'], sort_keys=True, separators=(',', ':')).encode()).hexdigest() == '3bd6c41dd155fbde607f3f7b44652ee876d991a639744528dde15c0f25aca763', 'runtime checksums changed'
+expected = runtime['crates']
 locked = {p['name']: p for p in tomllib.loads(lock_path.read_text())['package'] if p['name'].startswith('actionqueue-')}
 packages = {p['id']: p for p in meta['packages']}
 nodes = {n['id']: n for n in meta['resolve']['nodes']}
@@ -45,12 +48,12 @@ for node in nodes.values():
     if p['name'].startswith('actionqueue-'):
         name = p['name']
         assert name in expected, f'unexpected AQ crate {name}'
-        assert p['version'] == expected[name]['version'] == '0.2.0', f'{name} is not 0.2.0'
+        assert p['version'] == expected[name]['version'] == '0.3.0', f'{name} is not 0.3.0'
         assert p['source'] == CRATES_IO, f'{name} does not come from crates.io: {p["source"]}'
         assert locked.get(name, {}).get('checksum') == expected[name]['checksum'], f'{name}: Cargo.lock checksum is not the published one'
         assert name in feature_profile and set(node['features']) == feature_profile[name], f'{name}: unsupported feature profile'
         aq.append({'name': name, 'version': p['version'], 'features': node['features']})
-assert {p['name'] for p in aq} >= {'actionqueue-core', 'actionqueue-storage', 'actionqueue-runtime'}
+assert {p['name'] for p in aq} == set(feature_profile), 'incomplete AQ graph'
 # Inspect the complete production dependency graph, including transitive aliases.
 wi = next(p for p in meta['packages'] if p['name'] == 'worldinterface-runtime')
 pending = [wi['id']]
@@ -71,6 +74,6 @@ while pending:
 check_repository(root)
 production = check_production_build(root, "runtime")
 print(json.dumps(production, sort_keys=True))
-print(json.dumps({'upstream': target, 'registry': published['registry'], 'tag': published['tag'],
+print(json.dumps({'upstream': target, 'historical_release': published['tag'], 'registry': runtime['registry'], 'tag': runtime['tag'],
                   'resolved_aq': sorted(aq, key=lambda p: p['name']), 'production_graph': 'passed'},
                  sort_keys=True))

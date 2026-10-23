@@ -7,7 +7,7 @@ retain their original request bytes and the recovery/authorization/completion AP
 The existing recovery tests explicitly seed pre-WIP-07 effect records through a
 local fixture. No production fixture entry is added.
 
-The new `local-flow-6` fresh-store profile initializes an AQ-free Flow journal in
+The current `local-flow-7` fresh-store profile initializes an AQ-free Flow journal in
 StoreKind::Flow. Unsupported profiles reject before modification; no migration is
 implied. Immutable definitions, predecessor and activation checks, pinned plan bytes,
 hash, registry/schema and authority snapshots, complete original submissions and
@@ -48,12 +48,13 @@ Code-forced choices within the accepted design:
   hard ceiling. Its default 128 KiB budget cannot hold the complete accepted
   64-child transaction with its duplicated admission plans. Payload, initial-run,
   dependency, child, wait-target, signal and hierarchy hard limits remain AQ-owned.
-- Automatic AQ snapshots are disabled through its public runtime configuration.
-  AQ 0.2.0 validates the complete WAL on recovery and replays the WAL prefix when
-  publishing each snapshot. Repeated automatic snapshots made the retained
-  10,000-run profile expensive without removing full recovery work. WI retains
-  the complete WAL and uses the same strict AQ recovery and validation APIs;
-  existing snapshots remain valid inputs to recovery and backup/restore.
+- AQ 0.3.0 automatic snapshots use the default 10,000-event threshold and normal
+  engine bootstrap. Read-only AQ preflight remains before WI recovery writes;
+  engine bootstrap remains separate. Ordinary startup validates a checkpoint and
+  replays its WAL tail. The complete WAL is retained, Strict tail handling is
+  unchanged, and backup/restore perform AQ's explicit full-history verification.
+  Physical checkpoint damage falls back to WAL recovery; incompatible checkpoints
+  and corrupt tails still follow AQ's fail-closed compatibility/integrity policy.
 - Native WAL fault injection lives in `tests/flow_crash.rs`; AQ contract fixtures
   extend `tests/executor_aq_contract.rs` to reuse its published mutation seams.
 - Flow submission uses the original submission as the agency/policy template. A
@@ -71,7 +72,7 @@ WI-AQ-G3 stays open for WIP-08. No upstream conformance, legacy removal or relea
 claim is made.
 
 Verification uses Rust 1.89.0, the supplied external target cache and scratch logs.
-The runtime test profile uses optimization level 3, 16 codegen units and thin LTO
+The runtime test profile uses optimization level 3 and 16 codegen units, without LTO
 for the sustained 10,000-admission and recovery fixture. Debug assertions,
 overflow checks and debug-only crash
 injection remain enabled; no cases, bounds or adopted check definitions change.
@@ -158,11 +159,16 @@ These are implementation dispositions for independent review, not finding closur
 | F-022 | Fixed: `FlowRejected`, domain `CompileError` and storage `FlowIntegrity` identify deterministic validation failures. `FlowRevisionConflict` and `FlowCapacity` are distinct; I/O, SQLite and AQ service errors remain retryable irrespective of message text. Quarantine cancellation errors surface to the host and remain pending for the next tick. `pre_start_journal_failure_is_retryable_and_then_succeeds` injects a temporary SQLite error containing the former terminal keywords; `temporary_binding_artifact_io_failure_retries_without_quarantine` removes and restores accepted-request bytes; `quarantine_control_failure_surfaces_and_retries_after_host_repair` restores AQ control authority after a visible failed cancel. |
 | F-023 | Fixed: the independent outcome fold and terminal-parent fallback honor persisted cancel_requested; single-child cancellation ends Canceled unless stronger boundary evidence requires uncertainty. The separate-bundle cancellation regression asserts the exact outcome and zero invocations. |
 
-The fresh `local-flow-6` profile adds the row projections, bundle dispatch lock,
+The historical `local-flow-6` profile added the row projections, bundle dispatch lock,
 and compact storage of exact UTF-8 plan/request bytes as JSON strings.
 This avoids large intermediate JSON integer arrays on routine reads and replay.
-It preserves the original bytes and hashes; `local-flow-5` and earlier profiles
-reject before recovery writes, with no implicit migration.
+It preserves the original bytes and hashes. The current `local-flow-7` profile adds
+a retained-run count to the tenant catalog. The admission reducer increments it
+only for a new successful admission, in the same immediate transaction as history
+and run projection writes. Retry, conflict, completion and cancellation do not
+consume another slot. Replay reconstructs and compares the count with the persisted
+catalog. `local-flow-6` and earlier profiles reject before recovery writes, with no
+implicit migration.
 
 Repeated plan restoration reuses at most 16 sealed compiler results with at most
 8 MiB of encoded plan/pin inputs. A hit compares the exact bytes, expected hash
@@ -177,10 +183,13 @@ buffer, avoiding a temporary allocation for each byte in an admission digest's
 request array. Sorting, scalar validation, escaping, size limits and hash bytes
 are unchanged; the independent canonical golden vectors cover this path. The
 capacity fixture reports cumulative submission, cancellation and reconciliation
-times and the paired reopen/rebuild phases. AQ 0.2.0 clones its retained
-projection when applying admissions and cancellations, so the full-history
-fixture remains intentionally expensive; no AQ override or reduced assertion
-replaces its recovery evidence.
+times, each 1,000-run batch, and the paired reopen/rebuild phases. Optional
+`WI_RECOVERY_TIMINGS=1` diagnostics separate AQ read-only preflight (including
+checkpoint sequence and AQ recovery phases), WI database replay/comparison,
+plan/artifact validation, cross-store references/convergence and AQ engine
+bootstrap/scheduling. AQ 0.3.0 shares projection histories and recovers through
+checkpoints. WI no longer scans retained runs to count each admission. The full
+10,000-run proof and every existing assertion remain non-ignored.
 Earlier development profiles reject before modification; no migration is supplied.
 The per-tenant 10,000 retained-run limit matches the existing effect capacity;
 definition versions have a separate 256-version limit. Each run and catalog
@@ -200,7 +209,7 @@ offline restore API. Strict reopen verifies it before recovery. Preserve and
 reconcile any post-backup external outcomes with the WIP-04 procedure before new
 submissions; clearing quarantine or reusing a canceled coordinator is unsupported.
 
-Production bootstrap keeps AQ 0.2.0's Strict WAL policy. For an incomplete trailing
+Production bootstrap keeps AQ 0.3.0's Strict WAL policy. For an incomplete trailing
 record, stop every writer, retain a byte-for-byte copy, inspect the native WAL with
 AQ's published recovery API and TruncatePartial policy, and obtain the validated
 last-record boundary. An operator may then use AQ's `truncate_to_last_valid` API
@@ -209,8 +218,10 @@ record or interior corruption. This maintenance procedure is explicit; tests do
 not claim automatic repair by QueueEngine.
 
 Remediation adds only retained ownership/guard and test-helper declarations to the
-existing fabric-support disposition family; no check definitions, AQ features,
-versions, dependencies or legacy-removal dispositions change. The remote actor
+existing fabric-support disposition family. That historical remediation did not
+change AQ versions or dependencies. The subsequent operator-authorized AQ 0.3.0
+migration updates the runtime graph binding; legacy pins and legacy-removal
+dispositions remain unchanged. The remote actor
 mutation-only fixture retains its original test writer because this adopted binary
 profile does not enable AQ's actor wire feature; AB-WI-005 and AB-WI-010 use native
 WAL encoding and replay.
@@ -218,3 +229,58 @@ WAL encoding and replay.
 This remediation explicitly dispositions five new error/test declarations in the
 existing retained fabric-support family. Inventory source hashes are refreshed
 without changing adopted checks, AQ versions, dependency features or removal gates.
+
+## AQ 0.3.0 performance repair (F-024/F-025)
+
+Operator cycle `47b9f34c-4ffd-4ef6-8849-55aae36a8999` explicitly supersedes
+the older runtime 0.2.0 requirement. Four direct exact dependencies and the
+runtime's own lockfile now bind crates.io 0.3.0; legacy root pins are untouched.
+`contracts/aq-integration-target.json::runtime_release` records the six resolved
+packages and registry checksums separately from the unchanged imported `target`,
+`published_release`, baseline lock and source-record digests. The graph check and
+runtime receipt validator reject stale 0.2.0 packages, substituted sources, wrong
+checksums and wrong features. No new source commit is attributed to the old baseline.
+
+The fresh WI profile advances to `local-flow-7` because the catalog encoding
+changes. This is the explicit format disposition; no existing store is upgraded.
+No new inventory type declarations are introduced by the count/timing helpers.
+Borrowed history iteration replaces AQ's old slice getters without copying history.
+AQ manifests now require snapshot schema 10 and projection version 9.
+
+New non-ignored tests cover count rollback, retry/conflict, cancellation/completion,
+rebuild and tampering; a synthetic final-slot fixture isolates concurrent transaction
+serialization while the production test retains all 10,000 real admissions.
+Recovery coverage compares checkpoint-plus-tail and complete WAL projections,
+retains pending child bindings, verifies branch decisions and boundary receipts,
+exercises damaged-checkpoint fallback, and rejects partial WAL tails before WI writes.
+The completed Flow backup/restore case now includes a checkpoint.
+
+The upstream release-note URL was unavailable during this run (web fetch failed;
+direct network access was blocked). API/recovery behavior was reconciled against
+the fetched 0.3.0 crate source and its packaged release/compatibility documentation.
+Fresh measured results are recorded in the run's scratch verification report.
+F-024 requires a complete adopted runtime-test pass; F-025 requires measured
+scaling and reopen evidence. F-001–F-023 protections remain required. G4's effective
+closure remains conditional on CraftingTable's qualifying review and integration.
+
+Supplemental measurement before committed-head adopted checks (Rust 1.89.0):
+
+| Phase | Duration |
+|---|---:|
+| Initial all-target optimized test compilation (LTO disabled) | 271.64 s |
+| Complete 10,000-run capacity case, 600 s timeout | 285.92 s |
+| First / last 1,000 submission totals | 8.183 / 7.998 s |
+| First / last 1,000 cancellation totals | 5.599 / 5.433 s |
+| Full-capacity AQ read-only preflight, checkpoint sequence 20,095 | 0.145 s |
+| WI database replay and projection comparison | 16.764 s |
+| WI plan verification and artifact closure | 7.071 s |
+| WI open total | 23.836 s |
+| Cross-store references and convergence | 2.675 s |
+| AQ engine bootstrap and scheduling reconstruction | 0.171 s |
+| WI full-history rebuild | 16.526 s |
+
+This includes both paired reopens and the final pending request, receipts,
+capacity rejection, deduplication/conflict and rebuild assertions. Some supplemental
+compilation overlapped admission batches; the per-batch data show no monotonic
+retained-history growth. These measurements support F-025 remediation and do not
+substitute for the complete adopted runtime-test required by F-024.

@@ -4,9 +4,9 @@ version = 4
 
 [[package]]
 name = "actionqueue-core"
-version = "0.2.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "5c859fa85a8b35ad8ee38002764df2ad1fab69883c902673c208fa1c223f6aeb"
+checksum = "ce1af54ccb97fab6545c358c53c0fa6e11aa9d49a5aff2d7e5f1258b662723af"
 dependencies = [
  "serde",
  "sha2",
@@ -16,9 +16,9 @@ dependencies = [
 
 [[package]]
 name = "actionqueue-engine"
-version = "0.2.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "4bbd8ace8868ae649c751cdf1bd5f8d60aa45fb3ba1c44e6616a5925ccfa8bae"
+checksum = "45f9f5c71e115f9050186ef064140699dba9b586f671181914a9a21aa46c6b08"
 dependencies = [
  "actionqueue-core",
  "actionqueue-executor-local",
@@ -27,9 +27,9 @@ dependencies = [
 
 [[package]]
 name = "actionqueue-executor-local"
-version = "0.2.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2da9f041c8af8eae06c87fe3b0e90e7c61c8a34868a5aa8ca65235de073ebe97"
+checksum = "b833b8d7b92ec7c3c9dc628ca0d1a8ac711246a7981963e907db9fc7409df9f3"
 dependencies = [
  "actionqueue-core",
  "tracing",
@@ -37,9 +37,9 @@ dependencies = [
 
 [[package]]
 name = "actionqueue-runtime"
-version = "0.2.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "817ce7ac8bf601ab4c486552ec5797d1444f9927ace9e13d3db7531a9269abe4"
+checksum = "534af4a9e4e888a1df37608ea078efa916c9d17b0f55b81092bb5a565e2cd68a"
 dependencies = [
  "actionqueue-core",
  "actionqueue-engine",
@@ -55,12 +55,13 @@ dependencies = [
 
 [[package]]
 name = "actionqueue-storage"
-version = "0.2.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "2288e807e0b061285c7b8fd8080d00d09ac40f115f2c2dd8b4962ccf7aba539c"
+checksum = "87e0af46aeb771a452332a63c12cd666856d0fb4468f2ae193736f1edcdde0fd"
 dependencies = [
  "actionqueue-core",
  "crc32fast",
+ "imbl",
  "postcard",
  "serde",
  "serde_json",
@@ -71,9 +72,9 @@ dependencies = [
 
 [[package]]
 name = "actionqueue-workflow"
-version = "0.2.0"
+version = "0.3.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "fe1eccacd2c7f1f9a585ea63fae5bfede22cac7141bc5e05eedc3069d2876bd9"
+checksum = "1e598559e7c4e258c337c08639598e14bd35e7aa7da94fed7bce0e113829728a"
 dependencies = [
  "actionqueue-core",
  "actionqueue-executor-local",
@@ -91,6 +92,12 @@ dependencies = [
  "version_check",
  "zerocopy",
 ]
+
+[[package]]
+name = "archery"
+version = "1.2.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "33ca55ee147b1926dbea904f50fe4902494e97bc742205abbbf10c709e43815f"
 
 [[package]]
 name = "autocfg"
@@ -118,6 +125,12 @@ name = "bumpalo"
 version = "3.20.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "72f5acc6cb2ba439de613abc23857ec3d78374d8ed5ac84e9d11336e87da8649"
+
+[[package]]
+name = "bytemuck"
+version = "1.25.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "95832e849adfb21180ccb6826a99da14e5d266ae5c2e668e1602cf234f153797"
 
 [[package]]
 name = "cc"
@@ -203,6 +216,12 @@ name = "embedded-io"
 version = "0.6.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "edd0f118536f44f5ccd48bcb8b111bdc3de888b58c74639dfb034a357d0f206d"
+
+[[package]]
+name = "equivalent"
+version = "1.0.3"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "00d174d5400e5e8fd687ad1049e2f578285fa914201b1af7e8b112a4546bd826"
 
 [[package]]
 name = "errno"
@@ -327,6 +346,27 @@ dependencies = [
 ]
 
 [[package]]
+name = "imbl"
+version = "7.0.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "46bad832b9b463ed9398b8506488cc2e3b897a9d44f13af115f382aac71f4fec"
+dependencies = [
+ "archery",
+ "equivalent",
+ "imbl-sized-chunks",
+ "rand_core",
+ "rand_xoshiro",
+ "version_check",
+ "wide",
+]
+
+[[package]]
+name = "imbl-sized-chunks"
+version = "0.2.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "2a0813be332553f857953298749fa19549e8b61b80589757c29b4e2a804fa9c6"
+
+[[package]]
 name = "itoa"
 version = "1.0.18"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -436,6 +476,21 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "f8dcc9c7d52a811697d2151c701e0d08956f92b0e24136cf4cf27b57a6a0d9bf"
 
 [[package]]
+name = "rand_core"
+version = "0.9.5"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "76afc826de14238e6e8c374ddcc1fa19e374fd8dd986b0d2af0d02377261d83c"
+
+[[package]]
+name = "rand_xoshiro"
+version = "0.7.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "f703f4665700daf5512dcca5f43afa6af89f09db47fb56be587f80636bda2d41"
+dependencies = [
+ "rand_core",
+]
+
+[[package]]
 name = "rusqlite"
 version = "0.32.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -467,6 +522,15 @@ name = "rustversion"
 version = "1.0.23"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "cf54715a573b99ac80df0bc206da022bcd442c974952c7b9720069370852e21f"
+
+[[package]]
+name = "safe_arch"
+version = "0.7.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "96b02de82ddbe1b636e6170c21be622223aea188ef2e139be0a5b219ec215323"
+dependencies = [
+ "bytemuck",
+]
 
 [[package]]
 name = "serde"
@@ -732,6 +796,16 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "81941cd78d0c92026c33e5e01312845a4cb1e9af3407f9134b100dd03144103e"
 dependencies = [
  "unicode-ident",
+]
+
+[[package]]
+name = "wide"
+version = "0.7.33"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "0ce5da8ecb62bcd8ec8b7ea19f69a51275e91299be594ea5cc6ef7819e16cd03"
+dependencies = [
+ "bytemuck",
+ "safe_arch",
 ]
 
 [[package]]

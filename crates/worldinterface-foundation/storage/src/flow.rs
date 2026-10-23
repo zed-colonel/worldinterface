@@ -276,6 +276,8 @@ impl FlowRun {
 #[serde(deny_unknown_fields)]
 pub struct FlowState {
     pub revision: u64,
+    /// Retained admissions across all run outcomes, reconstructed from history.
+    pub retained_run_count: usize,
     pub versions: BTreeMap<OpaqueRef, BTreeMap<u64, FlowDefinition>>,
     pub active: BTreeMap<OpaqueRef, u64>,
     #[serde(default)]
@@ -455,6 +457,10 @@ fn reduce(old: &FlowState, tenant: &OpaqueRef, cmd: &FlowCommand) -> Result<Flow
             if s.requests.contains_key(&key) {
                 return Err(invalid("Flow request conflict"));
             }
+            if s.retained_run_count >= MAX_FLOW_RUNS {
+                return Err(FlowCapacity::Runs.into());
+            }
+            s.retained_run_count += 1;
             s.requests.insert(key, r.id.clone());
             s.runs.insert(r.id.clone(), *r.clone());
         }
@@ -729,15 +735,6 @@ fn command_view(c: &Connection, tenant: &OpaqueRef, cmd: &FlowCommand) -> Result
             .optional()?;
         if let Some(winner) = winner {
             s.requests.insert(key, winner.try_into().map_err(invalid)?);
-        }
-        if !s.runs.contains_key(id)
-            && c.query_row(
-                "SELECT count(*) FROM flow_runs WHERE tenant=?",
-                [tenant.as_str()],
-                |r| r.get::<_, usize>(0),
-            )? >= MAX_FLOW_RUNS
-        {
-            return Err(FlowCapacity::Runs.into());
         }
     }
     Ok(s)

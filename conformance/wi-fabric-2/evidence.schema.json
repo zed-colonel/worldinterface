@@ -210,6 +210,9 @@
     "producer": {
       "type": "string",
       "minLength": 1
+    },
+    "runtime_release": {
+      "type": "object"
     }
   },
   "required": [
@@ -232,7 +235,8 @@
     "executable_case_sha256",
     "integration_fixture_sha256",
     "resolved_packages_sha256",
-    "producer"
+    "producer",
+    "runtime_release"
   ],
   "additionalProperties": false,
   "$schema": "https://json-schema.org/draft/2020-12/schema"

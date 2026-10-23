@@ -931,7 +931,7 @@ pub fn validate_flow_integration(root: &Path, tests: &TestIndex) -> Result<Vec<F
     if v["version"] != 1
         || v["scope"] != "wi/WI-07/integration:embedded-proof"
         || v["upstream_conformance"] != false
-        || v["runtime_profile"] != "aq-0.2.0-wip07-flat-required-children"
+        || v["runtime_profile"] != "aq-0.3.0-wip07-flat-required-children"
         || obligations.keys().map(String::as_str).collect::<BTreeSet<_>>() != required
         || assigned.keys().map(String::as_str).collect::<BTreeSet<_>>()
             != BTreeSet::from(["AB-WI-005", "AB-WI-010", "AB-WI-013"])

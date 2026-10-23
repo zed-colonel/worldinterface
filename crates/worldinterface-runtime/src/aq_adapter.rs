@@ -77,13 +77,10 @@ impl<'a, H: ExecutorHandler + 'static> QueueEngine<'a, H> {
         )?;
         let store = QueueStoreId::from_session(&session);
         drop(session);
+        let started = std::time::Instant::now();
         let engine = ActionQueueEngine::new(
             RuntimeConfig {
                 data_dir: bundle.aq_path(),
-                // AQ 0.2.0 validates the complete WAL even with snapshots.
-                // Avoid repeatedly replaying growing history to publish optional
-                // automatic snapshots; complete-WAL recovery remains mandatory.
-                snapshot_event_threshold: None,
                 signal_limits,
                 continuation_limits: actionqueue_core::limits::ContinuationLimits {
                     disposition_bytes: 1024 * 1024,
@@ -95,6 +92,7 @@ impl<'a, H: ExecutorHandler + 'static> QueueEngine<'a, H> {
         )
         .bootstrap()?
         .with_host(host);
+        crate::storage::recovery_timing("AQ engine bootstrap and scheduling", started);
         if bundle.aq_store_id()? != store.as_uuid() {
             return Err("AQ store changed during engine bootstrap".into());
         }
@@ -228,6 +226,12 @@ impl QueueReferences {
             &session,
             actionqueue_storage::wal::repair::RepairPolicy::Strict,
         )?;
+        if std::env::var_os("WI_RECOVERY_TIMINGS").is_some() {
+            eprintln!(
+                "AQ recovery snapshot={} sequence={} phases={:?}",
+                recovered.snapshot_loaded, recovered.snapshot_sequence, recovered.phases
+            );
+        }
         Ok(Self { session, projection: recovered.projection })
     }
     /// Checks ingress task and signal references through AQ's recovered public models.
@@ -379,7 +383,12 @@ impl QueueReferences {
             self.projection.get_task(&run.task_id()).ok_or("missing AQ run task")?;
             let effect_task = effect_tasks.contains(&run.task_id().to_string());
             let mut completed_locator = false;
-            for attempt in self.projection.get_attempt_history(&run.id()).unwrap_or(&[]) {
+            for attempt in self
+                .projection
+                .get_attempt_history(&run.id())
+                .into_iter()
+                .flat_map(|history| history.iter())
+            {
                 if let Some(actionqueue_core::data_ref::DataRef::External(external)) =
                     attempt.output_ref()
                 {
@@ -472,8 +481,8 @@ impl QueueReferences {
                 if !self
                     .projection
                     .get_attempt_history(&run)
-                    .unwrap_or(&[])
-                    .iter()
+                    .into_iter()
+                    .flat_map(|history| history.iter())
                     .any(|a| a.attempt_id() == attempt)
                 {
                     return Err("attempt does not belong to local run".into());

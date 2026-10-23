@@ -651,6 +651,7 @@ async fn completed_flow_backup_restore_and_missing_artifact_rejection() {
     f.drive(&mut q, &id).await;
     let run = f.run(&id);
     q.shutdown().unwrap();
+    install_checkpoint(&f.bundle.aq_path());
     let tenant = f.auth.0.clone();
     let path = f._temp.path().join("bundle");
     let Fixture { _temp: temp, bundle, .. } = f;
@@ -681,6 +682,156 @@ async fn completed_flow_backup_restore_and_missing_artifact_rejection() {
     }
     assert!(remove_content(&artifacts, artifact.content.as_str()));
     assert!(StoreBundle::open(&restored).is_err());
+}
+
+// Exercise the supported offline snapshot writer; ordinary production capture is
+// also exercised at the default threshold by the full-capacity proof.
+fn install_checkpoint(path: &std::path::Path) {
+    use actionqueue_storage::{
+        recovery::bootstrap::recover_read_only,
+        snapshot::{
+            build::build_snapshot_from_projection,
+            writer::{SnapshotFsWriter, SnapshotWriter},
+        },
+        store::{open_store, OpenOptions},
+        wal::repair::RepairPolicy,
+    };
+    let session = open_store(path, OpenOptions::ReadWrite).unwrap();
+    let recovered = recover_read_only(&session, RepairPolicy::Strict).unwrap();
+    let snapshot = build_snapshot_from_projection(&recovered.projection, 1).unwrap();
+    let mut writer = SnapshotFsWriter::new(&session).unwrap();
+    writer.write(&snapshot).unwrap();
+    writer.close().unwrap();
+    assert!(recover_read_only(&session, RepairPolicy::Strict).unwrap().snapshot_loaded);
+}
+
+#[tokio::test]
+async fn checkpoint_tail_and_wal_only_recovery_preserve_pending_flow_and_branch_receipts() {
+    use actionqueue_storage::{
+        recovery::bootstrap::recover_read_only,
+        store::{open_store, OpenOptions},
+        wal::repair::RepairPolicy,
+    };
+    let mut f = Fixture::new();
+    let mut direct_submission = f.submission.clone();
+    direct_submission.client_request_id = "checkpoint:direct".to_string().try_into().unwrap();
+    let branch_submission = f.submission.clone();
+    allow_demands(&mut f, &[branch_submission, direct_submission.clone()]);
+    let evidence = Evidence(f.snapshot.clone());
+    let service = f.service(&evidence);
+    let d = branching();
+    service.activate_flow_version(&(), d.clone(), None).unwrap();
+    let mut q = QueueEngine::bootstrap(&f.bundle, f.handler(), host()).unwrap();
+    let branch = service.submit_flow(&(), &d.id, f.submission.clone(), &mut q).unwrap();
+    // Establish real parent waits and child admission evidence, then checkpoint
+    // while the Flow is unfinished. Recovery must retain those exact bindings.
+    for _ in 0..1000 {
+        let _ = q.tick().await.unwrap();
+        let r = f.run(&branch);
+        if !r.bindings.is_empty() {
+            assert!(r.outcome.is_none());
+            break;
+        }
+        tokio::time::sleep(std::time::Duration::from_millis(1)).await;
+    }
+    let pending = f.run(&branch);
+    assert!(!pending.bindings.is_empty());
+    q.shutdown().unwrap();
+    install_checkpoint(&f.bundle.aq_path());
+    q = QueueEngine::bootstrap(&f.bundle, f.handler(), host()).unwrap();
+    // This admission is strictly after the checkpoint and must come from its WAL tail.
+    let direct =
+        f.service(&evidence).submit_direct(&(), direct_submission, f.selection(), &mut q).unwrap();
+    q.shutdown().unwrap();
+    let session = open_store(&f.bundle.aq_path(), OpenOptions::ReadOnly).unwrap();
+    let from_checkpoint = recover_read_only(&session, RepairPolicy::Strict).unwrap();
+    assert!(from_checkpoint.snapshot_loaded);
+    assert!(from_checkpoint.projection.latest_sequence() > from_checkpoint.snapshot_sequence);
+    let digest = from_checkpoint.projection.projection_digest().unwrap();
+    let snapshot_path = session.snapshot_path();
+    let snapshot = std::fs::read(&snapshot_path).unwrap();
+    drop(from_checkpoint);
+    drop(session);
+    // An incompatible checkpoint fails closed without modifying the store.
+    std::fs::write(&snapshot_path, b"unsupported checkpoint").unwrap();
+    let session = open_store(&f.bundle.aq_path(), OpenOptions::ReadOnly).unwrap();
+    assert!(recover_read_only(&session, RepairPolicy::Strict).is_err());
+    assert_eq!(std::fs::read(&snapshot_path).unwrap(), b"unsupported checkpoint");
+    drop(session);
+    // Physical truncation is distinguishable from incompatibility and may use WAL.
+    std::fs::write(&snapshot_path, &snapshot[..snapshot.len() - 1]).unwrap();
+    let session = open_store(&f.bundle.aq_path(), OpenOptions::ReadOnly).unwrap();
+    let recovered = recover_read_only(&session, RepairPolicy::Strict).unwrap();
+    assert!(!recovered.snapshot_loaded);
+    assert_eq!(recovered.projection.projection_digest().unwrap(), digest);
+    drop(recovered);
+    drop(session);
+    std::fs::remove_file(&snapshot_path).unwrap();
+    let session = open_store(&f.bundle.aq_path(), OpenOptions::ReadOnly).unwrap();
+    let recovered = recover_read_only(&session, RepairPolicy::Strict).unwrap();
+    assert!(!recovered.snapshot_loaded);
+    assert_eq!(recovered.projection.projection_digest().unwrap(), digest);
+    drop(recovered);
+    drop(session);
+    std::fs::write(&snapshot_path, &snapshot).unwrap();
+    let path = f._temp.path().join("bundle");
+    f.bundle = Arc::new(StoreBundle::open(&path).unwrap());
+    assert_eq!(f.run(&branch), pending);
+    q = QueueEngine::bootstrap(&f.bundle, f.handler(), host()).unwrap();
+    f.drive(&mut q, &branch).await;
+    f.drive(&mut q, &direct).await;
+    let branch_run = f.run(&branch);
+    let direct_run = f.run(&direct);
+    assert_eq!(branch_run.outcome, Some(FlowOutcome::Succeeded));
+    assert_eq!(
+        branch_run.results[&"branch".to_string().try_into().unwrap()]
+            .branch
+            .as_ref()
+            .unwrap()
+            .as_str(),
+        "yes"
+    );
+    assert_eq!(direct_run.outcome, Some(FlowOutcome::Succeeded));
+    let effect = direct_run.results.values().next().unwrap().effect.as_ref().unwrap();
+    let receipts = f.bundle.wi().effect_receipts(&f.auth.0, effect).unwrap();
+    assert_eq!(receipts.len(), 1);
+    q.shutdown().unwrap();
+    // Compare complete WI results and receipts through both recovery paths.
+    for checkpoint in [true, false] {
+        if !checkpoint {
+            std::fs::remove_file(&snapshot_path).unwrap();
+        }
+        let reopened = StoreBundle::open(&path).unwrap();
+        assert_eq!(
+            reopened.wi().flow_run_snapshot(&f.auth.0, &branch).unwrap().runs[&branch],
+            branch_run
+        );
+        assert_eq!(
+            reopened.wi().flow_run_snapshot(&f.auth.0, &direct).unwrap().runs[&direct],
+            direct_run
+        );
+        assert_eq!(reopened.wi().effect_receipts(&f.auth.0, effect).unwrap(), receipts);
+    }
+    // Strict validation rejects both CRC corruption and partial tail frames,
+    // before WI journal recovery can mutate any source database.
+    std::fs::write(&snapshot_path, &snapshot).unwrap();
+    let session = open_store(&f.bundle.aq_path(), OpenOptions::ReadOnly).unwrap();
+    let wal = session.wal_path();
+    drop(session);
+    let complete = std::fs::read(&wal).unwrap();
+    let before = std::fs::read(path.join("wi/flow.sqlite")).unwrap();
+    for partial in [false, true] {
+        let mut damaged = complete.clone();
+        if partial {
+            damaged.extend_from_slice(b"partial tail");
+        } else {
+            *damaged.last_mut().unwrap() ^= 1;
+        }
+        std::fs::write(&wal, &damaged).unwrap();
+        assert!(StoreBundle::open(&path).is_err());
+        assert_eq!(std::fs::read(path.join("wi/flow.sqlite")).unwrap(), before);
+        assert_eq!(std::fs::read(&wal).unwrap(), damaged);
+    }
 }
 
 #[tokio::test]
@@ -1275,14 +1426,19 @@ async fn publication_failure_retries_durable_success_without_reinvocation() {
     for _ in 0..2000 {
         let _ = q.tick().await.unwrap();
         let retry = q.engine().projection().run_instances().any(|r| {
-            q.engine().projection().get_attempt_history(&r.id()).unwrap_or(&[]).iter().any(|a| {
-                a.disposition.as_ref().is_some_and(|d| {
+            q.engine()
+                .projection()
+                .get_attempt_history(&r.id())
+                .into_iter()
+                .flat_map(|history| history.iter())
+                .any(|a| {
+                    a.disposition.as_ref().is_some_and(|d| {
                     matches!(
                         d.disposition.outcome(),
                         actionqueue_core::disposition::DispositionOutcome::RetryableFailure { .. }
                     )
                 })
-            })
+                })
         });
         if retry {
             break;
@@ -1313,14 +1469,19 @@ async fn pre_start_journal_failure_is_retryable_and_then_succeeds() {
     for _ in 0..2000 {
         let _ = q.tick().await.unwrap();
         retried = q.engine().projection().run_instances().any(|r| {
-            q.engine().projection().get_attempt_history(&r.id()).unwrap_or(&[]).iter().any(|a| {
-                a.disposition.as_ref().is_some_and(|d| {
+            q.engine()
+                .projection()
+                .get_attempt_history(&r.id())
+                .into_iter()
+                .flat_map(|history| history.iter())
+                .any(|a| {
+                    a.disposition.as_ref().is_some_and(|d| {
                     matches!(
                         d.disposition.outcome(),
                         actionqueue_core::disposition::DispositionOutcome::RetryableFailure { .. }
                     )
                 })
-            })
+                })
         });
         if retried {
             break;
@@ -2148,12 +2309,154 @@ impl worldinterface_runtime::authority::EvidenceAuthority for CapacityEvidence {
     }
 }
 
+fn next_count_test_run(f: &Fixture, template: &FlowRun, label: &str) -> FlowRun {
+    let mut r = template.clone();
+    r.id = label.to_string().try_into().unwrap();
+    r.submission.client_request_id = label.to_string().try_into().unwrap();
+    let p = compile_direct(&r.submission, &f.selection(), &r.pins.context().unwrap()).unwrap();
+    r.plan = p.canonical_bytes().to_vec();
+    r.plan_hash = p.hash().clone();
+    r.origin = p.document().origin.clone();
+    r.coordinator_task = TaskId::new().to_string().try_into().unwrap();
+    for task in r.node_tasks.values_mut() {
+        *task = TaskId::new().to_string().try_into().unwrap();
+    }
+    r.admission_hash = r.admission_digest().unwrap();
+    r
+}
+
+#[tokio::test]
+async fn flow_retained_count_rollback_replay_and_tampering() {
+    let f = Fixture::new();
+    let evidence = Evidence(f.snapshot.clone());
+    let mut q = QueueEngine::bootstrap(&f.bundle, f.handler(), host()).unwrap();
+    let id = f
+        .service(&evidence)
+        .submit_direct(&(), f.submission.clone(), f.selection(), &mut q)
+        .unwrap();
+    q.shutdown().unwrap();
+    let root = f.bundle.wi();
+    let original = root.flow_catalog(&f.auth.0).unwrap();
+    assert_eq!(original.retained_run_count, 1);
+    let r = next_count_test_run(&f, &f.run(&id), "count:next");
+    let command = FlowCommand::AdmitRun { run: Box::new(r.clone()) };
+    let path = f._temp.path().join("bundle/wi/flow.sqlite");
+    let c = rusqlite::Connection::open(&path).unwrap();
+    c.execute_batch("CREATE TRIGGER count_failure BEFORE UPDATE ON flow_state BEGIN SELECT RAISE(ABORT,'count rollback'); END;").unwrap();
+    assert!(root.flow_update(&f.auth.0, original.revision, command.clone()).is_err());
+    assert_eq!(root.flow_catalog(&f.auth.0).unwrap(), original);
+    assert!(!root.flow_snapshot(&f.auth.0).unwrap().runs.contains_key(&r.id));
+    c.execute_batch("DROP TRIGGER count_failure").unwrap();
+    // The failed transaction did not reserve an identity or advance the count.
+    let admitted = root.flow_update(&f.auth.0, original.revision, command.clone()).unwrap();
+    assert_eq!(admitted.retained_run_count, 2);
+    assert_eq!(root.flow_update(&f.auth.0, original.revision, command).unwrap(), admitted);
+    let mut changed = r.clone();
+    changed.wait_id = "changed-wait".to_string().try_into().unwrap();
+    changed.admission_hash = changed.admission_digest().unwrap();
+    assert!(root
+        .flow_update(&f.auth.0, admitted.revision, FlowCommand::AdmitRun { run: Box::new(changed) })
+        .is_err());
+    let canceled = root
+        .flow_update(
+            &f.auth.0,
+            admitted.revision,
+            FlowCommand::CancelRequested { run: r.id.clone() },
+        )
+        .unwrap();
+    let finished = root
+        .flow_update(
+            &f.auth.0,
+            canceled.revision,
+            FlowCommand::Finish {
+                run: r.id.clone(),
+                outcome: FlowOutcome::Canceled,
+                exports: BTreeMap::new(),
+            },
+        )
+        .unwrap();
+    assert_eq!(finished.retained_run_count, 2);
+    let before = root.flow_snapshot(&f.auth.0).unwrap();
+    root.repository(worldinterface_storage::StoreKind::Flow).unwrap().rebuild().unwrap();
+    assert_eq!(root.flow_snapshot(&f.auth.0).unwrap(), before);
+    // Foundation open verifies its complete journal independently of AQ bindings.
+    let wi_path = f._temp.path().join("bundle/wi");
+    let reopened = worldinterface_storage::StoreRoot::open_existing(&wi_path).unwrap();
+    assert_eq!(reopened.flow_snapshot(&f.auth.0).unwrap(), before);
+    drop(reopened);
+    let mut catalog = root.flow_catalog(&f.auth.0).unwrap();
+    catalog.retained_run_count -= 1;
+    c.execute(
+        "UPDATE flow_state SET state=? WHERE tenant=?",
+        rusqlite::params![canonical_collection(&catalog).unwrap(), f.auth.0.as_str()],
+    )
+    .unwrap();
+    drop(c);
+    let bytes = std::fs::read(&path).unwrap();
+    assert!(worldinterface_storage::StoreRoot::open_existing(&wi_path).is_err());
+    assert_eq!(std::fs::read(&path).unwrap(), bytes);
+}
+
+#[tokio::test]
+async fn concurrent_flow_admissions_serialize_at_retained_capacity() {
+    let f = Fixture::new();
+    let evidence = Evidence(f.snapshot.clone());
+    let mut q = QueueEngine::bootstrap(&f.bundle, f.handler(), host()).unwrap();
+    let id = f
+        .service(&evidence)
+        .submit_direct(&(), f.submission.clone(), f.selection(), &mut q)
+        .unwrap();
+    q.shutdown().unwrap();
+    let wi_path = f._temp.path().join("bundle/wi");
+    let handles: Vec<_> = (0..2)
+        .map(|_| worldinterface_storage::StoreRoot::open_existing(&wi_path).unwrap())
+        .collect();
+    let template = f.run(&id);
+    let runs = [
+        next_count_test_run(&f, &template, "race:a"),
+        next_count_test_run(&f, &template, "race:b"),
+    ];
+    // Isolate the final-slot race with a synthetic catalog count. The capacity
+    // proof below separately uses all 10,000 real production admissions.
+    let mut catalog = f.bundle.wi().flow_catalog(&f.auth.0).unwrap();
+    catalog.retained_run_count = MAX_FLOW_RUNS - 1;
+    let c = rusqlite::Connection::open(wi_path.join("flow.sqlite")).unwrap();
+    c.execute(
+        "UPDATE flow_state SET state=? WHERE tenant=?",
+        rusqlite::params![canonical_collection(&catalog).unwrap(), f.auth.0.as_str()],
+    )
+    .unwrap();
+    drop(c);
+    let barrier = Arc::new(std::sync::Barrier::new(2));
+    let threads: Vec<_> = handles
+        .into_iter()
+        .zip(runs)
+        .map(|(root, run)| {
+            let tenant = f.auth.0.clone();
+            let barrier = barrier.clone();
+            let revision = catalog.revision;
+            std::thread::spawn(move || {
+                barrier.wait();
+                root.flow_update(&tenant, revision, FlowCommand::AdmitRun { run: Box::new(run) })
+            })
+        })
+        .collect();
+    let results: Vec<_> = threads.into_iter().map(|t| t.join().unwrap()).collect();
+    assert_eq!(results.iter().filter(|r| r.is_ok()).count(), 1);
+    assert!(results.iter().find_map(|r| r.as_ref().err()).unwrap().is::<FlowCapacity>());
+    let state = f.bundle.wi().flow_snapshot(&f.auth.0).unwrap();
+    assert_eq!(state.retained_run_count, MAX_FLOW_RUNS);
+    assert_eq!(state.revision, catalog.revision + 1);
+    assert_eq!(state.runs.len(), 2);
+}
+
 #[tokio::test]
 async fn flow_capacity_is_enforced_without_losing_existing_history() {
     let started = std::time::Instant::now();
     let mut submitting = std::time::Duration::ZERO;
     let mut canceling = std::time::Duration::ZERO;
     let mut reconciling = std::time::Duration::ZERO;
+    let mut last_batch = (started, submitting, canceling, reconciling);
     let mut f = Fixture::new();
     let evidence = CapacityEvidence(Evidence(f.snapshot.clone()));
     let handler = |f: &Fixture| {
@@ -2197,6 +2500,16 @@ async fn flow_capacity_is_enforced_without_losing_existing_history() {
             if i == MAX_FLOW_RUNS {
                 eprintln!("capacity paired reopen starting at {:?}", started.elapsed());
                 q.shutdown().unwrap();
+                let session = actionqueue_storage::store::open_store(
+                    &f.bundle.aq_path(),
+                    actionqueue_storage::store::OpenOptions::ReadOnly,
+                )
+                .unwrap();
+                assert!(
+                    session.snapshot_path().is_file(),
+                    "default automatic checkpoint must be present at capacity"
+                );
+                drop(session);
                 f.bundle = Arc::new(StoreBundle::open(&f._temp.path().join("bundle")).unwrap());
                 eprintln!("capacity paired store validation finished at {:?}", started.elapsed());
                 q = QueueEngine::bootstrap(&f.bundle, handler(&f), host()).unwrap();
@@ -2245,8 +2558,18 @@ async fn flow_capacity_is_enforced_without_losing_existing_history() {
                 MAX_FLOW_RUNS,
                 started.elapsed()
             );
+            eprintln!(
+                "capacity batch {}: wall {:?}, submit {:?}, cancel {:?}, tick {:?}",
+                i / 1000,
+                last_batch.0.elapsed(),
+                submitting - last_batch.1,
+                canceling - last_batch.2,
+                reconciling - last_batch.3
+            );
+            last_batch = (std::time::Instant::now(), submitting, canceling, reconciling);
         }
     }
+    assert_eq!(f.bundle.wi().flow_catalog(&f.auth.0).unwrap().retained_run_count, MAX_FLOW_RUNS);
     assert_eq!(f.connector.commits(), successes.len());
     let before = f.bundle.wi().flow_catalog(&f.auth.0).unwrap().revision;
     let resolver = Resolver(f.snapshot.facts[0].clone());
@@ -2275,6 +2598,7 @@ async fn flow_capacity_is_enforced_without_losing_existing_history() {
     assert_eq!(f.bundle.wi().flow_catalog(&f.auth.0).unwrap().revision, before);
     assert!(f.bundle.wi().flow_pending_snapshot(&f.auth.0).unwrap().runs.is_empty());
     let state = f.bundle.wi().flow_snapshot(&f.auth.0).unwrap();
+    assert_eq!(state.retained_run_count, MAX_FLOW_RUNS);
     assert_eq!(state.runs.len(), MAX_FLOW_RUNS);
     assert_eq!(state.requests.len(), MAX_FLOW_RUNS);
     drop(state);
@@ -2293,6 +2617,7 @@ async fn flow_capacity_is_enforced_without_losing_existing_history() {
             .unwrap();
         eprintln!("capacity history rebuild finished at {:?}", started.elapsed());
     }
+    assert_eq!(f.bundle.wi().flow_catalog(&f.auth.0).unwrap().retained_run_count, MAX_FLOW_RUNS);
     for run in &successes {
         assert_eq!(&f.run(&run.id), run);
     }

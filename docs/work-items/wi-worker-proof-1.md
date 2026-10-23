@@ -24,8 +24,9 @@ remote/two-host execution, hostile-code and VM/Kata qualification are deferred.
 
 The map's STACK-PLAN-ACCEPTED requirement is met by this operator import/start.
 AQ-BASELINE-ACCEPTED retains historical submission `7b060900` (2026-09-21); the
-current baseline is crates.io AQ 0.2.0 plus its published checksums and adopted
-runtime graph check. Per-slice verification and parent review move to the named
+current runtime is crates.io AQ 0.3.0 plus its published checksums and adopted
+runtime graph check. The operator-authorized WIP-07 migration preserves the imported
+0.2.0 baseline and source-record digests separately from the runtime release. Per-slice verification and parent review move to the named
 WIP scopes, reviewed integration and adopted checks. Gate records preserve the
 export's verbatim criteria and requirements. Historical submissions never become
 current passage automatically.

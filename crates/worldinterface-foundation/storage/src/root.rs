@@ -162,7 +162,7 @@ impl StoreRoot {
             contract: CONTRACT.into(),
             schema: 1,
             canonical_profile: CANONICAL_PROFILE.into(),
-            feature_profile: "local-flow-6".into(),
+            feature_profile: "local-flow-7".into(),
             stores: kinds(profile.platform),
             profile,
             complete: true,
@@ -230,7 +230,7 @@ impl StoreRoot {
             || manifest.contract != CONTRACT
             || manifest.schema != 1
             || manifest.canonical_profile != CANONICAL_PROFILE
-            || manifest.feature_profile != "local-flow-6"
+            || manifest.feature_profile != "local-flow-7"
             || !manifest.complete
             || manifest.stores != kinds(manifest.profile.platform)
             || path.join("initializing").exists()
@@ -346,6 +346,7 @@ impl StoreRoot {
                 FileExt::lock_shared(&root._lock)?;
             }
         }
+        let databases_started = std::time::Instant::now();
         for kind in &root.manifest.stores {
             let c =
                 Connection::open_with_flags(root.db_path(*kind), OpenFlags::SQLITE_OPEN_READ_ONLY)?;
@@ -358,10 +359,17 @@ impl StoreRoot {
             root.validate_identity(&c, *kind)?;
             crate::repository::validate_database(&c)?;
         }
+        if std::env::var_os("WI_RECOVERY_TIMINGS").is_some() {
+            eprintln!("WI databases replay/comparison: {:?}", databases_started.elapsed());
+        }
+        let artifacts_started = std::time::Instant::now();
         root.validate_artifacts()?;
         root.validate_effect_artifacts()?;
         root.validate_receipt_artifacts()?;
         root.validate_flow_artifacts()?;
+        if std::env::var_os("WI_RECOVERY_TIMINGS").is_some() {
+            eprintln!("WI plans and artifact closure: {:?}", artifacts_started.elapsed());
+        }
         crate::proof::validate(&root)?;
         Ok(root)
     }

@@ -310,8 +310,11 @@ pub(crate) fn reconcile<H: actionqueue_executor_local::handler::ExecutorHandler 
                 if proposed != children(r)? {
                     return Err(rejected("Flow proposal changed"));
                 }
-                let accepted =
-                    projection.get_attempt_history(&parent_run).unwrap_or(&[]).iter().find(|a| {
+                let accepted = projection
+                    .get_attempt_history(&parent_run)
+                    .into_iter()
+                    .flat_map(|history| history.iter())
+                    .find(|a| {
                         a.disposition
                             .as_ref()
                             .is_some_and(|d| d.disposition.child_admissions() == proposed)
@@ -555,8 +558,8 @@ fn validate_run_references(
         for (node, b) in &r.bindings {
             let producer = p
                 .get_attempt_history(&run_id)
-                .unwrap_or(&[])
-                .iter()
+                .into_iter()
+                .flat_map(|history| history.iter())
                 .find(|a| a.attempt_id().to_string() == b.producing_attempt.as_str())
                 .ok_or_else(|| rejected("missing Flow producer"))?;
             let d = &producer

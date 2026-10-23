@@ -67,5 +67,36 @@
       }
     },
     "note": "WorldInterface resolves AQ from crates.io outside the cross-project map. The published 0.2.0 source is the implementation_commit above; the checksums are the registry .crate SHA-256 values Cargo.lock records."
+  },
+  "runtime_release": {
+    "registry": "crates.io",
+    "tag": "v0.3.0",
+    "authority": "Operator-authorized WIP-07 migration; cycle 47b9f34c-4ffd-4ef6-8849-55aae36a8999, recorded 2026-10-23. Historical target and published_release remain the imported 0.2.0 baseline, not the source identity of 0.3.0.",
+    "crates": {
+      "actionqueue-core": {
+        "version": "0.3.0",
+        "checksum": "ce1af54ccb97fab6545c358c53c0fa6e11aa9d49a5aff2d7e5f1258b662723af"
+      },
+      "actionqueue-engine": {
+        "version": "0.3.0",
+        "checksum": "45f9f5c71e115f9050186ef064140699dba9b586f671181914a9a21aa46c6b08"
+      },
+      "actionqueue-executor-local": {
+        "version": "0.3.0",
+        "checksum": "b833b8d7b92ec7c3c9dc628ca0d1a8ac711246a7981963e907db9fc7409df9f3"
+      },
+      "actionqueue-runtime": {
+        "version": "0.3.0",
+        "checksum": "534af4a9e4e888a1df37608ea078efa916c9d17b0f55b81092bb5a565e2cd68a"
+      },
+      "actionqueue-storage": {
+        "version": "0.3.0",
+        "checksum": "87e0af46aeb771a452332a63c12cd666856d0fb4468f2ae193736f1edcdde0fd"
+      },
+      "actionqueue-workflow": {
+        "version": "0.3.0",
+        "checksum": "1e598559e7c4e258c337c08639598e14bd35e7aa7da94fed7bce0e113829728a"
+      }
+    }
   }
 }

@@ -73,5 +73,11 @@
       "persisted_old_policy_request_is_retried_without_rewriting",
       "ab_wi_002_003_004_persist_retry_ack_and_discover"
     ]
+  },
+  "runtime_release": {
+    "contract": "contracts/aq-integration-target.json",
+    "record": "runtime_release",
+    "check": "runtime-aq-graph",
+    "note": "The imported upstream/source-record digests stay historical. Current runtime evidence must separately bind the operator-authorized crates.io 0.3.0 release and exact package graph."
   }
 }
