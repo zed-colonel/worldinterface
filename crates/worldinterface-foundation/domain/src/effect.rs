@@ -102,10 +102,25 @@ pub struct Dispatch {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub acknowledgment: Option<EffectAcknowledgment>,
 }
+/// Verified transactional-child origin; never a top-level acknowledgment substitute.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ChildAdmissionProvenance {
+    pub admission_key: String,
+    pub version: u32,
+    pub flow: OpaqueRef,
+    pub node: OpaqueRef,
+    pub parent_task: OpaqueRef,
+    pub parent_run: OpaqueRef,
+    pub producing_attempt: OpaqueRef,
+    pub disposition_hash: ContentHash,
+}
 /// AQ-neutral, immutable record of the complete request published as a scoped artifact.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ProductionAdmission {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub child: Option<ChildAdmissionProvenance>,
     pub version: u32,
     pub queue_store: OpaqueRef,
     pub task: OpaqueRef,
@@ -124,7 +139,15 @@ pub struct ProductionAdmission {
 }
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+pub struct EffectOwner {
+    pub flow: OpaqueRef,
+    pub node: OpaqueRef,
+}
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct EffectAggregate {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub owner: Option<EffectOwner>,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub reconciliation_cases: Vec<crate::reconciliation::ReconciliationCase>,
     pub intent: EffectIntent,
@@ -265,6 +288,7 @@ pub fn inspect_effect(e: &EffectAggregate) -> Result<EffectView> {
         if d.request.intent != e.intent.id
             || d.admission.as_ref().is_some_and(|a| {
                 a.version != 1
+                    || a.child.as_ref().is_some_and(|c| c.version != 1)
                     || a.canonical_version != 2
                     || a.execution != d.request.execution
                     || a.admission_key != d.request.admission_key
@@ -307,6 +331,12 @@ pub fn inspect_effect(e: &EffectAggregate) -> Result<EffectView> {
 /// Trusted actions intentionally do not implement Deserialize.
 #[derive(Clone, Debug)]
 pub enum EffectAction {
+    SubmitFlow {
+        id: EffectIntentId,
+        submission: Box<EffectSubmission>,
+        snapshot: VerifiedSnapshot,
+        owner: EffectOwner,
+    },
     Submit {
         id: EffectIntentId,
         submission: Box<EffectSubmission>,
@@ -389,6 +419,8 @@ enum JournalAction {
         snapshot: AuthorizationSnapshot,
         #[serde(default, skip_serializing_if = "Option::is_none")]
         link: Option<IntentLink>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        owner: Option<EffectOwner>,
     },
     Resolve {
         id: EffectIntentId,
@@ -463,8 +495,15 @@ impl From<EffectAction> for JournalAction {
     fn from(a: EffectAction) -> Self {
         match a {
             EffectAction::Submit { id, submission, snapshot, link } => {
-                Self::Submit { id, submission, snapshot: snapshot.0, link }
+                Self::Submit { id, submission, snapshot: snapshot.0, link, owner: None }
             }
+            EffectAction::SubmitFlow { id, submission, snapshot, owner } => Self::Submit {
+                id,
+                submission,
+                snapshot: snapshot.0,
+                link: None,
+                owner: Some(owner),
+            },
             EffectAction::Resolve { id, snapshot } => Self::Resolve { id, snapshot: snapshot.0 },
             EffectAction::Authorize { id, snapshot } => {
                 Self::Authorize { id, snapshot: snapshot.0 }
@@ -677,12 +716,18 @@ fn apply(state: &EffectState, entry: &Entry) -> Result<(EffectState, EffectInten
     );
     let now = &entry.at;
     let mut s = state.clone();
-    if let JournalAction::Submit { id, submission, snapshot, link } = &entry.action {
-        let key =
-            digest(&(&entry.tenant, &entry.principal, "effect", &submission.client_request_id))?;
+    if let JournalAction::Submit { id, submission, snapshot, link, owner } = &entry.action {
+        let key = if let Some(owner) = owner {
+            digest(&(&entry.tenant, &entry.principal, "flow-effect", owner))?
+        } else {
+            digest(&(&entry.tenant, &entry.principal, "effect", &submission.client_request_id))?
+        };
         if let Some(old) = s.requests.get(&key) {
             let old_effect = &s.effects[old];
-            if old_effect.intent.submission != **submission || old_effect.link != *link {
+            if old_effect.intent.submission != **submission
+                || old_effect.link != *link
+                || old_effect.owner != *owner
+            {
                 return Err("conflicting client request".into());
             }
             return Ok((state.clone(), old.clone()));
@@ -720,6 +765,7 @@ fn apply(state: &EffectState, entry: &Entry) -> Result<(EffectState, EffectInten
         s.effects.insert(
             id.clone(),
             EffectAggregate {
+                owner: owner.clone(),
                 intent,
                 agency,
                 link: link.clone(),
@@ -842,6 +888,24 @@ fn apply(state: &EffectState, entry: &Entry) -> Result<(EffectState, EffectInten
                 return Err("attempt budget".into());
             }
             let request = admission_request(&entry.tenant, e, snapshot, index)?;
+            if let JournalAction::PrepareProduction { admission, .. } = &entry.action {
+                if e.owner.as_ref().map(|o| (&o.flow, &o.node))
+                    != admission.child.as_ref().map(|c| (&c.flow, &c.node))
+                {
+                    return Err("effect ownership/admission mismatch".into());
+                }
+                if let Some(child) = &admission.child {
+                    if child.version != 1 {
+                        return Err("unsupported child admission provenance".into());
+                    }
+                    if child.admission_key.len() != 73
+                        || !child.admission_key.starts_with("child/v1/")
+                        || !child.admission_key[9..].bytes().all(|b| b.is_ascii_hexdigit())
+                    {
+                        return Err("invalid scoped child admission key".into());
+                    }
+                }
+            }
             let admission =
                 if let JournalAction::PrepareProduction { admission, .. } = &entry.action {
                     if admission.version != 1

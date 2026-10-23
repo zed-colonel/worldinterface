@@ -33,6 +33,21 @@
         "process_death_after_wi_commit_recovers_aq_obligation"
       ],
       "review": "Candidate tests are implementation evidence; independent G2/G3 and assigned-case attestations remain controller-managed. The primary scope and AB-WI-003 interpretation above remain owned by WI-04/integration."
+    },
+    "wi/WI-07/integration": {
+      "gate": "WI-AQ-G4",
+      "assumptions": [
+        "WI-AQ-006",
+        "WI-AQ-011"
+      ],
+      "adapter": "crates/worldinterface-runtime/src/flow_coordinator.rs",
+      "mapping": "One Awaiting disposition atomically admits flat required children, dependencies, checkpoint and parent AllTerminal wait. Prepared WI proposals are not AQ commitment evidence. The live AQ projection verifies the producing disposition and exact accepted request, scoped child key and inherited causation. Bindings are durable before boundary execution. Missing bindings yield to deadline-based AQ waits and recheck without consuming failures or signal identities; there is no per-child signal outbox. Every child reloads its plan and current boundary authority; AQ terminality never proves WI acceptance. Native WAL crash cuts and real AQ deadline/lifecycle fixtures bind the WIP-07 profile.",
+      "tests": [
+        "child_transaction_native_wal_process_death_cuts_replay_all_or_none",
+        "admission_readiness_retained_wake_restart_and_duplicates_converge",
+        "aq_success_without_wi_acceptance_cannot_complete_flow"
+      ],
+      "review": "Candidate implementation evidence; G4 closure is effective only through CraftingTable reviewed merge with adopted checks. G3 remains WIP-08-owned."
     }
   },
   "approved_case_interpretations": {
@@ -58,5 +73,11 @@
       "persisted_old_policy_request_is_retried_without_rewriting",
       "ab_wi_002_003_004_persist_retry_ack_and_discover"
     ]
+  },
+  "runtime_release": {
+    "contract": "contracts/aq-integration-target.json",
+    "record": "runtime_release",
+    "check": "runtime-aq-graph",
+    "note": "The imported upstream/source-record digests stay historical. Current runtime evidence must separately bind the operator-authorized crates.io 0.3.0 release and exact package graph."
   }
 }

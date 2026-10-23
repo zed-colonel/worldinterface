@@ -980,8 +980,10 @@ fn old_manifest_profile_rejects_without_modification() {
     let path = s.temp.path().join("root");
     drop(s.root);
     let manifest = path.join("manifest.json");
-    let old =
-        std::fs::read_to_string(&manifest).unwrap().replace("local-receipt-3", "local-domain-1");
+    let mut unsupported: serde_json::Value =
+        serde_json::from_slice(&std::fs::read(&manifest).unwrap()).unwrap();
+    unsupported["feature_profile"] = "local-domain-1".into();
+    let old = serde_json::to_string(&unsupported).unwrap();
     std::fs::write(&manifest, &old).unwrap();
     let db = std::fs::read(path.join("fabric.sqlite")).unwrap();
     assert!(StoreRoot::open_existing(&path).is_err());

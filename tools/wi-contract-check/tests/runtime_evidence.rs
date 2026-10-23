@@ -16,14 +16,27 @@ fn put(base: &Path, name: &str, value: &Value) -> Value {
 fn fixture(base: &Path) -> Value {
     let m = read(&root().join("conformance/wi-fabric-2/manifest.yaml")).unwrap();
     let case = m["cases"].as_array().unwrap().iter().find(|c| c["id"] == "AB-WI-001").unwrap();
+    let release = read(&root().join("contracts/aq-integration-target.json")).unwrap()
+        ["runtime_release"]
+        .clone();
     let packages: Vec<_> = ["core", "storage", "runtime", "engine", "workflow", "executor-local"]
         .into_iter()
-        .map(|p| json!({"name":format!("actionqueue-{p}"),"version":"0.2.0","features":[]}))
+        .map(|p| {
+            let name = format!("actionqueue-{p}");
+            let features = match p {
+                "core" | "storage" => json!(["default", "serde"]),
+                "engine" => json!(["default"]),
+                "runtime" => json!(["serde"]),
+                _ => json!([]),
+            };
+            json!({"name":name,"version":"0.3.0","features":features,"source":"registry+https://github.com/rust-lang/crates.io-index","checksum":release["crates"][&name]["checksum"]})
+        })
         .collect();
     let log = put(base, "log.json", &json!({"synthetic":"command completed"}));
     let command = json!({"argv":["synthetic-validator-fixture"],"exit_code":0,"log":log});
     let mut receipt = json!({"schema_version":1,"kind":"runtime-conformance","phase":"candidate","case_id":"AB-WI-001","status":"passed","producer":"synthetic-implementer","consumer_revision":"b".repeat(40),"upstream":m["upstream_target"],"source_record_sha256":case["source_record_sha256"],"fixture_manifest_sha256":m["fixture_manifest_sha256"],"integration_fixture_sha256":m["integration_fixture_sha256"],"executable_case_sha256":hash(fs::read(root().join(case["test_source"].as_str().unwrap())).unwrap()),"resolved_packages_sha256":hash(serde_json::to_vec(&packages).unwrap()),"toolchain":"synthetic fixture","environment_sha256":"d".repeat(64),"test_run_id":"synthetic-1","command":command});
-    let build = json!({"upstream":receipt["upstream"],"consumer_revision":receipt["consumer_revision"],"status":"passed","resolved_packages_sha256":receipt["resolved_packages_sha256"],"packages":packages,"command":command});
+    receipt["runtime_release"] = release.clone();
+    let build = json!({"upstream":receipt["upstream"],"runtime_release":release,"consumer_revision":receipt["consumer_revision"],"status":"passed","resolved_packages_sha256":receipt["resolved_packages_sha256"],"packages":packages,"command":command});
     receipt["upstream_build_receipt"] = put(base, "build.json", &build);
     let result = json!({"case_id":receipt["case_id"],"consumer_revision":receipt["consumer_revision"],"source_record_sha256":receipt["source_record_sha256"],"test_run_id":receipt["test_run_id"],"tests_passed":1,"status":"passed"});
     receipt["results"] = json!([put(base, "result.json", &result)]);
@@ -58,16 +71,35 @@ fn imported_source_binding_and_review_artifacts_are_required() {
 }
 #[test]
 fn empty_build_results_and_self_review_cannot_pass() {
-    for change in ["empty-build", "empty-results", "self-review", "wrong-review", "old-package"] {
+    for change in [
+        "empty-build",
+        "empty-results",
+        "self-review",
+        "wrong-review",
+        "old-package",
+        "stale-package",
+        "wrong-release",
+        "wrong-checksum",
+        "wrong-source",
+        "wrong-features",
+    ] {
         let t = tempfile::tempdir().unwrap();
         let mut r = fixture(t.path());
         match change {
-            "empty-build" | "old-package" => {
+            "empty-build" | "old-package" | "stale-package" | "wrong-release"
+            | "wrong-checksum" | "wrong-source" | "wrong-features" => {
                 let mut b = read(&t.path().join("build.json")).unwrap();
                 if change == "empty-build" {
                     b["packages"] = json!([]);
                 } else {
-                    b["packages"][0]["version"] = "0.1.0".into();
+                    match change {
+                        "wrong-release" => b["runtime_release"]["tag"] = "v0.2.0".into(),
+                        "wrong-checksum" => b["packages"][0]["checksum"] = "0".repeat(64).into(),
+                        "wrong-source" => b["packages"][0]["source"] = "path+file:///tmp/aq".into(),
+                        "wrong-features" => b["packages"][0]["features"] = json!([]),
+                        "stale-package" => b["packages"][0]["version"] = "0.2.0".into(),
+                        _ => b["packages"][0]["version"] = "0.1.0".into(),
+                    }
                 }
                 r["upstream_build_receipt"] = put(t.path(), "build.json", &b);
             }

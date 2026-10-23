@@ -169,7 +169,7 @@ impl<P: Connector, V: EvidenceAuthority, C: TrustedClock> EffectAttemptHandler<P
         ctx: &ExecutorContext,
     ) -> Result<(AuthenticatedCaller, EffectIntentId, OpaqueRef, Vec<u8>)> {
         let root = self.bundle.wi();
-        let locator = TaskInputLocator::decode(&ctx.input.payload)?;
+
         let run: OpaqueRef = ctx.input.run_id.to_string().try_into()?;
         let store = self.bundle.aq_store_id()?.to_string();
         let (tenant, id) = root.effect_run_binding(&run)?.ok_or("unobserved AQ effect run")?;
@@ -186,11 +186,33 @@ impl<P: Connector, V: EvidenceAuthority, C: TrustedClock> EffectAttemptHandler<P
             || admission.acknowledged_sequence.is_none()
             || request.task_spec().id().to_string() != admission.task.as_str()
             || request.task_spec().task_payload().bytes() != ctx.input.payload
-            || locator.artifact() != &effect.intent.submission.input.artifact
         {
             return Err("AQ effect binding mismatch".into());
         }
-        let input = root.read_artifact(locator.artifact())?;
+        if let Some(child) = &admission.child {
+            let payload = crate::flow::FlowPayload::decode(&ctx.input.payload)?;
+            let flow = crate::flow_coordinator::load(root, &payload)?;
+            let node = payload.node.as_ref().ok_or("missing effect node")?;
+            let b = flow.bindings.get(node).ok_or("unverified effect child")?;
+            if child.flow != flow.id
+                || &child.node != node
+                || flow.principal != effect.agency.binding.principal
+                || b.run != run
+                || b.request != admission.request_artifact
+                || b.parent_task != child.parent_task
+                || b.parent_run != child.parent_run
+                || b.producing_attempt != child.producing_attempt
+                || b.disposition_hash != child.disposition_hash
+                || admission.acknowledged_sequence != Some(b.admission_sequence)
+            {
+                return Err("effect child provenance mismatch".into());
+            }
+        } else if TaskInputLocator::decode(&ctx.input.payload)?.artifact()
+            != &effect.intent.submission.input.artifact
+        {
+            return Err("effect input locator mismatch".into());
+        }
+        let input = root.read_artifact(&effect.intent.submission.input.artifact)?;
         let caller = AuthenticatedCaller::from_trusted_authentication(
             tenant,
             effect.agency.binding.principal.clone(),
@@ -648,6 +670,8 @@ impl<P: Connector, V: EvidenceAuthority, C: TrustedClock> EffectAttemptHandler<P
                 &view.intent.submission,
                 &at,
             )?;
+            let _flow_guard = root.flow_dispatch_guard()?;
+            crate::flow_node::require_dispatch_open(root, caller.tenant(), &id)?;
             Egress::new(root).apply(
                 &caller,
                 at,
@@ -743,7 +767,9 @@ impl<P: Connector, V: EvidenceAuthority, C: TrustedClock> EffectAttemptHandler<P
                     }],
                     boundary_record: None,
                 }
-            } else if ctx.input.cancellation_context.token().is_cancelled() {
+            } else if ctx.input.cancellation_context.token().is_cancelled()
+                || crate::flow_node::require_dispatch_open(root, caller.tenant(), &id).is_err()
+            {
                 PortObservation {
                     commit: CommitObservation::ProvenImpossible,
                     outcome: ExecutionOutcome::CanceledBeforeCommit,
@@ -952,21 +978,16 @@ pub(crate) fn record_uncertain_after_terminal_run(
     Ok(())
 }
 
-impl<
-        P: Connector + 'static,
-        V: EvidenceAuthority + Send + Sync + 'static,
-        C: TrustedClock + Send + Sync + 'static,
-    > ExecutorHandler for EffectAttemptHandler<P, V, C>
-{
-    fn execute(&self, ctx: ExecutorContext) -> AttemptDisposition {
+impl<P: Connector, V: EvidenceAuthority, C: TrustedClock> EffectAttemptHandler<P, V, C> {
+    pub(crate) fn execute_context(&self, ctx: &ExecutorContext) -> AttemptDisposition {
         let mut started = false;
-        self.execute_staged(&ctx, &mut started).unwrap_or_else(|_| {
+        self.execute_staged(ctx, &mut started).unwrap_or_else(|_| {
             if started {
                 return terminal("wi.effect.uncertain_recording_error");
             }
             // A failed fallback remains possible commit even if storage is unavailable.
             // It must never share a code with a retry-safe pre-Start failure.
-            let Ok((caller, id, run, _)) = self.bind(&ctx) else {
+            let Ok((caller, id, run, _)) = self.bind(ctx) else {
                 return terminal("wi.effect.phase_unknown");
             };
             let Ok(state) = self.bundle.wi().effect_snapshot(caller.tenant()) else {
@@ -990,5 +1011,15 @@ impl<
                     .expect("static message"),
             })
         })
+    }
+}
+impl<
+        P: Connector + 'static,
+        V: EvidenceAuthority + Send + Sync + 'static,
+        C: TrustedClock + Send + Sync + 'static,
+    > ExecutorHandler for EffectAttemptHandler<P, V, C>
+{
+    fn execute(&self, ctx: ExecutorContext) -> AttemptDisposition {
+        self.execute_context(&ctx)
     }
 }

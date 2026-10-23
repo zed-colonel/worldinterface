@@ -1,7 +1,7 @@
 # WI-09 domain worker boundary
 
 Historical slice record. Active work follows [WI-WORKER-PROOF-1](wi-worker-proof-1.md):
-crates.io AQ 0.2.0, adopted checks and in-repo gate records supersede the
+crates.io AQ 0.3.0, adopted checks and in-repo gate records supersede the
 map-era launcher, slice receipts and controller-only verification wording below.
 Historical evidence and retained implementation obligations are preserved.
 

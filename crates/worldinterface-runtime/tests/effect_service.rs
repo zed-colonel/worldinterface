@@ -312,7 +312,7 @@ fn with_effect(
         resolver: &observer,
         clock: &clock,
     };
-    let id = service.submit(&"good", submission.clone()).unwrap();
+    let id = service.fixture_submit(&"good", submission.clone()).unwrap();
     let state = bundle.wi().effect_snapshot(&opaque("tenant:fixture")).unwrap();
     assert_eq!(state.effects[&id].phase, Phase::Submitted);
     assert_eq!(state.effects[&id].intent.submission, submission);
@@ -782,7 +782,7 @@ fn caller_claims_cannot_override_authenticated_agency_or_grants() {
             let mut queue = QueueEngine::bootstrap(&bundle, Complete, host()).unwrap();
             let before = queue.engine().projection().projection_digest().unwrap();
             assert!(service
-                .submit(&"good", submission)
+                .fixture_submit(&"good", submission)
                 .unwrap_err()
                 .to_string()
                 .contains("agency assertion or capacity mismatch"));
@@ -863,21 +863,21 @@ fn production_facade_authenticates_verifies_and_rechecks_live_target() {
         resolver: &observer,
         clock: &clock,
     };
-    assert!(service.submit(&"forged", submission.clone()).is_err());
+    assert!(service.fixture_submit(&"forged", submission.clone()).is_err());
     assert!(bundle.wi().effect_snapshot(&snapshot.bindings[0].tenant).unwrap().effects.is_empty());
     evidence.invalid.set(true);
-    assert!(service.submit(&"good", submission.clone()).is_err());
+    assert!(service.fixture_submit(&"good", submission.clone()).is_err());
     evidence.invalid.set(false);
     evidence.revoked.set(true);
-    assert!(service.submit(&"good", submission.clone()).is_err());
+    assert!(service.fixture_submit(&"good", submission.clone()).is_err());
     evidence.revoked.set(false);
-    let id = service.submit(&"good", submission.clone()).unwrap();
+    let id = service.fixture_submit(&"good", submission.clone()).unwrap();
     assert!(service.advance(&"cross", &id).is_err());
     assert!(service.explain(&"forged", &id).is_err());
     let mut conflict = submission.clone();
     conflict.budget.timeout_millis += 1;
-    assert!(service.submit(&"good", conflict).is_err());
-    assert_eq!(service.submit(&"good", submission.clone()).unwrap(), id);
+    assert!(service.fixture_submit(&"good", conflict).is_err());
+    assert_eq!(service.fixture_submit(&"good", submission.clone()).unwrap(), id);
     let mut wrong_queue = QueueEngine::bootstrap(&other, Complete, host()).unwrap();
     assert!(service.dispatch_pending(&"good", &mut wrong_queue, 1).is_err());
     assert_eq!(wrong_queue.engine().projection().task_count(), 0);
@@ -981,12 +981,12 @@ fn expiry_during_refresh_blocks_initial_duplicate_and_later_batch_admission() {
             resolver: &observer,
             clock: &clock,
         };
-        let id = service.submit(&"good", submission.clone()).unwrap();
+        let id = service.fixture_submit(&"good", submission.clone()).unwrap();
         assert_eq!(service.advance(&"good", &id).unwrap().phase, Phase::Resolving);
         assert_eq!(service.advance(&"good", &id).unwrap().phase, Phase::Authorized);
         let mut queue = QueueEngine::bootstrap(&bundle, Complete, host()).unwrap();
         if let Some(second) = second_submission {
-            let second_id = service.submit(&"good", second).unwrap();
+            let second_id = service.fixture_submit(&"good", second).unwrap();
             assert_eq!(service.advance(&"good", &second_id).unwrap().phase, Phase::Resolving);
             let second_view = service.advance(&"good", &second_id).unwrap();
             assert_eq!(second_view.phase, Phase::Authorized, "{:?}", second_view.authorization);
@@ -1107,7 +1107,7 @@ fn live_ambiguity_after_intent_never_reaches_aq() {
         resolver: &observer,
         clock: &clock,
     };
-    let id = service.submit(&"good", submission).unwrap();
+    let id = service.fixture_submit(&"good", submission).unwrap();
     let mut queue = QueueEngine::bootstrap(&bundle, Complete, host()).unwrap();
     assert_ne!(service.advance(&"good", &id).unwrap().phase, Phase::Authorized);
     assert!(observer.observed_after_intent.get());
@@ -1246,7 +1246,7 @@ fn production_facade_rejects_resource_boundaries_before_admission() {
             resolver: &observer,
             clock: &clock,
         };
-        let id = service.submit(&"good", submission).unwrap();
+        let id = service.fixture_submit(&"good", submission).unwrap();
         let mut queue = QueueEngine::bootstrap(&bundle, Complete, host()).unwrap();
         let before = queue.engine().projection().projection_digest().unwrap();
         let first = service.advance(&"good", &id).unwrap();
@@ -1282,5 +1282,44 @@ fn production_facade_rejects_resource_boundaries_before_admission() {
         assert!(state.uses.is_empty(), "{case}");
         assert!(state.effects[&id].dispatches.is_empty(), "{case}");
         queue.shutdown().unwrap();
+    }
+}
+
+// These records model pre-WIP-07 persisted submissions. Production submissions
+// now use EffectService::submit_direct / PlanService and the transactional executor.
+trait PersistedEffectFixture<A: Authentication> {
+    fn fixture_submit(
+        &self,
+        session: &A::Session,
+        submission: EffectSubmission,
+    ) -> Result<EffectIntentId>;
+}
+impl<A: Authentication, V: EvidenceAuthority, R: ResourceObserver, C: TrustedClock>
+    PersistedEffectFixture<A> for EffectService<'_, A, V, R, C>
+{
+    fn fixture_submit(
+        &self,
+        session: &A::Session,
+        submission: EffectSubmission,
+    ) -> Result<EffectIntentId> {
+        let at = self.clock.now()?;
+        let caller = caller(self.authentication, session)?;
+        let snapshot = worldinterface_runtime::authority::verify_snapshot(
+            self.root,
+            self.evidence,
+            caller.tenant(),
+            &submission,
+            &at,
+        )?;
+        Egress::new(self.root).apply(
+            &caller,
+            at,
+            EffectAction::Submit {
+                id: EffectIntentId::generate(),
+                submission: Box::new(submission),
+                snapshot,
+                link: None,
+            },
+        )
     }
 }

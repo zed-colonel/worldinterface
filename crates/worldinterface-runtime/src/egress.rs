@@ -30,31 +30,31 @@ pub struct DispatchReport {
 impl<A: Authentication, V: EvidenceAuthority, R: ResourceObserver, C: TrustedClock>
     EffectService<'_, A, V, R, C>
 {
-    pub fn submit(
+    /// New production submissions always compile a plan and enter the Flow coordinator.
+    /// The remaining APIs operate on already persisted effect records and admissions.
+    pub fn submit_direct<H: ExecutorHandler + 'static>(
         &self,
         session: &A::Session,
         submission: EffectSubmission,
-    ) -> Result<EffectIntentId> {
-        let at = self.clock.now()?;
-        let caller = caller(self.authentication, session)?;
-        let snapshot =
-            verify_snapshot(self.root, self.evidence, caller.tenant(), &submission, &at)?;
-        Egress::new(self.root).apply(
-            &caller,
-            at,
-            EffectAction::Submit {
-                id: EffectIntentId::generate(),
-                submission: Box::new(submission),
-                snapshot,
-                link: None,
-            },
-        )
+        selection: worldinterface_domain::flow::DirectOperationSelection,
+        configuration: &impl crate::flow::PlanConfiguration,
+        queue: &mut QueueEngine<'_, H>,
+    ) -> Result<worldinterface_protocol::OpaqueRef> {
+        crate::flow::PlanService {
+            root: self.root,
+            authentication: self.authentication,
+            evidence: self.evidence,
+            clock: self.clock,
+            configuration,
+        }
+        .submit_direct(session, submission, selection, queue)
     }
     pub fn advance(&self, session: &A::Session, id: &EffectIntentId) -> Result<EffectView> {
         let at = self.clock.now()?;
         let caller = caller(self.authentication, session)?;
         let egress = Egress::new(self.root);
         let view = egress.inspect(&caller, id)?;
+        crate::admission::require_top_level(self.root, caller.tenant(), id)?;
         let snapshot = verify_snapshot(
             self.root,
             self.evidence,
@@ -127,7 +127,8 @@ impl<A: Authentication, V: EvidenceAuthority, R: ResourceObserver, C: TrustedClo
             if report.attempted == limit {
                 break;
             }
-            if effect.agency.binding.principal != *principal.principal()
+            if effect.owner.is_some()
+                || effect.agency.binding.principal != *principal.principal()
                 || !matches!(
                     effect.phase,
                     worldinterface_domain::Phase::Authorized

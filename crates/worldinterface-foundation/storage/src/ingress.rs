@@ -539,6 +539,7 @@ mod tests {
             c.execute_batch(crate::repository::SCHEMA).unwrap();
             c.execute_batch(SCHEMA).unwrap();
             c.execute_batch(crate::effect::SCHEMA).unwrap();
+            c.execute_batch(crate::flow::SCHEMA).unwrap();
             let tenant = binding.profile.scope.tenant.clone();
             let command = IngressCommand::Bind { binding: Box::new(binding.clone()) };
             assert!(transact(&mut c, &tenant, None, 1000, &command, Some(fault), false).is_err());

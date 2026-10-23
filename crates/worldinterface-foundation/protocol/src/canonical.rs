@@ -90,7 +90,7 @@ fn canonical_bounded<T: Serialize>(value: &T, limit: usize) -> Result<Vec<u8>> {
                     if i > 0 {
                         out.push(b',');
                     }
-                    out.extend(serde_json::to_vec(key).expect("string serialization"));
+                    serde_json::to_writer(&mut *out, key).expect("string serialization");
                     out.push(b':');
                     encode(&map[key], out);
                 }
@@ -106,7 +106,9 @@ fn canonical_bounded<T: Serialize>(value: &T, limit: usize) -> Result<Vec<u8>> {
                 }
                 out.push(b']');
             }
-            _ => out.extend(serde_json::to_vec(v).expect("validated JSON scalar")),
+            // Admission digests include byte arrays. Write each scalar into the
+            // existing buffer instead of allocating a separate Vec per byte.
+            _ => serde_json::to_writer(out, v).expect("validated JSON scalar"),
         }
     }
     let mut bytes = Vec::new();

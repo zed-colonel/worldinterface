@@ -24,13 +24,19 @@ suite. Exact unambiguous test names and selected package ownership are required.
 Adopted `foundation-test`, `runtime-test` and `contract-test` execute those tests;
 review establishes that assertions cover each criterion. The new contract test
 check is approved for adoption at WIP-01 merge. AB-WI-001 additionally tests the
-published AQ 0.2.0 identity, checksums, complete source tree, conformance revision
+historical AQ 0.2.0 identity, complete source tree, conformance revision
 16 and feature profile against substitutions. `runtime-aq-graph` validates the
 actual dependency graph. Store lineage and AB-WI-015/016 real AQ tests remain.
 
 Existing `domain/`, `egress/`, `receipts/`, `worker/`, `ingress/` and
 `integration/` coverage stays authoritative. Implementation registration never
 asserts provider qualification or source-matrix runtime passage. Historical
-`evidence check RECEIPT.json` tooling validates old external receipt shapes; it is
+`evidence check RECEIPT.json` tooling validates external receipt shapes and the
+current runtime release binding; it is
 not an off-map acceptance gate. Historical records remain separate from current
 adopted-check passage. See [the active ledger](../../docs/work-items/wi-worker-proof-1.md).
+
+The current runtime binds the separately recorded crates.io AQ 0.3.0 release
+(`contracts/aq-integration-target.json::runtime_release`), with exact checksums,
+versions and features enforced by runtime-aq-graph. Runtime receipts must bind
+this release in addition to the unchanged imported baseline/source records.

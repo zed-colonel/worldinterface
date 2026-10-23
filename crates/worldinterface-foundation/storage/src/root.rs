@@ -162,12 +162,13 @@ impl StoreRoot {
             contract: CONTRACT.into(),
             schema: 1,
             canonical_profile: CANONICAL_PROFILE.into(),
-            feature_profile: "local-receipt-3".into(),
+            feature_profile: "local-flow-7".into(),
             stores: kinds(profile.platform),
             profile,
             complete: true,
         };
         write_new(&path.join("lock"), b"")?;
+        write_new(&path.join("flow-dispatch.lock"), b"")?;
         fs::create_dir(path.join("artifacts"))?;
         for (i, kind) in manifest.stores.iter().enumerate() {
             let identity = canonical_data(&StoreManifest { root: manifest.clone(), kind: *kind })
@@ -176,6 +177,7 @@ impl StoreRoot {
             conn.execute_batch(SCHEMA)?;
             conn.execute_batch(crate::ingress::SCHEMA)?;
             conn.execute_batch(crate::effect::SCHEMA)?;
+            conn.execute_batch(crate::flow::SCHEMA)?;
             conn.execute("INSERT INTO store_identity VALUES(1,?1)", [&identity])?;
             drop(conn);
             File::open(path.join(format!("{}.sqlite", kind.name())))?.sync_all()?;
@@ -228,7 +230,7 @@ impl StoreRoot {
             || manifest.contract != CONTRACT
             || manifest.schema != 1
             || manifest.canonical_profile != CANONICAL_PROFILE
-            || manifest.feature_profile != "local-receipt-3"
+            || manifest.feature_profile != "local-flow-7"
             || !manifest.complete
             || manifest.stores != kinds(manifest.profile.platform)
             || path.join("initializing").exists()
@@ -245,23 +247,31 @@ impl StoreRoot {
                 return Err(invalid("inconsistent store manifest"));
             }
         }
-        let allowed: Vec<_> = ["manifest.json".to_string(), "lock".into(), "artifacts".into()]
-            .into_iter()
-            .chain(manifest.stores.iter().flat_map(|k| {
-                [
-                    format!("{}.json", k.name()),
-                    format!("{}.sqlite", k.name()),
-                    format!("{}.sqlite-journal", k.name()),
-                ]
-            }))
-            .collect();
+        let allowed: Vec<_> = [
+            "manifest.json".to_string(),
+            "lock".into(),
+            "flow-dispatch.lock".into(),
+            "artifacts".into(),
+        ]
+        .into_iter()
+        .chain(manifest.stores.iter().flat_map(|k| {
+            [
+                format!("{}.json", k.name()),
+                format!("{}.sqlite", k.name()),
+                format!("{}.sqlite-journal", k.name()),
+            ]
+        }))
+        .collect();
         for entry in fs::read_dir(path)? {
             let entry = entry?;
             if !allowed.iter().any(|n| entry.file_name() == n.as_str()) {
                 return Err(invalid("unexpected or unfinished store member"));
             }
         }
-        if !path.join("artifacts").is_dir() || !path.join("lock").is_file() {
+        if !path.join("artifacts").is_dir()
+            || !path.join("lock").is_file()
+            || !path.join("flow-dispatch.lock").is_file()
+        {
             return Err(invalid("incomplete artifact or lock store"));
         }
         let journals: Vec<_> = manifest
@@ -336,6 +346,7 @@ impl StoreRoot {
                 FileExt::lock_shared(&root._lock)?;
             }
         }
+        let databases_started = std::time::Instant::now();
         for kind in &root.manifest.stores {
             let c =
                 Connection::open_with_flags(root.db_path(*kind), OpenFlags::SQLITE_OPEN_READ_ONLY)?;
@@ -348,9 +359,17 @@ impl StoreRoot {
             root.validate_identity(&c, *kind)?;
             crate::repository::validate_database(&c)?;
         }
+        if std::env::var_os("WI_RECOVERY_TIMINGS").is_some() {
+            eprintln!("WI databases replay/comparison: {:?}", databases_started.elapsed());
+        }
+        let artifacts_started = std::time::Instant::now();
         root.validate_artifacts()?;
         root.validate_effect_artifacts()?;
         root.validate_receipt_artifacts()?;
+        root.validate_flow_artifacts()?;
+        if std::env::var_os("WI_RECOVERY_TIMINGS").is_some() {
+            eprintln!("WI plans and artifact closure: {:?}", artifacts_started.elapsed());
+        }
         crate::proof::validate(&root)?;
         Ok(root)
     }

@@ -854,9 +854,63 @@
       "source_record_sha256": "c5ed591d6024a6ef7080edc36848ef60d0aca374f4c219030678b063c6533789",
       "gate": "WI-AQ-G4",
       "owning_item": "WIP-07",
-      "status": "planned",
-      "coverage_refs": [],
-      "tests": []
+      "status": "implemented",
+      "coverage_refs": [
+        "conformance/wi-fabric-2/flow/integration-coverage.json",
+        "conformance/wi-fabric-2/integration/fixtures.json"
+      ],
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_005_bounds_are_enforced_by_aq_admission_and_disposition"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_005_compound_commit_replay_is_all_or_none_with_stable_children"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "child_transaction_native_wal_process_death_cuts_replay_all_or_none"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "bounded_64_node_plan_commits_flat_children_and_rejects_65_before_admission"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "maximum_length_flow_identities_have_bounded_aq_and_effect_keys"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wi_proposal_aq_commit_and_binding_process_death_recover_stable_children"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "sixty_four_boundary_nodes_reject_at_wi_plan_byte_bound_before_aq_admission"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "checkpoint_tail_and_wal_only_recovery_preserve_pending_flow_and_branch_receipts"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "flow_retained_count_rollback_replay_and_tampering"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "concurrent_flow_admissions_serialize_at_retained_capacity"
+        }
+      ]
     },
     {
       "id": "AB-WI-006",
@@ -953,9 +1007,18 @@
       "source_record_sha256": "4aef27823939c49b59856111146c1345c2a246a44a8c41c681ba573b294f0958",
       "gate": "WI-AQ-G3",
       "owning_item": "WIP-07",
-      "status": "planned",
-      "coverage_refs": [],
-      "tests": []
+      "status": "implemented",
+      "coverage_refs": [
+        "conformance/wi-fabric-2/flow/integration-coverage.json",
+        "conformance/wi-fabric-2/integration/fixtures.json"
+      ],
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_010_deadline_signal_orders_and_timeout_policies_survive_replay"
+        }
+      ]
     },
     {
       "id": "AB-WI-011",
@@ -991,9 +1054,53 @@
       "source_record_sha256": "735b29144504e56f502c4c80366cba10b5c36ee82871491362a241fb78d4285c",
       "gate": "WI-AQ-G4",
       "owning_item": "WIP-07",
-      "status": "planned",
-      "coverage_refs": [],
-      "tests": []
+      "status": "implemented",
+      "coverage_refs": [
+        "conformance/wi-fabric-2/flow/integration-coverage.json",
+        "conformance/wi-fabric-2/integration/fixtures.json"
+      ],
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_013_required_detached_closure_cancel_and_mixed_runs"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "aq_success_without_wi_acceptance_cannot_complete_flow"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "flow_cancellation_after_start_preserves_external_uncertainty"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "cancellation_before_start_and_failed_node_redelivery_cannot_invoke"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "publication_failure_retries_durable_success_without_reinvocation"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "rejected_aq_cancel_does_not_mutate_flow_and_authorized_execution_continues"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "temporary_binding_artifact_io_failure_retries_without_quarantine"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "quarantine_control_failure_surfaces_and_retries_after_host_repair"
+        }
+      ]
     },
     {
       "id": "AB-WI-014",

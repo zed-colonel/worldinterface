@@ -899,6 +899,7 @@ mod tests {
             serde_json::from_value(fixture["snapshot"].clone()).unwrap();
         for dispatch in 0..2 {
             let admission = ProductionAdmission {
+                child: None,
                 version: 1,
                 queue_store: "queue-store".to_owned().try_into().unwrap(),
                 task: format!("task-{dispatch}").try_into().unwrap(),

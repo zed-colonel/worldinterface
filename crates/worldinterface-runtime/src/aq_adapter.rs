@@ -62,18 +62,37 @@ impl<'a, H: ExecutorHandler + 'static> QueueEngine<'a, H> {
         handler: H,
         host: HostControlContext,
     ) -> Result<Self> {
+        Self::bootstrap_with_signal_limits(bundle, handler, host, Default::default())
+    }
+    /// Host capacity configuration; Flow binding checks do not allocate signals.
+    pub fn bootstrap_with_signal_limits(
+        bundle: &'a StoreBundle,
+        handler: H,
+        host: HostControlContext,
+        signal_limits: actionqueue_core::limits::SignalLimits,
+    ) -> Result<Self> {
         let session = actionqueue_storage::store::open_store(
             &bundle.aq_path(),
             actionqueue_storage::store::OpenOptions::ReadOnly,
         )?;
         let store = QueueStoreId::from_session(&session);
         drop(session);
+        let started = std::time::Instant::now();
         let engine = ActionQueueEngine::new(
-            RuntimeConfig { data_dir: bundle.aq_path(), ..Default::default() },
+            RuntimeConfig {
+                data_dir: bundle.aq_path(),
+                signal_limits,
+                continuation_limits: actionqueue_core::limits::ContinuationLimits {
+                    disposition_bytes: 1024 * 1024,
+                    ..Default::default()
+                },
+                ..Default::default()
+            },
             handler,
         )
         .bootstrap()?
         .with_host(host);
+        crate::storage::recovery_timing("AQ engine bootstrap and scheduling", started);
         if bundle.aq_store_id()? != store.as_uuid() {
             return Err("AQ store changed during engine bootstrap".into());
         }
@@ -107,6 +126,43 @@ impl<'a, H: ExecutorHandler + 'static> QueueEngine<'a, H> {
         &mut self,
     ) -> (&worldinterface_storage::StoreRoot, &mut BootstrappedEngine<H>, uuid::Uuid) {
         (self.bundle.wi(), &mut self.engine, self.store.as_uuid())
+    }
+    /// Host-owned reconciliation surrounds each scheduling tick, including restart.
+    pub async fn tick(&mut self) -> Result<actionqueue_runtime::dispatch::TickResult> {
+        crate::flow_coordinator::reconcile(
+            self.bundle.wi(),
+            self.store.as_uuid(),
+            &mut self.engine,
+        )?;
+        let result = self.engine.tick().await?;
+        crate::flow_coordinator::reconcile(
+            self.bundle.wi(),
+            self.store.as_uuid(),
+            &mut self.engine,
+        )?;
+        Ok(result)
+    }
+    /// Trusted host cancellation retains AQ's normal child lifecycle semantics.
+    pub fn cancel_task(&mut self, task: TaskId) -> Result<()> {
+        let root = self.bundle.wi();
+        // AQ authorizes the control first. Holding the WI guard across control
+        // and the cancel journal write prevents Start in the cross-store gap.
+        let guard = root.flow_dispatch_guard()?;
+        self.engine.control(actionqueue_runtime::control::ControlOperation::Cancel(
+            actionqueue_core::mutation::CancelTarget::Task(task),
+        ))?;
+        if let Some((tenant, run)) = root.flow_task(&task.to_string())? {
+            let state = root.flow_run_snapshot(&tenant, &run)?;
+            if state.runs.get(&run).is_some_and(|r| r.outcome.is_none()) {
+                root.flow_update_guarded(
+                    &guard,
+                    &tenant,
+                    state.revision,
+                    worldinterface_storage::flow::FlowCommand::CancelRequested { run },
+                )?;
+            }
+        }
+        Ok(())
     }
     pub fn shutdown(self) -> Result<()> {
         Ok(self.engine.shutdown()?)
@@ -170,11 +226,22 @@ impl QueueReferences {
             &session,
             actionqueue_storage::wal::repair::RepairPolicy::Strict,
         )?;
+        if std::env::var_os("WI_RECOVERY_TIMINGS").is_some() {
+            eprintln!(
+                "AQ recovery snapshot={} sequence={} phases={:?}",
+                recovered.snapshot_loaded, recovered.snapshot_sequence, recovered.phases
+            );
+        }
         Ok(Self { session, projection: recovered.projection })
     }
     /// Checks ingress task and signal references through AQ's recovered public models.
     /// External checkpoint artifact closure remains a separate G4 obligation.
     pub fn validate_artifacts(&self, wi: &worldinterface_storage::StoreRoot) -> Result<()> {
+        crate::flow_coordinator::validate_references(
+            wi,
+            self.store_id().as_uuid(),
+            &self.projection,
+        )?;
         for tenant in wi.ingress_tenants()? {
             let state = wi.ingress_snapshot(&tenant)?;
             for (id, q) in &state.queue {
@@ -316,7 +383,12 @@ impl QueueReferences {
             self.projection.get_task(&run.task_id()).ok_or("missing AQ run task")?;
             let effect_task = effect_tasks.contains(&run.task_id().to_string());
             let mut completed_locator = false;
-            for attempt in self.projection.get_attempt_history(&run.id()).unwrap_or(&[]) {
+            for attempt in self
+                .projection
+                .get_attempt_history(&run.id())
+                .into_iter()
+                .flat_map(|history| history.iter())
+            {
                 if let Some(actionqueue_core::data_ref::DataRef::External(external)) =
                     attempt.output_ref()
                 {
@@ -409,8 +481,8 @@ impl QueueReferences {
                 if !self
                     .projection
                     .get_attempt_history(&run)
-                    .unwrap_or(&[])
-                    .iter()
+                    .into_iter()
+                    .flat_map(|history| history.iter())
                     .any(|a| a.attempt_id() == attempt)
                 {
                     return Err("attempt does not belong to local run".into());

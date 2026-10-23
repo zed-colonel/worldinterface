@@ -1083,6 +1083,7 @@ fn persisted_old_policy_request_is_retried_without_rewriting() {
     let request = EnsureTaskRequest::new(key, spec, vec![], causal, None).unwrap();
     let bytes = serde_json::to_vec(&request).unwrap();
     let old = worldinterface_domain::effect::ProductionAdmission {
+        child: None,
         version: 1,
         queue_store: bundle.aq_store_id().unwrap().to_string().try_into().unwrap(),
         task: task.to_string().try_into().unwrap(),

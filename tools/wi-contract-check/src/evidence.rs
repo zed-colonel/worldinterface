@@ -118,7 +118,7 @@ pub fn runtime(root: &Path, receipt: &Value, artifact_base: &Path) -> Result<()>
         return Err("planned/unimplemented cases cannot pass".into());
     }
     if receipt["upstream"] != manifest["upstream_target"] {
-        return Err("execution upstream differs from current target (historical identities cannot substitute)".into());
+        return Err("upstream contract baseline differs from the imported target".into());
     }
     if receipt["fixture_manifest_sha256"] != manifest["fixture_manifest_sha256"] {
         return Err("stale fixture identity".into());
@@ -172,6 +172,11 @@ pub fn runtime(root: &Path, receipt: &Value, artifact_base: &Path) -> Result<()>
     {
         return Err("empty or mismatched AQ build receipt".into());
     }
+    let release =
+        read(&root.join("contracts/aq-integration-target.json"))?["runtime_release"].clone();
+    if receipt["runtime_release"] != release || build["runtime_release"] != release {
+        return Err("runtime release differs from operator-authorized binding".into());
+    }
     let expected = [
         "actionqueue-core",
         "actionqueue-storage",
@@ -185,10 +190,18 @@ pub fn runtime(root: &Path, receipt: &Value, artifact_base: &Path) -> Result<()>
         let name = string(package, "name")?;
         if !expected.contains(&name)
             || !names.insert(name)
-            || package["version"] != "0.2.0"
-            || array(package, "features")?
-                .iter()
-                .any(|v| !["default", "serde"].contains(&v.as_str().unwrap_or("")))
+            || package["version"] != "0.3.0"
+            || package["checksum"] != release["crates"][name]["checksum"]
+            || package["source"] != "registry+https://github.com/rust-lang/crates.io-index"
+            || package["features"]
+                != match name {
+                    "actionqueue-core" | "actionqueue-storage" => {
+                        serde_json::json!(["default", "serde"])
+                    }
+                    "actionqueue-engine" => serde_json::json!(["default"]),
+                    "actionqueue-runtime" => serde_json::json!(["serde"]),
+                    _ => serde_json::json!([]),
+                }
         {
             return Err("unexpected AQ package/version/feature".into());
         }
@@ -208,6 +221,7 @@ pub fn runtime(root: &Path, receipt: &Value, artifact_base: &Path) -> Result<()>
         "consumer_revision",
         "source_record_sha256",
         "upstream",
+        "runtime_release",
         "test_run_id",
         "executable_case_sha256",
         "integration_fixture_sha256",

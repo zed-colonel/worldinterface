@@ -19,6 +19,11 @@ struct BundleManifest {
     aq: uuid::Uuid,
 }
 
+pub(crate) fn recovery_timing(phase: &str, started: std::time::Instant) {
+    if std::env::var_os("WI_RECOVERY_TIMINGS").is_some() {
+        eprintln!("WI recovery {phase}: {:?}", started.elapsed());
+    }
+}
 fn write(path: &Path, bytes: &[u8]) -> Result<()> {
     let mut f = fs::OpenOptions::new().write(true).create_new(true).open(path)?;
     f.write_all(bytes)?;
@@ -120,11 +125,16 @@ impl StoreBundle {
         let lock = File::open(path.join("bundle.lock"))?;
         FileExt::try_lock_shared(&lock)?;
         // Preflight AQ read-only before WI recovery can mutate a valid journal.
+        let started = std::time::Instant::now();
         let references = crate::aq_adapter::QueueReferences::open(&path.join("aq"))?;
+        recovery_timing("AQ read-only preflight", started);
+        let started = std::time::Instant::now();
         let wi = StoreRoot::open_for_instance(path.join("wi"), &manifest.wi, false)?;
         if wi.profile().instance != manifest.wi {
             return Err("WI bundle identity mismatch".into());
         }
+        recovery_timing("WI open (database, plans and artifacts)", started);
+        let started = std::time::Instant::now();
         references.validate_artifacts(&wi)?;
         // AQ may have spent its interruption budget after Fabric Start. Its
         // terminal run cannot prove noncommit, so preserve Uncertain and the
@@ -274,6 +284,7 @@ impl StoreBundle {
                 }
             }
         }
+        recovery_timing("cross-store references and convergence", started);
         Ok(Self { wi, path: path.to_path_buf(), convergence_faults, _lock: lock })
     }
     pub fn wi(&self) -> &StoreRoot {

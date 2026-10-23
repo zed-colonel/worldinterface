@@ -42,7 +42,11 @@ fn error(kind: ErrorKind, node: Option<&OpaqueRef>, detail: &str) -> CompileErro
     CompileError { kind, node: node.cloned(), detail: detail.into() }
 }
 fn wire(detail: String) -> CompileError {
-    error(ErrorKind::Recovery, None, &detail)
+    error(
+        if detail.contains("size bound") { ErrorKind::Bound } else { ErrorKind::Recovery },
+        None,
+        &detail,
+    )
 }
 fn opaque(s: &str) -> OpaqueRef {
     s.to_string().try_into().expect("static opaque reference")
@@ -236,7 +240,13 @@ fn compile_document(
     normalize_body(&mut document.body).map_err(wire)?;
     validation::validate(&document, context)?;
     let envelope = PlanEnvelope::new(document);
-    let bytes = envelope.canonical_bytes().map_err(wire)?;
+    let bytes = envelope.canonical_bytes().map_err(|e| {
+        if e.contains("size bound") {
+            error(ErrorKind::Bound, None, &e)
+        } else {
+            wire(e)
+        }
+    })?;
     let hash = envelope.digest().map_err(wire)?;
     Ok(ExecutionPlan { envelope, bytes, hash, direct_submission: None })
 }

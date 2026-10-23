@@ -102,6 +102,11 @@ pub trait Connector: Send + Sync {
     fn registry_digest(&self) -> Result<ContentHash> {
         Ok(ConnectorRegistry::new(vec![self.descriptor().clone()])?.digest().clone())
     }
+    /// Validate an opaque artifact against an installed pinned schema implementation.
+    /// Connectors without this capability reject opaque Flow data before invocation.
+    fn validate_artifact(&self, _schema: &ContentHash, _bytes: &[u8]) -> Result<()> {
+        Err("connector does not validate pinned artifact schemas".into())
+    }
     fn resolve(&self, request: ResolveRequest) -> Result<ResolveObservation>;
     /// Must not dispatch the consequential operation or consume its provider key.
     fn prepare(&self, request: &AuthorizedInvocation) -> PrepareOutcome;
@@ -121,6 +126,9 @@ impl<T: Connector + ?Sized> Connector for Arc<T> {
     }
     fn registry_digest(&self) -> Result<ContentHash> {
         (**self).registry_digest()
+    }
+    fn validate_artifact(&self, schema: &ContentHash, bytes: &[u8]) -> Result<()> {
+        (**self).validate_artifact(schema, bytes)
     }
     fn resolve(&self, r: ResolveRequest) -> Result<ResolveObservation> {
         (**self).resolve(r)

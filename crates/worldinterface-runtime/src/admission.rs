@@ -76,6 +76,7 @@ fn prepare_at(
     snapshot: VerifiedSnapshot,
 ) -> Result<ProductionAdmission> {
     let root = bundle.wi();
+    require_top_level(root, caller.tenant(), id)?;
     let queue_store = bundle.aq_store_id()?;
     let egress = Egress::new(root);
     let view = egress.inspect(caller, id)?;
@@ -128,6 +129,7 @@ fn prepare_at(
         .map_err(|e| -> Box<dyn std::error::Error + Send + Sync> { e.into() })?
     };
     let admission = ProductionAdmission {
+        child: None,
         version: 1,
         queue_store: queue_store.to_string().try_into()?,
         task: task.to_string().try_into()?,
@@ -176,7 +178,11 @@ pub fn load_request(
     let request = decode_request(&bytes)?;
     if encode_request(&request)? != bytes
         || request.task_spec().id().to_string() != admission.task.as_str()
-        || request.admission_key().as_str() != admission.admission_key.as_str()
+        || request.admission_key().as_str()
+            != admission
+                .child
+                .as_ref()
+                .map_or(admission.admission_key.as_str(), |c| c.admission_key.as_str())
         || request.digest()?.canonical_version() != admission.canonical_version
         || aq_digest(&request)? != admission.canonical_digest
     {
@@ -216,6 +222,7 @@ fn deliver_at<H: ExecutorHandler + 'static>(
     id: &EffectIntentId,
     fresh: VerifiedSnapshot,
 ) -> Result<EnsureTaskOutcome> {
+    require_top_level(queue.wi(), caller.tenant(), id)?;
     let (root, engine, queue_store) = queue.parts_mut();
     let egress = Egress::new(root);
     let view: EffectView = egress.inspect(caller, id)?;
@@ -265,4 +272,15 @@ fn deliver_at<H: ExecutorHandler + 'static>(
         EffectAction::AcknowledgeProduction { id: id.clone(), sequence },
     )?;
     Ok(outcome)
+}
+
+pub(crate) fn require_top_level(
+    root: &StoreRoot,
+    tenant: &worldinterface_protocol::OpaqueRef,
+    id: &EffectIntentId,
+) -> Result<()> {
+    if root.effect_snapshot(tenant)?.effects.get(id).ok_or("missing effect")?.owner.is_some() {
+        return Err("Flow-owned effect requires the plan executor".into());
+    }
+    Ok(())
 }

@@ -9553,5 +9553,404 @@
     "target": "foundation untrusted plan and Flow contracts",
     "rationale": "WIP-06 versioned wi-json-1 plan data, finite paired structural ceilings and closed deterministic declarations; never executable authority",
     "source": "WI-WORKER-PROOF-1 WIP-06; WI-ADR-014; docs/work-items/WIP-06.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/effect.rs::::struct:ChildAdmissionProvenance",
+    "disposition": "retain-align",
+    "target": "foundation Flow journal and child admission provenance",
+    "rationale": "AQ-neutral immutable pins, attribution, versioning, proposals, verified provenance, node results and rebuildable history for WIP-07",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/flow.rs::::enum:FlowCommand",
+    "disposition": "retain-align",
+    "target": "foundation Flow journal and child admission provenance",
+    "rationale": "AQ-neutral immutable pins, attribution, versioning, proposals, verified provenance, node results and rebuildable history for WIP-07",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/flow.rs::::enum:FlowOutcome",
+    "disposition": "retain-align",
+    "target": "foundation Flow journal and child admission provenance",
+    "rationale": "AQ-neutral immutable pins, attribution, versioning, proposals, verified provenance, node results and rebuildable history for WIP-07",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/flow.rs::::enum:NodeDisposition",
+    "disposition": "retain-align",
+    "target": "foundation Flow journal and child admission provenance",
+    "rationale": "AQ-neutral immutable pins, attribution, versioning, proposals, verified provenance, node results and rebuildable history for WIP-07",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/flow.rs::::source-module:crates/worldinterface-foundation/storage/src/flow.rs",
+    "disposition": "retain-align",
+    "target": "foundation Flow journal and child admission provenance",
+    "rationale": "AQ-neutral immutable pins, attribution, versioning, proposals, verified provenance, node results and rebuildable history for WIP-07",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/flow.rs::::struct:ChildBinding",
+    "disposition": "retain-align",
+    "target": "foundation Flow journal and child admission provenance",
+    "rationale": "AQ-neutral immutable pins, attribution, versioning, proposals, verified provenance, node results and rebuildable history for WIP-07",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/flow.rs::::struct:Entry",
+    "disposition": "retain-align",
+    "target": "foundation Flow journal and child admission provenance",
+    "rationale": "AQ-neutral immutable pins, attribution, versioning, proposals, verified provenance, node results and rebuildable history for WIP-07",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/flow.rs::::struct:FlowPins",
+    "disposition": "retain-align",
+    "target": "foundation Flow journal and child admission provenance",
+    "rationale": "AQ-neutral immutable pins, attribution, versioning, proposals, verified provenance, node results and rebuildable history for WIP-07",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/flow.rs::::struct:FlowRun",
+    "disposition": "retain-align",
+    "target": "foundation Flow journal and child admission provenance",
+    "rationale": "AQ-neutral immutable pins, attribution, versioning, proposals, verified provenance, node results and rebuildable history for WIP-07",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/flow.rs::::struct:FlowState",
+    "disposition": "retain-align",
+    "target": "foundation Flow journal and child admission provenance",
+    "rationale": "AQ-neutral immutable pins, attribution, versioning, proposals, verified provenance, node results and rebuildable history for WIP-07",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/flow.rs::::struct:NodeResult",
+    "disposition": "retain-align",
+    "target": "foundation Flow journal and child admission provenance",
+    "rationale": "AQ-neutral immutable pins, attribution, versioning, proposals, verified provenance, node results and rebuildable history for WIP-07",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/lib.rs::::module:flow",
+    "disposition": "retain-align",
+    "target": "foundation Flow journal and child admission provenance",
+    "rationale": "AQ-neutral immutable pins, attribution, versioning, proposals, verified provenance, node results and rebuildable history for WIP-07",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/tests/flow.rs::::source-module:crates/worldinterface-foundation/storage/tests/flow.rs",
+    "disposition": "retain-align",
+    "target": "Flow runtime and persistence conformance evidence",
+    "rationale": "WIP-07 executable admission, transactional child, replay, authority, lifecycle and crash evidence; retained independently of legacy connector deletion",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/flow.rs::::source-module:crates/worldinterface-runtime/src/flow.rs",
+    "disposition": "retain-align",
+    "target": "runtime Flow coordinator and node executor",
+    "rationale": "WIP-07 shared Direct/Flow plan submission, AQ atomic children, binding reconciliation, current boundary authority and domain completion",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/flow.rs::::struct:FlowPayload",
+    "disposition": "retain-align",
+    "target": "runtime Flow coordinator and node executor",
+    "rationale": "WIP-07 shared Direct/Flow plan submission, AQ atomic children, binding reconciliation, current boundary authority and domain completion",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/flow.rs::::struct:PlanService",
+    "disposition": "retain-align",
+    "target": "runtime Flow coordinator and node executor",
+    "rationale": "WIP-07 shared Direct/Flow plan submission, AQ atomic children, binding reconciliation, current boundary authority and domain completion",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/flow.rs::::trait:PlanConfiguration",
+    "disposition": "retain-align",
+    "target": "runtime Flow coordinator and node executor",
+    "rationale": "WIP-07 shared Direct/Flow plan submission, AQ atomic children, binding reconciliation, current boundary authority and domain completion",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/flow_coordinator.rs::::source-module:crates/worldinterface-runtime/src/flow_coordinator.rs",
+    "disposition": "retain-align",
+    "target": "runtime Flow coordinator and node executor",
+    "rationale": "WIP-07 shared Direct/Flow plan submission, AQ atomic children, binding reconciliation, current boundary authority and domain completion",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/flow_node.rs::::source-module:crates/worldinterface-runtime/src/flow_node.rs",
+    "disposition": "retain-align",
+    "target": "runtime Flow coordinator and node executor",
+    "rationale": "WIP-07 shared Direct/Flow plan submission, AQ atomic children, binding reconciliation, current boundary authority and domain completion",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/flow_node.rs::::struct:FlowAttemptHandler",
+    "disposition": "retain-align",
+    "target": "runtime Flow coordinator and node executor",
+    "rationale": "WIP-07 shared Direct/Flow plan submission, AQ atomic children, binding reconciliation, current boundary authority and domain completion",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/lib.rs::::module:flow",
+    "disposition": "retain-align",
+    "target": "runtime Flow coordinator and node executor",
+    "rationale": "WIP-07 shared Direct/Flow plan submission, AQ atomic children, binding reconciliation, current boundary authority and domain completion",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/lib.rs::::module:flow_coordinator",
+    "disposition": "retain-align",
+    "target": "runtime Flow coordinator and node executor",
+    "rationale": "WIP-07 shared Direct/Flow plan submission, AQ atomic children, binding reconciliation, current boundary authority and domain completion",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/lib.rs::::module:flow_node",
+    "disposition": "retain-align",
+    "target": "runtime Flow coordinator and node executor",
+    "rationale": "WIP-07 shared Direct/Flow plan submission, AQ atomic children, binding reconciliation, current boundary authority and domain completion",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/effect_service.rs::::trait:PersistedEffectFixture",
+    "disposition": "retain-align",
+    "target": "Flow runtime and persistence conformance evidence",
+    "rationale": "WIP-07 executable admission, transactional child, replay, authority, lifecycle and crash evidence; retained independently of legacy connector deletion",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/executor_aq_contract.rs::::struct:At",
+    "disposition": "retain-align",
+    "target": "Flow runtime and persistence conformance evidence",
+    "rationale": "WIP-07 executable admission, transactional child, replay, authority, lifecycle and crash evidence; retained independently of legacy connector deletion",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/flow.rs::::module:child_guard",
+    "disposition": "retain-align",
+    "target": "Flow runtime and persistence conformance evidence",
+    "rationale": "WIP-07 executable admission, transactional child, replay, authority, lifecycle and crash evidence; retained independently of legacy connector deletion",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/flow.rs::::module:support",
+    "disposition": "retain-align",
+    "target": "Flow runtime and persistence conformance evidence",
+    "rationale": "WIP-07 executable admission, transactional child, replay, authority, lifecycle and crash evidence; retained independently of legacy connector deletion",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/flow.rs::::source-module:crates/worldinterface-runtime/tests/flow.rs",
+    "disposition": "retain-align",
+    "target": "Flow runtime and persistence conformance evidence",
+    "rationale": "WIP-07 executable admission, transactional child, replay, authority, lifecycle and crash evidence; retained independently of legacy connector deletion",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/flow.rs::::struct:Auth",
+    "disposition": "retain-align",
+    "target": "Flow runtime and persistence conformance evidence",
+    "rationale": "WIP-07 executable admission, transactional child, replay, authority, lifecycle and crash evidence; retained independently of legacy connector deletion",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/flow.rs::::struct:Config",
+    "disposition": "retain-align",
+    "target": "Flow runtime and persistence conformance evidence",
+    "rationale": "WIP-07 executable admission, transactional child, replay, authority, lifecycle and crash evidence; retained independently of legacy connector deletion",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/flow.rs::::struct:Fixture",
+    "disposition": "retain-align",
+    "target": "Flow runtime and persistence conformance evidence",
+    "rationale": "WIP-07 executable admission, transactional child, replay, authority, lifecycle and crash evidence; retained independently of legacy connector deletion",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/flow.rs::::struct:PretendNodes",
+    "disposition": "retain-align",
+    "target": "Flow runtime and persistence conformance evidence",
+    "rationale": "WIP-07 executable admission, transactional child, replay, authority, lifecycle and crash evidence; retained independently of legacy connector deletion",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/flow.rs::::struct:Resolver",
+    "disposition": "retain-align",
+    "target": "Flow runtime and persistence conformance evidence",
+    "rationale": "WIP-07 executable admission, transactional child, replay, authority, lifecycle and crash evidence; retained independently of legacy connector deletion",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/flow.rs::flow_cancellation_after_start_preserves_external_uncertainty::struct:Release",
+    "disposition": "retain-align",
+    "target": "Flow runtime and persistence conformance evidence",
+    "rationale": "WIP-07 executable admission, transactional child, replay, authority, lifecycle and crash evidence; retained independently of legacy connector deletion",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/flow.rs::support::module:connectors",
+    "disposition": "retain-align",
+    "target": "Flow runtime and persistence conformance evidence",
+    "rationale": "WIP-07 executable admission, transactional child, replay, authority, lifecycle and crash evidence; retained independently of legacy connector deletion",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/flow.rs::support::module:spi_harness",
+    "disposition": "retain-align",
+    "target": "Flow runtime and persistence conformance evidence",
+    "rationale": "WIP-07 executable admission, transactional child, replay, authority, lifecycle and crash evidence; retained independently of legacy connector deletion",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/flow_crash.rs::::module:child_guard",
+    "disposition": "retain-align",
+    "target": "Flow runtime and persistence conformance evidence",
+    "rationale": "WIP-07 executable admission, transactional child, replay, authority, lifecycle and crash evidence; retained independently of legacy connector deletion",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/flow_crash.rs::::module:support",
+    "disposition": "retain-align",
+    "target": "Flow runtime and persistence conformance evidence",
+    "rationale": "WIP-07 executable admission, transactional child, replay, authority, lifecycle and crash evidence; retained independently of legacy connector deletion",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/flow_crash.rs::::source-module:crates/worldinterface-runtime/tests/flow_crash.rs",
+    "disposition": "retain-align",
+    "target": "Flow runtime and persistence conformance evidence",
+    "rationale": "WIP-07 executable admission, transactional child, replay, authority, lifecycle and crash evidence; retained independently of legacy connector deletion",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/flow_crash.rs::::struct:Clock",
+    "disposition": "retain-align",
+    "target": "Flow runtime and persistence conformance evidence",
+    "rationale": "WIP-07 executable admission, transactional child, replay, authority, lifecycle and crash evidence; retained independently of legacy connector deletion",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/flow_crash.rs::::struct:CrashWriter",
+    "disposition": "retain-align",
+    "target": "Flow runtime and persistence conformance evidence",
+    "rationale": "WIP-07 executable admission, transactional child, replay, authority, lifecycle and crash evidence; retained independently of legacy connector deletion",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/flow_crash.rs::support::module:connectors",
+    "disposition": "retain-align",
+    "target": "Flow runtime and persistence conformance evidence",
+    "rationale": "WIP-07 executable admission, transactional child, replay, authority, lifecycle and crash evidence; retained independently of legacy connector deletion",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/flow_crash.rs::support::module:spi_harness",
+    "disposition": "retain-align",
+    "target": "Flow runtime and persistence conformance evidence",
+    "rationale": "WIP-07 executable admission, transactional child, replay, authority, lifecycle and crash evidence; retained independently of legacy connector deletion",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/flow.rs::::struct:DeniedArtifacts",
+    "disposition": "retain-align",
+    "target": "Flow artifact authorization conformance evidence",
+    "rationale": "WIP-07 host read authorization rejects same-tenant denied artifacts at submission, execution and inspection without connector invocation",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/effect.rs::::struct:EffectOwner",
+    "disposition": "retain-align",
+    "target": "runtime Flow coordinator and node executor",
+    "rationale": "WIP-07 review remediation: immutable effect ownership, serialized Flow dispatch fences and regression fixtures; retain for independent exact-head review",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/flow.rs::::struct:FlowDispatchGuard",
+    "disposition": "retain-align",
+    "target": "runtime Flow coordinator and node executor",
+    "rationale": "WIP-07 review remediation: immutable effect ownership, serialized Flow dispatch fences and regression fixtures; retain for independent exact-head review",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/flow.rs::::struct:FinishGate",
+    "disposition": "retain-align",
+    "target": "runtime Flow coordinator and node executor",
+    "rationale": "WIP-07 review remediation: immutable effect ownership, serialized Flow dispatch fences and regression fixtures; retain for independent exact-head review",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/flow.rs::::struct:InvalidEvidence",
+    "disposition": "retain-align",
+    "target": "runtime Flow coordinator and node executor",
+    "rationale": "WIP-07 review remediation: immutable effect ownership, serialized Flow dispatch fences and regression fixtures; retain for independent exact-head review",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/flow.rs::::struct:Latch",
+    "disposition": "retain-align",
+    "target": "runtime Flow coordinator and node executor",
+    "rationale": "WIP-07 review remediation: immutable effect ownership, serialized Flow dispatch fences and regression fixtures; retain for independent exact-head review",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/flow.rs::::struct:SessionAuth",
+    "disposition": "retain-align",
+    "target": "runtime Flow coordinator and node executor",
+    "rationale": "WIP-07 review remediation: immutable effect ownership, serialized Flow dispatch fences and regression fixtures; retain for independent exact-head review",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/flow_crash.rs::::struct:Noop",
+    "disposition": "retain-align",
+    "target": "runtime Flow coordinator and node executor",
+    "rationale": "WIP-07 review remediation: immutable effect ownership, serialized Flow dispatch fences and regression fixtures; retain for independent exact-head review",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/flow.rs::::enum:FlowCapacity",
+    "disposition": "retain-align",
+    "target": "runtime Flow coordinator and node executor",
+    "rationale": "WIP-07 F-020/F-022 remediation: typed validation and retry boundaries, production Direct capacity and recovery evidence; retain for independent review",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/flow.rs::::struct:FlowIntegrity",
+    "disposition": "retain-align",
+    "target": "runtime Flow coordinator and node executor",
+    "rationale": "WIP-07 F-020/F-022 remediation: typed validation and retry boundaries, production Direct capacity and recovery evidence; retain for independent review",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/flow.rs::::struct:FlowRevisionConflict",
+    "disposition": "retain-align",
+    "target": "runtime Flow coordinator and node executor",
+    "rationale": "WIP-07 F-020/F-022 remediation: typed validation and retry boundaries, production Direct capacity and recovery evidence; retain for independent review",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/flow.rs::::struct:FlowRejected",
+    "disposition": "retain-align",
+    "target": "runtime Flow coordinator and node executor",
+    "rationale": "WIP-07 F-020/F-022 remediation: typed validation and retry boundaries, production Direct capacity and recovery evidence; retain for independent review",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/flow.rs::::struct:CapacityEvidence",
+    "disposition": "retain-align",
+    "target": "runtime Flow coordinator and node executor",
+    "rationale": "WIP-07 F-020/F-022 remediation: typed validation and retry boundaries, production Direct capacity and recovery evidence; retain for independent review",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/flow.rs::restore_pinned_plan::type:Plans",
+    "disposition": "retain-align",
+    "target": "foundation immutable Flow plan validation",
+    "rationale": "WIP-07 F-020: bounded memoization of sealed compiler results for exact bytes, expected hash and complete pins; no run progress or authorization state; retain for independent review",
+    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
   }
 ]

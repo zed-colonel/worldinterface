@@ -1,9 +1,10 @@
 # WI-05 integration candidate
 
-This slice binds effect completion to the current AQ source at implementation
+This slice originally bound effect completion to the historical AQ baseline implementation
 `29e096c4f06985d1a9bd9d5fe5a3a6a5db8a6860`, tree
 `1c0c85dd700bd9d0c75de223dada911ffeadbb5b`, and conformance revision 16.
-The runtime uses published crates.io AQ =0.2.0; the adopted runtime graph check
+The current runtime uses published crates.io AQ =0.3.0 under the WIP-07 operator
+instruction; the adopted runtime graph check
 verifies the published checksums. The selective takeover is recorded in [WIP-04](WIP-04.md).
 
 AQ-ADR-012 at that pin specifies that an interrupted accepted attempt counts

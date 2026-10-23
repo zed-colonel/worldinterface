@@ -10,11 +10,11 @@ pub trait ArtifactAuthorization {
     fn authorize_read(&self, context: &Self::AuthenticatedContext, artifact: &ArtifactRef) -> bool;
 }
 
-pub struct ArtifactResolver<'a, A> {
+pub struct ArtifactResolver<'a, A: ?Sized> {
     store: &'a StoreRoot,
     authorization: &'a A,
 }
-impl<'a, A: ArtifactAuthorization> ArtifactResolver<'a, A> {
+impl<'a, A: ArtifactAuthorization + ?Sized> ArtifactResolver<'a, A> {
     pub fn new(store: &'a StoreRoot, authorization: &'a A) -> Self {
         Self { store, authorization }
     }
@@ -24,7 +24,7 @@ impl<'a, A: ArtifactAuthorization> ArtifactResolver<'a, A> {
         artifact: &ArtifactRef,
     ) -> Result<Vec<u8>> {
         if !self.authorization.authorize_read(context, artifact) {
-            return Err("artifact access denied".into());
+            return Err(crate::flow::rejected("artifact access denied"));
         }
         self.store.read_artifact(artifact)
     }

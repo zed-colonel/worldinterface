@@ -29,7 +29,7 @@
     "AB-WI-023"
   ],
   "closing_item": "WIP-07",
-  "status": "open",
+  "status": "closed",
   "effective_on": "reviewed-merge-with-adopted-checks",
   "historical_evidence": [],
   "requirement_bindings": [
