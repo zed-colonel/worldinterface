@@ -323,7 +323,7 @@ pub enum FlowCommand {
         #[serde(default, skip_serializing_if = "Option::is_none")]
         result: Option<NodeResult>,
         #[serde(default, skip_serializing_if = "Option::is_none")]
-        next_wait: Option<WaitCheckpoint>,
+        next_wait: Option<Box<WaitCheckpoint>>,
         #[serde(default, skip_serializing_if = "Option::is_none")]
         finish: Option<(FlowOutcome, BTreeMap<OpaqueRef, ArtifactRef>)>,
     },
@@ -446,7 +446,7 @@ fn reduce(old: &FlowState, tenant: &OpaqueRef, cmd: &FlowCommand) -> Result<Flow
             {
                 return Err(invalid("invalid replacement wait"));
             }
-            s.runs.get_mut(run).unwrap().waits.insert(wait.node.clone(), wait.clone());
+            s.runs.get_mut(run).unwrap().waits.insert(wait.node.clone(), *wait.clone());
         }
         s.runs.get_mut(run).unwrap().accepted_resumes.insert(key, acceptance.clone());
         s.revision = old.revision + 1;
@@ -994,8 +994,8 @@ impl StoreRoot {
                 }
             }
             FlowCommand::BindChild { binding, .. } => check(&binding.request)?,
-            FlowCommand::PrepareWait { wait, .. }
-            | FlowCommand::AcceptResume { next_wait: Some(wait), .. } => check(&wait.artifact)?,
+            FlowCommand::PrepareWait { wait, .. } => check(&wait.artifact)?,
+            FlowCommand::AcceptResume { next_wait: Some(wait), .. } => check(&wait.artifact)?,
             FlowCommand::RecordNodeResult { result, .. }
             | FlowCommand::AcceptResume { result: Some(result), .. } => {
                 for a in result.outputs.values() {

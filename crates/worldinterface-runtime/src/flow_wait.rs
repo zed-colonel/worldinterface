@@ -355,7 +355,7 @@ pub(crate) fn execute(
             node: Some(n.id.clone()),
             acceptance: a,
             result,
-            next_wait,
+            next_wait: next_wait.map(Box::new),
             finish: None,
         },
     )?;

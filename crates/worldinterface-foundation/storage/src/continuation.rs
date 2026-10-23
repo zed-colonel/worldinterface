@@ -78,16 +78,18 @@ pub(crate) fn insert(c: &Connection, event: &DurableEvent) -> Result<()> {
     Ok(())
 }
 fn get(c: &Connection, id: &OpaqueRef) -> Result<SignalObligation> {
-    let (e, r, d, sequence, rejection): (
-        Vec<u8>,
-        Option<Vec<u8>>,
-        Option<String>,
-        Option<u64>,
-        Option<String>,
-    ) = c.query_row(
+    let (e, r, d, sequence, rejection) = c.query_row(
         "SELECT event,request,digest,sequence,rejection FROM signal_outbox WHERE id=?",
         [id.as_str()],
-        |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?, r.get(3)?, r.get(4)?)),
+        |r| {
+            Ok((
+                r.get::<_, Vec<u8>>(0)?,
+                r.get::<_, Option<Vec<u8>>>(1)?,
+                r.get::<_, Option<String>>(2)?,
+                r.get::<_, Option<u64>>(3)?,
+                r.get::<_, Option<String>>(4)?,
+            ))
+        },
     )?;
     Ok(SignalObligation {
         event: decode(&e)?,

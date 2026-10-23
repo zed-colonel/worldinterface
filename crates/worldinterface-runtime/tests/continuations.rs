@@ -205,6 +205,17 @@ fn worker_intake_conflicts_scope_and_sequence_are_durable() {
     .is_err());
     f.bundle.wi().repository(StoreKind::Fabric).unwrap().rebuild().unwrap();
     assert_eq!(f.bundle.wi().pending_signals(StoreKind::Fabric, None, 10).unwrap().len(), 1);
+    let pending = f.bundle.wi().signal_obligation(StoreKind::Fabric, &id).unwrap();
+    let source = f._temp.path().join("bundle");
+    let backup = f._temp.path().join("pending-backup");
+    let restored = f._temp.path().join("pending-restored");
+    drop(f.bundle);
+    worldinterface_runtime::storage::StoreBundle::backup(&source, &backup).unwrap();
+    worldinterface_runtime::storage::StoreBundle::restore(&backup, &restored).unwrap();
+    let restored = worldinterface_runtime::storage::StoreBundle::open(&restored).unwrap();
+    assert_eq!(restored.wi().signal_obligation(StoreKind::Fabric, &id).unwrap(), pending);
+    restored.wi().repository(StoreKind::Fabric).unwrap().rebuild().unwrap();
+    assert_eq!(restored.wi().signal_obligation(StoreKind::Fabric, &id).unwrap(), pending);
 }
 
 #[tokio::test]
