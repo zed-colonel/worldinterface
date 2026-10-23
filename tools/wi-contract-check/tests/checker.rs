@@ -405,8 +405,11 @@ fn wi02_drafts_require_acceptance_and_maturity() {
 }
 fn runtime_receipt() -> Value {
     let m = read(&root().join("conformance/wi-fabric-2/manifest.yaml")).unwrap();
+    let release = read(&root().join("contracts/aq-integration-target.json")).unwrap()
+        ["runtime_release"]
+        .clone();
     let artifact = json!({"path":"synthetic.json","sha256":"a".repeat(64)});
-    json!({"producer":"synthetic-producer","executable_case_sha256":"e".repeat(64),"integration_fixture_sha256":m["integration_fixture_sha256"],"resolved_packages_sha256":"f".repeat(64),"schema_version":1,"kind":"runtime-conformance","phase":"candidate","case_id":"WI-SKELETON-W1","status":"passed","consumer_revision":"b".repeat(40),"upstream":m["upstream_target"],"upstream_build_receipt":artifact,"source_record_sha256":"c".repeat(64),"fixture_manifest_sha256":m["fixture_manifest_sha256"],"toolchain":"synthetic checker fixture only","environment_sha256":"d".repeat(64),"test_run_id":"synthetic-checker-test","command":{"argv":["synthetic"],"exit_code":0,"log":artifact},"results":[artifact],"independent_review":{"reviewer":"synthetic-reviewer","receipt":artifact}})
+    json!({"producer":"synthetic-producer","executable_case_sha256":"e".repeat(64),"integration_fixture_sha256":m["integration_fixture_sha256"],"resolved_packages_sha256":"f".repeat(64),"schema_version":1,"kind":"runtime-conformance","phase":"candidate","case_id":"WI-SKELETON-W1","status":"passed","consumer_revision":"b".repeat(40),"upstream":m["upstream_target"],"runtime_release":release,"upstream_build_receipt":artifact,"source_record_sha256":"c".repeat(64),"fixture_manifest_sha256":m["fixture_manifest_sha256"],"toolchain":"synthetic checker fixture only","environment_sha256":"d".repeat(64),"test_run_id":"synthetic-checker-test","command":{"argv":["synthetic"],"exit_code":0,"log":artifact},"results":[artifact],"independent_review":{"reviewer":"synthetic-reviewer","receipt":artifact}})
 }
 #[test]
 fn execution_schema_requires_each_identity_and_result() {
@@ -439,7 +442,7 @@ fn runtime_receipt_rejects_planned_cases_and_historical_upstream() {
     assert!(evidence::runtime(t.path(), &hist, t.path())
         .unwrap_err()
         .to_string()
-        .contains("historical"));
+        .contains("imported target"));
 }
 #[test]
 fn publication_preparation_is_not_completion() {
