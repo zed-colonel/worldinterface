@@ -1456,6 +1456,13 @@ async fn damaged_run_is_quarantined_while_another_tenant_completes() {
     let d = branching();
     service.activate_flow_version(&(), d.clone(), None).unwrap();
     let good = service.submit_flow(&(), &d.id, submission, &mut q).unwrap();
+    // Resume authorization uses the host's current facts for the healthy tenant.
+    // The damaged original run still fails its pinned-plan check independently.
+    q.shutdown().unwrap();
+    let mut handler = f.handler();
+    handler.effect.evidence = evidence2.clone();
+    let mut q = QueueEngine::bootstrap(&f.bundle, handler, host()).unwrap();
+
     for _ in 0..2000 {
         let _ = q.tick().await.unwrap();
         if f.bundle.wi().flow_snapshot(&auth.0).unwrap().runs[&good].outcome.is_some() {
@@ -1611,7 +1618,16 @@ async fn wi_proposal_aq_commit_and_binding_process_death_recover_stable_children
         assert_eq!(after.bindings.len(), 3);
         assert_eq!(f.connector.commits(), 3);
         assert_eq!(f.connector.invocation_calls.load(std::sync::atomic::Ordering::SeqCst), 3);
-        assert_eq!(q.engine().projection().signals().statistics().retained, 0);
+        assert_eq!(q.engine().projection().signals().statistics().retained, 3);
+        let obligations = f
+            .bundle
+            .wi()
+            .signal_obligations(worldinterface_storage::StoreKind::Flow, None, 10)
+            .unwrap();
+        assert_eq!(obligations.len(), 3);
+        assert!(obligations.iter().all(|o| o.event.route.kind
+            == worldinterface_domain::continuation::EventKind::FlowChild
+            && o.sequence.is_some()));
         q.shutdown().unwrap();
     }
 }
