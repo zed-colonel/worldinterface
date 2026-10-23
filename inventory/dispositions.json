@@ -4081,13 +4081,6 @@
     "rationale": "Pure reducer and named internal queue ports; no production adapters."
   },
   {
-    "id": "crates/worldinterface-foundation/domain/src/ports.rs::::trait:QueueWakePort",
-    "disposition": "retain-align",
-    "target": "worldinterface-domain",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Pure reducer and named internal queue ports; no production adapters."
-  },
-  {
     "id": "crates/worldinterface-foundation/domain/src/ports.rs::::trait:TestEffectAdmissionPort",
     "disposition": "retain-align",
     "target": "egress-domain",
@@ -4355,13 +4348,6 @@
   },
   {
     "id": "crates/worldinterface-foundation/ingress/tests/lifecycle.rs::::struct:Authority",
-    "disposition": "test-evidence",
-    "target": "ingress-domain",
-    "rationale": "Independent WI-03 transaction, transport and delivery conformance",
-    "source": "implementation plan WI-03, \u00a7\u00a75.4, 8.3, 9.5; full ADR-012/013 approvals"
-  },
-  {
-    "id": "crates/worldinterface-foundation/ingress/tests/lifecycle.rs::::struct:MockWake",
     "disposition": "test-evidence",
     "target": "ingress-domain",
     "rationale": "Independent WI-03 transaction, transport and delivery conformance",
@@ -9751,35 +9737,7 @@
     "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
   },
   {
-    "id": "crates/worldinterface-runtime/tests/flow.rs::::struct:Auth",
-    "disposition": "retain-align",
-    "target": "Flow runtime and persistence conformance evidence",
-    "rationale": "WIP-07 executable admission, transactional child, replay, authority, lifecycle and crash evidence; retained independently of legacy connector deletion",
-    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
-  },
-  {
-    "id": "crates/worldinterface-runtime/tests/flow.rs::::struct:Config",
-    "disposition": "retain-align",
-    "target": "Flow runtime and persistence conformance evidence",
-    "rationale": "WIP-07 executable admission, transactional child, replay, authority, lifecycle and crash evidence; retained independently of legacy connector deletion",
-    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
-  },
-  {
-    "id": "crates/worldinterface-runtime/tests/flow.rs::::struct:Fixture",
-    "disposition": "retain-align",
-    "target": "Flow runtime and persistence conformance evidence",
-    "rationale": "WIP-07 executable admission, transactional child, replay, authority, lifecycle and crash evidence; retained independently of legacy connector deletion",
-    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
-  },
-  {
     "id": "crates/worldinterface-runtime/tests/flow.rs::::struct:PretendNodes",
-    "disposition": "retain-align",
-    "target": "Flow runtime and persistence conformance evidence",
-    "rationale": "WIP-07 executable admission, transactional child, replay, authority, lifecycle and crash evidence; retained independently of legacy connector deletion",
-    "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
-  },
-  {
-    "id": "crates/worldinterface-runtime/tests/flow.rs::::struct:Resolver",
     "disposition": "retain-align",
     "target": "Flow runtime and persistence conformance evidence",
     "rationale": "WIP-07 executable admission, transactional child, replay, authority, lifecycle and crash evidence; retained independently of legacy connector deletion",
@@ -9952,5 +9910,327 @@
     "target": "foundation immutable Flow plan validation",
     "rationale": "WIP-07 F-020: bounded memoization of sealed compiler results for exact bytes, expected hash and complete pins; no run progress or authorization state; retain for independent review",
     "source": "WI-WORKER-PROOF-1 WIP-07; WI-ADR-014; docs/work-items/WIP-07.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/continuation.rs::::enum:EventKind",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 durable event/outbox and Flow continuation interfaces; AQ-free foundation retains owner journals and runtime maps to AQ 0.3.0.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/continuation.rs::::source-module:crates/worldinterface-foundation/domain/src/continuation.rs",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 durable event/outbox and Flow continuation interfaces; AQ-free foundation retains owner journals and runtime maps to AQ 0.3.0.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/continuation.rs::::struct:DurableEvent",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 durable event/outbox and Flow continuation interfaces; AQ-free foundation retains owner journals and runtime maps to AQ 0.3.0.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/continuation.rs::::struct:EventRoute",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 durable event/outbox and Flow continuation interfaces; AQ-free foundation retains owner journals and runtime maps to AQ 0.3.0.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/continuation.rs::::struct:ResumeAcceptance",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 durable event/outbox and Flow continuation interfaces; AQ-free foundation retains owner journals and runtime maps to AQ 0.3.0.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/continuation.rs::::struct:SignalObligation",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 durable event/outbox and Flow continuation interfaces; AQ-free foundation retains owner journals and runtime maps to AQ 0.3.0.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/continuation.rs::::struct:WaitCheckpoint",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 durable event/outbox and Flow continuation interfaces; AQ-free foundation retains owner journals and runtime maps to AQ 0.3.0.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/lib.rs::::module:continuation",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 durable event/outbox and Flow continuation interfaces; AQ-free foundation retains owner journals and runtime maps to AQ 0.3.0.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/continuation.rs::::enum:Command",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 durable event/outbox and Flow continuation interfaces; AQ-free foundation retains owner journals and runtime maps to AQ 0.3.0.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/continuation.rs::::module:tests@10d1b0eff34c",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 durable event/outbox and Flow continuation interfaces; AQ-free foundation retains owner journals and runtime maps to AQ 0.3.0.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/continuation.rs::::source-module:crates/worldinterface-foundation/storage/src/continuation.rs",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 durable event/outbox and Flow continuation interfaces; AQ-free foundation retains owner journals and runtime maps to AQ 0.3.0.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/lib.rs::::module:continuation",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 durable event/outbox and Flow continuation interfaces; AQ-free foundation retains owner journals and runtime maps to AQ 0.3.0.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/tests/continuation.rs::::source-module:crates/worldinterface-foundation/storage/tests/continuation.rs",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 durable event/outbox and Flow continuation interfaces; AQ-free foundation retains owner journals and runtime maps to AQ 0.3.0.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/continuation.rs::::source-module:crates/worldinterface-runtime/src/continuation.rs",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 durable event/outbox and Flow continuation interfaces; AQ-free foundation retains owner journals and runtime maps to AQ 0.3.0.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/continuation.rs::::struct:EventIntake",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 durable event/outbox and Flow continuation interfaces; AQ-free foundation retains owner journals and runtime maps to AQ 0.3.0.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/continuation.rs::::struct:SignalDeliveryStatus",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 durable event/outbox and Flow continuation interfaces; AQ-free foundation retains owner journals and runtime maps to AQ 0.3.0.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/continuation.rs::::struct:SignalScan",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 durable event/outbox and Flow continuation interfaces; AQ-free foundation retains owner journals and runtime maps to AQ 0.3.0.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/continuation.rs::::trait:EventAuthorization",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 durable event/outbox and Flow continuation interfaces; AQ-free foundation retains owner journals and runtime maps to AQ 0.3.0.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/flow_wait.rs::::source-module:crates/worldinterface-runtime/src/flow_wait.rs",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 durable event/outbox and Flow continuation interfaces; AQ-free foundation retains owner journals and runtime maps to AQ 0.3.0.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/inspection.rs::::struct:ContinuationInspector",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 durable event/outbox and Flow continuation interfaces; AQ-free foundation retains owner journals and runtime maps to AQ 0.3.0.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/inspection.rs::::struct:ContinuationView",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 durable event/outbox and Flow continuation interfaces; AQ-free foundation retains owner journals and runtime maps to AQ 0.3.0.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/lib.rs::::module:continuation",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 durable event/outbox and Flow continuation interfaces; AQ-free foundation retains owner journals and runtime maps to AQ 0.3.0.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/lib.rs::::module:flow_wait",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 durable event/outbox and Flow continuation interfaces; AQ-free foundation retains owner journals and runtime maps to AQ 0.3.0.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/continuation_crash.rs::::module:child_guard",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 durable event/outbox and Flow continuation interfaces; AQ-free foundation retains owner journals and runtime maps to AQ 0.3.0.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/continuation_crash.rs::::module:support",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 durable event/outbox and Flow continuation interfaces; AQ-free foundation retains owner journals and runtime maps to AQ 0.3.0.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/continuation_crash.rs::::source-module:crates/worldinterface-runtime/tests/continuation_crash.rs",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 durable event/outbox and Flow continuation interfaces; AQ-free foundation retains owner journals and runtime maps to AQ 0.3.0.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/continuation_crash.rs::::struct:BeforeCommit",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 durable event/outbox and Flow continuation interfaces; AQ-free foundation retains owner journals and runtime maps to AQ 0.3.0.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/continuation_crash.rs::support::module:connectors",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 durable event/outbox and Flow continuation interfaces; AQ-free foundation retains owner journals and runtime maps to AQ 0.3.0.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/continuation_crash.rs::support::module:continuation_fixture",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 durable event/outbox and Flow continuation interfaces; AQ-free foundation retains owner journals and runtime maps to AQ 0.3.0.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/continuation_crash.rs::support::module:flow_fixture",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 durable event/outbox and Flow continuation interfaces; AQ-free foundation retains owner journals and runtime maps to AQ 0.3.0.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/continuation_crash.rs::support::module:spi_harness",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 durable event/outbox and Flow continuation interfaces; AQ-free foundation retains owner journals and runtime maps to AQ 0.3.0.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/continuations.rs::::module:support",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 durable event/outbox and Flow continuation interfaces; AQ-free foundation retains owner journals and runtime maps to AQ 0.3.0.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/continuations.rs::::source-module:crates/worldinterface-runtime/tests/continuations.rs",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 durable event/outbox and Flow continuation interfaces; AQ-free foundation retains owner journals and runtime maps to AQ 0.3.0.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/continuations.rs::::struct:SuspendWait",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 durable event/outbox and Flow continuation interfaces; AQ-free foundation retains owner journals and runtime maps to AQ 0.3.0.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/continuations.rs::support::module:connectors",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 durable event/outbox and Flow continuation interfaces; AQ-free foundation retains owner journals and runtime maps to AQ 0.3.0.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/continuations.rs::support::module:continuation_fixture",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 durable event/outbox and Flow continuation interfaces; AQ-free foundation retains owner journals and runtime maps to AQ 0.3.0.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/continuations.rs::support::module:flow_fixture",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 durable event/outbox and Flow continuation interfaces; AQ-free foundation retains owner journals and runtime maps to AQ 0.3.0.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/continuations.rs::support::module:spi_harness",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 durable event/outbox and Flow continuation interfaces; AQ-free foundation retains owner journals and runtime maps to AQ 0.3.0.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/flow.rs::support::module:flow_fixture",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 durable event/outbox and Flow continuation interfaces; AQ-free foundation retains owner journals and runtime maps to AQ 0.3.0.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/continuation_fixture.rs::::source-module:crates/worldinterface-runtime/tests/support/continuation_fixture.rs",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 durable event/outbox and Flow continuation interfaces; AQ-free foundation retains owner journals and runtime maps to AQ 0.3.0.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/continuation_fixture.rs::::struct:Policy",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 durable event/outbox and Flow continuation interfaces; AQ-free foundation retains owner journals and runtime maps to AQ 0.3.0.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/flow_fixture.rs::::source-module:crates/worldinterface-runtime/tests/support/flow_fixture.rs",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 durable event/outbox and Flow continuation interfaces; AQ-free foundation retains owner journals and runtime maps to AQ 0.3.0.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/flow_fixture.rs::::struct:Auth",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 durable event/outbox and Flow continuation interfaces; AQ-free foundation retains owner journals and runtime maps to AQ 0.3.0.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/flow_fixture.rs::::struct:Config",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 durable event/outbox and Flow continuation interfaces; AQ-free foundation retains owner journals and runtime maps to AQ 0.3.0.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/flow_fixture.rs::::struct:Fixture",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 durable event/outbox and Flow continuation interfaces; AQ-free foundation retains owner journals and runtime maps to AQ 0.3.0.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/flow_fixture.rs::::struct:Resolver",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 durable event/outbox and Flow continuation interfaces; AQ-free foundation retains owner journals and runtime maps to AQ 0.3.0.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
   }
 ]

@@ -182,10 +182,15 @@ impl<A: Authentication, V: EvidenceAuthority, C: TrustedClock, P: PlanConfigurat
         if !std::ptr::eq(self.root, queue.wi()) {
             return Err("Flow queue bundle mismatch".into());
         }
-        if plan.document().body.nodes.iter().any(|n| {
-            matches!(n.operation, PlanOperation::Wait { .. } | PlanOperation::Timer { .. })
-        }) {
-            return Err("unsupported WIP-07 execution profile: wait/timer requires WIP-08".into());
+        for n in &plan.document().body.nodes {
+            if let PlanOperation::Wait { signal } = &n.operation {
+                if signal.tenant != *c.tenant()
+                    || signal.namespace.as_str() != worldinterface_domain::continuation::NAMESPACE
+                {
+                    return Err("foreign or unknown event route".into());
+                }
+                worldinterface_domain::continuation::EventKind::parse(signal.signal_kind.as_str())?;
+            }
         }
         let at = self.clock.now()?;
         let snapshot = verify_snapshot(self.root, self.evidence, c.tenant(), &submission, &at)?;
@@ -249,6 +254,9 @@ impl<A: Authentication, V: EvidenceAuthority, C: TrustedClock, P: PlanConfigurat
             cancel_requested: false,
             parent_run: None,
             bindings: BTreeMap::new(),
+            wait_cursors: BTreeMap::new(),
+            waits: BTreeMap::new(),
+            accepted_resumes: BTreeMap::new(),
             wakes_delivered: BTreeMap::new(),
             results: BTreeMap::new(),
             outcome: None,

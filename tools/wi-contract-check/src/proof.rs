@@ -402,6 +402,11 @@ fn coverage(root: &Path, id: &str) -> Result<(Vec<String>, BTreeSet<TestRef>)> {
     if let Some(names) = v["assigned_cases"].get(id) {
         add(path, RUNTIME, "worldinterface-runtime", serde_json::from_value(names.clone())?);
     }
+    let path = "conformance/wi-fabric-2/continuations/coverage.json";
+    let v = read(&root.join(path))?;
+    if let Some(names) = v["assigned_cases"].get(id) {
+        add(path, RUNTIME, "worldinterface-runtime", serde_json::from_value(names.clone())?);
+    }
     refs.sort();
     Ok((refs, tests))
 }
@@ -716,6 +721,7 @@ pub fn check(root: &Path) -> Result<Vec<Finding>> {
     findings.extend(validate_connectors(root, &tests)?);
     findings.extend(validate_flow(root, &tests)?);
     findings.extend(validate_flow_integration(root, &tests)?);
+    findings.extend(validate_continuations(root, &tests)?);
     Ok(findings)
 }
 
@@ -974,4 +980,79 @@ pub fn validate_flow_integration(root: &Path, tests: &TestIndex) -> Result<Vec<F
         }
     }
     Ok(findings)
+}
+
+/// Complete WIP-08 obligations with exact adopted, non-ignored test identities.
+pub fn validate_continuations(root: &Path, tests: &TestIndex) -> Result<Vec<Finding>> {
+    let path = "conformance/wi-fabric-2/continuations/coverage.json";
+    let v = read(&root.join(path))?;
+    let obligations: BTreeMap<String, Vec<TestRef>> =
+        serde_json::from_value(v["required_obligations"].clone())?;
+    let assigned: BTreeMap<String, Vec<String>> =
+        serde_json::from_value(v["assigned_cases"].clone())?;
+    let required = BTreeSet::from([
+        "source-outbox-atomicity",
+        "early-late-duplicate-fanout",
+        "stable-admission-backpressure",
+        "cursor-and-generation",
+        "physical-attempt-release",
+        "resume-idempotency",
+        "races",
+        "process-death-and-paired-restore",
+        "projection-replay",
+        "current-authorization",
+    ]);
+    let mut f = Vec::new();
+    if v["version"] != 1
+        || v["scope"] != "wi/WI-08/integration:embedded-proof"
+        || v["upstream_conformance"] != false
+        || v["runtime_profile"] != "aq-0.3.0-durable-continuations-1"
+        || obligations.keys().map(String::as_str).collect::<BTreeSet<_>>() != required
+        || assigned.keys().map(String::as_str).collect::<BTreeSet<_>>()
+            != BTreeSet::from(["AB-WI-008", "AB-WI-011"])
+    {
+        f.push(finding(
+            "PROOF-WI08",
+            path,
+            "scope",
+            "WIP-08",
+            "complete continuation obligations and exact owned cases required",
+        ));
+    }
+    for (name, refs) in &obligations {
+        if refs.is_empty()
+            || refs.iter().collect::<BTreeSet<_>>().len() != refs.len()
+            || refs.iter().any(|t| {
+                !((t.manifest == RUNTIME && t.package == "worldinterface-runtime")
+                    || (t.manifest == FOUNDATION && t.package == "worldinterface-storage"))
+                    || tests.get(t) != Some(&1)
+            })
+        {
+            f.push(finding(
+                "PROOF-WI08",
+                path,
+                name,
+                "WIP-08",
+                "exact non-ignored adopted runtime/storage tests required",
+            ));
+        }
+    }
+    let fixtures = read(&root.join("conformance/wi-fabric-2/integration/fixtures.json"))?;
+    for (id, names) in assigned {
+        if names.is_empty()
+            || serde_json::to_value(&names)? != fixtures["cases"][&id]["required_tests"]
+            || names.iter().any(|n| {
+                !obligations.values().flatten().any(|t| t.test == *n && t.manifest == RUNTIME)
+            })
+        {
+            f.push(finding(
+                "PROOF-WI08",
+                path,
+                &id,
+                "WIP-08",
+                "case fixtures and continuation evidence must agree",
+            ));
+        }
+    }
+    Ok(f)
 }

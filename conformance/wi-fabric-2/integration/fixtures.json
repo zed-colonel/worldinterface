@@ -33,6 +33,21 @@
         "wrong_queue_store_cannot_acknowledge_or_discover"
       ]
     },
+    "AB-WI-005": {
+      "source_record_sha256": "c5ed591d6024a6ef7080edc36848ef60d0aca374f4c219030678b063c6533789",
+      "required_tests": [
+        "ab_wi_005_bounds_are_enforced_by_aq_admission_and_disposition",
+        "ab_wi_005_compound_commit_replay_is_all_or_none_with_stable_children",
+        "child_transaction_native_wal_process_death_cuts_replay_all_or_none",
+        "bounded_64_node_plan_commits_flat_children_and_rejects_65_before_admission",
+        "maximum_length_flow_identities_have_bounded_aq_and_effect_keys",
+        "wi_proposal_aq_commit_and_binding_process_death_recover_stable_children",
+        "sixty_four_boundary_nodes_reject_at_wi_plan_byte_bound_before_aq_admission",
+        "checkpoint_tail_and_wal_only_recovery_preserve_pending_flow_and_branch_receipts",
+        "flow_retained_count_rollback_replay_and_tampering",
+        "concurrent_flow_admissions_serialize_at_retained_capacity"
+      ]
+    },
     "AB-WI-006": {
       "source_record_sha256": "2eae5f9661b6c3a24b34cb44fb18fe41647f1c134542db129ba4acedab196f18",
       "required_tests": [
@@ -50,10 +65,52 @@
         "process_death_after_subscriber_storage_redelivers_same_id"
       ]
     },
+    "AB-WI-008": {
+      "source_record_sha256": "c6adcefbd069d8ded5a47f64e563429cdb677de0a4082c122a0f38b71d3beed7",
+      "required_tests": [
+        "ab_wi_008_early_late_duplicate_and_fanout_use_durable_records",
+        "provider_callback_commits_an_authoritative_record_and_outbox_without_waiter",
+        "worker_intake_conflicts_scope_and_sequence_are_durable",
+        "outbox_backpressure_retains_identity_and_pending_obligations",
+        "continuation_process_death_replays_source_signal_wait_and_resume_commits"
+      ]
+    },
     "AB-WI-009": {
       "source_record_sha256": "4b1907c6eb598efc348ba0390ac93da7626fa45deb5e3805ebd5d544e950f1ee",
       "required_tests": [
         "ab_wi_006_009_one_wait_and_strict_signal_cursor_across_restart"
+      ]
+    },
+    "AB-WI-010": {
+      "source_record_sha256": "4aef27823939c49b59856111146c1345c2a246a44a8c41c681ba573b294f0958",
+      "required_tests": [
+        "ab_wi_010_deadline_signal_orders_and_timeout_policies_survive_replay"
+      ]
+    },
+    "AB-WI-011": {
+      "source_record_sha256": "03f81152fcde241dbab356e1ec9051dae6acbe9db194892ca6c3c7c0c01f0d65",
+      "required_tests": [
+        "ab_wi_011_awaiting_releases_attempt_and_unrelated_work_progresses",
+        "eligibility_uses_signal_high_water_and_after_handled_advances_actual_sequence",
+        "signal_deadline_cancel_and_late_event_orders_preserve_committed_outcomes",
+        "early_control_wakes_reestablish_child_and_parent_waits",
+        "resume_redelivery_reproduces_result_and_conflicting_context_rejects",
+        "administrative_resume_reestablishes_wait_and_all_wake_forms_redeliver_idempotently",
+        "continuation_process_death_replays_source_signal_wait_and_resume_commits",
+        "current_authority_and_scoped_routes_are_required_at_every_wake",
+        "altered_checkpoint_cannot_authorize_wait_progress",
+        "fresh_generation_is_scoped_and_inherited_through_after_handled"
+      ]
+    },
+    "AB-WI-013": {
+      "source_record_sha256": "735b29144504e56f502c4c80366cba10b5c36ee82871491362a241fb78d4285c",
+      "required_tests": [
+        "ab_wi_013_required_detached_closure_cancel_and_mixed_runs",
+        "aq_success_without_wi_acceptance_cannot_complete_flow",
+        "flow_cancellation_after_start_preserves_external_uncertainty",
+        "cancellation_before_start_and_failed_node_redelivery_cannot_invoke",
+        "publication_failure_retries_durable_success_without_reinvocation",
+        "rejected_aq_cancel_does_not_mutate_flow_and_authorized_execution_continues"
       ]
     },
     "AB-WI-015": {
@@ -85,38 +142,6 @@
         "terminal_wait_capacity_recovers_from_journaled_generation",
         "previously_journaled_generation_wake_is_reused_without_migration_after_restart",
         "retired_wake_deadletters_without_replacement_after_restart"
-      ]
-    },
-    "AB-WI-005": {
-      "source_record_sha256": "c5ed591d6024a6ef7080edc36848ef60d0aca374f4c219030678b063c6533789",
-      "required_tests": [
-        "ab_wi_005_bounds_are_enforced_by_aq_admission_and_disposition",
-        "ab_wi_005_compound_commit_replay_is_all_or_none_with_stable_children",
-        "child_transaction_native_wal_process_death_cuts_replay_all_or_none",
-        "bounded_64_node_plan_commits_flat_children_and_rejects_65_before_admission",
-        "maximum_length_flow_identities_have_bounded_aq_and_effect_keys",
-        "wi_proposal_aq_commit_and_binding_process_death_recover_stable_children",
-        "sixty_four_boundary_nodes_reject_at_wi_plan_byte_bound_before_aq_admission",
-        "checkpoint_tail_and_wal_only_recovery_preserve_pending_flow_and_branch_receipts",
-        "flow_retained_count_rollback_replay_and_tampering",
-        "concurrent_flow_admissions_serialize_at_retained_capacity"
-      ]
-    },
-    "AB-WI-010": {
-      "source_record_sha256": "4aef27823939c49b59856111146c1345c2a246a44a8c41c681ba573b294f0958",
-      "required_tests": [
-        "ab_wi_010_deadline_signal_orders_and_timeout_policies_survive_replay"
-      ]
-    },
-    "AB-WI-013": {
-      "source_record_sha256": "735b29144504e56f502c4c80366cba10b5c36ee82871491362a241fb78d4285c",
-      "required_tests": [
-        "ab_wi_013_required_detached_closure_cancel_and_mixed_runs",
-        "aq_success_without_wi_acceptance_cannot_complete_flow",
-        "flow_cancellation_after_start_preserves_external_uncertainty",
-        "cancellation_before_start_and_failed_node_redelivery_cannot_invoke",
-        "publication_failure_retries_durable_success_without_reinvocation",
-        "rejected_aq_cancel_does_not_mutate_flow_and_authorized_execution_continues"
       ]
     }
   },

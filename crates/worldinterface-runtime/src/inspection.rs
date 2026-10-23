@@ -466,3 +466,51 @@ impl<A: Authentication, D: ReceiptDisclosure<A>> ReceiptInspector<'_, A, D> {
         self.root.reconciliation_cases(&principal, intent)
     }
 }
+
+/// Authenticated event -> outbox -> accepted wait chain. AQ terminality is descriptive.
+pub struct ContinuationInspector<'a, A, P> {
+    pub root: &'a StoreRoot,
+    pub authentication: &'a A,
+    pub policy: &'a P,
+}
+#[derive(Clone, Debug)]
+pub struct ContinuationView {
+    pub signal: worldinterface_domain::continuation::SignalObligation,
+    pub waits: Vec<worldinterface_domain::continuation::WaitCheckpoint>,
+    pub accepted: Vec<worldinterface_domain::continuation::ResumeAcceptance>,
+}
+impl<A: Authentication, P: crate::continuation::EventAuthorization>
+    ContinuationInspector<'_, A, P>
+{
+    pub fn event(
+        &self,
+        session: &A::Session,
+        kind: worldinterface_storage::StoreKind,
+        id: &OpaqueRef,
+    ) -> Result<ContinuationView> {
+        let caller = caller(self.authentication, session)?;
+        let signal = self.root.signal_obligation(kind, id)?;
+        if signal.event.route.tenant != *caller.tenant()
+            || !self.policy.authorize_read(&caller, &signal.event)
+        {
+            return Err("event disclosure denied".into());
+        }
+        let mut waits = Vec::new();
+        let mut accepted = Vec::new();
+        for run in self.root.flow_snapshot(caller.tenant())?.runs.values() {
+            if &run.principal != caller.principal() {
+                continue;
+            }
+            waits.extend(
+                run.waits
+                    .values()
+                    .filter(|w| w.route.as_ref() == Some(&signal.event.route))
+                    .cloned(),
+            );
+            accepted.extend(
+                run.accepted_resumes.values().filter(|a| a.event.as_ref() == Some(id)).cloned(),
+            );
+        }
+        Ok(ContinuationView { signal, waits, accepted })
+    }
+}

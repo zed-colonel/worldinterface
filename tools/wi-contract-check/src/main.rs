@@ -1,7 +1,8 @@
 use serde_json::json;
 use std::{env, path::PathBuf};
 use wi_contract_check::{
-    catalog, contracts, evidence, finding, inventory, policy, proof, read, refresh, Finding, Result,
+    catalog, continuations, contracts, evidence, finding, inventory, policy, proof, read, refresh,
+    Finding, Result,
 };
 fn run() -> Result<bool> {
     let root = env::var_os("WI_REPO_ROOT").map(PathBuf::from).unwrap_or(env::current_dir()?);
@@ -16,7 +17,7 @@ fn run() -> Result<bool> {
         return Ok(true);
     }
     type Check = fn(&std::path::Path) -> Result<Vec<Finding>>;
-    let commands: [(&str, Check); 10] = [
+    let commands: [(&str, Check); 11] = [
         ("catalog", catalog::check),
         ("proof", proof::check),
         ("baseline", contracts::baseline),
@@ -27,6 +28,7 @@ fn run() -> Result<bool> {
         ("conformance", contracts::conformance),
         ("docs", contracts::docs),
         ("clean-break", policy::check),
+        ("continuations", continuations::check),
     ];
     if args.len() == 3
         && args[1] == "check"

@@ -101,6 +101,9 @@ pub(crate) fn coordinate(
     if r.cancel_requested {
         return Ok(terminal("wi.flow.canceled"));
     }
+    if let Some(disposition) = crate::flow_wait::accepted(r, ctx)? {
+        return Ok(disposition);
+    }
     if r.outcome.is_some() {
         return Ok(if r.outcome == Some(FlowOutcome::Succeeded) {
             AttemptDisposition::complete(None)
@@ -109,7 +112,53 @@ pub(crate) fn coordinate(
         });
     }
     // A wake only requests a domain evaluation. It never proves business success.
-    if ctx.input.resume_context.is_some() {
+    if let Some(context) = &ctx.input.resume_context {
+        let all_terminal =
+            ctx.children.as_ref().is_some_and(|children| children.all_children_terminal());
+        let finish = match &context.wake {
+            WakeReason::Children { wait_id, .. } => {
+                if wait_id.to_string() != r.wait_id.as_str()
+                    && !r.accepted_resumes.values().any(|a| {
+                        serde_json::from_slice::<AttemptDisposition>(&a.disposition)
+                            .ok()
+                            .and_then(|d| d.wait().map(|w| w.wait_id()))
+                            == Some(*wait_id)
+                    })
+                {
+                    return Err(rejected("coordinator child wait mismatch"));
+                }
+                true
+            }
+            WakeReason::ControlResolution { .. } | WakeReason::AdministrativeResume { .. } => {
+                all_terminal
+            }
+            WakeReason::Signal { .. } | WakeReason::Deadline { .. } => {
+                return Err(rejected("unexpected coordinator wake"))
+            }
+        };
+        if !finish {
+            let wait = WaitSpec::children(
+                crate::flow_wait::stable_wait_id(&(&r.id, context.context_id.0))?,
+                r.node_tasks.values().map(|v| Ok(v.as_str().parse()?)).collect::<Result<_>>()?,
+                ChildWaitPolicy::AllTerminal,
+                None,
+            )?;
+            let disposition = AttemptDisposition::awaiting(wait, None);
+            let acceptance = crate::flow_wait::acceptance(r, ctx, &disposition, None, None)?;
+            transact(
+                root,
+                &r.tenant,
+                FlowCommand::AcceptResume {
+                    run: r.id.clone(),
+                    node: None,
+                    acceptance,
+                    result: None,
+                    next_wait: None,
+                    finish: None,
+                },
+            )?;
+            return Ok(disposition);
+        }
         let guard = root.flow_dispatch_guard()?;
         let fresh = root.flow_run_snapshot(&r.tenant, &r.id)?;
         let r = fresh.runs.get(&r.id).ok_or_else(|| rejected("missing Flow at Finish"))?;
@@ -155,17 +204,26 @@ pub(crate) fn coordinate(
                 exports.insert(name.clone(), artifact);
             }
         }
+        let disposition = if outcome == FlowOutcome::Succeeded {
+            AttemptDisposition::complete(None)
+        } else {
+            terminal("wi.flow.domain_failure")
+        };
+        let acceptance = crate::flow_wait::acceptance(r, ctx, &disposition, None, None)?;
         root.flow_update_guarded(
             &guard,
             &r.tenant,
             fresh.revision,
-            FlowCommand::Finish { run: r.id.clone(), outcome: outcome.clone(), exports },
+            FlowCommand::AcceptResume {
+                run: r.id.clone(),
+                node: None,
+                acceptance,
+                result: None,
+                next_wait: None,
+                finish: Some((outcome, exports)),
+            },
         )?;
-        return Ok(if outcome == FlowOutcome::Succeeded {
-            AttemptDisposition::complete(None)
-        } else {
-            terminal("wi.flow.domain_failure")
-        });
+        return Ok(disposition);
     }
     let child_admissions = children(r)?;
     let proposal = serde_json::to_vec(&child_admissions)?;
@@ -368,6 +426,14 @@ pub(crate) fn reconcile<H: actionqueue_executor_local::handler::ExecutorHandler 
                         FlowCommand::BindChild { run: r.id.clone(), node, binding },
                     )?;
                 }
+                let fresh = root.flow_run_snapshot(&tenant, &r.id)?;
+                if let Some(run) = fresh.runs.get(&r.id) {
+                    crate::flow_wait::prepare_eligible(
+                        root,
+                        run,
+                        projection.signals().last_sequence().get(),
+                    )?;
+                }
                 Ok(())
             })();
             if let Err(error) = result {
@@ -524,7 +590,48 @@ fn validate_run_references(
     p: &actionqueue_storage::recovery::reducer::ReplayReducer,
     r: &FlowRun,
 ) -> Result<()> {
-    r.restore()?;
+    let plan = r.restore()?;
+    for (node, w) in &r.waits {
+        let n = plan
+            .document()
+            .body
+            .nodes
+            .iter()
+            .find(|n| &n.id == node)
+            .ok_or_else(|| rejected("checkpoint node missing"))?;
+        crate::flow_wait::validate(root, r, n, w)?;
+        let checkpoint: CheckpointRef = serde_json::from_slice(&w.checkpoint).map_err(rejected)?;
+        let wait: WaitSpec = serde_json::from_slice(&w.wait).map_err(rejected)?;
+        if p.waits().get(wait.wait_id()).is_some_and(|actual| {
+            actual.spec != wait
+                || actual.run_id.to_string() != w.run.as_str()
+                || actual.checkpoint.as_ref() != w.queue_checkpoint.then_some(&checkpoint)
+        }) {
+            return Err(rejected("published AQ wait/checkpoint changed"));
+        }
+
+        if p.checkpoint(checkpoint.checkpoint_id)
+            .is_some_and(|saved| saved.checkpoint != checkpoint)
+        {
+            return Err(rejected("published AQ checkpoint changed"));
+        }
+    }
+    for a in r.accepted_resumes.values() {
+        let run: RunId = a.run.as_str().parse()?;
+        let matching = p
+            .get_attempt_history(&run)
+            .into_iter()
+            .flat_map(|v| v.iter())
+            .filter_map(|attempt| p.attempt_resume(run, attempt.attempt_id()))
+            .any(|context| {
+                context.context_id.0 == a.context_id
+                    && serde_json::to_vec(&context)
+                        .is_ok_and(|b| ContentHash::of(&b) == a.context_digest)
+            });
+        if a.queue_store != r.queue_store || !matching {
+            return Err(rejected("accepted resume has no immutable AQ context"));
+        }
+    }
     if r.queue_store.as_str() != store.to_string() {
         return Err(rejected("Flow queue identity changed"));
     }

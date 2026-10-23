@@ -30,7 +30,7 @@
     "AB-WI-022"
   ],
   "closing_item": "WIP-08",
-  "status": "open",
+  "status": "closed",
   "effective_on": "reviewed-merge-with-adopted-checks",
   "historical_evidence": [
     "300d033f"

@@ -216,6 +216,7 @@ fn transact(
             return Err(invalid("injected effect history"));
         }
         write(&tx, tenant, &new, fault)?;
+        crate::continuation::effect_events(&tx, tenant, &old, &new)?;
     }
     tx.commit()?;
     #[cfg(any(test, feature = "crash-points"))]
@@ -721,6 +722,7 @@ impl StoreRoot {
         #[cfg(all(feature = "crash-points", not(test)))]
         crate::crashpoint::checkpoint("fabric-receipt-history");
         write_projection(c, tenant, &new, None, true)?;
+        crate::continuation::effect_events(c, tenant, old, &new)?;
         #[cfg(test)]
         crate::crash::checkpoint("fabric-receipt-outbox");
         #[cfg(all(feature = "crash-points", not(test)))]
@@ -845,6 +847,7 @@ pub(crate) fn replay(source: &Connection, target: &Connection) -> Result<()> {
             return Err(invalid("effect journal revision"));
         }
         write(target, &tenant, &new, None)?;
+        crate::continuation::effect_events(target, &tenant, &old, &new)?;
     }
     Ok(())
 }
@@ -869,6 +872,7 @@ mod tests {
         };
         let c = Connection::open_in_memory().unwrap();
         c.execute_batch(SCHEMA).unwrap();
+        c.execute_batch(crate::continuation::SCHEMA).unwrap();
         let tenant: OpaqueRef = "tenant-a".to_owned().try_into().unwrap();
         let id = EffectIntentId::generate();
         let insert = |scope: &str, revision, action: serde_json::Value| {
@@ -983,6 +987,7 @@ mod tests {
         // while holding the shared Fabric writer lock.
         let c = Connection::open_in_memory().unwrap();
         c.execute_batch(SCHEMA).unwrap();
+        c.execute_batch(crate::continuation::SCHEMA).unwrap();
         let tenant: OpaqueRef = "tenant-a".to_owned().try_into().unwrap();
         let id = EffectIntentId::generate();
         let tx = c.unchecked_transaction().unwrap();
@@ -1091,6 +1096,7 @@ mod tests {
         let id = EffectIntentId::generate();
         let mut c = Connection::open_in_memory().unwrap();
         c.execute_batch(SCHEMA).unwrap();
+        c.execute_batch(crate::continuation::SCHEMA).unwrap();
         c.execute_batch(crate::repository::SCHEMA).unwrap();
         let actions = vec![
             worldinterface_domain::effect::EffectAction::Submit {

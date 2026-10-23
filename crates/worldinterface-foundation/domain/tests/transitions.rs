@@ -166,11 +166,6 @@ fn queue_ports_have_only_test_composition() {
             Ok(if self.request.is_some() { QueueStatus::Pending } else { QueueStatus::Missing })
         }
     }
-    impl QueueWakePort for Mock {
-        fn wake(&mut self, _: &OpaqueRef, _: &OpaqueRef) -> Result<(), String> {
-            Ok(())
-        }
-    }
     let opaque = || "opaque".to_string().try_into().unwrap();
     let r = QueueAdmission {
         task: opaque(),
@@ -182,7 +177,6 @@ fn queue_ports_have_only_test_composition() {
     assert!(matches!(mock.ensure(&r).unwrap(), AdmissionResult::Created(_)));
     assert!(matches!(mock.ensure(&r).unwrap(), AdmissionResult::AlreadyExists(_)));
     assert_eq!(mock.inspect(&r.task).unwrap(), QueueStatus::Pending);
-    mock.wake(&r.admission_key, &r.payload_locator).unwrap();
 }
 #[test]
 fn outcome_artifact_bounds_include_boundary_bytes_and_checked_totals() {

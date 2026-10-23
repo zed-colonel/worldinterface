@@ -87,6 +87,7 @@ fn record(c: &Connection, e: &Entry, fault: Option<&str>) -> Result<(IngressStat
     let (new, result) = apply(c, e)?;
     if new.revision != e.expected {
         index_new_receipts(c, &e.tenant, &old, &new)?;
+        crate::continuation::ingress_events(c, &e.tenant, &old, &new)?;
         let bytes = canonical_data(e).map_err(invalid)?;
         c.execute(
             "INSERT INTO ingress_history(tenant,revision,entry,digest) VALUES(?,?,?,?)",
@@ -254,6 +255,7 @@ pub(crate) fn replay(source: &Connection, target: &Connection) -> Result<()> {
         }
         write_state(target, &e.tenant, &s)?;
         index_new_receipts(target, &e.tenant, &old, &s)?;
+        crate::continuation::ingress_events(target, &e.tenant, &old, &s)?;
     }
     Ok(())
 }
@@ -324,6 +326,7 @@ mod tests {
             for fault in ["history", "projection"] {
                 let mut c = Connection::open_in_memory().unwrap();
                 c.execute_batch(SCHEMA).unwrap();
+                c.execute_batch(crate::continuation::SCHEMA).unwrap();
                 write_state(&c, &tenant, &initial).unwrap();
                 assert!(transact_dispatch(&mut c, &tenant, 1000, &command, Some(fault)).is_err());
                 assert_eq!(snapshot(&c, &tenant).unwrap(), initial);
@@ -356,6 +359,7 @@ mod tests {
                 );
                 let replayed = Connection::open_in_memory().unwrap();
                 replayed.execute_batch(SCHEMA).unwrap();
+                replayed.execute_batch(crate::continuation::SCHEMA).unwrap();
                 write_state(&replayed, &tenant, &initial).unwrap();
                 replay(&c, &replayed).unwrap();
                 assert_eq!(snapshot(&replayed, &tenant).unwrap(), committed);
@@ -414,6 +418,7 @@ mod tests {
         for fault in ["history", "projection", "cursor-history", "cursor-projection"] {
             let mut c = Connection::open_in_memory().unwrap();
             c.execute_batch(SCHEMA).unwrap();
+            c.execute_batch(crate::continuation::SCHEMA).unwrap();
             write_state(&c, &tenant, &initial).unwrap();
             assert!(transact_dispatch(&mut c, &tenant, 999, &command, Some(fault)).is_err());
             assert_eq!(snapshot(&c, &tenant).unwrap(), initial);
@@ -438,6 +443,7 @@ mod tests {
             );
             let replayed = Connection::open_in_memory().unwrap();
             replayed.execute_batch(SCHEMA).unwrap();
+            replayed.execute_batch(crate::continuation::SCHEMA).unwrap();
             write_state(&replayed, &tenant, &initial).unwrap();
             replay(&c, &replayed).unwrap();
             assert_eq!(snapshot(&replayed, &tenant).unwrap(), committed);
@@ -477,6 +483,7 @@ mod tests {
         for fault in ["history", "projection", "cursor-history", "cursor-projection"] {
             let mut c = Connection::open_in_memory().unwrap();
             c.execute_batch(SCHEMA).unwrap();
+            c.execute_batch(crate::continuation::SCHEMA).unwrap();
             write_state(&c, &tenant, &initial).unwrap();
             assert!(transact_dispatch(&mut c, &tenant, 1000, &command, Some(fault)).is_err());
             assert_eq!(snapshot(&c, &tenant).unwrap(), initial);
@@ -521,6 +528,7 @@ mod tests {
             // Existing command bytes replay to the identical projection.
             let replayed = Connection::open_in_memory().unwrap();
             replayed.execute_batch(SCHEMA).unwrap();
+            replayed.execute_batch(crate::continuation::SCHEMA).unwrap();
             write_state(&replayed, &tenant, &initial).unwrap();
             replay(&c, &replayed).unwrap();
             assert_eq!(snapshot(&replayed, &tenant).unwrap(), committed);
@@ -538,6 +546,7 @@ mod tests {
             let mut c = Connection::open_in_memory().unwrap();
             c.execute_batch(crate::repository::SCHEMA).unwrap();
             c.execute_batch(SCHEMA).unwrap();
+            c.execute_batch(crate::continuation::SCHEMA).unwrap();
             c.execute_batch(crate::effect::SCHEMA).unwrap();
             c.execute_batch(crate::flow::SCHEMA).unwrap();
             let tenant = binding.profile.scope.tenant.clone();

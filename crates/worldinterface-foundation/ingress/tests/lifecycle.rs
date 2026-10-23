@@ -1,7 +1,7 @@
 use hmac::{Hmac, Mac};
 use sha2::Sha256;
 use std::sync::{Arc, Barrier};
-use worldinterface_domain::{ingress::*, ports::QueueWakePort};
+use worldinterface_domain::ingress::*;
 use worldinterface_ingress::{
     transport::{
         http::validate_http,
@@ -481,16 +481,6 @@ fn transport_rejects_forgery_substitution_bounds_and_malformed_frames() {
     assert!(session.validate_stream(&body, &sign(&signed), 1000).is_err());
     assert!(s.state().admissions.is_empty());
 }
-struct MockWake {
-    seen: Vec<OpaqueRef>,
-}
-impl QueueWakePort for MockWake {
-    fn wake(&mut self, key: &OpaqueRef, locator: &OpaqueRef) -> std::result::Result<(), String> {
-        assert!(locator.as_str().starts_with("delivery:"));
-        self.seen.push(key.clone());
-        Ok(())
-    }
-}
 #[test]
 fn restart_commit_before_wake_and_subscriber_commit_before_ack_are_safe() {
     let s = Setup::new();
@@ -505,8 +495,7 @@ fn restart_commit_before_wake_and_subscriber_commit_before_ack_are_safe() {
     assert_eq!(i.due_deliveries(&subscriber, 1000, 10).unwrap(), vec![id.clone()]);
     let first =
         i.claim_due_delivery(&subscriber, &id, DeliveryToken::generate(), 1000).unwrap().unwrap();
-    let mut wake = MockWake { seen: vec![] };
-    wake.wake(&first.wake_key, &first.locator).unwrap();
+    assert!(first.locator.as_str().starts_with("delivery:"));
     i.record_wake(&tenant, id.clone(), 1, true, 1000).unwrap();
     assert_eq!(i.inspect_delivery(&subscriber, &id, 1000).unwrap().state, DeliveryState::Pending);
     let database = s.temp.path().join("subscriber.sqlite");

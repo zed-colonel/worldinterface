@@ -172,3 +172,14 @@ separate from WIP-06's pure compiler proof. AB-WI-005/010/013 have executable
 candidate mappings; WI-AQ-G4 is drafted closed, effective on reviewed merge with
 all adopted checks. WI-AQ-G3 remains WIP-08-owned and open. See [WIP-07](WIP-07.md)
 for the persistence profile, admission provenance, recovery boundaries and evidence.
+
+## WIP-08 continuation candidate
+
+[WIP-08](WIP-08.md) adds authoritative event/outbox transactions, authenticated
+callback/worker intake, Flow wait/timer children and immutable resume acceptance.
+AB-WI-008/011 have exact executable mappings in the continuation coverage file.
+WI-AQ-G3 and then WI-EMBEDDED-CORE-1 are drafted closed, effective only on
+qualifying reviewed integration with all adopted checks. The development store
+profile is `local-continuation-8`; prior profiles require a fresh store. Worker
+process lifecycle and AB-WI-021 remain WIP-10. Legacy deletion milestones remain
+unchanged.

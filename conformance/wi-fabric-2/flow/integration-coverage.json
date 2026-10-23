@@ -79,7 +79,7 @@
       {
         "manifest": "crates/worldinterface-runtime/Cargo.toml",
         "package": "worldinterface-runtime",
-        "test": "flow_authority_purity_version_conflicts_and_unsupported_profile_reject_before_admission"
+        "test": "flow_authority_purity_version_conflicts_reject_and_timer_admits"
       },
       {
         "manifest": "crates/worldinterface-runtime/Cargo.toml",
@@ -325,7 +325,7 @@
       {
         "manifest": "crates/worldinterface-runtime/Cargo.toml",
         "package": "worldinterface-runtime",
-        "test": "flow_authority_purity_version_conflicts_and_unsupported_profile_reject_before_admission"
+        "test": "flow_authority_purity_version_conflicts_reject_and_timer_admits"
       }
     ]
   },

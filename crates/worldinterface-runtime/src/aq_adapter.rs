@@ -40,6 +40,8 @@ pub struct QueueEngine<'a, H: ExecutorHandler + 'static> {
     bundle: &'a StoreBundle,
     store: QueueStoreId,
     engine: BootstrappedEngine<H>,
+    signal_scan: crate::continuation::SignalScan,
+    pub signal_delivery_status: crate::continuation::SignalDeliveryStatus,
 }
 /// Dispatches by the immutable admitted payload shape. The effect handler still
 /// verifies the persisted AQ admission and observed run before invoking a port.
@@ -96,7 +98,13 @@ impl<'a, H: ExecutorHandler + 'static> QueueEngine<'a, H> {
         if bundle.aq_store_id()? != store.as_uuid() {
             return Err("AQ store changed during engine bootstrap".into());
         }
-        Ok(Self { bundle, store, engine })
+        Ok(Self {
+            bundle,
+            store,
+            engine,
+            signal_scan: Default::default(),
+            signal_delivery_status: Default::default(),
+        })
     }
     pub fn wi(&self) -> &worldinterface_storage::StoreRoot {
         self.bundle.wi()
@@ -127,6 +135,27 @@ impl<'a, H: ExecutorHandler + 'static> QueueEngine<'a, H> {
     ) -> (&worldinterface_storage::StoreRoot, &mut BootstrappedEngine<H>, uuid::Uuid) {
         (self.bundle.wi(), &mut self.engine, self.store.as_uuid())
     }
+    pub fn drain_signals(&mut self) -> Result<crate::continuation::SignalDeliveryStatus> {
+        let status =
+            crate::continuation::drain(self.bundle.wi(), &mut self.engine, &mut self.signal_scan)?;
+        self.signal_delivery_status = status.clone();
+        Ok(status)
+    }
+    pub fn resume_run(&mut self, run_id: RunId) -> Result<()> {
+        self.engine.resume_run(run_id)?;
+        Ok(())
+    }
+    pub fn resolve_wait(
+        &mut self,
+        run_id: RunId,
+        wait_id: actionqueue_core::ids::WaitId,
+    ) -> Result<()> {
+        self.engine.control(actionqueue_runtime::control::ControlOperation::ResolveWait {
+            run_id,
+            wait_id,
+        })?;
+        Ok(())
+    }
     /// Host-owned reconciliation surrounds each scheduling tick, including restart.
     pub async fn tick(&mut self) -> Result<actionqueue_runtime::dispatch::TickResult> {
         crate::flow_coordinator::reconcile(
@@ -134,12 +163,16 @@ impl<'a, H: ExecutorHandler + 'static> QueueEngine<'a, H> {
             self.store.as_uuid(),
             &mut self.engine,
         )?;
+        self.signal_delivery_status =
+            crate::continuation::drain(self.bundle.wi(), &mut self.engine, &mut self.signal_scan)?;
         let result = self.engine.tick().await?;
         crate::flow_coordinator::reconcile(
             self.bundle.wi(),
             self.store.as_uuid(),
             &mut self.engine,
         )?;
+        self.signal_delivery_status =
+            crate::continuation::drain(self.bundle.wi(), &mut self.engine, &mut self.signal_scan)?;
         Ok(result)
     }
     /// Trusted host cancellation retains AQ's normal child lifecycle semantics.
@@ -237,6 +270,7 @@ impl QueueReferences {
     /// Checks ingress task and signal references through AQ's recovered public models.
     /// External checkpoint artifact closure remains a separate G4 obligation.
     pub fn validate_artifacts(&self, wi: &worldinterface_storage::StoreRoot) -> Result<()> {
+        crate::continuation::validate_references(wi, &self.projection)?;
         crate::flow_coordinator::validate_references(
             wi,
             self.store_id().as_uuid(),

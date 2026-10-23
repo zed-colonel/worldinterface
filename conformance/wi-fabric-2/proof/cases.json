@@ -979,9 +979,38 @@
       "source_record_sha256": "c6adcefbd069d8ded5a47f64e563429cdb677de0a4082c122a0f38b71d3beed7",
       "gate": "WI-AQ-G3",
       "owning_item": "WIP-08",
-      "status": "planned",
-      "coverage_refs": [],
-      "tests": []
+      "status": "implemented",
+      "coverage_refs": [
+        "conformance/wi-fabric-2/continuations/coverage.json",
+        "conformance/wi-fabric-2/integration/fixtures.json"
+      ],
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_008_early_late_duplicate_and_fanout_use_durable_records"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "continuation_process_death_replays_source_signal_wait_and_resume_commits"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "outbox_backpressure_retains_identity_and_pending_obligations"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "provider_callback_commits_an_authoritative_record_and_outbox_without_waiter"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "worker_intake_conflicts_scope_and_sequence_are_durable"
+        }
+      ]
     },
     {
       "id": "AB-WI-009",
@@ -1026,9 +1055,63 @@
       "source_record_sha256": "03f81152fcde241dbab356e1ec9051dae6acbe9db194892ca6c3c7c0c01f0d65",
       "gate": "WI-AQ-G3",
       "owning_item": "WIP-08",
-      "status": "planned",
-      "coverage_refs": [],
-      "tests": []
+      "status": "implemented",
+      "coverage_refs": [
+        "conformance/wi-fabric-2/continuations/coverage.json",
+        "conformance/wi-fabric-2/integration/fixtures.json"
+      ],
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_011_awaiting_releases_attempt_and_unrelated_work_progresses"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "administrative_resume_reestablishes_wait_and_all_wake_forms_redeliver_idempotently"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "altered_checkpoint_cannot_authorize_wait_progress"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "continuation_process_death_replays_source_signal_wait_and_resume_commits"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "current_authority_and_scoped_routes_are_required_at_every_wake"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "early_control_wakes_reestablish_child_and_parent_waits"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "eligibility_uses_signal_high_water_and_after_handled_advances_actual_sequence"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "fresh_generation_is_scoped_and_inherited_through_after_handled"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "resume_redelivery_reproduces_result_and_conflicting_context_rejects"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "signal_deadline_cancel_and_late_event_orders_preserve_committed_outcomes"
+        }
+      ]
     },
     {
       "id": "AB-WI-012",
