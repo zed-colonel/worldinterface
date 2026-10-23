@@ -11,10 +11,10 @@ fn forbidden(tokens: TokenStream, found: &mut BTreeSet<String>) {
             TokenTree::Group(g) => forbidden(g.stream(), found),
             TokenTree::Ident(i) => {
                 let name = i.to_string();
-                let normalized = name.to_lowercase().replace('_', "");
+                let normalized = name.trim_start_matches("r#").to_lowercase().replace('_', "");
                 if [
-                    "lazy_static",
-                    "thread_local",
+                    "lazystatic",
+                    "threadlocal",
                     "lazylock",
                     "sleep",
                     "sleepuntil",

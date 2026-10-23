@@ -9,6 +9,9 @@ fn continuation_policy_rejects_aliases_qualified_calls_macros_and_feature_branch
         "fn f(){let x=\"signal.await\";}",
         "static WAITING: u64=0;",
         "use tokio::sync::oneshot as channel;",
+        "thread_local! { static STATE: std::cell::RefCell<std::collections::BTreeMap<WaitId,bool>> = Default::default(); }",
+        "lazy_static! { static ref STATE: Mutex<Vec<WaitId>> = Default::default(); }",
+        "fn f(){std::thread::r#sleep(d());}",
     ] {
         assert!(
             !source_findings("crates/worldinterface-runtime/src/new.rs", source)
