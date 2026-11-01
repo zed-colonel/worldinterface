@@ -82,17 +82,11 @@ pub(crate) fn definition(
         },
     }
 }
-pub(crate) async fn until_wait(
+pub(crate) async fn until_wait<
+    H: actionqueue_executor_local::handler::ExecutorHandler + 'static,
+>(
     f: &Fixture,
-    q: &mut QueueEngine<
-        '_,
-        worldinterface_runtime::flow_node::FlowAttemptHandler<
-            DeterministicConnector,
-            Evidence,
-            Resolver,
-            Clock,
-        >,
-    >,
+    q: &mut QueueEngine<'_, H>,
     id: &OpaqueRef,
 ) {
     for _ in 0..1000 {
@@ -111,17 +105,11 @@ pub(crate) async fn until_wait(
     panic!("wait did not establish: {:?}", f.run(id));
 }
 
-pub(crate) fn assert_redeliveries(
+pub(crate) fn assert_redeliveries<
+    H: actionqueue_executor_local::handler::ExecutorHandler + 'static,
+>(
     f: &Fixture,
-    q: &QueueEngine<
-        '_,
-        worldinterface_runtime::flow_node::FlowAttemptHandler<
-            DeterministicConnector,
-            Evidence,
-            Resolver,
-            Clock,
-        >,
-    >,
+    q: &QueueEngine<'_, H>,
     id: &OpaqueRef,
 ) {
     use actionqueue_executor_local::handler::{

@@ -90,8 +90,9 @@ release. These checks include quarantine recorded by other admitted observations
 ## Delivery and inspection contract
 
 Attempts are committed before returning the subscriber token and bounded wake
-locator. `QueueWakePort` remains an inactive seam; its test-only sink receives a
-stable wake key, distinct from provider identity and any future AQ SignalId.
+locator. Readiness and acknowledgment commit authoritative WI events and signal
+outbox obligations in the owner transaction. The shared outbox admits stable,
+deduplicated AQ signals that carry opaque references to those records.
 Wake outcome cannot acknowledge subscriber ingestion. Retry keeps DeliveryId,
 pins explicit attempt/timeout/backoff/retention policy and stops in dead letter
 after exhaustion. A delayed issued token can acknowledge during backoff or dead

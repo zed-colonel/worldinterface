@@ -170,11 +170,9 @@ impl Fixture {
     pub(crate) fn run(&self, id: &OpaqueRef) -> FlowRun {
         self.bundle.wi().flow_run_snapshot(&self.auth.0, id).unwrap().runs[id].clone()
     }
-    pub(crate) async fn drive<
-        V: worldinterface_runtime::authority::EvidenceAuthority + Send + Sync + 'static,
-    >(
+    pub(crate) async fn drive<H: actionqueue_executor_local::handler::ExecutorHandler + 'static>(
         &self,
-        queue: &mut QueueEngine<'_, FlowAttemptHandler<DeterministicConnector, V, Resolver, Clock>>,
+        queue: &mut QueueEngine<'_, H>,
         id: &OpaqueRef,
     ) {
         for _ in 0..3000 {

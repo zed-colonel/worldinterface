@@ -9,7 +9,7 @@ pub(crate) const SCHEMA: &str = "
 CREATE TABLE continuation_history(seq INTEGER PRIMARY KEY, entry BLOB NOT NULL, digest TEXT NOT NULL);
 CREATE TRIGGER continuation_no_update BEFORE UPDATE ON continuation_history BEGIN SELECT RAISE(ABORT,'append only'); END;
 CREATE TRIGGER continuation_no_delete BEFORE DELETE ON continuation_history BEGIN SELECT RAISE(ABORT,'append only'); END;
-CREATE TABLE event_sources(id TEXT PRIMARY KEY, canonical BLOB NOT NULL, digest TEXT NOT NULL);
+CREATE TABLE event_sources(position INTEGER PRIMARY KEY, id TEXT NOT NULL UNIQUE, canonical BLOB NOT NULL, digest TEXT NOT NULL);
 CREATE TRIGGER event_source_no_update BEFORE UPDATE ON event_sources BEGIN SELECT RAISE(ABORT,'append only'); END;
 CREATE TRIGGER event_source_no_delete BEFORE DELETE ON event_sources BEGIN SELECT RAISE(ABORT,'append only'); END;
 CREATE TABLE signal_outbox(id TEXT PRIMARY KEY, tenant TEXT NOT NULL, event BLOB NOT NULL, request BLOB, digest TEXT, sequence INTEGER, rejection TEXT);
@@ -43,7 +43,7 @@ pub(crate) fn insert(c: &Connection, event: &DurableEvent) -> Result<()> {
         }
     } else {
         c.execute(
-            "INSERT INTO event_sources VALUES(?,?,?)",
+            "INSERT INTO event_sources(id,canonical,digest) VALUES(?,?,?)",
             params![event.id.as_str(), &bytes, ContentHash::of(&bytes).as_str()],
         )?;
     }
@@ -190,6 +190,22 @@ fn transact(root: &StoreRoot, kind: StoreKind, cmd: Command) -> Result<()> {
     Ok(())
 }
 impl StoreRoot {
+    /// Append position in the authoritative, append-only source table. Unlike
+    /// the outbox projection, this table survives rebuilds and backup intact.
+    pub fn event_high_water(&self, kind: StoreKind) -> Result<u64> {
+        Ok(self.connect(kind)?.query_row(
+            "SELECT coalesce(max(position),0) FROM event_sources",
+            [],
+            |r| r.get(0),
+        )?)
+    }
+    pub fn event_position(&self, kind: StoreKind, id: &OpaqueRef) -> Result<u64> {
+        Ok(self.connect(kind)?.query_row(
+            "SELECT position FROM event_sources WHERE id=?",
+            [id.as_str()],
+            |r| r.get(0),
+        )?)
+    }
     pub fn record_event(&self, event: DurableEvent) -> Result<()> {
         if let Some(a) = &event.artifact {
             self.read_artifact(a)?;

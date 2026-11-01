@@ -156,6 +156,27 @@ async fn outbox_backpressure_retains_identity_and_pending_obligations() {
     let frozen = f.bundle.wi().signal_obligation(StoreKind::Fabric, &event).unwrap();
     assert!(frozen.sequence.is_none());
     assert_eq!(q.drain_signals().unwrap(), status);
+    assert!(q.signal_capacity().alarm);
+    let evidence = Evidence(f.snapshot.clone());
+    let service = f.service(&evidence);
+    let node = pure_node("pure", vec![], true.into(), "bool");
+    let pure = FlowDefinition {
+        id: r("backpressured-unrelated"),
+        version: 1,
+        predecessor: None,
+        body: FlowBody {
+            entries: vec![node.id.clone()],
+            nodes: vec![node],
+            outputs: BTreeMap::new(),
+            authority: AuthorityUpperBound::default(),
+            causal_metadata: BTreeMap::new(),
+        },
+    };
+    service.activate_flow_version(&(), pure.clone(), None).unwrap();
+    let unrelated = service.submit_flow(&(), &pure.id, f.submission.clone(), &mut q).unwrap();
+    f.drive(&mut q, &unrelated).await;
+    assert_eq!(f.run(&unrelated).outcome, Some(FlowOutcome::Succeeded));
+    assert!(f.bundle.wi().signal_obligation(StoreKind::Fabric, &event).unwrap().sequence.is_none());
     q.shutdown().unwrap();
     let mut q = QueueEngine::bootstrap(&f.bundle, f.handler(), host()).unwrap();
     q.drain_signals().unwrap();

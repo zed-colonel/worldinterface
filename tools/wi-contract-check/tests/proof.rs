@@ -532,3 +532,39 @@ fn wi08_continuation_obligations_require_exact_enabled_tests() {
         .iter()
         .any(|f| f.rule == "PROOF-WI08"));
 }
+
+#[test]
+fn wi08_source_atomicity_requires_every_producer_even_if_coverage_is_removed() {
+    let path = "conformance/wi-fabric-2/continuations/coverage.json";
+    let coverage = read(&root().join(path)).unwrap();
+    let obligations: std::collections::BTreeMap<String, Vec<TestRef>> =
+        serde_json::from_value(coverage["required_obligations"].clone()).unwrap();
+    let index: TestIndex = obligations.values().flatten().cloned().map(|t| (t, 1)).collect();
+    let t = tempfile::tempdir().unwrap();
+    std::fs::create_dir_all(t.path().join("conformance/wi-fabric-2/continuations")).unwrap();
+    std::fs::create_dir_all(t.path().join("conformance/wi-fabric-2/integration")).unwrap();
+    std::fs::copy(
+        root().join("conformance/wi-fabric-2/integration/fixtures.json"),
+        t.path().join("conformance/wi-fabric-2/integration/fixtures.json"),
+    )
+    .unwrap();
+    for producer in obligations["source-outbox-atomicity"]
+        .iter()
+        .filter(|r| r.package == "worldinterface-runtime")
+    {
+        let mut missing = coverage.clone();
+        missing["required_obligations"]["source-outbox-atomicity"]
+            .as_array_mut()
+            .unwrap()
+            .retain(|r| r["test"].as_str() != Some(&producer.test));
+        std::fs::write(t.path().join(path), serde_json::to_vec(&missing).unwrap()).unwrap();
+        assert!(
+            proof::validate_continuations(t.path(), &index)
+                .unwrap()
+                .iter()
+                .any(|f| f.rule == "PROOF-WI08"),
+            "{}",
+            producer.test
+        );
+    }
+}

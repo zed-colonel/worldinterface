@@ -12,6 +12,19 @@ fn continuation_policy_rejects_aliases_qualified_calls_macros_and_feature_branch
         "thread_local! { static STATE: std::cell::RefCell<std::collections::BTreeMap<WaitId,bool>> = Default::default(); }",
         "lazy_static! { static ref STATE: Mutex<Vec<WaitId>> = Default::default(); }",
         "fn f(){std::thread::r#sleep(d());}",
+        "struct X { pending: Mutex<HashMap<WaitId, std::task::Waker>> }",
+        "struct X { resumes: tokio::sync::Mutex<HashMap<WaitId, Handle>> }",
+        "use std::collections::HashMap as Map; use a::WaitId as Key; struct X { pending: Map<Key, Handle> }",
+        "struct X { pending: Vec<ResumeContextId> }",
+        "type Key = WaitId; struct X { pending: HashMap<Key, Handle> }",
+        "struct X { pending: HashMap<String, (WaitId, Handle)> }",
+        "make! { struct X { pending: HashMap<WaitId, Handle> } }",
+        "fn f(){tokio::time::timeout(d(), std::future::pending::<()>()).await;}",
+        "fn f(){tokio::time::interval(d());}",
+        "use std::sync::Barrier;",
+        "fn f(){crossbeam_channel::bounded::<u8>(1);}",
+        "fn f(){flume::unbounded::<u8>();}",
+        "fn f(){while Instant::now() < deadline {std::hint::spin_loop();}}",
     ] {
         assert!(
             !source_findings("crates/worldinterface-runtime/src/new.rs", source)

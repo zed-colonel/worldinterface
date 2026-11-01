@@ -1009,6 +1009,26 @@
           "manifest": "crates/worldinterface-runtime/Cargo.toml",
           "package": "worldinterface-runtime",
           "test": "worker_intake_conflicts_scope_and_sequence_are_durable"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ingress_ready_and_acknowledged_commit_source_outbox_atomically_and_wake_flows"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "reconciliation_commits_source_outbox_atomically_and_wakes_flow"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "flow_child_commits_source_outbox_atomically_and_wakes_flow"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "signal_capacity_alarm_uses_resident_statistics_across_restart"
         }
       ]
     },
@@ -1110,6 +1130,41 @@
           "manifest": "crates/worldinterface-runtime/Cargo.toml",
           "package": "worldinterface-runtime",
           "test": "signal_deadline_cancel_and_late_event_orders_preserve_committed_outcomes"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "non_early_wait_rejects_preexisting_outbox_events_after_backpressure_and_rebuild"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "admitted_unacknowledged_wake_with_backlog_recovers_independently_of_scan"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "accepted_child_and_coordinator_replay_after_authority_revocation"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "signal_cancel_acceptance_and_deadline_winners_replay_across_paired_reopen"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "continuation_inspection_authorizes_and_reports_pending_and_accepted_chain"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "accept_resume_validates_exports_even_with_other_artifacts"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "unaccepted_coordinator_finish_requires_authority_after_child_acceptance"
         }
       ]
     },

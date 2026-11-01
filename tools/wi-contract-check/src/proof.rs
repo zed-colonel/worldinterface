@@ -1037,6 +1037,27 @@ pub fn validate_continuations(root: &Path, tests: &TestIndex) -> Result<Vec<Find
             ));
         }
     }
+    for producer in [
+        "provider_callback_commits_an_authoritative_record_and_outbox_without_waiter",
+        "worker_intake_conflicts_scope_and_sequence_are_durable",
+        "ingress_ready_and_acknowledged_commit_source_outbox_atomically_and_wake_flows",
+        "reconciliation_commits_source_outbox_atomically_and_wakes_flow",
+        "flow_child_commits_source_outbox_atomically_and_wakes_flow",
+    ] {
+        if !obligations.get("source-outbox-atomicity").is_some_and(|refs| {
+            refs.iter().any(|t| {
+                t.manifest == RUNTIME && t.package == "worldinterface-runtime" && t.test == producer
+            })
+        }) {
+            f.push(finding(
+                "PROOF-WI08",
+                path,
+                producer,
+                "WIP-08 all source producers",
+                "each producer requires its exact source/outbox regression",
+            ));
+        }
+    }
     let fixtures = read(&root.join("conformance/wi-fabric-2/integration/fixtures.json"))?;
     for (id, names) in assigned {
         if names.is_empty()

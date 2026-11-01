@@ -126,6 +126,33 @@ pub struct SignalDeliveryStatus {
     /// Stable event identities and actionable AQ classifications. Remain pending.
     pub pending: Vec<(OpaqueRef, String)>,
 }
+#[derive(Clone, Debug, PartialEq, Eq)]
+pub struct SignalCapacity {
+    pub resident_identities: usize,
+    pub resident_bytes: usize,
+    pub identity_limit: usize,
+    pub byte_limit: usize,
+    /// Hosts must alert at 80% of either lifetime budget (including zero capacity).
+    pub alarm: bool,
+    pub capacity_rejections: u64,
+}
+impl SignalCapacity {
+    pub(crate) fn from_statistics(
+        s: actionqueue_storage::recovery::signals::SignalStatistics,
+        limits: actionqueue_core::limits::SignalLimits,
+    ) -> Self {
+        let identities = s.retained.saturating_add(s.retired);
+        Self {
+            resident_identities: identities,
+            resident_bytes: s.bytes,
+            identity_limit: limits.identities,
+            byte_limit: limits.bytes,
+            alarm: (identities as u128) * 100 >= (limits.identities as u128) * 80
+                || (s.bytes as u128) * 100 >= (limits.bytes as u128) * 80,
+            capacity_rejections: s.capacity_rejections,
+        }
+    }
+}
 #[derive(Default)]
 pub(crate) struct SignalScan {
     fabric: Option<OpaqueRef>,

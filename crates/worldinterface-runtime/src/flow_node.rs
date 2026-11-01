@@ -620,6 +620,17 @@ impl<
     pub fn execute_bound(&self, ctx: &ExecutorContext) -> Result<AttemptDisposition> {
         let payload = FlowPayload::decode(&ctx.input.payload)?;
         let r = load(self.effect.bundle.wi(), &payload)?;
+        // Replay is a lookup of an immutable accepted result. New authority is
+        // required only when evaluating a context that has not been accepted.
+        let bound = payload
+            .node
+            .as_ref()
+            .map_or(r.parent_run.as_ref(), |n| r.bindings.get(n).map(|b| &b.run));
+        if bound.is_some_and(|run| run.as_str() == ctx.input.run_id.to_string()) {
+            if let Some(disposition) = crate::flow_wait::accepted(&r, ctx)? {
+                return Ok(disposition);
+            }
+        }
         if ctx.input.resume_context.is_some() {
             let at = self.effect.clock.now()?;
             let snapshot = verify_snapshot(

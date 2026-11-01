@@ -35,6 +35,14 @@ fn forbidden(tokens: TokenStream, found: &mut BTreeSet<String>) {
                     "broadcast",
                     "watch",
                     "wakechannel",
+                    "timeout",
+                    "timeoutat",
+                    "interval",
+                    "intervalat",
+                    "spinloop",
+                    "barrier",
+                    "crossbeamchannel",
+                    "flume",
                 ]
                 .contains(&normalized.as_str())
                 {
@@ -60,6 +68,87 @@ pub fn source_findings(path: &str, source: &str) -> Result<Vec<Finding>> {
     // is the existing bounded compiler optimization, inspected separately.
     let ast = syn::parse_file(&production)?;
     use syn::visit::Visit;
+    // Follow import aliases before inspecting collection element/key types.
+    let mut identities =
+        BTreeSet::from(["WaitId".into(), "ResumeContextId".into(), "Waker".into()]);
+    let mut collections = BTreeSet::from([
+        "HashMap".into(),
+        "BTreeMap".into(),
+        "HashSet".into(),
+        "BTreeSet".into(),
+        "Vec".into(),
+        "VecDeque".into(),
+        "LinkedList".into(),
+    ]);
+    struct Aliases<'a>(&'a mut BTreeSet<String>, &'a mut BTreeSet<String>);
+    fn contains_identity(tokens: TokenStream, ids: &BTreeSet<String>) -> bool {
+        tokens.into_iter().any(|t| match t {
+            TokenTree::Ident(n) => ids.contains(&n.to_string()),
+            TokenTree::Group(g) => contains_identity(g.stream(), ids),
+            _ => false,
+        })
+    }
+    impl<'ast> Visit<'ast> for Aliases<'_> {
+        fn visit_use_rename(&mut self, r: &'ast syn::UseRename) {
+            if self.0.contains(&r.ident.to_string()) {
+                self.0.insert(r.rename.to_string());
+            }
+            if self.1.contains(&r.ident.to_string()) {
+                self.1.insert(r.rename.to_string());
+            }
+        }
+        fn visit_item_type(&mut self, item: &'ast syn::ItemType) {
+            use quote::ToTokens;
+            if contains_identity(item.ty.to_token_stream(), self.0) {
+                self.0.insert(item.ident.to_string());
+            }
+        }
+    }
+    loop {
+        let before = (identities.len(), collections.len());
+        Aliases(&mut identities, &mut collections).visit_file(&ast);
+        if before == (identities.len(), collections.len()) {
+            break;
+        }
+    }
+    fn registries(
+        tokens: TokenStream,
+        ids: &BTreeSet<String>,
+        collections: &BTreeSet<String>,
+        found: &mut BTreeSet<String>,
+    ) {
+        let tokens: Vec<_> = tokens.into_iter().collect();
+        for (i, t) in tokens.iter().enumerate() {
+            if let TokenTree::Group(g) = t {
+                registries(g.stream(), ids, collections, found);
+            }
+            if !matches!(t, TokenTree::Ident(n) if collections.contains(&n.to_string()))
+                || !matches!(tokens.get(i+1), Some(TokenTree::Punct(p)) if p.as_char() == '<')
+            {
+                continue;
+            }
+            let mut depth = 0;
+            for t in &tokens[i + 1..] {
+                match t {
+                    TokenTree::Punct(p) if p.as_char() == '<' => depth += 1,
+                    TokenTree::Punct(p) if p.as_char() == '>' => {
+                        depth -= 1;
+                        if depth == 0 {
+                            break;
+                        }
+                    }
+                    TokenTree::Ident(n) if ids.contains(&n.to_string()) => {
+                        found.insert(format!("collection of {n}"));
+                    }
+                    TokenTree::Group(g) if contains_identity(g.stream(), ids) => {
+                        found.insert("collection of wait/resume identity".into());
+                    }
+                    _ => {}
+                }
+            }
+        }
+    }
+    registries(production.parse()?, &identities, &collections, &mut found);
     struct Statics<'a>(&'a mut BTreeSet<String>, &'a str);
     impl<'ast> Visit<'ast> for Statics<'_> {
         fn visit_item_static(&mut self, item: &'ast syn::ItemStatic) {

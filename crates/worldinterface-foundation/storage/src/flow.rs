@@ -195,6 +195,12 @@ fn restore_pinned_plan(
 }
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+pub struct WaitCursor {
+    pub sequence: u64,
+    pub event_position: u64,
+}
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct FlowRun {
     pub id: OpaqueRef,
     pub tenant: OpaqueRef,
@@ -221,7 +227,7 @@ pub struct FlowRun {
     pub parent_run: Option<OpaqueRef>,
     pub bindings: BTreeMap<OpaqueRef, ChildBinding>,
     #[serde(default)]
-    pub wait_cursors: BTreeMap<OpaqueRef, u64>,
+    pub wait_cursors: BTreeMap<OpaqueRef, WaitCursor>,
     #[serde(default)]
     pub waits: BTreeMap<OpaqueRef, WaitCheckpoint>,
     #[serde(default)]
@@ -310,6 +316,7 @@ pub enum FlowCommand {
         run: OpaqueRef,
         node: OpaqueRef,
         sequence: u64,
+        event_position: u64,
     },
     PrepareWait {
         run: OpaqueRef,
@@ -611,17 +618,25 @@ fn reduce(old: &FlowState, tenant: &OpaqueRef, cmd: &FlowCommand) -> Result<Flow
                     }
                     w.checkpoint = checkpoint.clone();
                 }
-                FlowCommand::SetWaitCursor { node, sequence, .. } => {
+                FlowCommand::SetWaitCursor { node, sequence, event_position, .. } => {
                     if !r.bindings.contains_key(node) || r.results.contains_key(node) {
                         return Err(invalid("unbound wait cursor"));
                     }
                     if let Some(old) = r.wait_cursors.get(node) {
-                        if old != sequence {
+                        if old
+                            != &(WaitCursor {
+                                sequence: *sequence,
+                                event_position: *event_position,
+                            })
+                        {
                             return Err(invalid("wait cursor conflict"));
                         }
                         return Ok(s);
                     }
-                    r.wait_cursors.insert(node.clone(), *sequence);
+                    r.wait_cursors.insert(
+                        node.clone(),
+                        WaitCursor { sequence: *sequence, event_position: *event_position },
+                    );
                 }
                 FlowCommand::PrepareWait { wait, .. } => {
                     if let Some(old) = r.waits.get(&wait.node) {
@@ -995,9 +1010,22 @@ impl StoreRoot {
             }
             FlowCommand::BindChild { binding, .. } => check(&binding.request)?,
             FlowCommand::PrepareWait { wait, .. } => check(&wait.artifact)?,
-            FlowCommand::AcceptResume { next_wait: Some(wait), .. } => check(&wait.artifact)?,
-            FlowCommand::RecordNodeResult { result, .. }
-            | FlowCommand::AcceptResume { result: Some(result), .. } => {
+            FlowCommand::AcceptResume { next_wait, result, finish, .. } => {
+                if let Some(wait) = next_wait {
+                    check(&wait.artifact)?;
+                }
+                if let Some(result) = result {
+                    for a in result.outputs.values() {
+                        check(a)?;
+                    }
+                }
+                if let Some((_, exports)) = finish {
+                    for a in exports.values() {
+                        check(a)?;
+                    }
+                }
+            }
+            FlowCommand::RecordNodeResult { result, .. } => {
                 for a in result.outputs.values() {
                     check(a)?;
                 }

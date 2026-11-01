@@ -41,6 +41,7 @@ pub struct QueueEngine<'a, H: ExecutorHandler + 'static> {
     store: QueueStoreId,
     engine: BootstrappedEngine<H>,
     signal_scan: crate::continuation::SignalScan,
+    signal_limits: actionqueue_core::limits::SignalLimits,
     pub signal_delivery_status: crate::continuation::SignalDeliveryStatus,
 }
 /// Dispatches by the immutable admitted payload shape. The effect handler still
@@ -104,6 +105,7 @@ impl<'a, H: ExecutorHandler + 'static> QueueEngine<'a, H> {
             engine,
             signal_scan: Default::default(),
             signal_delivery_status: Default::default(),
+            signal_limits,
         })
     }
     pub fn wi(&self) -> &worldinterface_storage::StoreRoot {
@@ -117,6 +119,13 @@ impl<'a, H: ExecutorHandler + 'static> QueueEngine<'a, H> {
     }
     pub fn engine(&self) -> &BootstrappedEngine<H> {
         &self.engine
+    }
+    /// Pollable host alarm: retained and retired records share lifetime capacity.
+    pub fn signal_capacity(&self) -> crate::continuation::SignalCapacity {
+        crate::continuation::SignalCapacity::from_statistics(
+            self.engine.signal_statistics(),
+            self.signal_limits,
+        )
     }
     /// Submit through the engine bound at bootstrap. The engine itself cannot
     /// be replaced independently of the WI journal and AQ store identity.

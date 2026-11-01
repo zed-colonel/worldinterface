@@ -700,5 +700,5 @@
   "store_fixture": "conformance/wi-fabric-2/store-scenarios.json",
   "store_fixture_sha256": "57954a1042fd7845c4ecf72aa0f0524f7fb8f456d49ee9e501370add7658009d",
   "integration_fixture": "conformance/wi-fabric-2/integration/fixtures.json",
-  "integration_fixture_sha256": "7f67afd80aca4ef01bdddc9722947bba70f8759bfff7d3c08dccabb5d472b505"
+  "integration_fixture_sha256": "4f9174263bfb87af12c3e632a64dc9304352f0983455b8eafb97026db41f95ab"
 }

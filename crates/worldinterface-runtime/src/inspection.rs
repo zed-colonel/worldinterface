@@ -489,7 +489,8 @@ impl<A: Authentication, P: crate::continuation::EventAuthorization>
         id: &OpaqueRef,
     ) -> Result<ContinuationView> {
         let caller = caller(self.authentication, session)?;
-        let signal = self.root.signal_obligation(kind, id)?;
+        let signal =
+            self.root.signal_obligation(kind, id).map_err(|_| "event disclosure denied")?;
         if signal.event.route.tenant != *caller.tenant()
             || !self.policy.authorize_read(&caller, &signal.event)
         {

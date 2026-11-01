@@ -101,8 +101,8 @@ fn prepare_at(
     let payload = TaskInputLocator::new(view.intent.submission.input.artifact.clone()).payload()?;
     // AQ redelivery reaches only the deduplicating completion handler; provider
     // re-invocation is fenced by the durable Fabric Start record.
-    let timeout = view.intent.submission.budget.timeout_millis.div_ceil(1000).max(1);
-    let mut constraints = TaskConstraints::new(3, Some(timeout), None)?;
+    let timeout_secs = view.intent.submission.budget.timeout_millis.div_ceil(1000).max(1);
+    let mut constraints = TaskConstraints::new(3, Some(timeout_secs), None)?;
     constraints.set_safety_level(SafetyLevel::Idempotent);
     let spec = TaskSpec::new(task, payload, RunPolicy::Once, constraints, TaskMetadata::default())?;
     let causal = CausalContext::new(

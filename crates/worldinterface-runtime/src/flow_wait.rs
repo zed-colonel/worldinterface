@@ -51,6 +51,14 @@ pub(crate) fn prepare_eligible(root: &StoreRoot, r: &FlowRun, high_water: u64) -
             && !r.wait_cursors.contains_key(&n.id)
             && n.dependencies.iter().all(|d| r.results.contains_key(d))
         {
+            let source_store = match &n.operation {
+                PlanOperation::Wait { signal }
+                    if signal.signal_kind.as_str() == EventKind::FlowChild.name() =>
+                {
+                    worldinterface_storage::StoreKind::Flow
+                }
+                _ => worldinterface_storage::StoreKind::Fabric,
+            };
             transact(
                 root,
                 &r.tenant,
@@ -58,6 +66,7 @@ pub(crate) fn prepare_eligible(root: &StoreRoot, r: &FlowRun, high_water: u64) -
                     run: r.id.clone(),
                     node: n.id.clone(),
                     sequence: high_water,
+                    event_position: root.event_high_water(source_store)?,
                 },
             )?;
         }
@@ -81,11 +90,24 @@ fn wait_spec(r: &FlowRun, n: &PlanNode, wait_id: WaitId) -> Result<(WaitSpec, Op
                 _ => None,
             };
             if !signal.accept_early {
-                let cursor = *r
+                let cursor = r
                     .wait_cursors
                     .get(&n.id)
                     .ok_or_else(|| rejected("unprepared eligibility cursor"))?;
-                after = Some(after.unwrap_or(0).max(cursor));
+                after = Some(after.unwrap_or(0).max(cursor.sequence));
+            }
+            if let Some(handled) = r
+                .accepted_resumes
+                .values()
+                .filter(|a| r.bindings.get(&n.id).is_some_and(|b| b.run == a.run))
+                .filter(|a| {
+                    serde_json::from_slice::<AttemptDisposition>(&a.disposition)
+                        .is_ok_and(|d| d.wait().is_some())
+                })
+                .filter_map(|a| a.sequence)
+                .max()
+            {
+                after = Some(after.unwrap_or(0).max(handled));
             }
             (
                 SignalFilter {
@@ -275,14 +297,17 @@ pub(crate) fn execute(
             } else {
                 worldinterface_storage::StoreKind::Fabric
             };
-            let obligation = root.signal_obligation(kind, &id).map_err(rejected)?;
-            if root.authoritative_event(kind, &id).map_err(rejected)? != obligation.event {
+            let obligation = root.signal_obligation(kind, &id)?;
+            if root.authoritative_event(kind, &id)? != obligation.event {
                 return Err(rejected("event projection differs from source"));
             }
             if prepared.route.as_ref() != Some(&obligation.event.route) {
                 return Err(rejected("signal source scope mismatch"));
             }
-            let expected = crate::continuation::signal_request(&obligation.event)?.envelope(
+            let request = crate::continuation::signal_request(&obligation.event)?;
+            let request_bytes = serde_json::to_vec(&request)?;
+            let digest = ContentHash::of(&request_bytes);
+            let expected = request.envelope(
                 &SignalIngressContext {
                     control_context: envelope.control_context.clone(),
                     ..Default::default()
@@ -290,20 +315,43 @@ pub(crate) fn execute(
                 envelope.received_at,
             );
             if **envelope != expected
-                || obligation.sequence != Some(signal_sequence.get())
+                || obligation.request.as_ref() != Some(&request_bytes)
+                || obligation.request_digest.as_ref() != Some(&digest)
+                || obligation.sequence.is_some_and(|v| v != signal_sequence.get())
                 || prepared.after_sequence.is_some_and(|v| signal_sequence.get() <= v)
             {
-                return Err(rejected("signal does not bind acknowledged source record"));
+                return Err(rejected("signal does not bind frozen source record"));
             }
-            if let Some(a) = &obligation.event.artifact {
-                let caller =
+            // AQ can dispatch an admitted wake before a bounded outbox scan
+            // reaches its WI acknowledgment after restart. Repair from the
+            // trusted envelope and frozen request, independently of scan order.
+            root.acknowledge_signal(kind, id.clone(), digest, signal_sequence.get())?;
+            let stale = matches!(&n.operation, PlanOperation::Wait { signal } if !signal.accept_early)
+                && root.event_position(kind, &id)? <= r.wait_cursors[&n.id].event_position;
+            if stale {
+                let mut next = prepared.clone();
+                let advanced = WaitSpec::new(
+                    stable_wait_id(&(&prepared.run, context.context_id.0))?,
+                    wait.filter().unwrap().clone(),
+                    WaitMatchPolicy::FirstMatch,
+                    SignalEligibility::After(*signal_sequence),
+                    wait.deadline().cloned(),
+                )?;
+                next.wait = serde_json::to_vec(&advanced)?;
+                next.after_sequence = Some(signal_sequence.get());
+                next.queue_checkpoint = false;
+                (None, Some(signal_sequence.get()), Some(id), Some(next))
+            } else {
+                if let Some(a) = &obligation.event.artifact {
+                    let caller =
                     worldinterface_domain::agency::AuthenticatedCaller::from_trusted_authentication(
                         r.tenant.clone(),
                         r.principal.clone(),
                     );
-                crate::artifact::ArtifactResolver::new(root, artifacts).read(&caller, a)?;
+                    crate::artifact::ArtifactResolver::new(root, artifacts).read(&caller, a)?;
+                }
+                (Some(true), Some(signal_sequence.get()), Some(id), None)
             }
-            (Some(true), Some(signal_sequence.get()), Some(id), None)
         }
         WakeReason::Deadline { deadline_at, .. } => {
             if wait.deadline().is_none_or(|d| d.at != *deadline_at) {
@@ -399,7 +447,8 @@ pub(crate) fn validate(
         serde_json::from_slice(&b).map_err(rejected)?;
     if original.0 != r.plan_hash
         || original.1 != n.id
-        || original.2.target() != wait.target()
+        || original.2.filter() != wait.filter()
+        || original.2.match_policy() != wait.match_policy()
         || original.2.deadline() != wait.deadline()
     {
         return Err(rejected("checkpoint content mismatch"));

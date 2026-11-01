@@ -96,8 +96,8 @@ pub(crate) fn constraints(timeout_millis: Option<u64>) -> Result<TaskConstraints
     // The coordinator has no boundary operation budget. Its durable AQ lease,
     // retry limit and host cancellation still apply. Only node budgets supply
     // an attempt timeout; queue maintenance can outlast an arbitrary 60 seconds.
-    let timeout = timeout_millis.map(|ms| ms.div_ceil(1000).max(1));
-    let mut c = TaskConstraints::new(3, timeout, None)?;
+    let timeout_secs = timeout_millis.map(|ms| ms.div_ceil(1000).max(1));
+    let mut c = TaskConstraints::new(3, timeout_secs, None)?;
     c.set_safety_level(SafetyLevel::Idempotent);
     Ok(c)
 }

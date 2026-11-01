@@ -10232,5 +10232,117 @@
     "target": "continuation domain/storage/runtime",
     "rationale": "WIP-08 durable event/outbox and Flow continuation interfaces; AQ-free foundation retains owner journals and runtime maps to AQ 0.3.0.",
     "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/flow.rs::::struct:WaitCursor",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 review remediation: durable source eligibility, resident capacity inspection and producer/recovery regression fixtures.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/continuation.rs::::struct:SignalCapacity",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 review remediation: durable source eligibility, resident capacity inspection and producer/recovery regression fixtures.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/continuation_producers.rs::::module:support",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 review remediation: durable source eligibility, resident capacity inspection and producer/recovery regression fixtures.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/continuation_producers.rs::::source-module:crates/worldinterface-runtime/tests/continuation_producers.rs",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 review remediation: durable source eligibility, resident capacity inspection and producer/recovery regression fixtures.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/continuation_producers.rs::support::module:connectors",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 review remediation: durable source eligibility, resident capacity inspection and producer/recovery regression fixtures.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/continuation_producers.rs::support::module:continuation_fixture",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 review remediation: durable source eligibility, resident capacity inspection and producer/recovery regression fixtures.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/continuation_producers.rs::support::module:flow_fixture",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 review remediation: durable source eligibility, resident capacity inspection and producer/recovery regression fixtures.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/continuation_producers.rs::support::module:spi_harness",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 review remediation: durable source eligibility, resident capacity inspection and producer/recovery regression fixtures.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/continuation_recovery.rs::::module:support",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 review remediation: durable source eligibility, resident capacity inspection and producer/recovery regression fixtures.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/continuation_recovery.rs::::source-module:crates/worldinterface-runtime/tests/continuation_recovery.rs",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 review remediation: durable source eligibility, resident capacity inspection and producer/recovery regression fixtures.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/continuation_recovery.rs::::struct:HoldFinish",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 review remediation: durable source eligibility, resident capacity inspection and producer/recovery regression fixtures.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/continuation_recovery.rs::::struct:RevokeAfterAccept",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 review remediation: durable source eligibility, resident capacity inspection and producer/recovery regression fixtures.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/continuation_recovery.rs::support::module:connectors",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 review remediation: durable source eligibility, resident capacity inspection and producer/recovery regression fixtures.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/continuation_recovery.rs::support::module:continuation_fixture",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 review remediation: durable source eligibility, resident capacity inspection and producer/recovery regression fixtures.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/continuation_recovery.rs::support::module:flow_fixture",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 review remediation: durable source eligibility, resident capacity inspection and producer/recovery regression fixtures.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/continuation_recovery.rs::support::module:spi_harness",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 review remediation: durable source eligibility, resident capacity inspection and producer/recovery regression fixtures.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
   }
 ]
