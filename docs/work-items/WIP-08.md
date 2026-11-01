@@ -117,6 +117,11 @@ reviewed head `6eeccb4`.
 | F-008 | Fixed: missing and unauthorized events return one denial. `continuation_inspection_authorizes_and_reports_pending_and_accepted_chain` checks tenant/principal/audience policy, diagnostics and the accepted chain. |
 | F-009 | Fixed: `QueueEngine::signal_capacity` exposes resident counts/bytes, limits, rejection count and an 80% alarm. `signal_capacity_alarm_uses_resident_statistics_across_restart` checks the threshold and recovery. See the capacity procedure below. |
 | F-010 | Fixed: the ingress conformance README describes the current durable outbox path. |
+| F-011 | Fixed: ban Waker, JoinHandle, Semaphore, Timer APIs, yield/sleep/receive timeout calls and async_channel/kanal. Inspect containers, tuples, slices, fields and generic aliases holding wait/resume identities, with Result allowed for identity-returning helpers. Reject empty polling loops. Only the durable PlanOperation::Timer variant is allowed. Policy tests cover each reported form. |
+| F-012 | Fixed: disposable scalar WI-journal/AQ-sequence watermarks skip unchanged idle reconciliation; mutations and reopen cause full validation, and transient errors leave retries enabled. Fully bound runs also avoid redundant admission transactions and database reloads. `idle_ticks_skip_unchanged_waiting_flows_and_reconcile_changes_after_restart` checks 100 waits, unrelated work, cancellation and restart wakeup. |
+| F-013 | Fixed: EventAuthorization::authorize_run_read provides a separate run disclosure decision with the existing principal-only default. The inspection regression now covers an operator granted or denied the wait/accepted chain and enforces the tenant boundary even with a permissive policy. |
+| F-014 | Fixed: the backlog regression checks the missing acknowledgment before handler execution and the repaired sequence immediately after acceptance, inside the executor before the next drain. Removing handler repair fails that assertion. |
+
 
 The schema adds an explicit append position to authoritative event sources and
 stores both eligibility cursors in the Flow journal. This is an unreleased
@@ -153,3 +158,22 @@ contexts bind the original queue store.
 Per-tenant producer quotas can limit one tenant's growth but cannot reclaim
 retained global capacity. No per-tenant AQ capacity isolation is claimed here;
 the host must budget aggregate traffic and enforce its producer admission policy.
+
+## Idle reconciliation budget
+
+The F-012 regression uses 100 unresolved Flows and an average idle-tick budget
+of 250 ms over eight ticks in the test profile. This is a regression threshold,
+not an end-to-end production latency guarantee. A local targeted run measured
+about 1.85 ms per idle tick. No wait identities, handles or business decisions
+are cached: the optimization retains only two scalar journal positions. Losing
+the watermark repeats validation. Flow writes, AQ transitions (including
+signals, controls and deadlines), bootstrap, and transient reconciliation
+failures cause another full pass. The pre-scan watermark prevents concurrent
+writes or reconciliation's own writes from being skipped.
+
+A pass after a journal change still visits all pending Flows. Sustained active
+traffic therefore retains linear reconciliation cost; the idle optimization
+removes the repeated per-Flow cost for unchanged ticks. Fully bound runs avoid
+redundant transactions even on those active passes. Future per-run change
+indexing can further reduce active-traffic cost without changing durable wait
+semantics. Reopen retains the complete reference/artifact validation.

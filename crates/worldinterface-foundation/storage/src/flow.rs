@@ -1049,6 +1049,15 @@ impl StoreRoot {
     pub fn flow_run_snapshot(&self, tenant: &OpaqueRef, run: &OpaqueRef) -> Result<FlowState> {
         read_view(self, tenant, Some(run), false)
     }
+    /// Append-only Flow journal position, for disposable reconciliation scan
+    /// watermarks. Source mutations always advance this position.
+    pub fn flow_journal_position(&self) -> Result<u64> {
+        Ok(self.connect(StoreKind::Flow)?.query_row(
+            "SELECT COALESCE(MAX(seq),0) FROM flow_history",
+            [],
+            |row| row.get(0),
+        )?)
+    }
     pub fn flow_pending_snapshot(&self, tenant: &OpaqueRef) -> Result<FlowState> {
         read_view(self, tenant, None, true)
     }

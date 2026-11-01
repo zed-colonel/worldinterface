@@ -41,6 +41,7 @@ pub struct QueueEngine<'a, H: ExecutorHandler + 'static> {
     store: QueueStoreId,
     engine: BootstrappedEngine<H>,
     signal_scan: crate::continuation::SignalScan,
+    flow_scan: crate::flow_coordinator::ReconcileCursor,
     signal_limits: actionqueue_core::limits::SignalLimits,
     pub signal_delivery_status: crate::continuation::SignalDeliveryStatus,
 }
@@ -104,6 +105,7 @@ impl<'a, H: ExecutorHandler + 'static> QueueEngine<'a, H> {
             store,
             engine,
             signal_scan: Default::default(),
+            flow_scan: Default::default(),
             signal_delivery_status: Default::default(),
             signal_limits,
         })
@@ -171,6 +173,7 @@ impl<'a, H: ExecutorHandler + 'static> QueueEngine<'a, H> {
             self.bundle.wi(),
             self.store.as_uuid(),
             &mut self.engine,
+            &mut self.flow_scan,
         )?;
         self.signal_delivery_status =
             crate::continuation::drain(self.bundle.wi(), &mut self.engine, &mut self.signal_scan)?;
@@ -179,6 +182,7 @@ impl<'a, H: ExecutorHandler + 'static> QueueEngine<'a, H> {
             self.bundle.wi(),
             self.store.as_uuid(),
             &mut self.engine,
+            &mut self.flow_scan,
         )?;
         self.signal_delivery_status =
             crate::continuation::drain(self.bundle.wi(), &mut self.engine, &mut self.signal_scan)?;

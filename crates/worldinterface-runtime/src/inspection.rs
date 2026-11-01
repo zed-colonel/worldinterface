@@ -499,7 +499,7 @@ impl<A: Authentication, P: crate::continuation::EventAuthorization>
         let mut waits = Vec::new();
         let mut accepted = Vec::new();
         for run in self.root.flow_snapshot(caller.tenant())?.runs.values() {
-            if &run.principal != caller.principal() {
+            if &run.tenant != caller.tenant() || !self.policy.authorize_run_read(&caller, run) {
                 continue;
             }
             waits.extend(

@@ -25,6 +25,30 @@ fn continuation_policy_rejects_aliases_qualified_calls_macros_and_feature_branch
         "fn f(){crossbeam_channel::bounded::<u8>(1);}",
         "fn f(){flume::unbounded::<u8>();}",
         "fn f(){while Instant::now() < deadline {std::hint::spin_loop();}}",
+        "struct X { pending: Mutex<Option<Waker>> }",
+        "struct X { pending: Mutex<Box<[(WaitId, Handle)]>> }",
+        "struct X { pending: DashMap<WaitId, Handle> }",
+        "struct X { pending: IndexMap<String, Waker> }",
+        "struct X { pending: Slab<WaitId> }",
+        "type M<K,V> = HashMap<K,V>; struct X { pending: M<WaitId,Handle> }",
+        "type M<K,V> = HashMap<K,V>; use a::ResumeContextId as Key; struct X { pending: M<Key,Handle> }",
+        "struct X { pending: HashMap<RunId, JoinHandle> }",
+        "make! { struct X { pending: M<WaitId,Handle> } }",
+        "struct X { pending: (WaitId, Handle) }",
+        "struct X { id: WaitId, executor: Handle }",
+        "type Key = ResumeContextId; struct X { id: Key }",
+        "struct X { id: Result<WaitId> }",
+        "struct X { pending: [ResumeContextId; 10] }",
+        "fn f(){async_channel::bounded::<u8>(1);}",
+        "fn f(){kanal::unbounded::<u8>();}",
+        "use tokio::sync::Semaphore;",
+        "fn f(){async_io::Timer::after(d()).await;}",
+        "fn f(){receiver.recv_timeout(d());}",
+        "fn f(){std::thread::sleep_ms(1);}",
+        "fn f(){while Instant::now() < deadline {std::thread::yield_now();}}",
+        "fn f(){while Instant::now() < deadline {}}",
+        "fn f(){let start = Instant::now(); while start.elapsed() < d() {}}",
+
     ] {
         assert!(
             !source_findings("crates/worldinterface-runtime/src/new.rs", source)
@@ -42,7 +66,7 @@ fn continuation_policy_rejects_aliases_qualified_calls_macros_and_feature_branch
 }
 #[test]
 fn continuation_policy_keeps_ordinary_storage_locks_and_durable_checkpoints() {
-    assert!(source_findings("source.rs","struct Durable { waits: std::collections::BTreeMap<String, WaitCheckpoint>, lock: std::sync::Mutex<()> }").unwrap().is_empty());
+    assert!(source_findings("source.rs","enum PlanOperation { Timer { deadline: Deadline } } fn f(){ match x { PlanOperation::Timer { deadline } => save(deadline) } } fn new_id() -> Result<WaitId> { todo!() } struct Durable { waits: std::collections::BTreeMap<String, WaitCheckpoint>, lock: std::sync::Mutex<()> }").unwrap().is_empty());
 }
 #[test]
 fn continuation_policy_rejects_alternate_module_and_include_routes_to_legacy_code() {

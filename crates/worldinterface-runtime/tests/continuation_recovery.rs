@@ -20,6 +20,48 @@ use worldinterface_runtime::{
 };
 use worldinterface_storage::{flow::*, StoreKind};
 
+// Observe inside the executor, before control returns to tick's next outbox
+// drain. This distinguishes handler repair from eventual scan acknowledgment.
+struct CheckWakeAcknowledgment<H> {
+    inner: H,
+    bundle: std::sync::Arc<worldinterface_runtime::storage::StoreBundle>,
+    event: OpaqueRef,
+    sequence: u64,
+    observed: std::sync::Arc<AtomicBool>,
+}
+impl<H: ExecutorHandler> ExecutorHandler for CheckWakeAcknowledgment<H> {
+    fn execute(&self, ctx: ExecutorContext) -> AttemptDisposition {
+        let payload: serde_json::Value = serde_json::from_slice(&ctx.input.payload).unwrap();
+        let target = payload["node"] == "wait" && ctx.input.resume_context.is_some();
+        if target {
+            assert!(
+                self.bundle
+                    .wi()
+                    .signal_obligation(StoreKind::Fabric, &self.event)
+                    .unwrap()
+                    .sequence
+                    .is_none(),
+                "scan reached the target before the handler"
+            );
+        }
+        let disposition = self.inner.execute(ctx);
+        if target {
+            assert!(matches!(disposition.outcome(), DispositionOutcome::Complete));
+            assert_eq!(
+                self.bundle
+                    .wi()
+                    .signal_obligation(StoreKind::Fabric, &self.event)
+                    .unwrap()
+                    .sequence,
+                Some(self.sequence),
+                "wake handler must repair acknowledgment"
+            );
+            self.observed.store(true, Ordering::SeqCst);
+        }
+        disposition
+    }
+}
+
 #[tokio::test]
 async fn admitted_unacknowledged_wake_with_backlog_recovers_independently_of_scan() {
     let f = Fixture::new();
@@ -78,8 +120,17 @@ async fn admitted_unacknowledged_wake_with_backlog_recovers_independently_of_sca
     let sequence = aq.admit_signal(request).unwrap().sequence().get();
     aq.shutdown().unwrap(); // The cross-store cut: AQ committed, WI not acknowledged.
     assert!(f.bundle.wi().signal_obligation(StoreKind::Fabric, &event).unwrap().sequence.is_none());
-    let mut q = QueueEngine::bootstrap(&f.bundle, f.handler(), host()).unwrap();
+    let observed = std::sync::Arc::new(AtomicBool::new(false));
+    let handler = CheckWakeAcknowledgment {
+        inner: f.handler(),
+        bundle: f.bundle.clone(),
+        event: event.clone(),
+        sequence,
+        observed: observed.clone(),
+    };
+    let mut q = QueueEngine::bootstrap(&f.bundle, handler, host()).unwrap();
     f.drive(&mut q, &id).await;
+    assert!(observed.load(Ordering::SeqCst));
     assert_eq!(f.run(&id).outcome, Some(FlowOutcome::Succeeded));
     assert_eq!(
         f.bundle.wi().signal_obligation(StoreKind::Fabric, &event).unwrap().sequence,
@@ -295,6 +346,61 @@ async fn continuation_inspection_authorizes_and_reports_pending_and_accepted_cha
     assert_eq!(view.waits.len(), 1);
     assert_eq!(view.accepted.len(), 1);
     assert_eq!(view.accepted[0].event.as_ref(), Some(&event));
+
+    struct OperatorPolicy {
+        event: Policy,
+        run: Option<OpaqueRef>,
+    }
+    impl EventAuthorization for OperatorPolicy {
+        fn authorize(
+            &self,
+            c: &worldinterface_domain::agency::AuthenticatedCaller,
+            kind: EventKind,
+            source: &OpaqueRef,
+        ) -> worldinterface_runtime::Result<EventRoute> {
+            self.event.authorize(c, kind, source)
+        }
+        fn authorize_read(
+            &self,
+            _: &worldinterface_domain::agency::AuthenticatedCaller,
+            _: &DurableEvent,
+        ) -> bool {
+            true
+        }
+        fn authorize_run_read(
+            &self,
+            _: &worldinterface_domain::agency::AuthenticatedCaller,
+            run: &FlowRun,
+        ) -> bool {
+            self.run.as_ref() == Some(&run.id)
+        }
+    }
+    let operator = Auth(f.auth.0.clone(), PrincipalId::generate());
+    for allowed in [false, true] {
+        let policy =
+            OperatorPolicy { event: Policy(event_route(&f)), run: allowed.then_some(id.clone()) };
+        let inspector = ContinuationInspector {
+            root: f.bundle.wi(),
+            authentication: &operator,
+            policy: &policy,
+        };
+        let operator_view = inspector.event(&(), StoreKind::Fabric, &event).unwrap();
+        assert_eq!(operator_view.waits.len(), usize::from(allowed));
+        assert_eq!(operator_view.accepted.len(), usize::from(allowed));
+        if allowed {
+            assert_eq!(operator_view.waits, view.waits);
+            assert_eq!(operator_view.accepted, view.accepted);
+        }
+        // Even a permissive host policy cannot cross the authenticated tenant.
+        let foreign = Auth(r("foreign"), operator.1.clone());
+        assert!(ContinuationInspector {
+            root: f.bundle.wi(),
+            authentication: &foreign,
+            policy: &policy
+        }
+        .event(&(), StoreKind::Fabric, &event)
+        .is_err());
+    }
     q.shutdown().unwrap();
 }
 
@@ -444,4 +550,88 @@ async fn signal_cancel_acceptance_and_deadline_winners_replay_across_paired_reop
         assert_eq!(f.run(&id), before, "{order}");
         q.shutdown().unwrap();
     }
+}
+
+/// F-012: idle scheduling must not repeat a full reconciliation per waiting
+/// Flow. The 250 ms average budget leaves ample headroom over an empty tick
+/// while catching the reviewed 500+ ms cost at 100 waits.
+#[tokio::test]
+async fn idle_ticks_skip_unchanged_waiting_flows_and_reconcile_changes_after_restart() {
+    use actionqueue_core::run::RunState;
+    use std::time::{Duration, Instant};
+    let mut f = Fixture::new();
+    let submissions: Vec<_> = (0..101)
+        .map(|i| {
+            let mut s = f.submission.clone();
+            s.client_request_id = format!("idle-scale:{i}").try_into().unwrap();
+            s
+        })
+        .collect();
+    allow_demands(&mut f, &submissions);
+    let evidence = Evidence(f.snapshot.clone());
+    let service = f.service(&evidence);
+    let d = definition(&f, true, SignalProgress::Once {}, None);
+    service.activate_flow_version(&(), d.clone(), None).unwrap();
+    let mut q = QueueEngine::bootstrap(&f.bundle, f.handler(), host()).unwrap();
+    let ids: Vec<_> = submissions[..100]
+        .iter()
+        .map(|s| service.submit_flow(&(), &d.id, s.clone(), &mut q).unwrap())
+        .collect();
+    for _ in 0..1500 {
+        let _ = q.tick().await.unwrap();
+        let state = f.bundle.wi().flow_pending_snapshot(&f.auth.0).unwrap();
+        if state.runs.len() == 100
+            && state.runs.values().all(|r| {
+                r.waits.len() == 1
+                    && r.bindings.values().all(|b| {
+                        q.engine().projection().get_run_state(&b.run.as_str().parse().unwrap())
+                            == Some(&RunState::Awaiting)
+                    })
+            })
+        {
+            break;
+        }
+        tokio::time::sleep(Duration::from_millis(1)).await;
+    }
+    assert_eq!(
+        q.engine().projection().run_instances().filter(|r| r.state() == RunState::Awaiting).count(),
+        200
+    );
+    // Complete the final disposable watermark pass before measurement.
+    for _ in 0..2 {
+        let _ = q.tick().await.unwrap();
+    }
+    let started = Instant::now();
+    for _ in 0..8 {
+        let tick = q.tick().await.unwrap();
+        assert_eq!(tick.dispatched, 0);
+    }
+    let average = started.elapsed() / 8;
+    eprintln!("100 waiting Flows: average idle tick {average:?}");
+    assert!(average < Duration::from_millis(250), "idle tick: {average:?}");
+
+    // WI and AQ mutations both invalidate the disposable watermark. A newly
+    // admitted unrelated Flow must progress while all 100 waits stay unresolved.
+    let mut pure = d.clone();
+    pure.id = r("idle-unrelated");
+    pure.body.nodes = vec![pure_node("value", vec![], true.into(), "bool")];
+    pure.body.entries = vec![r("value")];
+    service.activate_flow_version(&(), pure.clone(), None).unwrap();
+    let unrelated = service.submit_flow(&(), &pure.id, submissions[100].clone(), &mut q).unwrap();
+    f.drive(&mut q, &unrelated).await;
+    assert_eq!(f.run(&unrelated).outcome, Some(FlowOutcome::Succeeded));
+    let canceled = ids.last().unwrap();
+    q.cancel_task(f.run(canceled).coordinator_task.as_str().parse().unwrap()).unwrap();
+    f.drive(&mut q, canceled).await;
+    assert_eq!(f.run(canceled).outcome, Some(FlowOutcome::Canceled));
+    q.shutdown().unwrap();
+
+    // No local watermark survives reopen. AQ-owned waits still wake from their
+    // authoritative records, with the canceled run retaining its outcome.
+    let mut q = QueueEngine::bootstrap(&f.bundle, f.handler(), host()).unwrap();
+    emit(&f, 1);
+    f.drive(&mut q, &ids[0]).await;
+    assert_eq!(f.run(&ids[0]).outcome, Some(FlowOutcome::Succeeded));
+    assert_eq!(f.run(canceled).outcome, Some(FlowOutcome::Canceled));
+    q.shutdown().unwrap();
 }

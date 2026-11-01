@@ -10344,5 +10344,26 @@
     "target": "continuation domain/storage/runtime",
     "rationale": "WIP-08 review remediation: durable source eligibility, resident capacity inspection and producer/recovery regression fixtures.",
     "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/flow_coordinator.rs::::struct:ReconcileCursor",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 F-011 through F-014 remediation: disposable scalar scan cursor and acknowledgment/operator regression fixtures.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/continuation_recovery.rs::::struct:CheckWakeAcknowledgment",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 F-011 through F-014 remediation: disposable scalar scan cursor and acknowledgment/operator regression fixtures.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/continuation_recovery.rs::continuation_inspection_authorizes_and_reports_pending_and_accepted_chain::struct:OperatorPolicy",
+    "disposition": "retain-align",
+    "target": "continuation domain/storage/runtime",
+    "rationale": "WIP-08 F-011 through F-014 remediation: disposable scalar scan cursor and acknowledgment/operator regression fixtures.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
   }
 ]

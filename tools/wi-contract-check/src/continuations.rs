@@ -6,12 +6,27 @@ use std::{collections::BTreeSet, fs, path::Path};
 const CRASH_BARRIER: &str = "crates/worldinterface-foundation/storage/src/crashpoint.rs";
 const CRASH_BARRIER_HASH: &str = "c8c9d9f983ca833ffdd0d22552379aea3a5976ce39b6a537d2d3ac6a784f4e14";
 fn forbidden(tokens: TokenStream, found: &mut BTreeSet<String>) {
-    for token in tokens {
+    let tokens: Vec<_> = tokens.into_iter().collect();
+    for (index, token) in tokens.iter().enumerate() {
         match token {
             TokenTree::Group(g) => forbidden(g.stream(), found),
             TokenTree::Ident(i) => {
                 let name = i.to_string();
                 let normalized = name.trim_start_matches("r#").to_lowercase().replace('_', "");
+                // Flow's durable deadline variant is not an executor timer.
+                // Only its definition and qualified variant construction/match
+                // are allowed; Timer imports and Timer::after still reject.
+                if normalized == "timer"
+                    && matches!(tokens.get(index + 1), Some(TokenTree::Group(g))
+                    if g.delimiter() == proc_macro2::Delimiter::Brace
+                    && (g.stream().to_string() == "deadline : Deadline"
+                        || index >= 3
+                            && matches!(&tokens[index-3], TokenTree::Ident(n) if n == "PlanOperation")
+                            && matches!(&tokens[index-2], TokenTree::Punct(p) if p.as_char() == ':')
+                            && matches!(&tokens[index-1], TokenTree::Punct(p) if p.as_char() == ':')))
+                {
+                    continue;
+                }
                 if [
                     "lazystatic",
                     "threadlocal",
@@ -43,6 +58,15 @@ fn forbidden(tokens: TokenStream, found: &mut BTreeSet<String>) {
                     "barrier",
                     "crossbeamchannel",
                     "flume",
+                    "asyncchannel",
+                    "kanal",
+                    "waker",
+                    "joinhandle",
+                    "semaphore",
+                    "yieldnow",
+                    "sleepms",
+                    "recvtimeout",
+                    "timer",
                 ]
                 .contains(&normalized.as_str())
                 {
@@ -68,33 +92,22 @@ pub fn source_findings(path: &str, source: &str) -> Result<Vec<Finding>> {
     // is the existing bounded compiler optimization, inspected separately.
     let ast = syn::parse_file(&production)?;
     use syn::visit::Visit;
-    // Follow import aliases before inspecting collection element/key types.
-    let mut identities =
-        BTreeSet::from(["WaitId".into(), "ResumeContextId".into(), "Waker".into()]);
-    let mut collections = BTreeSet::from([
-        "HashMap".into(),
-        "BTreeMap".into(),
-        "HashSet".into(),
-        "BTreeSet".into(),
-        "Vec".into(),
-        "VecDeque".into(),
-        "LinkedList".into(),
-    ]);
-    struct Aliases<'a>(&'a mut BTreeSet<String>, &'a mut BTreeSet<String>);
+    // Any container of a wait/resume identity can become a registry, including
+    // generic aliases, tuples and slices. Result is the explicit transport-only
+    // allowance for helpers returning a newly constructed durable identity.
+    let mut identities = BTreeSet::from(["WaitId".into(), "ResumeContextId".into()]);
     fn contains_identity(tokens: TokenStream, ids: &BTreeSet<String>) -> bool {
         tokens.into_iter().any(|t| match t {
-            TokenTree::Ident(n) => ids.contains(&n.to_string()),
+            TokenTree::Ident(n) => ids.contains(n.to_string().trim_start_matches("r#")),
             TokenTree::Group(g) => contains_identity(g.stream(), ids),
             _ => false,
         })
     }
+    struct Aliases<'a>(&'a mut BTreeSet<String>);
     impl<'ast> Visit<'ast> for Aliases<'_> {
         fn visit_use_rename(&mut self, r: &'ast syn::UseRename) {
             if self.0.contains(&r.ident.to_string()) {
                 self.0.insert(r.rename.to_string());
-            }
-            if self.1.contains(&r.ident.to_string()) {
-                self.1.insert(r.rename.to_string());
             }
         }
         fn visit_item_type(&mut self, item: &'ast syn::ItemType) {
@@ -105,24 +118,19 @@ pub fn source_findings(path: &str, source: &str) -> Result<Vec<Finding>> {
         }
     }
     loop {
-        let before = (identities.len(), collections.len());
-        Aliases(&mut identities, &mut collections).visit_file(&ast);
-        if before == (identities.len(), collections.len()) {
+        let before = identities.len();
+        Aliases(&mut identities).visit_file(&ast);
+        if before == identities.len() {
             break;
         }
     }
-    fn registries(
-        tokens: TokenStream,
-        ids: &BTreeSet<String>,
-        collections: &BTreeSet<String>,
-        found: &mut BTreeSet<String>,
-    ) {
+    fn registries(tokens: TokenStream, ids: &BTreeSet<String>, found: &mut BTreeSet<String>) {
         let tokens: Vec<_> = tokens.into_iter().collect();
         for (i, t) in tokens.iter().enumerate() {
             if let TokenTree::Group(g) = t {
-                registries(g.stream(), ids, collections, found);
+                registries(g.stream(), ids, found);
             }
-            if !matches!(t, TokenTree::Ident(n) if collections.contains(&n.to_string()))
+            if !matches!(t, TokenTree::Ident(n) if n != "Result")
                 || !matches!(tokens.get(i+1), Some(TokenTree::Punct(p)) if p.as_char() == '<')
             {
                 continue;
@@ -137,18 +145,50 @@ pub fn source_findings(path: &str, source: &str) -> Result<Vec<Finding>> {
                             break;
                         }
                     }
-                    TokenTree::Ident(n) if ids.contains(&n.to_string()) => {
-                        found.insert(format!("collection of {n}"));
+                    TokenTree::Ident(n) if ids.contains(n.to_string().trim_start_matches("r#")) => {
+                        found.insert(format!("container of {n}"));
                     }
                     TokenTree::Group(g) if contains_identity(g.stream(), ids) => {
-                        found.insert("collection of wait/resume identity".into());
+                        found.insert("container of wait/resume identity".into());
                     }
                     _ => {}
                 }
             }
         }
     }
-    registries(production.parse()?, &identities, &collections, &mut found);
+    registries(production.parse()?, &identities, &mut found);
+    struct TypesAndLoops<'a>(&'a BTreeSet<String>, &'a mut BTreeSet<String>);
+    impl<'ast> Visit<'ast> for TypesAndLoops<'_> {
+        fn visit_field(&mut self, field: &'ast syn::Field) {
+            use quote::ToTokens;
+            if contains_identity(field.ty.to_token_stream(), self.0) {
+                self.1.insert("field holding wait/resume identity".into());
+            }
+            syn::visit::visit_field(self, field);
+        }
+        fn visit_type(&mut self, ty: &'ast syn::Type) {
+            use quote::ToTokens;
+            if matches!(ty, syn::Type::Tuple(_) | syn::Type::Array(_) | syn::Type::Slice(_))
+                && contains_identity(ty.to_token_stream(), self.0)
+            {
+                self.1.insert("tuple/array of wait/resume identity".into());
+            }
+            syn::visit::visit_type(self, ty);
+        }
+        fn visit_expr_while(&mut self, expr: &'ast syn::ExprWhile) {
+            if expr.body.stmts.is_empty() {
+                self.1.insert("empty polling loop".into());
+            }
+            syn::visit::visit_expr_while(self, expr);
+        }
+        fn visit_expr_loop(&mut self, expr: &'ast syn::ExprLoop) {
+            if expr.body.stmts.is_empty() {
+                self.1.insert("empty polling loop".into());
+            }
+            syn::visit::visit_expr_loop(self, expr);
+        }
+    }
+    TypesAndLoops(&identities, &mut found).visit_file(&ast);
     struct Statics<'a>(&'a mut BTreeSet<String>, &'a str);
     impl<'ast> Visit<'ast> for Statics<'_> {
         fn visit_item_static(&mut self, item: &'ast syn::ItemStatic) {

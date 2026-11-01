@@ -1165,6 +1165,11 @@
           "manifest": "crates/worldinterface-runtime/Cargo.toml",
           "package": "worldinterface-runtime",
           "test": "unaccepted_coordinator_finish_requires_authority_after_child_acceptance"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "idle_ticks_skip_unchanged_waiting_flows_and_reconcile_changes_after_restart"
         }
       ]
     },

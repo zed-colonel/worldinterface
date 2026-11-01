@@ -24,6 +24,15 @@ pub trait EventAuthorization {
         source: &OpaqueRef,
     ) -> Result<EventRoute>;
     fn authorize_read(&self, caller: &AuthenticatedCaller, event: &DurableEvent) -> bool;
+    /// Separate run disclosure decision: hosts may grant an operator access to
+    /// selected runs without granting event readers every run on that route.
+    fn authorize_run_read(
+        &self,
+        caller: &AuthenticatedCaller,
+        run: &worldinterface_storage::flow::FlowRun,
+    ) -> bool {
+        caller.tenant() == &run.tenant && caller.principal() == &run.principal
+    }
 }
 pub struct EventIntake<'a, A, P> {
     pub root: &'a StoreRoot,

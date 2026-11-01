@@ -262,11 +262,27 @@ pub(crate) fn coordinate(
     )?)
 }
 
+/// Disposable scan watermark, never a wait registry. Losing it only repeats a
+/// full validation pass; no wake, deadline or recovery depends on retaining it.
+#[derive(Default)]
+pub(crate) struct ReconcileCursor {
+    position: Option<(u64, u64)>,
+}
+
 pub(crate) fn reconcile<H: actionqueue_executor_local::handler::ExecutorHandler + 'static>(
     root: &StoreRoot,
     store: uuid::Uuid,
     engine: &mut actionqueue_runtime::engine::BootstrappedEngine<H>,
+    cursor: &mut ReconcileCursor,
 ) -> Result<()> {
+    let position = (root.flow_journal_position()?, engine.projection().latest_sequence());
+    if cursor.position == Some(position) {
+        return Ok(());
+    }
+    // Capture before scanning, so writes by this pass or concurrent handlers
+    // invalidate it. Errors must never suppress retries on an unchanged journal.
+    cursor.position = None;
+    let mut retry = false;
     for tenant in root.flow_tenants()? {
         let state = root.flow_pending_snapshot(&tenant)?;
         for r in state.runs.values() {
@@ -296,14 +312,16 @@ pub(crate) fn reconcile<H: actionqueue_executor_local::handler::ExecutorHandler 
                     return Err(rejected("Flow coordinator run cardinality"));
                 }
                 let parent_run = runs[0];
-                transact(
-                    root,
-                    &tenant,
-                    FlowCommand::BindCoordinator {
-                        run: r.id.clone(),
-                        parent_run: parent_run.to_string().try_into()?,
-                    },
-                )?;
+                if r.parent_run.is_none() {
+                    transact(
+                        root,
+                        &tenant,
+                        FlowCommand::BindCoordinator {
+                            run: r.id.clone(),
+                            parent_run: parent_run.to_string().try_into()?,
+                        },
+                    )?;
+                }
                 let child_tasks = r
                     .node_tasks
                     .values()
@@ -359,6 +377,17 @@ pub(crate) fn reconcile<H: actionqueue_executor_local::handler::ExecutorHandler 
                             outcome,
                             exports: Default::default(),
                         },
+                    )?;
+                    return Ok(());
+                }
+                if r.bindings.len() == r.node_tasks.len() {
+                    // References were validated above. Fully bound runs need
+                    // only cursor preparation for newly eligible nodes, without
+                    // another admission transaction or per-run database reload.
+                    crate::flow_wait::prepare_eligible(
+                        root,
+                        r,
+                        projection.signals().last_sequence().get(),
                     )?;
                     return Ok(());
                 }
@@ -448,6 +477,7 @@ pub(crate) fn reconcile<H: actionqueue_executor_local::handler::ExecutorHandler 
                 if !is_rejected(error.as_ref()) {
                     // I/O, AQ service, capacity and contention failures retry on
                     // later ticks. Their diagnostic text never establishes damage.
+                    retry = true;
                     continue;
                 }
                 // Run damage cannot stop scheduling other tenants. Journal/store
@@ -463,6 +493,9 @@ pub(crate) fn reconcile<H: actionqueue_executor_local::handler::ExecutorHandler 
                 cancel_quarantined(engine, r)?;
             }
         }
+    }
+    if !retry {
+        cursor.position = Some(position);
     }
     Ok(())
 }
