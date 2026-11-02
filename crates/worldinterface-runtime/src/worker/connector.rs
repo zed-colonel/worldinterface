@@ -370,7 +370,7 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
                 tenant: binding.tenant.clone(),
                 audience: binding.principal.clone(),
                 kind: worldinterface_domain::continuation::EventKind::WorkerObservation,
-                correlation: binding.run.clone(),
+                correlation: binding.event_correlation()?,
                 generation: None,
             };
             super::observation::commit(self.bundle.wi(), binding, route, observed)?;

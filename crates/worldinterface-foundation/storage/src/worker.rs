@@ -134,7 +134,7 @@ fn apply(c: &Connection, command: &Command) -> Result<bool> {
         Command::Observe { tenant, provider, run, observation, event } => {
             let mut state =
                 snapshot(c, tenant, provider, run)?.ok_or_else(|| invalid("worker absent"))?;
-            if event.route.correlation != *run
+            if event.route.correlation != state.binding.event_correlation().map_err(invalid)?
                 || event.route.generation.is_some()
                 || event.route.tenant != *tenant
                 || event.route.audience != state.binding.principal

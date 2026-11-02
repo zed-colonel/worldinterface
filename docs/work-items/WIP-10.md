@@ -118,3 +118,8 @@ explicit acceptance of the new exact digest. Check definitions are unchanged.
 The declared tooling suite also exposed the previous 27-connector inventory
 count. It now requires 28 and explicitly checks the new embedded WorkerConnector;
 the legacy default-registry registration count remains 21.
+
+Worker notification correlation hashes provider and run together. Reusing a run
+name under another provider cannot share its stream, revision index or wake; an
+atomic outbox/replay regression covers both valid parallel streams and cross-route
+rejection.

@@ -14,6 +14,21 @@ pub struct WorkerBinding {
     /// Exact request, executable, configuration, control, input and evaluation bindings.
     pub realization: ContentHash,
 }
+impl WorkerBinding {
+    /// Providers may reuse a run name; a notification must bind both dimensions.
+    pub fn event_correlation(&self) -> Result<OpaqueRef, String> {
+        format!(
+            "wi-worker-run:{}",
+            ContentHash::of(&worldinterface_protocol::canonical_data(&(
+                "wi-worker-stream-1",
+                &self.provider,
+                &self.run
+            ))?)
+            .as_str()
+        )
+        .try_into()
+    }
+}
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(rename_all = "snake_case")]
 pub enum WorkerFact {

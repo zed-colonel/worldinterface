@@ -15,7 +15,7 @@ pub fn commit(
         || observed.sequence == 0
         || route.tenant != binding.tenant
         || route.audience != binding.principal
-        || route.correlation != binding.run
+        || route.correlation != binding.event_correlation()?
         || route.kind != EventKind::WorkerObservation
         || route.generation.is_some()
     {

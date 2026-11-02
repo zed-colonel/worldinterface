@@ -77,7 +77,7 @@ fn observe(
             tenant: b.tenant.clone(),
             audience: b.principal.clone(),
             kind: EventKind::WorkerObservation,
-            correlation: b.run.clone(),
+            correlation: b.event_correlation().unwrap(),
             generation: None,
         },
         source.clone(),
@@ -166,4 +166,70 @@ fn worker_provider_keys_bind_exact_original_operations_and_replay_acknowledgemen
     let reopened = StoreRoot::open_existing(&path).unwrap();
     assert_eq!(state(&reopened, &b), before);
     assert!(!reopened.begin_worker_operation(b, operation).unwrap());
+}
+#[test]
+fn worker_provider_run_streams_do_not_collide_or_cross_wake() {
+    let t = tempfile::tempdir().unwrap();
+    let path = t.path().join("root");
+    let root = create(&path);
+    let first = binding();
+    let mut second = first.clone();
+    second.provider = "other-provider".to_string().try_into().unwrap();
+    second.request = "other-start".to_string().try_into().unwrap();
+    second.realization = ContentHash::of(b"other exact realization");
+    assert_ne!(first.event_correlation().unwrap(), second.event_correlation().unwrap());
+    for b in [&first, &second] {
+        root.reserve_start(b.clone(), 2).unwrap();
+        let source: OpaqueRef = format!("{}:event-1", b.provider.as_str()).try_into().unwrap();
+        let digest = ContentHash::of(b"accepted");
+        let event = DurableEvent::new(
+            EventRoute {
+                tenant: b.tenant.clone(),
+                audience: b.principal.clone(),
+                kind: EventKind::WorkerObservation,
+                correlation: b.event_correlation().unwrap(),
+                generation: None,
+            },
+            source.clone(),
+            2,
+            digest.clone(),
+            None,
+        )
+        .unwrap();
+        let observation = WorkerObservation {
+            event: source,
+            provider_sequence: 1,
+            fact: WorkerFact::StartAccepted,
+            digest,
+        };
+        if b == &second {
+            let mut wrong = event.clone();
+            wrong.route.correlation = first.event_correlation().unwrap();
+            assert!(root
+                .record_worker_observation(
+                    b.tenant.clone(),
+                    b.provider.clone(),
+                    b.run.clone(),
+                    observation.clone(),
+                    wrong
+                )
+                .is_err());
+        }
+        root.record_worker_observation(
+            b.tenant.clone(),
+            b.provider.clone(),
+            b.run.clone(),
+            observation,
+            event,
+        )
+        .unwrap();
+        assert!(state(&root, b).accepted);
+    }
+    let signals = root.pending_signals(StoreKind::Fabric, None, 100).unwrap();
+    assert_eq!(signals.len(), 2);
+    assert_ne!(signals[0].event.route, signals[1].event.route);
+    root.repository(StoreKind::Fabric).unwrap().rebuild().unwrap();
+    drop(root);
+    let root = StoreRoot::open_existing(&path).unwrap();
+    assert_eq!(root.pending_signals(StoreKind::Fabric, None, 100).unwrap(), signals);
 }

@@ -171,6 +171,11 @@
         "manifest": "crates/worldinterface-foundation/Cargo.toml",
         "package": "worldinterface-storage",
         "test": "worker_provider_keys_bind_exact_original_operations_and_replay_acknowledgements"
+      },
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-storage",
+        "test": "worker_provider_run_streams_do_not_collide_or_cross_wake"
       }
     ]
   }

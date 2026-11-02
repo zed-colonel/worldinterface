@@ -223,7 +223,7 @@ async fn wp_025_reordered_duplicate_late_and_cancel_racing_events_cannot_revive_
         tenant: b.tenant.clone(),
         audience: b.principal.clone(),
         kind: EventKind::WorkerObservation,
-        correlation: b.run.clone(),
+        correlation: b.event_correlation().unwrap(),
         generation: None,
     };
     let late = Observation {
@@ -398,7 +398,7 @@ async fn wp_025_real_worker_events_preserve_aq_deadline_cancel_and_restart_winne
         let PlanOperation::Wait { signal } = &mut definition.body.nodes[0].operation else {
             unreachable!()
         };
-        signal.correlation = h.run.clone().try_into().unwrap();
+        signal.correlation = h.binding().event_correlation().unwrap();
         service.activate_flow_version(&(), definition.clone(), None).unwrap();
         if order == "signal-deadline" {
             h.finish().await;
