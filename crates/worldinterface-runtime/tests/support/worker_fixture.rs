@@ -62,6 +62,22 @@ impl TrustedWorkerBuild for Approval {
         Ok(())
     }
 }
+#[cfg(not(clippy))]
+fn compiled_executables() -> (ContentHash, ContentHash) {
+    (
+        ContentHash::of(include_bytes!(env!("CARGO_BIN_EXE_wi-process-fixture"))),
+        ContentHash::of(include_bytes!(env!("CARGO_BIN_EXE_wi-process-reaper"))),
+    )
+}
+#[cfg(clippy)]
+fn compiled_executables() -> (ContentHash, ContentHash) {
+    // Check-only compilation has no executable build authority. These cannot
+    // match sealed ELF bytes, even if a check artifact were accidentally run.
+    (
+        ContentHash::of(b"clippy:no-fixture-build-authority"),
+        ContentHash::of(b"clippy:no-helper-build-authority"),
+    )
+}
 pub fn evaluation() -> Arc<EvaluationVerifier<Approval>> {
     let source = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
     let bytes =
@@ -91,12 +107,8 @@ pub fn evaluation() -> Arc<EvaluationVerifier<Approval>> {
     }
     let packet = manifest.digest().unwrap();
     assert_eq!(receipt.manifest, packet);
-    let trusted = Approval {
-        expected: receipt.clone(),
-        packet,
-        fixture: ContentHash::of(include_bytes!(env!("CARGO_BIN_EXE_wi-process-fixture"))),
-        helper: ContentHash::of(include_bytes!(env!("CARGO_BIN_EXE_wi-process-reaper"))),
-    };
+    let (fixture, helper) = compiled_executables();
+    let trusted = Approval { expected: receipt.clone(), packet, fixture, helper };
     Arc::new(EvaluationVerifier { manifest, receipt, trusted, source_root: source })
 }
 #[derive(Clone)]

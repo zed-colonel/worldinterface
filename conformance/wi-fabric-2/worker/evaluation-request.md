@@ -32,7 +32,9 @@ compiler identity and packet digest in the run scratch verification directory.
 Cargo's binary outputs are embedded in the test host at compile time; their
 digests are independent of runtime pathname measurement. The approved source/recipe
 and that trusted build output establish provenance; a measured ELF hash alone grants no authority. Sealed executable
-capabilities prevent later path replacement from substituting bytes.
+capabilities prevent later path replacement from substituting bytes. Check-only
+Clippy builds use non-authorizing sentinel hashes because no executables exist
+yet; runnable tests retain the compile-time binary binding.
 
 Approval must come from actual explicit operator acceptance of the completed
 canonical manifest digest. Its decision identity, operator, scope and finite

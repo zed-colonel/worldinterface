@@ -107,3 +107,14 @@ After acceptance: run the lifecycle/crash/concurrency tests, fix any findings wi
 renewed packet acceptance when bindings change, refresh hashes, commit, and run
 all ten adopted checks on that head. G3 closure requires passing evidence and
 qualifying reviewed CraftingTable integration with no blocking or major finding.
+
+The first committed candidate's declared runtime Clippy check found that fresh
+check-only targets have no binary files to embed. The replacement test-host path
+uses non-authorizing sentinel hashes under Clippy only; runnable tests still
+embed Cargo outputs and pin their bytes before sealing. The original packet
+7c89f1cc09c190982fe37e53758fc5bd519bff2255904360db8e935ddb6e9334
+was withdrawn without live evaluation or acceptance; its replacement needs
+explicit acceptance of the new exact digest. Check definitions are unchanged.
+The declared tooling suite also exposed the previous 27-connector inventory
+count. It now requires 28 and explicitly checks the new embedded WorkerConnector;
+the legacy default-registry registration count remains 21.

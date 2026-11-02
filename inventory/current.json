@@ -13305,7 +13305,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/tests/support/worker_fixture.rs",
     "name": "anchor",
-    "source_sha256": "619d8bf1dfa81dbfd7dc746201b65638eeb3fc4cf7815c0d28bdc5c24573293b",
+    "source_sha256": "85e8e5a9b850442fe8ec7b56179c4394c26862c2d8e8195e27d831d131241bc5",
     "conditions": [],
     "registration_sites": []
   },
@@ -13314,7 +13314,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-runtime/tests/support/worker_fixture.rs",
     "name": "crates/worldinterface-runtime/tests/support/worker_fixture.rs",
-    "source_sha256": "619d8bf1dfa81dbfd7dc746201b65638eeb3fc4cf7815c0d28bdc5c24573293b",
+    "source_sha256": "85e8e5a9b850442fe8ec7b56179c4394c26862c2d8e8195e27d831d131241bc5",
     "conditions": [],
     "registration_sites": []
   },
@@ -13323,7 +13323,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/support/worker_fixture.rs",
     "name": "Approval",
-    "source_sha256": "619d8bf1dfa81dbfd7dc746201b65638eeb3fc4cf7815c0d28bdc5c24573293b",
+    "source_sha256": "85e8e5a9b850442fe8ec7b56179c4394c26862c2d8e8195e27d831d131241bc5",
     "conditions": [],
     "registration_sites": []
   },
@@ -13332,7 +13332,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/support/worker_fixture.rs",
     "name": "Harness",
-    "source_sha256": "619d8bf1dfa81dbfd7dc746201b65638eeb3fc4cf7815c0d28bdc5c24573293b",
+    "source_sha256": "85e8e5a9b850442fe8ec7b56179c4394c26862c2d8e8195e27d831d131241bc5",
     "conditions": [],
     "registration_sites": []
   },
@@ -13341,7 +13341,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/support/worker_fixture.rs",
     "name": "HostClock",
-    "source_sha256": "619d8bf1dfa81dbfd7dc746201b65638eeb3fc4cf7815c0d28bdc5c24573293b",
+    "source_sha256": "85e8e5a9b850442fe8ec7b56179c4394c26862c2d8e8195e27d831d131241bc5",
     "conditions": [],
     "registration_sites": []
   },
@@ -13350,7 +13350,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/support/worker_fixture.rs",
     "name": "HostEvidence",
-    "source_sha256": "619d8bf1dfa81dbfd7dc746201b65638eeb3fc4cf7815c0d28bdc5c24573293b",
+    "source_sha256": "85e8e5a9b850442fe8ec7b56179c4394c26862c2d8e8195e27d831d131241bc5",
     "conditions": [],
     "registration_sites": []
   },
@@ -13359,7 +13359,7 @@
     "kind": "type",
     "path": "crates/worldinterface-runtime/tests/support/worker_fixture.rs",
     "name": "Evidence",
-    "source_sha256": "619d8bf1dfa81dbfd7dc746201b65638eeb3fc4cf7815c0d28bdc5c24573293b",
+    "source_sha256": "85e8e5a9b850442fe8ec7b56179c4394c26862c2d8e8195e27d831d131241bc5",
     "conditions": [],
     "registration_sites": []
   },
