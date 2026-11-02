@@ -8,6 +8,18 @@ edition = "2021"
 rust-version = "1.89"
 publish = false
 
+[[bin]]
+name = "wi-process-reaper"
+path = "src/bin/wi-process-reaper.rs"
+test = false
+bench = false
+
+[[bin]]
+name = "wi-process-fixture"
+path = "src/bin/wi-process-fixture.rs"
+test = false
+bench = false
+
 [dependencies]
 worldinterface-capability = { path = "../worldinterface-foundation/capability" }
 actionqueue-core = { version = "=0.3.0", default-features = false, features = ["serde"] }
@@ -27,6 +39,7 @@ tempfile = "3"
 hex = "0.4"
 uuid = { version = "1", features = ["serde"] }
 sha2 = "0.10"
+libc = "0.2"
 
 [dev-dependencies]
 worldinterface-storage = { path = "../worldinterface-foundation/storage", features = ["crash-points"] }

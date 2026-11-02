@@ -10372,5 +10372,397 @@
     "target": "continuation domain/storage/runtime",
     "rationale": "WIP-08 F-017: test-only event disclosure policy exercises the principal-only run-read default with permissive event reads.",
     "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/bin/wi-process-fixture.rs::::module:worker_process",
+    "disposition": "test-evidence",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "WIP-09: WI-owned functional/misbehaving fixture and executable adapter evidence; no lifecycle conformance closure.",
+    "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/bin/wi-process-fixture.rs::::source-module:crates/worldinterface-runtime/src/bin/wi-process-fixture.rs",
+    "disposition": "test-evidence",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "WIP-09: WI-owned functional/misbehaving fixture and executable adapter evidence; no lifecycle conformance closure.",
+    "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/bin/wi-process-reaper.rs::::module:worker_process",
+    "disposition": "retain-align",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "WIP-09: Reviewed standalone per-run reaper entry point, distinct from operator host supervisor.",
+    "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/bin/wi-process-reaper.rs::::source-module:crates/worldinterface-runtime/src/bin/wi-process-reaper.rs",
+    "disposition": "retain-align",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "WIP-09: Reviewed standalone per-run reaper entry point, distinct from operator host supervisor.",
+    "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/lib.rs::::module:worker_process@9bb98d23c4b1",
+    "disposition": "retain-align",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "WIP-09: Linux-only runtime worker adapter export; foundation remains process-free.",
+    "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/admission.rs::::enum:Task",
+    "disposition": "retain-align",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "WIP-09: Exact trusted host admission, scope, reviewed registry and typed bounded fixture configuration.",
+    "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/admission.rs::::source-module:crates/worldinterface-runtime/src/worker_process/admission.rs",
+    "disposition": "retain-align",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "WIP-09: Exact trusted host admission, scope, reviewed registry and typed bounded fixture configuration.",
+    "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/admission.rs::::struct:AuthorizedRun",
+    "disposition": "retain-align",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "WIP-09: Exact trusted host admission, scope, reviewed registry and typed bounded fixture configuration.",
+    "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/admission.rs::::struct:ExecutableRegistry",
+    "disposition": "retain-align",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "WIP-09: Exact trusted host admission, scope, reviewed registry and typed bounded fixture configuration.",
+    "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/admission.rs::::struct:Export",
+    "disposition": "retain-align",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "WIP-09: Exact trusted host admission, scope, reviewed registry and typed bounded fixture configuration.",
+    "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/admission.rs::::struct:HostScope",
+    "disposition": "retain-align",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "WIP-09: Exact trusted host admission, scope, reviewed registry and typed bounded fixture configuration.",
+    "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/admission.rs::::struct:Input",
+    "disposition": "retain-align",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "WIP-09: Exact trusted host admission, scope, reviewed registry and typed bounded fixture configuration.",
+    "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/admission.rs::::struct:SystemClock",
+    "disposition": "retain-align",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "WIP-09: Exact trusted host admission, scope, reviewed registry and typed bounded fixture configuration.",
+    "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/admission.rs::::trait:Clock",
+    "disposition": "retain-align",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "WIP-09: Exact trusted host admission, scope, reviewed registry and typed bounded fixture configuration.",
+    "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/artifact.rs::::source-module:crates/worldinterface-runtime/src/worker_process/artifact.rs",
+    "disposition": "retain-align",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "WIP-09: Private per-run workspace and scoped, bounded no-follow export collection.",
+    "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/artifact.rs::::struct:Workspace",
+    "disposition": "retain-align",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "WIP-09: Private per-run workspace and scoped, bounded no-follow export collection.",
+    "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/bootstrap.rs::::module:credential_tests@10d1b0eff34c",
+    "disposition": "test-evidence",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "WIP-09: WI-owned functional/misbehaving fixture and executable adapter evidence; no lifecycle conformance closure.",
+    "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/bootstrap.rs::::module:tests@10d1b0eff34c",
+    "disposition": "test-evidence",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "WIP-09: WI-owned functional/misbehaving fixture and executable adapter evidence; no lifecycle conformance closure.",
+    "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/bootstrap.rs::::source-module:crates/worldinterface-runtime/src/worker_process/bootstrap.rs",
+    "disposition": "retain-align",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "WIP-09: Private socketpair bootstrap, header-first bounded streaming and run credential proof.",
+    "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/bootstrap.rs::::struct:Decoder",
+    "disposition": "retain-align",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "WIP-09: Private socketpair bootstrap, header-first bounded streaming and run credential proof.",
+    "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/bootstrap.rs::::struct:Launch",
+    "disposition": "retain-align",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "WIP-09: Private socketpair bootstrap, header-first bounded streaming and run credential proof.",
+    "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/bootstrap.rs::::struct:Message",
+    "disposition": "retain-align",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "WIP-09: Private socketpair bootstrap, header-first bounded streaming and run credential proof.",
+    "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/fixture.rs::::source-module:crates/worldinterface-runtime/src/worker_process/fixture.rs",
+    "disposition": "test-evidence",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "WIP-09: WI-owned functional/misbehaving fixture and executable adapter evidence; no lifecycle conformance closure.",
+    "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/launch.rs::::module:tests@10d1b0eff34c",
+    "disposition": "test-evidence",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "WIP-09: WI-owned functional/misbehaving fixture and executable adapter evidence; no lifecycle conformance closure.",
+    "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/launch.rs::::source-module:crates/worldinterface-runtime/src/worker_process/launch.rs",
+    "disposition": "retain-align",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "WIP-09: Verified sealed descriptor execution and explicit child descriptor/environment allowlists.",
+    "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/launch.rs::::struct:Executable",
+    "disposition": "retain-align",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "WIP-09: Verified sealed descriptor execution and explicit child descriptor/environment allowlists.",
+    "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/mod.rs::::module:admission",
+    "disposition": "retain-align",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "WIP-09: Existing WorkerPort composition, lifecycle replay tombstones, scope checks and owned child guards.",
+    "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/mod.rs::::module:artifact",
+    "disposition": "retain-align",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "WIP-09: Existing WorkerPort composition, lifecycle replay tombstones, scope checks and owned child guards.",
+    "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/mod.rs::::module:bootstrap",
+    "disposition": "retain-align",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "WIP-09: Existing WorkerPort composition, lifecycle replay tombstones, scope checks and owned child guards.",
+    "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/mod.rs::::module:fixture",
+    "disposition": "retain-align",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "WIP-09: Existing WorkerPort composition, lifecycle replay tombstones, scope checks and owned child guards.",
+    "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/mod.rs::::module:launch",
+    "disposition": "retain-align",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "WIP-09: Existing WorkerPort composition, lifecycle replay tombstones, scope checks and owned child guards.",
+    "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/mod.rs::::module:ownership",
+    "disposition": "retain-align",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "WIP-09: Existing WorkerPort composition, lifecycle replay tombstones, scope checks and owned child guards.",
+    "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/mod.rs::::module:supervision",
+    "disposition": "retain-align",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "WIP-09: Existing WorkerPort composition, lifecycle replay tombstones, scope checks and owned child guards.",
+    "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/mod.rs::::source-module:crates/worldinterface-runtime/src/worker_process/mod.rs",
+    "disposition": "retain-align",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "WIP-09: Existing WorkerPort composition, lifecycle replay tombstones, scope checks and owned child guards.",
+    "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/mod.rs::::struct:HelperGuard",
+    "disposition": "retain-align",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "WIP-09: Existing WorkerPort composition, lifecycle replay tombstones, scope checks and owned child guards.",
+    "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/mod.rs::::struct:ProcessWorkerPort",
+    "disposition": "retain-align",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "WIP-09: Existing WorkerPort composition, lifecycle replay tombstones, scope checks and owned child guards.",
+    "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/mod.rs::::struct:Run",
+    "disposition": "retain-align",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "WIP-09: Existing WorkerPort composition, lifecycle replay tombstones, scope checks and owned child guards.",
+    "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/mod.rs::::type:RunRegistry",
+    "disposition": "retain-align",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "WIP-09: Existing WorkerPort composition, lifecycle replay tombstones, scope checks and owned child guards.",
+    "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/ownership.rs::::module:tests@10d1b0eff34c",
+    "disposition": "test-evidence",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "WIP-09: WI-owned functional/misbehaving fixture and executable adapter evidence; no lifecycle conformance closure.",
+    "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/ownership.rs::::source-module:crates/worldinterface-runtime/src/worker_process/ownership.rs",
+    "disposition": "retain-align",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "WIP-09: Private boot/birth/nonce/allocation bindings with stable pidfd signalling and no PID fallback.",
+    "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/ownership.rs::::struct:Context",
+    "disposition": "retain-align",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "WIP-09: Private boot/birth/nonce/allocation bindings with stable pidfd signalling and no PID fallback.",
+    "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/ownership.rs::::struct:Owned",
+    "disposition": "retain-align",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "WIP-09: Private boot/birth/nonce/allocation bindings with stable pidfd signalling and no PID fallback.",
+    "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/ownership.rs::tests::struct:ChildGuard@10d1b0eff34c",
+    "disposition": "test-evidence",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "WIP-09: WI-owned functional/misbehaving fixture and executable adapter evidence; no lifecycle conformance closure.",
+    "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/supervision.rs::::module:tests@10d1b0eff34c",
+    "disposition": "test-evidence",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "WIP-09: WI-owned functional/misbehaving fixture and executable adapter evidence; no lifecycle conformance closure.",
+    "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/supervision.rs::::source-module:crates/worldinterface-runtime/src/worker_process/supervision.rs",
+    "disposition": "retain-align",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "WIP-09: Per-run subreaper, bounded descendant discovery, escalation and explicit cleanup uncertainty.",
+    "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/supervision.rs::::struct:CleanupReport",
+    "disposition": "retain-align",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "WIP-09: Per-run subreaper, bounded descendant discovery, escalation and explicit cleanup uncertainty.",
+    "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/supervision.rs::::struct:Tree",
+    "disposition": "retain-align",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "WIP-09: Per-run subreaper, bounded descendant discovery, escalation and explicit cleanup uncertainty.",
+    "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/supervision.rs::tests::cleanup_uncertainty_is_reported_without_signalling_mismatched_ownership::struct:ChildGuard@10d1b0eff34c",
+    "disposition": "test-evidence",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "WIP-09: WI-owned functional/misbehaving fixture and executable adapter evidence; no lifecycle conformance closure.",
+    "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/supervision.rs::tests::struct:Guard@10d1b0eff34c",
+    "disposition": "test-evidence",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "WIP-09: WI-owned functional/misbehaving fixture and executable adapter evidence; no lifecycle conformance closure.",
+    "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_process.rs::::source-module:crates/worldinterface-runtime/tests/worker_process.rs",
+    "disposition": "test-evidence",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "WIP-09: WI-owned functional/misbehaving fixture and executable adapter evidence; no lifecycle conformance closure.",
+    "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_process.rs::::struct:Harness",
+    "disposition": "test-evidence",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "WIP-09: WI-owned functional/misbehaving fixture and executable adapter evidence; no lifecycle conformance closure.",
+    "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_process.rs::executable_path_replacement_cannot_change_reviewed_bytes::registration:1311b6cfc84208d3e4985be631dd5ce7539672523931fe51574c821df349966f#1",
+    "disposition": "test-evidence",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "WIP-09: WI-owned functional/misbehaving fixture and executable adapter evidence; no lifecycle conformance closure.",
+    "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_process.rs::expired_or_revoked_artifact_and_observation_access_is_denied::struct:TestClock",
+    "disposition": "test-evidence",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "WIP-09: WI-owned functional/misbehaving fixture and executable adapter evidence; no lifecycle conformance closure.",
+    "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_process.rs::registry::registration:0c2b76916ed79e6713b7a9ec80b5efe9e0f52dbbec5d2ef022c31cccd4264660#1",
+    "disposition": "test-evidence",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "WIP-09: WI-owned functional/misbehaving fixture and executable adapter evidence; no lifecycle conformance closure.",
+    "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/bootstrap.rs::::struct:FixtureLaunch",
+    "disposition": "retain-align",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "Private fixture bootstrap excluding host ownership bindings (F-001)",
+    "source": "WIP-09 review remediation F-001\u2013F-005; docs/work-items/WIP-09.md"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/mod.rs::::module:tests@10d1b0eff34c",
+    "disposition": "test-evidence",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "Real-child regression for missing stable helper ownership (F-004)",
+    "source": "WIP-09 review remediation F-001\u2013F-005; docs/work-items/WIP-09.md"
   }
 ]

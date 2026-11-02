@@ -908,6 +908,7 @@ dependencies = [
  "fs2",
  "hex",
  "hmac",
+ "libc",
  "rusqlite",
  "serde",
  "serde_json",
