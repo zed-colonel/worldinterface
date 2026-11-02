@@ -134,6 +134,27 @@ pub(super) fn nonblocking(fd: RawFd) -> Result<()> {
     }
     Ok(())
 }
+/// Probe each launch layer before it opens any additional runtime descriptors.
+pub(super) fn environment_and_descriptors_clean(last_allowed: RawFd) -> Result<bool> {
+    let env = std::env::vars_os().collect::<Vec<_>>();
+    // Close the directory iterator before checking its transient descriptor.
+    let descriptors = io(std::fs::read_dir("/proc/self/fd"))?
+        .map(|entry| {
+            io(entry)?
+                .file_name()
+                .to_str()
+                .and_then(|s| s.parse::<RawFd>().ok())
+                .ok_or_else(|| "invalid descriptor entry".to_string())
+        })
+        .collect::<Result<Vec<_>>>()?;
+    let extra = descriptors
+        .into_iter()
+        .any(|fd| fd > last_allowed && unsafe { libc::fcntl(fd, libc::F_GETFD) } >= 0);
+    Ok(env.len() == 1
+        && env[0].0 == "WI_PROFILE"
+        && env[0].1 == "process-managed-proof-1"
+        && !extra)
+}
 
 #[cfg(test)]
 mod tests {

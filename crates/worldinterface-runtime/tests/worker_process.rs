@@ -299,17 +299,46 @@ async fn descendants_grandchildren_sessions_and_early_leader_exit_are_cleaned_wi
 }
 #[tokio::test]
 async fn environment_and_deliberately_non_cloexec_descriptor_are_excluded() {
+    use std::os::fd::FromRawFd;
     let sentinel = tempfile::NamedTempFile::new().unwrap();
-    let fd = sentinel.as_file().as_raw_fd();
+    // Keep the sentinel above deliberate bootstrap slots 3/4, even in an isolated test.
+    let fd = unsafe { libc::fcntl(sentinel.as_file().as_raw_fd(), libc::F_DUPFD, 64) };
+    assert!(fd >= 64);
+    let inherited = unsafe { fs::File::from_raw_fd(fd) };
+    let fd = inherited.as_raw_fd();
     assert!(unsafe { libc::fcntl(fd, libc::F_SETFD, 0) } >= 0);
     std::env::set_var("WI_SENTINEL_SECRET", "do-not-inherit-this-test-sentinel");
     let h = harness(Task::Probe, 1500, 65536, vec![export("probe.json", b"{\"clean\":true}")]);
     h.start().await;
-    assert!(h.finished().cleanup_confirmed);
+    let report = h.finished();
+    assert!(report.cleanup_confirmed);
+    assert!(report.helper_launch_clean, "helper inherited ambient authority: {report:?}");
     h.submit(Operation::CollectArtifacts).await.unwrap();
     assert_eq!(h.port.read_artifact("artifact-probe.json").await.unwrap(), b"{\"clean\":true}");
     h.submit(Operation::Release).await.unwrap();
     std::env::remove_var("WI_SENTINEL_SECRET");
+}
+#[tokio::test]
+async fn reaped_short_lived_grandchildren_do_not_quarantine_or_exhaust_handles() {
+    let h = harness(
+        Task::Churn { children: 512 },
+        15_000,
+        65536,
+        vec![export("churn.json", b"{\"reaped\":true}")],
+    );
+    h.start().await;
+    let report = h.finished();
+    assert!(report.exit_confirmed && report.cleanup_confirmed, "{report:?}");
+    assert!(report.findings.is_empty(), "{report:?}");
+    assert!(
+        report.descendants_observed > 256,
+        "fixture did not exercise handle turnover: {report:?}"
+    );
+    assert_eq!(report.reason, "exited");
+    h.submit(Operation::CollectArtifacts).await.unwrap();
+    assert_eq!(h.port.read_artifact("artifact-churn.json").await.unwrap(), b"{\"reaped\":true}");
+    h.submit(Operation::Release).await.unwrap();
+    assert_eq!(fs::read_dir(h.root.path()).unwrap().count(), 0);
 }
 #[tokio::test]
 async fn unavailable_operations_have_no_process_filesystem_credential_or_observation_side_effect() {

@@ -26,7 +26,8 @@
     ],
     "WP-021": [
       "descendants_grandchildren_sessions_and_early_leader_exit_are_cleaned_with_escalation",
-      "port_drop_joins_supervision_and_reaps_owned_descendants"
+      "port_drop_joins_supervision_and_reaps_owned_descendants",
+      "reaped_short_lived_grandchildren_do_not_quarantine_or_exhaust_handles"
     ],
     "WP-022": [
       "wall_and_simultaneous_output_bounds_run_without_observation_polling"
@@ -221,6 +222,23 @@
         "name": "worker_process"
       },
       "test": "stop_before_start_prevents_consequential_launch"
+    },
+    {
+      "manifest": "crates/worldinterface-runtime/Cargo.toml",
+      "package": "worldinterface-runtime",
+      "target": {
+        "kind": "lib"
+      },
+      "test": "worker_process::tests::missing_helper_ownership_closes_bootstrap_without_waiting_or_signalling"
+    },
+    {
+      "manifest": "crates/worldinterface-runtime/Cargo.toml",
+      "package": "worldinterface-runtime",
+      "target": {
+        "kind": "test",
+        "name": "worker_process"
+      },
+      "test": "reaped_short_lived_grandchildren_do_not_quarantine_or_exhaust_handles"
     }
   ]
 }

@@ -21,6 +21,25 @@ pub(super) struct Launch {
     pub wall_ms: u64,
     pub output_bytes: u64,
 }
+/// Workload authority excludes the host/helper's private ownership bindings.
+#[derive(Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(super) struct FixtureLaunch {
+    pub handshake: String,
+    pub token: String,
+    pub credential: CredentialBindingV1,
+    pub task: super::admission::Task,
+}
+impl Launch {
+    pub fn fixture_bootstrap(&self) -> Result<FixtureLaunch> {
+        Ok(FixtureLaunch {
+            handshake: super::ownership::random()?,
+            token: self.token.clone(),
+            credential: self.credential.clone(),
+            task: self.task.clone(),
+        })
+    }
+}
 #[derive(Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub(super) struct Message {
@@ -166,7 +185,7 @@ mod tests {
 
 /// Proof is useful only on this private socket and for this exact run's short-lived credential.
 pub(super) fn verify_ready(
-    launch: &Launch,
+    launch: &FixtureLaunch,
     message: &Message,
     expected: &worldinterface_worker::credential::CredentialExpectation<'_>,
     now: u64,
@@ -218,7 +237,7 @@ mod credential_tests {
             run: "run-a",
             authorization_digest: &hash,
         };
-        let mut launch = Launch {
+        let launch = Launch {
             nonce: super::super::ownership::random().unwrap(),
             allocation: super::super::ownership::random().unwrap(),
             token: super::super::ownership::random().unwrap(),
@@ -227,6 +246,19 @@ mod credential_tests {
             wall_ms: 10,
             output_bytes: 100,
         };
+        let fixture = launch.fixture_bootstrap().unwrap();
+        let bytes = serde_json::to_vec(&fixture).unwrap();
+        let fields: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+        assert_eq!(fields.as_object().unwrap().len(), 4);
+        assert!(fields.get("nonce").is_none() && fields.get("allocation").is_none());
+        let wire = String::from_utf8(bytes).unwrap();
+        assert!(!wire.contains(&launch.nonce) && !wire.contains(&launch.allocation));
+        assert_ne!(fixture.handshake, launch.nonce);
+        // Even a valid host launch is rejected by the workload protocol.
+        assert!(
+            serde_json::from_slice::<FixtureLaunch>(&serde_json::to_vec(&launch).unwrap()).is_err()
+        );
+        let mut launch = fixture;
         let proof = Message::new(ContentHash::of(launch.token.as_bytes()).as_str(), "ready");
         assert!(verify_ready(&launch, &proof, &expected, 99, 7).is_ok());
         assert!(verify_ready(&launch, &proof, &expected, 100, 7).is_err());

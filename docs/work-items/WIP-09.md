@@ -114,7 +114,7 @@ adapter I/O errors exposed to consumers are bounded opaque messages.
 ## Evidence and retained work
 
 `conformance/wi-fabric-2/worker/process-adapter-coverage.json` records exact
-manifest/package/target/test references: 14 integration tests and seven focused
+manifest/package/target/test references: 15 integration tests and eight focused
 unit tests. They cover functional exports, executable replacement/sealing,
 startup drift, environment/non-CLOEXEC sentinels, malformed/fragmented bootstrap,
 credential restrictions, deadlines without polling, simultaneous floods, normal
@@ -173,3 +173,41 @@ checks still inspect the supervisor files. Regression tests cover exact pins,
 changed and unlisted sources, and the unchanged generic policy. Adopted check
 definitions remain unchanged. All ten adopted checks must pass on the committed
 candidate; this approval alone is not verification or independent security review.
+
+## Review remediation (F-001–F-005)
+
+This candidate addresses all five findings from review run
+`4ad4cf97-e25c-4709-b0f5-3df3ddaec142`. These are implementation dispositions
+for the next reviewer to verify, effective through reviewed integration.
+
+- F-001: a separate deny-unknown-fields `FixtureLaunch` carries only the task,
+  run credential, credential binding and independently generated fixture handshake.
+  The host/helper ownership nonce and allocation never enter the fixture protocol.
+  The credential regression test checks the serialized boundary and rejects a host
+  launch as a fixture message; functional real-process tests exercise the handshake.
+- F-002: discovery prunes exited pidfds each pass, treats missing/ESRCH candidates
+  and stable-handle-confirmed exit during registration or traversal as departure,
+  and retains uncertainty for live ownership failures. A bounded churn fixture's
+  child spawns and reaps 512 grandchildren; the integration test requires more than
+  256 observed descendants, confirmed cleanup, successful collection and release.
+  The cap remains 256 retained live handles per pass.
+- F-003: the helper probes its own environment and descriptors before opening
+  runtime resources, reports only a bounded `helper_launch_clean` boolean, and
+  the sentinel test asserts that bit independently of the fixture's export.
+- F-004: a guard without stable ownership closes bootstrap and returns immediately,
+  without sending authority, signalling or waiting. A real-child regression checks
+  prompt return, EOF and target survival, then reaps via its test-only stable handle.
+  The embedding host must handle the unowned direct child's wait status on this
+  acquisition-failure path; the run stays quarantined. Numeric-PID fallback remains
+  forbidden, so the adapter cannot safely reap that child itself.
+- F-005: the recycled-PID simulation retains matching PID/boot/birth while replacing
+  only the pidfd with another live child's handle. It asserts the exact handle
+  mismatch, refuses adoption/signal/reap and checks both children still respond.
+
+This remediation explicitly proposes the corresponding structural dispositions
+for the private fixture message and guard regression module. It also updates the
+five existing supervisor source pins for these finding-specific edits under the
+previously approved exception. The exception's file set, generic continuation
+policy, source-route analysis and adopted check definitions remain unchanged.
+Independent review must verify this pin update against the remediation above;
+this candidate does not claim a new operator approval or security sign-off.

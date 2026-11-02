@@ -17,23 +17,23 @@ const CRASH_BARRIER_HASH: &str = "c8c9d9f983ca833ffdd0d22552379aea3a5976ce39b6a5
 const PROCESS_SUPERVISOR: &[(&str, &str)] = &[
     (
         "crates/worldinterface-runtime/src/worker_process/admission.rs",
-        "23d750d9c87f521b84b4d39502ebbba18ea69f11afbf1ee61092aae784024372",
+        "d2488547620a933eba15536c07952226647de1e2625c1e528f3e70a0767d0719",
     ),
     (
         "crates/worldinterface-runtime/src/worker_process/bootstrap.rs",
-        "8229b0276a20b9e8a3290f89ae4a819380d31f82dbd88aae5663b0142ab23721",
+        "6a9eccf4c9518ff1857f706e69077535afa5ad2de36686f9e7ecb2a71322ff3d",
     ),
     (
         "crates/worldinterface-runtime/src/worker_process/fixture.rs",
-        "6634e235a84ed147add70c7b9b4f8937b0d895440a2e306a3159058ae994cb33",
+        "1c1a05a1c7308d101134740b84a92d20f6622ff637ed77d41b06599d324e7eb5",
     ),
     (
         "crates/worldinterface-runtime/src/worker_process/mod.rs",
-        "6469c9e0d25f07882b7c4d7bd95133c3a81140c56ee5b355f2b270246f31202c",
+        "3e680308f0b8f562bd20245231519c0964174cefb52ecd5045a7f3f50bcfb827",
     ),
     (
         "crates/worldinterface-runtime/src/worker_process/supervision.rs",
-        "2e252962a72f9d2d41473f4dd24c8ea5009861523cb7f929e96c0f177ab4ffa1",
+        "d2ef3e98ae93e958c0baaabca0effff66d6d89ee8263ca4ff82f0ca0f0149839",
     ),
 ];
 fn process_supervisor_status(path: &str, source: &str) -> Option<bool> {

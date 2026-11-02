@@ -18,6 +18,7 @@ use std::{
 #[derive(Clone, Debug, Default, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct CleanupReport {
+    pub helper_launch_clean: bool,
     pub exit_confirmed: bool,
     pub cleanup_confirmed: bool,
     pub term_signals: u32,
@@ -37,6 +38,9 @@ struct Tree {
 }
 impl Tree {
     fn discover(&mut self) {
+        // Descendants reaped by their own parents never reach our waitpid loop.
+        // Release their stable handles before accounting for the live-member cap.
+        self.members.retain(|_, member| !member.exited());
         let root = std::process::id();
         let mut pending = vec![root];
         let mut visited = std::collections::BTreeSet::new();
@@ -68,8 +72,8 @@ impl Tree {
                         self.finding("descendant handle bound");
                         continue;
                     }
-                    match Owned::acquire(pid, parent, &self.context) {
-                        Ok(member) => {
+                    match Owned::acquire_if_present(pid, parent, &self.context) {
+                        Ok(Some(member)) => {
                             // Parent identity is pinned and revalidated after acquiring the child.
                             if parent != root
                                 && self
@@ -83,6 +87,7 @@ impl Tree {
                             self.members.insert(pid, member);
                             self.report.descendants_observed += 1;
                         }
+                        Ok(None) => continue,
                         Err(_) => {
                             self.finding("descendant ownership unavailable");
                             continue;
@@ -227,6 +232,7 @@ fn validate_launch(l: &Launch) -> Result<()> {
 /// Entry point for the reviewed per-run reaper binary, not a consumer API.
 #[doc(hidden)]
 pub fn helper_main() -> Result<()> {
+    let helper_launch_clean = launch::environment_and_descriptors_clean(4)?;
     // SAFETY: invoked in the standalone single-threaded helper, never the embedding process.
     if unsafe { libc::prctl(libc::PR_SET_CHILD_SUBREAPER, 1, 0, 0, 0) } < 0 {
         return Err("subreaper unavailable".into());
@@ -235,6 +241,7 @@ pub fn helper_main() -> Result<()> {
     let mut host = unsafe { UnixStream::from_raw_fd(3) };
     let launch: Launch = bootstrap::receive(&mut host)?;
     validate_launch(&launch)?;
+    let fixture_launch = launch.fixture_bootstrap()?;
     bootstrap::send(&mut host, &Message::new(&launch.nonce, "ready"))?;
     let go: Message = bootstrap::receive(&mut host)?;
     if go.nonce != launch.nonce || go.kind != "go" {
@@ -254,7 +261,7 @@ pub fn helper_main() -> Result<()> {
             allocation,
         },
         members: BTreeMap::new(),
-        report: CleanupReport::default(),
+        report: CleanupReport { helper_launch_clean, ..CleanupReport::default() },
         finished: false,
         logs: Vec::new(),
     };
@@ -263,10 +270,10 @@ pub fn helper_main() -> Result<()> {
         tree.members.insert(owned.pid(), owned);
         launch::nonblocking(tree.child.stdout.as_ref().ok_or("stdout missing")?.as_raw_fd())?;
         launch::nonblocking(tree.child.stderr.as_ref().ok_or("stderr missing")?.as_raw_fd())?;
-        bootstrap::send(&mut fixture, &launch)?;
+        bootstrap::send(&mut fixture, &fixture_launch)?;
         let ready: Message = bootstrap::receive(&mut fixture)?;
         bootstrap::verify_ready(
-            &launch,
+            &fixture_launch,
             &ready,
             &worldinterface_worker::credential::CredentialExpectation {
                 issuer: "worldinterface",
@@ -279,7 +286,7 @@ pub fn helper_main() -> Result<()> {
             super::admission::Clock::unix_ms(&super::admission::SystemClock),
             launch.credential.revocation_generation,
         )?;
-        bootstrap::send(&mut fixture, &Message::new(&launch.nonce, "go"))?;
+        bootstrap::send(&mut fixture, &Message::new(&fixture_launch.handshake, "go"))?;
         bootstrap::send(&mut host, &Message::new(&launch.nonce, "running"))
     })();
     let started = Instant::now();
@@ -323,7 +330,7 @@ pub fn helper_main() -> Result<()> {
             std::thread::sleep(Duration::from_millis(2));
         }
     }
-    tree.cleanup(&mut fixture, &launch.nonce, launch.output_bytes);
+    tree.cleanup(&mut fixture, &fixture_launch.handshake, launch.output_bytes);
     bootstrap::send(
         &mut host,
         &Message { nonce: launch.nonce, kind: "report".into(), report: Some(tree.report.clone()) },

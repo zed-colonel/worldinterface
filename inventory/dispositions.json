@@ -10750,5 +10750,19 @@
     "target": "process-managed-proof-1 runtime adapter",
     "rationale": "WIP-09: WI-owned functional/misbehaving fixture and executable adapter evidence; no lifecycle conformance closure.",
     "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/bootstrap.rs::::struct:FixtureLaunch",
+    "disposition": "retain-align",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "Private fixture bootstrap excluding host ownership bindings (F-001)",
+    "source": "WIP-09 review remediation F-001\u2013F-005; docs/work-items/WIP-09.md"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/mod.rs::::module:tests@10d1b0eff34c",
+    "disposition": "test-evidence",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "Real-child regression for missing stable helper ownership (F-004)",
+    "source": "WIP-09 review remediation F-001\u2013F-005; docs/work-items/WIP-09.md"
   }
 ]

@@ -94,6 +94,12 @@ impl HelperGuard {
 }
 impl Drop for HelperGuard {
     fn drop(&mut self) {
+        if self.owned.is_none() {
+            // No launch authority has been sent. EOF makes the helper exit;
+            // without a stable handle only the embedding host can reap it.
+            let _ = self.socket.shutdown(std::net::Shutdown::Both);
+            return;
+        }
         if self.poll_exit().unwrap_or(false) {
             return;
         }
@@ -601,5 +607,54 @@ impl Drop for ProcessWorkerPort {
                 }
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn missing_helper_ownership_closes_bootstrap_without_waiting_or_signalling() {
+        let context = Context {
+            provider: "test".into(),
+            run: "test".into(),
+            nonce: ownership::random().unwrap(),
+            allocation: ownership::random().unwrap(),
+        };
+        let child = std::process::Command::new("/bin/sleep").arg("30").spawn().unwrap();
+        // The test alone retains a stable handle for failure cleanup and reaping.
+        let owned = Owned::acquire(child.id(), std::process::id(), &context).unwrap();
+        let (socket, mut peer) = std::os::unix::net::UnixStream::pair().unwrap();
+        let started = Instant::now();
+        drop(HelperGuard {
+            reaped: false,
+            child,
+            owned: None,
+            context: Context {
+                provider: context.provider.clone(),
+                run: context.run.clone(),
+                nonce: context.nonce.clone(),
+                allocation: context.allocation.clone(),
+            },
+            socket,
+        });
+        let elapsed = started.elapsed();
+        let still_alive = !owned.exited();
+        owned.signal(&context, libc::SIGKILL).unwrap();
+        let until = Instant::now() + Duration::from_secs(2);
+        let mut reaped = false;
+        while Instant::now() < until {
+            if owned.reap(&context).unwrap() {
+                reaped = true;
+                break;
+            }
+            std::thread::sleep(Duration::from_millis(5));
+        }
+        assert!(reaped, "test child was not reaped");
+        assert!(elapsed < Duration::from_millis(500), "guard blocked for {elapsed:?}");
+        assert!(still_alive, "unowned child was signalled");
+        peer.set_nonblocking(true).unwrap();
+        let mut buf = [0u8; 1];
+        assert_eq!(std::io::Read::read(&mut peer, &mut buf).unwrap(), 0);
     }
 }

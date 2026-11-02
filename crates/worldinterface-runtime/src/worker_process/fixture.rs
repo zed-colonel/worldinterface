@@ -1,6 +1,6 @@
 //! WI-owned reviewed fixtures. No shell, network access, or external consumer code.
 use super::{
-    bootstrap::{self, Launch, Message},
+    bootstrap::{self, FixtureLaunch, Message},
     io, Result,
 };
 use std::{
@@ -12,7 +12,7 @@ use std::{
 };
 pub(super) fn run() -> Result<()> {
     let mut socket = unsafe { UnixStream::from_raw_fd(3) };
-    let launch: Launch = bootstrap::receive(&mut socket)?;
+    let launch: FixtureLaunch = bootstrap::receive(&mut socket)?;
     bootstrap::send(
         &mut socket,
         &Message::new(
@@ -21,7 +21,7 @@ pub(super) fn run() -> Result<()> {
         ),
     )?;
     let go: Message = bootstrap::receive(&mut socket)?;
-    if go.nonce != launch.nonce || go.kind != "go" {
+    if go.nonce != launch.handshake || go.kind != "go" {
         return Err("fixture ownership handshake".into());
     }
     let args: Vec<String> = std::env::args().skip(1).collect();
@@ -51,18 +51,7 @@ pub(super) fn run() -> Result<()> {
             ))?;
         }
         super::admission::Task::Probe => {
-            let env = std::env::vars_os().collect::<Vec<_>>();
-            // Directory iteration itself opens a transient fd; test each entry after the iterator closes.
-            let descriptors = io(fs::read_dir("/proc/self/fd"))?
-                .filter_map(|e| e.ok()?.file_name().to_str()?.parse::<i32>().ok())
-                .collect::<Vec<_>>();
-            let extra = descriptors
-                .into_iter()
-                .any(|fd| fd > 3 && unsafe { libc::fcntl(fd, libc::F_GETFD) } >= 0);
-            let clean = env.len() == 1
-                && env[0].0 == "WI_PROFILE"
-                && env[0].1 == "process-managed-proof-1"
-                && !extra;
+            let clean = super::launch::environment_and_descriptors_clean(3)?;
             io(fs::write(
                 "../export/probe.json",
                 if clean {
@@ -127,6 +116,37 @@ pub(super) fn run() -> Result<()> {
             if !early_exit {
                 std::thread::sleep(Duration::from_secs(30));
             }
+        }
+        super::admission::Task::Churn { children } => {
+            // The fixture is the grandparent: its child reaps short-lived grandchildren.
+            let parent = unsafe { libc::fork() };
+            if parent < 0 {
+                return Err("fixture fork failed".into());
+            }
+            let target = if parent == 0 {
+                for _ in 0..children {
+                    let child = unsafe { libc::fork() };
+                    if child < 0 {
+                        unsafe { libc::_exit(1) }
+                    }
+                    if child == 0 {
+                        std::thread::sleep(Duration::from_millis(5));
+                        unsafe { libc::_exit(0) }
+                    }
+                    let mut status = 0;
+                    if unsafe { libc::waitpid(child, &mut status, 0) } != child || status != 0 {
+                        unsafe { libc::_exit(1) }
+                    }
+                }
+                unsafe { libc::_exit(0) }
+            } else {
+                parent
+            };
+            let mut status = 0;
+            if unsafe { libc::waitpid(target, &mut status, 0) } != target || status != 0 {
+                return Err("fixture churn failed".into());
+            }
+            io(fs::write("../export/churn.json", b"{\"reaped\":true}"))?;
         }
     }
     Ok(())

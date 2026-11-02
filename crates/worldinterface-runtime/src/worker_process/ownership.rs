@@ -15,10 +15,17 @@ fn boot() -> Result<String> {
     io(fs::read_to_string("/proc/sys/kernel/random/boot_id"))
 }
 fn stat(pid: u32) -> Result<(u32, u64)> {
-    let s = io(fs::read_to_string(format!("/proc/{pid}/stat")))?;
+    stat_if_present(pid)?.ok_or_else(|| "process departed".into())
+}
+fn stat_if_present(pid: u32) -> Result<Option<(u32, u64)>> {
+    let s = match fs::read_to_string(format!("/proc/{pid}/stat")) {
+        Ok(s) => s,
+        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+        Err(e) => return io(Err(e)),
+    };
     let fields: Vec<_> =
         s.rsplit_once(')').ok_or("process identity missing")?.1.split_whitespace().collect();
-    Ok((
+    Ok(Some((
         fields
             .get(1)
             .ok_or("process parent missing")?
@@ -29,7 +36,7 @@ fn stat(pid: u32) -> Result<(u32, u64)> {
             .ok_or("process birth missing")?
             .parse()
             .map_err(|_| "process birth invalid")?,
-    ))
+    )))
 }
 pub(super) struct Context {
     pub provider: String,
@@ -49,13 +56,21 @@ pub(super) struct Owned {
 }
 impl Owned {
     pub fn acquire(pid: u32, parent: u32, context: &Context) -> Result<Self> {
-        let (observed_parent, birth) = stat(pid)?;
+        Self::acquire_if_present(pid, parent, context)?.ok_or_else(|| "process departed".into())
+    }
+    pub fn acquire_if_present(pid: u32, parent: u32, context: &Context) -> Result<Option<Self>> {
+        let Some((observed_parent, birth)) = stat_if_present(pid)? else {
+            return Ok(None);
+        };
         if observed_parent != parent {
             return Err("unproven descendant".into());
         }
         // SAFETY: pidfd_open has no pointer arguments; the returned descriptor is owned once.
         let fd = unsafe { libc::syscall(libc::SYS_pidfd_open, pid, 0) };
         if fd < 0 {
+            if std::io::Error::last_os_error().raw_os_error() == Some(libc::ESRCH) {
+                return Ok(None);
+            }
             return Err("stable process handle unavailable".into());
         }
         let handle = unsafe { File::from_raw_fd(fd as i32) };
@@ -69,11 +84,20 @@ impl Owned {
             allocation: context.allocation.clone(),
             handle,
         };
-        record.validate(context)?;
-        if stat(pid)?.0 != parent {
-            return Err("descendant relationship changed".into());
+        let validated: Result<()> = (|| {
+            record.validate(context)?;
+            if stat(pid)?.0 != parent {
+                return Err("descendant relationship changed".into());
+            }
+            Ok(())
+        })();
+        // A parent may reap its child during registration. Only stable-handle exit
+        // evidence makes a failed validation benign; live mismatches remain errors.
+        if record.exited() {
+            return Ok(None);
         }
-        Ok(record)
+        validated?;
+        Ok(Some(record))
     }
     pub fn validate(&self, c: &Context) -> Result<()> {
         if self.boot != boot()?
@@ -139,10 +163,21 @@ impl Owned {
         self.pid
     }
     pub fn children(&self, c: &Context) -> Result<Vec<u32>> {
-        self.validate(c)?;
-        let children = children(self.pid)?;
-        self.validate(c)?;
-        Ok(children)
+        if self.exited() {
+            return Ok(Vec::new());
+        }
+        let result = (|| {
+            self.validate(c)?;
+            let children = children(self.pid)?;
+            self.validate(c)?;
+            Ok(children)
+        })();
+        // Reaping between /proc reads is normal. Orphans will be rediscovered
+        // under the subreaper; a live identity failure still quarantines cleanup.
+        if result.is_err() && self.exited() {
+            return Ok(Vec::new());
+        }
+        result
     }
 }
 pub(super) fn children(pid: u32) -> Result<Vec<u32>> {
@@ -210,38 +245,49 @@ mod tests {
         let mut child = ChildGuard(
             Command::new("/bin/cat").stdin(Stdio::piped()).stdout(Stdio::piped()).spawn().unwrap(),
         );
+        let mut other = ChildGuard(
+            Command::new("/bin/cat").stdin(Stdio::piped()).stdout(Stdio::piped()).spawn().unwrap(),
+        );
         let c = Context {
             provider: "p".into(),
             run: "r".into(),
             nonce: random().unwrap(),
             allocation: random().unwrap(),
         };
-        for field in ["boot", "birth", "nonce", "run", "allocation", "handle"] {
+        for field in ["boot", "birth", "nonce", "provider", "run", "allocation", "handle"] {
             let mut owned = Owned::acquire(child.0.id(), std::process::id(), &c).unwrap();
             match field {
                 "boot" => owned.boot.push('x'),
                 "birth" => owned.birth += 1,
                 "nonce" => owned.nonce.push('x'),
+                "provider" => owned.provider.push('x'),
                 "run" => owned.run.push('x'),
                 "allocation" => owned.allocation.push('x'),
-                _ => owned.pid = std::process::id(),
+                _ => {
+                    let other_owned = Owned::acquire(other.0.id(), std::process::id(), &c).unwrap();
+                    owned.handle = other_owned.handle.try_clone().unwrap();
+                    // PID, boot and birth remain valid: only the descriptor target differs.
+                    assert_eq!(owned.validate(&c).unwrap_err(), "process handle mismatch");
+                }
             }
             assert!(owned.validate(&c).is_err());
             assert!(owned.signal(&c, libc::SIGKILL).is_err());
             assert!(owned.reap(&c).is_err());
-            child.0.stdin.as_mut().unwrap().write_all(b"alive\n").unwrap();
-            let mut pipe = libc::pollfd {
-                fd: child.0.stdout.as_ref().unwrap().as_raw_fd(),
-                events: libc::POLLIN,
-                revents: 0,
-            };
-            assert!(
-                unsafe { libc::poll(&mut pipe, 1, 2000) } > 0,
-                "unrelated child stopped responding"
-            );
-            let mut response = String::new();
-            BufReader::new(child.0.stdout.as_mut().unwrap()).read_line(&mut response).unwrap();
-            assert_eq!(response, "alive\n");
+            for child in [&mut child, &mut other] {
+                child.0.stdin.as_mut().unwrap().write_all(b"alive\n").unwrap();
+                let mut pipe = libc::pollfd {
+                    fd: child.0.stdout.as_ref().unwrap().as_raw_fd(),
+                    events: libc::POLLIN,
+                    revents: 0,
+                };
+                assert!(
+                    unsafe { libc::poll(&mut pipe, 1, 2000) } > 0,
+                    "unrelated child stopped responding"
+                );
+                let mut response = String::new();
+                BufReader::new(child.0.stdout.as_mut().unwrap()).read_line(&mut response).unwrap();
+                assert_eq!(response, "alive\n");
+            }
         }
     }
 }

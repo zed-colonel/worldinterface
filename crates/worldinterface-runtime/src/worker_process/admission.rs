@@ -19,6 +19,7 @@ pub enum Task {
     Sleep { millis: u64 },
     Flood { bytes: u64 },
     Tree { early_exit: bool, change_session: bool, resist_term: bool },
+    Churn { children: u16 },
 }
 impl Task {
     pub(super) fn validate(&self) -> Result<()> {
@@ -29,6 +30,9 @@ impl Task {
             Self::Flood { bytes } if *bytes > 16 * 1024 * 1024 => {
                 Err("typed output exceeds bound".into())
             }
+            Self::Churn { children } if *children > 1024 => {
+                Err("typed child count exceeds bound".into())
+            }
             _ => Ok(()),
         }
     }
@@ -37,6 +41,7 @@ impl Task {
             Self::Coding => vec!["coding".into()],
             Self::Transform { xor } => vec!["transform".into(), xor.to_string()],
             Self::Probe => vec!["probe".into()],
+            Self::Churn { children } => vec!["churn".into(), children.to_string()],
             Self::Sleep { millis } => vec!["sleep".into(), millis.to_string()],
             Self::Flood { bytes } => vec!["flood".into(), bytes.to_string()],
             Self::Tree { early_exit, change_session, resist_term } => vec![
