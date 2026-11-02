@@ -121,7 +121,17 @@ reviewed head `6eeccb4`.
 | F-012 | Fixed: disposable scalar WI-journal/AQ-sequence watermarks skip unchanged idle reconciliation; mutations and reopen cause full validation, and transient errors leave retries enabled. Fully bound runs also avoid redundant admission transactions and database reloads. `idle_ticks_skip_unchanged_waiting_flows_and_reconcile_changes_after_restart` checks 100 waits, unrelated work, cancellation and restart wakeup. |
 | F-013 | Fixed: EventAuthorization::authorize_run_read provides a separate run disclosure decision with the existing principal-only default. The inspection regression now covers an operator granted or denied the wait/accepted chain and enforces the tenant boundary even with a permissive policy. |
 | F-014 | Fixed: the backlog regression checks the missing acknowledgment before handler execution and the repaired sequence immediately after acceptance, inside the executor before the next drain. Removing handler repair fails that assertion. |
+| F-015 | Fixed: inspect containers/fields of WaitSpec, ResumeContext and WakeReason; follow type and import aliases across each target crate to a fixed point. Reject future::pending, smol channels, recv_deadline, wait_timeout and nonempty timed polling loops. Policy probes include cross-module alias chains and a separate-crate negative control, while preserving local/return tuple transport of durable checkpoints. |
+| F-016 | Fixed: `journal_only_admission_failure_retries_on_an_otherwise_idle_live_engine` establishes an idle watermark, fails AQ admission after WI AdmitRun by temporarily removing host control context, fails reconciliation during another tick, then repairs host context. A tick must recover without resubmission, signals, other AQ changes or reopen. |
+| F-017 | Fixed: the inspection regression uses permissive event reads without an authorize_run_read override. The principal sees the populated wait/acceptance chain and another principal sees neither, exercising the trait default independently of operator policy. |
+| F-018 | Fixed: the scale regression now admits one unrelated event per measured tick with 100 waiting Flows, checks admission and all 200 AQ waits, and enforces active tick budgets. The supported integration workload and host admission limit are below. |
 
+Targeted mutation verification for F-016 removes each watermark guard separately;
+both variants fail at the missing-admission assertion. Replacing the F-017
+principal-only default with unconditional disclosure fails the foreign-reader
+assertion. The unmodified recovery suite passes all ten tests. The new test-only
+OpenEventReads inventory item is explicitly retained in its existing runtime
+infrastructure family; no production authority is added.
 
 The schema adds an explicit append position to authoritative event sources and
 stores both eligibility cursors in the Flow journal. This is an unreleased
@@ -159,7 +169,16 @@ Per-tenant producer quotas can limit one tenant's growth but cannot reclaim
 retained global capacity. No per-tenant AQ capacity isolation is claimed here;
 the host must budget aggregate traffic and enforce its producer admission policy.
 
-## Idle reconciliation budget
+## Supported waiting workload and reconciliation budget
+
+This integration profile supports up to **100 simultaneously pending waiting
+Flows per engine**, qualified with one waiting node and its coordinator per Flow
+(200 AQ Awaiting runs). Hosts must cap admission at that workload and at 200
+Awaiting runs, including coordinators, and defer additional submissions. This is
+a host operating limit; QueueEngine does not enforce a new admission quota.
+Larger workloads or more complex graphs need separate scale qualification or
+partitioning into independent complete WI/AQ bundles. No larger waiting workload
+is supported by this proof.
 
 The F-012 regression uses 100 unresolved Flows and an average idle-tick budget
 of 250 ms over eight ticks in the test profile. This is a regression threshold,
@@ -171,9 +190,19 @@ signals, controls and deadlines), bootstrap, and transient reconciliation
 failures cause another full pass. The pre-scan watermark prevents concurrent
 writes or reconciliation's own writes from being skipped.
 
-A pass after a journal change still visits all pending Flows. Sustained active
-traffic therefore retains linear reconciliation cost; the idle optimization
-removes the repeated per-Flow cost for unchanged ticks. Fully bound runs avoid
-redundant transactions even on those active passes. Future per-run change
-indexing can further reduce active-traffic cost without changing durable wait
-semantics. Reopen retains the complete reference/artifact validation.
+A pass after a journal change still visits all pending Flows. The same regression
+qualifies active traffic with eight ticks, each preceded by one new unrelated
+worker event and its outbox obligation. Every event must be admitted while all
+200 AQ waits remain unresolved and no executor is dispatched. The active budget
+is **500 ms average and 2 seconds maximum per tick** in the test profile; intake
+time and initial wait establishment are outside that measurement. Unrelated work,
+cancellation and restart wakeup are then checked. These thresholds allow build
+host variation and are regression budgets, not production deadline guarantees.
+Hosts must monitor tick duration and reduce admitted workload or traffic if their
+latency requirements are tighter. Bursty traffic above one new event per tick
+and startup/recovery latency are not qualified by this scale test.
+The targeted run measured 161 ms average and 164 ms maximum active tick time.
+
+Active reconciliation retains linear cost; fully bound runs avoid redundant
+transactions even on those active passes. Per-run change indexing remains future
+performance work. Reopen retains complete reference/artifact validation.

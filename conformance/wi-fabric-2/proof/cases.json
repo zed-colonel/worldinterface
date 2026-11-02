@@ -1170,6 +1170,11 @@
           "manifest": "crates/worldinterface-runtime/Cargo.toml",
           "package": "worldinterface-runtime",
           "test": "idle_ticks_skip_unchanged_waiting_flows_and_reconcile_changes_after_restart"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "journal_only_admission_failure_retries_on_an_otherwise_idle_live_engine"
         }
       ]
     },

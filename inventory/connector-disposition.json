@@ -1280,7 +1280,7 @@
         {
           "path": "docs/work-items/WIP-08.md",
           "treatment": "Retain WIP-08 target continuation contracts, runtime mappings and executable evidence; review selective legacy removal without deleting shared infrastructure.",
-          "source_sha256": "4ac59440446f69e495f8905c5e2281acdaecfef383cd49091adeb6ff24d5160a"
+          "source_sha256": "c4f8026b22db80c0c9d5f373e98a96b1fd8d21341657a798092d5b0d494cd23c"
         },
         {
           "path": "docs/work-items/wi-03-integration.md",
@@ -5511,52 +5511,57 @@
         },
         {
           "id": "crates/worldinterface-runtime/tests/continuation_recovery.rs::::module:support",
-          "source_sha256": "932edb9c38d62415342ca9838f4aae1677f77b5f2d1c299fa5347e3aa6387675",
+          "source_sha256": "ff46dbc83949e04b226173e778a20f076f09e453da784a6349e92d57fe7ac826",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/continuation_recovery.rs::::source-module:crates/worldinterface-runtime/tests/continuation_recovery.rs",
-          "source_sha256": "932edb9c38d62415342ca9838f4aae1677f77b5f2d1c299fa5347e3aa6387675",
+          "source_sha256": "ff46dbc83949e04b226173e778a20f076f09e453da784a6349e92d57fe7ac826",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/continuation_recovery.rs::::struct:CheckWakeAcknowledgment",
-          "source_sha256": "932edb9c38d62415342ca9838f4aae1677f77b5f2d1c299fa5347e3aa6387675",
+          "source_sha256": "ff46dbc83949e04b226173e778a20f076f09e453da784a6349e92d57fe7ac826",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/continuation_recovery.rs::::struct:HoldFinish",
-          "source_sha256": "932edb9c38d62415342ca9838f4aae1677f77b5f2d1c299fa5347e3aa6387675",
+          "source_sha256": "ff46dbc83949e04b226173e778a20f076f09e453da784a6349e92d57fe7ac826",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/continuation_recovery.rs::::struct:RevokeAfterAccept",
-          "source_sha256": "932edb9c38d62415342ca9838f4aae1677f77b5f2d1c299fa5347e3aa6387675",
+          "source_sha256": "ff46dbc83949e04b226173e778a20f076f09e453da784a6349e92d57fe7ac826",
+          "registration_sites": []
+        },
+        {
+          "id": "crates/worldinterface-runtime/tests/continuation_recovery.rs::continuation_inspection_authorizes_and_reports_pending_and_accepted_chain::struct:OpenEventReads",
+          "source_sha256": "ff46dbc83949e04b226173e778a20f076f09e453da784a6349e92d57fe7ac826",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/continuation_recovery.rs::continuation_inspection_authorizes_and_reports_pending_and_accepted_chain::struct:OperatorPolicy",
-          "source_sha256": "932edb9c38d62415342ca9838f4aae1677f77b5f2d1c299fa5347e3aa6387675",
+          "source_sha256": "ff46dbc83949e04b226173e778a20f076f09e453da784a6349e92d57fe7ac826",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/continuation_recovery.rs::support::module:connectors",
-          "source_sha256": "932edb9c38d62415342ca9838f4aae1677f77b5f2d1c299fa5347e3aa6387675",
+          "source_sha256": "ff46dbc83949e04b226173e778a20f076f09e453da784a6349e92d57fe7ac826",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/continuation_recovery.rs::support::module:continuation_fixture",
-          "source_sha256": "932edb9c38d62415342ca9838f4aae1677f77b5f2d1c299fa5347e3aa6387675",
+          "source_sha256": "ff46dbc83949e04b226173e778a20f076f09e453da784a6349e92d57fe7ac826",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/continuation_recovery.rs::support::module:flow_fixture",
-          "source_sha256": "932edb9c38d62415342ca9838f4aae1677f77b5f2d1c299fa5347e3aa6387675",
+          "source_sha256": "ff46dbc83949e04b226173e778a20f076f09e453da784a6349e92d57fe7ac826",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/continuation_recovery.rs::support::module:spi_harness",
-          "source_sha256": "932edb9c38d62415342ca9838f4aae1677f77b5f2d1c299fa5347e3aa6387675",
+          "source_sha256": "ff46dbc83949e04b226173e778a20f076f09e453da784a6349e92d57fe7ac826",
           "registration_sites": []
         },
         {
@@ -7058,7 +7063,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/tests/continuation_recovery.rs",
-          "source_sha256": "932edb9c38d62415342ca9838f4aae1677f77b5f2d1c299fa5347e3aa6387675",
+          "source_sha256": "ff46dbc83949e04b226173e778a20f076f09e453da784a6349e92d57fe7ac826",
           "treatment": "Retain durable-continuation producer and recovery regression evidence; review separately from legacy connector removal."
         },
         {

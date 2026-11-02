@@ -111,7 +111,8 @@
         "continuation_inspection_authorizes_and_reports_pending_and_accepted_chain",
         "accept_resume_validates_exports_even_with_other_artifacts",
         "unaccepted_coordinator_finish_requires_authority_after_child_acceptance",
-        "idle_ticks_skip_unchanged_waiting_flows_and_reconcile_changes_after_restart"
+        "idle_ticks_skip_unchanged_waiting_flows_and_reconcile_changes_after_restart",
+        "journal_only_admission_failure_retries_on_an_otherwise_idle_live_engine"
       ]
     },
     "AB-WI-013": {

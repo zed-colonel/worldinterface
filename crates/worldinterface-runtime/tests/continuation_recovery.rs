@@ -347,6 +347,41 @@ async fn continuation_inspection_authorizes_and_reports_pending_and_accepted_cha
     assert_eq!(view.accepted.len(), 1);
     assert_eq!(view.accepted[0].event.as_ref(), Some(&event));
 
+    // Event access alone must not disclose another principal's run. Exercise
+    // the trait default, independently of the fixture's event audience check
+    // and the explicit operator override below (F-017).
+    struct OpenEventReads;
+    impl EventAuthorization for OpenEventReads {
+        fn authorize(
+            &self,
+            _: &worldinterface_domain::agency::AuthenticatedCaller,
+            _: EventKind,
+            _: &OpaqueRef,
+        ) -> worldinterface_runtime::Result<EventRoute> {
+            unreachable!("inspection never authorizes event production")
+        }
+        fn authorize_read(
+            &self,
+            _: &worldinterface_domain::agency::AuthenticatedCaller,
+            _: &DurableEvent,
+        ) -> bool {
+            true
+        }
+    }
+    let reader = Auth(f.auth.0.clone(), PrincipalId::generate());
+    for (auth, own) in [(&f.auth, true), (&reader, false)] {
+        let disclosed = ContinuationInspector {
+            root: f.bundle.wi(),
+            authentication: auth,
+            policy: &OpenEventReads,
+        }
+        .event(&(), StoreKind::Fabric, &event)
+        .unwrap();
+        assert_eq!(disclosed.signal, view.signal);
+        assert_eq!(disclosed.waits.len(), usize::from(own));
+        assert_eq!(disclosed.accepted.len(), usize::from(own));
+    }
+
     struct OperatorPolicy {
         event: Policy,
         run: Option<OpaqueRef>,
@@ -460,6 +495,53 @@ fn signal_capacity_alarm_uses_resident_statistics_across_restart() {
     q.shutdown().unwrap();
 }
 
+#[tokio::test]
+async fn journal_only_admission_failure_retries_on_an_otherwise_idle_live_engine() {
+    let f = Fixture::new();
+    let evidence = Evidence(f.snapshot.clone());
+    let service = f.service(&evidence);
+    let d = definition(&f, true, SignalProgress::Once {}, None);
+    service.activate_flow_version(&(), d.clone(), None).unwrap();
+    let mut q = QueueEngine::bootstrap(&f.bundle, f.handler(), host()).unwrap();
+    // Establish an idle watermark before AdmitRun. Removing only the WI
+    // journal position must make the recovery assertion below fail (F-016).
+    let _ = q.tick().await.unwrap();
+    let aq_position = q.engine().projection().latest_sequence();
+    let journal_position = f.bundle.wi().flow_journal_position().unwrap();
+    // Temporarily unavailable host context rejects AQ admission before any
+    // WAL write, after the WI admission/outbox has already committed.
+    q.set_host_control_context(None);
+    assert!(service.submit_flow(&(), &d.id, f.submission.clone(), &mut q).is_err());
+    let run = f
+        .bundle
+        .wi()
+        .flow_request(&f.auth.0, &f.auth.1, &f.submission.client_request_id)
+        .unwrap()
+        .unwrap();
+    let parent = run.coordinator_task.as_str().parse().unwrap();
+    assert!(f.bundle.wi().flow_journal_position().unwrap() > journal_position);
+    let committed_position = f.bundle.wi().flow_journal_position().unwrap();
+    assert_eq!(q.engine().projection().latest_sequence(), aq_position);
+    assert!(q.engine().projection().task_admission(parent).is_none());
+    // Reconciliation itself fails during this tick too, leaving retries enabled,
+    // rather than caching the new journal position after a transient failure.
+    let _ = q.tick().await.unwrap();
+    assert!(q.engine().projection().task_admission(parent).is_none());
+    assert_eq!(q.engine().projection().latest_sequence(), aq_position);
+    assert_eq!(f.bundle.wi().flow_journal_position().unwrap(), committed_position);
+    assert!(!f.bundle.wi().flow_snapshot(&f.auth.0).unwrap().quarantined.contains_key(&run.id));
+    q.set_host_control_context(Some(host()));
+    // No resubmit, signal, other admission or reopen can invalidate the
+    // watermark: the following tick alone must finish the durable admission.
+    let _ = q.tick().await.unwrap();
+    let admitted = q.engine().projection().task_admission(parent).expect("admission retried");
+    let expected: actionqueue_core::admission::EnsureTaskRequest =
+        serde_json::from_slice(&run.coordinator_request).unwrap();
+    assert_eq!(admitted.digest(), &expected.digest().unwrap());
+    until_wait(&f, &mut q, &run.id).await;
+    q.shutdown().unwrap();
+}
+
 struct HoldFinish<H> {
     inner: H,
     hold: bool,
@@ -554,7 +636,8 @@ async fn signal_cancel_acceptance_and_deadline_winners_replay_across_paired_reop
 
 /// F-012: idle scheduling must not repeat a full reconciliation per waiting
 /// Flow. The 250 ms average budget leaves ample headroom over an empty tick
-/// while catching the reviewed 500+ ms cost at 100 waits.
+/// while catching the reviewed 500+ ms cost at 100 waits. The active phase
+/// qualifies the documented supported waiting workload (F-018).
 #[tokio::test]
 async fn idle_ticks_skip_unchanged_waiting_flows_and_reconcile_changes_after_restart() {
     use actionqueue_core::run::RunState;
@@ -609,6 +692,54 @@ async fn idle_ticks_skip_unchanged_waiting_flows_and_reconcile_changes_after_res
     let average = started.elapsed() / 8;
     eprintln!("100 waiting Flows: average idle tick {average:?}");
     assert!(average < Duration::from_millis(250), "idle tick: {average:?}");
+
+    // Each unrelated source/outbox commit advances AQ without satisfying any
+    // Flow. Unlike idle ticks, every measured tick must reconcile all waits.
+    let mut traffic_route = event_route(&f);
+    traffic_route.correlation = r("scale-traffic");
+    let traffic_policy = Policy(traffic_route);
+    let intake =
+        EventIntake { root: f.bundle.wi(), authentication: &f.auth, policy: &traffic_policy };
+    let mut active = Vec::new();
+    for sequence in 1..=8 {
+        let event = intake
+            .worker_observation(
+                &(),
+                worldinterface_worker::ports::Observation {
+                    provider: "scale-traffic".into(),
+                    run: "unrelated".into(),
+                    event: format!("traffic-{sequence}"),
+                    sequence,
+                    kind: worldinterface_worker::ports::ObservationKind::Exited,
+                },
+            )
+            .unwrap();
+        let started = Instant::now();
+        assert_eq!(q.tick().await.unwrap().dispatched, 0);
+        active.push(started.elapsed());
+        assert!(f
+            .bundle
+            .wi()
+            .signal_obligation(StoreKind::Fabric, &event)
+            .unwrap()
+            .sequence
+            .is_some());
+        assert_eq!(
+            q.engine()
+                .projection()
+                .run_instances()
+                .filter(|r| r.state() == RunState::Awaiting)
+                .count(),
+            200
+        );
+    }
+    let average = active.iter().sum::<Duration>() / active.len() as u32;
+    let maximum = *active.iter().max().unwrap();
+    eprintln!(
+        "100 waiting Flows under unrelated traffic: average tick {average:?}, maximum {maximum:?}"
+    );
+    assert!(average < Duration::from_millis(500), "active average tick: {average:?}");
+    assert!(maximum < Duration::from_secs(2), "active maximum tick: {maximum:?}");
 
     // WI and AQ mutations both invalidate the disposable watermark. A newly
     // admitted unrelated Flow must progress while all 100 waits stay unresolved.
