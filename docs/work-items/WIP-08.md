@@ -12,7 +12,12 @@ Foundation's AQ-free continuation contract binds immutable event identity to
 source revision/digest, tenant, audience, logical stream, kind and generation.
 Domain-separated canonical hashes bound correlations and identities. External
 intake authenticates the producer; host policy selects the authorized route.
-Callbacks additionally bind an existing dispatched effect. Typed worker
+Callbacks additionally bind an existing dispatched effect. New callback revisions
+must increase per effect and scoped route (tenant, audience, kind, correlation
+and generation). Exact retries of any previously recorded revision remain
+idempotent; changed content at that revision rejects. A stale unrecorded revision
+rejects atomically without a source or signal obligation, including after rebuild
+and reopen. Typed worker
 observations retain provider/run/event identity and monotonic stream sequencing.
 A tenant-scoped source index rejects the same provider/run/event under a new
 sequence or route, including after journal replay and projection rebuild.
@@ -34,8 +39,9 @@ journaled as bounded redacted codes and exposed to authenticated inspection,
 including AQ's `not_found` classification for a host-scope mismatch. Delivery failure does not
 prevent unrelated queue scheduling. Child-binding readiness remains signal-free.
 
-`local-continuation-9` replaces the development `local-continuation-8` profile
-to add the durable worker source uniqueness constraint. Older profiles reject
+`local-continuation-10` replaces the development `local-continuation-9` profile
+to add the durable callback revision fence. The preceding profile added the
+worker source uniqueness constraint. Older profiles reject
 before writes; there is no migration. Replay reconstructs all
 outbox progress from source histories and delivery history, compares projections,
 and checks event/checkpoint artifact closure. Paired reopen and backup/restore
@@ -89,6 +95,14 @@ release. Storage tests cover rollback, frozen requests, replay and tampering.
 
 Review remediation evidence:
 
+- F-023: `stale_callback_revision_rejects_after_handled_across_rebuild_and_reopen`
+  resolves the first wait with revision 5, rejects revision 3 before and after
+  replay, keeps the AfterHandled second wait unresolved on stale/duplicate
+  callbacks, and completes exactly once with revision 6. The storage regression
+  `callback_revisions_are_scoped_atomic_and_validated_against_history` checks
+  effect/route isolation, source/outbox/fence rollback and projection tampering.
+- F-026: all four conformance READMEs now name `local-continuation-10` as the
+  current profile, matching StoreRoot. WIP-07 retains its historical item record.
 - F-019: `resequenced_worker_event_rejects_after_handled_across_rebuild_and_reopen`
   establishes an AfterHandled wait, rebuilds and reopens, rejects re-sequenced
   retries without appending a source, and completes only on a distinct event.

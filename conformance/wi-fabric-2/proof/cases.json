@@ -1049,6 +1049,11 @@
           "manifest": "crates/worldinterface-runtime/Cargo.toml",
           "package": "worldinterface-runtime",
           "test": "scope_rejected_signal_is_journaled_without_blocking_scheduling"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "stale_callback_revision_rejects_after_handled_across_rebuild_and_reopen"
         }
       ]
     },

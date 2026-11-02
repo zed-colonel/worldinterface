@@ -14,6 +14,7 @@ CREATE TRIGGER event_source_no_update BEFORE UPDATE ON event_sources BEGIN SELEC
 CREATE TRIGGER event_source_no_delete BEFORE DELETE ON event_sources BEGIN SELECT RAISE(ABORT,'append only'); END;
 CREATE TABLE signal_outbox(id TEXT PRIMARY KEY, tenant TEXT NOT NULL, event BLOB NOT NULL, request BLOB, digest TEXT, sequence INTEGER, rejection TEXT);
 CREATE TABLE worker_event_sequences(stream TEXT NOT NULL, sequence INTEGER NOT NULL, id TEXT NOT NULL, tenant TEXT NOT NULL, source TEXT NOT NULL, PRIMARY KEY(stream,sequence), UNIQUE(tenant,source));
+CREATE TABLE callback_revisions(stream TEXT NOT NULL, source TEXT NOT NULL, revision INTEGER NOT NULL, PRIMARY KEY(stream,source));
 CREATE INDEX signal_pending ON signal_outbox(id) WHERE sequence IS NULL;
 ";
 #[derive(Serialize, Deserialize)]
@@ -55,6 +56,25 @@ pub(crate) fn insert(c: &Connection, event: &DurableEvent) -> Result<()> {
             return Err(invalid("conflicting event identity"));
         }
         return Ok(());
+    }
+    if event.route.kind == EventKind::ProviderCallback {
+        // Exact duplicates returned above. New revisions must advance within
+        // this effect and scoped route, atomically with the source and outbox.
+        let stream = event.route.correlation_id().map_err(invalid)?;
+        let last: Option<u64> = c
+            .query_row(
+                "SELECT revision FROM callback_revisions WHERE stream=? AND source=?",
+                params![stream, event.source.as_str()],
+                |r| r.get(0),
+            )
+            .optional()?;
+        if last.is_some_and(|v| event.revision <= v) {
+            return Err(invalid("callback revision regresses"));
+        }
+        c.execute(
+            "INSERT INTO callback_revisions VALUES(?,?,?) ON CONFLICT(stream,source) DO UPDATE SET revision=excluded.revision",
+            params![stream, event.source.as_str(), event.revision],
+        )?;
     }
     if event.route.kind == EventKind::WorkerObservation {
         // A provider/run/event is one observation, even if a retry changes its
@@ -484,7 +504,9 @@ mod tests {
             );
             // Dropping this uncommitted source transaction models a failed owner write.
         }
-        for table in ["event_sources", "signal_outbox", "continuation_history"] {
+        for table in
+            ["event_sources", "signal_outbox", "continuation_history", "callback_revisions"]
+        {
             assert_eq!(
                 c.query_row(&format!("SELECT count(*) FROM {table}"), [], |r| r.get::<_, u32>(0))
                     .unwrap(),

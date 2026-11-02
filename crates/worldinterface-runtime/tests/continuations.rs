@@ -630,6 +630,112 @@ async fn provider_callback_before_and_after_wait_resumes_flow_exactly_once() {
     }
 }
 
+/// F-023: a stale callback cannot satisfy AfterHandled, including after replay.
+#[tokio::test]
+async fn stale_callback_revision_rejects_after_handled_across_rebuild_and_reopen() {
+    let f = Fixture::new();
+    let evidence = Evidence(f.snapshot.clone());
+    let service = f.service(&evidence);
+    let mut q = QueueEngine::bootstrap(&f.bundle, f.handler(), host()).unwrap();
+    let dispatched =
+        service.submit_direct(&(), f.submission.clone(), f.selection(), &mut q).unwrap();
+    f.drive(&mut q, &dispatched).await;
+    let effect = f.run(&dispatched).results.values().next().unwrap().effect.clone().unwrap();
+    let policy = Policy(EventRoute {
+        kind: EventKind::ProviderCallback,
+        correlation: effect.as_str().to_string().try_into().unwrap(),
+        ..event_route(&f)
+    });
+    let artifact = f.bundle.wi().publish(f.auth.0.clone(), b"callback-result").unwrap();
+    let mut d = definition(&f, true, SignalProgress::Once {}, None);
+    if let PlanOperation::Wait { signal } = &mut d.body.nodes[0].operation {
+        signal.signal_kind = r("provider_callback");
+        signal.correlation = policy.0.correlation.clone();
+    }
+    let mut second = d.body.nodes[0].clone();
+    second.id = r("second");
+    second.dependencies = vec![r("wait")];
+    if let PlanOperation::Wait { signal } = &mut second.operation {
+        signal.progress = SignalProgress::AfterHandled { wait: r("wait") };
+    }
+    d.body.nodes.push(second);
+    service.activate_flow_version(&(), d.clone(), None).unwrap();
+    let mut submission = f.submission.clone();
+    submission.client_request_id = uuid::Uuid::new_v4().to_string().try_into().unwrap();
+    let id = service.submit_flow(&(), &d.id, submission, &mut q).unwrap();
+    until_wait(&f, &mut q, &id).await;
+    let intake = EventIntake { root: f.bundle.wi(), authentication: &f.auth, policy: &policy };
+    let first = intake.provider_callback(&(), &effect, 5, artifact.clone()).unwrap();
+    for _ in 0..1000 {
+        let _ = q.tick().await.unwrap();
+        let run = f.run(&id);
+        if run.waits.contains_key(&r("second"))
+            && q.engine()
+                .projection()
+                .runs_for_task(run.node_tasks[&r("second")].as_str().parse().unwrap())
+                .any(|v| v.state() == RunState::Awaiting && v.current_attempt_id().is_none())
+        {
+            break;
+        }
+        tokio::time::sleep(std::time::Duration::from_millis(1)).await;
+    }
+    let before = f.run(&id);
+    assert!(before.waits.contains_key(&r("second")));
+    assert!(q
+        .engine()
+        .projection()
+        .runs_for_task(before.node_tasks[&r("second")].as_str().parse().unwrap())
+        .any(|v| v.state() == RunState::Awaiting && v.current_attempt_id().is_none()));
+    assert_eq!(before.results.len(), 1);
+    assert_eq!(
+        before.waits[&r("second")].after_sequence,
+        f.bundle.wi().signal_obligation(StoreKind::Fabric, &first).unwrap().sequence
+    );
+    let high_water = f.bundle.wi().event_high_water(StoreKind::Fabric).unwrap();
+    assert!(intake.provider_callback(&(), &effect, 3, artifact.clone()).is_err());
+    assert_eq!(f.bundle.wi().event_high_water(StoreKind::Fabric).unwrap(), high_water);
+    q.shutdown().unwrap();
+    for kind in [StoreKind::Fabric, StoreKind::Flow] {
+        f.bundle.wi().repository(kind).unwrap().rebuild().unwrap();
+    }
+    let reopened =
+        worldinterface_runtime::storage::StoreBundle::open(&f._temp.path().join("bundle")).unwrap();
+    let intake = EventIntake { root: reopened.wi(), authentication: &f.auth, policy: &policy };
+    for revision in [1, 3, 4] {
+        assert!(intake
+            .provider_callback(&(), &effect, revision, artifact.clone())
+            .unwrap_err()
+            .to_string()
+            .contains("callback revision regresses"));
+    }
+    assert_eq!(intake.provider_callback(&(), &effect, 5, artifact.clone()).unwrap(), first);
+    assert_eq!(reopened.wi().event_high_water(StoreKind::Fabric).unwrap(), high_water);
+    let mut q = QueueEngine::bootstrap(&reopened, f.handler(), host()).unwrap();
+    for _ in 0..10 {
+        let _ = q.tick().await.unwrap();
+    }
+    assert_eq!(
+        f.run(&id),
+        before,
+        "stale and duplicate callbacks must leave the next wait unresolved"
+    );
+    let next = intake.provider_callback(&(), &effect, 6, artifact.clone()).unwrap();
+    // An exact retry of an older accepted revision remains idempotent.
+    assert_eq!(intake.provider_callback(&(), &effect, 5, artifact).unwrap(), first);
+    f.drive(&mut q, &id).await;
+    let run = f.run(&id);
+    assert_eq!(run.outcome, Some(FlowOutcome::Succeeded));
+    assert_eq!(run.results.len(), 2);
+    for event in [first, next] {
+        assert_eq!(
+            run.accepted_resumes.values().filter(|a| a.event.as_ref() == Some(&event)).count(),
+            1
+        );
+    }
+    assert_redeliveries(&f, &q, &id);
+    q.shutdown().unwrap();
+}
+
 /// F-022: both authorized waiters must be live before the shared signal arrives.
 #[tokio::test]
 async fn one_signal_resumes_two_live_flow_waiters_exactly_once_each() {
