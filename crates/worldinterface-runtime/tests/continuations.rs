@@ -144,6 +144,160 @@ async fn eligibility_uses_signal_high_water_and_after_handled_advances_actual_se
     assert_eq!(f.run(&id).results.len(), 2);
     q.shutdown().unwrap();
 }
+/// F-019: changing the sequence of one provider event cannot satisfy AfterHandled.
+#[tokio::test]
+async fn resequenced_worker_event_rejects_after_handled_across_rebuild_and_reopen() {
+    let f = Fixture::new();
+    let evidence = Evidence(f.snapshot.clone());
+    let service = f.service(&evidence);
+    let mut d = definition(&f, true, SignalProgress::Once {}, None);
+    let mut second = d.body.nodes[0].clone();
+    second.id = r("second");
+    second.dependencies = vec![r("wait")];
+    if let PlanOperation::Wait { signal } = &mut second.operation {
+        signal.progress = SignalProgress::AfterHandled { wait: r("wait") };
+    }
+    d.body.nodes.push(second);
+    service.activate_flow_version(&(), d.clone(), None).unwrap();
+    let mut q = QueueEngine::bootstrap(&f.bundle, f.handler(), host()).unwrap();
+    let id = service.submit_flow(&(), &d.id, f.submission.clone(), &mut q).unwrap();
+    until_wait(&f, &mut q, &id).await;
+    let first = emit(&f, 1);
+    for _ in 0..1000 {
+        let _ = q.tick().await.unwrap();
+        let run = f.run(&id);
+        if run.waits.contains_key(&r("second"))
+            && q.engine()
+                .projection()
+                .runs_for_task(run.node_tasks[&r("second")].as_str().parse().unwrap())
+                .any(|v| v.state() == RunState::Awaiting)
+        {
+            break;
+        }
+        tokio::time::sleep(std::time::Duration::from_millis(1)).await;
+    }
+    let before = f.run(&id);
+    assert!(before.waits.contains_key(&r("second")));
+    assert!(q
+        .engine()
+        .projection()
+        .runs_for_task(before.node_tasks[&r("second")].as_str().parse().unwrap())
+        .any(|v| v.state() == RunState::Awaiting));
+    assert_eq!(before.results.len(), 1);
+    assert_eq!(
+        before.waits[&r("second")].after_sequence,
+        f.bundle.wi().signal_obligation(StoreKind::Fabric, &first).unwrap().sequence
+    );
+    q.shutdown().unwrap();
+    for kind in [StoreKind::Fabric, StoreKind::Flow] {
+        f.bundle.wi().repository(kind).unwrap().rebuild().unwrap();
+    }
+    let reopened =
+        worldinterface_runtime::storage::StoreBundle::open(&f._temp.path().join("bundle")).unwrap();
+    let policy = Policy(event_route(&f));
+    let intake = EventIntake { root: reopened.wi(), authentication: &f.auth, policy: &policy };
+    let high_water = reopened.wi().event_high_water(StoreKind::Fabric).unwrap();
+    for sequence in [2, 3] {
+        assert!(intake
+            .worker_observation(
+                &(),
+                worldinterface_worker::ports::Observation {
+                    provider: "worker-fixture".into(),
+                    run: "worker-run".into(),
+                    event: "event-1".into(),
+                    sequence,
+                    kind: worldinterface_worker::ports::ObservationKind::Exited,
+                }
+            )
+            .unwrap_err()
+            .to_string()
+            .contains("worker observation identity conflicts"));
+    }
+    assert_eq!(reopened.wi().event_high_water(StoreKind::Fabric).unwrap(), high_water);
+    assert_eq!(emit(&f, 1), first);
+    let mut q = QueueEngine::bootstrap(&reopened, f.handler(), host()).unwrap();
+    for _ in 0..10 {
+        let _ = q.tick().await.unwrap();
+    }
+    assert_eq!(f.run(&id), before, "retry must leave the next wait unresolved");
+    let next = emit(&f, 2);
+    f.drive(&mut q, &id).await;
+    let run = f.run(&id);
+    assert_eq!(run.outcome, Some(FlowOutcome::Succeeded));
+    assert_eq!(run.results.len(), 2);
+    for event in [first, next] {
+        assert_eq!(
+            run.accepted_resumes.values().filter(|a| a.event.as_ref() == Some(&event)).count(),
+            1
+        );
+    }
+    assert_redeliveries(&f, &q, &id);
+    q.shutdown().unwrap();
+}
+
+/// F-020: a host-scope rejection is a pending diagnostic, while runnable work executes.
+#[tokio::test]
+async fn scope_rejected_signal_is_journaled_without_blocking_scheduling() {
+    use actionqueue_core::{
+        admission::EnsureTaskRequest,
+        control::ControlScope,
+        ids::{AdmissionKey, TaskId},
+        task::{
+            constraints::TaskConstraints,
+            metadata::TaskMetadata,
+            run_policy::RunPolicy,
+            task_spec::{TaskPayload, TaskSpec},
+        },
+    };
+    let f = Fixture::new();
+    let mut q = QueueEngine::bootstrap(&f.bundle, support::spi_harness::Noop, host()).unwrap();
+    let task = TaskId::new();
+    let request = EnsureTaskRequest::new(
+        AdmissionKey::new("unrelated").unwrap(),
+        TaskSpec::new(
+            task,
+            TaskPayload::new(vec![]),
+            RunPolicy::Once,
+            TaskConstraints::default(),
+            TaskMetadata::default(),
+        )
+        .unwrap(),
+        vec![],
+        worldinterface_runtime::aq_adapter::causal_context("unrelated", "unrelated").unwrap(),
+        None,
+    )
+    .unwrap();
+    q.ensure_task(request).unwrap();
+    let event = emit(&f, 1);
+    let mut wrong_host = host();
+    wrong_host.scope = ControlScope::Store;
+    q.set_host_control_context(Some(wrong_host));
+    for _ in 0..1000 {
+        let _ = q.tick().await.unwrap();
+        if q.engine().projection().runs_for_task(task).any(|v| v.state() == RunState::Completed) {
+            break;
+        }
+        tokio::time::sleep(std::time::Duration::from_millis(1)).await;
+    }
+    assert!(q.engine().projection().runs_for_task(task).any(|v| v.state() == RunState::Completed));
+    assert_eq!(q.signal_delivery_status.pending, vec![(event.clone(), "not_found".into())]);
+    let rejected = f.bundle.wi().signal_obligation(StoreKind::Fabric, &event).unwrap();
+    assert!(rejected.sequence.is_none());
+    assert_eq!(rejected.rejection.as_deref(), Some("not_found"));
+    q.shutdown().unwrap();
+    f.bundle.wi().repository(StoreKind::Fabric).unwrap().rebuild().unwrap();
+    let reopened =
+        worldinterface_runtime::storage::StoreBundle::open(&f._temp.path().join("bundle")).unwrap();
+    assert_eq!(reopened.wi().signal_obligation(StoreKind::Fabric, &event).unwrap(), rejected);
+    let mut q = QueueEngine::bootstrap(&reopened, support::spi_harness::Noop, host()).unwrap();
+    assert_eq!(q.drain_signals().unwrap().acknowledged, 1);
+    let delivered = reopened.wi().signal_obligation(StoreKind::Fabric, &event).unwrap();
+    assert_eq!(delivered.request, rejected.request);
+    assert!(delivered.sequence.is_some());
+    assert!(delivered.rejection.is_none());
+    q.shutdown().unwrap();
+}
+
 #[tokio::test]
 async fn outbox_backpressure_retains_identity_and_pending_obligations() {
     let f = Fixture::new();
@@ -420,6 +574,105 @@ async fn provider_callback_commits_an_authoritative_record_and_outbox_without_wa
     q.shutdown().unwrap();
 }
 
+/// F-022: exercise authenticated callbacks against a real Flow in both orders.
+#[tokio::test]
+async fn provider_callback_before_and_after_wait_resumes_flow_exactly_once() {
+    for early in [true, false] {
+        let f = Fixture::new();
+        let evidence = Evidence(f.snapshot.clone());
+        let service = f.service(&evidence);
+        let mut q = QueueEngine::bootstrap(&f.bundle, f.handler(), host()).unwrap();
+        let dispatched =
+            service.submit_direct(&(), f.submission.clone(), f.selection(), &mut q).unwrap();
+        f.drive(&mut q, &dispatched).await;
+        let effect = f.run(&dispatched).results.values().next().unwrap().effect.clone().unwrap();
+        let policy = Policy(EventRoute {
+            kind: EventKind::ProviderCallback,
+            correlation: effect.as_str().to_string().try_into().unwrap(),
+            ..event_route(&f)
+        });
+        let intake = EventIntake { root: f.bundle.wi(), authentication: &f.auth, policy: &policy };
+        let artifact = f.bundle.wi().publish(f.auth.0.clone(), b"callback-result").unwrap();
+        let mut d = definition(&f, true, SignalProgress::Once {}, None);
+        if let PlanOperation::Wait { signal } = &mut d.body.nodes[0].operation {
+            signal.signal_kind = r("provider_callback");
+            signal.correlation = policy.0.correlation.clone();
+        }
+        service.activate_flow_version(&(), d.clone(), None).unwrap();
+        let first =
+            early.then(|| intake.provider_callback(&(), &effect, 1, artifact.clone()).unwrap());
+        let mut submission = f.submission.clone();
+        submission.client_request_id = uuid::Uuid::new_v4().to_string().try_into().unwrap();
+        let id = service.submit_flow(&(), &d.id, submission, &mut q).unwrap();
+        if !early {
+            until_wait(&f, &mut q, &id).await;
+        }
+        let event = intake.provider_callback(&(), &effect, 1, artifact.clone()).unwrap();
+        if let Some(first) = first {
+            assert_eq!(first, event);
+        }
+        assert_eq!(intake.provider_callback(&(), &effect, 1, artifact.clone()).unwrap(), event);
+        f.drive(&mut q, &id).await;
+        let run = f.run(&id);
+        assert_eq!(run.outcome, Some(FlowOutcome::Succeeded));
+        assert_eq!(run.results.len(), 1);
+        assert_eq!(
+            run.accepted_resumes.values().filter(|a| a.event.as_ref() == Some(&event)).count(),
+            1
+        );
+        assert_eq!(intake.provider_callback(&(), &effect, 1, artifact).unwrap(), event);
+        for _ in 0..3 {
+            let _ = q.tick().await.unwrap();
+        }
+        assert_eq!(f.run(&id), run);
+        assert_redeliveries(&f, &q, &id);
+        q.shutdown().unwrap();
+    }
+}
+
+/// F-022: both authorized waiters must be live before the shared signal arrives.
+#[tokio::test]
+async fn one_signal_resumes_two_live_flow_waiters_exactly_once_each() {
+    let f = Fixture::new();
+    let evidence = Evidence(f.snapshot.clone());
+    let service = f.service(&evidence);
+    let d = definition(&f, true, SignalProgress::Once {}, None);
+    service.activate_flow_version(&(), d.clone(), None).unwrap();
+    let mut q = QueueEngine::bootstrap(&f.bundle, f.handler(), host()).unwrap();
+    let first = service.submit_flow(&(), &d.id, f.submission.clone(), &mut q).unwrap();
+    let mut submission = f.submission.clone();
+    submission.client_request_id = uuid::Uuid::new_v4().to_string().try_into().unwrap();
+    let second = service.submit_flow(&(), &d.id, submission, &mut q).unwrap();
+    for id in [&first, &second] {
+        until_wait(&f, &mut q, id).await;
+    }
+    for id in [&first, &second] {
+        let run = f.run(id);
+        assert!(run.outcome.is_none());
+        assert!(run.results.is_empty());
+        assert!(q
+            .engine()
+            .projection()
+            .runs_for_task(run.node_tasks[&r("wait")].as_str().parse().unwrap())
+            .any(|v| v.state() == RunState::Awaiting && v.current_attempt_id().is_none()));
+    }
+    let event = emit(&f, 1);
+    assert_eq!(emit(&f, 1), event);
+    for id in [&first, &second] {
+        f.drive(&mut q, id).await;
+        let run = f.run(id);
+        assert_eq!(run.outcome, Some(FlowOutcome::Succeeded));
+        assert_eq!(run.results.len(), 1);
+        assert_eq!(
+            run.accepted_resumes.values().filter(|a| a.event.as_ref() == Some(&event)).count(),
+            1
+        );
+        assert_redeliveries(&f, &q, id);
+    }
+    assert_eq!(q.engine().signal_statistics().retained, 3); // one source and two child completions
+    q.shutdown().unwrap();
+}
+
 struct SuspendWait<H> {
     inner: H,
     once: std::sync::atomic::AtomicBool,
@@ -622,7 +875,9 @@ async fn fresh_generation_is_scoped_and_inherited_through_after_handled() {
                 worldinterface_worker::ports::Observation {
                     provider: "fixture".into(),
                     run: "run".into(),
-                    event: format!("event-{seq}"),
+                    // Generations carry distinct provider events, even when
+                    // their route-local sequence starts again at one.
+                    event: format!("{generation}-event-{seq}"),
                     sequence: seq,
                     kind: worldinterface_worker::ports::ObservationKind::Running,
                 },

@@ -76,7 +76,11 @@
         "ingress_ready_and_acknowledged_commit_source_outbox_atomically_and_wake_flows",
         "reconciliation_commits_source_outbox_atomically_and_wakes_flow",
         "flow_child_commits_source_outbox_atomically_and_wakes_flow",
-        "signal_capacity_alarm_uses_resident_statistics_across_restart"
+        "signal_capacity_alarm_uses_resident_statistics_across_restart",
+        "provider_callback_before_and_after_wait_resumes_flow_exactly_once",
+        "one_signal_resumes_two_live_flow_waiters_exactly_once_each",
+        "resequenced_worker_event_rejects_after_handled_across_rebuild_and_reopen",
+        "scope_rejected_signal_is_journaled_without_blocking_scheduling"
       ]
     },
     "AB-WI-009": {

@@ -13,7 +13,7 @@ CREATE TABLE event_sources(position INTEGER PRIMARY KEY, id TEXT NOT NULL UNIQUE
 CREATE TRIGGER event_source_no_update BEFORE UPDATE ON event_sources BEGIN SELECT RAISE(ABORT,'append only'); END;
 CREATE TRIGGER event_source_no_delete BEFORE DELETE ON event_sources BEGIN SELECT RAISE(ABORT,'append only'); END;
 CREATE TABLE signal_outbox(id TEXT PRIMARY KEY, tenant TEXT NOT NULL, event BLOB NOT NULL, request BLOB, digest TEXT, sequence INTEGER, rejection TEXT);
-CREATE TABLE worker_event_sequences(stream TEXT NOT NULL, sequence INTEGER NOT NULL, id TEXT NOT NULL, PRIMARY KEY(stream,sequence));
+CREATE TABLE worker_event_sequences(stream TEXT NOT NULL, sequence INTEGER NOT NULL, id TEXT NOT NULL, tenant TEXT NOT NULL, source TEXT NOT NULL, PRIMARY KEY(stream,sequence), UNIQUE(tenant,source));
 CREATE INDEX signal_pending ON signal_outbox(id) WHERE sequence IS NULL;
 ";
 #[derive(Serialize, Deserialize)]
@@ -57,6 +57,16 @@ pub(crate) fn insert(c: &Connection, event: &DurableEvent) -> Result<()> {
         return Ok(());
     }
     if event.route.kind == EventKind::WorkerObservation {
+        // A provider/run/event is one observation, even if a retry changes its
+        // sequence or authorized route. This index is rebuilt from the journal.
+        let seen: bool = c.query_row(
+            "SELECT EXISTS(SELECT 1 FROM worker_event_sequences WHERE tenant=? AND source=?)",
+            params![event.route.tenant.as_str(), event.source.as_str()],
+            |r| r.get(0),
+        )?;
+        if seen {
+            return Err(invalid("worker observation identity conflicts"));
+        }
         let stream = event.route.correlation_id().map_err(invalid)?;
         let last: Option<u64> = c.query_row(
             "SELECT max(sequence) FROM worker_event_sequences WHERE stream=?",
@@ -67,8 +77,14 @@ pub(crate) fn insert(c: &Connection, event: &DurableEvent) -> Result<()> {
             return Err(invalid("worker observation sequence conflicts or regresses"));
         }
         c.execute(
-            "INSERT INTO worker_event_sequences VALUES(?,?,?)",
-            params![stream, event.revision, event.id.as_str()],
+            "INSERT INTO worker_event_sequences VALUES(?,?,?,?,?)",
+            params![
+                stream,
+                event.revision,
+                event.id.as_str(),
+                event.route.tenant.as_str(),
+                event.source.as_str()
+            ],
         )?;
     }
     c.execute(
@@ -128,17 +144,13 @@ fn apply(c: &Connection, cmd: &Command) -> Result<bool> {
             Ok(true)
         }
         Command::Rejected { id, code } => {
-            if ![
-                "backpressure",
-                "forbidden",
-                "invalid_request",
-                "conflict",
-                "storage_unavailable",
-                "signal_committed_recovery_required",
-            ]
-            .contains(&code.as_str())
+            // AQ owns the classification vocabulary. Keep diagnostics bounded
+            // and redacted without duplicating its version-specific allow list.
+            if code.is_empty()
+                || code.len() > 64
+                || !code.bytes().all(|b| b.is_ascii_lowercase() || b == b'_')
             {
-                return Err(invalid("unknown signal diagnostic"));
+                return Err(invalid("invalid signal diagnostic"));
             }
             let old = get(c, id)?;
             if old.sequence.is_some() {

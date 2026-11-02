@@ -1029,6 +1029,26 @@
           "manifest": "crates/worldinterface-runtime/Cargo.toml",
           "package": "worldinterface-runtime",
           "test": "signal_capacity_alarm_uses_resident_statistics_across_restart"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "provider_callback_before_and_after_wait_resumes_flow_exactly_once"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "one_signal_resumes_two_live_flow_waiters_exactly_once_each"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "resequenced_worker_event_rejects_after_handled_across_rebuild_and_reopen"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "scope_rejected_signal_is_journaled_without_blocking_scheduling"
         }
       ]
     },

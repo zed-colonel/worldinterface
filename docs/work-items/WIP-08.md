@@ -13,8 +13,10 @@ source revision/digest, tenant, audience, logical stream, kind and generation.
 Domain-separated canonical hashes bound correlations and identities. External
 intake authenticates the producer; host policy selects the authorized route.
 Callbacks additionally bind an existing dispatched effect. Typed worker
-observations retain provider/run/event identity and monotonic stream sequencing;
-process lifecycle integration and AB-WI-021 remain WIP-10 work.
+observations retain provider/run/event identity and monotonic stream sequencing.
+A tenant-scoped source index rejects the same provider/run/event under a new
+sequence or route, including after journal replay and projection rebuild.
+Process lifecycle integration and AB-WI-021 remain WIP-10 work.
 
 The source owner inserts its append-only event record and derived signal outbox
 inside the same SQLite transaction. Ingress readiness/acknowledgments,
@@ -28,11 +30,13 @@ Delivery freezes the exact versioned AQ request before admission. Admitted and
 AlreadyExists both acknowledge the original SignalSequence. Bounded indexed
 scans retain identity under capacity rejection and rotate scan cursors so one
 pending prefix cannot starve later obligations. Rejection classifications are
-journaled and exposed to authenticated inspection. Delivery failure does not
+journaled as bounded redacted codes and exposed to authenticated inspection,
+including AQ's `not_found` classification for a host-scope mismatch. Delivery failure does not
 prevent unrelated queue scheduling. Child-binding readiness remains signal-free.
 
-`local-continuation-8` replaces the development `local-flow-7` profile. Older
-profiles reject before writes; there is no migration. Replay reconstructs all
+`local-continuation-9` replaces the development `local-continuation-8` profile
+to add the durable worker source uniqueness constraint. Older profiles reject
+before writes; there is no migration. Replay reconstructs all
 outbox progress from source histories and delivery history, compares projections,
 and checks event/checkpoint artifact closure. Paired reopen and backup/restore
 also verify acknowledged signals and accepted AQ resume contexts.
@@ -82,6 +86,22 @@ Runtime fixtures exercise production services/stores and real AQ, including six
 process-death cuts, all five wake shapes, redelivery, deadlines, cancellation,
 retained-event fan-out, cursor advancement, backpressure and physical-attempt
 release. Storage tests cover rollback, frozen requests, replay and tampering.
+
+Review remediation evidence:
+
+- F-019: `resequenced_worker_event_rejects_after_handled_across_rebuild_and_reopen`
+  establishes an AfterHandled wait, rebuilds and reopens, rejects re-sequenced
+  retries without appending a source, and completes only on a distinct event.
+- F-020: `scope_rejected_signal_is_journaled_without_blocking_scheduling`
+  runs an unrelated AQ task while journaling `not_found`, replays the pending
+  diagnostic, then admits the frozen request with corrected host authority.
+- F-022: `provider_callback_before_and_after_wait_resumes_flow_exactly_once`
+  exercises both callback orders and duplicates through real Flow execution;
+  `one_signal_resumes_two_live_flow_waiters_exactly_once_each` establishes both
+  Awaiting runs before publishing one shared notification.
+- F-021: the static rule and its regression probes reject `crossbeam`,
+  `AtomicWaker` and `event_listener`, including renamed imports. Semantic
+  detection of inferred run-keyed registries remains a code-review obligation.
 
 The continuation static rule inspects production tokens and source routes in
 foundation/runtime, including imports, aliases and macros. It rejects local wait

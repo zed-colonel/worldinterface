@@ -45,6 +45,18 @@ fn signal_outbox_replay_preserves_frozen_requests_acknowledgments_and_rejects_pr
     let frozen = root.signal_obligation(StoreKind::Fabric, &e.id).unwrap();
     root.repository(StoreKind::Fabric).unwrap().rebuild().unwrap();
     assert_eq!(root.signal_obligation(StoreKind::Fabric, &e.id).unwrap(), frozen);
+    // F-020: diagnostics are bounded AQ classifications, including new codes.
+    for code in ["not_found", "already_terminal", "future_rejection"] {
+        root.record_signal_rejection(StoreKind::Fabric, e.id.clone(), code.into()).unwrap();
+        let rejected = root.signal_obligation(StoreKind::Fabric, &e.id).unwrap();
+        assert_eq!(rejected.rejection.as_deref(), Some(code));
+        assert!(rejected.sequence.is_none());
+        root.repository(StoreKind::Fabric).unwrap().rebuild().unwrap();
+        assert_eq!(root.signal_obligation(StoreKind::Fabric, &e.id).unwrap(), rejected);
+    }
+    for code in [String::new(), "x".repeat(65), "request:secret".into()] {
+        assert!(root.record_signal_rejection(StoreKind::Fabric, e.id.clone(), code).is_err());
+    }
     root.acknowledge_signal(StoreKind::Fabric, e.id.clone(), ContentHash::of(&request), 7).unwrap();
     root.acknowledge_signal(StoreKind::Fabric, e.id.clone(), ContentHash::of(&request), 7).unwrap();
     assert!(root

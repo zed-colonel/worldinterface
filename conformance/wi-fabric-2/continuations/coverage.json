@@ -13,7 +13,11 @@
       "ingress_ready_and_acknowledged_commit_source_outbox_atomically_and_wake_flows",
       "reconciliation_commits_source_outbox_atomically_and_wakes_flow",
       "flow_child_commits_source_outbox_atomically_and_wakes_flow",
-      "signal_capacity_alarm_uses_resident_statistics_across_restart"
+      "signal_capacity_alarm_uses_resident_statistics_across_restart",
+      "provider_callback_before_and_after_wait_resumes_flow_exactly_once",
+      "one_signal_resumes_two_live_flow_waiters_exactly_once_each",
+      "resequenced_worker_event_rejects_after_handled_across_rebuild_and_reopen",
+      "scope_rejected_signal_is_journaled_without_blocking_scheduling"
     ],
     "AB-WI-011": [
       "ab_wi_011_awaiting_releases_attempt_and_unrelated_work_progresses",
@@ -75,6 +79,16 @@
         "manifest": "crates/worldinterface-runtime/Cargo.toml",
         "package": "worldinterface-runtime",
         "test": "ab_wi_008_early_late_duplicate_and_fanout_use_durable_records"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "provider_callback_before_and_after_wait_resumes_flow_exactly_once"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "one_signal_resumes_two_live_flow_waiters_exactly_once_each"
       }
     ],
     "stable-admission-backpressure": [
@@ -97,6 +111,11 @@
         "manifest": "crates/worldinterface-runtime/Cargo.toml",
         "package": "worldinterface-runtime",
         "test": "journal_only_admission_failure_retries_on_an_otherwise_idle_live_engine"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "scope_rejected_signal_is_journaled_without_blocking_scheduling"
       }
     ],
     "cursor-and-generation": [
@@ -114,6 +133,11 @@
         "manifest": "crates/worldinterface-runtime/Cargo.toml",
         "package": "worldinterface-runtime",
         "test": "non_early_wait_rejects_preexisting_outbox_events_after_backpressure_and_rebuild"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "resequenced_worker_event_rejects_after_handled_across_rebuild_and_reopen"
       }
     ],
     "physical-attempt-release": [

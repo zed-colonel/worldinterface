@@ -180,6 +180,6 @@ callback/worker intake, Flow wait/timer children and immutable resume acceptance
 AB-WI-008/011 have exact executable mappings in the continuation coverage file.
 WI-AQ-G3 and then WI-EMBEDDED-CORE-1 are drafted closed, effective only on
 qualifying reviewed integration with all adopted checks. The development store
-profile is `local-continuation-8`; prior profiles require a fresh store. Worker
+profile is `local-continuation-9`; prior profiles require a fresh store. Worker
 process lifecycle and AB-WI-021 remain WIP-10. Legacy deletion milestones remain
 unchanged.
