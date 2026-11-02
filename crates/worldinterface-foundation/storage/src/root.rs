@@ -162,7 +162,7 @@ impl StoreRoot {
             contract: CONTRACT.into(),
             schema: 1,
             canonical_profile: CANONICAL_PROFILE.into(),
-            feature_profile: "local-continuation-10".into(),
+            feature_profile: "local-worker-11".into(),
             stores: kinds(profile.platform),
             profile,
             complete: true,
@@ -179,6 +179,7 @@ impl StoreRoot {
             conn.execute_batch(crate::effect::SCHEMA)?;
             conn.execute_batch(crate::flow::SCHEMA)?;
             conn.execute_batch(crate::continuation::SCHEMA)?;
+            conn.execute_batch(crate::worker::SCHEMA)?;
             conn.execute("INSERT INTO store_identity VALUES(1,?1)", [&identity])?;
             drop(conn);
             File::open(path.join(format!("{}.sqlite", kind.name())))?.sync_all()?;
@@ -231,7 +232,7 @@ impl StoreRoot {
             || manifest.contract != CONTRACT
             || manifest.schema != 1
             || manifest.canonical_profile != CANONICAL_PROFILE
-            || manifest.feature_profile != "local-continuation-10"
+            || manifest.feature_profile != "local-worker-11"
             || !manifest.complete
             || manifest.stores != kinds(manifest.profile.platform)
             || path.join("initializing").exists()

@@ -20,6 +20,7 @@ use std::{
 pub struct CleanupReport {
     pub helper_launch_clean: bool,
     pub exit_confirmed: bool,
+    pub exit_success: Option<bool>,
     pub cleanup_confirmed: bool,
     pub term_signals: u32,
     pub kill_signals: u32,
@@ -111,6 +112,8 @@ impl Tree {
             if pid > 0 {
                 if pid as u32 == self.child.id() {
                     self.report.exit_confirmed = true;
+                    self.report.exit_success =
+                        Some(libc::WIFEXITED(status) && libc::WEXITSTATUS(status) == 0);
                 }
                 self.members.remove(&(pid as u32));
             } else if pid == 0 {
@@ -232,7 +235,7 @@ fn validate_launch(l: &Launch) -> Result<()> {
 /// Entry point for the reviewed per-run reaper binary, not a consumer API.
 #[doc(hidden)]
 pub fn helper_main() -> Result<()> {
-    let helper_launch_clean = launch::environment_and_descriptors_clean(4)?;
+    let helper_launch_clean = launch::environment_and_descriptors_clean(5)?;
     // SAFETY: invoked in the standalone single-threaded helper, never the embedding process.
     if unsafe { libc::prctl(libc::PR_SET_CHILD_SUBREAPER, 1, 0, 0, 0) } < 0 {
         return Err("subreaper unavailable".into());
@@ -241,6 +244,10 @@ pub fn helper_main() -> Result<()> {
     let mut host = unsafe { UnixStream::from_raw_fd(3) };
     let launch: Launch = bootstrap::receive(&mut host)?;
     validate_launch(&launch)?;
+    let journal = super::journal::Journal::from_helper(
+        unsafe { std::fs::File::from_raw_fd(5) },
+        &launch.nonce,
+    )?;
     let fixture_launch = launch.fixture_bootstrap()?;
     bootstrap::send(&mut host, &Message::new(&launch.nonce, "ready"))?;
     let go: Message = bootstrap::receive(&mut host)?;
@@ -266,8 +273,19 @@ pub fn helper_main() -> Result<()> {
         logs: Vec::new(),
     };
     let startup = (|| -> Result<()> {
+        bootstrap::send(&mut host, &Message::new(&launch.nonce, "fixture_spawned"))?;
+        let record: Message = bootstrap::receive(&mut host)?;
+        if record.nonce != launch.nonce || record.kind != "record_fixture" {
+            return Err("fixture recording permission refused".into());
+        }
         let owned = Owned::acquire(tree.child.id(), std::process::id(), &tree.context)?;
+        journal.append("fixture_owned", Some(&owned), None)?;
         tree.members.insert(owned.pid(), owned);
+        bootstrap::send(&mut host, &Message::new(&launch.nonce, "fixture_owned"))?;
+        let permission: Message = bootstrap::receive(&mut host)?;
+        if permission.nonce != launch.nonce || permission.kind != "launch_fixture" {
+            return Err("fixture launch permission refused".into());
+        }
         launch::nonblocking(tree.child.stdout.as_ref().ok_or("stdout missing")?.as_raw_fd())?;
         launch::nonblocking(tree.child.stderr.as_ref().ok_or("stderr missing")?.as_raw_fd())?;
         bootstrap::send(&mut fixture, &fixture_launch)?;
@@ -331,6 +349,7 @@ pub fn helper_main() -> Result<()> {
         }
     }
     tree.cleanup(&mut fixture, &fixture_launch.handshake, launch.output_bytes);
+    journal.append("cleanup", None, Some(&tree.report))?;
     bootstrap::send(
         &mut host,
         &Message { nonce: launch.nonce, kind: "report".into(), report: Some(tree.report.clone()) },

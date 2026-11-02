@@ -29,11 +29,11 @@ const PROCESS_SUPERVISOR: &[(&str, &str)] = &[
     ),
     (
         "crates/worldinterface-runtime/src/worker_process/mod.rs",
-        "3e680308f0b8f562bd20245231519c0964174cefb52ecd5045a7f3f50bcfb827",
+        "2a2b85dee615c82ac15dcd7d6b2665da4d29657bfb3d7b472705a247ab0a728e",
     ),
     (
         "crates/worldinterface-runtime/src/worker_process/supervision.rs",
-        "d2ef3e98ae93e958c0baaabca0effff66d6d89ee8263ca4ff82f0ca0f0149839",
+        "1e6acdbf2b57cab161945b14668c68a6ae8ef10861d98671647233f13bc52487",
     ),
 ];
 fn process_supervisor_status(path: &str, source: &str) -> Option<bool> {

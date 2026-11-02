@@ -63,8 +63,8 @@ historical reducers. Guarded ADR-007 semantics now live in the [WI-04 egress jou
 
 `StoreRoot` requires an empty directory for creation. Root and per-database
 manifests bind contract, schema 1, instance, creation time, feature profile
-`local-continuation-10` and canonical profile.
-[WIP-08](../../../docs/work-items/WIP-08.md) supersedes earlier development
+`local-worker-11` and canonical profile.
+[WIP-10](../../../docs/work-items/WIP-10.md) supersedes earlier development
 profiles, including `local-domain-1` and `local-ingress-1`, which reject unchanged.
 Fabric, Flow and Context databases are required; Platform is optional. All manifests and expected members are checked
 before SQLite opens. Unsupported, pre-contract and incomplete roots reject

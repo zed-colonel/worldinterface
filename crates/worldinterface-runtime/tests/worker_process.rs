@@ -32,6 +32,25 @@ fn private_dir() -> tempfile::TempDir {
     use std::os::unix::fs::PermissionsExt;
     tempfile::Builder::new().permissions(fs::Permissions::from_mode(0o700)).tempdir().unwrap()
 }
+fn allocations(root: &Path) -> Vec<std::path::PathBuf> {
+    fs::read_dir(root)
+        .unwrap()
+        .map(|e| e.unwrap())
+        .filter(|e| e.file_type().unwrap().is_dir())
+        .map(|e| e.path())
+        .collect()
+}
+fn retained_journals_are_private_and_bounded(root: &Path) {
+    use std::os::unix::fs::PermissionsExt;
+    for entry in fs::read_dir(root).unwrap() {
+        let entry = entry.unwrap();
+        assert!(entry.file_name().to_string_lossy().starts_with(".wi-owner-"));
+        let metadata = entry.metadata().unwrap();
+        assert!(metadata.is_file());
+        assert!(metadata.len() <= 64 * 1024);
+        assert_eq!(metadata.permissions().mode() & 0o077, 0);
+    }
+}
 fn registry() -> ExecutableRegistry {
     let mut r = ExecutableRegistry::default();
     let path = Path::new(env!("CARGO_BIN_EXE_wi-process-fixture"));
@@ -223,7 +242,8 @@ async fn transform_artifacts_are_scoped_integrity_checked_and_release_is_replay_
     }
     h.submit(Operation::Release).await.unwrap();
     h.submit(Operation::Release).await.unwrap();
-    assert_eq!(fs::read_dir(h.root.path()).unwrap().count(), 0);
+    assert!(allocations(h.root.path()).is_empty());
+    retained_journals_are_private_and_bounded(h.root.path());
     assert!(h.submit(Operation::Start).await.is_err());
 }
 #[tokio::test]
@@ -238,7 +258,7 @@ async fn coding_fixture_edits_the_copied_sample_and_exports_patch_and_report() {
     );
     h.start().await;
     assert!(h.finished().cleanup_confirmed);
-    let allocation = fs::read_dir(h.root.path()).unwrap().next().unwrap().unwrap().path();
+    let allocation = allocations(h.root.path()).into_iter().next().unwrap();
     let edited = fs::read_to_string(allocation.join("work/sample-rust/src/lib.rs")).unwrap();
     assert!(edited.contains("fn calculate_average"));
     assert!(!edited.contains("averge"));
@@ -338,7 +358,8 @@ async fn reaped_short_lived_grandchildren_do_not_quarantine_or_exhaust_handles()
     h.submit(Operation::CollectArtifacts).await.unwrap();
     assert_eq!(h.port.read_artifact("artifact-churn.json").await.unwrap(), b"{\"reaped\":true}");
     h.submit(Operation::Release).await.unwrap();
-    assert_eq!(fs::read_dir(h.root.path()).unwrap().count(), 0);
+    assert!(allocations(h.root.path()).is_empty());
+    retained_journals_are_private_and_bounded(h.root.path());
 }
 #[tokio::test]
 async fn unavailable_operations_have_no_process_filesystem_credential_or_observation_side_effect() {
@@ -431,7 +452,7 @@ async fn artifact_integrity_symlink_hardlink_and_special_files_are_quarantined()
             harness(Task::Transform { xor: 0 }, 1500, 65536, vec![export("output.bin", b"hello")]);
         h.start().await;
         assert!(h.finished().cleanup_confirmed);
-        let allocation = fs::read_dir(h.root.path()).unwrap().next().unwrap().unwrap().path();
+        let allocation = allocations(h.root.path()).into_iter().next().unwrap();
         let file = allocation.join("export/output.bin");
         match attack {
             "digest" => fs::write(&file, b"other").unwrap(),
@@ -466,7 +487,7 @@ async fn duplicate_start_is_single_launch_and_revocation_stops_run_and_denies_re
     for _ in 0..8 {
         h.submit(Operation::Start).await.unwrap();
     }
-    assert_eq!(fs::read_dir(h.root.path()).unwrap().count(), 1);
+    assert_eq!(allocations(h.root.path()).len(), 1);
     h.port.revoke(1).unwrap();
     assert!(h.port.observe("local-proof", "run-a").await.is_err());
     assert!(h.submit(Operation::Start).await.is_err());
@@ -624,7 +645,8 @@ async fn port_drop_joins_supervision_and_reaps_owned_descendants() {
     let started = Instant::now();
     drop(port);
     assert!(started.elapsed() < Duration::from_secs(5));
-    assert_eq!(fs::read_dir(root.path()).unwrap().count(), 0);
+    assert!(allocations(root.path()).is_empty());
+    retained_journals_are_private_and_bounded(root.path());
 }
 
 #[tokio::test]
@@ -635,5 +657,6 @@ async fn stop_before_start_prevents_consequential_launch() {
     assert!(h.submit(Operation::Start).await.is_err());
     assert!(h.port.evidence("local-proof", "run-a").unwrap().is_none());
     h.submit(Operation::Release).await.unwrap();
-    assert_eq!(fs::read_dir(h.root.path()).unwrap().count(), 0);
+    assert!(allocations(h.root.path()).is_empty());
+    retained_journals_are_private_and_bounded(h.root.path());
 }

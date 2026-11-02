@@ -1,7 +1,9 @@
 //! Consumer proofs use AQ's published mutation, disposition and recovery authority.
 mod support {
     pub mod connectors;
+    pub mod flow_fixture;
     pub mod spi_harness;
+    pub mod worker_fixture;
 }
 use actionqueue_core::{
     admission::EnsureTaskRequest,
@@ -1150,4 +1152,85 @@ fn ab_wi_013_required_detached_closure_cancel_and_mixed_runs() {
     .unwrap();
     assert_eq!(a.projection().task_terminal_status(id), Some(TaskTerminalStatus::Succeeded));
     assert!(runs.iter().any(|r| a.projection().get_run_state(r) == Some(&RunState::Failed)));
+}
+
+/// AB-WI-021: AQ's key reservation is independent of a live WI worker reservation.
+#[tokio::test]
+async fn ab_wi_021_awaiting_release_hold_and_resume_keep_durable_worker_capacity() {
+    use actionqueue_core::task::constraints::ConcurrencyKeyWaitPolicy;
+    use worldinterface_worker::mapping::Operation;
+    for hold in [false, true] {
+        let h = support::worker_fixture::Harness::new(
+            worldinterface_runtime::worker_process::Task::Sleep { millis: 5000 },
+            "AB-WI-021",
+            1500,
+            65536,
+        );
+        h.operation(Operation::Start).await;
+        let aq_path = h.temp.path().join("bundle/aq");
+        let mut a =
+            StorageMutationAuthority::new(log(aq_path.clone(), false), replay_log(&aq_path))
+                .with_host(host());
+        let mut constraints = TaskConstraints::new(3, None, Some("worker-key".into())).unwrap();
+        if hold {
+            constraints
+                .set_concurrency_key_wait_policy(ConcurrencyKeyWaitPolicy::HoldWhileAwaiting);
+        } else {
+            assert_eq!(
+                constraints.concurrency_key_wait_policy(),
+                ConcurrencyKeyWaitPolicy::ReleaseWhileAwaiting
+            );
+        }
+        let first = TaskSpec::new(
+            TaskId::new(),
+            TaskPayload::new(b"first".to_vec()),
+            RunPolicy::Once,
+            constraints.clone(),
+            TaskMetadata::default(),
+        )
+        .unwrap();
+        let second = TaskSpec::new(
+            TaskId::new(),
+            TaskPayload::new(b"second".to_vec()),
+            RunPolicy::Once,
+            constraints,
+            TaskMetadata::default(),
+        )
+        .unwrap();
+        let run = admit(&mut a, request(first, vec![]));
+        let other = admit(&mut a, request(second, vec![]));
+        let expectation = begin(&mut a, run, "local");
+        disposition::commit(&mut a, expectation, AttemptDisposition::awaiting(wait(), None), 101)
+            .unwrap();
+        assert_eq!(a.projection().key_reservation(run).is_some(), hold);
+        assert_eq!(claim::eligible(a.projection(), other, None, 101), !hold);
+        assert!(h.state().capacity_reserved);
+        let mut replacement = h.binding();
+        replacement.run = "replacement".to_string().try_into().unwrap();
+        replacement.request = "replacement-request".to_string().try_into().unwrap();
+        assert!(h.bundle.wi().reserve_start(replacement.clone(), 1).is_err());
+        a.into_parts().0.close().unwrap();
+        let mut a =
+            StorageMutationAuthority::new(log(aq_path.clone(), false), replay_log(&aq_path))
+                .with_host(host());
+        assert_eq!(a.projection().key_reservation(run).is_some(), hold);
+        let reopened =
+            worldinterface_storage::StoreRoot::open_existing(h.temp.path().join("bundle/wi"))
+                .unwrap();
+        assert!(reopened.reserve_start(replacement.clone(), 1).is_err());
+        // Resolving a wait makes the original run claimable; reacquisition fences its peer.
+        waits::reconcile(&mut a, 200).unwrap();
+        assert_eq!(a.projection().get_run_state(&run), Some(&RunState::Ready));
+        claim::accept(&mut a, run, AttemptId::new(), "resumed", 200, 1000).unwrap();
+        assert!(a.projection().key_reservation(run).is_some());
+        assert!(!claim::eligible(a.projection(), other, None, 200));
+        assert!(reopened.reserve_start(replacement.clone(), 1).is_err());
+        a.into_parts().0.close().unwrap();
+        drop(reopened);
+        h.operation(Operation::Terminate).await;
+        h.finish().await;
+        h.operation(Operation::CollectArtifacts).await;
+        h.operation(Operation::Release).await;
+        assert!(h.bundle.wi().reserve_start(replacement, 1).unwrap());
+    }
 }

@@ -88,6 +88,18 @@ impl<A: Authentication, P: EventAuthorization> EventIntake<'_, A, P> {
         if route.kind != EventKind::WorkerObservation {
             return Err("worker route kind mismatch".into());
         }
+        if let Some(worker) = self.root.worker_snapshot(
+            caller.tenant(),
+            &observation.provider.clone().try_into()?,
+            &observation.run.clone().try_into()?,
+        )? {
+            return crate::worker::observation::commit(
+                self.root,
+                &worker.binding,
+                route,
+                observation,
+            );
+        }
         let artifact =
             self.root.publish(caller.tenant().clone(), &canonical_data(&observation)?)?;
         self.record(&caller, route, source, observation.sequence, artifact)
@@ -191,15 +203,28 @@ pub(crate) fn drain<H: ExecutorHandler + 'static>(
                 root.prepare_signal_request(kind, obligation.event.id.clone(), expected.clone())?;
                 expected
             };
+            let worker = obligation.event.route.kind == EventKind::WorkerObservation;
+            if worker {
+                worldinterface_storage::worker_boundary("worker-wake-before-publish");
+            }
             match engine.admit_signal(serde_json::from_slice(&request)?) {
                 Ok(outcome) => {
+                    if worker {
+                        worldinterface_storage::worker_boundary("worker-wake-published");
+                    }
                     worldinterface_storage::continuation_signal_admitted();
+                    if worker {
+                        worldinterface_storage::worker_boundary("worker-wake-before-ack");
+                    }
                     root.acknowledge_signal(
                         kind,
                         obligation.event.id,
                         ContentHash::of(&request),
                         outcome.sequence().get(),
                     )?;
+                    if worker {
+                        worldinterface_storage::worker_boundary("worker-wake-acknowledged");
+                    }
                     status.acknowledged += 1;
                 }
                 Err(error) => {

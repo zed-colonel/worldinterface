@@ -114,10 +114,7 @@ impl Lifecycle {
             (Phase::Provisioned, Fact::StartIntent) => Phase::StartIntent,
             (Phase::StartIntent, Fact::Accepted(Operation::Start)) => Phase::StartAccepted,
             (Phase::StartAccepted, Fact::Running) => Phase::Running,
-            (Phase::Running, Fact::StopRequested) => Phase::StopRequested,
-            (Phase::StartIntent | Phase::StartAccepted, Fact::StopRequested)
-                if self.quarantined && self.reconciled =>
-            {
+            (Phase::StartIntent | Phase::StartAccepted | Phase::Running, Fact::StopRequested) => {
                 Phase::StopRequested
             }
             (

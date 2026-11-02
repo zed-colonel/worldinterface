@@ -77,9 +77,21 @@ pub enum Credential {
     Test { run: OpaqueRef, subject: PrincipalId, expires_at: Timestamp, authority: Authority },
     Production,
 }
+/// Prelaunch installation attestation; deliberately distinct from runtime observations.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ProcessControlInstallation {
+    pub version: u32,
+    pub wall_ms: u64,
+    pub output_bytes: u64,
+    pub configuration: ContentHash,
+    pub adapter: ContentHash,
+}
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct WorkerRealization {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub installation: Option<ProcessControlInstallation>,
     pub profile: OpaqueRef,
     pub provider: OpaqueRef,
     pub run: OpaqueRef,
@@ -247,16 +259,48 @@ fn worker_reason(
     if w.mandatory.is_empty() || w.mandatory.len() > 32 || w.controls.len() > 32 {
         return Ok(Some(Reason::Policy));
     }
-    for required in &w.mandatory {
-        if !["cpu", "memory", "mount", "network"].contains(&required.as_str())
-            || w.controls.get(required).is_none_or(|c| {
+    if let Some(installation) = &w.installation {
+        if w.profile.as_str() != "process-managed-proof-1"
+            || installation.version != 1
+            || installation.wall_ms == 0
+            || installation.wall_ms > 60_000
+            || installation.output_bytes == 0
+            || installation.output_bytes > 4 * 1024 * 1024
+            || installation.configuration != w.manifest.configuration.content
+            || installation.adapter != w.manifest.adapter.content
+            || w.mandatory.iter().map(OpaqueRef::as_str).collect::<BTreeSet<_>>()
+                != BTreeSet::from(["wall_time_ms", "output_bytes"])
+        {
+            return Ok(Some(Reason::ProfileDrift));
+        }
+        for required in &w.mandatory {
+            let value = if required.as_str() == "wall_time_ms" {
+                installation.wall_ms
+            } else {
+                installation.output_bytes
+            };
+            if w.controls.get(required).is_none_or(|c| {
                 c.enforcement != Enforcement::Enforced
+                    || c.requested.as_str() != value.to_string()
                     || c.requested != c.advertised
                     || c.requested != c.applied
-                    || c.requested != c.observed
-            })
-        {
-            return Ok(Some(Reason::MandatoryControl(required.clone())));
+                    || c.observed.as_str() != "not-observed"
+            }) {
+                return Ok(Some(Reason::MandatoryControl(required.clone())));
+            }
+        }
+    } else {
+        for required in &w.mandatory {
+            if !["cpu", "memory", "mount", "network"].contains(&required.as_str())
+                || w.controls.get(required).is_none_or(|c| {
+                    c.enforcement != Enforcement::Enforced
+                        || c.requested != c.advertised
+                        || c.requested != c.applied
+                        || c.requested != c.observed
+                })
+            {
+                return Ok(Some(Reason::MandatoryControl(required.clone())));
+            }
         }
     }
     if let Some(qualified) = ordinary {

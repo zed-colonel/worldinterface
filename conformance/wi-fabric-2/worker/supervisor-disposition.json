@@ -1,0 +1,18 @@
+{
+  "version": 1,
+  "status": "candidate-for-review",
+  "effective_on": "explicit-operator-disposition-for-evaluation-then-qualifying-CraftingTable-review",
+  "scope": "same five WIP-09 supervisor files; generic continuation ban unchanged",
+  "updates": [
+    {
+      "path": "crates/worldinterface-runtime/src/worker_process/mod.rs",
+      "sha256": "2a2b85dee615c82ac15dcd7d6b2665da4d29657bfb3d7b472705a247ab0a728e",
+      "rationale": "WIP-10 durable private ownership journal, launch barrier, scoped artifacts and persistent stop delivery; proposed for explicit evaluation disposition and qualifying source review."
+    },
+    {
+      "path": "crates/worldinterface-runtime/src/worker_process/supervision.rs",
+      "sha256": "1e6acdbf2b57cab161945b14668c68a6ae8ef10861d98671647233f13bc52487",
+      "rationale": "WIP-10 durable private ownership journal, launch barrier, scoped artifacts and persistent stop delivery; proposed for explicit evaluation disposition and qualifying source review."
+    }
+  ]
+}
