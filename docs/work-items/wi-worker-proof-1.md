@@ -183,3 +183,16 @@ qualifying reviewed integration with all adopted checks. The development store
 profile is `local-continuation-9`; prior profiles require a fresh store. Worker
 process lifecycle and AB-WI-021 remain WIP-10. Legacy deletion milestones remain
 unchanged.
+
+## WIP-09 process adapter candidate
+
+[WIP-09](WIP-09.md) implements Linux WorkerPort mechanics behind exact trusted
+admission: sealed reviewed executables, typed arguments, private socketpair
+credentials/workspaces, descriptor/environment allowlists, independent wall/output
+bounds and pidfd-validated subreaper cleanup. Real-process supporting tests resolve
+WP-A04 at this adapter boundary and explicitly report cleanup uncertainty. The
+separate process-adapter coverage record preserves WIP-10's planned WP-020–023
+and WP-026 entries. Durable lifecycle/AQ events/evaluation registration remain
+WIP-10; portable artifact qualification remains WIP-11. Independent security
+review, exact committed-head adopted checks and CraftingTable integration remain
+required. No hostile-code or additional resource containment is claimed.

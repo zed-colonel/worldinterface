@@ -1,0 +1,226 @@
+{
+  "version": 1,
+  "work_item": "WIP-09",
+  "scope": "process-managed-proof-1 adapter mechanics; not WI/AQ lifecycle conformance",
+  "platform": "linux",
+  "assumptions_resolved": [
+    "WP-A04"
+  ],
+  "upstream_conformance": false,
+  "fixtures": [
+    {
+      "manifest": "crates/worldinterface-runtime/Cargo.toml",
+      "package": "worldinterface-runtime",
+      "binary": "wi-process-fixture"
+    },
+    {
+      "manifest": "crates/worldinterface-runtime/Cargo.toml",
+      "package": "worldinterface-runtime",
+      "binary": "wi-process-reaper"
+    }
+  ],
+  "supporting_associations": {
+    "WP-020": [
+      "recycled_pid_simulation_never_adopts_or_signals_unrelated_child",
+      "cleanup_uncertainty_is_reported_without_signalling_mismatched_ownership"
+    ],
+    "WP-021": [
+      "descendants_grandchildren_sessions_and_early_leader_exit_are_cleaned_with_escalation",
+      "port_drop_joins_supervision_and_reaps_owned_descendants"
+    ],
+    "WP-022": [
+      "wall_and_simultaneous_output_bounds_run_without_observation_polling"
+    ],
+    "WP-023": [
+      "environment_and_deliberately_non_cloexec_descriptor_are_excluded"
+    ],
+    "WP-026": [
+      "unavailable_operations_have_no_process_filesystem_credential_or_observation_side_effect"
+    ]
+  },
+  "case_closure_owner": "WIP-10; proof/cases.json entries remain planned",
+  "tests": [
+    {
+      "manifest": "crates/worldinterface-runtime/Cargo.toml",
+      "package": "worldinterface-runtime",
+      "target": {
+        "kind": "lib"
+      },
+      "test": "worker_process::bootstrap::tests::fragmented_and_malformed_frames_are_bounded"
+    },
+    {
+      "manifest": "crates/worldinterface-runtime/Cargo.toml",
+      "package": "worldinterface-runtime",
+      "target": {
+        "kind": "lib"
+      },
+      "test": "worker_process::bootstrap::credential_tests::bootstrap_credentials_reject_cross_run_expiry_revocation_audience_operation_and_scope"
+    },
+    {
+      "manifest": "crates/worldinterface-runtime/Cargo.toml",
+      "package": "worldinterface-runtime",
+      "target": {
+        "kind": "lib"
+      },
+      "test": "worker_process::bootstrap::credential_tests::incomplete_bootstrap_has_an_independent_handshake_deadline"
+    },
+    {
+      "manifest": "crates/worldinterface-runtime/Cargo.toml",
+      "package": "worldinterface-runtime",
+      "target": {
+        "kind": "lib"
+      },
+      "test": "worker_process::bootstrap::credential_tests::protocol_queue_and_total_traffic_are_bounded"
+    },
+    {
+      "manifest": "crates/worldinterface-runtime/Cargo.toml",
+      "package": "worldinterface-runtime",
+      "target": {
+        "kind": "lib"
+      },
+      "test": "worker_process::launch::tests::reviewed_bytes_are_sealed_and_symlink_executables_are_rejected"
+    },
+    {
+      "manifest": "crates/worldinterface-runtime/Cargo.toml",
+      "package": "worldinterface-runtime",
+      "target": {
+        "kind": "lib"
+      },
+      "test": "worker_process::ownership::tests::recycled_pid_simulation_never_adopts_or_signals_unrelated_child"
+    },
+    {
+      "manifest": "crates/worldinterface-runtime/Cargo.toml",
+      "package": "worldinterface-runtime",
+      "target": {
+        "kind": "lib"
+      },
+      "test": "worker_process::supervision::tests::cleanup_uncertainty_is_reported_without_signalling_mismatched_ownership"
+    },
+    {
+      "manifest": "crates/worldinterface-runtime/Cargo.toml",
+      "package": "worldinterface-runtime",
+      "target": {
+        "kind": "test",
+        "name": "worker_process"
+      },
+      "test": "transform_artifacts_are_scoped_integrity_checked_and_release_is_replay_safe"
+    },
+    {
+      "manifest": "crates/worldinterface-runtime/Cargo.toml",
+      "package": "worldinterface-runtime",
+      "target": {
+        "kind": "test",
+        "name": "worker_process"
+      },
+      "test": "coding_fixture_edits_the_copied_sample_and_exports_patch_and_report"
+    },
+    {
+      "manifest": "crates/worldinterface-runtime/Cargo.toml",
+      "package": "worldinterface-runtime",
+      "target": {
+        "kind": "test",
+        "name": "worker_process"
+      },
+      "test": "wall_and_simultaneous_output_bounds_run_without_observation_polling"
+    },
+    {
+      "manifest": "crates/worldinterface-runtime/Cargo.toml",
+      "package": "worldinterface-runtime",
+      "target": {
+        "kind": "test",
+        "name": "worker_process"
+      },
+      "test": "descendants_grandchildren_sessions_and_early_leader_exit_are_cleaned_with_escalation"
+    },
+    {
+      "manifest": "crates/worldinterface-runtime/Cargo.toml",
+      "package": "worldinterface-runtime",
+      "target": {
+        "kind": "test",
+        "name": "worker_process"
+      },
+      "test": "environment_and_deliberately_non_cloexec_descriptor_are_excluded"
+    },
+    {
+      "manifest": "crates/worldinterface-runtime/Cargo.toml",
+      "package": "worldinterface-runtime",
+      "target": {
+        "kind": "test",
+        "name": "worker_process"
+      },
+      "test": "unavailable_operations_have_no_process_filesystem_credential_or_observation_side_effect"
+    },
+    {
+      "manifest": "crates/worldinterface-runtime/Cargo.toml",
+      "package": "worldinterface-runtime",
+      "target": {
+        "kind": "test",
+        "name": "worker_process"
+      },
+      "test": "exact_admission_rejects_executable_configuration_input_control_and_request_drift"
+    },
+    {
+      "manifest": "crates/worldinterface-runtime/Cargo.toml",
+      "package": "worldinterface-runtime",
+      "target": {
+        "kind": "test",
+        "name": "worker_process"
+      },
+      "test": "artifact_integrity_symlink_hardlink_and_special_files_are_quarantined"
+    },
+    {
+      "manifest": "crates/worldinterface-runtime/Cargo.toml",
+      "package": "worldinterface-runtime",
+      "target": {
+        "kind": "test",
+        "name": "worker_process"
+      },
+      "test": "duplicate_start_is_single_launch_and_revocation_stops_run_and_denies_reads"
+    },
+    {
+      "manifest": "crates/worldinterface-runtime/Cargo.toml",
+      "package": "worldinterface-runtime",
+      "target": {
+        "kind": "test",
+        "name": "worker_process"
+      },
+      "test": "executable_path_replacement_cannot_change_reviewed_bytes"
+    },
+    {
+      "manifest": "crates/worldinterface-runtime/Cargo.toml",
+      "package": "worldinterface-runtime",
+      "target": {
+        "kind": "test",
+        "name": "worker_process"
+      },
+      "test": "expired_and_cross_run_credentials_are_rejected_before_allocation"
+    },
+    {
+      "manifest": "crates/worldinterface-runtime/Cargo.toml",
+      "package": "worldinterface-runtime",
+      "target": {
+        "kind": "test",
+        "name": "worker_process"
+      },
+      "test": "expired_or_revoked_artifact_and_observation_access_is_denied"
+    },
+    {
+      "manifest": "crates/worldinterface-runtime/Cargo.toml",
+      "package": "worldinterface-runtime",
+      "target": {
+        "kind": "test",
+        "name": "worker_process"
+      },
+      "test": "port_drop_joins_supervision_and_reaps_owned_descendants"
+    },
+    {
+      "manifest": "crates/worldinterface-runtime/Cargo.toml",
+      "package": "worldinterface-runtime",
+      "target": {
+        "kind": "test",
+        "name": "worker_process"
+      },
+      "test": "stop_before_start_prevents_consequential_launch"
+    }
+  ]
+}
