@@ -11,6 +11,37 @@ use syn::visit::Visit;
 
 const CRASH_BARRIER: &str = "crates/worldinterface-foundation/storage/src/crashpoint.rs";
 const CRASH_BARRIER_HASH: &str = "c8c9d9f983ca833ffdd0d22552379aea3a5976ce39b6a537d2d3ac6a784f4e14";
+// Approved WIP-09 operator disposition (docs/work-items/WIP-09.md): host supervision is distinct from
+// AQ continuation correctness. Exact source pins require explicit review on edits;
+// source-route checking and the continuation ban in every other file still apply.
+const PROCESS_SUPERVISOR: &[(&str, &str)] = &[
+    (
+        "crates/worldinterface-runtime/src/worker_process/admission.rs",
+        "23d750d9c87f521b84b4d39502ebbba18ea69f11afbf1ee61092aae784024372",
+    ),
+    (
+        "crates/worldinterface-runtime/src/worker_process/bootstrap.rs",
+        "8229b0276a20b9e8a3290f89ae4a819380d31f82dbd88aae5663b0142ab23721",
+    ),
+    (
+        "crates/worldinterface-runtime/src/worker_process/fixture.rs",
+        "6634e235a84ed147add70c7b9b4f8937b0d895440a2e306a3159058ae994cb33",
+    ),
+    (
+        "crates/worldinterface-runtime/src/worker_process/mod.rs",
+        "6469c9e0d25f07882b7c4d7bd95133c3a81140c56ee5b355f2b270246f31202c",
+    ),
+    (
+        "crates/worldinterface-runtime/src/worker_process/supervision.rs",
+        "2e252962a72f9d2d41473f4dd24c8ea5009861523cb7f929e96c0f177ab4ffa1",
+    ),
+];
+fn process_supervisor_status(path: &str, source: &str) -> Option<bool> {
+    PROCESS_SUPERVISOR
+        .iter()
+        .find(|(p, _)| *p == path)
+        .map(|(_, expected)| hash(source.as_bytes()) == *expected)
+}
 fn forbidden(tokens: TokenStream, found: &mut BTreeSet<String>) {
     let tokens: Vec<_> = tokens.into_iter().collect();
     for (index, token) in tokens.iter().enumerate() {
@@ -306,7 +337,16 @@ pub fn check(root: &Path) -> Result<Vec<Finding>> {
                 }
                 continue;
             }
-            findings.extend(source_findings_with_types(&rel, source, identities.clone())?);
+            match process_supervisor_status(&rel, source) {
+                Some(true) => {}
+                Some(false) => {
+                    findings.push(finding("CONTINUATION-PROCESS-SUPERVISOR",&rel,"reviewed host supervision","WIP-09 operator disposition","process supervisor source changed; explicit review and disposition required"));
+                    findings.extend(source_findings_with_types(&rel, source, identities.clone())?);
+                }
+                None => {
+                    findings.extend(source_findings_with_types(&rel, source, identities.clone())?)
+                }
+            }
             use syn::visit::Visit;
             struct Routes<'a> {
                 root: &'a Path,
@@ -359,9 +399,84 @@ pub fn check(root: &Path) -> Result<Vec<Finding>> {
                     syn::visit::visit_macro(self, m);
                 }
             }
-            Routes { root: &root, path: &path, rel: &rel, findings: &mut findings }
-                .visit_file(&syn::parse_file(&policy::production_tokens(&source)?)?);
+            Routes { root: &root, path, rel: &rel, findings: &mut findings }
+                .visit_file(&syn::parse_file(&policy::production_tokens(source)?)?);
         }
     }
     Ok(findings)
+}
+
+#[cfg(test)]
+mod process_supervisor_tests {
+    use super::*;
+    #[test]
+    fn only_exact_reviewed_host_sources_have_the_supervisor_exception() {
+        let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        for (path, _) in PROCESS_SUPERVISOR {
+            let source = fs::read_to_string(root.join(path)).unwrap();
+            assert_eq!(process_supervisor_status(path, &source), Some(true));
+            assert_eq!(
+                process_supervisor_status(
+                    path,
+                    &(source.clone() + "\nfn unreviewed(){std::thread::sleep(d);}")
+                ),
+                Some(false)
+            );
+            assert_eq!(
+                process_supervisor_status(
+                    "crates/worldinterface-runtime/src/unreviewed.rs",
+                    &source
+                ),
+                None
+            );
+        }
+        // The generic policy itself is unchanged, even when passed a supervisor path.
+        for path in [
+            "crates/worldinterface-runtime/src/worker_process/mod.rs",
+            "crates/worldinterface-runtime/src/new.rs",
+        ] {
+            assert!(!source_findings(path, "fn f(){std::thread::sleep(d);}").unwrap().is_empty());
+        }
+    }
+
+    #[test]
+    fn repository_scan_rejects_supervisor_drift_and_unlisted_local_waits() {
+        let approved = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+        let temp = tempfile::tempdir().unwrap();
+        let root = temp.path();
+        let runtime = root.join("crates/worldinterface-runtime");
+        fs::create_dir_all(runtime.join("src/worker_process")).unwrap();
+        fs::create_dir(root.join("examples")).unwrap();
+        fs::write(root.join("Cargo.toml"), "[workspace]\nmembers=[]\n").unwrap();
+        fs::write(runtime.join("Cargo.toml"), "[package]\nname=\"probe\"\nversion=\"0.1.0\"\n")
+            .unwrap();
+        for (path, _) in PROCESS_SUPERVISOR {
+            let source = fs::read_to_string(approved.join(path)).unwrap();
+            fs::write(root.join(path), &source).unwrap();
+            let findings = check(root).unwrap();
+            assert!(
+                !findings.iter().any(|f| f.rule == "CONTINUATION-LOCAL-WAIT"
+                    || f.rule == "CONTINUATION-PROCESS-SUPERVISOR"),
+                "{path}: {findings:?}"
+            );
+
+            // Even harmless byte drift requires review; existing local waits
+            // must be inspected again rather than silently inheriting approval.
+            fs::write(root.join(path), source + "\n").unwrap();
+            let findings = check(root).unwrap();
+            for rule in ["CONTINUATION-PROCESS-SUPERVISOR", "CONTINUATION-LOCAL-WAIT"] {
+                assert!(
+                    findings.iter().any(|f| f.rule == rule && f.path == *path),
+                    "{path}: {findings:?}"
+                );
+            }
+            fs::remove_file(root.join(path)).unwrap();
+        }
+
+        // Placement beside an approved supervisor does not confer an exception.
+        let path = "crates/worldinterface-runtime/src/worker_process/unreviewed.rs";
+        fs::write(root.join(path), "fn f(){std::thread::sleep(d());}").unwrap();
+        let findings = check(root).unwrap();
+        assert!(findings.iter().any(|f| f.rule == "CONTINUATION-LOCAL-WAIT" && f.path == path));
+    }
 }

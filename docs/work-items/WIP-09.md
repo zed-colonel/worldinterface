@@ -152,15 +152,24 @@ The imported assumption/source matrices remain immutable historical records.
 Targeted tests use hard timeouts. All ten adopted checks must pass on the committed
 candidate; exact commit receipts and logs live in the run's scratch/verification.
 
-## Pending verification policy disposition
+## Approved verification policy disposition
 
-The unmodified WIP-08 `continuations` checker scans all runtime sources and bans
-JoinHandle, sleeps and timed polling, including WIP-09's required independent
-host-process supervisor and its reviewed fixtures. `contract-check` therefore
-rejects this candidate with CONTINUATION-LOCAL-WAIT even though the process
-mechanics tests pass. This is an unresolved scope conflict, not an adopted-check
-pass. No checker or adopted definition has been weakened. The proposed operator
-resolution is an exact-source-pinned host-supervisor exception, preserving every
-AQ continuation and source-route check. A concrete unapplied patch and rationale
-are retained in the run's scratch/review. Operator disposition and a fresh full
-committed-head check run are required before the WIP-09 exit gate can pass.
+On 2026-11-02 the operator approved the proposed checker exception: "I approve
+the [proposed checker exception], pinned to hashes of five reviewed supervisor
+files" (CraftingTable run `2b1d3753-1c85-4b3e-9b04-8a27fa05e7aa`). The approved
+proposal is `process-supervisor-exception.patch`, SHA-256
+`b0a2e7f81c8d97d8f20580e8bcbb2b5ef4772d618c3424ce08dfbd108fe40a63`,
+from the previous run's `scratch/review`.
+
+The WIP-08 `continuations` checker now exempts only the exact reviewed bytes of
+`worker_process/{admission,bootstrap,fixture,mod,supervision}.rs` from its local
+wait ban. These implement host-process supervision, independently of AQ
+continuation correctness. Their five SHA-256 pins live in the checker and are
+not updated by `hashes refresh`. Any source change fails with
+CONTINUATION-PROCESS-SUPERVISOR and restores the ordinary local-wait scan until
+an explicit reviewed disposition updates the pin. All other files retain the
+local-wait ban; source coverage, crate-wide identity analysis and source-route
+checks still inspect the supervisor files. Regression tests cover exact pins,
+changed and unlisted sources, and the unchanged generic policy. Adopted check
+definitions remain unchanged. All ten adopted checks must pass on the committed
+candidate; this approval alone is not verification or independent security review.
