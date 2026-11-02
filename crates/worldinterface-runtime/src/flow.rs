@@ -96,8 +96,8 @@ pub(crate) fn constraints(timeout_millis: Option<u64>) -> Result<TaskConstraints
     // The coordinator has no boundary operation budget. Its durable AQ lease,
     // retry limit and host cancellation still apply. Only node budgets supply
     // an attempt timeout; queue maintenance can outlast an arbitrary 60 seconds.
-    let timeout = timeout_millis.map(|ms| ms.div_ceil(1000).max(1));
-    let mut c = TaskConstraints::new(3, timeout, None)?;
+    let timeout_secs = timeout_millis.map(|ms| ms.div_ceil(1000).max(1));
+    let mut c = TaskConstraints::new(3, timeout_secs, None)?;
     c.set_safety_level(SafetyLevel::Idempotent);
     Ok(c)
 }
@@ -182,10 +182,15 @@ impl<A: Authentication, V: EvidenceAuthority, C: TrustedClock, P: PlanConfigurat
         if !std::ptr::eq(self.root, queue.wi()) {
             return Err("Flow queue bundle mismatch".into());
         }
-        if plan.document().body.nodes.iter().any(|n| {
-            matches!(n.operation, PlanOperation::Wait { .. } | PlanOperation::Timer { .. })
-        }) {
-            return Err("unsupported WIP-07 execution profile: wait/timer requires WIP-08".into());
+        for n in &plan.document().body.nodes {
+            if let PlanOperation::Wait { signal } = &n.operation {
+                if signal.tenant != *c.tenant()
+                    || signal.namespace.as_str() != worldinterface_domain::continuation::NAMESPACE
+                {
+                    return Err("foreign or unknown event route".into());
+                }
+                worldinterface_domain::continuation::EventKind::parse(signal.signal_kind.as_str())?;
+            }
         }
         let at = self.clock.now()?;
         let snapshot = verify_snapshot(self.root, self.evidence, c.tenant(), &submission, &at)?;
@@ -249,6 +254,9 @@ impl<A: Authentication, V: EvidenceAuthority, C: TrustedClock, P: PlanConfigurat
             cancel_requested: false,
             parent_run: None,
             bindings: BTreeMap::new(),
+            wait_cursors: BTreeMap::new(),
+            waits: BTreeMap::new(),
+            accepted_resumes: BTreeMap::new(),
             wakes_delivered: BTreeMap::new(),
             results: BTreeMap::new(),
             outcome: None,

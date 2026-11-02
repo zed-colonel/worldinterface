@@ -4,7 +4,11 @@ use rusqlite::{params, Connection, OptionalExtension, TransactionBehavior};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::collections::BTreeMap;
-use worldinterface_domain::{agency::AgencyRecord, flow::*};
+use worldinterface_domain::{
+    agency::AgencyRecord,
+    continuation::{ResumeAcceptance, WaitCheckpoint},
+    flow::*,
+};
 use worldinterface_protocol::{
     canonical_collection, strict_collection, ArtifactRef, ConnectorDescriptor, ContentHash,
     EffectIntentId, EffectSubmission, OpaqueRef, PrincipalId,
@@ -191,6 +195,12 @@ fn restore_pinned_plan(
 }
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
+pub struct WaitCursor {
+    pub sequence: u64,
+    pub event_position: u64,
+}
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
 pub struct FlowRun {
     pub id: OpaqueRef,
     pub tenant: OpaqueRef,
@@ -216,6 +226,12 @@ pub struct FlowRun {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub parent_run: Option<OpaqueRef>,
     pub bindings: BTreeMap<OpaqueRef, ChildBinding>,
+    #[serde(default)]
+    pub wait_cursors: BTreeMap<OpaqueRef, WaitCursor>,
+    #[serde(default)]
+    pub waits: BTreeMap<OpaqueRef, WaitCheckpoint>,
+    #[serde(default)]
+    pub accepted_resumes: BTreeMap<String, ResumeAcceptance>,
     pub wakes_delivered: BTreeMap<OpaqueRef, u64>,
     pub results: BTreeMap<OpaqueRef, NodeResult>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -290,6 +306,34 @@ pub struct FlowState {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
 pub enum FlowCommand {
+    RebindCheckpoint {
+        run: OpaqueRef,
+        node: OpaqueRef,
+        expected: Vec<u8>,
+        checkpoint: Vec<u8>,
+    },
+    SetWaitCursor {
+        run: OpaqueRef,
+        node: OpaqueRef,
+        sequence: u64,
+        event_position: u64,
+    },
+    PrepareWait {
+        run: OpaqueRef,
+        wait: WaitCheckpoint,
+    },
+    AcceptResume {
+        run: OpaqueRef,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        node: Option<OpaqueRef>,
+        acceptance: ResumeAcceptance,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        result: Option<NodeResult>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        next_wait: Option<Box<WaitCheckpoint>>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        finish: Option<(FlowOutcome, BTreeMap<OpaqueRef, ArtifactRef>)>,
+    },
     CancelRequested {
         run: OpaqueRef,
     },
@@ -339,6 +383,11 @@ pub enum FlowCommand {
         exports: BTreeMap<OpaqueRef, ArtifactRef>,
     },
 }
+pub fn resume_key(a: &ResumeAcceptance) -> Result<String> {
+    Ok(String::from_utf8(
+        canonical_collection(&(&a.queue_store, &a.run, a.context_id)).map_err(invalid)?,
+    )?)
+}
 fn request_key(run: &FlowRun) -> Result<String> {
     Ok(String::from_utf8(
         canonical_collection(&(&run.principal, &run.submission.client_request_id))
@@ -347,6 +396,69 @@ fn request_key(run: &FlowRun) -> Result<String> {
 }
 fn reduce(old: &FlowState, tenant: &OpaqueRef, cmd: &FlowCommand) -> Result<FlowState> {
     let mut s = old.clone();
+    if let FlowCommand::AcceptResume { run, node, acceptance, result, next_wait, finish } = cmd {
+        let r = old.runs.get(run).ok_or_else(|| invalid("unknown resume Flow"))?;
+        let key = resume_key(acceptance)?;
+        if let Some(previous) = r.accepted_resumes.get(&key) {
+            if previous != acceptance {
+                return Err(invalid("conflicting resume context"));
+            }
+            return Ok(s);
+        }
+        if acceptance.queue_store != r.queue_store
+            || acceptance.context_id == 0
+            || acceptance.disposition.is_empty()
+            || acceptance.disposition.len() > 65536
+            || node.as_ref().map_or(r.parent_run.as_ref(), |n| r.bindings.get(n).map(|b| &b.run))
+                != Some(&acceptance.run)
+            || r.cancel_requested
+            || r.outcome.is_some()
+        {
+            return Err(invalid("invalid resume binding"));
+        }
+        if let Some(node) = node {
+            if !r.waits.contains_key(node) {
+                return Err(invalid("resume without prepared wait"));
+            }
+        }
+        if let Some(result) = result {
+            s = reduce(
+                &s,
+                tenant,
+                &FlowCommand::RecordNodeResult {
+                    run: run.clone(),
+                    node: node.clone().ok_or_else(|| invalid("result without node"))?,
+                    result: result.clone(),
+                },
+            )?;
+        }
+        if let Some((outcome, exports)) = finish {
+            s = reduce(
+                &s,
+                tenant,
+                &FlowCommand::Finish {
+                    run: run.clone(),
+                    outcome: outcome.clone(),
+                    exports: exports.clone(),
+                },
+            )?;
+        }
+        if let Some(wait) = next_wait {
+            if node.as_ref() != Some(&wait.node)
+                || wait.queue_store != r.queue_store
+                || wait.run != acceptance.run
+                || wait.plan_hash != r.plan_hash
+                || result.is_some()
+                || finish.is_some()
+            {
+                return Err(invalid("invalid replacement wait"));
+            }
+            s.runs.get_mut(run).unwrap().waits.insert(wait.node.clone(), *wait.clone());
+        }
+        s.runs.get_mut(run).unwrap().accepted_resumes.insert(key, acceptance.clone());
+        s.revision = old.revision + 1;
+        return Ok(s);
+    }
     match cmd {
         FlowCommand::QuarantineRun { run, diagnostic } => {
             if !s.runs.contains_key(run) || diagnostic.len() > 1024 {
@@ -412,13 +524,11 @@ fn reduce(old: &FlowState, tenant: &OpaqueRef, cmd: &FlowCommand) -> Result<Flow
                 || !r.exports.is_empty()
                 || r.outcome.is_some()
                 || !r.wakes_delivered.is_empty()
+                || !r.wait_cursors.is_empty()
+                || !r.waits.is_empty()
+                || !r.accepted_resumes.is_empty()
             {
                 return Err(invalid("invalid initial Flow run"));
-            }
-            if p.document().body.nodes.iter().any(|n| {
-                matches!(n.operation, PlanOperation::Wait { .. } | PlanOperation::Timer { .. })
-            }) {
-                return Err(invalid("unsupported WIP-07 execution profile"));
             }
             if let PlanOrigin::Flow { id, version, definition_digest, .. } = &r.origin {
                 if s.active.get(id) != Some(version) {
@@ -466,7 +576,10 @@ fn reduce(old: &FlowState, tenant: &OpaqueRef, cmd: &FlowCommand) -> Result<Flow
         }
         _ => {
             let id = match cmd {
-                FlowCommand::CancelRequested { run }
+                FlowCommand::RebindCheckpoint { run, .. }
+                | FlowCommand::SetWaitCursor { run, .. }
+                | FlowCommand::PrepareWait { run, .. }
+                | FlowCommand::CancelRequested { run }
                 | FlowCommand::BindCoordinator { run, .. }
                 | FlowCommand::PrepareChildren { run, .. }
                 | FlowCommand::BindChild { run, .. }
@@ -486,6 +599,70 @@ fn reduce(old: &FlowState, tenant: &OpaqueRef, cmd: &FlowCommand) -> Result<Flow
                 return Err(invalid("Flow run finished"));
             }
             match cmd {
+                FlowCommand::RebindCheckpoint { node, expected, checkpoint, .. } => {
+                    if r.results.contains_key(node)
+                        || checkpoint.is_empty()
+                        || checkpoint.len() > 16384
+                    {
+                        return Err(invalid("invalid checkpoint rebind"));
+                    }
+                    let w = r
+                        .waits
+                        .get_mut(node)
+                        .ok_or_else(|| invalid("missing checkpoint to rebind"))?;
+                    if w.checkpoint == *checkpoint {
+                        return Ok(s);
+                    }
+                    if w.checkpoint != *expected {
+                        return Err(invalid("checkpoint rebind conflict"));
+                    }
+                    w.checkpoint = checkpoint.clone();
+                }
+                FlowCommand::SetWaitCursor { node, sequence, event_position, .. } => {
+                    if !r.bindings.contains_key(node) || r.results.contains_key(node) {
+                        return Err(invalid("unbound wait cursor"));
+                    }
+                    if let Some(old) = r.wait_cursors.get(node) {
+                        if old
+                            != &(WaitCursor {
+                                sequence: *sequence,
+                                event_position: *event_position,
+                            })
+                        {
+                            return Err(invalid("wait cursor conflict"));
+                        }
+                        return Ok(s);
+                    }
+                    r.wait_cursors.insert(
+                        node.clone(),
+                        WaitCursor { sequence: *sequence, event_position: *event_position },
+                    );
+                }
+                FlowCommand::PrepareWait { wait, .. } => {
+                    if let Some(old) = r.waits.get(&wait.node) {
+                        if old == wait {
+                            return Ok(s);
+                        }
+                        return Err(invalid("wait checkpoint conflict"));
+                    }
+                    if r.cancel_requested
+                        || wait.queue_store != r.queue_store
+                        || wait.plan_hash != r.plan_hash
+                        || r.bindings.get(&wait.node).is_none_or(|b| b.run != wait.run)
+                        || wait
+                            .route
+                            .as_ref()
+                            .is_some_and(|v| v.tenant != r.tenant || v.audience != r.principal)
+                        || wait.wait.is_empty()
+                        || wait.wait.len() > 16384
+                        || wait.checkpoint.is_empty()
+                        || wait.checkpoint.len() > 16384
+                        || r.results.contains_key(&wait.node)
+                    {
+                        return Err(invalid("invalid wait checkpoint binding"));
+                    }
+                    r.waits.insert(wait.node.clone(), wait.clone());
+                }
                 FlowCommand::CancelRequested { .. } => {
                     r.cancel_requested = true;
                 }
@@ -714,7 +891,11 @@ fn command_view(c: &Connection, tenant: &OpaqueRef, cmd: &FlowCommand) -> Result
             return catalog(c, tenant)
         }
         FlowCommand::AdmitRun { run } => &run.id,
-        FlowCommand::CancelRequested { run }
+        FlowCommand::RebindCheckpoint { run, .. }
+        | FlowCommand::SetWaitCursor { run, .. }
+        | FlowCommand::PrepareWait { run, .. }
+        | FlowCommand::AcceptResume { run, .. }
+        | FlowCommand::CancelRequested { run }
         | FlowCommand::QuarantineRun { run, .. }
         | FlowCommand::BindCoordinator { run, .. }
         | FlowCommand::PrepareChildren { run, .. }
@@ -791,6 +972,7 @@ pub(crate) fn replay(source: &Connection, target: &Connection) -> Result<()> {
             return Err(invalid("corrupt Flow history"));
         }
         write(target, &e.tenant, &new)?;
+        crate::continuation::flow_events(target, &e.tenant, &old, &new)?;
     }
     Ok(())
 }
@@ -827,6 +1009,22 @@ impl StoreRoot {
                 }
             }
             FlowCommand::BindChild { binding, .. } => check(&binding.request)?,
+            FlowCommand::PrepareWait { wait, .. } => check(&wait.artifact)?,
+            FlowCommand::AcceptResume { next_wait, result, finish, .. } => {
+                if let Some(wait) = next_wait {
+                    check(&wait.artifact)?;
+                }
+                if let Some(result) = result {
+                    for a in result.outputs.values() {
+                        check(a)?;
+                    }
+                }
+                if let Some((_, exports)) = finish {
+                    for a in exports.values() {
+                        check(a)?;
+                    }
+                }
+            }
             FlowCommand::RecordNodeResult { result, .. } => {
                 for a in result.outputs.values() {
                     check(a)?;
@@ -850,6 +1048,15 @@ impl StoreRoot {
     }
     pub fn flow_run_snapshot(&self, tenant: &OpaqueRef, run: &OpaqueRef) -> Result<FlowState> {
         read_view(self, tenant, Some(run), false)
+    }
+    /// Append-only Flow journal position, for disposable reconciliation scan
+    /// watermarks. Source mutations always advance this position.
+    pub fn flow_journal_position(&self) -> Result<u64> {
+        Ok(self.connect(StoreKind::Flow)?.query_row(
+            "SELECT COALESCE(MAX(seq),0) FROM flow_history",
+            [],
+            |row| row.get(0),
+        )?)
     }
     pub fn flow_pending_snapshot(&self, tenant: &OpaqueRef) -> Result<FlowState> {
         read_view(self, tenant, None, true)
@@ -950,6 +1157,7 @@ impl StoreRoot {
             params![tenant.as_str(), new.revision, &b, ContentHash::of(&b).as_str()],
         )?;
         write(&tx, tenant, &new)?;
+        crate::continuation::flow_events(&tx, tenant, &old, &new)?;
         #[cfg(all(feature = "crash-points", not(test)))]
         crate::crashpoint::checkpoint("flow-before-commit");
         tx.commit()?;
@@ -962,6 +1170,12 @@ impl StoreRoot {
                 crate::crashpoint::checkpoint("flow-coordinator-bound")
             }
             FlowCommand::BindChild { .. } => crate::crashpoint::checkpoint("flow-child-bound"),
+            FlowCommand::PrepareWait { .. } => {
+                crate::crashpoint::checkpoint("continuation-wait-prepared")
+            }
+            FlowCommand::AcceptResume { .. } => {
+                crate::crashpoint::checkpoint("continuation-resume-accepted")
+            }
             _ => {}
         }
         Ok(new)
@@ -986,6 +1200,9 @@ impl StoreRoot {
                             self.read_artifact(reference)?;
                         }
                     }
+                }
+                for w in r.waits.values() {
+                    self.read_artifact(&w.artifact)?;
                 }
                 for b in r.bindings.values() {
                     self.read_artifact(&b.request)?;

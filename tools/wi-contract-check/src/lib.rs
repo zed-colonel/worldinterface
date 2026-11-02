@@ -91,3 +91,5 @@ pub fn string<'a>(v: &'a Value, key: &str) -> Result<&'a str> {
         .filter(|s| !s.is_empty())
         .ok_or_else(|| format!("missing nonempty string {key}").into())
 }
+
+pub mod continuations;

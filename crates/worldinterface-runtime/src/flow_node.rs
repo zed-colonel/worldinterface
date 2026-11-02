@@ -109,7 +109,7 @@ pub(crate) fn materialize(
     }
     Ok(result)
 }
-fn empty_result(disposition: NodeDisposition) -> NodeResult {
+pub(crate) fn empty_result(disposition: NodeDisposition) -> NodeResult {
     NodeResult {
         disposition,
         values: BTreeMap::new(),
@@ -179,6 +179,11 @@ impl<
             || request.task_spec().id().to_string() != r.node_tasks[node].as_str()
         {
             return Err(rejected("Flow child payload mismatch"));
+        }
+        if matches!(n.operation, PlanOperation::Wait { .. } | PlanOperation::Timer { .. }) {
+            if let Some(disposition) = crate::flow_wait::accepted(r, ctx)? {
+                return Ok(disposition);
+            }
         }
         if let Some(result) = r.results.get(node) {
             if result.effect.is_some() && result.disposition == NodeDisposition::Succeeded {
@@ -519,7 +524,9 @@ impl<
                 artifact_reader.read(&caller, &submission.input.artifact)?;
                 self.boundary_result(r, node, n, &p, ctx, id, &bytes)
             }
-            _ => Err(rejected("unsupported WIP-07 execution profile")),
+            PlanOperation::Wait { .. } | PlanOperation::Timer { .. } => {
+                crate::flow_wait::execute(root, r, n, ctx, self.artifacts.as_ref())
+            }
         }
     }
     fn boundary_result(
@@ -613,6 +620,38 @@ impl<
     pub fn execute_bound(&self, ctx: &ExecutorContext) -> Result<AttemptDisposition> {
         let payload = FlowPayload::decode(&ctx.input.payload)?;
         let r = load(self.effect.bundle.wi(), &payload)?;
+        // Replay is a lookup of an immutable accepted result. New authority is
+        // required only when evaluating a context that has not been accepted.
+        let bound = payload
+            .node
+            .as_ref()
+            .map_or(r.parent_run.as_ref(), |n| r.bindings.get(n).map(|b| &b.run));
+        if bound.is_some_and(|run| run.as_str() == ctx.input.run_id.to_string()) {
+            if let Some(disposition) = crate::flow_wait::accepted(&r, ctx)? {
+                return Ok(disposition);
+            }
+        }
+        if ctx.input.resume_context.is_some() {
+            let at = self.effect.clock.now()?;
+            let snapshot = verify_snapshot(
+                self.effect.bundle.wi(),
+                &self.effect.evidence,
+                &r.tenant,
+                &r.submission,
+                &at,
+            )?;
+            let caller = AuthenticatedCaller::from_trusted_authentication(
+                r.tenant.clone(),
+                r.principal.clone(),
+            );
+            let agency = resolve_agency(&caller, &r.submission, &snapshot.facts().bindings, &at)
+                .map_err(rejected)?;
+            if agency != r.agency {
+                return Err(rejected("Flow agency changed at resumption"));
+            }
+            ArtifactResolver::new(self.effect.bundle.wi(), self.artifacts.as_ref())
+                .read(&caller, &r.submission.input.artifact)?;
+        }
         if let Some(node) = payload.node {
             self.node(&r, &node, ctx)
         } else {

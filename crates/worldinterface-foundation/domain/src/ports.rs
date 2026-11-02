@@ -32,10 +32,6 @@ pub trait QueueAdmissionPort {
 pub trait QueueInspectionPort {
     fn inspect(&self, task: &OpaqueRef) -> Result<QueueStatus, String>;
 }
-pub trait QueueWakePort {
-    fn wake(&mut self, key: &OpaqueRef, payload_locator: &OpaqueRef) -> Result<(), String>;
-}
-
 /// WI-04 fixture admission seam. Implementations belong in tests; this is not an AQ adapter.
 #[derive(Clone, Debug, PartialEq, Eq, serde::Serialize, serde::Deserialize)]
 #[serde(deny_unknown_fields)]

@@ -2,16 +2,14 @@
 mod child_guard;
 mod support {
     pub mod connectors;
+    pub mod flow_fixture;
     pub mod spi_harness;
 }
 use actionqueue_core::ids::TaskId;
 use std::{collections::BTreeMap, sync::Arc};
+use support::flow_fixture::*;
 use support::{connectors::*, spi_harness::host};
-use worldinterface_domain::{
-    agency::AuthenticatedCaller,
-    flow::*,
-    resource::{ResolutionFact, ResolverSnapshot, TargetDocument},
-};
+use worldinterface_domain::{agency::AuthenticatedCaller, flow::*};
 use worldinterface_protocol::*;
 use worldinterface_runtime::{
     aq_adapter::QueueEngine,
@@ -19,190 +17,10 @@ use worldinterface_runtime::{
     completion::EffectAttemptHandler,
     flow::{PlanConfiguration, PlanService},
     flow_node::FlowAttemptHandler,
-    resolution::ResourceObserver,
     storage::StoreBundle,
     Result,
 };
-use worldinterface_storage::{flow::*, StoreProfile};
-#[derive(Clone)]
-struct Auth(OpaqueRef, PrincipalId);
-impl Authentication for Auth {
-    type Session = ();
-    fn authenticate(&self, _: &()) -> Result<(OpaqueRef, PrincipalId)> {
-        Ok((self.0.clone(), self.1.clone()))
-    }
-}
-#[derive(Clone)]
-struct Config(FlowPins);
-impl worldinterface_runtime::artifact::ArtifactAuthorization for Config {
-    type AuthenticatedContext = AuthenticatedCaller;
-    fn authorize_read(&self, caller: &AuthenticatedCaller, artifact: &ArtifactRef) -> bool {
-        &artifact.scope == caller.tenant()
-    }
-}
-impl PlanConfiguration for Config {
-    fn pins(&self, _: &AuthenticatedCaller) -> Result<FlowPins> {
-        Ok(self.0.clone())
-    }
-}
-#[derive(Clone)]
-struct Resolver(ResolutionFact);
-impl ResourceObserver for Resolver {
-    fn observe(
-        &self,
-        _: &OpaqueRef,
-        s: &EffectSubmission,
-        _: &ResolverSnapshot,
-        _: &Timestamp,
-    ) -> Result<ResolutionFact> {
-        if s.resource != self.0.selector {
-            return Err("wrong selector".into());
-        }
-        Ok(self.0.clone())
-    }
-    fn compare_before_use(&self, _: &ResolutionFact) -> Result<TargetDocument> {
-        Ok(self.0.document.clone())
-    }
-}
-struct Fixture {
-    _temp: tempfile::TempDir,
-    bundle: Arc<StoreBundle>,
-    connector: DeterministicConnector,
-    snapshot: worldinterface_domain::authorization::AuthorizationSnapshot,
-    submission: EffectSubmission,
-    clock: Clock,
-    config: Config,
-    auth: Auth,
-}
-impl Fixture {
-    fn new() -> Self {
-        let temp = if let Some(parent) = std::env::var_os("WI_FLOW_FIXTURE_PARENT") {
-            tempfile::tempdir_in(parent).unwrap()
-        } else {
-            tempfile::tempdir().unwrap()
-        };
-        let connector = DeterministicConnector::new(
-            temp.path().join("provider"),
-            IdempotencyClass::ExternallyKeyed,
-            Mode::Commit,
-        );
-        let (submission, snapshot) = fixture(&connector.descriptor);
-        let clock = Clock::new();
-        let bundle = Arc::new(
-            StoreBundle::initialize(
-                &temp.path().join("bundle"),
-                StoreProfile {
-                    instance: InstanceId::generate(),
-                    created_at: clock.now().unwrap(),
-                    platform: false,
-                },
-            )
-            .unwrap(),
-        );
-        let auth =
-            Auth(snapshot.bindings[0].tenant.clone(), snapshot.bindings[0].principal.clone());
-        for b in [b"input".as_slice(), b"resolution", b"grant"] {
-            bundle.wi().publish(auth.0.clone(), b).unwrap();
-        }
-        let authority = AuthorityUpperBound {
-            alternatives: vec![AuthorityAlternative {
-                connector: connector.descriptor.connector.clone(),
-                operation: connector.descriptor.operation.clone(),
-                effect: submission.effect_class.clone(),
-                resource: submission.resource.clone(),
-            }],
-        };
-        let config = Config(FlowPins {
-            descriptors: vec![connector.descriptor.clone()],
-            schemas: BTreeMap::from([
-                (
-                    "input:1".to_string().try_into().unwrap(),
-                    Schema::Artifact { schema_hash: ContentHash::of(b"input:1"), max_bytes: 4096 },
-                ),
-                (
-                    "output:1".to_string().try_into().unwrap(),
-                    Schema::Artifact { schema_hash: ContentHash::of(b"output:1"), max_bytes: 4096 },
-                ),
-                ("bool".to_string().try_into().unwrap(), Schema::Boolean {}),
-                ("int".to_string().try_into().unwrap(), Schema::Integer {}),
-            ]),
-            submitting_authority: authority.clone(),
-            run_authority: authority,
-        });
-        let mut f =
-            Self { _temp: temp, bundle, connector, snapshot, submission, clock, config, auth };
-        f.submission.budget.timeout_millis = 60_000;
-        let submission = f.submission.clone();
-        allow_demands(&mut f, &[submission]);
-        f
-    }
-    fn handler(&self) -> FlowAttemptHandler<DeterministicConnector, Evidence, Resolver, Clock> {
-        FlowAttemptHandler {
-            effect: EffectAttemptHandler {
-                bundle: self.bundle.clone(),
-                port: self.connector.clone(),
-                evidence: Evidence(self.snapshot.clone()),
-                clock: self.clock.clone(),
-            },
-            resolver: Resolver(self.snapshot.facts[0].clone()),
-            artifacts: Arc::new(self.config.clone()),
-        }
-    }
-    fn service<'a>(
-        &'a self,
-        evidence: &'a Evidence,
-    ) -> PlanService<'a, Auth, Evidence, Clock, Config> {
-        PlanService {
-            root: self.bundle.wi(),
-            authentication: &self.auth,
-            evidence,
-            clock: &self.clock,
-            configuration: &self.config,
-        }
-    }
-    fn direct(&self) -> ExecutionPlan {
-        compile_direct(&self.submission, &self.selection(), &self.config.0.context().unwrap())
-            .unwrap()
-    }
-    fn selection(&self) -> DirectOperationSelection {
-        DirectOperationSelection {
-            connector: self.connector.descriptor.connector.clone(),
-            operation: self.connector.descriptor.operation.clone(),
-        }
-    }
-    fn run(&self, id: &OpaqueRef) -> FlowRun {
-        self.bundle.wi().flow_run_snapshot(&self.auth.0, id).unwrap().runs[id].clone()
-    }
-    async fn drive<
-        V: worldinterface_runtime::authority::EvidenceAuthority + Send + Sync + 'static,
-    >(
-        &self,
-        queue: &mut QueueEngine<'_, FlowAttemptHandler<DeterministicConnector, V, Resolver, Clock>>,
-        id: &OpaqueRef,
-    ) {
-        for _ in 0..3000 {
-            let _ = queue.tick().await.unwrap();
-            let r = self.run(id);
-            let task: TaskId = r.coordinator_task.as_str().parse().unwrap();
-            if r.outcome.is_some()
-                && queue.engine().projection().runs_for_task(task).all(|r| r.state().is_terminal())
-            {
-                return;
-            }
-            tokio::time::sleep(std::time::Duration::from_millis(1)).await;
-        }
-        panic!(
-            "Flow did not settle: {:?}; AQ {:?}",
-            self.run(id),
-            queue
-                .engine()
-                .projection()
-                .run_instances()
-                .map(|r| (r.task_id(), r.state()))
-                .collect::<Vec<_>>()
-        );
-    }
-}
+use worldinterface_storage::flow::*;
 #[tokio::test]
 async fn direct_and_flow_share_transactional_executor_and_receipts() {
     for flow in [false, true] {
@@ -304,28 +122,6 @@ async fn tampered_plan_hash_snapshots_and_attribution_prevent_execution() {
     q.shutdown().unwrap();
 }
 
-fn pure_node(
-    id: &str,
-    dependencies: Vec<OpaqueRef>,
-    value: serde_json::Value,
-    schema: &str,
-) -> PlanNode {
-    PlanNode {
-        id: id.to_string().try_into().unwrap(),
-        dependencies,
-        guards: BTreeMap::new(),
-        inputs: BTreeMap::new(),
-        outputs: BTreeMap::from([(
-            "value".to_string().try_into().unwrap(),
-            PlanOutput { schema: schema.to_string().try_into().unwrap(), resources: vec![] },
-        )]),
-        authority: AuthorityUpperBound::default(),
-        fan_out: FanOut::Expanded {},
-        operation: PlanOperation::Transform {
-            program: Program::closed(Expression::Literal { value }).unwrap(),
-        },
-    }
-}
 fn branching() -> FlowDefinition {
     let branch: OpaqueRef = "branch".to_string().try_into().unwrap();
     let a: OpaqueRef = "a".to_string().try_into().unwrap();
@@ -482,7 +278,7 @@ async fn admission_readiness_retained_wake_restart_and_duplicates_converge() {
     q.shutdown().unwrap();
 }
 #[test]
-fn flow_authority_purity_version_conflicts_and_unsupported_profile_reject_before_admission() {
+fn flow_authority_purity_version_conflicts_reject_and_timer_admits() {
     let f = Fixture::new();
     let evidence = Evidence(f.snapshot.clone());
     let service = f.service(&evidence);
@@ -554,8 +350,8 @@ fn flow_authority_purity_version_conflicts_and_unsupported_profile_reject_before
     };
     service.activate_flow_version(&(), d.clone(), None).unwrap();
     let mut q = QueueEngine::bootstrap(&f.bundle, f.handler(), host()).unwrap();
-    assert!(service.submit_flow(&(), &d.id, f.submission.clone(), &mut q).is_err());
-    assert_eq!(q.engine().projection().task_count(), 0);
+    assert!(service.submit_flow(&(), &d.id, f.submission.clone(), &mut q).is_ok());
+    assert_eq!(q.engine().projection().task_count(), 1);
     q.shutdown().unwrap();
     assert_eq!(f.connector.commits(), 0);
 }
@@ -1277,20 +1073,6 @@ async fn maximum_length_flow_identities_have_bounded_aq_and_effect_keys() {
     q.shutdown().unwrap();
 }
 
-fn allow_demands(f: &mut Fixture, submissions: &[EffectSubmission]) {
-    let demands: std::collections::BTreeSet<_> =
-        submissions.iter().map(|s| worldinterface_domain::ingress::digest(s).unwrap()).collect();
-    for b in &mut f.snapshot.bindings {
-        b.principal_authority = demands.clone();
-        b.capacity_authority = demands.clone();
-    }
-    f.snapshot.policy.platform = demands.clone();
-    f.snapshot.policy.resource = demands.clone();
-    f.snapshot.policy.information_use = demands.clone();
-    for g in &mut f.snapshot.grants {
-        g.authority = demands.clone();
-    }
-}
 fn boundary_definition(f: &Fixture, count: usize) -> FlowDefinition {
     let nodes: Vec<_> = (0..count)
         .map(|i| {
@@ -1674,6 +1456,13 @@ async fn damaged_run_is_quarantined_while_another_tenant_completes() {
     let d = branching();
     service.activate_flow_version(&(), d.clone(), None).unwrap();
     let good = service.submit_flow(&(), &d.id, submission, &mut q).unwrap();
+    // Resume authorization uses the host's current facts for the healthy tenant.
+    // The damaged original run still fails its pinned-plan check independently.
+    q.shutdown().unwrap();
+    let mut handler = f.handler();
+    handler.effect.evidence = evidence2.clone();
+    let mut q = QueueEngine::bootstrap(&f.bundle, handler, host()).unwrap();
+
     for _ in 0..2000 {
         let _ = q.tick().await.unwrap();
         if f.bundle.wi().flow_snapshot(&auth.0).unwrap().runs[&good].outcome.is_some() {
@@ -1829,7 +1618,16 @@ async fn wi_proposal_aq_commit_and_binding_process_death_recover_stable_children
         assert_eq!(after.bindings.len(), 3);
         assert_eq!(f.connector.commits(), 3);
         assert_eq!(f.connector.invocation_calls.load(std::sync::atomic::Ordering::SeqCst), 3);
-        assert_eq!(q.engine().projection().signals().statistics().retained, 0);
+        assert_eq!(q.engine().projection().signals().statistics().retained, 3);
+        let obligations = f
+            .bundle
+            .wi()
+            .signal_obligations(worldinterface_storage::StoreKind::Flow, None, 10)
+            .unwrap();
+        assert_eq!(obligations.len(), 3);
+        assert!(obligations.iter().all(|o| o.event.route.kind
+            == worldinterface_domain::continuation::EventKind::FlowChild
+            && o.sequence.is_some()));
         q.shutdown().unwrap();
     }
 }

@@ -50,7 +50,18 @@ fn baseline_records_have_precise_g1_coverage_and_no_source_result_claims() {
         r.cases.iter().filter(|c| c.owning_item == "WIP-01" && c.status == "implemented").count(),
         11
     );
-    assert_eq!(g.iter().filter(|g| g.status == "closed").count(), 5);
+    assert_eq!(
+        g.iter().filter(|g| g.status == "closed").map(|g| g.id.as_str()).collect::<BTreeSet<_>>(),
+        BTreeSet::from([
+            "WI-WORKER-G1",
+            "WI-WORKER-G2",
+            "WI-AQ-G1",
+            "WI-AQ-G2",
+            "WI-AQ-G3",
+            "WI-AQ-G4",
+            "WI-EMBEDDED-CORE-1"
+        ])
+    );
     assert_eq!(r.cases.iter().find(|c| c.id == "WP-002").unwrap().tests.len(), 3);
     assert_eq!(r.cases.iter().find(|c| c.id == "WP-007").unwrap().tests.len(), 3);
 }
@@ -216,7 +227,7 @@ fn closed_gate_with_open_case_or_prerequisite_rejects() {
         r.cases[0].tests.clear();
     });
     rejects("PROOF-CLOSED-PREREQUISITE", |_, g, _| {
-        g.iter_mut().find(|g| g.id == "WI-WORKER-G3").unwrap().status = "closed".into()
+        g.iter_mut().find(|g| g.id == "WI-AQ-G3").unwrap().status = "open".into()
     });
 }
 #[test]
@@ -504,5 +515,56 @@ fn flow_runtime_matrix_rejects_missing_ignored_foreign_and_ambiguous_evidence() 
         }
         fs::write(t.path().join(path), serde_json::to_vec_pretty(&changed).unwrap()).unwrap();
         assert!(!proof::validate_flow_integration(t.path(), &index).unwrap().is_empty(), "{mode}");
+    }
+}
+
+#[test]
+fn wi08_continuation_obligations_require_exact_enabled_tests() {
+    let path = "conformance/wi-fabric-2/continuations/coverage.json";
+    let coverage = read(&root().join(path)).unwrap();
+    let obligations: std::collections::BTreeMap<String, Vec<TestRef>> =
+        serde_json::from_value(coverage["required_obligations"].clone()).unwrap();
+    let mut index: TestIndex = obligations.values().flatten().cloned().map(|t| (t, 1)).collect();
+    assert!(proof::validate_continuations(&root(), &index).unwrap().is_empty());
+    index.remove(&obligations["resume-idempotency"][0]);
+    assert!(proof::validate_continuations(&root(), &index)
+        .unwrap()
+        .iter()
+        .any(|f| f.rule == "PROOF-WI08"));
+}
+
+#[test]
+fn wi08_source_atomicity_requires_every_producer_even_if_coverage_is_removed() {
+    let path = "conformance/wi-fabric-2/continuations/coverage.json";
+    let coverage = read(&root().join(path)).unwrap();
+    let obligations: std::collections::BTreeMap<String, Vec<TestRef>> =
+        serde_json::from_value(coverage["required_obligations"].clone()).unwrap();
+    let index: TestIndex = obligations.values().flatten().cloned().map(|t| (t, 1)).collect();
+    let t = tempfile::tempdir().unwrap();
+    std::fs::create_dir_all(t.path().join("conformance/wi-fabric-2/continuations")).unwrap();
+    std::fs::create_dir_all(t.path().join("conformance/wi-fabric-2/integration")).unwrap();
+    std::fs::copy(
+        root().join("conformance/wi-fabric-2/integration/fixtures.json"),
+        t.path().join("conformance/wi-fabric-2/integration/fixtures.json"),
+    )
+    .unwrap();
+    for producer in obligations["source-outbox-atomicity"]
+        .iter()
+        .filter(|r| r.package == "worldinterface-runtime")
+    {
+        let mut missing = coverage.clone();
+        missing["required_obligations"]["source-outbox-atomicity"]
+            .as_array_mut()
+            .unwrap()
+            .retain(|r| r["test"].as_str() != Some(&producer.test));
+        std::fs::write(t.path().join(path), serde_json::to_vec(&missing).unwrap()).unwrap();
+        assert!(
+            proof::validate_continuations(t.path(), &index)
+                .unwrap()
+                .iter()
+                .any(|f| f.rule == "PROOF-WI08"),
+            "{}",
+            producer.test
+        );
     }
 }

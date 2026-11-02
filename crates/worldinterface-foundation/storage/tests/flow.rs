@@ -133,7 +133,13 @@ fn flow_projection_tampering_and_old_profiles_reject_without_writes() {
     let before = std::fs::read(p.join("flow.sqlite")).unwrap();
     assert!(StoreRoot::open_existing(&p).is_err());
     assert_eq!(std::fs::read(p.join("flow.sqlite")).unwrap(), before);
-    for previous in ["local-receipt-3", "local-flow-5", "local-flow-6"] {
+    for previous in [
+        "local-receipt-3",
+        "local-flow-5",
+        "local-flow-6",
+        "local-continuation-8",
+        "local-continuation-9",
+    ] {
         let t = tempfile::tempdir().unwrap();
         let p = t.path().join("root");
         drop(root_at(&p));
