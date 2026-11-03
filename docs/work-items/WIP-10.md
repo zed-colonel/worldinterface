@@ -196,3 +196,36 @@ cold-cache compile evidence and test/check results. Positive lifecycle, crash,
 concurrency and adapter evaluation, every adopted check on the approved committed
 head, and G3 review/integration remain due after renewed acceptance. No live
 fixture or helper has been run on this revision.
+
+
+## Revised packet acceptance and live evaluation, 2026-11-03
+
+The operator accepted the completed revised package in this conversation:
+“Yes, I accept the revised package.” The receipt and host anchor record the
+canonical digest `4602f6c489562f1c73424786ed3180b091b79cfc93e6f51dc242fbddf8aacb53`,
+its exact supervisor disposition and the finite expiry 2026-11-10T19:00:00Z.
+All 266 source bindings and measured support programs match. This authorizes
+only the evaluation scope in the request; it supplies no gate acceptance.
+
+On acceptance commit `747d4f5`, fourteen of fifteen adapter regressions pass.
+The path-replacement regression fails at its deliberate rewrite because fs::copy
+inherits the builder artifact's owner-read/execute mode (0500). Only that attack
+copy needs to be made writable; this finding does not authorize relaxing sealed
+executable verification or private build artifact permissions.
+
+The unavailable-operation lifecycle test passes; ten lifecycle tests and
+AB-WI-021 fail with Uncertain outcomes. The crash matrix completes the cuts before
+cancel and stops at `worker-cancel-before-commit`, after the child reports the
+same Uncertain outcome. Source inspection identifies incomplete publication:
+WorkerConnector returns one WorkerState output and no boundary record, while the
+harness declares zero required outputs. The existing WIP-05 executor correctly
+converts that claimed success to uncertainty. Its strict publication checks must
+remain intact. A proposed follow-up would declare a deterministic operation
+acknowledgement as the output and attach authoritative state as boundary evidence,
+plus correct the attack-copy permissions and add publication-contract regressions.
+Covered source changes need another packet and renewed acceptance.
+
+Live logs are retained in `scratch/verification/approved-revision/`. All ten
+adopted checks are requested on the committed candidate with these findings;
+individual commands/results are retained there. G3 remains open. No live passage,
+completed qualification or clean qualifying review is asserted by this record.
