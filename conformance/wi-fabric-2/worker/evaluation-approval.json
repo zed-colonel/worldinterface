@@ -1,6 +1,6 @@
 {
-  "decision": "operator-acceptance:2026-11-03:473d47be:fcf4f9936abd712244a78f3499c4b76eb7acceb068385e1eda43e84169261ffc",
+  "decision": "operator-acceptance:2026-11-03:a26cf478-833c-49c5-bf03-a9c8c09c0e69:4602f6c489562f1c73424786ed3180b091b79cfc93e6f51dc242fbddf8aacb53",
   "operator": "0698a39b-dda2-4870-8f3f-97ef94784ae9",
-  "manifest": "fcf4f9936abd712244a78f3499c4b76eb7acceb068385e1eda43e84169261ffc",
+  "manifest": "4602f6c489562f1c73424786ed3180b091b79cfc93e6f51dc242fbddf8aacb53",
   "expires_unix_ms": 1794337200000
 }

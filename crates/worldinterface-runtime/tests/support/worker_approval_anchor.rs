@@ -1,15 +1,17 @@
 //! Trusted test-host provisioning, separate from the source packet it approves.
-//! Actual operator acceptance supplied in this manual run on 2026-11-03,
-//! answering run 473d47be, by 0698a39b-dda2-4870-8f3f-97ef94784ae9.
-//! The decision identity in the receipt names this provenance; it is not a new
-//! controller-issued decision ID. Acceptance expires 2026-11-10T19:00:00Z.
+//! Actual operator acceptance in this conversation on 2026-11-03: "Yes, I accept
+//! the revised package." This answers the exact-digest/disposition/expiry question
+//! for the revised packet at a7c5231, by 0698a39b-dda2-4870-8f3f-97ef94784ae9,
+//! in run a26cf478-833c-49c5-bf03-a9c8c09c0e69. The receipt's decision identity
+//! describes this provenance; it is not a controller-issued decision ID.
+//! Acceptance expires 2026-11-10T19:00:00Z.
 //!
-//! Accepted canonical packet (at 70caa54):
-//! fcf4f9936abd712244a78f3499c4b76eb7acceb068385e1eda43e84169261ffc.
+//! Accepted canonical packet:
+//! 4602f6c489562f1c73424786ed3180b091b79cfc93e6f51dc242fbddf8aacb53.
 //! Includes supervisor-disposition.json's exact pins for worker_process/mod.rs
 //! (2a2b85dee615c82ac15dcd7d6b2665da4d29657bfb3d7b472705a247ab0a728e)
 //! and supervision.rs
-//! (1e6acdbf2b57cab161945b14668c68a6ae8ef10861d98671647233f13bc52487).
+//! (7210b73647db0ade87f0cdf489a901fed9151d52ca2950135bf10526590fb259).
 //! The original five-file exception and generic continuation ban are unchanged.
 //!
 //! Evaluation only for this candidate's verification and CraftingTable review:
@@ -20,4 +22,4 @@
 //! hostile code, same-user isolation claim, publication, integration or gate
 //! acceptance. These records encode only that supplied acceptance.
 pub const ACCEPTED_RECEIPT_SHA256: Option<&str> =
-    Some("b1c6f26295a5c1d0472c93460005f185f8c52e06d3aff2d87cb56a9d0c2d6bae");
+    Some("db418c8e7eb60e387a94f3bc3ba1c29a3abfdf5e92c733803590e7e51a162e9f");
