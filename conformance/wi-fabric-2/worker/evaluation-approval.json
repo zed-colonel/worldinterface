@@ -1,4 +1,6 @@
 {
-  "status": "draft",
-  "reason": "Exact packet acceptance must be recorded from the operator before live evaluation. The scheduling exception is not executable approval."
+  "decision": "operator-acceptance:2026-11-03:473d47be:fcf4f9936abd712244a78f3499c4b76eb7acceb068385e1eda43e84169261ffc",
+  "operator": "0698a39b-dda2-4870-8f3f-97ef94784ae9",
+  "manifest": "fcf4f9936abd712244a78f3499c4b76eb7acceb068385e1eda43e84169261ffc",
+  "expires_unix_ms": 1794337200000
 }
