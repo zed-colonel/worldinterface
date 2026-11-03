@@ -1,7 +1,8 @@
 # WIP-10 revised packet approval request
 
 This packet requests evaluation only, for this candidate's verification and review
-for seven days from explicit operator acceptance. It does not authorize ordinary
+through 2026-11-10T19:00:00Z, within the maximum seven days from explicit operator
+acceptance. It does not authorize ordinary
 worker use, production credentials, hostile code, same-user isolation claims,
 publication, integration or gate acceptance.
 

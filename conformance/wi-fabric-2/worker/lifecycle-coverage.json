@@ -154,6 +154,16 @@
         "manifest": "crates/worldinterface-runtime/Cargo.toml",
         "package": "worldinterface-runtime",
         "test": "approved_packet_cannot_widen_tasks_operations_cases_environment_or_source_bindings"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "reviewed_build_artifacts_are_bounded_and_publishable_without_launch"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "trusted_build_digests_reject_replaced_paths_without_launch"
       }
     ],
     "storage-recovery": [
@@ -176,18 +186,6 @@
         "manifest": "crates/worldinterface-foundation/Cargo.toml",
         "package": "worldinterface-storage",
         "test": "worker_provider_run_streams_do_not_collide_or_cross_wake"
-      }
-    ],
-    "build-provenance": [
-      {
-        "manifest": "crates/worldinterface-runtime/Cargo.toml",
-        "package": "worldinterface-runtime",
-        "test": "reviewed_build_artifacts_are_bounded_and_publishable_without_launch"
-      },
-      {
-        "manifest": "crates/worldinterface-runtime/Cargo.toml",
-        "package": "worldinterface-runtime",
-        "test": "trusted_build_digests_reject_replaced_paths_without_launch"
       },
       {
         "manifest": "crates/worldinterface-runtime/Cargo.toml",
