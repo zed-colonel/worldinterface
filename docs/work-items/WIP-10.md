@@ -3,8 +3,9 @@
 Candidate implementation under the accepted lifecycle design. AQ remains crates.io
 0.3.0, under WIP-07 operator cycle 47b9f34c-4ffd-4ef6-8849-55aae36a8999;
 imported 0.2.0 source criteria remain unchanged. Only CraftingTable integrates.
-Ordinary worker use remains disabled. G3 is open pending approved live evaluation,
-all ten adopted checks on the committed candidate and qualifying review.
+Ordinary worker use remains disabled. G3 is open: the explicitly approved live
+evaluation exposed the executable artifact size failure described below. Passing
+live tests, all ten adopted checks and qualifying review remain required.
 
 ## Operator scheduling decision
 
@@ -19,9 +20,11 @@ This supersedes only the merge-effective timing in plan §§5.2/5.4. The operato
 user ID is 0698a39b-dda2-4870-8f3f-97ef94784ae9; recovery run
 c2d2033a-8905-4c3e-8c4b-b305c5b6b7c0 and snapshot
 c196df65742d0720aad0ed79df4d58dd0fd6644ebecff002c26185b58737b7e3
-preserve the decision lineage. No exact executable packet acceptance has been
-supplied. The separate approval receipt is deliberately a draft; the trusted
-host anchor is absent and positive evaluation fails closed.
+preserve the scheduling decision lineage. The later explicit operator packet
+acceptance is recorded in `evaluation-approval.json` and the test-host
+`worker_approval_anchor.rs`, with its provenance, scope and finite expiry. This
+acceptance authorizes evaluation of the unchanged packet only; ordinary use,
+integration and gate acceptance remain outside its scope.
 
 ## Implementation
 
@@ -85,7 +88,9 @@ disposition for the launch journal and handshake ordering described above. The
 other three supervisor pins and the generic continuation ban remain intact;
 changed/unlisted-source regression tests remain required. Proposed exact new
 pins are recorded in `conformance/wi-fabric-2/worker/supervisor-disposition.json`.
-They are not accepted by a hash refresh. No check definition is changed.
+The explicit packet acceptance includes these exact-source dispositions for
+evaluation; qualifying source review remains required. A hash refresh does not
+accept them. No check definition is changed.
 
 ## Evidence and remaining checkpoint
 
@@ -100,13 +105,10 @@ compile and Clippy passes. Full foundation verification is permitted. Positive
 process tests and the full runtime suite have not run in this implementation step.
 Logs and exact command outcomes are recorded under the run's scratch/verification.
 
-Before positive tests: accept the completed evaluation manifest digest with actual
-operator provenance, provision its separate receipt/host anchor, and disposition
-the exact supervisor pins. Covered source changes invalidate that approval.
-After acceptance: run the lifecycle/crash/concurrency tests, fix any findings with
-renewed packet acceptance when bindings change, refresh hashes, commit, and run
-all ten adopted checks on that head. G3 closure requires passing evidence and
-qualifying reviewed CraftingTable integration with no blocking or major finding.
+Covered source changes require renewed packet acceptance. G3 closure requires
+passing lifecycle/crash/concurrency evidence, all ten adopted checks on the
+committed candidate and qualifying reviewed CraftingTable integration with no
+blocking or major finding.
 
 The first committed candidate's declared runtime Clippy check found that fresh
 check-only targets have no binary files to embed. The replacement test-host path
@@ -123,3 +125,25 @@ Worker notification correlation hashes provider and run together. Reusing a run
 name under another provider cannot share its stream, revision index or wake; an
 atomic outbox/replay regression covers both valid parallel streams and cross-route
 rejection.
+
+## Approved evaluation result, 2026-11-03
+
+The exact approved packet is unchanged: all 264 file bindings, supervisor pins
+and measured system support binaries match. The approved build recipe completes
+with Rust 1.89.0 and records executable digests in scratch verification evidence.
+Both approval rejection tests pass.
+
+All eleven `worker_lifecycle` tests fail before process launch at
+`tests/support/worker_fixture.rs:313`: the harness publishes the fixture ELF as
+an executable artifact, but its 27,938,656 bytes exceed the existing 16 MiB local
+artifact bound. No lifecycle success or crash/concurrency passage is claimed.
+The combined focused command stops at that failure before running the crash and
+adapter integration targets. The store bound and packet-bound sources remain
+unchanged. A proposed build-profile fix requires a revised packet and renewed
+acceptance before further live evaluation of that revision.
+
+Run `a26cf478-833c-49c5-bf03-a9c8c09c0e69` retains exact command results and logs in
+`scratch/verification`, including `worker-build.json`, `worker-build.log`,
+`hashes-refresh.log` and `worker-focused.log`. Adopted checks are requested
+against the committed candidate; their individual results live in that run's
+verification evidence. This note records the failure, not passing qualification.
