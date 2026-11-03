@@ -17,7 +17,9 @@ struct Entry {
     binding: ContentHash,
     nonce: String,
     stage: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
     identity: Option<super::ownership::Identity>,
+    #[serde(skip_serializing_if = "Option::is_none")]
     report: Option<CleanupReport>,
 }
 #[derive(Serialize, Deserialize)]
@@ -181,4 +183,76 @@ pub(super) fn recovered_report(
         .find(|f| f.entry.stage == "cleanup")
         .and_then(|f| f.entry.report.clone())
         .filter(|r| r.cleanup_confirmed))
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::worker_process::ownership::Context;
+
+    #[test]
+    fn ownership_journal_intent_ownership_and_optional_exit_replay_without_launch() {
+        let root = tempfile::tempdir().unwrap();
+        let path = root.path().join(key("provider", "run").unwrap());
+        let binding = ContentHash::of(b"reviewed run");
+        let journal = Journal {
+            file: OpenOptions::new()
+                .read(true)
+                .append(true)
+                .create_new(true)
+                .mode(0o600)
+                .open(&path)
+                .unwrap(),
+            binding: binding.clone(),
+            nonce: "private-nonce".into(),
+        };
+        journal.append("intent", None, None).unwrap();
+        assert!(recovered_report(root.path(), "provider", "run", &binding).unwrap().is_none());
+        assert!(Journal::from_helper(journal.file.try_clone().unwrap(), "wrong-nonce").is_err());
+        let helper =
+            Journal::from_helper(journal.file.try_clone().unwrap(), "private-nonce").unwrap();
+        // Observe only this test process: no subprocess is launched or signalled.
+        let context = Context {
+            provider: "provider".into(),
+            run: "run".into(),
+            nonce: "private-nonce".into(),
+            allocation: "test-allocation".into(),
+        };
+        let owned = Owned::acquire(std::process::id(), unsafe { libc::getppid() } as u32, &context)
+            .unwrap();
+        helper.append("fixture-owned", Some(&owned), None).unwrap();
+        assert!(recovered_report(root.path(), "provider", "run", &binding).unwrap().is_none());
+        for success in [None, Some(false), Some(true)] {
+            let report = CleanupReport {
+                cleanup_confirmed: true,
+                exit_confirmed: true,
+                exit_success: success,
+                ..Default::default()
+            };
+            helper.append("cleanup", Some(&owned), Some(&report)).unwrap();
+            let recovered =
+                recovered_report(root.path(), "provider", "run", &binding).unwrap().unwrap();
+            assert_eq!(recovered.exit_success, success);
+            assert!(recovered.cleanup_confirmed);
+        }
+        let bytes = std::fs::read(&path).unwrap();
+        assert!(!String::from_utf8_lossy(&bytes).contains(":null"));
+        let mut source = File::open(&path).unwrap();
+        let frames = read(&mut source).unwrap();
+        assert_eq!(frames.len(), 5);
+        assert!(frames[0].entry.identity.is_none() && frames[0].entry.report.is_none());
+        assert!(frames[1].entry.identity.is_some());
+        assert!(
+            recovered_report(root.path(), "provider", "run", &ContentHash::of(b"other")).is_err()
+        );
+        std::fs::write(&path, &bytes[..bytes.len() - 1]).unwrap();
+        assert!(recovered_report(root.path(), "provider", "run", &binding).is_err());
+        let mut changed: serde_json::Value =
+            serde_json::from_slice(bytes.split(|b| *b == b'\n').next().unwrap()).unwrap();
+        changed["entry"]["stage"] = "replaced-intent".into();
+        let mut corrupt = canonical_data(&changed).unwrap();
+        corrupt.push(b'\n');
+        std::fs::write(&path, corrupt).unwrap();
+        assert!(recovered_report(root.path(), "provider", "run", &binding).is_err());
+    }
 }

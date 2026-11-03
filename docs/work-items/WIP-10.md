@@ -3,9 +3,10 @@
 Candidate implementation under the accepted lifecycle design. AQ remains crates.io
 0.3.0, under WIP-07 operator cycle 47b9f34c-4ffd-4ef6-8849-55aae36a8999;
 imported 0.2.0 source criteria remain unchanged. Only CraftingTable integrates.
-Ordinary worker use remains disabled. G3 is open: the explicitly approved live
-evaluation exposed the executable artifact size failure described below. Passing
-live tests, all ten adopted checks and qualifying review remain required.
+Ordinary worker use remains disabled. G3 is open. The prior approved evaluation
+exposed three blockers; this revision addresses them under the operator's
+preparation-only direction. Renewed exact packet acceptance, passing live tests,
+all ten adopted checks and qualifying review remain required.
 
 ## Operator scheduling decision
 
@@ -41,9 +42,12 @@ profile and environment restrictions. Its approval receipt and host provisioning
 anchor are separate to avoid recursive hashes. TrustedApprovals must authenticate
 actual current acceptance independently of request or repository assertions;
 TrustedWorkerBuild must verify the measured helper/fixture build provenance.
-The test host embeds Cargo's binary outputs at compile time and verifies their
-digests independently of runtime path measurement, after checking the accepted
-packet. WI source identity binds the packet and AQ identity binds the locked graph. The anchor may be provisioned only from the actual operator
+The trusted test host verifies packet sources, runs a fixed locked/offline Cargo
+build with an allowlisted compiler environment, verifies compiler identity,
+profile and output source paths, and rechecks packet sources. It retains the
+compiled bytes and digests before creating private launch artifact copies.
+TrustedWorkerBuild compares those independent digests to launch measurements;
+measuring a pathname alone grants no build provenance. WI source identity binds the packet and AQ identity binds the locked graph. The anchor may be provisioned only from the actual operator
 acceptance and its provenance, never from a test-created accepted field. Neither
 an observed binary digest nor a scheduling decision authorizes execution.
 
@@ -147,3 +151,48 @@ Run `a26cf478-833c-49c5-bf03-a9c8c09c0e69` retains exact command results and log
 `hashes-refresh.log` and `worker-focused.log`. Adopted checks are requested
 against the committed candidate; their individual results live in that run's
 verification evidence. This note records the failure, not passing qualification.
+
+
+## Revised packet preparation authorized 2026-11-03
+
+The operator explicitly requested preparation of a revised packet addressing all
+three blockers. That direction authorizes compilation and non-live validation,
+not positive fixture evaluation or a new acceptance receipt. The separate receipt
+and test-host anchor retain the actual prior packet acceptance unchanged.
+
+Dev/test debug information is disabled, while debug assertions, overflow checks
+and crash injection remain enabled. Ownership journal identity/report fields and
+an unknown cleanup exit status now omit absent values rather than emitting null.
+The new journal regression round-trips intent, owned identity and cleanup with
+missing/false/true status, and rejects mismatched, truncated or corrupt evidence;
+it observes only its own process and launches/signals nothing.
+
+Clean Cargo test compilation no longer includes unfinished executable bytes.
+The test-only builder performs the verified compilation described above before
+any launch, keeps independent digests and private copies, and supplies the existing
+TrustedWorkerBuild boundary. The build regressions publish both actual executables
+through the 16 MiB artifact store and reject altered executable paths. Crash
+parents warm only the compilation cache before starting observation deadlines.
+There is no build script or source-generator policy exception. The compiler
+subprocesses are preparation, never worker operations or an approval assertion.
+
+Nine inventory entries register the builder and non-launching regressions. One
+adapter-test registration reference changes because its expected executable digest
+now comes from the trusted build rather than measuring the launch pathname.
+Existing catalog family owners/destinations and foundation-worker exclusions are
+preserved; source hashes refresh without changing their structural decisions.
+
+The only additional supervisor pin change is `supervision.rs` at
+`7210b73647db0ade87f0cdf489a901fed9151d52ca2950135bf10526590fb259`, for the optional
+exit-status serialization attribute. The five-file scope, other supervisor pins
+and generic continuation ban remain unchanged. The proposed exact-source
+disposition is part of the revised evaluation request and needs renewed explicit
+acceptance together with the completed canonical manifest digest.
+
+The revised build recipe compiles all tests without prebuilding binaries and runs
+only the two non-launching build regressions. `scratch/verification/revised-*`
+and `scratch/verification/revised-packet/` retain commands, compiler measurements,
+cold-cache compile evidence and test/check results. Positive lifecycle, crash,
+concurrency and adapter evaluation, every adopted check on the approved committed
+head, and G3 review/integration remain due after renewed acceptance. No live
+fixture or helper has been run on this revision.

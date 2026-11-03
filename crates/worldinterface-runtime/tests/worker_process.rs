@@ -1,4 +1,6 @@
 #![cfg(target_os = "linux")]
+#[path = "support/worker_build.rs"]
+mod build;
 use std::{
     fs,
     os::fd::AsRawFd,
@@ -53,17 +55,17 @@ fn retained_journals_are_private_and_bounded(root: &Path) {
 }
 fn registry() -> ExecutableRegistry {
     let mut r = ExecutableRegistry::default();
-    let path = Path::new(env!("CARGO_BIN_EXE_wi-process-fixture"));
-    r.register("fixture-v1", path, &executable_digest(path).unwrap()).unwrap();
+    let path = build::current().fixture.as_path();
+    r.register("fixture-v1", path, &build::current().fixture_digest).unwrap();
     r
 }
 fn port(root: &Path, scope: HostScope) -> ProcessWorkerPort {
-    let path = Path::new(env!("CARGO_BIN_EXE_wi-process-reaper"));
+    let path = build::current().helper.as_path();
     ProcessWorkerPort::new(
         scope,
         root,
         path,
-        &executable_digest(path).unwrap(),
+        &build::current().helper_digest,
         registry(),
         Arc::new(SystemClock),
     )
@@ -119,7 +121,7 @@ fn authorization(
     let controls_digest = AuthorizedRun::controls_digest(&controls).unwrap();
     let configuration_digest = AuthorizedRun::configuration_digest(&task, &exports).unwrap();
     let auth = ContentHash::of(format!("authorized-tenant-a-{name}").as_bytes());
-    let exe = executable_digest(Path::new(env!("CARGO_BIN_EXE_wi-process-fixture"))).unwrap();
+    let exe = build::current().fixture_digest.clone();
     let operations = OPS
         .iter()
         .map(|op| {
@@ -227,7 +229,7 @@ async fn transform_artifacts_are_scoped_integrity_checked_and_release_is_replay_
     let realization = h.port.realization(&h.requests[1]).unwrap();
     assert_eq!(
         realization.executable_digest,
-        executable_digest(Path::new(env!("CARGO_BIN_EXE_wi-process-fixture"))).unwrap()
+        executable_digest(build::current().fixture.as_path()).unwrap()
     );
     let records = serde_json::to_string(&(
         h.port.observe("local-proof", "run-a").await.unwrap(),
@@ -497,7 +499,7 @@ async fn duplicate_start_is_single_launch_and_revocation_stops_run_and_denies_re
 fn executable_path_replacement_cannot_change_reviewed_bytes() {
     let root = private_dir();
     let copy = root.path().join("fixture");
-    fs::copy(env!("CARGO_BIN_EXE_wi-process-fixture"), &copy).unwrap();
+    fs::copy(&build::current().fixture, &copy).unwrap();
     let expected = executable_digest(&copy).unwrap();
     let mut registry = ExecutableRegistry::default();
     registry.register("fixture-v1", &copy, &expected).unwrap();
@@ -507,7 +509,7 @@ fn executable_path_replacement_cannot_change_reviewed_bytes() {
     let runtime = tokio::runtime::Runtime::new().unwrap();
     runtime.block_on(async {
         let workspace = private_dir();
-        let helper = Path::new(env!("CARGO_BIN_EXE_wi-process-reaper"));
+        let helper = build::current().helper.as_path();
         let p = ProcessWorkerPort::new(
             scope(),
             workspace.path(),
@@ -583,7 +585,7 @@ async fn expired_or_revoked_artifact_and_observation_access_is_denied() {
     for revoke in [false, true] {
         let root = private_dir();
         let clock = Arc::new(TestClock(AtomicU64::new(SystemClock.unix_ms())));
-        let helper = Path::new(env!("CARGO_BIN_EXE_wi-process-reaper"));
+        let helper = build::current().helper.as_path();
         let p = ProcessWorkerPort::new(
             scope(),
             root.path(),

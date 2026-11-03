@@ -6,6 +6,8 @@ use super::{
 };
 #[path = "worker_approval_anchor.rs"]
 mod anchor;
+#[path = "worker_build.rs"]
+mod build;
 use std::{
     collections::{BTreeMap, BTreeSet},
     path::Path,
@@ -62,22 +64,6 @@ impl TrustedWorkerBuild for Approval {
         Ok(())
     }
 }
-#[cfg(not(clippy))]
-fn compiled_executables() -> (ContentHash, ContentHash) {
-    (
-        ContentHash::of(include_bytes!(env!("CARGO_BIN_EXE_wi-process-fixture"))),
-        ContentHash::of(include_bytes!(env!("CARGO_BIN_EXE_wi-process-reaper"))),
-    )
-}
-#[cfg(clippy)]
-fn compiled_executables() -> (ContentHash, ContentHash) {
-    // Check-only compilation has no executable build authority. These cannot
-    // match sealed ELF bytes, even if a check artifact were accidentally run.
-    (
-        ContentHash::of(b"clippy:no-fixture-build-authority"),
-        ContentHash::of(b"clippy:no-helper-build-authority"),
-    )
-}
 pub fn evaluation() -> Arc<EvaluationVerifier<Approval>> {
     let source = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
     let bytes =
@@ -107,7 +93,9 @@ pub fn evaluation() -> Arc<EvaluationVerifier<Approval>> {
     }
     let packet = manifest.digest().unwrap();
     assert_eq!(receipt.manifest, packet);
-    let (fixture, helper) = compiled_executables();
+    let built = build::current();
+    assert_eq!(built.packet, packet);
+    let (fixture, helper) = (built.fixture_digest.clone(), built.helper_digest.clone());
     let trusted = Approval { expected: receipt.clone(), packet, fixture, helper };
     Arc::new(EvaluationVerifier { manifest, receipt, trusted, source_root: source })
 }
@@ -198,8 +186,8 @@ impl Harness {
                 bundle.clone(),
                 HostScope { tenant: auth.0.as_str().into(), principal: auth.1.as_str().into() },
                 &root,
-                Path::new(env!("CARGO_BIN_EXE_wi-process-fixture")),
-                Path::new(env!("CARGO_BIN_EXE_wi-process-reaper")),
+                &build::current().fixture,
+                &build::current().helper,
                 evaluation.clone(),
                 Arc::new(HostClock),
                 1,
@@ -303,14 +291,8 @@ impl Harness {
         w.input = submission.input.artifact.clone();
         w.environment = self.evaluation.manifest.environment.clone();
         w.exports = digest(&effect.exports).unwrap();
-        w.manifest.executable = self
-            .bundle
-            .wi()
-            .publish(
-                self.auth.0.clone(),
-                &std::fs::read(env!("CARGO_BIN_EXE_wi-process-fixture")).unwrap(),
-            )
-            .unwrap();
+        w.manifest.executable =
+            self.bundle.wi().publish(self.auth.0.clone(), &build::current().fixture_bytes).unwrap();
         w.manifest.configuration = self
             .bundle
             .wi()
@@ -551,4 +533,10 @@ fn adapter_bytes() -> Vec<u8> {
         out.extend(std::fs::read(root.join(name)).unwrap());
     }
     out
+}
+
+/// Warm the verified compilation cache before crash-child observation deadlines.
+/// This only builds reviewed source; it does not launch a worker or grant approval.
+pub fn prebuild() {
+    let _ = build::current();
 }

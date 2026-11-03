@@ -20,6 +20,7 @@ use std::{
 pub struct CleanupReport {
     pub helper_launch_clean: bool,
     pub exit_confirmed: bool,
+    #[serde(skip_serializing_if = "Option::is_none")]
     pub exit_success: Option<bool>,
     pub cleanup_confirmed: bool,
     pub term_signals: u32,

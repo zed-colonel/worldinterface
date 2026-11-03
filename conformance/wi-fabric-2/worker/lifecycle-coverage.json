@@ -3,7 +3,7 @@
   "scope": "wi/WI-09/process-provider:lifecycle",
   "runtime_pass_asserted": false,
   "work_item": "WIP-10",
-  "evaluation": "pending-explicit-packet-acceptance",
+  "evaluation": "pending-renewed-explicit-packet-acceptance",
   "assumptions_addressed": [
     "WP-A03"
   ],
@@ -176,6 +176,23 @@
         "manifest": "crates/worldinterface-foundation/Cargo.toml",
         "package": "worldinterface-storage",
         "test": "worker_provider_run_streams_do_not_collide_or_cross_wake"
+      }
+    ],
+    "build-provenance": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "reviewed_build_artifacts_are_bounded_and_publishable_without_launch"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "trusted_build_digests_reject_replaced_paths_without_launch"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "worker_process::journal::tests::ownership_journal_intent_ownership_and_optional_exit_replay_without_launch"
       }
     ]
   }

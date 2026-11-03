@@ -10745,13 +10745,6 @@
     "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
   },
   {
-    "id": "crates/worldinterface-runtime/tests/worker_process.rs::registry::registration:0c2b76916ed79e6713b7a9ec80b5efe9e0f52dbbec5d2ef022c31cccd4264660#1",
-    "disposition": "test-evidence",
-    "target": "process-managed-proof-1 runtime adapter",
-    "rationale": "WIP-09: WI-owned functional/misbehaving fixture and executable adapter evidence; no lifecycle conformance closure.",
-    "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
-  },
-  {
     "id": "crates/worldinterface-runtime/src/worker_process/bootstrap.rs::::struct:FixtureLaunch",
     "disposition": "retain-align",
     "target": "process-managed-proof-1 runtime adapter",
@@ -11261,5 +11254,68 @@
     "target": "worker-lifecycle-test-evidence",
     "rationale": "WIP-10 candidate provider-key persistence and real worker event races; requires review and exact packet acceptance.",
     "source": "docs/work-items/WIP-10.md; accepted WIP-10 design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/journal.rs::::module:tests@10d1b0eff34c",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WIP-10 revised packet: trusted test-host compilation of verified locked sources, independent executable digests and private artifact copies, and non-launching build/journal regressions. Replaces pathname-only adapter registration binding. No source-generator exception or live evaluation approval.",
+    "source": "docs/work-items/WIP-10.md; 2026-11-03 operator direction to prepare revised packet; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_build.rs::::source-module:crates/worldinterface-runtime/tests/worker_build.rs",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WIP-10 revised packet: trusted test-host compilation of verified locked sources, independent executable digests and private artifact copies, and non-launching build/journal regressions. Replaces pathname-only adapter registration binding. No source-generator exception or live evaluation approval.",
+    "source": "docs/work-items/WIP-10.md; 2026-11-03 operator direction to prepare revised packet; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/worker_build.rs::::source-module:crates/worldinterface-runtime/tests/support/worker_build.rs",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WIP-10 revised packet: trusted test-host compilation of verified locked sources, independent executable digests and private artifact copies, and non-launching build/journal regressions. Replaces pathname-only adapter registration binding. No source-generator exception or live evaluation approval.",
+    "source": "docs/work-items/WIP-10.md; 2026-11-03 operator direction to prepare revised packet; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/worker_build.rs::::struct:WorkerBuild",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WIP-10 revised packet: trusted test-host compilation of verified locked sources, independent executable digests and private artifact copies, and non-launching build/journal regressions. Replaces pathname-only adapter registration binding. No source-generator exception or live evaluation approval.",
+    "source": "docs/work-items/WIP-10.md; 2026-11-03 operator direction to prepare revised packet; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/worker_fixture.rs::::module:build",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WIP-10 revised packet: trusted test-host compilation of verified locked sources, independent executable digests and private artifact copies, and non-launching build/journal regressions. Replaces pathname-only adapter registration binding. No source-generator exception or live evaluation approval.",
+    "source": "docs/work-items/WIP-10.md; 2026-11-03 operator direction to prepare revised packet; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_build.rs::::module:build",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WIP-10 revised packet: trusted test-host compilation of verified locked sources, independent executable digests and private artifact copies, and non-launching build/journal regressions. Replaces pathname-only adapter registration binding. No source-generator exception or live evaluation approval.",
+    "source": "docs/work-items/WIP-10.md; 2026-11-03 operator direction to prepare revised packet; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_build.rs::trusted_build_digests_reject_replaced_paths_without_launch::registration:4b5856338fa1a63b424cb31d0a2dcfa499e38f2f5a18b546f31b2ecd63b08774#1",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WIP-10 revised packet: trusted test-host compilation of verified locked sources, independent executable digests and private artifact copies, and non-launching build/journal regressions. Replaces pathname-only adapter registration binding. No source-generator exception or live evaluation approval.",
+    "source": "docs/work-items/WIP-10.md; 2026-11-03 operator direction to prepare revised packet; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_process.rs::::module:build",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WIP-10 revised packet: trusted test-host compilation of verified locked sources, independent executable digests and private artifact copies, and non-launching build/journal regressions. Replaces pathname-only adapter registration binding. No source-generator exception or live evaluation approval.",
+    "source": "docs/work-items/WIP-10.md; 2026-11-03 operator direction to prepare revised packet; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_process.rs::registry::registration:b9bace7bbcd2ccd282cff5143f759c8ec36853698da4726e94352c40052b7604#1",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WIP-10 revised packet: trusted test-host compilation of verified locked sources, independent executable digests and private artifact copies, and non-launching build/journal regressions. Replaces pathname-only adapter registration binding. No source-generator exception or live evaluation approval.",
+    "source": "docs/work-items/WIP-10.md; 2026-11-03 operator direction to prepare revised packet; WI-ADR-016"
   }
 ]

@@ -11,8 +11,8 @@
     },
     {
       "path": "crates/worldinterface-runtime/src/worker_process/supervision.rs",
-      "sha256": "1e6acdbf2b57cab161945b14668c68a6ae8ef10861d98671647233f13bc52487",
-      "rationale": "WIP-10 durable private ownership journal, launch barrier, scoped artifacts and persistent stop delivery; proposed for explicit evaluation disposition and qualifying source review."
+      "sha256": "7210b73647db0ade87f0cdf489a901fed9151d52ca2950135bf10526590fb259",
+      "rationale": "WIP-10 launch journal and handshake ordering, including omission of an absent cleanup exit status from canonical JSON; proposed for renewed explicit evaluation disposition and qualifying source review."
     }
   ]
 }

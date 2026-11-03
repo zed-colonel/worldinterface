@@ -42,6 +42,7 @@ fn journal_count(path: &Path) -> usize {
 }
 #[test]
 fn wp_019_and_wp_024_killed_lifecycle_boundaries_quarantine_without_replacement() {
+    prebuild();
     for point in [
         "worker-operation-before-ack",
         "worker-operation-acknowledged",
