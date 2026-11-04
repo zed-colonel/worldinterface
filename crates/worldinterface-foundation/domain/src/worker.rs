@@ -141,7 +141,7 @@ impl WorkerState {
                 self.completed = true
             }
             WorkerFact::Quarantined => {
-                self.completed = false;
+                // Resource ownership ambiguity cannot revoke a committed collection outcome.
                 self.quarantined = true;
                 self.stop_requested = true;
             }

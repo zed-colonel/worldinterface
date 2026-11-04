@@ -43,6 +43,18 @@ fn wp_028_invalid_batches_quarantine_before_any_publication_and_survive_reopen()
             "attack {attack}"
         );
         assert!(matches!(c.state().collection, WorkerCollection::Quarantined(_)));
+        // F-001: preserve the first report, including after later recovery/cleanup.
+        let decided = c.state().collection;
+        c.root.record_worker_collection(c.binding.clone(), decided.clone(), vec![]).unwrap();
+        assert!(artifacts::quarantine(
+            &c.root,
+            &c.binding,
+            &c.operation,
+            "different-report",
+            vec![]
+        )
+        .is_err());
+        assert_eq!(c.state().collection, decided);
         for e in &c.state().artifact_policy[0].exports {
             assert!(c
                 .root
@@ -65,6 +77,7 @@ fn wp_028_invalid_batches_quarantine_before_any_publication_and_survive_reopen()
         assert!(s.quarantined && !s.completed && !s.capacity_reserved);
         assert!(artifacts::read(&root, &binding, "blob").is_err());
         assert!(matches!(s.collection, WorkerCollection::Quarantined(_)));
+        assert_eq!(s.collection, decided);
     }
 }
 #[test]
@@ -79,6 +92,20 @@ fn wp_027_publication_requires_exact_binding_and_precedes_completion_across_reop
     let published = c.state();
     assert!(!published.completed);
     c.root.record_worker_transition(&published, WorkerFact::Completed).unwrap();
+    // F-001: collection disposition and resource quarantine are separate journals.
+    let decided = c.state().collection;
+    assert!(artifacts::quarantine(
+        &c.root,
+        &c.binding,
+        &c.operation,
+        "ambiguous-worker-restart",
+        vec![]
+    )
+    .is_err());
+    worldinterface_runtime::worker::recovery::quarantine(&c.root, &c.binding).unwrap();
+    assert!(c.state().completed && c.state().quarantined && c.state().capacity_reserved);
+    assert_eq!(c.state().collection, decided);
+    assert_eq!(artifacts::read(&c.root, &c.binding, "blob").unwrap(), b"safe");
     c.root.confirm_worker_cleanup(&c.state()).unwrap();
     for scope in 0..4 {
         let mut b = c.binding.clone();

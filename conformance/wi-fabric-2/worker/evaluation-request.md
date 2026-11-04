@@ -1,23 +1,25 @@
-# WIP-11 cleanup-confirmation exact-packet evaluation request
+# WIP-11 restart-before-Release exact-packet evaluation request
 
 Explicit operator acceptance is requested for the canonical SHA-256 printed by
 `scripts/refresh-wi-worker-evaluation.py`, including the exact supervisor
 source disposition in `supervisor-disposition.json`. This is a candidate request,
 not an approval. The existing receipt and independent trusted test-host anchor
-authorize only the previously accepted WIP-11 follow-up packet
-`2b8be6d80b522c4b3bf6776009067ef58030f97ed97ef8a04b7f0704148fc921`.
+authorize only the previously accepted WIP-11 cleanup-confirmation packet
+`0723acb0ab7ccbac3b20e8b97030a2a617bd9fa5543ddddcfcb5cf46a2b1b6d5`, accepted in
+`cc11859` and expiring 2026-11-11T00:00:00Z.
 
-That authorized evaluation passed the five focused WP-027/028/031 live tests and
-the process stop-before-start cleanup regression, but found a remaining AB-WI-021
-test assertion error. Provider process cleanup is available before Release; WI
-records durable cleanup confirmation and releases capacity during Release. The
-follow-up test incorrectly demanded durable confirmation before that operation.
-This correction checks provider exit/cleanup, WI stop/exit and retained capacity
-before Release, then WI cleanup confirmation and released capacity afterward.
-Both AQ key wait-policy branches and replacement-capacity assertions remain.
-Stopped work remains incomplete and unpublished. Runtime behavior and the already
-accepted supervisor source pin are unchanged. These corrected test bytes have
-compiled/non-live evidence only until accepted.
+That packet passed the full live evaluation and all ten adopted checks. Review
+then reproduced F-001: restart before Release retroactively replaced a completed
+Published collection with Quarantined and revoked export access. This remediation
+makes Published and Quarantined terminal in storage, preserves completion under
+later resource quarantine, and keys reads and acknowledged collection results to
+collection disposition. Allocation ambiguity still retains capacity and the private
+allocation. Normal WP-027 and eleven live WP-028 crash cuts now continue through
+AQ Release and reopen; non-live tests preserve both terminal outcomes and verify
+resource quarantine/rebuild. F-002 records the actual prior evaluation in the
+coverage and programme notes. Supervisor source/pin and task/operation/bound scope
+are unchanged. The changed source/test/status bytes have compilation/non-live
+evidence only until renewed exact acceptance.
 
 The request adds WP-027, WP-028 and WP-031 to WP-017–026, AB-WI-021 and the
 source-bound WIP-09 regressions. It covers scoped artifact imports/exports, durable

@@ -10,7 +10,9 @@ pub fn quarantine(root: &StoreRoot, binding: &WorkerBinding) -> Result<()> {
         return Err("worker recovery binding drift".into());
     }
     if !state.quarantined && !state.cleanup_confirmed {
-        if !state.artifact_policy.is_empty() {
+        if !state.artifact_policy.is_empty()
+            && matches!(state.collection, WorkerCollection::Absent | WorkerCollection::Prepared(_))
+        {
             let operation = state
                 .operations
                 .values()

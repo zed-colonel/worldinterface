@@ -20,6 +20,7 @@ use worldinterface_runtime::{
     worker::{artifacts, recovery},
     worker_process::*,
 };
+use worldinterface_storage::{flow::FlowOutcome, StoreKind};
 use worldinterface_worker::mapping::Operation;
 #[tokio::test]
 async fn artifact_live_crash_child() {
@@ -43,8 +44,8 @@ async fn artifact_live_crash_child() {
     worldinterface_storage::worker_boundary("worker-artifact-aq-completed");
     panic!("collection/effect/AQ barrier not reached");
 }
-#[test]
-fn wp_028_live_collection_ack_receipt_and_aq_crashes_preserve_publication_order() {
+#[tokio::test]
+async fn wp_028_live_collection_ack_receipt_and_aq_crashes_preserve_publication_order() {
     prebuild();
     for point in [
         "worker-collection-before-prepare",
@@ -108,6 +109,35 @@ fn wp_028_live_collection_ack_receipt_and_aq_crashes_preserve_publication_order(
         } else {
             assert!(state.quarantined);
             assert!(artifacts::read(bundle.wi(), &b, "probe").is_err());
+        }
+        // F-001: recovery must survive the next admitted operations, not just reopen.
+        let published = matches!(state.collection, WorkerCollection::Published(_));
+        drop(bundle);
+        let mut h = Harness::open_at(t, &path, Task::Probe, "WP-028", 1500, 65536);
+        h.exports = vec![Export {
+            reference: "probe".into(),
+            name: "probe.json".into(),
+            digest: ContentHash::of(b"{\"clean\":true}"),
+            size: 14,
+        }];
+        assert_eq!(h.binding(), b);
+        if published {
+            h.operation(Operation::CollectArtifacts).await;
+            assert!(h.state().completed, "{point}: recovered collection must complete");
+        }
+        let decided = h.state().collection;
+        h.operation_expect(Operation::Release, FlowOutcome::Uncertain).await;
+        let after = h.state();
+        assert_eq!(after.collection, decided, "{point}: Release changed export disposition");
+        assert_eq!(after.completed, published, "{point}: Release revoked completion");
+        assert!(after.quarantined && after.capacity_reserved && !after.cleanup_confirmed);
+        h.bundle.wi().repository(StoreKind::Fabric).unwrap().rebuild().unwrap();
+        let h = h.reopen();
+        assert_eq!(h.state(), after, "{point}: replay/reopen changed durable outcome");
+        if published {
+            assert_eq!(h.runtime.read_artifact(&b, "probe").unwrap(), b"{\"clean\":true}");
+        } else {
+            assert!(h.runtime.read_artifact(&b, "probe").is_err());
         }
         let journals = std::fs::read_dir(path.join("process"))
             .unwrap()

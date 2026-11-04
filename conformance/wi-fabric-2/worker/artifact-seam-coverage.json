@@ -3,7 +3,7 @@
   "scope": "wi/WI-09/process-provider:artifacts-and-seam",
   "work_item": "WIP-11",
   "runtime_pass_asserted": false,
-  "evaluation": "exact-packet-acceptance-pending; see docs/work-items/WIP-11.md",
+  "evaluation": "Packet 0723acb0ab7ccbac3b20e8b97030a2a617bd9fa5543ddddcfcb5cf46a2b1b6d5 accepted in cc11859, expires 2026-11-11T00:00:00Z; full live evaluation, focused WIP-11 tests and all ten adopted checks passed on those exact sources. F-001 remediation requires renewed exact-packet acceptance/live verification; see docs/work-items/WIP-11.md.",
   "assumptions_addressed": [
     "WP-A05"
   ],

@@ -281,9 +281,7 @@ pub fn resume(root: &StoreRoot, b: &WorkerBinding) -> Result<()> {
 }
 pub fn read(root: &StoreRoot, b: &WorkerBinding, reference: &str) -> Result<Vec<u8>> {
     let s = state(root, b)?;
-    if s.quarantined {
-        return Err("exports quarantined".into());
-    }
+    // Export disposition is independent of later allocation/cleanup quarantine.
     if let WorkerCollection::Published(p) = s.collection {
         root.read_artifact(
             p.exports.get(&reference.to_string().try_into()?).ok_or("export access denied")?,

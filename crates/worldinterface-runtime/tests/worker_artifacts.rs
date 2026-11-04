@@ -9,6 +9,7 @@ use support::worker_fixture::*;
 use worldinterface_domain::worker::WorkerCollection;
 use worldinterface_protocol::*;
 use worldinterface_runtime::worker_process::*;
+use worldinterface_storage::flow::FlowOutcome;
 use worldinterface_worker::mapping::Operation;
 #[tokio::test]
 async fn wp_027_scoped_transform_import_and_durable_export_through_real_wi_aq() {
@@ -38,9 +39,21 @@ async fn wp_027_scoped_transform_import_and_durable_export_through_real_wi_aq() 
         };
         assert!(h.runtime.read_artifact(&b, "result").is_err());
     }
-    h.operation(Operation::Release).await;
-    assert_eq!(h.runtime.read_artifact(&h.binding(), "result").unwrap(), bytes);
+    // F-001: a normal restart before Release retains published work even when
+    // the new host cannot establish ownership of the old provider allocation.
+    let published = h.state().collection;
     let h = h.reopen();
+    h.operation_expect(Operation::Release, FlowOutcome::Uncertain).await;
+    let state = h.state();
+    assert!(state.completed && state.quarantined && state.capacity_reserved);
+    assert!(!state.cleanup_confirmed);
+    assert_eq!(state.collection, published);
+    assert_eq!(h.runtime.read_artifact(&h.binding(), "result").unwrap(), bytes);
+    // Retrying the already acknowledged collection cannot revoke AQ success.
+    h.operation(Operation::CollectArtifacts).await;
+    let h = h.reopen();
+    assert!(h.state().completed);
+    assert_eq!(h.state().collection, published);
     assert_eq!(h.runtime.read_artifact(&h.binding(), "result").unwrap(), bytes);
 }
 #[tokio::test]

@@ -70,6 +70,9 @@ pub(crate) fn advance(
     next: &WorkerCollection,
     events: &[DurableEvent],
 ) -> Result<()> {
+    if matches!(s.collection, WorkerCollection::Published(_) | WorkerCollection::Quarantined(_)) {
+        return Err(invalid("collection disposition is terminal"));
+    }
     match next {
         WorkerCollection::Prepared(p)
             if matches!(s.collection, WorkerCollection::Absent) && !s.quarantined =>

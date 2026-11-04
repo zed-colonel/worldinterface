@@ -212,6 +212,15 @@ policy, private validated snapshots, staged export/manifest publication before
 completion, durable quarantine and an asynchronous WI-owned seam simulation.
 WP-027/028/031 have exact non-ignored test mappings. WP-A05 is addressed at the
 simulated contract seam; remote-provider and isolation qualification are excluded.
-The store profile is `local-worker-12`. G4 stays open. Revised exact-packet
-acceptance, supervisor disposition, live verification and qualifying review remain
-due; the WIP-10 receipt cannot authorize these source or scope changes.
+The store profile is `local-worker-12`. G4 stays open. Packet
+`0723acb0ab7ccbac3b20e8b97030a2a617bd9fa5543ddddcfcb5cf46a2b1b6d5`, including
+its supervisor disposition, was explicitly accepted in `cc11859` with expiry
+2026-11-11T00:00:00Z. Its full live evaluation and all ten adopted checks passed;
+review independently passed the focused WIP-11 targets. This evidence is limited
+to that evaluated scope. F-001's subsequent restart-before-Release remediation
+preserves terminal collection outcomes separately from resource quarantine and
+extends the normal and crash-cut AQ tests through Release/reopen. Its changed
+packet bytes require renewed exact-digest acceptance and live verification.
+F-002 updates these status records with the actual accepted evaluation history.
+Qualifying review and CraftingTable integration remain due; ordinary use,
+remote-provider/isolation qualification and G4 closure are excluded.

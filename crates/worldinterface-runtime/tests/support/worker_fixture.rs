@@ -199,6 +199,7 @@ impl<H: actionqueue_executor_local::handler::ExecutorHandler>
 pub type Evidence = EvaluationAuthority<HostEvidence, Approval, HostClock>;
 pub struct Harness {
     pub temp: tempfile::TempDir,
+    root: std::path::PathBuf,
     pub bundle: Arc<StoreBundle>,
     pub runtime: Arc<WorkerRuntime<Approval>>,
     pub evaluation: Arc<EvaluationVerifier<Approval>>,
@@ -217,24 +218,50 @@ impl Harness {
         Self::at(temp, task, case, wall, output)
     }
     pub fn at(temp: tempfile::TempDir, task: Task, case: &str, wall: u64, output: u64) -> Self {
+        Self::at_path(temp, None, task, case, wall, output)
+    }
+    /// Recompose a crashed host in a directory retained by the parent test's TempDir.
+    pub fn open_at(
+        temp: tempfile::TempDir,
+        path: &Path,
+        task: Task,
+        case: &str,
+        wall: u64,
+        output: u64,
+    ) -> Self {
+        Self::at_path(temp, Some(path), task, case, wall, output)
+    }
+    fn at_path(
+        temp: tempfile::TempDir,
+        existing: Option<&Path>,
+        task: Task,
+        case: &str,
+        wall: u64,
+        output: u64,
+    ) -> Self {
         let evaluation = evaluation();
-        let bundle = Arc::new(
+        let directory = existing.unwrap_or(temp.path()).to_path_buf();
+        let bundle = Arc::new(if existing.is_some() {
+            StoreBundle::open(&directory.join("bundle")).unwrap()
+        } else {
             StoreBundle::initialize(
-                &temp.path().join("bundle"),
+                &directory.join("bundle"),
                 StoreProfile {
                     instance: InstanceId::generate(),
                     created_at: HostClock.now().unwrap(),
                     platform: false,
                 },
             )
-            .unwrap(),
-        );
+            .unwrap()
+        });
         let auth = Auth(
             "tenant:fixture".to_string().try_into().unwrap(),
             "12345678-1234-4234-8234-123456789abc".to_string().try_into().unwrap(),
         );
-        let root = temp.path().join("process");
-        std::fs::create_dir(&root).unwrap();
+        let root = directory.join("process");
+        if existing.is_none() {
+            std::fs::create_dir(&root).unwrap();
+        }
         use std::os::unix::fs::PermissionsExt;
         std::fs::set_permissions(&root, std::fs::Permissions::from_mode(0o700)).unwrap();
         let runtime = Arc::new(
@@ -273,6 +300,7 @@ impl Harness {
         };
         Self {
             temp,
+            root: directory,
             bundle,
             runtime,
             evaluation,
@@ -290,7 +318,7 @@ impl Harness {
         assert!(!self.seam);
         drop(self.runtime);
         drop(self.bundle);
-        self.bundle = Arc::new(StoreBundle::open(&self.temp.path().join("bundle")).unwrap());
+        self.bundle = Arc::new(StoreBundle::open(&self.root.join("bundle")).unwrap());
         self.runtime = Arc::new(
             WorkerRuntime::install(
                 self.bundle.clone(),
@@ -298,7 +326,7 @@ impl Harness {
                     tenant: self.auth.0.as_str().into(),
                     principal: self.auth.1.as_str().into(),
                 },
-                &self.temp.path().join("process"),
+                &self.root.join("process"),
                 &build::current().fixture,
                 &build::current().helper,
                 self.evaluation.clone(),
@@ -572,6 +600,17 @@ impl Harness {
         (submission, s, config)
     }
     pub async fn operation(&self, op: Operation) {
+        self.operation_expect(
+            op,
+            if self.seam && op == Operation::Start {
+                FlowOutcome::Uncertain
+            } else {
+                FlowOutcome::Succeeded
+            },
+        )
+        .await;
+    }
+    pub async fn operation_expect(&self, op: Operation, expected: FlowOutcome) {
         let (submission, snapshot, config) = self.demand(op);
         let evidence = Evidence {
             base: HostEvidence(snapshot.clone()),
@@ -627,15 +666,7 @@ impl Harness {
             let state = self.bundle.wi().flow_run_snapshot(&self.auth.0, &id).unwrap();
             let run = &state.runs[&id];
             if run.outcome.is_some() {
-                assert_eq!(
-                    run.outcome,
-                    Some(if self.seam && op == Operation::Start {
-                        FlowOutcome::Uncertain
-                    } else {
-                        FlowOutcome::Succeeded
-                    }),
-                    "{run:?}"
-                );
+                assert_eq!(run.outcome, Some(expected), "{run:?}");
                 break;
             }
             assert!(Instant::now() < deadline, "worker Flow deadline: {run:?}");

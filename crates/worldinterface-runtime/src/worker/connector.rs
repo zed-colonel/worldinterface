@@ -273,8 +273,7 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
             }
             if old.acknowledged {
                 if op == Operation::CollectArtifacts
-                    && (state.quarantined
-                        || !matches!(state.collection, WorkerCollection::Published(_)))
+                    && !matches!(state.collection, WorkerCollection::Published(_))
                 {
                     return Ok(observation(
                         CommitObservation::Unknown,

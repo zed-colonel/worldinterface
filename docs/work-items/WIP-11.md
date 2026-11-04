@@ -45,16 +45,21 @@ logical reference. WI stages and publishes every export, then a manifest binding
 owner/run/realization, references and findings. Only available publications can be
 committed as Published. The Fabric transaction rechecks cancellation/quarantine
 and writes the collection plus its durable event/outbox obligation atomically.
+Published and Quarantined are terminal collection dispositions; an exact replay
+is idempotent and cannot replace the export map or the original quarantine report.
 Completion requires Published and successful exit. Even zero exports need an
 explicit validated collection. The generic deterministic acknowledgement and
 executor publication checks remain intact.
 
 Recovery reads exact private snapshots, never mutable workspaces, and resumes
 idempotent staged publication. Missing/corrupt snapshots quarantine. Interrupted
-runs without a prepared obligation remain conservatively quarantined. Reports
+runs without a prepared or published obligation remain conservatively quarantined. Reports
 retain binding, operation, policy/manifest digests, fixed rejection codes and
 bounded verifier findings, without echoing arbitrary manifest content. Cleanup
 releases capacity without deleting quarantine reports or unsafe allocations.
+Later allocation or cleanup ambiguity quarantines resource ownership independently
+of the terminal collection. It preserves completion and published export access;
+an unproven cleanup retains capacity and the private allocation.
 Consumer export access checks exact tenant, principal, provider, run and realization
 against the published collection, including after provider release/reopen.
 
@@ -86,8 +91,9 @@ verifiers, cancellation, cross-scope reads, replay/reopen and snapshot corruptio
 Deterministic descriptor tests cover replacement/write races, links and FIFO.
 Nine non-live crash cuts cover snapshot retention through collection commit.
 Eleven additional positive-evaluation cuts cover real collection, acknowledgement,
-receipt and AQ disposition ordering. Positive process/seam tests are compiled but
-must not execute until the revised packet is explicitly accepted.
+receipt and AQ disposition ordering. The accepted evaluation history below applies
+to its exact sources. Positive evaluation of the F-001 remediation requires renewed
+exact-packet acceptance before execution.
 
 The implementation uses crates.io AQ 0.3.0 under the recorded WIP-07 migration;
 imported 0.2.0 source/baseline records remain unchanged. Structural inventory
@@ -98,10 +104,11 @@ tool pin matches those exact bytes for review. Neither that pin nor a passing
 contract check grants evaluation approval; activation remains conditional on
 explicit exact-packet acceptance and qualifying source review.
 
-The revised `evaluation-manifest.json` includes WP-027/028/031 and all candidate
+The current `evaluation-manifest.json` includes WP-027/028/031 and all candidate
 source/build/check data. Its exact canonical digest is recorded by the packet
-refresh/build output in run scratch. The old receipt and trusted approval anchor
-are unchanged and do not authorize this candidate. See `evaluation-request.md`.
+refresh/build output in run scratch. The separate receipt and trusted approval
+anchor record the last actual acceptance described below. They do not authorize
+changed source bytes. See `evaluation-request.md`.
 The two derived inventory files that contain the separate anchor's source hash
 are also excluded from the packet to avoid an indirect approval cycle. Static
 inventory dispositions remain bound; the contract checker still validates the
@@ -112,7 +119,10 @@ requires a new packet and acceptance. All ten adopted checks on the committed ca
 focused security review and CraftingTable integration remain required. Only
 CraftingTable integrates; this branch is not pushed or merged by the implementer.
 
-## Follow-up after authorized evaluation, 2026-11-04
+## Earlier evaluation history, 2026-11-04
+
+The next two checkpoints are historical; the accepted cleanup-confirmation
+evaluation below supersedes their pending-acceptance and live-verification status.
 
 The operator explicitly accepted packet
 `703c30858557e209c9843e1f19a037c9c48f955c58bbc79b2bb67f0193adcec2`, including
@@ -167,3 +177,39 @@ observed RetryWait instead of Completed; its isolated reproduction and full
 eight-test target recheck passed. That transient result is retained in the run evidence and is not asserted as a suite
 pass. Qualifying review and CraftingTable integration remain due. No ordinary-use,
 remote-provider, isolation or WI-WORKER-G4 closure claim is added.
+
+## Accepted cleanup-confirmation evaluation, 2026-11-04 (F-002)
+
+The operator accepted packet
+`0723acb0ab7ccbac3b20e8b97030a2a617bd9fa5543ddddcfcb5cf46a2b1b6d5`, including
+its supervisor disposition, for seven days. Commit `cc11859` records that acceptance
+from run `91c2d552-d390-445c-98cc-d37f0644221b` in the receipt and independent
+test-host anchor. The receipt expires **2026-11-11T00:00:00Z**. The unchanged packet
+passed the full live evaluation, including focused WP-027/028/031, and all ten
+adopted checks on `cc11859`. The run's `scratch/verification/evaluation-summary.json`
+and source-integrity record are the evaluation evidence. Review run
+`d7049c6a-4d3f-4c6c-a98b-63456fb93715` independently confirmed those adopted results
+and passed all five focused WIP-11 targets and the descriptor race unit test.
+This supersedes the earlier pending-acceptance/live-verification checkpoints for
+that packet only. It asserts no runtime passage beyond the evaluated scope,
+ordinary-use qualification, remote-provider/isolation proof or G4 closure.
+
+## Restart before Release remediation, 2026-11-04 (F-001)
+
+Review reproduced a normal restart followed by Release overwriting Published with
+Quarantined, clearing completion and denying export reads after AQ success. The
+remediation makes collection dispositions terminal and treats resource quarantine
+separately. The normal WP-027 AQ test now reopens before Release; WP-028's eleven
+live crash cuts continue the recovered collection through AQ Release, replay and
+another reopen. They require the exact collection and completion to persist, with
+exports readable for Published and denied for Quarantined. Ambiguous allocations
+remain quarantined with capacity reserved; no replacement or cleanup is invented.
+Non-live tests also reject replacement of either terminal collection disposition
+and check export access and completion through resource quarantine and rebuild.
+
+The remediation changes packet-bound runtime, domain, storage, test and status
+bytes. Compilation and non-live checks are permitted before acceptance; renewed
+live evaluation and the full adopted runtime check require acceptance of the
+refreshed exact packet. The prior receipt/anchor remain unchanged. No supervisor,
+task, operation, environment or evaluation bounds are widened. Qualifying review
+and CraftingTable integration remain due; WI-WORKER-G4 remains open for WIP-16.
