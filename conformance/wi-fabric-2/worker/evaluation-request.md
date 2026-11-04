@@ -31,8 +31,11 @@ binary, external backend, isolation proof or ordinary-use qualification.
 Complete non-live compilation, Clippy, pure collection/security/replay/crash checks
 and the source-bound build recipe before acceptance. That recipe builds all test
 targets and measures actual fixture/helper binaries without launching either.
-System support subprocesses remain confined to reviewed regression code. Missing
-or drifting sources, invalid approval, expiry or revocation reject positive use.
+System support subprocesses remain confined to reviewed regression code. The separate approval receipt/host anchor and the two derived inventory files
+containing the anchor's hash are outside the packet to avoid recursive acceptance.
+Static inventory dispositions are bound, and contract checks still validate both
+derived inventories. Missing or drifting bound sources, invalid approval, expiry
+or revocation reject positive use.
 No test creates, widens or retargets an approval. Non-ignored live tests are not
 silently skipped; the full adopted runtime test awaits actual acceptance.
 

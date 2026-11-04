@@ -46,10 +46,12 @@ for name in [
 for directory in ["contracts", "conformance/wi-fabric-2", "inventory"]:
     for path in (ROOT/directory).rglob("*"):
         name=path.relative_to(ROOT).as_posix()
-        if not path.is_file() or name in ["conformance/wi-fabric-2/worker/evaluation-manifest.json", "conformance/wi-fabric-2/worker/evaluation-approval.json"] or name.startswith("conformance/wi-fabric-2/proof/gates/"):
+        if not path.is_file() or name in ["conformance/wi-fabric-2/worker/evaluation-manifest.json", "conformance/wi-fabric-2/worker/evaluation-approval.json", "inventory/current.json", "inventory/connector-disposition.json"] or name.startswith("conformance/wi-fabric-2/proof/gates/"):
             continue
         files.add(name)
 # Trust provisioning is separate from the packet, so acceptance does not recursively hash itself.
+# The two derived inventories above include the anchor's source hash; the contract
+# checker still regenerates/validates them, but they cannot enter this trust digest.
 files.remove("crates/worldinterface-runtime/tests/support/worker_approval_anchor.rs")
 tasks = [{"task": "probe"}, {"task": "coding"}, {"task": "churn", "children": 512}]
 tasks += [{"task": "sleep", "millis": n} for n in [1, 5000, 30000]]

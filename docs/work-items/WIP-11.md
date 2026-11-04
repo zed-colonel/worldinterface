@@ -99,6 +99,10 @@ The revised `evaluation-manifest.json` includes WP-027/028/031 and all candidate
 source/build/check data. Its exact canonical digest is recorded by the packet
 refresh/build output in run scratch. The old receipt and trusted approval anchor
 are unchanged and do not authorize this candidate. See `evaluation-request.md`.
+The two derived inventory files that contain the separate anchor's source hash
+are also excluded from the packet to avoid an indirect approval cycle. Static
+inventory dispositions remain bound; the contract checker still validates the
+complete generated inventories after actual trust provisioning.
 After exact-digest acceptance, record only the actual decision in the separate
 receipt/anchor before positive evaluation. Any further covered source change
 requires a new packet and acceptance. All ten adopted checks on the committed candidate, independent
