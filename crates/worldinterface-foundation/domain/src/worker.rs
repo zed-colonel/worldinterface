@@ -268,7 +268,7 @@ impl WorkerPreparedCollection {
         binding: &WorkerBinding,
         reference: &str,
     ) -> Result<OpaqueRef, String> {
-        Ok(format!(
+        format!(
             "wi-worker-publication:{}",
             ContentHash::of(&worldinterface_protocol::canonical_data(&(
                 "wi-worker-publication-2",
@@ -278,6 +278,6 @@ impl WorkerPreparedCollection {
             ))?)
             .as_str()
         )
-        .try_into()?)
+        .try_into()
     }
 }

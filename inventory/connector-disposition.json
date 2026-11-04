@@ -3321,67 +3321,67 @@
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/worker.rs::::enum:WorkerCollection",
-          "source_sha256": "fe2b5f16271c568d1919fc8fb32843e67a78930c6dc7985432346c13e3df4cda",
+          "source_sha256": "1fe8d087319b2b32be771ff3d9e5d96b7045bb8abfa266f3673b56fe33d6a336",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/worker.rs::::enum:WorkerFact",
-          "source_sha256": "fe2b5f16271c568d1919fc8fb32843e67a78930c6dc7985432346c13e3df4cda",
+          "source_sha256": "1fe8d087319b2b32be771ff3d9e5d96b7045bb8abfa266f3673b56fe33d6a336",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/worker.rs::::source-module:crates/worldinterface-foundation/domain/src/worker.rs",
-          "source_sha256": "fe2b5f16271c568d1919fc8fb32843e67a78930c6dc7985432346c13e3df4cda",
+          "source_sha256": "1fe8d087319b2b32be771ff3d9e5d96b7045bb8abfa266f3673b56fe33d6a336",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/worker.rs::::struct:WorkerArtifactPolicy",
-          "source_sha256": "fe2b5f16271c568d1919fc8fb32843e67a78930c6dc7985432346c13e3df4cda",
+          "source_sha256": "1fe8d087319b2b32be771ff3d9e5d96b7045bb8abfa266f3673b56fe33d6a336",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/worker.rs::::struct:WorkerBinding",
-          "source_sha256": "fe2b5f16271c568d1919fc8fb32843e67a78930c6dc7985432346c13e3df4cda",
+          "source_sha256": "1fe8d087319b2b32be771ff3d9e5d96b7045bb8abfa266f3673b56fe33d6a336",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/worker.rs::::struct:WorkerExportPolicy",
-          "source_sha256": "fe2b5f16271c568d1919fc8fb32843e67a78930c6dc7985432346c13e3df4cda",
+          "source_sha256": "1fe8d087319b2b32be771ff3d9e5d96b7045bb8abfa266f3673b56fe33d6a336",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/worker.rs::::struct:WorkerObservation",
-          "source_sha256": "fe2b5f16271c568d1919fc8fb32843e67a78930c6dc7985432346c13e3df4cda",
+          "source_sha256": "1fe8d087319b2b32be771ff3d9e5d96b7045bb8abfa266f3673b56fe33d6a336",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/worker.rs::::struct:WorkerOperation",
-          "source_sha256": "fe2b5f16271c568d1919fc8fb32843e67a78930c6dc7985432346c13e3df4cda",
+          "source_sha256": "1fe8d087319b2b32be771ff3d9e5d96b7045bb8abfa266f3673b56fe33d6a336",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/worker.rs::::struct:WorkerPreparedCollection",
-          "source_sha256": "fe2b5f16271c568d1919fc8fb32843e67a78930c6dc7985432346c13e3df4cda",
+          "source_sha256": "1fe8d087319b2b32be771ff3d9e5d96b7045bb8abfa266f3673b56fe33d6a336",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/worker.rs::::struct:WorkerPublishedCollection",
-          "source_sha256": "fe2b5f16271c568d1919fc8fb32843e67a78930c6dc7985432346c13e3df4cda",
+          "source_sha256": "1fe8d087319b2b32be771ff3d9e5d96b7045bb8abfa266f3673b56fe33d6a336",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/worker.rs::::struct:WorkerQuarantineReport",
-          "source_sha256": "fe2b5f16271c568d1919fc8fb32843e67a78930c6dc7985432346c13e3df4cda",
+          "source_sha256": "1fe8d087319b2b32be771ff3d9e5d96b7045bb8abfa266f3673b56fe33d6a336",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/worker.rs::::struct:WorkerState",
-          "source_sha256": "fe2b5f16271c568d1919fc8fb32843e67a78930c6dc7985432346c13e3df4cda",
+          "source_sha256": "1fe8d087319b2b32be771ff3d9e5d96b7045bb8abfa266f3673b56fe33d6a336",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/worker.rs::::struct:WorkerVerifierFinding",
-          "source_sha256": "fe2b5f16271c568d1919fc8fb32843e67a78930c6dc7985432346c13e3df4cda",
+          "source_sha256": "1fe8d087319b2b32be771ff3d9e5d96b7045bb8abfa266f3673b56fe33d6a336",
           "registration_sites": []
         },
         {
@@ -4656,7 +4656,7 @@
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/worker_collection.rs::::source-module:crates/worldinterface-foundation/storage/src/worker_collection.rs",
-          "source_sha256": "73bcbd3c7ec59d8900192907b890425e91f074a6b951ac7c58d7ae3c9afa296f",
+          "source_sha256": "2bbddbda669da56cf9d916461b6cfb8b163021b6eeb5d95488dbe296bcd7d779",
           "registration_sites": []
         },
         {
@@ -7588,7 +7588,7 @@
         },
         {
           "path": "crates/worldinterface-foundation/domain/src/worker.rs",
-          "source_sha256": "fe2b5f16271c568d1919fc8fb32843e67a78930c6dc7985432346c13e3df4cda",
+          "source_sha256": "1fe8d087319b2b32be771ff3d9e5d96b7045bb8abfa266f3673b56fe33d6a336",
           "treatment": "WIP-10 candidate worker source or associated build/test surface; preserve exact evaluation bindings and review ownership changes before integration."
         },
         {
@@ -7788,7 +7788,7 @@
         },
         {
           "path": "crates/worldinterface-foundation/storage/src/worker_collection.rs",
-          "source_sha256": "73bcbd3c7ec59d8900192907b890425e91f074a6b951ac7c58d7ae3c9afa296f",
+          "source_sha256": "2bbddbda669da56cf9d916461b6cfb8b163021b6eeb5d95488dbe296bcd7d779",
           "treatment": "Shared WIP-11 artifact/seam support or evidence: retain run scoping, publication and quarantine obligations; review selective legacy removal without deleting these contracts. Candidate disposition in docs/work-items/WIP-11.md."
         },
         {

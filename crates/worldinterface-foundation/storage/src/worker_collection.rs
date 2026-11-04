@@ -40,10 +40,9 @@ fn validate_prepared(s: &WorkerState, p: &WorkerPreparedCollection) -> Result<()
     let policy = s.artifact_policy.first().ok_or_else(|| invalid("artifact policy absent"))?;
     if p.version != 2
         || p.policy != ContentHash::of(&canonical_data(policy).map_err(invalid)?)
-        || !s
-            .operations
+        || s.operations
             .get(&p.operation)
-            .is_some_and(|o| o.operation.as_str() == "collect_artifacts")
+            .is_none_or(|o| o.operation.as_str() != "collect_artifacts")
         || !s.exited
         || p.findings.len() > 16
     {
