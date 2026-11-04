@@ -55,6 +55,8 @@ impl Workspace {
         let mut total = 0;
         let actual: std::collections::BTreeSet<_> =
             io(fs::read_dir(format!("/proc/self/fd/{}", self.exports.as_raw_fd())))?
+                // One excess entry is enough to reject; never enumerate an unbounded tree.
+                .take(a.exports.len() + 1)
                 .map(|entry| entry.map(|e| e.file_name()))
                 .collect::<std::io::Result<_>>()
                 .map_err(|_| "export enumeration failed")?;
@@ -73,6 +75,8 @@ impl Workspace {
         }
         let after: std::collections::BTreeSet<_> =
             io(fs::read_dir(format!("/proc/self/fd/{}", self.exports.as_raw_fd())))?
+                // One excess entry is enough to reject; never enumerate an unbounded tree.
+                .take(a.exports.len() + 1)
                 .map(|entry| entry.map(|e| e.file_name()))
                 .collect::<std::io::Result<_>>()
                 .map_err(|_| "export enumeration failed")?;

@@ -11417,7 +11417,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/src/worker_process/artifact.rs",
     "name": "tests",
-    "source_sha256": "e93cdcfb4c1a07d61d45549353ae6dd252255be9b451884db458850e8bd25ebb",
+    "source_sha256": "5b6f345413f3c9794aed6c83d607138eaf991f117d3ffc41ee5445ef12dd15a0",
     "conditions": [
       "# [cfg (test)]"
     ],
@@ -11428,7 +11428,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-runtime/src/worker_process/artifact.rs",
     "name": "crates/worldinterface-runtime/src/worker_process/artifact.rs",
-    "source_sha256": "e93cdcfb4c1a07d61d45549353ae6dd252255be9b451884db458850e8bd25ebb",
+    "source_sha256": "5b6f345413f3c9794aed6c83d607138eaf991f117d3ffc41ee5445ef12dd15a0",
     "conditions": [],
     "registration_sites": []
   },
@@ -11437,7 +11437,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/src/worker_process/artifact.rs",
     "name": "Workspace",
-    "source_sha256": "e93cdcfb4c1a07d61d45549353ae6dd252255be9b451884db458850e8bd25ebb",
+    "source_sha256": "5b6f345413f3c9794aed6c83d607138eaf991f117d3ffc41ee5445ef12dd15a0",
     "conditions": [],
     "registration_sites": []
   },

@@ -198,7 +198,7 @@
     "crates/worldinterface-runtime/src/worker/provider.rs": "5b2d437db1c9f6dd53192676111e2e270f00cd06cafb41a01337ffdf86c98433",
     "crates/worldinterface-runtime/src/worker/recovery.rs": "641d37e23c4bb72f4b4d8b147ca9d4e7c0f832bd7eb708333ddb419ded32341b",
     "crates/worldinterface-runtime/src/worker_process/admission.rs": "d2488547620a933eba15536c07952226647de1e2625c1e528f3e70a0767d0719",
-    "crates/worldinterface-runtime/src/worker_process/artifact.rs": "e93cdcfb4c1a07d61d45549353ae6dd252255be9b451884db458850e8bd25ebb",
+    "crates/worldinterface-runtime/src/worker_process/artifact.rs": "5b6f345413f3c9794aed6c83d607138eaf991f117d3ffc41ee5445ef12dd15a0",
     "crates/worldinterface-runtime/src/worker_process/assets/sample-rust-Cargo.txt": "f7a6fdad07f316a2c3168b5c0dd9af42cb5bb10c8ba0cd325cd9dc33f067ca21",
     "crates/worldinterface-runtime/src/worker_process/assets/sample-rust-lib.txt": "4f6a07ed71fc95baaa7243cb58588a956f3905730ad5201d751ad914a9bb2722",
     "crates/worldinterface-runtime/src/worker_process/bootstrap.rs": "6a9eccf4c9518ff1857f706e69077535afa5ad2de36686f9e7ecb2a71322ff3d",
