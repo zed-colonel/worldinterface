@@ -238,7 +238,7 @@ Review run f729811c-ddbb-4485-a380-88056015476e reported four findings at
 69567943-836b-436e-aa25-c15d8636fb00. Its remediation instruction authorizes fixing
 the findings and preparing the completed revised packet. The recorded scheduling
 decision still requires actual exact-digest acceptance before positive live tests.
-The prior receipt and test-host anchor have not been retargeted.
+At preparation, the prior receipt and test-host anchor remained unchanged.
 
 F-001: all four success branches now share one publication constructor. The output
 is an acknowledgement of the validated operation request, so its exact artifact
@@ -252,12 +252,12 @@ states, checks state evidence, and rejects missing boundary or wrong outputs.
 F-002: the crash harness reports each completed cut, with its launch-journal count,
 after asserting bounded process cleanup, retained capacity or confirmed cleanup,
 quarantine before replacement, immutable run identity and authoritative event/wake
-replay. All 27 cuts, including four cancel and two cleanup cuts, still require a
-new authorized live run; no convergence result is claimed on the revised packet.
+replay. At preparation, all 27 cuts, including four cancel and two cleanup cuts, required
+a new authorized live run; no convergence result was then claimed.
 
 F-003: only the test's attack copy receives owner-write permission after registry
 sealing. The private built fixture remains 0500; executable sealing and digest
-verification are unchanged. The live path-replacement regression awaits acceptance.
+verification are unchanged. At preparation, the live path-replacement regression awaited acceptance.
 
 F-004: lifecycle-coverage.json now records the previous packet as evaluated and
 failing, and refers here for the changing current evaluation result. Its complete
@@ -265,7 +265,7 @@ case/test mappings stay packet-bound. This result note is separate from the
 packet, like approval provisioning, so recording verification after acceptance
 cannot invalidate the exact source that was approved. The note grants no authority.
 
-Current result: non-live preparation passed. The publication-contract test,
+Preparation result: non-live preparation passed. The publication-contract test,
 two approval rejection tests, two build/provenance regressions, runtime formatting,
 runtime Clippy and compile-only build of every runtime test target pass. The fixed
 build recipe rechecks all 266 packet bindings before and after validation; both
@@ -280,6 +280,25 @@ unchanged; the required source hash refresh passes.
 
 The revised canonical packet digest is
 `abd936f432985aae400a6ae3c3d4c3b3ab66ef3eea0abc311fa6e6805c4d6342`.
-Positive lifecycle, crash, concurrency and adapter tests, adopted runtime-test,
-and G3 closure remain pending renewed explicit packet acceptance and review.
+At preparation, positive lifecycle, crash, concurrency and adapter tests, adopted
+runtime-test, and G3 closure remained pending explicit packet acceptance and review.
 Non-live logs and results are retained in this run's scratch/verification.
+
+
+### Renewed acceptance and current result, 2026-11-04
+
+The operator answered the exact-digest/unchanged-disposition/scope/expiry question:
+“Yes, I accept the revised packet, including its unchanged supervisor disposition
+and evaluation-only scope.” This accepts canonical packet
+`abd936f432985aae400a6ae3c3d4c3b3ab66ef3eea0abc311fa6e6805c4d6342`
+at `836b8b5` through 2026-11-10T19:00:00Z. The receipt and trusted host anchor
+record that actual acceptance in run 69567943-836b-436e-aa25-c15d8636fb00.
+All 266 source bindings, exact supervisor dispositions and measured support
+programs match; no packet-bound source changed to provision this acceptance.
+Ordinary worker use and integration remain outside the approval scope.
+
+Current result: acceptance recorded; live lifecycle, crash, concurrency and
+adapter evaluation and all ten adopted checks are in progress. G3 closure remains
+conditional on passing evidence and qualifying reviewed CraftingTable integration.
+Logs and exact results go under this run's
+`scratch/verification/accepted-remediation/`.
