@@ -270,7 +270,7 @@
     "scripts/check-wi-domain.sh": "aa31ab1cf224c218bed112256022d1d261a8c6bc3ef67ac25352b532580ea9f8",
     "scripts/check-wi-integration.py": "d7946c88e940be66ac5398ccdcd220d02687cdc668b57e7c366b13ed0b8866f6",
     "scripts/check-wi-integration.sh": "c40ec59329d3298b1f537c5e154c4027a92823493fee107efe7bdb2689290493",
-    "scripts/refresh-wi-worker-evaluation.py": "ad3f176c78fbdd2efbedd1f3b39d07c287722b3a541f6757c039be201e79fd2e",
+    "scripts/refresh-wi-worker-evaluation.py": "bbee52f6d917cb94eed1dc4bd89cecce9fc1b056eaa3a5dc3fc5a6251b9655c5",
     "scripts/wi_crash_isolation.py": "1ca6ef61e2ff6e514fb21c63d7c2ec133e789d7ba9056cb925b13702652cf1f1",
     "tools/wi-contract-check/Cargo.lock": "e23d73ebc1773d7c638713f63e51cf3e6f0c1982ee3f96a3b46b804185cce057",
     "tools/wi-contract-check/Cargo.toml": "c84b94c6dd68016e87647f468d5e8a9f9b30391a0d902b7feceb622dd5be7cd7",
@@ -286,7 +286,7 @@
     "tools/wi-contract-check/src/proof.rs": "d920d5410a3a1acb40adfac3fc64e4e66fc274b8d1906fa59948e2b05152474e",
     "tools/wi-contract-check/src/refresh.rs": "9c5962065a1ad87f70a7ad5dc6ef958062d2026ee8e8b58e7635b858096166ab",
     "tools/wi-contract-check/tests/catalog.rs": "edc8741899a5b38e122476d69fb67a533d6bfd14966ef954d21a099ddb18f4e1",
-    "tools/wi-contract-check/tests/checker.rs": "4b7d46102f290e2b8c4258b2e67cd96aae7b1e6b8951fbdfa62a241122ea4af3",
+    "tools/wi-contract-check/tests/checker.rs": "4bf2ba2cb8c8f05a0511248dba98f832ca37ef1796e0e4c223f3bcc147c50604",
     "tools/wi-contract-check/tests/continuations.rs": "d00d51f8ae04809b47c5b2976fb0a860e48cc3d873f832aa2f8f27672070e2a9",
     "tools/wi-contract-check/tests/proof.rs": "91b83903709220e2afa6ec879aada20c425762aaf3f5defd52a7b6b3324ac54c",
     "tools/wi-contract-check/tests/runtime_evidence.rs": "232c78c728ff6ca2040b1b591b95cc051498bac4ba6acb5a36d803b1387faad9"
@@ -306,10 +306,9 @@
     "f4b3c58cf48ed82d7cdfc013a4256cc3de2e61d27e19f735d7320ee67b3a639a"
   ],
   "cases": [
-    "WP-007",
-    "WP-032",
     "AB-WI-021",
     "WIP-09-adapter-regressions",
+    "WP-007",
     "WP-017",
     "WP-018",
     "WP-019",
@@ -322,7 +321,8 @@
     "WP-026",
     "WP-027",
     "WP-028",
-    "WP-031"
+    "WP-031",
+    "WP-032"
   ],
   "operations": [
     "collect_artifacts",

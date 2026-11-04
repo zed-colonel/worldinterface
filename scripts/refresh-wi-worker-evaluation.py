@@ -64,7 +64,7 @@ manifest = {
     "environment": digest((ROOT / "conformance/wi-fabric-2/worker/evaluation-environment.json").read_bytes()),
     "files": {name: digest((ROOT / name).read_bytes()) for name in sorted(files)},
     "tasks": sorted({digest(canonical(task)) for task in tasks}),
-    "cases": ["WP-007", "WP-032", "AB-WI-021", "WIP-09-adapter-regressions"] + [f"WP-{n:03}" for n in range(17, 27)] + [f"WP-{n:03}" for n in [27, 28, 31]],
+    "cases": sorted(["WP-007", "WP-032", "AB-WI-021", "WIP-09-adapter-regressions"] + [f"WP-{n:03}" for n in range(17, 27)] + [f"WP-{n:03}" for n in [27, 28, 31]]),
     "operations": sorted(["provision", "start", "inspect", "terminate", "collect_artifacts", "release"]),
     "max_wall_ms": 15000, "max_output_bytes": 65536,
     "nonsensitive_only": True, "production_credentials": False, "ordinary_use": False,
