@@ -1229,8 +1229,18 @@ async fn ab_wi_021_awaiting_release_hold_and_resume_keep_durable_worker_capacity
         drop(reopened);
         h.operation(Operation::Terminate).await;
         h.finish().await;
-        h.operation(Operation::CollectArtifacts).await;
+        assert!(h.state().stop_requested && h.state().cleanup_confirmed);
+        assert!(!h.state().completed);
+        assert!(matches!(
+            h.state().collection,
+            worldinterface_domain::worker::WorkerCollection::Absent
+        ));
         h.operation(Operation::Release).await;
+        assert!(!h.state().completed);
+        assert!(matches!(
+            h.state().collection,
+            worldinterface_domain::worker::WorkerCollection::Absent
+        ));
         assert!(h.bundle.wi().reserve_start(replacement, 1).unwrap());
     }
 }

@@ -562,7 +562,7 @@ impl ProcessWorkerPort {
                     return Err("required exports not collected".into());
                 }
                 if let Some(workspace) = run.workspace.take() {
-                    if run.quarantined || run.stop.load(Ordering::SeqCst) {
+                    if run.quarantined || (run.started && run.stop.load(Ordering::SeqCst)) {
                         workspace.preserve();
                     } else {
                         io(workspace.dir.close())?;

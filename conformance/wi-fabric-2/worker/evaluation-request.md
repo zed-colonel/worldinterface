@@ -1,10 +1,21 @@
-# WIP-11 exact-packet evaluation request
+# WIP-11 follow-up exact-packet evaluation request
 
 Explicit operator acceptance is requested for the canonical SHA-256 printed by
 `scripts/refresh-wi-worker-evaluation.py`, including the exact supervisor
 source disposition in `supervisor-disposition.json`. This is a candidate request,
 not an approval. The existing receipt and independent trusted test-host anchor
-remain unchanged and authorize only their previously accepted WIP-10 packet.
+remain unchanged and authorize only the previously accepted WIP-11 packet
+`703c30858557e209c9843e1f19a037c9c48f955c58bbc79b2bb67f0193adcec2`.
+
+That authorized evaluation passed the focused WP-027/028/031 live tests, but
+found two regressions elsewhere in the runtime suite. This follow-up corrects
+AB-WI-021's expectation of successful collection after termination: it now checks
+capacity release with stopped work still incomplete and unpublished. It also
+restores removal of a confirmed unlaunched, unquarantined allocation on release.
+Quarantined allocations and stopped allocations that may have executed remain
+private and retained. The existing stop-before-start regression is unchanged.
+The changed supervisor source and its proposed exact pin are included for review.
+These follow-up bytes have compiled/non-live evidence only until accepted.
 
 The request adds WP-027, WP-028 and WP-031 to WP-017–026, AB-WI-021 and the
 source-bound WIP-09 regressions. It covers scoped artifact imports/exports, durable

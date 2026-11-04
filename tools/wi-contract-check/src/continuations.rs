@@ -29,7 +29,7 @@ const PROCESS_SUPERVISOR: &[(&str, &str)] = &[
     ),
     (
         "crates/worldinterface-runtime/src/worker_process/mod.rs",
-        "e7670cb6bd56feac3140396fba9708fb50bc8938790f6b873ef2a5bfe1814795",
+        "259143d2a3465cf8cf90a53dbcd1c9368f8fa3fd8d110c413c11147fb63c7e72",
     ),
     (
         "crates/worldinterface-runtime/src/worker_process/supervision.rs",

@@ -6,8 +6,8 @@
   "updates": [
     {
       "path": "crates/worldinterface-runtime/src/worker_process/mod.rs",
-      "sha256": "e7670cb6bd56feac3140396fba9708fb50bc8938790f6b873ef2a5bfe1814795",
-      "rationale": "WIP-11 scoped artifact locators, collection-ready observations and retained quarantine allocations; candidate pin effective only upon explicit exact-packet evaluation acceptance and qualifying source review."
+      "sha256": "259143d2a3465cf8cf90a53dbcd1c9368f8fa3fd8d110c413c11147fb63c7e72",
+      "rationale": "WIP-11 scoped collection and retained unsafe allocations, with follow-up release cleanup for confirmed unlaunched, unquarantined allocations. Candidate pin effective only upon explicit exact-packet evaluation acceptance and qualifying source review."
     }
   ]
 }

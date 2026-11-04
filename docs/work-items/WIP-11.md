@@ -111,3 +111,32 @@ receipt/anchor before positive evaluation. Any further covered source change
 requires a new packet and acceptance. All ten adopted checks on the committed candidate, independent
 focused security review and CraftingTable integration remain required. Only
 CraftingTable integrates; this branch is not pushed or merged by the implementer.
+
+## Follow-up after authorized evaluation, 2026-11-04
+
+The operator explicitly accepted packet
+`703c30858557e209c9843e1f19a037c9c48f955c58bbc79b2bb67f0193adcec2`, including
+its supervisor disposition, for up to seven days. Commit `1c8cc27` records that
+actual guidance in the separate receipt and test-host anchor. Its five focused
+live tests passed, including the eleven collection/acknowledgement/receipt/AQ
+crash cuts and the asynchronous seam simulation. Nine adopted checks passed.
+The adopted runtime suite failed AB-WI-021; continuing the remaining targets
+also exposed a stop-before-start allocation cleanup regression. Both failures
+were reproduced alone under hard timeouts. Evaluation reports are retained in
+the implementation run's verification directory; no whole-suite pass is claimed.
+
+This follow-up keeps AB-WI-021's two concurrency-key wait policies and replacement
+capacity checks, but no longer asks a stopped worker to publish a collection as
+successful work. It explicitly checks stopped/cleaned-up state, absent publication
+and absent completion around release. The process release path again removes a
+confirmed unlaunched, unquarantined allocation. It still retains quarantined
+allocations and stopped allocations that may have executed. The existing
+stop-before-start test retains its original cleanup assertion.
+
+These changes require a new exact packet and proposed supervisor source pin.
+The prior actual receipt/anchor remain unchanged and do not authorize these
+follow-up bytes. Non-live validation and compilation are permitted; positive
+evaluation and the adopted runtime suite await renewed exact-digest acceptance.
+The case mappings, task/operation/bound/environment scope and ordinary-use
+exclusions are unchanged. Qualifying review and CraftingTable integration remain
+due, and WI-WORKER-G4 remains open for WIP-16.
