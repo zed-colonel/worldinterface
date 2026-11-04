@@ -268,6 +268,27 @@ fn catalog_quarantine_fences_stale_admission_and_survives_cleanup_replacement_re
     let path = temp.path().join("store");
     let root = Arc::new(create(&path));
     let worker = worker();
+    assert_eq!(
+        inspect_registration(&root, &worker, None, &binding, &v, 100)
+            .unwrap()
+            .registration
+            .as_str(),
+        "unregistered"
+    );
+    assert_eq!(
+        inspect_registration(&root, &worker, Some(&registration(&binding)), &binding, &v, 100)
+            .unwrap()
+            .registration
+            .as_str(),
+        "evaluation-only"
+    );
+    assert_eq!(
+        inspect_registration(&root, &worker, Some(&registration(&binding)), &binding, &v, 200)
+            .unwrap()
+            .registration
+            .as_str(),
+        "invalidated"
+    );
     let registration = verify_registration(&registration(&binding), &binding, &v, 100).unwrap();
     let digest = authorize_admission(&root, &worker, &registration).unwrap();
     assert!(root.reserve_catalog_start(launch(worker.clone(), digest.clone()), 2).unwrap());
@@ -279,6 +300,13 @@ fn catalog_quarantine_fences_stale_admission_and_survives_cleanup_replacement_re
     .unwrap();
     assert!(calls.swap(false, Ordering::SeqCst));
     quarantine(&root, &worker, digest.clone());
+    assert_eq!(
+        inspect_registration(&root, &worker, None, &binding, &v, 100)
+            .unwrap()
+            .registration
+            .as_str(),
+        "quarantined"
+    );
     assert!(root
         .fence_worker_dispatch(&worker, &digest, || {
             calls.store(true, Ordering::SeqCst);
@@ -384,7 +412,7 @@ async fn wp_007_exact_operator_packet_runs_only_supported_bounded_evaluation_thr
     h.operation(Operation::CollectArtifacts).await;
     h.operation(Operation::Release).await;
     assert!(!h.state().capacity_reserved);
-    assert_eq!(inspect_profile().unwrap().registration.as_str(), "evaluation-only");
+    assert_eq!(inspect_profile().unwrap().registration.as_str(), "unverified");
 }
 #[tokio::test]
 async fn wp_032_drift_denies_new_admissions_before_allocation_through_real_wi_aq() {

@@ -28,9 +28,38 @@ pub fn inspect_profile() -> Result<ProcessProfileInspection> {
             .iter()
             .map(|s| s.to_string().try_into())
             .collect::<std::result::Result<_, _>>()?,
-        registration: "evaluation-only".to_string().try_into()?,
+        registration: "unverified".to_string().try_into()?,
         denial_reasons: vec!["ordinary-use-disabled".to_string().try_into()?],
     })
+}
+/// Read-only inspection of current registration and durable provider disposition.
+/// The verified capability is discarded; this result cannot reserve or dispatch.
+pub fn inspect_registration<S: TrustedApprovals>(
+    root: &StoreRoot,
+    worker: &WorkerBinding,
+    record: Option<&ProcessRegistrationRecord>,
+    current: &ProcessCatalogBinding,
+    evaluation: &EvaluationVerifier<S>,
+    now: u64,
+) -> Result<ProcessProfileInspection> {
+    let mut inspection = inspect_profile()?;
+    let (state, denial) =
+        if root.worker_provider_quarantine(&worker.tenant, &worker.provider)?.is_some() {
+            ("quarantined", Some("provider-quarantined"))
+        } else if let Some(record) = record {
+            if verify_registration(record, current, evaluation, now).is_ok() {
+                ("evaluation-only", None)
+            } else {
+                ("invalidated", Some("registration-invalid"))
+            }
+        } else {
+            ("unregistered", Some("registration-absent"))
+        };
+    inspection.registration = state.to_string().try_into()?;
+    if let Some(reason) = denial {
+        inspection.denial_reasons.push(reason.to_string().try_into()?);
+    }
+    Ok(inspection)
 }
 pub fn verify_registration<S: TrustedApprovals>(
     record: &ProcessRegistrationRecord,
