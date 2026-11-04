@@ -40,10 +40,14 @@ pub fn commit(
     )
     .try_into()?;
     let fact = match observed.kind {
+        ObservationKind::Accepted => WorkerFact::StartAccepted,
         ObservationKind::Provisioned => WorkerFact::Provisioned,
         ObservationKind::Running => WorkerFact::Running,
         ObservationKind::Exited => WorkerFact::Exited,
-        ObservationKind::ArtifactPublished => WorkerFact::ArtifactsPublished,
+        ObservationKind::ArtifactPublished => {
+            return Err("provider cannot assert WI publication".into())
+        }
+        ObservationKind::CollectionReady => WorkerFact::CollectionReady,
         ObservationKind::Released => WorkerFact::Released,
         ObservationKind::Quarantined => WorkerFact::Quarantined,
     };

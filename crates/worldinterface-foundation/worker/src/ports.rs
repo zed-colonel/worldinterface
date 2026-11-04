@@ -23,9 +23,11 @@ pub struct Observation {
 #[serde(rename_all = "snake_case")]
 pub enum ObservationKind {
     Provisioned,
+    Accepted,
     Running,
     Exited,
     ArtifactPublished,
+    CollectionReady,
     Released,
     Quarantined,
 }
@@ -33,7 +35,10 @@ pub enum ObservationKind {
 pub trait WorkerPort: Send + Sync {
     fn submit<'a>(&'a self, request: &'a WorkerRequestV1) -> PortFuture<'a, Acknowledgment>;
     fn observe<'a>(&'a self, provider: &'a str, run: &'a str) -> PortFuture<'a, Vec<Observation>>;
-    fn read_artifact<'a>(&'a self, reference: &'a str) -> PortFuture<'a, Vec<u8>>;
+    fn read_artifact<'a>(
+        &'a self,
+        locator: &'a crate::artifacts::ArtifactLocatorV2,
+    ) -> PortFuture<'a, Vec<u8>>;
 }
 pub const MAX_FRAME_BYTES: usize = 1024 * 1024;
 pub fn frame(payload: &[u8]) -> Result<Vec<u8>> {

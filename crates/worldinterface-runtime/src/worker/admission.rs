@@ -31,6 +31,7 @@ pub struct WorkerEffect {
     pub exports: Vec<Export>,
 }
 pub struct AdmittedWorker {
+    pub artifact_policy: worldinterface_domain::worker::WorkerArtifactPolicy,
     pub authorization: AuthorizedRun,
     pub binding: WorkerBinding,
     pub operation: Operation,
@@ -57,6 +58,7 @@ pub fn derive<S: TrustedApprovals>(
     now_ms: u64,
     executable: &ContentHash,
     helper: &ContentHash,
+    adapter: &ContentHash,
 ) -> Result<AdmittedWorker> {
     let demand = WorkerEffect::decode(&bound.input)?;
     let request = &demand.worker;
@@ -82,7 +84,7 @@ pub fn derive<S: TrustedApprovals>(
         || w.exports != ContentHash::of(&canonical_data(&demand.exports)?)
         || w.manifest.configuration.content
             != AuthorizedRun::configuration_digest(&demand.task, &demand.exports)?
-        || w.manifest.adapter.content != adapter_digest()
+        || w.manifest.adapter.content != *adapter
         || w.manifest.dependencies.first().map(|d| &d.content) != Some(&dependencies_digest())
         || request.controls_digest != AuthorizedRun::controls_digest(&demand.controls)?
         || demand.controls.provider != request.provider
@@ -160,7 +162,7 @@ pub fn derive<S: TrustedApprovals>(
                 request_digest: r.digest()?,
                 provider: r.provider.clone(),
                 run: r.run.clone(),
-                adapter_digest: adapter_digest(),
+                adapter_digest: adapter.clone(),
                 executable_digest: executable.clone(),
                 dependencies_digest: dependencies_digest(),
                 configuration_digest: AuthorizedRun::configuration_digest(
@@ -215,6 +217,11 @@ pub fn derive<S: TrustedApprovals>(
         })
     };
     Ok(AdmittedWorker {
+        artifact_policy: super::artifacts::policy(
+            demand.inputs.clone(),
+            &demand.exports,
+            installation.output_bytes,
+        )?,
         operation: request.operation,
         provider_operation,
         binding,

@@ -34,7 +34,13 @@ fn worker_admission_retry_keeps_exact_agency_facts_without_launch() {
 }
 #[tokio::test]
 async fn wp_017_admitted_worker_intent_precedes_bounded_process_and_wakes_are_durable() {
-    let h = Harness::new(Task::Probe, "WP-017", 1500, 65536);
+    let mut h = Harness::new(Task::Probe, "WP-017", 1500, 65536);
+    h.exports = vec![worldinterface_runtime::worker_process::Export {
+        reference: "artifact-probe".into(),
+        name: "probe.json".into(),
+        digest: worldinterface_protocol::ContentHash::of(b"{\"clean\":true}"),
+        size: 14,
+    }];
     h.operation(Operation::Provision).await;
     assert!(!h.state().accepted && h.state().capacity_reserved);
     h.operation(Operation::Start).await;
@@ -112,7 +118,6 @@ async fn wp_021_stop_obligation_precedes_bounded_descendant_cleanup() {
     assert!(report.exit_confirmed && report.cleanup_confirmed);
     assert!(report.descendants_observed > 0);
     assert!(report.kill_signals > 0);
-    h.operation(Operation::CollectArtifacts).await;
     h.operation(Operation::Release).await;
     assert!(!h.state().capacity_reserved);
 }

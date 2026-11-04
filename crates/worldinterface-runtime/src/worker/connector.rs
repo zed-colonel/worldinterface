@@ -40,11 +40,11 @@ fn succeeded(request: &WorkerRequestV1, state: &WorkerState) -> Result<PortObser
         outcome: ExecutionOutcome::Succeeded,
         outputs: vec![acknowledgement(request)?],
         evidence: vec![EvidenceBytes {
-            schema: "wi-worker-lifecycle:1".to_string().try_into()?,
+            schema: "wi-worker-lifecycle:2".to_string().try_into()?,
             bytes: bytes.clone(),
         }],
         boundary_record: Some(EvidenceBytes {
-            schema: "wi-worker-lifecycle:1".to_string().try_into()?,
+            schema: "wi-worker-lifecycle:2".to_string().try_into()?,
             bytes,
         }),
     })
@@ -61,6 +61,8 @@ pub fn descriptor(operation: Operation) -> Result<ConnectorDescriptor> {
                 include_str!("evaluation.rs"),
                 include_str!("recovery.rs"),
                 include_str!("observation.rs"),
+                include_str!("artifacts.rs"),
+                include_str!("provider.rs"),
             ]
             .concat()
             .as_bytes(),
@@ -100,7 +102,7 @@ pub fn descriptor(operation: Operation) -> Result<ConnectorDescriptor> {
             automatic: true,
         },
         cancellation_supported: true,
-        evidence_schema: "wi-worker-lifecycle:1".to_string().try_into()?,
+        evidence_schema: "wi-worker-lifecycle:2".to_string().try_into()?,
         max_evidence_bytes: 64 * 1024,
     };
     worldinterface_worker::mapping::validate_spi_descriptor(operation, &d)?;
@@ -122,7 +124,8 @@ type LiveRuns = BTreeMap<
 >;
 pub struct WorkerRuntime<S> {
     pub(crate) bundle: Arc<StoreBundle>,
-    pub(crate) port: ProcessWorkerPort,
+    pub(crate) port: Arc<dyn super::provider::AdmittedProvider>,
+    adapter: ContentHash,
     pub(crate) evaluation: Arc<EvaluationVerifier<S>>,
     pub(crate) clock: Arc<dyn Clock>,
     executable: ContentHash,
@@ -159,13 +162,48 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
         super::recovery::recover_quarantines(bundle.wi(), &scope)?;
         Ok(Self {
             bundle,
-            port,
+            port: Arc::new(port),
+            adapter: adapter_digest(),
             evaluation,
             clock,
             executable,
             helper_digest,
             slots,
             scope,
+            live: Mutex::new(BTreeMap::new()),
+        })
+    }
+    /// Test/embedded composition for a reviewed asynchronous provider implementation.
+    /// Provenance must be independently checked by TrustedWorkerBuild, including seam sources.
+    pub fn install_provider(
+        bundle: Arc<StoreBundle>,
+        scope: HostScope,
+        port: Arc<dyn super::provider::AdmittedProvider>,
+        provenance: super::provider::ProviderProvenance,
+        evaluation: Arc<EvaluationVerifier<S>>,
+        clock: Arc<dyn Clock>,
+        slots: u32,
+    ) -> Result<Self> {
+        let verified = evaluation.verify(clock.unix_ms())?;
+        if !provenance.seam_simulation {
+            return Err("external provider requires separate qualification".into());
+        }
+        evaluation.trusted.verify_build(
+            verified.digest(),
+            &provenance.implementation,
+            &provenance.helper,
+        )?;
+        super::recovery::recover_quarantines(bundle.wi(), &scope)?;
+        Ok(Self {
+            bundle,
+            scope,
+            port,
+            executable: provenance.implementation,
+            helper_digest: provenance.helper,
+            adapter: provenance.adapter,
+            evaluation,
+            clock,
+            slots,
             live: Mutex::new(BTreeMap::new()),
         })
     }
@@ -225,6 +263,7 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
             }
             false
         };
+        root.bind_worker_artifact_policy(binding.clone(), admitted.artifact_policy.clone())?;
         let state = self.state(binding)?;
         if let Some(old) = state.operations.get(&provider_operation.key) {
             let mut expected = old.clone();
@@ -233,7 +272,27 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
                 return Err("worker provider key conflict".into());
             }
             if old.acknowledged {
+                if op == Operation::CollectArtifacts
+                    && !matches!(state.collection, WorkerCollection::Published(_))
+                {
+                    return Ok(observation(
+                        CommitObservation::Unknown,
+                        ExecutionOutcome::Uncertain,
+                    ));
+                }
                 return succeeded(&request, &state);
+            }
+            if op == Operation::CollectArtifacts
+                && matches!(
+                    state.collection,
+                    WorkerCollection::Prepared(_) | WorkerCollection::Published(_)
+                )
+            {
+                drop(live);
+                super::artifacts::resume(root, binding)?;
+                self.finish_collection(binding)?;
+                root.acknowledge_worker_operation(binding.clone(), provider_operation)?;
+                return succeeded(&request, &self.state(binding)?);
             }
             super::recovery::quarantine(root, binding)?;
             return Ok(observation(CommitObservation::Unknown, ExecutionOutcome::Uncertain));
@@ -260,7 +319,7 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
         }
         let stopping = self.state(binding)?.stop_requested;
         if stopping {
-            self.port.stop_admitted(binding.provider.as_str(), binding.run.as_str())?;
+            self.port.stop(binding.provider.as_str(), binding.run.as_str())?;
         }
         if stopping && matches!(op, Operation::Start | Operation::Provision) {
             return Ok(observation(CommitObservation::Unknown, ExecutionOutcome::Uncertain));
@@ -275,10 +334,25 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
                 .unwrap()
                 .0
                 .clone();
-            self.port.submit_admitted(&provision)?;
+            self.port.submit(&provision)?;
         }
-        let result = self.port.submit_admitted(&request);
+        let result = self.port.submit(&request);
+        if result
+            .as_ref()
+            .is_ok_and(|a| *a == worldinterface_worker::ports::Acknowledgment::Uncertain)
+        {
+            return Ok(observation(CommitObservation::Unknown, ExecutionOutcome::Uncertain));
+        }
         if result.is_err() {
+            if op == Operation::CollectArtifacts {
+                super::artifacts::quarantine(
+                    root,
+                    binding,
+                    &provider_operation.key,
+                    "provider-collection-rejected",
+                    vec![],
+                )?;
+            }
             super::recovery::quarantine(root, binding)?;
             return Ok(observation(CommitObservation::Unknown, ExecutionOutcome::Uncertain));
         }
@@ -311,16 +385,62 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
         }
         drop(live);
         self.poll(binding)?;
-        if op == Operation::CollectArtifacts
-            && !self.state(binding)?.completed
-            && !self.state(binding)?.stop_requested
-            && !self.state(binding)?.quarantined
-            && self
+        if op == Operation::CollectArtifacts {
+            let manifest = self.port.manifest(binding.provider.as_str(), binding.run.as_str());
+            let collection = (|| -> Result<_> {
+                let manifest = manifest?;
+                let policy = self.state(binding)?.artifact_policy[0].clone();
+                let mut bytes = BTreeMap::new();
+                for e in &policy.exports {
+                    let locator = worldinterface_worker::artifacts::ArtifactLocatorV2 {
+                        provider: binding.provider.as_str().into(),
+                        run: binding.run.as_str().into(),
+                        authorization: binding.realization.clone(),
+                        reference: e.reference.as_str().into(),
+                        digest: e.digest.clone(),
+                        size: e.size,
+                    };
+                    bytes.insert(e.reference.as_str().into(), self.port.read(&locator)?);
+                }
+                Ok((manifest, bytes))
+            })();
+            let (manifest, bytes) = match collection {
+                Ok(v) => v,
+                Err(_) => {
+                    super::artifacts::quarantine(
+                        root,
+                        binding,
+                        &provider_operation.key,
+                        "provider-collection-unavailable",
+                        vec![],
+                    )?;
+                    return Ok(observation(
+                        CommitObservation::Unknown,
+                        ExecutionOutcome::Uncertain,
+                    ));
+                }
+            };
+            let report = self
                 .port
                 .evidence(binding.provider.as_str(), binding.run.as_str())?
-                .is_some_and(|r| r.exit_success == Some(true))
-        {
-            self.transition(binding, WorkerFact::Completed)?;
+                .ok_or("collection cleanup evidence absent")?;
+            if !report.cleanup_confirmed || !report.exit_confirmed {
+                return Err("collection cleanup unconfirmed".into());
+            }
+            if super::artifacts::prepare(
+                root,
+                binding,
+                &provider_operation.key,
+                &manifest,
+                &bytes,
+                report.exit_success == Some(true),
+            )
+            .is_err()
+            {
+                return Ok(observation(CommitObservation::Unknown, ExecutionOutcome::Uncertain));
+            }
+            super::artifacts::resume(root, binding)?;
+            self.finish_collection(binding)?;
         }
         root.acknowledge_worker_operation(binding.clone(), provider_operation)?;
         succeeded(&request, &self.state(binding)?)
@@ -333,12 +453,20 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
         {
             return Err("worker artifact scope mismatch".into());
         }
-        Ok(self.port.artifact_admitted(
-            binding.provider.as_str(),
-            binding.run.as_str(),
-            reference,
-        )?)
+        super::artifacts::read(self.bundle.wi(), binding, reference)
     }
+    fn finish_collection(&self, binding: &WorkerBinding) -> Result<()> {
+        let state = self.state(binding)?;
+        if !state.completed
+            && !state.stop_requested
+            && !state.quarantined
+            && matches!(&state.collection, WorkerCollection::Published(p) if p.prepared.exit_success)
+        {
+            self.transition(binding, WorkerFact::Completed)?;
+        }
+        Ok(())
+    }
+
     pub fn recovery_evidence(&self, binding: &WorkerBinding) -> Result<Option<CleanupReport>> {
         self.evaluation.verify(self.clock.unix_ms())?;
         if self.state(binding)?.binding != *binding
@@ -351,19 +479,16 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
         let operations = live
             .get(&(binding.provider.clone(), binding.run.clone()))
             .ok_or("worker recovery requires original operation bindings")?;
-        Ok(self.port.recover_cleanup(
-            binding.provider.as_str(),
-            binding.run.as_str(),
-            operations,
-        )?)
+        self.port.recover_cleanup(binding.provider.as_str(), binding.run.as_str(), operations)
     }
     pub fn cleanup_report(&self, binding: &WorkerBinding) -> Result<Option<CleanupReport>> {
         if binding.tenant.as_str() != self.scope.tenant
             || binding.principal.as_str() != self.scope.principal
+            || self.state(binding)?.binding != *binding
         {
             return Err("worker read scope mismatch".into());
         }
-        Ok(self.port.evidence(binding.provider.as_str(), binding.run.as_str())?)
+        self.port.evidence(binding.provider.as_str(), binding.run.as_str())
     }
     /// Host maintenance explicitly polls durable observations; AQ never depends on this process's memory.
     pub fn poll(&self, binding: &WorkerBinding) -> Result<()> {
@@ -376,16 +501,14 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
             return Err("worker polling realization mismatch".into());
         }
         if self.state(binding)?.stop_requested {
-            self.port.stop_admitted(binding.provider.as_str(), binding.run.as_str())?;
+            self.port.stop(binding.provider.as_str(), binding.run.as_str())?;
         }
         if let Err(error) = self.evaluation.verify(self.clock.unix_ms()) {
             super::recovery::quarantine(self.bundle.wi(), binding)?;
-            self.port.stop_admitted(binding.provider.as_str(), binding.run.as_str())?;
+            self.port.stop(binding.provider.as_str(), binding.run.as_str())?;
             return Err(error);
         }
-        for observed in
-            self.port.observations_admitted(binding.provider.as_str(), binding.run.as_str())?
-        {
+        for observed in self.port.observe(binding.provider.as_str(), binding.run.as_str())? {
             let route = worldinterface_domain::continuation::EventRoute {
                 tenant: binding.tenant.clone(),
                 audience: binding.principal.clone(),
@@ -439,6 +562,7 @@ impl<S: TrustedWorkerBuild + 'static> Connector for WorkerConnector<S> {
             self.runtime.clock.unix_ms(),
             &self.runtime.executable,
             &self.runtime.helper_digest,
+            &self.runtime.adapter,
         ) {
             Ok(a) if a.operation.name() == self.descriptor.operation.as_str() => {
                 PrepareOutcome::Ready
@@ -454,6 +578,7 @@ impl<S: TrustedWorkerBuild + 'static> Connector for WorkerConnector<S> {
             self.runtime.clock.unix_ms(),
             &self.runtime.executable,
             &self.runtime.helper_digest,
+            &self.runtime.adapter,
         )?;
         if admitted.operation.name() != self.descriptor.operation.as_str() {
             return Err("worker operation mismatch".into());
@@ -485,9 +610,70 @@ impl<S: TrustedWorkerBuild + 'static> Connector for WorkerConnector<S> {
             .as_ref()
             .and_then(|s| s.worker.as_ref())
             .ok_or("worker realization absent")?;
-        let state = root.worker_snapshot(&r.tenant, &w.provider, &w.run)?.ok_or("worker absent")?;
+        let mut state =
+            root.worker_snapshot(&r.tenant, &w.provider, &w.run)?.ok_or("worker absent")?;
+        if state.quarantined
+            && self.descriptor.operation.as_str() == "collect_artifacts"
+            && !matches!(state.collection, WorkerCollection::Published(_))
+        {
+            return Ok(ReconcileOutcome::Unknown(vec![EvidenceBytes {
+                schema: "wi-worker-lifecycle:2".to_string().try_into()?,
+                bytes: canonical_data(&state)?,
+            }]));
+        }
+        if let Some(key) = &r.execution.provider_key {
+            if let Some(operation) = state.operations.get(key).cloned() {
+                if !operation.acknowledged
+                    && operation.intent == r.intent
+                    && operation.operation == self.descriptor.operation
+                {
+                    if operation.operation.as_str() == "collect_artifacts"
+                        && matches!(
+                            state.collection,
+                            WorkerCollection::Prepared(_) | WorkerCollection::Published(_)
+                        )
+                    {
+                        super::artifacts::resume(root, &state.binding)?;
+                        self.runtime.finish_collection(&state.binding)?;
+                        root.acknowledge_worker_operation(
+                            state.binding.clone(),
+                            operation.clone(),
+                        )?;
+                    } else {
+                        let request = self
+                            .runtime
+                            .live
+                            .lock()
+                            .map_err(|_| "worker registry unavailable")?
+                            .get(&(w.provider.clone(), w.run.clone()))
+                            .and_then(|operations| {
+                                operations
+                                    .iter()
+                                    .find(|(q, _)| {
+                                        q.operation.name() == operation.operation.as_str()
+                                    })
+                                    .map(|(q, _)| q.clone())
+                            });
+                        if let Some(request) = request {
+                            if self.runtime.port.acknowledged(&request)? {
+                                self.runtime.poll(&state.binding)?;
+                                root.acknowledge_worker_operation(
+                                    state.binding.clone(),
+                                    operation.clone(),
+                                )?;
+                            } else {
+                                return Ok(ReconcileOutcome::Unknown(vec![]));
+                            }
+                        }
+                    }
+                    state = root
+                        .worker_snapshot(&r.tenant, &w.provider, &w.run)?
+                        .ok_or("worker absent")?;
+                }
+            }
+        }
         let evidence = vec![EvidenceBytes {
-            schema: "wi-worker-lifecycle:1".to_string().try_into()?,
+            schema: "wi-worker-lifecycle:2".to_string().try_into()?,
             bytes: canonical_data(&state)?,
         }];
         if let Some(key) = &r.execution.provider_key {
@@ -529,7 +715,7 @@ impl<S: TrustedWorkerBuild + 'static> Connector for WorkerConnector<S> {
             root.request_worker_stop(&state)?;
         }
         // A stop obligation survives grant/approval expiry; it cannot authorize fresh work.
-        let _ = self.runtime.port.stop_admitted(w.provider.as_str(), w.run.as_str());
+        let _ = self.runtime.port.stop(w.provider.as_str(), w.run.as_str());
         Ok(CancelObservation::Requested)
     }
 }
@@ -596,7 +782,7 @@ mod tests {
                 assert_eq!(decoded.version, 1);
                 assert_eq!(decoded.request, request.digest().unwrap());
                 let boundary = observed.boundary_record.as_ref().unwrap();
-                assert_eq!(boundary.schema.as_str(), "wi-worker-lifecycle:1");
+                assert_eq!(boundary.schema.as_str(), "wi-worker-lifecycle:2");
                 assert_eq!(serde_json::from_slice::<WorkerState>(&boundary.bytes).unwrap(), *state);
                 let mut outcome = OutcomeEvidence {
                     classification: None,

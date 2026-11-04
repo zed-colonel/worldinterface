@@ -11331,5 +11331,355 @@
     "target": "worker-lifecycle-runtime",
     "rationale": "WIP-10 F-001 remediation: deterministic operation acknowledgement and non-launching publication-contract regression; candidate for source review and renewed exact-packet acceptance.",
     "source": "docs/work-items/WIP-10.md; WIP-10 review F-001; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/worker.rs::::enum:WorkerCollection",
+    "disposition": "retain-align",
+    "target": "worker-artifact-seam",
+    "rationale": "WIP-11 candidate disposition: run-bound artifacts, private collection journal, authoritative publication/quarantine and nonblocking provider seam; effective through qualifying source review.",
+    "source": "docs/work-items/WIP-11.md; accepted WIP-11 design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/worker.rs::::struct:WorkerArtifactPolicy",
+    "disposition": "retain-align",
+    "target": "worker-artifact-seam",
+    "rationale": "WIP-11 candidate disposition: run-bound artifacts, private collection journal, authoritative publication/quarantine and nonblocking provider seam; effective through qualifying source review.",
+    "source": "docs/work-items/WIP-11.md; accepted WIP-11 design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/worker.rs::::struct:WorkerExportPolicy",
+    "disposition": "retain-align",
+    "target": "worker-artifact-seam",
+    "rationale": "WIP-11 candidate disposition: run-bound artifacts, private collection journal, authoritative publication/quarantine and nonblocking provider seam; effective through qualifying source review.",
+    "source": "docs/work-items/WIP-11.md; accepted WIP-11 design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/worker.rs::::struct:WorkerPreparedCollection",
+    "disposition": "retain-align",
+    "target": "worker-artifact-seam",
+    "rationale": "WIP-11 candidate disposition: run-bound artifacts, private collection journal, authoritative publication/quarantine and nonblocking provider seam; effective through qualifying source review.",
+    "source": "docs/work-items/WIP-11.md; accepted WIP-11 design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/worker.rs::::struct:WorkerPublishedCollection",
+    "disposition": "retain-align",
+    "target": "worker-artifact-seam",
+    "rationale": "WIP-11 candidate disposition: run-bound artifacts, private collection journal, authoritative publication/quarantine and nonblocking provider seam; effective through qualifying source review.",
+    "source": "docs/work-items/WIP-11.md; accepted WIP-11 design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/worker.rs::::struct:WorkerQuarantineReport",
+    "disposition": "retain-align",
+    "target": "worker-artifact-seam",
+    "rationale": "WIP-11 candidate disposition: run-bound artifacts, private collection journal, authoritative publication/quarantine and nonblocking provider seam; effective through qualifying source review.",
+    "source": "docs/work-items/WIP-11.md; accepted WIP-11 design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/worker.rs::::struct:WorkerVerifierFinding",
+    "disposition": "retain-align",
+    "target": "worker-artifact-seam",
+    "rationale": "WIP-11 candidate disposition: run-bound artifacts, private collection journal, authoritative publication/quarantine and nonblocking provider seam; effective through qualifying source review.",
+    "source": "docs/work-items/WIP-11.md; accepted WIP-11 design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/lib.rs::::module:worker_collection",
+    "disposition": "retain-align",
+    "target": "worker-artifact-seam",
+    "rationale": "WIP-11 candidate disposition: run-bound artifacts, private collection journal, authoritative publication/quarantine and nonblocking provider seam; effective through qualifying source review.",
+    "source": "docs/work-items/WIP-11.md; accepted WIP-11 design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/worker_collection.rs::::source-module:crates/worldinterface-foundation/storage/src/worker_collection.rs",
+    "disposition": "retain-align",
+    "target": "worker-artifact-seam",
+    "rationale": "WIP-11 candidate disposition: run-bound artifacts, private collection journal, authoritative publication/quarantine and nonblocking provider seam; effective through qualifying source review.",
+    "source": "docs/work-items/WIP-11.md; accepted WIP-11 design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/artifacts.rs::::struct:ArtifactLocatorV2",
+    "disposition": "retain-align",
+    "target": "worker-artifact-seam",
+    "rationale": "WIP-11 candidate disposition: run-bound artifacts, private collection journal, authoritative publication/quarantine and nonblocking provider seam; effective through qualifying source review.",
+    "source": "docs/work-items/WIP-11.md; accepted WIP-11 design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker/artifacts.rs::::source-module:crates/worldinterface-runtime/src/worker/artifacts.rs",
+    "disposition": "retain-align",
+    "target": "worker-artifact-seam",
+    "rationale": "WIP-11 candidate disposition: run-bound artifacts, private collection journal, authoritative publication/quarantine and nonblocking provider seam; effective through qualifying source review.",
+    "source": "docs/work-items/WIP-11.md; accepted WIP-11 design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker/artifacts.rs::::struct:PublishedManifest",
+    "disposition": "retain-align",
+    "target": "worker-artifact-seam",
+    "rationale": "WIP-11 candidate disposition: run-bound artifacts, private collection journal, authoritative publication/quarantine and nonblocking provider seam; effective through qualifying source review.",
+    "source": "docs/work-items/WIP-11.md; accepted WIP-11 design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker/mod.rs::::module:artifacts",
+    "disposition": "retain-align",
+    "target": "worker-artifact-seam",
+    "rationale": "WIP-11 candidate disposition: run-bound artifacts, private collection journal, authoritative publication/quarantine and nonblocking provider seam; effective through qualifying source review.",
+    "source": "docs/work-items/WIP-11.md; accepted WIP-11 design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker/mod.rs::::module:provider",
+    "disposition": "retain-align",
+    "target": "worker-artifact-seam",
+    "rationale": "WIP-11 candidate disposition: run-bound artifacts, private collection journal, authoritative publication/quarantine and nonblocking provider seam; effective through qualifying source review.",
+    "source": "docs/work-items/WIP-11.md; accepted WIP-11 design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker/provider.rs::::source-module:crates/worldinterface-runtime/src/worker/provider.rs",
+    "disposition": "retain-align",
+    "target": "worker-artifact-seam",
+    "rationale": "WIP-11 candidate disposition: run-bound artifacts, private collection journal, authoritative publication/quarantine and nonblocking provider seam; effective through qualifying source review.",
+    "source": "docs/work-items/WIP-11.md; accepted WIP-11 design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker/provider.rs::::struct:ProviderProvenance",
+    "disposition": "retain-align",
+    "target": "worker-artifact-seam",
+    "rationale": "WIP-11 candidate disposition: run-bound artifacts, private collection journal, authoritative publication/quarantine and nonblocking provider seam; effective through qualifying source review.",
+    "source": "docs/work-items/WIP-11.md; accepted WIP-11 design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker/provider.rs::::trait:AdmittedProvider",
+    "disposition": "retain-align",
+    "target": "worker-artifact-seam",
+    "rationale": "WIP-11 candidate disposition: run-bound artifacts, private collection journal, authoritative publication/quarantine and nonblocking provider seam; effective through qualifying source review.",
+    "source": "docs/work-items/WIP-11.md; accepted WIP-11 design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/artifact.rs::::module:tests@10d1b0eff34c",
+    "disposition": "retain-align",
+    "target": "worker-artifact-seam",
+    "rationale": "WIP-11 candidate disposition: run-bound artifacts, private collection journal, authoritative publication/quarantine and nonblocking provider seam; effective through qualifying source review.",
+    "source": "docs/work-items/WIP-11.md; accepted WIP-11 design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/worker_collection.rs::::source-module:crates/worldinterface-runtime/tests/support/worker_collection.rs",
+    "disposition": "test-evidence",
+    "target": "worker-artifact-seam-test-evidence",
+    "rationale": "WIP-11 candidate disposition: run-bound artifacts, private collection journal, authoritative publication/quarantine and nonblocking provider seam; effective through qualifying source review.",
+    "source": "docs/work-items/WIP-11.md; accepted WIP-11 design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/worker_collection.rs::::struct:Collection",
+    "disposition": "test-evidence",
+    "target": "worker-artifact-seam-test-evidence",
+    "rationale": "WIP-11 candidate disposition: run-bound artifacts, private collection journal, authoritative publication/quarantine and nonblocking provider seam; effective through qualifying source review.",
+    "source": "docs/work-items/WIP-11.md; accepted WIP-11 design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/worker_fixture.rs::::module:seam",
+    "disposition": "test-evidence",
+    "target": "worker-artifact-seam-test-evidence",
+    "rationale": "WIP-11 candidate disposition: run-bound artifacts, private collection journal, authoritative publication/quarantine and nonblocking provider seam; effective through qualifying source review.",
+    "source": "docs/work-items/WIP-11.md; accepted WIP-11 design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/worker_fixture.rs::::struct:WorkerAqBoundary",
+    "disposition": "test-evidence",
+    "target": "worker-artifact-seam-test-evidence",
+    "rationale": "WIP-11 candidate disposition: run-bound artifacts, private collection journal, authoritative publication/quarantine and nonblocking provider seam; effective through qualifying source review.",
+    "source": "docs/work-items/WIP-11.md; accepted WIP-11 design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/worker_seam.rs::::source-module:crates/worldinterface-runtime/tests/support/worker_seam.rs",
+    "disposition": "test-evidence",
+    "target": "worker-artifact-seam-test-evidence",
+    "rationale": "WIP-11 candidate disposition: run-bound artifacts, private collection journal, authoritative publication/quarantine and nonblocking provider seam; effective through qualifying source review.",
+    "source": "docs/work-items/WIP-11.md; accepted WIP-11 design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/worker_seam.rs::::struct:Run",
+    "disposition": "test-evidence",
+    "target": "worker-artifact-seam-test-evidence",
+    "rationale": "WIP-11 candidate disposition: run-bound artifacts, private collection journal, authoritative publication/quarantine and nonblocking provider seam; effective through qualifying source review.",
+    "source": "docs/work-items/WIP-11.md; accepted WIP-11 design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/worker_seam.rs::::struct:Seam",
+    "disposition": "test-evidence",
+    "target": "worker-artifact-seam-test-evidence",
+    "rationale": "WIP-11 candidate disposition: run-bound artifacts, private collection journal, authoritative publication/quarantine and nonblocking provider seam; effective through qualifying source review.",
+    "source": "docs/work-items/WIP-11.md; accepted WIP-11 design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/worker_seam.rs::::type:Runs",
+    "disposition": "test-evidence",
+    "target": "worker-artifact-seam-test-evidence",
+    "rationale": "WIP-11 candidate disposition: run-bound artifacts, private collection journal, authoritative publication/quarantine and nonblocking provider seam; effective through qualifying source review.",
+    "source": "docs/work-items/WIP-11.md; accepted WIP-11 design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_artifact_crash.rs::::module:child",
+    "disposition": "test-evidence",
+    "target": "worker-artifact-seam-test-evidence",
+    "rationale": "WIP-11 candidate disposition: run-bound artifacts, private collection journal, authoritative publication/quarantine and nonblocking provider seam; effective through qualifying source review.",
+    "source": "docs/work-items/WIP-11.md; accepted WIP-11 design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_artifact_crash.rs::::module:fixture",
+    "disposition": "test-evidence",
+    "target": "worker-artifact-seam-test-evidence",
+    "rationale": "WIP-11 candidate disposition: run-bound artifacts, private collection journal, authoritative publication/quarantine and nonblocking provider seam; effective through qualifying source review.",
+    "source": "docs/work-items/WIP-11.md; accepted WIP-11 design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_artifact_crash.rs::::source-module:crates/worldinterface-runtime/tests/worker_artifact_crash.rs",
+    "disposition": "test-evidence",
+    "target": "worker-artifact-seam-test-evidence",
+    "rationale": "WIP-11 candidate disposition: run-bound artifacts, private collection journal, authoritative publication/quarantine and nonblocking provider seam; effective through qualifying source review.",
+    "source": "docs/work-items/WIP-11.md; accepted WIP-11 design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_artifact_live_crash.rs::::module:support",
+    "disposition": "test-evidence",
+    "target": "worker-artifact-seam-test-evidence",
+    "rationale": "WIP-11 candidate disposition: run-bound artifacts, private collection journal, authoritative publication/quarantine and nonblocking provider seam; effective through qualifying source review.",
+    "source": "docs/work-items/WIP-11.md; accepted WIP-11 design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_artifact_live_crash.rs::::source-module:crates/worldinterface-runtime/tests/worker_artifact_live_crash.rs",
+    "disposition": "test-evidence",
+    "target": "worker-artifact-seam-test-evidence",
+    "rationale": "WIP-11 candidate disposition: run-bound artifacts, private collection journal, authoritative publication/quarantine and nonblocking provider seam; effective through qualifying source review.",
+    "source": "docs/work-items/WIP-11.md; accepted WIP-11 design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_artifact_live_crash.rs::support::module:child",
+    "disposition": "test-evidence",
+    "target": "worker-artifact-seam-test-evidence",
+    "rationale": "WIP-11 candidate disposition: run-bound artifacts, private collection journal, authoritative publication/quarantine and nonblocking provider seam; effective through qualifying source review.",
+    "source": "docs/work-items/WIP-11.md; accepted WIP-11 design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_artifact_live_crash.rs::support::module:connectors",
+    "disposition": "test-evidence",
+    "target": "worker-artifact-seam-test-evidence",
+    "rationale": "WIP-11 candidate disposition: run-bound artifacts, private collection journal, authoritative publication/quarantine and nonblocking provider seam; effective through qualifying source review.",
+    "source": "docs/work-items/WIP-11.md; accepted WIP-11 design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_artifact_live_crash.rs::support::module:flow_fixture",
+    "disposition": "test-evidence",
+    "target": "worker-artifact-seam-test-evidence",
+    "rationale": "WIP-11 candidate disposition: run-bound artifacts, private collection journal, authoritative publication/quarantine and nonblocking provider seam; effective through qualifying source review.",
+    "source": "docs/work-items/WIP-11.md; accepted WIP-11 design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_artifact_live_crash.rs::support::module:spi_harness",
+    "disposition": "test-evidence",
+    "target": "worker-artifact-seam-test-evidence",
+    "rationale": "WIP-11 candidate disposition: run-bound artifacts, private collection journal, authoritative publication/quarantine and nonblocking provider seam; effective through qualifying source review.",
+    "source": "docs/work-items/WIP-11.md; accepted WIP-11 design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_artifact_live_crash.rs::support::module:worker_fixture",
+    "disposition": "test-evidence",
+    "target": "worker-artifact-seam-test-evidence",
+    "rationale": "WIP-11 candidate disposition: run-bound artifacts, private collection journal, authoritative publication/quarantine and nonblocking provider seam; effective through qualifying source review.",
+    "source": "docs/work-items/WIP-11.md; accepted WIP-11 design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_artifact_validation.rs::::module:fixture",
+    "disposition": "test-evidence",
+    "target": "worker-artifact-seam-test-evidence",
+    "rationale": "WIP-11 candidate disposition: run-bound artifacts, private collection journal, authoritative publication/quarantine and nonblocking provider seam; effective through qualifying source review.",
+    "source": "docs/work-items/WIP-11.md; accepted WIP-11 design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_artifact_validation.rs::::source-module:crates/worldinterface-runtime/tests/worker_artifact_validation.rs",
+    "disposition": "test-evidence",
+    "target": "worker-artifact-seam-test-evidence",
+    "rationale": "WIP-11 candidate disposition: run-bound artifacts, private collection journal, authoritative publication/quarantine and nonblocking provider seam; effective through qualifying source review.",
+    "source": "docs/work-items/WIP-11.md; accepted WIP-11 design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_artifacts.rs::::module:support",
+    "disposition": "test-evidence",
+    "target": "worker-artifact-seam-test-evidence",
+    "rationale": "WIP-11 candidate disposition: run-bound artifacts, private collection journal, authoritative publication/quarantine and nonblocking provider seam; effective through qualifying source review.",
+    "source": "docs/work-items/WIP-11.md; accepted WIP-11 design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_artifacts.rs::::source-module:crates/worldinterface-runtime/tests/worker_artifacts.rs",
+    "disposition": "test-evidence",
+    "target": "worker-artifact-seam-test-evidence",
+    "rationale": "WIP-11 candidate disposition: run-bound artifacts, private collection journal, authoritative publication/quarantine and nonblocking provider seam; effective through qualifying source review.",
+    "source": "docs/work-items/WIP-11.md; accepted WIP-11 design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_artifacts.rs::support::module:connectors",
+    "disposition": "test-evidence",
+    "target": "worker-artifact-seam-test-evidence",
+    "rationale": "WIP-11 candidate disposition: run-bound artifacts, private collection journal, authoritative publication/quarantine and nonblocking provider seam; effective through qualifying source review.",
+    "source": "docs/work-items/WIP-11.md; accepted WIP-11 design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_artifacts.rs::support::module:flow_fixture",
+    "disposition": "test-evidence",
+    "target": "worker-artifact-seam-test-evidence",
+    "rationale": "WIP-11 candidate disposition: run-bound artifacts, private collection journal, authoritative publication/quarantine and nonblocking provider seam; effective through qualifying source review.",
+    "source": "docs/work-items/WIP-11.md; accepted WIP-11 design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_artifacts.rs::support::module:spi_harness",
+    "disposition": "test-evidence",
+    "target": "worker-artifact-seam-test-evidence",
+    "rationale": "WIP-11 candidate disposition: run-bound artifacts, private collection journal, authoritative publication/quarantine and nonblocking provider seam; effective through qualifying source review.",
+    "source": "docs/work-items/WIP-11.md; accepted WIP-11 design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_artifacts.rs::support::module:worker_fixture",
+    "disposition": "test-evidence",
+    "target": "worker-artifact-seam-test-evidence",
+    "rationale": "WIP-11 candidate disposition: run-bound artifacts, private collection journal, authoritative publication/quarantine and nonblocking provider seam; effective through qualifying source review.",
+    "source": "docs/work-items/WIP-11.md; accepted WIP-11 design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_seam.rs::::module:support",
+    "disposition": "test-evidence",
+    "target": "worker-artifact-seam-test-evidence",
+    "rationale": "WIP-11 candidate disposition: run-bound artifacts, private collection journal, authoritative publication/quarantine and nonblocking provider seam; effective through qualifying source review.",
+    "source": "docs/work-items/WIP-11.md; accepted WIP-11 design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_seam.rs::::source-module:crates/worldinterface-runtime/tests/worker_seam.rs",
+    "disposition": "test-evidence",
+    "target": "worker-artifact-seam-test-evidence",
+    "rationale": "WIP-11 candidate disposition: run-bound artifacts, private collection journal, authoritative publication/quarantine and nonblocking provider seam; effective through qualifying source review.",
+    "source": "docs/work-items/WIP-11.md; accepted WIP-11 design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_seam.rs::support::module:connectors",
+    "disposition": "test-evidence",
+    "target": "worker-artifact-seam-test-evidence",
+    "rationale": "WIP-11 candidate disposition: run-bound artifacts, private collection journal, authoritative publication/quarantine and nonblocking provider seam; effective through qualifying source review.",
+    "source": "docs/work-items/WIP-11.md; accepted WIP-11 design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_seam.rs::support::module:flow_fixture",
+    "disposition": "test-evidence",
+    "target": "worker-artifact-seam-test-evidence",
+    "rationale": "WIP-11 candidate disposition: run-bound artifacts, private collection journal, authoritative publication/quarantine and nonblocking provider seam; effective through qualifying source review.",
+    "source": "docs/work-items/WIP-11.md; accepted WIP-11 design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_seam.rs::support::module:spi_harness",
+    "disposition": "test-evidence",
+    "target": "worker-artifact-seam-test-evidence",
+    "rationale": "WIP-11 candidate disposition: run-bound artifacts, private collection journal, authoritative publication/quarantine and nonblocking provider seam; effective through qualifying source review.",
+    "source": "docs/work-items/WIP-11.md; accepted WIP-11 design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_seam.rs::support::module:worker_fixture",
+    "disposition": "test-evidence",
+    "target": "worker-artifact-seam-test-evidence",
+    "rationale": "WIP-11 candidate disposition: run-bound artifacts, private collection journal, authoritative publication/quarantine and nonblocking provider seam; effective through qualifying source review.",
+    "source": "docs/work-items/WIP-11.md; accepted WIP-11 design; WI-ADR-016"
   }
 ]

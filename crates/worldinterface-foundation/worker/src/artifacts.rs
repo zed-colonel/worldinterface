@@ -83,3 +83,15 @@ pub fn verify_content(export: &ExportV1, bytes: &[u8]) -> Result<()> {
     }
     Ok(())
 }
+
+/// Internal capability locator. Logical names alone never select a run.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ArtifactLocatorV2 {
+    pub provider: String,
+    pub run: String,
+    pub authorization: ContentHash,
+    pub reference: String,
+    pub digest: ContentHash,
+    pub size: u64,
+}

@@ -737,9 +737,32 @@
       "source_record_sha256": "282c3307e90881d1239051729f4136043d7e5951625ef2d6954e18bec63ffd80",
       "gate": "WI-WORKER-G4",
       "owning_item": "WIP-11",
-      "status": "planned",
-      "coverage_refs": [],
-      "tests": []
+      "status": "implemented",
+      "coverage_refs": [
+        "conformance/wi-fabric-2/worker/artifact-seam-coverage.json"
+      ],
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_027_scoped_transform_import_and_durable_export_through_real_wi_aq"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_027_coding_patch_and_schema_report_publish_before_completion"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_027_publication_requires_exact_binding_and_precedes_completion_across_reopen"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_027_empty_exports_still_require_a_validated_published_collection"
+        }
+      ]
     },
     {
       "id": "WP-028",
@@ -747,9 +770,52 @@
       "source_record_sha256": "4772d4d417ae8be47787253d1bf019ccdf6fbe2b2f9241e34c5b1b386402bee3",
       "gate": "WI-WORKER-G4",
       "owning_item": "WIP-11",
-      "status": "planned",
-      "coverage_refs": [],
-      "tests": []
+      "status": "implemented",
+      "coverage_refs": [
+        "conformance/wi-fabric-2/worker/artifact-seam-coverage.json"
+      ],
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_028_invalid_batches_quarantine_before_any_publication_and_survive_reopen"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_028_unknown_and_failed_trusted_verifiers_ignore_provider_pass_claims"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_028_cancelled_prepared_collection_cannot_publish_and_cleanup_keeps_report"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_028_snapshot_and_publication_crash_cuts_recover_exactly_or_quarantine"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_028_missing_or_corrupt_prepared_snapshot_quarantines_without_recollection"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_028_live_collection_ack_receipt_and_aq_crashes_preserve_publication_order"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "worker_process::artifact::tests::export_links_special_files_and_replacement_races_reject"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "artifact_integrity_symlink_hardlink_and_special_files_are_quarantined"
+        }
+      ]
     },
     {
       "id": "WP-029",
@@ -777,9 +843,17 @@
       "source_record_sha256": "4d26d23e95bd09fb87e99b4ac03e02e0ac750b8363a04a6ae38ad8a24782e647",
       "gate": "WI-WORKER-G4",
       "owning_item": "WIP-11",
-      "status": "planned",
-      "coverage_refs": [],
-      "tests": []
+      "status": "implemented",
+      "coverage_refs": [
+        "conformance/wi-fabric-2/worker/artifact-seam-coverage.json"
+      ],
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_031_seam_simulation_delayed_reordered_observations_and_uncertain_ack_use_real_wi_aq"
+        }
+      ]
     },
     {
       "id": "WP-032",

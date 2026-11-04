@@ -10,11 +10,23 @@ CREATE TABLE worker_history(seq INTEGER PRIMARY KEY, command BLOB NOT NULL, dige
 CREATE TRIGGER worker_no_update BEFORE UPDATE ON worker_history BEGIN SELECT RAISE(ABORT,'append only'); END;
 CREATE TRIGGER worker_no_delete BEFORE DELETE ON worker_history BEGIN SELECT RAISE(ABORT,'append only'); END;
 CREATE TABLE worker_runs(tenant TEXT NOT NULL, provider TEXT NOT NULL, run TEXT NOT NULL, request TEXT NOT NULL, reserved INTEGER NOT NULL, state BLOB NOT NULL, PRIMARY KEY(tenant,provider,run), UNIQUE(tenant,request));
+CREATE TABLE worker_snapshots(identity TEXT PRIMARY KEY, content TEXT NOT NULL, bytes BLOB NOT NULL);
+CREATE TRIGGER worker_snapshot_no_update BEFORE UPDATE ON worker_snapshots BEGIN SELECT RAISE(ABORT,'immutable'); END;
+CREATE TRIGGER worker_snapshot_no_delete BEFORE DELETE ON worker_snapshots BEGIN SELECT RAISE(ABORT,'immutable'); END;
 CREATE TABLE worker_limits(tenant TEXT PRIMARY KEY, slots INTEGER NOT NULL);
 ";
 #[derive(Serialize, Deserialize)]
 #[serde(tag = "operation", rename_all = "snake_case", deny_unknown_fields)]
 enum Command {
+    Policy {
+        binding: WorkerBinding,
+        policy: WorkerArtifactPolicy,
+    },
+    Collection {
+        binding: WorkerBinding,
+        collection: WorkerCollection,
+        events: Vec<DurableEvent>,
+    },
     Operation {
         binding: WorkerBinding,
         entry: WorkerOperation,
@@ -63,6 +75,39 @@ fn save(c: &Connection, s: &WorkerState) -> Result<()> {
 }
 fn apply(c: &Connection, command: &Command) -> Result<bool> {
     match command {
+        Command::Policy { binding, policy } => {
+            let mut state = snapshot(c, &binding.tenant, &binding.provider, &binding.run)?
+                .ok_or_else(|| invalid("worker absent"))?;
+            if state.binding != *binding {
+                return Err(invalid("policy binding mismatch"));
+            }
+            crate::worker_collection::validate_policy(policy)?;
+            if state.artifact_policy == [policy.clone()] {
+                return Ok(false);
+            }
+            if !state.artifact_policy.is_empty() || state.accepted {
+                return Err(invalid("immutable worker policy"));
+            }
+            state.artifact_policy.push(policy.clone());
+            state.revision += 1;
+            save(c, &state)?;
+        }
+        Command::Collection { binding, collection, events } => {
+            let mut state = snapshot(c, &binding.tenant, &binding.provider, &binding.run)?
+                .ok_or_else(|| invalid("worker absent"))?;
+            if state.binding != *binding {
+                return Err(invalid("collection binding mismatch"));
+            }
+            if state.collection == *collection {
+                return Ok(false);
+            }
+            crate::worker_collection::advance(&mut state, collection, events)?;
+            state.revision += 1;
+            save(c, &state)?;
+            for event in events {
+                crate::continuation::insert(c, event)?;
+            }
+        }
         Command::Operation { binding, entry: operation } => {
             let mut state = snapshot(c, &binding.tenant, &binding.provider, &binding.run)?
                 .ok_or_else(|| invalid("worker absent"))?;
@@ -172,6 +217,15 @@ fn transact(root: &StoreRoot, cmd: &Command) -> Result<bool> {
         )?;
     }
     let boundary = match cmd {
+        Command::Collection { collection: WorkerCollection::Prepared(_), .. } => {
+            "worker-collection-before-prepare"
+        }
+        Command::Collection { collection: WorkerCollection::Published(_), .. } => {
+            "worker-collection-before-publish"
+        }
+        Command::Collection { collection: WorkerCollection::Quarantined(_), .. } => {
+            "worker-collection-before-quarantine"
+        }
         Command::Operation { entry, .. } if entry.acknowledged => "worker-operation-before-ack",
         Command::Operation { .. } => "worker-operation-intent-before-commit",
         Command::Reserve { .. } => "worker-intent-before-commit",
@@ -187,6 +241,9 @@ fn transact(root: &StoreRoot, cmd: &Command) -> Result<bool> {
     worker_boundary(boundary);
     tx.commit()?;
     worker_boundary(match boundary {
+        "worker-collection-before-prepare" => "worker-collection-prepared",
+        "worker-collection-before-publish" => "worker-collection-published",
+        "worker-collection-before-quarantine" => "worker-collection-quarantined",
         "worker-operation-before-ack" => "worker-operation-acknowledged",
         "worker-operation-intent-before-commit" => "worker-operation-intent-committed",
         "worker-intent-before-commit" => "worker-intent-committed",
@@ -198,6 +255,41 @@ fn transact(root: &StoreRoot, cmd: &Command) -> Result<bool> {
     Ok(changed)
 }
 impl StoreRoot {
+    pub fn bind_worker_artifact_policy(
+        &self,
+        binding: WorkerBinding,
+        policy: WorkerArtifactPolicy,
+    ) -> Result<()> {
+        transact(self, &Command::Policy { binding, policy })?;
+        Ok(())
+    }
+    pub fn record_worker_collection(
+        &self,
+        binding: WorkerBinding,
+        collection: WorkerCollection,
+        events: Vec<DurableEvent>,
+    ) -> Result<()> {
+        if let WorkerCollection::Published(p) = &collection {
+            let publications = p
+                .exports
+                .iter()
+                .map(|(r, a)| (r.as_str(), a))
+                .chain(std::iter::once(("wi:manifest", &p.manifest)));
+            for (reference, artifact) in publications {
+                let id = p.prepared.publication_identity(&binding, reference).map_err(invalid)?;
+                if !self.publication(&id)?.is_some_and(|entry| {
+                    entry.artifact == *artifact
+                        && entry.state
+                            == worldinterface_domain::publication::PublicationState::Available
+                }) {
+                    return Err(invalid("collection publication not available"));
+                }
+                self.read_artifact(artifact)?;
+            }
+        }
+        transact(self, &Command::Collection { binding, collection, events })?;
+        Ok(())
+    }
     pub fn committed_worker_event(
         &self,
         tenant: &OpaqueRef,

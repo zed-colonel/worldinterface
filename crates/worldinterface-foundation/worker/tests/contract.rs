@@ -172,8 +172,11 @@ impl WorkerPort for Scripted {
             }])
         })
     }
-    fn read_artifact<'a>(&'a self, reference: &'a str) -> PortFuture<'a, Vec<u8>> {
-        Box::pin(async move { Ok(reference.as_bytes().to_vec()) })
+    fn read_artifact<'a>(
+        &'a self,
+        locator: &'a worldinterface_worker::artifacts::ArtifactLocatorV2,
+    ) -> PortFuture<'a, Vec<u8>> {
+        Box::pin(async move { Ok(locator.reference.as_bytes().to_vec()) })
     }
 }
 #[test]
@@ -183,7 +186,15 @@ fn wp_004_opaque_consumer_artifacts_and_controls() {
     assert_eq!(ready(p.submit(&r)).unwrap(), Acknowledgment::Accepted);
     let obs = ready(p.observe(&r.provider, &r.run)).unwrap();
     assert_eq!(obs[0].run, r.run);
-    let bytes = ready(p.read_artifact("coding-result")).unwrap();
+    let bytes = ready(p.read_artifact(&worldinterface_worker::artifacts::ArtifactLocatorV2 {
+        provider: r.provider.clone(),
+        run: r.run.clone(),
+        authorization: ContentHash::of(b"admitted"),
+        reference: "coding-result".into(),
+        digest: ContentHash::of(b"coding-result"),
+        size: 13,
+    }))
+    .unwrap();
     let export = ExportV1 {
         reference: "coding-result".into(),
         relative_name: "out/result.txt".into(),
