@@ -196,3 +196,11 @@ and WP-026 entries. Durable lifecycle/AQ events/evaluation registration remain
 WIP-10; portable artifact qualification remains WIP-11. Independent security
 review, exact committed-head adopted checks and CraftingTable integration remain
 required. No hostile-code or additional resource containment is claimed.
+
+WIP-10's recorded operator timing exception permits acceptance of an exact,
+completed evaluation packet before merge. The scheduling decision authorizes no
+executable. Positive live evaluation still requires explicit packet acceptance;
+ordinary use and gate acceptance remain effective only through their qualifying
+reviewed integration. See [WIP-10](WIP-10.md) for decision provenance and the
+pending packet checkpoint. Blanket merge-only approval language in the imported
+plan does not override this narrow recorded exception.

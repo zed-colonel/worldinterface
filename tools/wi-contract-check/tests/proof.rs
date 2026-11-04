@@ -50,18 +50,21 @@ fn baseline_records_have_precise_g1_coverage_and_no_source_result_claims() {
         r.cases.iter().filter(|c| c.owning_item == "WIP-01" && c.status == "implemented").count(),
         11
     );
-    assert_eq!(
-        g.iter().filter(|g| g.status == "closed").map(|g| g.id.as_str()).collect::<BTreeSet<_>>(),
-        BTreeSet::from([
-            "WI-WORKER-G1",
-            "WI-WORKER-G2",
-            "WI-AQ-G1",
-            "WI-AQ-G2",
-            "WI-AQ-G3",
-            "WI-AQ-G4",
-            "WI-EMBEDDED-CORE-1"
-        ])
-    );
+    let closed =
+        g.iter().filter(|g| g.status == "closed").map(|g| g.id.as_str()).collect::<BTreeSet<_>>();
+    let baseline = BTreeSet::from([
+        "WI-WORKER-G1",
+        "WI-WORKER-G2",
+        "WI-AQ-G1",
+        "WI-AQ-G2",
+        "WI-AQ-G3",
+        "WI-AQ-G4",
+        "WI-EMBEDDED-CORE-1",
+    ]);
+    assert!(baseline.is_subset(&closed));
+    // WIP-10 may close G3 after approved live checks/review without changing executable bindings.
+    let allowed = baseline.into_iter().chain(["WI-WORKER-G3"]).collect::<BTreeSet<_>>();
+    assert!(closed.is_subset(&allowed));
     assert_eq!(r.cases.iter().find(|c| c.id == "WP-002").unwrap().tests.len(), 3);
     assert_eq!(r.cases.iter().find(|c| c.id == "WP-007").unwrap().tests.len(), 3);
 }
@@ -565,6 +568,43 @@ fn wi08_source_atomicity_requires_every_producer_even_if_coverage_is_removed() {
                 .any(|f| f.rule == "PROOF-WI08"),
             "{}",
             producer.test
+        );
+    }
+}
+
+#[test]
+fn wi10_lifecycle_requires_all_cases_approval_tests_and_exact_executable_evidence() {
+    let t = fixture();
+    let path = t.path().join("conformance/wi-fabric-2/worker/lifecycle-coverage.json");
+    let original = read(&path).unwrap();
+    let obligations: std::collections::BTreeMap<String, Vec<TestRef>> =
+        serde_json::from_value(original["required_obligations"].clone()).unwrap();
+    let tests: TestIndex = obligations.values().flatten().cloned().map(|t| (t, 1)).collect();
+    assert!(proof::validate_worker_lifecycle(t.path(), &tests).unwrap().is_empty());
+    for mutation in ["case", "approval", "runtime-claim", "missing-test", "ignored-test"] {
+        let mut v = original.clone();
+        let mut index = tests.clone();
+        match mutation {
+            "case" => {
+                v["assigned_cases"].as_object_mut().unwrap().remove("WP-019");
+            }
+            "approval" => {
+                v["required_obligations"].as_object_mut().unwrap().remove("approval-authenticity");
+            }
+            "runtime-claim" => v["runtime_pass_asserted"] = json!(true),
+            "missing-test" => {
+                index.clear();
+            }
+            _ => {
+                for count in index.values_mut() {
+                    *count = 0;
+                }
+            }
+        }
+        fs::write(&path, serde_json::to_vec_pretty(&v).unwrap()).unwrap();
+        assert!(
+            !proof::validate_worker_lifecycle(t.path(), &index).unwrap().is_empty(),
+            "{mutation}"
         );
     }
 }

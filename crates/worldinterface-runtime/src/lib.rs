@@ -29,3 +29,6 @@ mod flow_wait;
 
 #[cfg(target_os = "linux")]
 pub mod worker_process;
+
+#[cfg(target_os = "linux")]
+pub mod worker;

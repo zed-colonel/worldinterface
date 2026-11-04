@@ -44,6 +44,13 @@ pub(super) struct Context {
     pub nonce: String,
     pub allocation: String,
 }
+#[derive(Clone, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+pub(super) struct Identity {
+    pid: u32,
+    boot: String,
+    birth: u64,
+}
 pub(super) struct Owned {
     pid: u32,
     boot: String,
@@ -55,6 +62,9 @@ pub(super) struct Owned {
     handle: File,
 }
 impl Owned {
+    pub fn identity(&self) -> Identity {
+        Identity { pid: self.pid, boot: self.boot.clone(), birth: self.birth }
+    }
     pub fn acquire(pid: u32, parent: u32, context: &Context) -> Result<Self> {
         Self::acquire_if_present(pid, parent, context)?.ok_or_else(|| "process departed".into())
     }

@@ -407,6 +407,11 @@ fn coverage(root: &Path, id: &str) -> Result<(Vec<String>, BTreeSet<TestRef>)> {
     if let Some(names) = v["assigned_cases"].get(id) {
         add(path, RUNTIME, "worldinterface-runtime", serde_json::from_value(names.clone())?);
     }
+    let path = "conformance/wi-fabric-2/worker/lifecycle-coverage.json";
+    let v = read(&root.join(path))?;
+    if let Some(names) = v["assigned_cases"].get(id) {
+        add(path, RUNTIME, "worldinterface-runtime", serde_json::from_value(names.clone())?);
+    }
     refs.sort();
     Ok((refs, tests))
 }
@@ -722,6 +727,7 @@ pub fn check(root: &Path) -> Result<Vec<Finding>> {
     findings.extend(validate_flow(root, &tests)?);
     findings.extend(validate_flow_integration(root, &tests)?);
     findings.extend(validate_continuations(root, &tests)?);
+    findings.extend(validate_worker_lifecycle(root, &tests)?);
     Ok(findings)
 }
 
@@ -1076,4 +1082,78 @@ pub fn validate_continuations(root: &Path, tests: &TestIndex) -> Result<Vec<Find
         }
     }
     Ok(f)
+}
+
+/// WIP-10 maps every lifecycle criterion to an adopted, non-ignored test.
+/// Runtime passage and approval authenticity remain separate evidence boundaries.
+pub fn validate_worker_lifecycle(root: &Path, tests: &TestIndex) -> Result<Vec<Finding>> {
+    let path = "conformance/wi-fabric-2/worker/lifecycle-coverage.json";
+    let v = read(&root.join(path))?;
+    let assigned: BTreeMap<String, Vec<String>> =
+        serde_json::from_value(v["assigned_cases"].clone())?;
+    let obligations: BTreeMap<String, Vec<TestRef>> =
+        serde_json::from_value(v["required_obligations"].clone())?;
+    let required: BTreeSet<String> = (17..=26)
+        .map(|n| format!("WP-{n:03}"))
+        .chain(std::iter::once("AB-WI-021".into()))
+        .collect();
+    let mut findings = Vec::new();
+    if v["version"] != 1
+        || v["scope"] != "wi/WI-09/process-provider:lifecycle"
+        || v["runtime_pass_asserted"] != false
+        || assigned.keys().cloned().collect::<BTreeSet<_>>() != required
+    {
+        findings.push(finding(
+            "PROOF-WI10",
+            path,
+            "matrix",
+            "WIP-10",
+            "exact lifecycle case coverage and candidate evidence profile required",
+        ));
+    }
+    let expected_obligations = required
+        .into_iter()
+        .chain(["approval-authenticity".into(), "storage-recovery".into()])
+        .collect::<BTreeSet<_>>();
+    if obligations.keys().cloned().collect::<BTreeSet<_>>() != expected_obligations {
+        findings.push(finding(
+            "PROOF-WI10",
+            path,
+            "obligations",
+            "WIP-10",
+            "lifecycle, approval and recovery obligations cannot be omitted",
+        ));
+    }
+    for (case, names) in assigned {
+        if names.is_empty()
+            || names.iter().any(|name| {
+                !obligations.values().flatten().any(|t| {
+                    t.test == *name
+                        && t.manifest == RUNTIME
+                        && t.package == "worldinterface-runtime"
+                        && tests.get(t) == Some(&1)
+                })
+            })
+        {
+            findings.push(finding(
+                "PROOF-WI10",
+                path,
+                &case,
+                "WIP-10",
+                "each criterion requires exact reachable non-ignored adopted runtime tests",
+            ));
+        }
+    }
+    for (obligation, refs) in obligations {
+        if refs.is_empty() || refs.iter().any(|t| tests.get(t) != Some(&1)) {
+            findings.push(finding(
+                "PROOF-WI10",
+                path,
+                &obligation,
+                "WIP-10",
+                "obligation tests must be adopted and non-ignored",
+            ));
+        }
+    }
+    Ok(findings)
 }

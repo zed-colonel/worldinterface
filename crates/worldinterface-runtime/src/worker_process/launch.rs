@@ -91,6 +91,7 @@ pub(super) fn helper(
     fixture: &Executable,
     socket: &UnixStream,
     workspace: &Path,
+    journal: &File,
 ) -> Result<Child> {
     let exe = executable.high_fd()?;
     let fixture = fixture.high_fd()?;
@@ -102,10 +103,17 @@ pub(super) fn helper(
         .stdin(Stdio::null())
         .stdout(Stdio::null())
         .stderr(Stdio::null());
-    let (s, f) = (socket.as_raw_fd(), fixture.as_raw_fd());
+    let journal = duplicate(journal.as_raw_fd())?;
+    let (s, f, j) = (socket.as_raw_fd(), fixture.as_raw_fd(), journal.as_raw_fd());
     // SAFETY: closure contains only close_range/dup2 and errno handling; it allocates no memory.
     unsafe {
-        cmd.pre_exec(move || descriptors(s, Some(f)));
+        cmd.pre_exec(move || {
+            descriptors(s, Some(f))?;
+            if libc::dup2(j, 5) < 0 {
+                return Err(std::io::Error::last_os_error());
+            }
+            Ok(())
+        });
     }
     io(cmd.spawn())
 }

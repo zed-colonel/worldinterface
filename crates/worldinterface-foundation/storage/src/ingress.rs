@@ -327,6 +327,7 @@ mod tests {
                 let mut c = Connection::open_in_memory().unwrap();
                 c.execute_batch(SCHEMA).unwrap();
                 c.execute_batch(crate::continuation::SCHEMA).unwrap();
+                c.execute_batch(crate::worker::SCHEMA).unwrap();
                 write_state(&c, &tenant, &initial).unwrap();
                 assert!(transact_dispatch(&mut c, &tenant, 1000, &command, Some(fault)).is_err());
                 assert_eq!(snapshot(&c, &tenant).unwrap(), initial);
@@ -360,6 +361,7 @@ mod tests {
                 let replayed = Connection::open_in_memory().unwrap();
                 replayed.execute_batch(SCHEMA).unwrap();
                 replayed.execute_batch(crate::continuation::SCHEMA).unwrap();
+                replayed.execute_batch(crate::worker::SCHEMA).unwrap();
                 write_state(&replayed, &tenant, &initial).unwrap();
                 replay(&c, &replayed).unwrap();
                 assert_eq!(snapshot(&replayed, &tenant).unwrap(), committed);
@@ -419,6 +421,7 @@ mod tests {
             let mut c = Connection::open_in_memory().unwrap();
             c.execute_batch(SCHEMA).unwrap();
             c.execute_batch(crate::continuation::SCHEMA).unwrap();
+            c.execute_batch(crate::worker::SCHEMA).unwrap();
             write_state(&c, &tenant, &initial).unwrap();
             assert!(transact_dispatch(&mut c, &tenant, 999, &command, Some(fault)).is_err());
             assert_eq!(snapshot(&c, &tenant).unwrap(), initial);
@@ -444,6 +447,7 @@ mod tests {
             let replayed = Connection::open_in_memory().unwrap();
             replayed.execute_batch(SCHEMA).unwrap();
             replayed.execute_batch(crate::continuation::SCHEMA).unwrap();
+            replayed.execute_batch(crate::worker::SCHEMA).unwrap();
             write_state(&replayed, &tenant, &initial).unwrap();
             replay(&c, &replayed).unwrap();
             assert_eq!(snapshot(&replayed, &tenant).unwrap(), committed);
@@ -484,6 +488,7 @@ mod tests {
             let mut c = Connection::open_in_memory().unwrap();
             c.execute_batch(SCHEMA).unwrap();
             c.execute_batch(crate::continuation::SCHEMA).unwrap();
+            c.execute_batch(crate::worker::SCHEMA).unwrap();
             write_state(&c, &tenant, &initial).unwrap();
             assert!(transact_dispatch(&mut c, &tenant, 1000, &command, Some(fault)).is_err());
             assert_eq!(snapshot(&c, &tenant).unwrap(), initial);
@@ -529,6 +534,7 @@ mod tests {
             let replayed = Connection::open_in_memory().unwrap();
             replayed.execute_batch(SCHEMA).unwrap();
             replayed.execute_batch(crate::continuation::SCHEMA).unwrap();
+            replayed.execute_batch(crate::worker::SCHEMA).unwrap();
             write_state(&replayed, &tenant, &initial).unwrap();
             replay(&c, &replayed).unwrap();
             assert_eq!(snapshot(&replayed, &tenant).unwrap(), committed);
@@ -547,6 +553,7 @@ mod tests {
             c.execute_batch(crate::repository::SCHEMA).unwrap();
             c.execute_batch(SCHEMA).unwrap();
             c.execute_batch(crate::continuation::SCHEMA).unwrap();
+            c.execute_batch(crate::worker::SCHEMA).unwrap();
             c.execute_batch(crate::effect::SCHEMA).unwrap();
             c.execute_batch(crate::flow::SCHEMA).unwrap();
             let tenant = binding.profile.scope.tenant.clone();

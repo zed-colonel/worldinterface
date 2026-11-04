@@ -2,7 +2,7 @@
 
 The independent foundation proof supplies the receipt contract. WI-05/integration
 adds the runtime completion adapter and indexed ingress inspection. WI-06 supplies
-the production connector port. The fresh local store profile is `local-continuation-10`;
+the production connector port. The fresh local store profile is `local-worker-11`;
 earlier profiles reject unchanged.
 
 Receipt import requires exact `wi-json-1` bytes, supported profile and a stable

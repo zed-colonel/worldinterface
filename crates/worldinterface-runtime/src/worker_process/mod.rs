@@ -5,6 +5,7 @@ mod admission;
 mod artifact;
 mod bootstrap;
 mod fixture;
+mod journal;
 mod launch;
 mod ownership;
 mod supervision;
@@ -48,6 +49,7 @@ pub fn adapter_digest() -> ContentHash {
             include_str!("fixture.rs"),
             include_str!("launch.rs"),
             include_str!("ownership.rs"),
+            include_str!("journal.rs"),
             include_str!("supervision.rs"),
             include_str!("assets/sample-rust-lib.txt"),
             include_str!("assets/sample-rust-Cargo.txt"),
@@ -229,6 +231,53 @@ impl ProcessWorkerPort {
         );
         Ok(())
     }
+    #[allow(dead_code)] // Also compiled into the standalone fixture/helper without WI composition.
+    pub(crate) fn submit_admitted(&self, request: &WorkerRequestV1) -> Result<Acknowledgment> {
+        self.submit_sync(request)
+    }
+    #[allow(dead_code)] // Also compiled into standalone binaries.
+    pub(crate) fn observations_admitted(
+        &self,
+        provider: &str,
+        run: &str,
+    ) -> Result<Vec<Observation>> {
+        let shared = self.run(provider, run)?;
+        let run = shared.lock().map_err(|_| "run unavailable")?;
+        self.authorize_read(&run, Operation::Inspect, None)?;
+        Ok(run.observations.clone())
+    }
+    #[allow(dead_code)] // Cleanup authority is narrower than fresh work authorization.
+    pub(crate) fn stop_admitted(&self, provider: &str, run: &str) -> Result<()> {
+        let shared = self.run(provider, run)?;
+        let run = shared.lock().map_err(|_| "run unavailable")?;
+        if run.authorization.scope != self.scope {
+            return Err("cleanup scope mismatch".into());
+        }
+        run.stop.store(true, Ordering::SeqCst);
+        Ok(())
+    }
+    #[allow(dead_code)] // Standalone binaries do not expose the WI host facade.
+    pub(crate) fn artifact_admitted(
+        &self,
+        provider: &str,
+        run: &str,
+        reference: &str,
+    ) -> Result<Vec<u8>> {
+        let shared = self.run(provider, run)?;
+        let run = shared.lock().map_err(|_| "run unavailable")?;
+        self.authorize_read(&run, Operation::CollectArtifacts, Some(reference))?;
+        run.artifacts.get(reference).cloned().ok_or_else(|| "artifact access denied".into())
+    }
+    /// Recovery observes only exact private evidence; it never starts or adopts a process.
+    pub fn recover_cleanup(
+        &self,
+        provider: &str,
+        run: &str,
+        operations: &[(WorkerRequestV1, ResolvedWorkerV1)],
+    ) -> Result<Option<CleanupReport>> {
+        let binding = ContentHash::of(&worldinterface_worker::encode(&operations)?);
+        journal::recovered_report(&self.root, provider, run, &binding)
+    }
     pub fn revoke(&self, generation: u64) -> Result<()> {
         let previous = self.generation.fetch_max(generation, Ordering::SeqCst);
         if generation > previous {
@@ -251,7 +300,17 @@ impl ProcessWorkerPort {
         let shared = self.run(provider, run)?;
         let run = shared.lock().map_err(|_| "run unavailable")?;
         self.authorize_read(&run, Operation::Inspect, None)?;
-        Ok(run.report.clone())
+        Ok(run.report.clone().or_else(|| {
+            if run.released && !run.started {
+                Some(CleanupReport {
+                    cleanup_confirmed: true,
+                    reason: "not launched".into(),
+                    ..CleanupReport::default()
+                })
+            } else {
+                None
+            }
+        }))
     }
     pub fn realization(&self, request: &WorkerRequestV1) -> Result<ResolvedWorkerV1> {
         let shared = self.run(&request.provider, &request.run)?;
@@ -355,7 +414,11 @@ impl ProcessWorkerPort {
                 if run.stop.load(Ordering::SeqCst) {
                     return Err("run already stopped".into());
                 }
-                let workspace = run.workspace.as_ref().ok_or("run not provisioned")?;
+                if run.workspace.is_none() {
+                    return Err("run not provisioned".into());
+                }
+                run.started = true; // Reserve this attempt before any consequential launch preparation.
+                let workspace = run.workspace.as_ref().unwrap();
                 let nonce = ownership::random()?;
                 let token = ownership::random()?;
                 let context = Context {
@@ -364,9 +427,17 @@ impl ProcessWorkerPort {
                     nonce: nonce.clone(),
                     allocation: workspace.allocation.clone(),
                 };
+                let journal = journal::Journal::create(&self.root, &auth, &nonce)?;
                 let (socket, child_socket) = io(std::os::unix::net::UnixStream::pair())?;
-                let child =
-                    launch::helper(&self.helper, executable, &child_socket, workspace.dir.path())?;
+                worldinterface_storage::worker_boundary("worker-helper-before-spawn");
+                let child = launch::helper(
+                    &self.helper,
+                    executable,
+                    &child_socket,
+                    workspace.dir.path(),
+                    &journal.file,
+                )?;
+                worldinterface_storage::worker_boundary("worker-helper-spawned");
                 drop(child_socket);
                 let mut helper = HelperGuard { reaped: false, child, owned: None, context, socket };
                 match Owned::acquire(helper.child.id(), std::process::id(), &helper.context) {
@@ -383,6 +454,9 @@ impl ProcessWorkerPort {
                         return Err("helper ownership unavailable".into());
                     }
                 }
+                worldinterface_storage::worker_boundary("worker-ownership-before-persist");
+                journal.append("owned", helper.owned.as_ref(), None)?;
+                worldinterface_storage::worker_boundary("worker-ownership-persisted");
                 let launch = Launch {
                     nonce,
                     allocation: helper.context.allocation.clone(),
@@ -397,7 +471,7 @@ impl ProcessWorkerPort {
                 let target = shared.clone();
                 match std::thread::Builder::new()
                     .name("wi-process-monitor".into())
-                    .spawn(move || monitor(&mut helper, launch, stop, target))
+                    .spawn(move || monitor(&mut helper, launch, stop, target, journal))
                 {
                     Ok(monitor) => run.monitor = Some(monitor),
                     Err(_) => {
@@ -413,7 +487,9 @@ impl ProcessWorkerPort {
             }
             Operation::Inspect => {}
             Operation::Terminate => {
+                worldinterface_storage::worker_boundary("worker-cancel-before-delivery");
                 run.stop.store(true, Ordering::SeqCst);
+                worldinterface_storage::worker_boundary("worker-cancel-delivered");
             }
             Operation::CollectArtifacts => {
                 if run.collected {
@@ -488,6 +564,7 @@ fn monitor(
     launch: Launch,
     stop: Arc<AtomicBool>,
     target: Arc<Mutex<Run>>,
+    journal: journal::Journal,
 ) {
     let HelperGuard { child: _, reaped: already_reaped, owned, context, socket } = helper;
     let Some(owned) = owned.as_ref() else {
@@ -502,6 +579,8 @@ fn monitor(
             return Err("helper bootstrap refused".into());
         }
         owned.validate(context)?;
+        worldinterface_storage::worker_boundary("worker-fixture-before-spawn");
+        journal.append("launch_permission", Some(owned), None)?;
         bootstrap::send(socket, &Message::new(&context.nonce, "go"))?;
         let until = Instant::now() + Duration::from_millis(launch.wall_ms) + Duration::from_secs(6);
         let mut stop_at = None;
@@ -517,7 +596,18 @@ fn monitor(
             }
             match decoder.poll::<Message>(socket)? {
                 Some(m) if m.nonce != context.nonce => return Err("helper ownership drift".into()),
+                Some(m) if m.kind == "fixture_spawned" && !running => {
+                    worldinterface_storage::worker_boundary("worker-fixture-spawned");
+                    bootstrap::send(socket, &Message::new(&context.nonce, "record_fixture"))?;
+                }
+                Some(m) if m.kind == "fixture_owned" && !running => {
+                    worldinterface_storage::worker_boundary("worker-fixture-ownership-persisted");
+                    bootstrap::send(socket, &Message::new(&context.nonce, "launch_fixture"))?;
+                }
                 Some(m) if m.kind == "running" && !running => {
+                    worldinterface_storage::worker_boundary("worker-before-acknowledgement");
+                    journal.append("acknowledged", Some(owned), None)?;
+                    worldinterface_storage::worker_boundary("worker-acknowledged");
                     running = true;
                     if let Ok(mut run) = target.lock() {
                         run.event(ObservationKind::Running);

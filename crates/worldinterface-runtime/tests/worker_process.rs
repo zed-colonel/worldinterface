@@ -1,4 +1,6 @@
 #![cfg(target_os = "linux")]
+#[path = "support/worker_build.rs"]
+mod build;
 use std::{
     fs,
     os::fd::AsRawFd,
@@ -32,19 +34,38 @@ fn private_dir() -> tempfile::TempDir {
     use std::os::unix::fs::PermissionsExt;
     tempfile::Builder::new().permissions(fs::Permissions::from_mode(0o700)).tempdir().unwrap()
 }
+fn allocations(root: &Path) -> Vec<std::path::PathBuf> {
+    fs::read_dir(root)
+        .unwrap()
+        .map(|e| e.unwrap())
+        .filter(|e| e.file_type().unwrap().is_dir())
+        .map(|e| e.path())
+        .collect()
+}
+fn retained_journals_are_private_and_bounded(root: &Path) {
+    use std::os::unix::fs::PermissionsExt;
+    for entry in fs::read_dir(root).unwrap() {
+        let entry = entry.unwrap();
+        assert!(entry.file_name().to_string_lossy().starts_with(".wi-owner-"));
+        let metadata = entry.metadata().unwrap();
+        assert!(metadata.is_file());
+        assert!(metadata.len() <= 64 * 1024);
+        assert_eq!(metadata.permissions().mode() & 0o077, 0);
+    }
+}
 fn registry() -> ExecutableRegistry {
     let mut r = ExecutableRegistry::default();
-    let path = Path::new(env!("CARGO_BIN_EXE_wi-process-fixture"));
-    r.register("fixture-v1", path, &executable_digest(path).unwrap()).unwrap();
+    let path = build::current().fixture.as_path();
+    r.register("fixture-v1", path, &build::current().fixture_digest).unwrap();
     r
 }
 fn port(root: &Path, scope: HostScope) -> ProcessWorkerPort {
-    let path = Path::new(env!("CARGO_BIN_EXE_wi-process-reaper"));
+    let path = build::current().helper.as_path();
     ProcessWorkerPort::new(
         scope,
         root,
         path,
-        &executable_digest(path).unwrap(),
+        &build::current().helper_digest,
         registry(),
         Arc::new(SystemClock),
     )
@@ -100,7 +121,7 @@ fn authorization(
     let controls_digest = AuthorizedRun::controls_digest(&controls).unwrap();
     let configuration_digest = AuthorizedRun::configuration_digest(&task, &exports).unwrap();
     let auth = ContentHash::of(format!("authorized-tenant-a-{name}").as_bytes());
-    let exe = executable_digest(Path::new(env!("CARGO_BIN_EXE_wi-process-fixture"))).unwrap();
+    let exe = build::current().fixture_digest.clone();
     let operations = OPS
         .iter()
         .map(|op| {
@@ -208,7 +229,7 @@ async fn transform_artifacts_are_scoped_integrity_checked_and_release_is_replay_
     let realization = h.port.realization(&h.requests[1]).unwrap();
     assert_eq!(
         realization.executable_digest,
-        executable_digest(Path::new(env!("CARGO_BIN_EXE_wi-process-fixture"))).unwrap()
+        executable_digest(build::current().fixture.as_path()).unwrap()
     );
     let records = serde_json::to_string(&(
         h.port.observe("local-proof", "run-a").await.unwrap(),
@@ -223,7 +244,8 @@ async fn transform_artifacts_are_scoped_integrity_checked_and_release_is_replay_
     }
     h.submit(Operation::Release).await.unwrap();
     h.submit(Operation::Release).await.unwrap();
-    assert_eq!(fs::read_dir(h.root.path()).unwrap().count(), 0);
+    assert!(allocations(h.root.path()).is_empty());
+    retained_journals_are_private_and_bounded(h.root.path());
     assert!(h.submit(Operation::Start).await.is_err());
 }
 #[tokio::test]
@@ -238,7 +260,7 @@ async fn coding_fixture_edits_the_copied_sample_and_exports_patch_and_report() {
     );
     h.start().await;
     assert!(h.finished().cleanup_confirmed);
-    let allocation = fs::read_dir(h.root.path()).unwrap().next().unwrap().unwrap().path();
+    let allocation = allocations(h.root.path()).into_iter().next().unwrap();
     let edited = fs::read_to_string(allocation.join("work/sample-rust/src/lib.rs")).unwrap();
     assert!(edited.contains("fn calculate_average"));
     assert!(!edited.contains("averge"));
@@ -338,7 +360,8 @@ async fn reaped_short_lived_grandchildren_do_not_quarantine_or_exhaust_handles()
     h.submit(Operation::CollectArtifacts).await.unwrap();
     assert_eq!(h.port.read_artifact("artifact-churn.json").await.unwrap(), b"{\"reaped\":true}");
     h.submit(Operation::Release).await.unwrap();
-    assert_eq!(fs::read_dir(h.root.path()).unwrap().count(), 0);
+    assert!(allocations(h.root.path()).is_empty());
+    retained_journals_are_private_and_bounded(h.root.path());
 }
 #[tokio::test]
 async fn unavailable_operations_have_no_process_filesystem_credential_or_observation_side_effect() {
@@ -431,7 +454,7 @@ async fn artifact_integrity_symlink_hardlink_and_special_files_are_quarantined()
             harness(Task::Transform { xor: 0 }, 1500, 65536, vec![export("output.bin", b"hello")]);
         h.start().await;
         assert!(h.finished().cleanup_confirmed);
-        let allocation = fs::read_dir(h.root.path()).unwrap().next().unwrap().unwrap().path();
+        let allocation = allocations(h.root.path()).into_iter().next().unwrap();
         let file = allocation.join("export/output.bin");
         match attack {
             "digest" => fs::write(&file, b"other").unwrap(),
@@ -466,7 +489,7 @@ async fn duplicate_start_is_single_launch_and_revocation_stops_run_and_denies_re
     for _ in 0..8 {
         h.submit(Operation::Start).await.unwrap();
     }
-    assert_eq!(fs::read_dir(h.root.path()).unwrap().count(), 1);
+    assert_eq!(allocations(h.root.path()).len(), 1);
     h.port.revoke(1).unwrap();
     assert!(h.port.observe("local-proof", "run-a").await.is_err());
     assert!(h.submit(Operation::Start).await.is_err());
@@ -476,17 +499,20 @@ async fn duplicate_start_is_single_launch_and_revocation_stops_run_and_denies_re
 fn executable_path_replacement_cannot_change_reviewed_bytes() {
     let root = private_dir();
     let copy = root.path().join("fixture");
-    fs::copy(env!("CARGO_BIN_EXE_wi-process-fixture"), &copy).unwrap();
+    fs::copy(&build::current().fixture, &copy).unwrap();
     let expected = executable_digest(&copy).unwrap();
     let mut registry = ExecutableRegistry::default();
     registry.register("fixture-v1", &copy, &expected).unwrap();
+    // Only the attack copy is mutable; trusted build artifacts remain 0500.
+    use std::os::unix::fs::PermissionsExt;
+    fs::set_permissions(&copy, fs::Permissions::from_mode(0o700)).unwrap();
     fs::write(&copy, b"unreviewed replacement").unwrap();
     assert!(registry.register("replacement", &copy, &expected).is_err());
     // The registered capability is a sealed copy. Execute it after replacing its original pathname.
     let runtime = tokio::runtime::Runtime::new().unwrap();
     runtime.block_on(async {
         let workspace = private_dir();
-        let helper = Path::new(env!("CARGO_BIN_EXE_wi-process-reaper"));
+        let helper = build::current().helper.as_path();
         let p = ProcessWorkerPort::new(
             scope(),
             workspace.path(),
@@ -562,7 +588,7 @@ async fn expired_or_revoked_artifact_and_observation_access_is_denied() {
     for revoke in [false, true] {
         let root = private_dir();
         let clock = Arc::new(TestClock(AtomicU64::new(SystemClock.unix_ms())));
-        let helper = Path::new(env!("CARGO_BIN_EXE_wi-process-reaper"));
+        let helper = build::current().helper.as_path();
         let p = ProcessWorkerPort::new(
             scope(),
             root.path(),
@@ -624,7 +650,8 @@ async fn port_drop_joins_supervision_and_reaps_owned_descendants() {
     let started = Instant::now();
     drop(port);
     assert!(started.elapsed() < Duration::from_secs(5));
-    assert_eq!(fs::read_dir(root.path()).unwrap().count(), 0);
+    assert!(allocations(root.path()).is_empty());
+    retained_journals_are_private_and_bounded(root.path());
 }
 
 #[tokio::test]
@@ -635,5 +662,6 @@ async fn stop_before_start_prevents_consequential_launch() {
     assert!(h.submit(Operation::Start).await.is_err());
     assert!(h.port.evidence("local-proof", "run-a").unwrap().is_none());
     h.submit(Operation::Release).await.unwrap();
-    assert_eq!(fs::read_dir(h.root.path()).unwrap().count(), 0);
+    assert!(allocations(h.root.path()).is_empty());
+    retained_journals_are_private_and_bounded(h.root.path());
 }

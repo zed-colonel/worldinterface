@@ -80,7 +80,7 @@ fn inventory_is_complete_and_deterministic() {
         ("workspace-crate", 10),
         ("auxiliary-crate", 11),
         ("foundation-crate", 7),
-        ("connector", 27),
+        ("connector", 28), // WIP-10 adds the embedded WorkerConnector.
         ("wasm-manifest", 15),
         ("generated-id", 4),
     ] {
@@ -91,6 +91,14 @@ fn inventory_is_complete_and_deterministic() {
             .filter(|x| x.kind == "registration" && x.id.contains("::default_registry::"))
             .count(),
         21
+    );
+    assert_eq!(
+        a.iter()
+            .filter(|x| x.kind == "connector"
+                && x.path == "crates/worldinterface-runtime/src/worker/connector.rs"
+                && x.name == "WorkerConnector < S >")
+            .count(),
+        1
     );
     assert!(a.iter().any(|x| x.name == "code_fuzzy"));
     assert!(a.iter().any(|x| x.path.ends_with("semantic/rust/analyzer.rs")));

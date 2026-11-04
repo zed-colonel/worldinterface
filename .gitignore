@@ -45,3 +45,6 @@ scripts/*
 
 !scripts/wi_crash_isolation.py
 !scripts/test_wi_crash_isolation.py
+
+!scripts/build-wi-worker-evaluation.sh
+!scripts/refresh-wi-worker-evaluation.py

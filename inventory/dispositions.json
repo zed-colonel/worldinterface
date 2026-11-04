@@ -10745,13 +10745,6 @@
     "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
   },
   {
-    "id": "crates/worldinterface-runtime/tests/worker_process.rs::registry::registration:0c2b76916ed79e6713b7a9ec80b5efe9e0f52dbbec5d2ef022c31cccd4264660#1",
-    "disposition": "test-evidence",
-    "target": "process-managed-proof-1 runtime adapter",
-    "rationale": "WIP-09: WI-owned functional/misbehaving fixture and executable adapter evidence; no lifecycle conformance closure.",
-    "source": "docs/work-items/WIP-09.md; accepted WI-ADR-016 full approval; WIP-09 accepted design"
-  },
-  {
     "id": "crates/worldinterface-runtime/src/worker_process/bootstrap.rs::::struct:FixtureLaunch",
     "disposition": "retain-align",
     "target": "process-managed-proof-1 runtime adapter",
@@ -10764,5 +10757,579 @@
     "target": "process-managed-proof-1 runtime adapter",
     "rationale": "Real-child regression for missing stable helper ownership (F-004)",
     "source": "WIP-09 review remediation F-001\u2013F-005; docs/work-items/WIP-09.md"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/authorization.rs::::struct:ProcessControlInstallation",
+    "disposition": "retain-align",
+    "target": "worker-lifecycle-foundation",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/lib.rs::::module:worker",
+    "disposition": "retain-align",
+    "target": "worker-lifecycle-foundation",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/worker.rs::::enum:WorkerFact",
+    "disposition": "retain-align",
+    "target": "worker-lifecycle-foundation",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/worker.rs::::source-module:crates/worldinterface-foundation/domain/src/worker.rs",
+    "disposition": "retain-align",
+    "target": "worker-lifecycle-foundation",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/worker.rs::::struct:WorkerBinding",
+    "disposition": "retain-align",
+    "target": "worker-lifecycle-foundation",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/worker.rs::::struct:WorkerObservation",
+    "disposition": "retain-align",
+    "target": "worker-lifecycle-foundation",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/worker.rs::::struct:WorkerState",
+    "disposition": "retain-align",
+    "target": "worker-lifecycle-foundation",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/lib.rs::::module:worker",
+    "disposition": "retain-align",
+    "target": "worker-lifecycle-foundation",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/worker.rs::::enum:Command",
+    "disposition": "retain-align",
+    "target": "worker-lifecycle-foundation",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/worker.rs::::source-module:crates/worldinterface-foundation/storage/src/worker.rs",
+    "disposition": "retain-align",
+    "target": "worker-lifecycle-foundation",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/tests/worker.rs::::source-module:crates/worldinterface-foundation/storage/tests/worker.rs",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/lib.rs::::module:worker@9bb98d23c4b1",
+    "disposition": "retain-align",
+    "target": "worker-lifecycle-runtime",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker/admission.rs::::source-module:crates/worldinterface-runtime/src/worker/admission.rs",
+    "disposition": "retain-align",
+    "target": "worker-lifecycle-runtime",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker/admission.rs::::struct:AdmittedWorker",
+    "disposition": "retain-align",
+    "target": "worker-lifecycle-runtime",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker/admission.rs::::struct:WorkerEffect",
+    "disposition": "retain-align",
+    "target": "worker-lifecycle-runtime",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker/connector.rs::::connector:WorkerConnector < S >",
+    "disposition": "retain-align",
+    "target": "worker-lifecycle-runtime",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker/connector.rs::::source-module:crates/worldinterface-runtime/src/worker/connector.rs",
+    "disposition": "retain-align",
+    "target": "worker-lifecycle-runtime",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker/connector.rs::::struct:WorkerConnector",
+    "disposition": "retain-align",
+    "target": "worker-lifecycle-runtime",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker/connector.rs::::struct:WorkerRuntime",
+    "disposition": "retain-align",
+    "target": "worker-lifecycle-runtime",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker/connector.rs::::trait:TrustedWorkerBuild",
+    "disposition": "retain-align",
+    "target": "worker-lifecycle-runtime",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker/connector.rs::::type:LiveRuns",
+    "disposition": "retain-align",
+    "target": "worker-lifecycle-runtime",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker/connector.rs::impl WorkerRuntime < S >::registration:fa416ed0d58305fbaee2fdf42993dd38729851f0222aa6c069942d3c5b9b297a#1",
+    "disposition": "retain-align",
+    "target": "worker-lifecycle-runtime",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker/evaluation.rs::::source-module:crates/worldinterface-runtime/src/worker/evaluation.rs",
+    "disposition": "retain-align",
+    "target": "worker-lifecycle-runtime",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker/evaluation.rs::::struct:EvaluationAuthority",
+    "disposition": "retain-align",
+    "target": "worker-lifecycle-runtime",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker/evaluation.rs::::struct:EvaluationManifest",
+    "disposition": "retain-align",
+    "target": "worker-lifecycle-runtime",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker/evaluation.rs::::struct:EvaluationVerifier",
+    "disposition": "retain-align",
+    "target": "worker-lifecycle-runtime",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker/evaluation.rs::::struct:OperatorApprovalReceipt",
+    "disposition": "retain-align",
+    "target": "worker-lifecycle-runtime",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker/evaluation.rs::::struct:VerifiedEvaluation",
+    "disposition": "retain-align",
+    "target": "worker-lifecycle-runtime",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker/evaluation.rs::::trait:TrustedApprovals",
+    "disposition": "retain-align",
+    "target": "worker-lifecycle-runtime",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker/mod.rs::::module:admission",
+    "disposition": "retain-align",
+    "target": "worker-lifecycle-runtime",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker/mod.rs::::module:connector",
+    "disposition": "retain-align",
+    "target": "worker-lifecycle-runtime",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker/mod.rs::::module:evaluation",
+    "disposition": "retain-align",
+    "target": "worker-lifecycle-runtime",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker/mod.rs::::module:observation",
+    "disposition": "retain-align",
+    "target": "worker-lifecycle-runtime",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker/mod.rs::::module:recovery",
+    "disposition": "retain-align",
+    "target": "worker-lifecycle-runtime",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker/mod.rs::::source-module:crates/worldinterface-runtime/src/worker/mod.rs",
+    "disposition": "retain-align",
+    "target": "worker-lifecycle-runtime",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker/observation.rs::::source-module:crates/worldinterface-runtime/src/worker/observation.rs",
+    "disposition": "retain-align",
+    "target": "worker-lifecycle-runtime",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker/recovery.rs::::source-module:crates/worldinterface-runtime/src/worker/recovery.rs",
+    "disposition": "retain-align",
+    "target": "worker-lifecycle-runtime",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/journal.rs::::source-module:crates/worldinterface-runtime/src/worker_process/journal.rs",
+    "disposition": "retain-align",
+    "target": "worker-lifecycle-runtime",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/journal.rs::::struct:Entry",
+    "disposition": "retain-align",
+    "target": "worker-lifecycle-runtime",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/journal.rs::::struct:Frame",
+    "disposition": "retain-align",
+    "target": "worker-lifecycle-runtime",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/journal.rs::::struct:Journal",
+    "disposition": "retain-align",
+    "target": "worker-lifecycle-runtime",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/journal.rs::impl Journal::struct:Unlock",
+    "disposition": "retain-align",
+    "target": "worker-lifecycle-runtime",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/mod.rs::::module:journal",
+    "disposition": "retain-align",
+    "target": "worker-lifecycle-runtime",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/ownership.rs::::struct:Identity",
+    "disposition": "retain-align",
+    "target": "worker-lifecycle-runtime",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/executor_aq_contract.rs::support::module:flow_fixture",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/executor_aq_contract.rs::support::module:worker_fixture",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/worker_approval_anchor.rs::::source-module:crates/worldinterface-runtime/tests/support/worker_approval_anchor.rs",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/worker_fixture.rs::::module:anchor",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/worker_fixture.rs::::source-module:crates/worldinterface-runtime/tests/support/worker_fixture.rs",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/worker_fixture.rs::::struct:Approval",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/worker_fixture.rs::::struct:Harness",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/worker_fixture.rs::::struct:HostClock",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/worker_fixture.rs::::struct:HostEvidence",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/worker_fixture.rs::::type:Evidence",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_evaluation.rs::::source-module:crates/worldinterface-runtime/tests/worker_evaluation.rs",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_evaluation.rs::::struct:Trust",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_lifecycle.rs::::module:support",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_lifecycle.rs::::source-module:crates/worldinterface-runtime/tests/worker_lifecycle.rs",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_lifecycle.rs::support::module:connectors",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_lifecycle.rs::support::module:flow_fixture",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_lifecycle.rs::support::module:spi_harness",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_lifecycle.rs::support::module:worker_fixture",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_lifecycle_crash.rs::::module:support",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_lifecycle_crash.rs::::source-module:crates/worldinterface-runtime/tests/worker_lifecycle_crash.rs",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_lifecycle_crash.rs::support::module:child",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_lifecycle_crash.rs::support::module:connectors",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_lifecycle_crash.rs::support::module:flow_fixture",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_lifecycle_crash.rs::support::module:spi_harness",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_lifecycle_crash.rs::support::module:worker_fixture",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/worker.rs::::struct:WorkerOperation",
+    "disposition": "retain-align",
+    "target": "worker-lifecycle-foundation",
+    "rationale": "WIP-10 candidate provider-key persistence and real worker event races; requires review and exact packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_lifecycle.rs::support::module:continuation_fixture",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WIP-10 candidate provider-key persistence and real worker event races; requires review and exact packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; accepted WIP-10 design"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/journal.rs::::module:tests@10d1b0eff34c",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WIP-10 revised packet: trusted test-host compilation of verified locked sources, independent executable digests and private artifact copies, and non-launching build/journal regressions. Replaces pathname-only adapter registration binding. No source-generator exception or live evaluation approval.",
+    "source": "docs/work-items/WIP-10.md; 2026-11-03 operator direction to prepare revised packet; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_build.rs::::source-module:crates/worldinterface-runtime/tests/worker_build.rs",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WIP-10 revised packet: trusted test-host compilation of verified locked sources, independent executable digests and private artifact copies, and non-launching build/journal regressions. Replaces pathname-only adapter registration binding. No source-generator exception or live evaluation approval.",
+    "source": "docs/work-items/WIP-10.md; 2026-11-03 operator direction to prepare revised packet; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/worker_build.rs::::source-module:crates/worldinterface-runtime/tests/support/worker_build.rs",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WIP-10 revised packet: trusted test-host compilation of verified locked sources, independent executable digests and private artifact copies, and non-launching build/journal regressions. Replaces pathname-only adapter registration binding. No source-generator exception or live evaluation approval.",
+    "source": "docs/work-items/WIP-10.md; 2026-11-03 operator direction to prepare revised packet; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/worker_build.rs::::struct:WorkerBuild",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WIP-10 revised packet: trusted test-host compilation of verified locked sources, independent executable digests and private artifact copies, and non-launching build/journal regressions. Replaces pathname-only adapter registration binding. No source-generator exception or live evaluation approval.",
+    "source": "docs/work-items/WIP-10.md; 2026-11-03 operator direction to prepare revised packet; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/worker_fixture.rs::::module:build",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WIP-10 revised packet: trusted test-host compilation of verified locked sources, independent executable digests and private artifact copies, and non-launching build/journal regressions. Replaces pathname-only adapter registration binding. No source-generator exception or live evaluation approval.",
+    "source": "docs/work-items/WIP-10.md; 2026-11-03 operator direction to prepare revised packet; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_build.rs::::module:build",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WIP-10 revised packet: trusted test-host compilation of verified locked sources, independent executable digests and private artifact copies, and non-launching build/journal regressions. Replaces pathname-only adapter registration binding. No source-generator exception or live evaluation approval.",
+    "source": "docs/work-items/WIP-10.md; 2026-11-03 operator direction to prepare revised packet; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_build.rs::trusted_build_digests_reject_replaced_paths_without_launch::registration:4b5856338fa1a63b424cb31d0a2dcfa499e38f2f5a18b546f31b2ecd63b08774#1",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WIP-10 revised packet: trusted test-host compilation of verified locked sources, independent executable digests and private artifact copies, and non-launching build/journal regressions. Replaces pathname-only adapter registration binding. No source-generator exception or live evaluation approval.",
+    "source": "docs/work-items/WIP-10.md; 2026-11-03 operator direction to prepare revised packet; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_process.rs::::module:build",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WIP-10 revised packet: trusted test-host compilation of verified locked sources, independent executable digests and private artifact copies, and non-launching build/journal regressions. Replaces pathname-only adapter registration binding. No source-generator exception or live evaluation approval.",
+    "source": "docs/work-items/WIP-10.md; 2026-11-03 operator direction to prepare revised packet; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_process.rs::registry::registration:b9bace7bbcd2ccd282cff5143f759c8ec36853698da4726e94352c40052b7604#1",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WIP-10 revised packet: trusted test-host compilation of verified locked sources, independent executable digests and private artifact copies, and non-launching build/journal regressions. Replaces pathname-only adapter registration binding. No source-generator exception or live evaluation approval.",
+    "source": "docs/work-items/WIP-10.md; 2026-11-03 operator direction to prepare revised packet; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker/connector.rs::::module:tests@10d1b0eff34c",
+    "disposition": "retain-align",
+    "target": "worker-lifecycle-runtime",
+    "rationale": "WIP-10 F-001 remediation: deterministic operation acknowledgement and non-launching publication-contract regression; candidate for source review and renewed exact-packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; WIP-10 review F-001; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker/connector.rs::::struct:WorkerAcknowledgement",
+    "disposition": "retain-align",
+    "target": "worker-lifecycle-runtime",
+    "rationale": "WIP-10 F-001 remediation: deterministic operation acknowledgement and non-launching publication-contract regression; candidate for source review and renewed exact-packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; WIP-10 review F-001; WI-ADR-016"
   }
 ]

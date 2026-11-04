@@ -62,7 +62,7 @@
     "WP-026"
   ],
   "closing_item": "WIP-10",
-  "status": "open",
+  "status": "closed",
   "effective_on": "reviewed-merge-with-adopted-checks",
   "historical_evidence": [],
   "requirement_bindings": [
