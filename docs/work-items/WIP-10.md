@@ -3,11 +3,13 @@
 Candidate implementation under the accepted lifecycle design. AQ remains crates.io
 0.3.0, under WIP-07 operator cycle 47b9f34c-4ffd-4ef6-8849-55aae36a8999;
 imported 0.2.0 source criteria remain unchanged. Only CraftingTable integrates.
-Ordinary worker use remains disabled. G3 is open. The last accepted packet failed
-runtime verification at `abd7a36`. This remediation fixes F-001/F-003, makes every
-crash-cut result visible for F-002, and corrects the evaluation metadata for F-004.
-Renewed exact packet acceptance, passing live tests, all ten adopted checks and
-qualifying review remain required.
+Ordinary worker use remains disabled. G3 is open. Accepted evaluation at `7efff7f`
+passes all 27 crash cuts, all 15 adapter regressions and AB-WI-021. Nine adopted
+checks pass; runtime-test fails on WP-017's pending-only wake assertion and
+WP-018's regenerated agency expiry. The follow-up packet fixes these two test
+harness issues and passes non-live validation. Renewed exact-digest acceptance,
+positive verification and all adopted checks on the final committed candidate,
+and qualifying reviewed integration remain required.
 
 ## Operator scheduling decision
 
@@ -297,8 +299,47 @@ All 266 source bindings, exact supervisor dispositions and measured support
 programs match; no packet-bound source changed to provision this acceptance.
 Ordinary worker use and integration remain outside the approval scope.
 
-Current result: acceptance recorded; live lifecycle, crash, concurrency and
-adapter evaluation and all ten adopted checks are in progress. G3 closure remains
-conditional on passing evidence and qualifying reviewed CraftingTable integration.
+Accepted evaluation result: nine of eleven lifecycle tests pass, all fifteen
+adapter regressions pass (including F-003's path replacement), and AB-WI-021 passes.
+All 27 crash cuts pass, including the four cancel and two cleanup cuts: each
+asserts no blind duplicate journal, process cleanup, retained capacity/quarantine
+before replacement, immutable start identity and authoritative wake replay. This
+provides the previously missing F-002 evidence. F-001 no longer yields Uncertain
+outcomes. All ten adopted checks completed on accepted head `7efff7f`: nine passed;
+runtime-test failed on the same two lifecycle assertions below. AB-WI-021 passed
+in the adopted suite as well. The slow 10,000-admission Flow test passed both in
+the adopted suite (42 Flow tests, 300 seconds total) and alone under a 900-second
+timeout (337 seconds). This was bounded capacity work, not a stalled worker.
+
+WP-017 still fails because the real AQ executor can already have acknowledged
+all pending signals. WP-018 still fails because the generic connector fixture
+regenerates agency binding expiry on each call, so a repeated demand has different
+attribution and correctly hits the runtime's strict Flow request-conflict guard.
+Both failures reproduce in isolated, bounded runs; no runtime guard is relaxed.
+G3 remains open pending these tests, adopted runtime-test and qualifying review.
 Logs and exact results go under this run's
 `scratch/verification/accepted-remediation/`.
+
+
+### Test harness follow-up packet
+
+The next packet pins admission snapshot expiry to the store's immutable creation
+time plus the existing one-day interval. This keeps the same policy/agency/grant/
+resolution facts on retry. A non-launching test verifies canonical snapshot and
+resolved agency identity for all six operations at separate wall-clock instants.
+WP-017 now inspects retained obligations, requires the exact worker event route,
+and still checks authoritative event equality after AQ may have delivered wakes.
+
+Only tests/support/worker_fixture.rs, tests/worker_lifecycle.rs and the coverage/
+request metadata change in the packet. WorkerConnector, executor, outbox, process
+adapter, supervisor dispositions and evaluation scope remain unchanged. The
+accepted receipt and host anchor still authorize only the preceding packet.
+Current result: the follow-up packet is prepared. The new non-launching agency
+regression, runtime formatting and Clippy, all-runtime compile-only build, two
+build/provenance regressions and source hash refresh pass. No fixture/helper was
+launched after these test source changes. The canonical packet digest is
+`fd64db73cb3ab3dc03e731a070c3421778a6908fbada1332ffa33991067798ee`.
+Positive evaluation awaits renewed exact-digest acceptance. All adopted evidence above belongs to the accepted head `7efff7f`; the test-only
+follow-up is committed separately. Live evaluation and adopted checks on that
+final candidate await renewed exact-digest acceptance. No gate closure or passing
+runtime-test result is asserted by this prepared packet.

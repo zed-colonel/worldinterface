@@ -69,35 +69,36 @@ by this request or by the source-to-test mappings.
 
 ## Changes requiring renewed acceptance
 
-The receipt and test-host anchor record only the actual acceptance of packet
-`4602f6c489562f1c73424786ed3180b091b79cfc93e6f51dc242fbddf8aacb53`
-at `747d4f5`, expiring 2026-11-10T19:00:00Z. That packet failed evaluation at
-`abd7a36`; its receipt does not authorize this revision. The current WIP-10
-remediation request authorizes these fixes and preparation of the revised packet.
-Renewed exact-digest acceptance is required before positive live evaluation.
+The receipt and trusted test-host anchor record actual acceptance of packet
+`abd936f432985aae400a6ae3c3d4c3b3ab66ef3eea0abc311fa6e6805c4d6342`
+at `7efff7f`, expiring 2026-11-10T19:00:00Z. That accepted evaluation passed all
+27 crash cuts, all 15 adapter regressions, AB-WI-021 and nine lifecycle tests.
+WP-017 and WP-018 failed on test harness assumptions exposed after publication
+was repaired. Both failures reproduce alone. The prior receipt does not authorize
+this revision; renewed exact-digest acceptance is required before live evaluation.
 
-This revision addresses review findings F-001 through F-004. Every worker success
-path publishes a deterministic request acknowledgement matching the declared
-output artifact, plus authoritative lifecycle state as evidence and the boundary
-record. The executor's publication checks remain intact. A non-launching regression
-passes these publications through the domain's outcome validator for all six
-operations and advancing lifecycle states, and rejects missing boundary records
-and mismatched manifest outputs. Only the path-replacement test's attack copy is
-made writable; private build artifacts and sealed capabilities retain their
-protections. The crash matrix emits a completion line after each of its 27 cuts,
-including cancel and cleanup, so a subsequent authorized run can establish full
-coverage. No crash passage is asserted before that run.
+This revision changes only two test source files and their result/request metadata:
 
-The lifecycle coverage mapping records the prior evaluated failure and points to
-`docs/work-items/WIP-10.md#remediation-evaluation` for the current result. This
-keeps changing result metadata separate from the exact source packet; all test
-and case bindings in the coverage mapping remain hashed. Approval provenance
-continues to be provisioned only through the separate receipt and trusted anchor.
-The result note grants no executable authority.
+- Worker admission fixtures retain the original store creation time plus the same
+  one-day validity interval for policy, agency, grants and resolution facts. A retry
+  no longer changes its exact agency binding by rebuilding it from a new wall clock.
+  The runtime's strict Flow request-conflict check is unchanged. A non-launching
+  regression verifies exact repeated snapshots and equal resolved agency for all
+  six operations, across separate wall-clock instants.
+- WP-017 verifies retained signal obligations, including entries already published
+  and acknowledged by the real AQ executor. It requires a worker observation for
+  the exact provider/run correlation and checks authoritative event equality.
+  Successful wake delivery no longer makes this durability assertion fail by
+  emptying the pending-only view. No outbox or executor behavior changes.
 
-The supervisor sources and exact dispositions are unchanged from the last
-accepted packet. The five-file exception, generic continuation ban, cases,
-tasks, operations, environment and evaluation limits retain their scope.
-The receipt must not be retargeted without actual explicit acceptance of the new
-canonical manifest digest and finite expiry. All adopted live verification and
-qualifying review/integration remain due after that acceptance.
+The lifecycle coverage mapping records the last evaluated failure and points to
+`docs/work-items/WIP-10.md#remediation-evaluation` for the current result. All
+case/test bindings remain hashed. That result note and separate approval receipt
+and host anchor grant no authority beyond actual operator acceptance.
+
+The WorkerConnector publication fix, process adapter, supervisor sources and exact
+dispositions are unchanged from the accepted packet. The five-file exception,
+generic continuation ban, cases, tasks, operations, environment and evaluation
+limits retain their scope. The receipt must not be retargeted without actual
+explicit acceptance of this new canonical manifest digest and finite expiry.
+All adopted verification and qualifying review/integration remain due.

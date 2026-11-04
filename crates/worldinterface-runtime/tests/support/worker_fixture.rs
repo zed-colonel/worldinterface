@@ -142,6 +142,27 @@ impl TrustedClock for HostClock {
         Ok(Timestamp::from_epoch_millis(self.unix_ms())?)
     }
 }
+/// A retry must retain the original agency facts, including their expiry.
+/// The generic connector fixture uses a fresh wall clock for each construction.
+pub fn admission_fixture(
+    descriptor: &ConnectorDescriptor,
+    created_at: &Timestamp,
+) -> (EffectSubmission, AuthorizationSnapshot) {
+    let (submission, mut snapshot) = connectors::fixture(descriptor);
+    let expires =
+        Timestamp::from_epoch_millis(created_at.epoch_millis().unwrap() + 86_400_000).unwrap();
+    snapshot.policy.expires_at = expires.clone();
+    for binding in &mut snapshot.bindings {
+        binding.expires_at = expires.clone();
+    }
+    for grant in &mut snapshot.grants {
+        grant.expires_at = expires.clone();
+    }
+    for fact in &mut snapshot.facts {
+        fact.valid_until = expires.clone();
+    }
+    (submission, snapshot)
+}
 pub type Evidence = EvaluationAuthority<HostEvidence, Approval, HostClock>;
 pub struct Harness {
     pub temp: tempfile::TempDir,
@@ -246,7 +267,8 @@ impl Harness {
     }
     pub fn demand(&self, op: Operation) -> (EffectSubmission, AuthorizationSnapshot, Config) {
         let descriptor = descriptor(op).unwrap();
-        let (mut submission, mut s) = connectors::fixture(&descriptor);
+        let (mut submission, mut s) =
+            admission_fixture(&descriptor, &self.bundle.wi().profile().created_at);
         let request = WorkerRequestV1 {
             schema: 1,
             profile: ProfileBinding::process_proof(),

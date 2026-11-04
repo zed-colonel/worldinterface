@@ -10,6 +10,28 @@ use support::worker_fixture::*;
 use worldinterface_runtime::worker_process::Task;
 use worldinterface_storage::StoreKind;
 use worldinterface_worker::mapping::Operation;
+#[test]
+fn worker_admission_retry_keeps_exact_agency_facts_without_launch() {
+    use worldinterface_domain::agency::{resolve_agency, AuthenticatedCaller};
+    use worldinterface_protocol::{canonical_data, Timestamp};
+    let created = Timestamp::from_epoch_millis(1_000_000).unwrap();
+    for op in worldinterface_runtime::worker::admission::OPERATIONS {
+        let descriptor = worldinterface_runtime::worker::connector::descriptor(op).unwrap();
+        let (first, facts) = admission_fixture(&descriptor, &created);
+        std::thread::sleep(std::time::Duration::from_millis(2));
+        let (retry, repeated) = admission_fixture(&descriptor, &created);
+        assert_eq!(canonical_data(&first).unwrap(), canonical_data(&retry).unwrap());
+        assert_eq!(canonical_data(&facts).unwrap(), canonical_data(&repeated).unwrap());
+        let caller = AuthenticatedCaller::from_trusted_authentication(
+            facts.bindings[0].tenant.clone(),
+            facts.bindings[0].principal.clone(),
+        );
+        assert_eq!(
+            resolve_agency(&caller, &first, &facts.bindings, &created).unwrap(),
+            resolve_agency(&caller, &retry, &repeated.bindings, &created).unwrap()
+        );
+    }
+}
 #[tokio::test]
 async fn wp_017_admitted_worker_intent_precedes_bounded_process_and_wakes_are_durable() {
     let h = Harness::new(Task::Probe, "WP-017", 1500, 65536);
@@ -32,8 +54,12 @@ async fn wp_017_admitted_worker_intent_precedes_bounded_process_and_wakes_are_du
     assert_eq!(b.principal, h.auth.1);
     assert!(h.state().exited);
     assert!(h.state().capacity_reserved);
-    let signals = h.bundle.wi().pending_signals(StoreKind::Fabric, None, 100).unwrap();
-    assert!(!signals.is_empty());
+    // The real executor may already have published and acknowledged these wakes.
+    // Durability includes those retained obligations, not just pending delivery.
+    let signals = h.bundle.wi().signal_obligations(StoreKind::Fabric, None, 100).unwrap();
+    assert!(signals.iter().any(|s| s.event.route.kind
+        == worldinterface_domain::continuation::EventKind::WorkerObservation
+        && s.event.route.correlation == b.event_correlation().unwrap()));
     for s in &signals {
         assert_eq!(
             h.bundle.wi().authoritative_event(StoreKind::Fabric, &s.event.id).unwrap(),
