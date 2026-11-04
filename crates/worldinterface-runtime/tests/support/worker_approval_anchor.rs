@@ -1,17 +1,17 @@
 //! Trusted test-host provisioning, separate from the source packet it approves.
 //! Actual operator guidance supplied at startup of CraftingTable run
-//! 1a5c73bb-1389-486a-8342-b2c9b4c4cc1d on 2026-11-04:
-//! "I approve the evaluation-only packet
-//! 703c30858557e209c9843e1f19a037c9c48f955c58bbc79b2bb67f0193adcec2,
-//! including its supervisor disposition, for seven days after acceptance"
+//! b817a755-c855-4e6a-88f8-4201703b5b78 on 2026-11-04:
+//! "I approve rhe evaluation-only packet
+//! 2b8be6d80b522c4b3bf6776009067ef58030f97ed97ef8a04b7f0704148fc921,
+//! including its updated supervisor disposition, for seven days after acceptance"
 //! The receipt identifies that supplied guidance, not a controller-issued
 //! decision ID or an independently inferred operator UUID. Its finite expiry
 //! conservatively ends 2026-11-11T00:00:00Z, within the accepted seven-day window.
 //!
 //! Accepted canonical packet:
-//! 703c30858557e209c9843e1f19a037c9c48f955c58bbc79b2bb67f0193adcec2.
+//! 2b8be6d80b522c4b3bf6776009067ef58030f97ed97ef8a04b7f0704148fc921.
 //! Includes supervisor-disposition.json's exact worker_process/mod.rs pin
-//! e7670cb6bd56feac3140396fba9708fb50bc8938790f6b873ef2a5bfe1814795.
+//! 259143d2a3465cf8cf90a53dbcd1c9368f8fa3fd8d110c413c11147fb63c7e72.
 //! The original five-file exception and generic continuation ban are unchanged.
 //!
 //! Evaluation only for this candidate's verification and CraftingTable review:
@@ -22,4 +22,4 @@
 //! hostile code, same-user isolation claim, publication, integration or gate
 //! acceptance. These records encode only that supplied acceptance.
 pub const ACCEPTED_RECEIPT_SHA256: Option<&str> =
-    Some("df5d2651699c201148cfe811e867bb742953de25b980c0c2774d933b22e3eaa9");
+    Some("2b5cce1beec92e6359cd3fe2a129e4c324b520883cfd4c586633e26821b8e9c0");
