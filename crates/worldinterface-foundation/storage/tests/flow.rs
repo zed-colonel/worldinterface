@@ -139,6 +139,7 @@ fn flow_projection_tampering_and_old_profiles_reject_without_writes() {
         "local-flow-6",
         "local-continuation-8",
         "local-continuation-9",
+        "local-worker-12",
     ] {
         let t = tempfile::tempdir().unwrap();
         let p = t.path().join("root");

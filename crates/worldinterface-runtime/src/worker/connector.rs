@@ -51,6 +51,9 @@ fn succeeded(request: &WorkerRequestV1, state: &WorkerState) -> Result<PortObser
 }
 
 pub fn descriptor(operation: Operation) -> Result<ConnectorDescriptor> {
+    if !super::admission::OPERATIONS.contains(&operation) {
+        return Err("unsupported process operation".into());
+    }
     let d = ConnectorDescriptor {
         version: 1,
         connector: "wi:process-worker".to_string().try_into()?,
@@ -59,6 +62,7 @@ pub fn descriptor(operation: Operation) -> Result<ConnectorDescriptor> {
                 include_str!("connector.rs"),
                 include_str!("admission.rs"),
                 include_str!("evaluation.rs"),
+                include_str!("catalog.rs"),
                 include_str!("recovery.rs"),
                 include_str!("observation.rs"),
                 include_str!("artifacts.rs"),
@@ -126,7 +130,8 @@ pub struct WorkerRuntime<S> {
     pub(crate) bundle: Arc<StoreBundle>,
     pub(crate) port: Arc<dyn super::provider::AdmittedProvider>,
     adapter: ContentHash,
-    pub(crate) evaluation: Arc<EvaluationVerifier<S>>,
+    pub(crate) evaluation: Option<Arc<EvaluationVerifier<S>>>,
+    recovery_policy: super::catalog::RecoveryPolicy,
     pub(crate) clock: Arc<dyn Clock>,
     executable: ContentHash,
     helper_digest: ContentHash,
@@ -164,7 +169,8 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
             bundle,
             port: Arc::new(port),
             adapter: adapter_digest(),
-            evaluation,
+            recovery_policy: default_recovery_policy(scope.clone())?,
+            evaluation: Some(evaluation),
             clock,
             executable,
             helper_digest,
@@ -196,16 +202,105 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
         super::recovery::recover_quarantines(bundle.wi(), &scope)?;
         Ok(Self {
             bundle,
-            scope,
+            scope: scope.clone(),
             port,
             executable: provenance.implementation,
             helper_digest: provenance.helper,
             adapter: provenance.adapter,
-            evaluation,
+            recovery_policy: default_recovery_policy(scope.clone())?,
+            evaluation: Some(evaluation),
             clock,
             slots,
             live: Mutex::new(BTreeMap::new()),
         })
+    }
+    pub fn with_recovery_policy(mut self, policy: super::catalog::RecoveryPolicy) -> Self {
+        self.recovery_policy = policy;
+        self
+    }
+    fn recovery_authorization(
+        &self,
+        binding: &WorkerBinding,
+        operation: &str,
+    ) -> Result<super::catalog::RecoveryAuthorization> {
+        let caller =
+            worldinterface_domain::agency::AuthenticatedCaller::from_trusted_authentication(
+                self.scope.tenant.clone().try_into()?,
+                self.scope.principal.clone().try_into()?,
+            );
+        super::catalog::authorize_recovery(
+            self.bundle.wi(),
+            &caller,
+            binding,
+            operation,
+            &descriptor(Operation::Start)?.implementation,
+            &self.recovery_policy,
+        )
+    }
+    fn recovery_invocation(
+        &self,
+        bound: &crate::completion::BoundExecution,
+    ) -> Result<Option<(WorkerBinding, WorkerRequestV1)>> {
+        let snapshot = self.bundle.wi().effect_snapshot(&bound.tenant)?;
+        let effect = snapshot.effects.get(&bound.intent).ok_or("worker effect absent")?;
+        let facts = effect.authorization_inputs.as_ref().ok_or("worker authority absent")?;
+        let Some(recovery) = &facts.recovery else {
+            return Ok(None);
+        };
+        let authorization = effect.authorization.as_ref().ok_or("worker authorization absent")?;
+        if authorization.decision != Decision::Allow
+            || ContentHash::of(&canonical_data(authorization)?) != bound.authorization
+        {
+            return Err("worker recovery authorization drift".into());
+        }
+        let demand = super::admission::WorkerEffect::decode(&bound.input)?;
+        let caller =
+            worldinterface_domain::agency::AuthenticatedCaller::from_trusted_authentication(
+                bound.tenant.clone(),
+                effect.agency.binding.principal.clone(),
+            );
+        let verified = super::catalog::authorize_recovery(
+            self.bundle.wi(),
+            &caller,
+            &recovery.binding,
+            demand.worker.operation.name(),
+            &descriptor(Operation::Start)?.implementation,
+            &self.recovery_policy,
+        )?;
+        if verified.policy() != &recovery.policy
+            || verified.operation() != &recovery.operation
+            || recovery.expires_at.epoch_millis()? <= self.clock.unix_ms()
+        {
+            return Err("recovery policy drift or expiry".into());
+        }
+        let launch =
+            self.bundle.wi().worker_launch(&recovery.binding)?.ok_or("worker launch absent")?;
+        let operations: Vec<(WorkerRequestV1, worldinterface_worker::mapping::ResolvedWorkerV1)> =
+            serde_json::from_slice(&launch.operations)?;
+        let original = operations
+            .iter()
+            .find(|(q, _)| q == &demand.worker)
+            .ok_or("recovery request binding mismatch")?;
+        let inputs: Vec<_> = demand
+            .inputs
+            .iter()
+            .map(|r| (format!("input:{}", r.content.as_str()), &r.content, r.size))
+            .collect();
+        if ContentHash::of(&worldinterface_worker::encode(&inputs)?) != demand.worker.input_digest {
+            return Err("recovery input binding mismatch".into());
+        }
+        if original.1.configuration_digest
+            != AuthorizedRun::configuration_digest(&demand.task, &demand.exports)?
+            || original.1.controls_digest != AuthorizedRun::controls_digest(&demand.controls)?
+            || self
+                .state(&recovery.binding)?
+                .artifact_policy
+                .first()
+                .is_some_and(|p| p.inputs != demand.inputs)
+        {
+            return Err("recovery configuration or scope mismatch".into());
+        }
+        Ok(Some((recovery.binding.clone(), demand.worker)))
     }
     pub fn connector(self: &Arc<Self>, operation: Operation) -> Result<WorkerConnector<S>> {
         Ok(WorkerConnector { runtime: self.clone(), descriptor: descriptor(operation)? })
@@ -218,6 +313,25 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
     }
     fn transition(&self, b: &WorkerBinding, fact: WorkerFact) -> Result<()> {
         self.bundle.wi().record_worker_transition(&self.state(b)?, fact)
+    }
+    fn check_registration(
+        &self,
+        record: &worldinterface_capability::process_catalog::ProcessRegistrationRecord,
+    ) -> Result<()> {
+        let worldinterface_capability::process_catalog::ProcessRegistrationRecord::Evaluation {
+            binding,
+            ..
+        } = record
+        else {
+            return Err("ordinary use disabled".into());
+        };
+        super::catalog::verify_registration(
+            record,
+            binding,
+            self.evaluation.as_ref().ok_or("admission approval absent")?,
+            self.clock.unix_ms(),
+        )?;
+        Ok(())
     }
     fn invoke(
         &self,
@@ -256,7 +370,26 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
             admitted.provider_operation.clone().ok_or("worker provider operation absent")?;
         let mut live = self.live.lock().map_err(|_| "worker registry unavailable")?;
         let fresh = if matches!(op, Operation::Provision | Operation::Start) {
-            root.reserve_start(binding.clone(), self.slots)?
+            let connectors = super::admission::OPERATIONS
+                .iter()
+                .map(|op| {
+                    ConnectorRegistry::new(vec![descriptor(*op)?])?.bindings().map_err(Into::into)
+                })
+                .collect::<Result<Vec<_>>>()?
+                .into_iter()
+                .flatten()
+                .collect();
+            root.reserve_catalog_start(
+                WorkerLaunchRecord {
+                    version: 1,
+                    binding: binding.clone(),
+                    catalog: admitted.catalog.clone(),
+                    implementation: descriptor(Operation::Start)?.implementation,
+                    connectors,
+                    operations: canonical_data(&admitted.authorization.operations)?,
+                },
+                self.slots,
+            )?
         } else {
             if self.state(binding)?.binding != *binding {
                 return Err("worker operation binding mismatch".into());
@@ -308,7 +441,10 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
         }
         if fresh {
             let operations = admitted.authorization.operations.clone();
-            self.port.admit(admitted.authorization)?;
+            root.fence_worker_dispatch(binding, &admitted.catalog, || {
+                self.check_registration(&admitted.registration)?;
+                self.port.admit(admitted.authorization)
+            })?;
             live.insert(key.clone(), operations);
         }
         if cancellation.is_cancelled() || op == Operation::Terminate {
@@ -334,9 +470,15 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
                 .unwrap()
                 .0
                 .clone();
-            self.port.submit(&provision)?;
+            root.fence_worker_dispatch(binding, &admitted.catalog, || {
+                self.check_registration(&admitted.registration)?;
+                self.port.submit(&provision)
+            })?;
         }
-        let result = self.port.submit(&request);
+        let result = root.fence_worker_dispatch(binding, &admitted.catalog, || {
+            self.check_registration(&admitted.registration)?;
+            self.port.submit(&request)
+        });
         if result
             .as_ref()
             .is_ok_and(|a| *a == worldinterface_worker::ports::Acknowledgment::Uncertain)
@@ -446,7 +588,10 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
         succeeded(&request, &self.state(binding)?)
     }
     pub fn read_artifact(&self, binding: &WorkerBinding, reference: &str) -> Result<Vec<u8>> {
-        self.evaluation.verify(self.clock.unix_ms())?;
+        self.evaluation
+            .as_ref()
+            .ok_or("admission approval absent")?
+            .verify(self.clock.unix_ms())?;
         if binding.tenant.as_str() != self.scope.tenant
             || binding.principal.as_str() != self.scope.principal
             || self.state(binding)?.binding != *binding
@@ -468,18 +613,17 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
     }
 
     pub fn recovery_evidence(&self, binding: &WorkerBinding) -> Result<Option<CleanupReport>> {
-        self.evaluation.verify(self.clock.unix_ms())?;
+        self.recovery_authorization(binding, "inspect")?;
         if self.state(binding)?.binding != *binding
             || binding.tenant.as_str() != self.scope.tenant
             || binding.principal.as_str() != self.scope.principal
         {
             return Err("worker recovery scope mismatch".into());
         }
-        let live = self.live.lock().map_err(|_| "worker registry unavailable")?;
-        let operations = live
-            .get(&(binding.provider.clone(), binding.run.clone()))
-            .ok_or("worker recovery requires original operation bindings")?;
-        self.port.recover_cleanup(binding.provider.as_str(), binding.run.as_str(), operations)
+        let launch = self.bundle.wi().worker_launch(binding)?.ok_or("worker launch absent")?;
+        let operations: Vec<(WorkerRequestV1, worldinterface_worker::mapping::ResolvedWorkerV1)> =
+            serde_json::from_slice(&launch.operations)?;
+        self.port.recover_cleanup(binding.provider.as_str(), binding.run.as_str(), &operations)
     }
     pub fn cleanup_report(&self, binding: &WorkerBinding) -> Result<Option<CleanupReport>> {
         if binding.tenant.as_str() != self.scope.tenant
@@ -501,12 +645,48 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
             return Err("worker polling realization mismatch".into());
         }
         if self.state(binding)?.stop_requested {
-            self.port.stop(binding.provider.as_str(), binding.run.as_str())?;
+            let _ = self.port.stop(binding.provider.as_str(), binding.run.as_str());
         }
-        if let Err(error) = self.evaluation.verify(self.clock.unix_ms()) {
+        self.recovery_authorization(binding, "inspect")?;
+        if self.evaluation.as_ref().is_none_or(|e| e.verify(self.clock.unix_ms()).is_err())
+            || self
+                .bundle
+                .wi()
+                .worker_provider_quarantine(&binding.tenant, &binding.provider)?
+                .is_some()
+        {
+            if self
+                .bundle
+                .wi()
+                .worker_provider_quarantine(&binding.tenant, &binding.provider)?
+                .is_none()
+            {
+                let launch =
+                    self.bundle.wi().worker_launch(binding)?.ok_or("worker launch absent")?;
+                self.bundle.wi().quarantine_worker_provider(WorkerProviderQuarantine {
+                    version: 1,
+                    tenant: binding.tenant.clone(),
+                    provider: binding.provider.clone(),
+                    revision: 1,
+                    affected: vec![launch.catalog],
+                    reason: "registration-invalidated".to_string().try_into()?,
+                    evidence: binding.realization.clone(),
+                    attributed_to: binding.principal.clone(),
+                })?;
+            }
             super::recovery::quarantine(self.bundle.wi(), binding)?;
-            self.port.stop(binding.provider.as_str(), binding.run.as_str())?;
-            return Err(error);
+            let _ = self.port.stop(binding.provider.as_str(), binding.run.as_str());
+        }
+        // A reopened port cannot reconstruct handles or credentials. It reads only
+        // the original private cleanup journal, never adopts a numeric process id.
+        if !self
+            .live
+            .lock()
+            .map_err(|_| "worker registry unavailable")?
+            .contains_key(&(binding.provider.clone(), binding.run.clone()))
+        {
+            let _ = self.recovery_evidence(binding);
+            return Ok(());
         }
         for observed in self.port.observe(binding.provider.as_str(), binding.run.as_str())? {
             let route = worldinterface_domain::continuation::EventRoute {
@@ -555,10 +735,16 @@ impl<S: TrustedWorkerBuild + 'static> Connector for WorkerConnector<S> {
         Ok(ResolveObservation { resource: r.resource })
     }
     fn prepare(&self, r: &AuthorizedInvocation) -> PrepareOutcome {
+        if self.runtime.recovery_invocation(r).is_ok_and(|v| v.is_some()) {
+            return PrepareOutcome::Ready;
+        }
+        let Some(evaluation) = self.runtime.evaluation.as_ref() else {
+            return PrepareOutcome::PermanentRejection;
+        };
         match derive(
             self.runtime.bundle.wi(),
             r,
-            &self.runtime.evaluation,
+            evaluation,
             self.runtime.clock.unix_ms(),
             &self.runtime.executable,
             &self.runtime.helper_digest,
@@ -571,10 +757,24 @@ impl<S: TrustedWorkerBuild + 'static> Connector for WorkerConnector<S> {
         }
     }
     fn invoke(&self, r: PreparedInvocation, c: &CancellationToken) -> Result<PortObservation> {
+        if let Some((binding, request)) = self.runtime.recovery_invocation(&r)? {
+            if request.operation.name() != self.descriptor.operation.as_str() {
+                return Err("recovery operation mismatch".into());
+            }
+            if request.operation == Operation::Terminate {
+                let state = self.runtime.state(&binding)?;
+                if !state.stop_requested && !state.cleanup_confirmed {
+                    self.runtime.bundle.wi().request_worker_stop(&state)?;
+                }
+                let _ = self.runtime.port.stop(binding.provider.as_str(), binding.run.as_str());
+            }
+            self.runtime.poll(&binding)?;
+            return succeeded(&request, &self.runtime.state(&binding)?);
+        }
         let admitted = derive(
             self.runtime.bundle.wi(),
             &r,
-            &self.runtime.evaluation,
+            self.runtime.evaluation.as_ref().ok_or("admission approval absent")?,
             self.runtime.clock.unix_ms(),
             &self.runtime.executable,
             &self.runtime.helper_digest,
@@ -586,7 +786,7 @@ impl<S: TrustedWorkerBuild + 'static> Connector for WorkerConnector<S> {
         self.runtime.invoke(admitted, c)
     }
     fn reconcile(&self, r: ReconcileRequest) -> Result<ReconcileOutcome> {
-        self.runtime.evaluation.verify(self.runtime.clock.unix_ms())?;
+        self.check_recovery(&r)?;
         let root = self.runtime.bundle.wi();
         let effect = root
             .effect_snapshot(&r.tenant)?
@@ -612,6 +812,17 @@ impl<S: TrustedWorkerBuild + 'static> Connector for WorkerConnector<S> {
             .ok_or("worker realization absent")?;
         let mut state =
             root.worker_snapshot(&r.tenant, &w.provider, &w.run)?.ok_or("worker absent")?;
+        if self
+            .runtime
+            .evaluation
+            .as_ref()
+            .is_none_or(|e| e.verify(self.runtime.clock.unix_ms()).is_err())
+            || root.worker_provider_quarantine(&r.tenant, &w.provider)?.is_some()
+        {
+            super::recovery::quarantine(root, &state.binding)?;
+            state = self.runtime.state(&state.binding)?;
+        }
+        self.runtime.recovery_authorization(&state.binding, "reconcile")?;
         if state.quarantined
             && self.descriptor.operation.as_str() == "collect_artifacts"
             && !matches!(state.collection, WorkerCollection::Published(_))
@@ -640,22 +851,18 @@ impl<S: TrustedWorkerBuild + 'static> Connector for WorkerConnector<S> {
                             operation.clone(),
                         )?;
                     } else {
-                        let request = self
-                            .runtime
-                            .live
-                            .lock()
-                            .map_err(|_| "worker registry unavailable")?
-                            .get(&(w.provider.clone(), w.run.clone()))
-                            .and_then(|operations| {
-                                operations
-                                    .iter()
-                                    .find(|(q, _)| {
-                                        q.operation.name() == operation.operation.as_str()
-                                    })
-                                    .map(|(q, _)| q.clone())
-                            });
+                        let launch =
+                            root.worker_launch(&state.binding)?.ok_or("worker launch absent")?;
+                        let operations: Vec<(
+                            WorkerRequestV1,
+                            worldinterface_worker::mapping::ResolvedWorkerV1,
+                        )> = serde_json::from_slice(&launch.operations)?;
+                        let request = operations
+                            .iter()
+                            .find(|(q, _)| q.operation.name() == operation.operation.as_str())
+                            .map(|(q, _)| q.clone());
                         if let Some(request) = request {
-                            if self.runtime.port.acknowledged(&request)? {
+                            if self.runtime.port.acknowledged(&request).unwrap_or(false) {
                                 self.runtime.poll(&state.binding)?;
                                 root.acknowledge_worker_operation(
                                     state.binding.clone(),
@@ -686,7 +893,35 @@ impl<S: TrustedWorkerBuild + 'static> Connector for WorkerConnector<S> {
         super::recovery::quarantine(root, &state.binding)?;
         Ok(ReconcileOutcome::Unknown(evidence))
     }
+    fn check_recovery(&self, r: &ReconcileRequest) -> Result<()> {
+        let root = self.runtime.bundle.wi();
+        let snapshot = root.effect_snapshot(&r.tenant)?;
+        let effect = snapshot.effects.get(&r.intent).ok_or("recovery effect absent")?;
+        let w = effect
+            .authorization_inputs
+            .as_ref()
+            .and_then(|f| f.worker.as_ref())
+            .ok_or("recovery realization absent")?;
+        let state = root
+            .worker_snapshot(&r.tenant, &w.provider, &w.run)?
+            .ok_or("recovery worker absent")?;
+        if effect.agency.binding.principal.as_str() != self.runtime.scope.principal
+            || effect.resolution.as_ref().map(|x| &x.resolved.resource) != Some(&r.resource)
+            || effect.resolution.as_ref().and_then(|x| x.resolved.connector_execution.as_ref())
+                != Some(&r.execution)
+            || r.execution.binding.descriptor.operation != self.descriptor.operation
+        {
+            return Err("recovery connector identity mismatch".into());
+        }
+        self.runtime.recovery_authorization(&state.binding, "reconcile")?;
+        let launch = root.worker_launch(&state.binding)?.ok_or("recovery launch absent")?;
+        if !launch.connectors.contains(&r.execution.binding) {
+            return Err("original recovery implementation mismatch".into());
+        }
+        Ok(())
+    }
     fn cancel(&self, r: ReconcileRequest) -> Result<CancelObservation> {
+        self.check_recovery(&r)?;
         let root = self.runtime.bundle.wi();
         let effect = root
             .effect_snapshot(&r.tenant)?
@@ -717,6 +952,53 @@ impl<S: TrustedWorkerBuild + 'static> Connector for WorkerConnector<S> {
         // A stop obligation survives grant/approval expiry; it cannot authorize fresh work.
         let _ = self.runtime.port.stop(w.provider.as_str(), w.run.as_str());
         Ok(CancelObservation::Requested)
+    }
+}
+
+fn default_recovery_policy(scope: HostScope) -> Result<super::catalog::RecoveryPolicy> {
+    let implementation = descriptor(Operation::Start)?.implementation;
+    super::catalog::RecoveryPolicy::new(
+        scope,
+        implementation.clone(),
+        vec![implementation],
+        ContentHash::of(b"wi-worker-recovery:1"),
+    )
+}
+/// A recovery-only host has no executable registration or admission approval.
+pub struct RecoveryOnly;
+impl TrustedApprovals for RecoveryOnly {
+    fn accepted(&self, _: &super::evaluation::OperatorApprovalReceipt, _: u64) -> Result<bool> {
+        Ok(false)
+    }
+}
+impl TrustedWorkerBuild for RecoveryOnly {
+    fn verify_build(&self, _: &ContentHash, _: &ContentHash, _: &ContentHash) -> Result<()> {
+        Err("recovery cannot admit builds".into())
+    }
+}
+impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
+    pub fn install_recovery(
+        bundle: Arc<StoreBundle>,
+        scope: HostScope,
+        root: &Path,
+        policy: super::catalog::RecoveryPolicy,
+        clock: Arc<dyn Clock>,
+    ) -> Result<Self> {
+        let helper_digest = ContentHash::of(b"no-recovery-launch-helper");
+        let port = ProcessWorkerPort::new_recovery(scope.clone(), root, clock.clone())?;
+        Ok(Self {
+            bundle,
+            port: Arc::new(port),
+            adapter: adapter_digest(),
+            evaluation: None,
+            recovery_policy: policy,
+            clock,
+            executable: ContentHash::of(b"no-executable"),
+            helper_digest,
+            slots: 0,
+            scope,
+            live: Mutex::new(BTreeMap::new()),
+        })
     }
 }
 

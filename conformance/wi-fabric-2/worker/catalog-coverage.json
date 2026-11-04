@@ -1,0 +1,103 @@
+{
+  "version": 1,
+  "scope": "wi/WI-10/process-catalog",
+  "runtime_pass_asserted": false,
+  "assigned_cases": {
+    "WP-007": [
+      "catalog_registration_is_exact_bounded_and_inspection_grants_no_authority",
+      "catalog_ordinary_records_require_provenance_and_never_enable_or_self_promote",
+      "wp_007_exact_operator_packet_runs_only_supported_bounded_evaluation_through_wi_aq"
+    ],
+    "WP-032": [
+      "catalog_registration_is_exact_bounded_and_inspection_grants_no_authority",
+      "catalog_quarantine_fences_stale_admission_and_survives_cleanup_replacement_rebuild_and_reopen",
+      "catalog_recovery_is_exact_to_caller_binding_operation_and_current_policy",
+      "wp_032_drift_denies_new_admissions_before_allocation_through_real_wi_aq",
+      "wp_032_quarantine_revocation_and_recovery_only_reopen_keep_inspect_terminate_and_aq_reconcile",
+      "catalog_quarantine_serializes_with_dispatch_and_fences_every_later_dispatch",
+      "catalog_recovery_only_construction_requires_no_approval_or_executable_files"
+    ]
+  },
+  "required_obligations": {
+    "registration": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "catalog_registration_is_exact_bounded_and_inspection_grants_no_authority"
+      }
+    ],
+    "qualification": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "catalog_ordinary_records_require_provenance_and_never_enable_or_self_promote"
+      }
+    ],
+    "drift": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "catalog_registration_is_exact_bounded_and_inspection_grants_no_authority"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "wp_032_drift_denies_new_admissions_before_allocation_through_real_wi_aq"
+      }
+    ],
+    "quarantine": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "catalog_quarantine_fences_stale_admission_and_survives_cleanup_replacement_rebuild_and_reopen"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "wp_032_quarantine_revocation_and_recovery_only_reopen_keep_inspect_terminate_and_aq_reconcile"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "catalog_quarantine_serializes_with_dispatch_and_fences_every_later_dispatch"
+      }
+    ],
+    "recovery": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "catalog_recovery_is_exact_to_caller_binding_operation_and_current_policy"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "wp_032_quarantine_revocation_and_recovery_only_reopen_keep_inspect_terminate_and_aq_reconcile"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "catalog_recovery_only_construction_requires_no_approval_or_executable_files"
+      }
+    ],
+    "live-wi-aq": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "wp_007_exact_operator_packet_runs_only_supported_bounded_evaluation_through_wi_aq"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "wp_032_drift_denies_new_admissions_before_allocation_through_real_wi_aq"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "wp_032_quarantine_revocation_and_recovery_only_reopen_keep_inspect_terminate_and_aq_reconcile"
+      }
+    ]
+  },
+  "non_live_filter": "catalog_",
+  "positive_evaluation_target": "worker_catalog",
+  "gate": "WI-WORKER-G4 remains open for WIP-16"
+}

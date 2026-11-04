@@ -66,7 +66,17 @@ fn baseline_records_have_precise_g1_coverage_and_no_source_result_claims() {
     let allowed = baseline.into_iter().chain(["WI-WORKER-G3"]).collect::<BTreeSet<_>>();
     assert!(closed.is_subset(&allowed));
     assert_eq!(r.cases.iter().find(|c| c.id == "WP-002").unwrap().tests.len(), 3);
-    assert_eq!(r.cases.iter().find(|c| c.id == "WP-007").unwrap().tests.len(), 3);
+    assert_eq!(
+        r.cases
+            .iter()
+            .find(|c| c.id == "WP-007")
+            .unwrap()
+            .tests
+            .iter()
+            .filter(|t| t.manifest != "crates/worldinterface-runtime/Cargo.toml")
+            .count(),
+        3
+    );
 }
 #[test]
 fn wip02_admission_cases_preserve_scope_evidence_and_wip04_closes_g2() {
@@ -606,5 +616,38 @@ fn wi10_lifecycle_requires_all_cases_approval_tests_and_exact_executable_evidenc
             !proof::validate_worker_lifecycle(t.path(), &index).unwrap().is_empty(),
             "{mutation}"
         );
+    }
+}
+
+#[test]
+fn catalog_coverage_rejects_missing_cases_obligations_ignored_or_fabricated_tests() {
+    let t = fixture();
+    let (_, _, tests) = records();
+    let path = t.path().join("conformance/wi-fabric-2/worker/catalog-coverage.json");
+    let original = read(&path).unwrap();
+    assert!(proof::validate_worker_catalog(t.path(), &tests).unwrap().is_empty());
+    for mode in ["case", "obligation", "ignored", "fabricated", "claim", "wrong-package"] {
+        let mut v = original.clone();
+        let mut index = tests.clone();
+        let reference: TestRef =
+            serde_json::from_value(v["required_obligations"]["registration"][0].clone()).unwrap();
+        match mode {
+            "case" => {
+                v["assigned_cases"].as_object_mut().unwrap().remove("WP-032");
+            }
+            "obligation" => {
+                v["required_obligations"].as_object_mut().unwrap().remove("recovery");
+            }
+            "ignored" => {
+                index.insert(reference, 0);
+            }
+            "fabricated" => v["assigned_cases"]["WP-032"][0] = json!("invented_test"),
+            "wrong-package" => {
+                v["required_obligations"]["registration"][0]["package"] = json!("other")
+            }
+            _ => v["runtime_pass_asserted"] = json!(true),
+        }
+        fs::write(&path, serde_json::to_vec(&v).unwrap()).unwrap();
+        assert!(!proof::validate_worker_catalog(t.path(), &index).unwrap().is_empty(), "{mode}");
     }
 }

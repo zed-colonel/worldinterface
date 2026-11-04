@@ -205,7 +205,10 @@ pub fn resume(root: &StoreRoot, b: &WorkerBinding) -> Result<()> {
         WorkerCollection::Prepared(p) => p.clone(),
         _ => return Err("collection not recoverable".into()),
     };
-    if s.quarantined || s.stop_requested {
+    if s.quarantined
+        || s.stop_requested
+        || root.worker_provider_quarantine(&b.tenant, &b.provider)?.is_some()
+    {
         quarantine(
             root,
             b,
@@ -242,22 +245,25 @@ pub fn resume(root: &StoreRoot, b: &WorkerBinding) -> Result<()> {
             return Err("snapshot quarantined".into());
         }
     };
-    let mut exports = BTreeMap::new();
-    for (reference, bytes) in snapshots {
-        let id = identity(b, &prepared, reference.as_str())?;
+    let (exports, manifest, id) = root.fence_worker_publication(b, || {
+        let mut exports = BTreeMap::new();
+        for (reference, bytes) in snapshots {
+            let id = identity(b, &prepared, reference.as_str())?;
+            root.stage_publication(id.clone(), b.tenant.clone(), &bytes)?;
+            exports.insert(reference, root.publish_staged(&id, &bytes)?);
+        }
+        let bytes = canonical_data(&PublishedManifest {
+            version: 2,
+            binding: b.clone(),
+            prepared: prepared.clone(),
+            exports: exports.clone(),
+        })?;
+        let id = identity(b, &prepared, "wi:manifest")?;
         root.stage_publication(id.clone(), b.tenant.clone(), &bytes)?;
-        exports.insert(reference, root.publish_staged(&id, &bytes)?);
-    }
-    let bytes = canonical_data(&PublishedManifest {
-        version: 2,
-        binding: b.clone(),
-        prepared: prepared.clone(),
-        exports: exports.clone(),
+        let manifest = root.publish_staged(&id, &bytes)?;
+        worker_boundary("worker-manifest-published");
+        Ok((exports, manifest, id))
     })?;
-    let id = identity(b, &prepared, "wi:manifest")?;
-    root.stage_publication(id.clone(), b.tenant.clone(), &bytes)?;
-    let manifest = root.publish_staged(&id, &bytes)?;
-    worker_boundary("worker-manifest-published");
     let current = state(root, b)?;
     let event = DurableEvent::new(
         EventRoute {

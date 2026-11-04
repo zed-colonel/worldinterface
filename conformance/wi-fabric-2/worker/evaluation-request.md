@@ -1,3 +1,11 @@
+# WIP-12 exact-packet evaluation request
+
+The completed candidate adds WP-007 and WP-032 catalog registration, exact policy and measurement verification, durable provider quarantine and separately authorized recovery through WI/AQ after recovery-only reopen. Accept only the exact canonical digest printed by the refresh script, including the updated supervisor disposition, for evaluation of this candidate and CraftingTable review. The maximum requested validity is seven days from actual acceptance. Ordinary use, production credentials, hostile code, publication, integration and gate closure remain excluded. The existing receipt and test-host anchor cover the predecessor packet only; the recorded willingness to accept WIP-12 does not accept unseen bytes.
+
+Non-live validation and the source-bound build must complete before requesting the digest acceptance. All changed sources/contracts and these limits are bound in the packet. A changed covered byte requires renewed acceptance.
+
+## Historical predecessor request
+
 # WIP-11 collection reconciliation exact-packet evaluation request
 
 Explicit operator acceptance is requested for the canonical SHA-256 printed by

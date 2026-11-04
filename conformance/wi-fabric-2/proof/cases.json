@@ -127,13 +127,24 @@
       "owning_item": "WIP-01",
       "status": "implemented",
       "coverage_refs": [
+        "conformance/wi-fabric-2/worker/catalog-coverage.json",
         "contracts/wi10-obligations.json"
       ],
       "tests": [
         {
-          "manifest": "tools/wi-contract-check/Cargo.toml",
-          "package": "wi-contract-check",
-          "test": "wp007_unqualified_and_evaluation_table"
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "catalog_ordinary_records_require_provenance_and_never_enable_or_self_promote"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "catalog_registration_is_exact_bounded_and_inspection_grants_no_authority"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_007_exact_operator_packet_runs_only_supported_bounded_evaluation_through_wi_aq"
         },
         {
           "manifest": "tools/wi-contract-check/Cargo.toml",
@@ -144,6 +155,11 @@
           "manifest": "tools/wi-contract-check/Cargo.toml",
           "package": "wi-contract-check",
           "test": "quarantine_and_discovery"
+        },
+        {
+          "manifest": "tools/wi-contract-check/Cargo.toml",
+          "package": "wi-contract-check",
+          "test": "wp007_unqualified_and_evaluation_table"
         }
       ]
     },
@@ -861,9 +877,47 @@
       "source_record_sha256": "5e5293135a46bb7be0b4779d57602659d8130c3d0ec4e9b01fba9e11b81e3869",
       "gate": "WI-WORKER-G4",
       "owning_item": "WIP-12",
-      "status": "planned",
-      "coverage_refs": [],
-      "tests": []
+      "status": "implemented",
+      "coverage_refs": [
+        "conformance/wi-fabric-2/worker/catalog-coverage.json"
+      ],
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "catalog_quarantine_fences_stale_admission_and_survives_cleanup_replacement_rebuild_and_reopen"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "catalog_quarantine_serializes_with_dispatch_and_fences_every_later_dispatch"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "catalog_recovery_is_exact_to_caller_binding_operation_and_current_policy"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "catalog_recovery_only_construction_requires_no_approval_or_executable_files"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "catalog_registration_is_exact_bounded_and_inspection_grants_no_authority"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_032_drift_denies_new_admissions_before_allocation_through_real_wi_aq"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_032_quarantine_revocation_and_recovery_only_reopen_keep_inspect_terminate_and_aq_reconcile"
+        }
+      ]
     },
     {
       "id": "WP-033",

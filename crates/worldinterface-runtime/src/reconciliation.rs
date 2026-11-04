@@ -300,7 +300,18 @@ impl<P: Connector, C: TrustedClock> ReconciliationHandler<P, C> {
                 CaseStatus::StillUnknown,
                 vec![diagnostic(b"automatic reconciliation exhausted")],
             )?;
-        } else if !policy.automatic || check_installed(&self.connector, &case.execution).is_err() {
+        } else if !policy.automatic
+            || (check_installed(&self.connector, &case.execution).is_err()
+                && self
+                    .connector
+                    .check_recovery(&ReconcileRequest {
+                        tenant: case.tenant.clone(),
+                        intent: case.intent.clone(),
+                        execution: case.execution.clone(),
+                        resource: case.resource.clone(),
+                    })
+                    .is_err())
+        {
             self.observe(
                 &caller,
                 &case,

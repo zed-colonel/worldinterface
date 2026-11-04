@@ -11681,5 +11681,187 @@
     "target": "worker-artifact-seam-test-evidence",
     "rationale": "WIP-11 candidate disposition: run-bound artifacts, private collection journal, authoritative publication/quarantine and nonblocking provider seam; effective through qualifying source review.",
     "source": "docs/work-items/WIP-11.md; accepted WIP-11 design; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-foundation/capability/src/lib.rs::::module:process_catalog",
+    "disposition": "retain-align",
+    "target": "worker-process-catalog",
+    "rationale": "WIP-12 candidate disposition: exact catalog records, independent provenance, durable tenant/provider quarantine and separately authorized recovery. Effective through qualifying source review; no ordinary admission or promotion.",
+    "source": "docs/work-items/WIP-12.md; accepted WIP-12 design; WI-ADR-017"
+  },
+  {
+    "id": "crates/worldinterface-foundation/capability/src/process_catalog.rs::::enum:ProcessRegistrationRecord",
+    "disposition": "retain-align",
+    "target": "worker-process-catalog",
+    "rationale": "WIP-12 candidate disposition: exact catalog records, independent provenance, durable tenant/provider quarantine and separately authorized recovery. Effective through qualifying source review; no ordinary admission or promotion.",
+    "source": "docs/work-items/WIP-12.md; accepted WIP-12 design; WI-ADR-017"
+  },
+  {
+    "id": "crates/worldinterface-foundation/capability/src/process_catalog.rs::::source-module:crates/worldinterface-foundation/capability/src/process_catalog.rs",
+    "disposition": "retain-align",
+    "target": "worker-process-catalog",
+    "rationale": "WIP-12 candidate disposition: exact catalog records, independent provenance, durable tenant/provider quarantine and separately authorized recovery. Effective through qualifying source review; no ordinary admission or promotion.",
+    "source": "docs/work-items/WIP-12.md; accepted WIP-12 design; WI-ADR-017"
+  },
+  {
+    "id": "crates/worldinterface-foundation/capability/src/process_catalog.rs::::struct:OrdinaryQualificationRecord",
+    "disposition": "retain-align",
+    "target": "worker-process-catalog",
+    "rationale": "WIP-12 candidate disposition: exact catalog records, independent provenance, durable tenant/provider quarantine and separately authorized recovery. Effective through qualifying source review; no ordinary admission or promotion.",
+    "source": "docs/work-items/WIP-12.md; accepted WIP-12 design; WI-ADR-017"
+  },
+  {
+    "id": "crates/worldinterface-foundation/capability/src/process_catalog.rs::::struct:ProcessCatalogBinding",
+    "disposition": "retain-align",
+    "target": "worker-process-catalog",
+    "rationale": "WIP-12 candidate disposition: exact catalog records, independent provenance, durable tenant/provider quarantine and separately authorized recovery. Effective through qualifying source review; no ordinary admission or promotion.",
+    "source": "docs/work-items/WIP-12.md; accepted WIP-12 design; WI-ADR-017"
+  },
+  {
+    "id": "crates/worldinterface-foundation/capability/src/process_catalog.rs::::struct:ProcessProfileInspection",
+    "disposition": "retain-align",
+    "target": "worker-process-catalog",
+    "rationale": "WIP-12 candidate disposition: exact catalog records, independent provenance, durable tenant/provider quarantine and separately authorized recovery. Effective through qualifying source review; no ordinary admission or promotion.",
+    "source": "docs/work-items/WIP-12.md; accepted WIP-12 design; WI-ADR-017"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/authorization.rs::::struct:WorkerRecovery",
+    "disposition": "retain-align",
+    "target": "worker-process-catalog",
+    "rationale": "WIP-12 candidate disposition: exact catalog records, independent provenance, durable tenant/provider quarantine and separately authorized recovery. Effective through qualifying source review; no ordinary admission or promotion.",
+    "source": "docs/work-items/WIP-12.md; accepted WIP-12 design; WI-ADR-017"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/worker.rs::::struct:WorkerLaunchRecord",
+    "disposition": "retain-align",
+    "target": "worker-process-catalog",
+    "rationale": "WIP-12 candidate disposition: exact catalog records, independent provenance, durable tenant/provider quarantine and separately authorized recovery. Effective through qualifying source review; no ordinary admission or promotion.",
+    "source": "docs/work-items/WIP-12.md; accepted WIP-12 design; WI-ADR-017"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/worker.rs::::struct:WorkerProviderQuarantine",
+    "disposition": "retain-align",
+    "target": "worker-process-catalog",
+    "rationale": "WIP-12 candidate disposition: exact catalog records, independent provenance, durable tenant/provider quarantine and separately authorized recovery. Effective through qualifying source review; no ordinary admission or promotion.",
+    "source": "docs/work-items/WIP-12.md; accepted WIP-12 design; WI-ADR-017"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker/catalog.rs::::source-module:crates/worldinterface-runtime/src/worker/catalog.rs",
+    "disposition": "retain-align",
+    "target": "worker-process-catalog",
+    "rationale": "WIP-12 candidate disposition: exact catalog records, independent provenance, durable tenant/provider quarantine and separately authorized recovery. Effective through qualifying source review; no ordinary admission or promotion.",
+    "source": "docs/work-items/WIP-12.md; accepted WIP-12 design; WI-ADR-017"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker/catalog.rs::::struct:RecoveryAuthorization",
+    "disposition": "retain-align",
+    "target": "worker-process-catalog",
+    "rationale": "WIP-12 candidate disposition: exact catalog records, independent provenance, durable tenant/provider quarantine and separately authorized recovery. Effective through qualifying source review; no ordinary admission or promotion.",
+    "source": "docs/work-items/WIP-12.md; accepted WIP-12 design; WI-ADR-017"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker/catalog.rs::::struct:RecoveryPolicy",
+    "disposition": "retain-align",
+    "target": "worker-process-catalog",
+    "rationale": "WIP-12 candidate disposition: exact catalog records, independent provenance, durable tenant/provider quarantine and separately authorized recovery. Effective through qualifying source review; no ordinary admission or promotion.",
+    "source": "docs/work-items/WIP-12.md; accepted WIP-12 design; WI-ADR-017"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker/catalog.rs::::struct:VerifiedRegistration",
+    "disposition": "retain-align",
+    "target": "worker-process-catalog",
+    "rationale": "WIP-12 candidate disposition: exact catalog records, independent provenance, durable tenant/provider quarantine and separately authorized recovery. Effective through qualifying source review; no ordinary admission or promotion.",
+    "source": "docs/work-items/WIP-12.md; accepted WIP-12 design; WI-ADR-017"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker/connector.rs::::struct:RecoveryOnly",
+    "disposition": "retain-align",
+    "target": "worker-process-catalog",
+    "rationale": "WIP-12 candidate disposition: exact catalog records, independent provenance, durable tenant/provider quarantine and separately authorized recovery. Effective through qualifying source review; no ordinary admission or promotion.",
+    "source": "docs/work-items/WIP-12.md; accepted WIP-12 design; WI-ADR-017"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker/mod.rs::::module:catalog",
+    "disposition": "retain-align",
+    "target": "worker-process-catalog",
+    "rationale": "WIP-12 candidate disposition: exact catalog records, independent provenance, durable tenant/provider quarantine and separately authorized recovery. Effective through qualifying source review; no ordinary admission or promotion.",
+    "source": "docs/work-items/WIP-12.md; accepted WIP-12 design; WI-ADR-017"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/worker_fixture.rs::::connector:AmbiguousConnector < C >",
+    "disposition": "test-evidence",
+    "target": "worker-process-catalog",
+    "rationale": "WIP-12 candidate disposition: exact catalog records, independent provenance, durable tenant/provider quarantine and separately authorized recovery. Effective through qualifying source review; no ordinary admission or promotion.",
+    "source": "docs/work-items/WIP-12.md; accepted WIP-12 design; WI-ADR-017"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/worker_fixture.rs::::struct:AmbiguousConnector",
+    "disposition": "test-evidence",
+    "target": "worker-process-catalog",
+    "rationale": "WIP-12 candidate disposition: exact catalog records, independent provenance, durable tenant/provider quarantine and separately authorized recovery. Effective through qualifying source review; no ordinary admission or promotion.",
+    "source": "docs/work-items/WIP-12.md; accepted WIP-12 design; WI-ADR-017"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_catalog.rs::::module:support",
+    "disposition": "test-evidence",
+    "target": "worker-process-catalog",
+    "rationale": "WIP-12 candidate disposition: exact catalog records, independent provenance, durable tenant/provider quarantine and separately authorized recovery. Effective through qualifying source review; no ordinary admission or promotion.",
+    "source": "docs/work-items/WIP-12.md; accepted WIP-12 design; WI-ADR-017"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_catalog.rs::::source-module:crates/worldinterface-runtime/tests/worker_catalog.rs",
+    "disposition": "test-evidence",
+    "target": "worker-process-catalog",
+    "rationale": "WIP-12 candidate disposition: exact catalog records, independent provenance, durable tenant/provider quarantine and separately authorized recovery. Effective through qualifying source review; no ordinary admission or promotion.",
+    "source": "docs/work-items/WIP-12.md; accepted WIP-12 design; WI-ADR-017"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_catalog.rs::::struct:Trust",
+    "disposition": "test-evidence",
+    "target": "worker-process-catalog",
+    "rationale": "WIP-12 candidate disposition: exact catalog records, independent provenance, durable tenant/provider quarantine and separately authorized recovery. Effective through qualifying source review; no ordinary admission or promotion.",
+    "source": "docs/work-items/WIP-12.md; accepted WIP-12 design; WI-ADR-017"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_catalog.rs::::trait:ErrorString",
+    "disposition": "test-evidence",
+    "target": "worker-process-catalog",
+    "rationale": "WIP-12 candidate disposition: exact catalog records, independent provenance, durable tenant/provider quarantine and separately authorized recovery. Effective through qualifying source review; no ordinary admission or promotion.",
+    "source": "docs/work-items/WIP-12.md; accepted WIP-12 design; WI-ADR-017"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_catalog.rs::support::module:connectors",
+    "disposition": "test-evidence",
+    "target": "worker-process-catalog",
+    "rationale": "WIP-12 candidate disposition: exact catalog records, independent provenance, durable tenant/provider quarantine and separately authorized recovery. Effective through qualifying source review; no ordinary admission or promotion.",
+    "source": "docs/work-items/WIP-12.md; accepted WIP-12 design; WI-ADR-017"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_catalog.rs::support::module:continuation_fixture",
+    "disposition": "test-evidence",
+    "target": "worker-process-catalog",
+    "rationale": "WIP-12 candidate disposition: exact catalog records, independent provenance, durable tenant/provider quarantine and separately authorized recovery. Effective through qualifying source review; no ordinary admission or promotion.",
+    "source": "docs/work-items/WIP-12.md; accepted WIP-12 design; WI-ADR-017"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_catalog.rs::support::module:flow_fixture",
+    "disposition": "test-evidence",
+    "target": "worker-process-catalog",
+    "rationale": "WIP-12 candidate disposition: exact catalog records, independent provenance, durable tenant/provider quarantine and separately authorized recovery. Effective through qualifying source review; no ordinary admission or promotion.",
+    "source": "docs/work-items/WIP-12.md; accepted WIP-12 design; WI-ADR-017"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_catalog.rs::support::module:spi_harness",
+    "disposition": "test-evidence",
+    "target": "worker-process-catalog",
+    "rationale": "WIP-12 candidate disposition: exact catalog records, independent provenance, durable tenant/provider quarantine and separately authorized recovery. Effective through qualifying source review; no ordinary admission or promotion.",
+    "source": "docs/work-items/WIP-12.md; accepted WIP-12 design; WI-ADR-017"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_catalog.rs::support::module:worker_fixture",
+    "disposition": "test-evidence",
+    "target": "worker-process-catalog",
+    "rationale": "WIP-12 candidate disposition: exact catalog records, independent provenance, durable tenant/provider quarantine and separately authorized recovery. Effective through qualifying source review; no ordinary admission or promotion.",
+    "source": "docs/work-items/WIP-12.md; accepted WIP-12 design; WI-ADR-017"
   }
 ]

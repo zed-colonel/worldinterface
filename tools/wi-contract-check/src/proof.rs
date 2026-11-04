@@ -417,6 +417,11 @@ fn coverage(root: &Path, id: &str) -> Result<(Vec<String>, BTreeSet<TestRef>)> {
     if let Some(names) = v["assigned_cases"].get(id) {
         add(path, RUNTIME, "worldinterface-runtime", serde_json::from_value(names.clone())?);
     }
+    let path = "conformance/wi-fabric-2/worker/catalog-coverage.json";
+    let v = read(&root.join(path))?;
+    if let Some(names) = v["assigned_cases"].get(id) {
+        add(path, RUNTIME, "worldinterface-runtime", serde_json::from_value(names.clone())?);
+    }
     refs.sort();
     Ok((refs, tests))
 }
@@ -733,6 +738,7 @@ pub fn check(root: &Path) -> Result<Vec<Finding>> {
     findings.extend(validate_flow_integration(root, &tests)?);
     findings.extend(validate_continuations(root, &tests)?);
     findings.extend(validate_worker_lifecycle(root, &tests)?);
+    findings.extend(validate_worker_catalog(root, &tests)?);
     Ok(findings)
 }
 
@@ -1161,4 +1167,56 @@ pub fn validate_worker_lifecycle(root: &Path, tests: &TestIndex) -> Result<Vec<F
         }
     }
     Ok(findings)
+}
+
+/// Catalog claims require exact adopted, non-ignored runtime references.
+pub fn validate_worker_catalog(root: &Path, tests: &TestIndex) -> Result<Vec<Finding>> {
+    let path = "conformance/wi-fabric-2/worker/catalog-coverage.json";
+    let v = read(&root.join(path))?;
+    let assigned: BTreeMap<String, Vec<String>> =
+        serde_json::from_value(v["assigned_cases"].clone())?;
+    let obligations: BTreeMap<String, Vec<TestRef>> =
+        serde_json::from_value(v["required_obligations"].clone())?;
+    let expected = BTreeSet::from([
+        "registration",
+        "qualification",
+        "drift",
+        "quarantine",
+        "recovery",
+        "live-wi-aq",
+    ]);
+    let invalid = v["version"] != 1
+        || v["scope"] != "wi/WI-10/process-catalog"
+        || v["runtime_pass_asserted"] != false
+        || assigned.keys().map(String::as_str).collect::<BTreeSet<_>>()
+            != BTreeSet::from(["WP-007", "WP-032"])
+        || obligations.keys().map(String::as_str).collect::<BTreeSet<_>>() != expected
+        || obligations.values().any(|refs| {
+            refs.is_empty()
+                || refs.iter().any(|t| {
+                    t.manifest != RUNTIME
+                        || t.package != "worldinterface-runtime"
+                        || tests.get(t) != Some(&1)
+                })
+        })
+        || assigned.values().any(|names| {
+            names.is_empty()
+                || names.iter().any(|name| {
+                    !obligations
+                        .values()
+                        .flatten()
+                        .any(|t| t.test == *name && tests.get(t) == Some(&1))
+                })
+        });
+    Ok(if invalid {
+        vec![finding(
+            "PROOF-WI12",
+            path,
+            "matrix",
+            "WIP-12",
+            "exact catalog cases and executable obligations required",
+        )]
+    } else {
+        vec![]
+    })
 }

@@ -612,3 +612,33 @@ fn control_provenance_is_typed_bounded_and_content_bound() {
     v["mapping"]["observed_controls"] = json!([{"control":"independent-vm","value":true}]);
     assert!(serde_json::from_value::<Sandbox>(v).is_err());
 }
+
+#[test]
+fn process_catalog_contract_preserves_exact_operations_bindings_and_recovery_only_quarantine() {
+    use wi_contract_check::catalog::{validate_process_catalog, ProcessCatalogContract};
+    let original = read(&root().join("contracts/worker-process-catalog.json")).unwrap();
+    let contract: ProcessCatalogContract = serde_json::from_value(original.clone()).unwrap();
+    assert!(validate_process_catalog(&contract).is_empty());
+    for field in [
+        "operations",
+        "records",
+        "binding_fields",
+        "recovery_operations",
+        "quarantine_scope",
+        "ordinary_use",
+        "self_promotion",
+        "runtime_pass_asserted",
+        "store_profile",
+    ] {
+        let mut v = original.clone();
+        match field {
+            "ordinary_use" | "self_promotion" | "runtime_pass_asserted" => v[field] = json!(true),
+            "quarantine_scope" | "store_profile" => v[field] = json!("wrong"),
+            _ => {
+                v[field].as_array_mut().unwrap().pop();
+            }
+        }
+        let changed = serde_json::from_value(v).unwrap();
+        assert!(!validate_process_catalog(&changed).is_empty(), "{field}");
+    }
+}

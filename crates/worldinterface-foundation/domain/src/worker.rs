@@ -281,3 +281,28 @@ impl WorkerPreparedCollection {
         .try_into()
     }
 }
+
+/// Immutable prelaunch recovery material, committed with capacity reservation.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct WorkerLaunchRecord {
+    pub version: u32,
+    pub binding: WorkerBinding,
+    pub catalog: ContentHash,
+    pub implementation: ContentHash,
+    pub connectors: Vec<worldinterface_protocol::ConnectorBinding>,
+    pub operations: Vec<u8>,
+}
+/// Provider quarantine is independent of run names and replacement registrations.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct WorkerProviderQuarantine {
+    pub version: u32,
+    pub tenant: OpaqueRef,
+    pub provider: OpaqueRef,
+    pub revision: u64,
+    pub affected: Vec<ContentHash>,
+    pub reason: OpaqueRef,
+    pub evidence: ContentHash,
+    pub attributed_to: PrincipalId,
+}

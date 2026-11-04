@@ -44,13 +44,58 @@ use worldinterface_worker::{
 #[derive(Clone)]
 pub struct Approval {
     expected: OperatorApprovalReceipt,
+    pub revoked: Arc<std::sync::atomic::AtomicBool>,
+    approved_policies: Arc<std::sync::Mutex<BTreeSet<ContentHash>>>,
     packet: ContentHash,
     fixture: ContentHash,
     helper: ContentHash,
 }
 impl TrustedApprovals for Approval {
+    fn registered(
+        &self,
+        record: &worldinterface_capability::process_catalog::ProcessRegistrationRecord,
+        _: u64,
+    ) -> Result<bool> {
+        let worldinterface_capability::process_catalog::ProcessRegistrationRecord::Evaluation {
+            binding,
+            approval,
+        } = record
+        else {
+            return Ok(false);
+        };
+        let environment_bytes = include_bytes!(
+            "../../../../conformance/wi-fabric-2/worker/evaluation-environment.json"
+        );
+        let environment: serde_json::Value = serde_json::from_slice(environment_bytes)?;
+        if binding.environment != ContentHash::of(environment_bytes) {
+            return Ok(false);
+        }
+        for (path, expected) in environment["support_binary_sha256"].as_object().unwrap() {
+            if ContentHash::of(&std::fs::read(path)?).as_str() != expected.as_str().unwrap() {
+                return Ok(false);
+            }
+        }
+        Ok(approval == &self.packet
+            && binding.fixture == self.packet
+            && binding.wi == self.packet
+            && self.approved_policies.lock().unwrap().contains(&binding.policy)
+            && binding.profile.as_str() == "process-managed-proof-1"
+            && binding.profile_definition.as_str()
+                == worldinterface_worker::profile::DEFINITION_SHA256
+            && binding.aq == dependencies_digest()
+            && binding.dependencies == [dependencies_digest()]
+            && ((binding.executable == self.fixture
+                && binding.helper == self.helper
+                && binding.adapter == adapter_digest())
+                || (binding.executable == seam::provenance().implementation
+                    && binding.helper == seam::provenance().helper
+                    && binding.adapter == seam::provenance().adapter)))
+    }
     fn accepted(&self, r: &OperatorApprovalReceipt, now: u64) -> Result<bool> {
-        Ok(r == &self.expected && r.manifest == self.packet && now < r.expires_unix_ms)
+        Ok(r == &self.expected
+            && r.manifest == self.packet
+            && now < r.expires_unix_ms
+            && !self.revoked.load(std::sync::atomic::Ordering::SeqCst))
     }
 }
 impl TrustedWorkerBuild for Approval {
@@ -102,7 +147,14 @@ pub fn evaluation() -> Arc<EvaluationVerifier<Approval>> {
     let built = build::current();
     assert_eq!(built.packet, packet);
     let (fixture, helper) = (built.fixture_digest.clone(), built.helper_digest.clone());
-    let trusted = Approval { expected: receipt.clone(), packet, fixture, helper };
+    let trusted = Approval {
+        revoked: Arc::new(std::sync::atomic::AtomicBool::new(false)),
+        approved_policies: Arc::new(std::sync::Mutex::new(BTreeSet::new())),
+        expected: receipt.clone(),
+        packet,
+        fixture,
+        helper,
+    };
     Arc::new(EvaluationVerifier { manifest, receipt, trusted, source_root: source })
 }
 #[derive(Clone)]
@@ -199,7 +251,7 @@ impl<H: actionqueue_executor_local::handler::ExecutorHandler>
 pub type Evidence = EvaluationAuthority<HostEvidence, Approval, HostClock>;
 pub struct Harness {
     pub temp: tempfile::TempDir,
-    root: std::path::PathBuf,
+    pub root: std::path::PathBuf,
     pub bundle: Arc<StoreBundle>,
     pub runtime: Arc<WorkerRuntime<Approval>>,
     pub evaluation: Arc<EvaluationVerifier<Approval>>,
@@ -207,6 +259,9 @@ pub struct Harness {
     pub exports: Vec<Export>,
     pub inputs: Vec<ArtifactRef>,
     pub seam: bool,
+    pub recovery: bool,
+    pub ambiguous_start: bool,
+    pub submission_generation: u64,
     pub case: String,
     pub controls: ControlEvidenceV1,
     pub auth: Auth,
@@ -308,6 +363,9 @@ impl Harness {
             exports: vec![],
             inputs: vec![],
             seam: false,
+            recovery: false,
+            ambiguous_start: false,
+            submission_generation: 0,
             case: case.into(),
             controls,
             auth,
@@ -356,6 +414,93 @@ impl Harness {
         );
         self.seam = true;
         (self, provider)
+    }
+    pub fn reopen_recovery_only(self) -> Self {
+        let Self {
+            temp,
+            root,
+            bundle,
+            runtime,
+            evaluation,
+            task,
+            exports,
+            inputs,
+            seam,
+            recovery: _,
+            ambiguous_start,
+            submission_generation,
+            case,
+            controls,
+            auth,
+            run,
+        } = self;
+        drop(runtime);
+        drop(bundle);
+        let bundle = Arc::new(StoreBundle::open(&root.join("bundle")).unwrap());
+        let scope = HostScope { tenant: auth.0.as_str().into(), principal: auth.1.as_str().into() };
+        let implementation = descriptor(Operation::Start).unwrap().implementation;
+        let policy = worldinterface_runtime::worker::catalog::RecoveryPolicy::new(
+            scope.clone(),
+            implementation.clone(),
+            vec![implementation],
+            ContentHash::of(b"wi-worker-recovery:1"),
+        )
+        .unwrap();
+        let runtime = Arc::new(
+            WorkerRuntime::install_recovery(
+                bundle.clone(),
+                scope,
+                &root.join("process"),
+                policy,
+                Arc::new(HostClock),
+            )
+            .unwrap(),
+        );
+        Self {
+            temp,
+            root,
+            bundle,
+            runtime,
+            evaluation,
+            task,
+            exports,
+            inputs,
+            seam,
+            recovery: true,
+            ambiguous_start,
+            submission_generation: submission_generation + 1,
+            case,
+            controls,
+            auth,
+            run,
+        }
+    }
+    pub fn rejects_helper_drift(&self) {
+        let built = build::current();
+        let mut changed = built.helper_bytes.clone();
+        changed.push(0);
+        let path = self.temp.path().join("changed-helper");
+        std::fs::write(&path, changed).unwrap();
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(&path, std::fs::Permissions::from_mode(0o700)).unwrap();
+        let result = WorkerRuntime::install(
+            self.bundle.clone(),
+            HostScope {
+                tenant: self.auth.0.as_str().into(),
+                principal: self.auth.1.as_str().into(),
+            },
+            &self.root.join("process"),
+            &built.fixture,
+            &path,
+            self.evaluation.clone(),
+            Arc::new(HostClock),
+            1,
+        );
+        assert!(result
+            .err()
+            .expect("changed helper accepted")
+            .to_string()
+            .contains("unverified test-host build"));
     }
     pub fn binding(&self) -> WorkerBinding {
         self.bundle
@@ -410,7 +555,9 @@ impl Harness {
         let bytes = canonical_data(&effect).unwrap();
         submission.input.artifact = self.bundle.wi().publish(self.auth.0.clone(), &bytes).unwrap();
         submission.client_request_id =
-            format!("worker-flow-{}-{}", self.run, op.name()).try_into().unwrap();
+            format!("worker-flow-{}-{}-{}", self.run, op.name(), self.submission_generation)
+                .try_into()
+                .unwrap();
         submission.effect_class = descriptor.effect_class.clone();
         submission.resource.namespace = descriptor.resource_namespace.clone();
         submission.budget.timeout_millis = 60_000;
@@ -545,6 +692,16 @@ impl Harness {
         qualification.expires_at = s.policy.expires_at.clone();
         s.worker = Some(w);
         s.fixture = Some(qualification);
+        if self.recovery {
+            s.fixture = None;
+            s.recovery = Some(WorkerRecovery {
+                binding: self.binding(),
+                operation: op.name().to_string().try_into().unwrap(),
+                policy: worldinterface_protocol::ContentHash::of(b"wi-worker-recovery:1"),
+                expires_at: s.policy.expires_at.clone(),
+                evidence: s.worker.as_ref().unwrap().evidence.clone(),
+            });
+        }
         s.required_outputs = vec![self
             .bundle
             .wi()
@@ -597,6 +754,12 @@ impl Harness {
             submitting_authority: authority.clone(),
             run_authority: authority,
         });
+        self.evaluation
+            .trusted
+            .approved_policies
+            .lock()
+            .unwrap()
+            .insert(ContentHash::of(&canonical_data(&s.policy).unwrap()));
         (submission, s, config)
     }
     pub async fn operation(&self, op: Operation) {
@@ -611,14 +774,26 @@ impl Harness {
         .await;
     }
     pub async fn operation_expect(&self, op: Operation, expected: FlowOutcome) {
-        let (submission, snapshot, config) = self.demand(op);
+        let snapshot = self.demand(op).1;
+        assert_eq!(self.operation_snapshot(op, snapshot).await, expected);
+    }
+    pub async fn operation_snapshot(
+        &self,
+        op: Operation,
+        snapshot: AuthorizationSnapshot,
+    ) -> FlowOutcome {
+        let (submission, _, config) = self.demand(op);
         let evidence = Evidence {
             base: HostEvidence(snapshot.clone()),
             evaluation: self.evaluation.clone(),
             clock: HostClock,
         };
         let resolver = Resolver(snapshot.facts[0].clone());
-        let connector = self.runtime.connector(op).unwrap();
+        let connector = AmbiguousConnector {
+            inner: self.runtime.connector(op).unwrap(),
+            ambiguous: self.ambiguous_start && op == Operation::Start,
+            recovery_registry: false,
+        };
         let handler = FlowAttemptHandler {
             effect: EffectAttemptHandler {
                 bundle: self.bundle.clone(),
@@ -646,7 +821,13 @@ impl Harness {
             connector: descriptor(op).unwrap().connector,
             operation: op.name().to_string().try_into().unwrap(),
         };
-        let id = service.submit_direct(&(), submission, selection, &config, &mut queue).unwrap();
+        let id = match service.submit_direct(&(), submission, selection, &config, &mut queue) {
+            Ok(id) => id,
+            Err(_) => {
+                queue.shutdown().unwrap();
+                return FlowOutcome::Denied;
+            }
+        };
         let duplicate = service
             .submit_direct(
                 &(),
@@ -661,18 +842,18 @@ impl Harness {
             .unwrap();
         assert_eq!(id, duplicate, "duplicate admission changed run identity");
         let deadline = Instant::now() + Duration::from_secs(30);
-        loop {
+        let outcome = loop {
             let _ = queue.tick().await.unwrap();
             let state = self.bundle.wi().flow_run_snapshot(&self.auth.0, &id).unwrap();
             let run = &state.runs[&id];
             if run.outcome.is_some() {
-                assert_eq!(run.outcome, Some(expected), "{run:?}");
-                break;
+                break run.outcome.clone().unwrap();
             }
             assert!(Instant::now() < deadline, "worker Flow deadline: {run:?}");
             tokio::time::sleep(Duration::from_millis(2)).await;
-        }
+        };
         queue.shutdown().unwrap();
+        outcome
     }
     pub async fn reconcile_start(&self) {
         self.reconcile_operation(Operation::Start).await;
@@ -695,7 +876,11 @@ impl Harness {
         let original = self.bundle.wi().effect_receipts(&self.auth.0, &intent).unwrap();
         let handler = ReconciliationHandler {
             bundle: self.bundle.clone(),
-            connector: self.runtime.connector(op).unwrap(),
+            connector: AmbiguousConnector {
+                inner: self.runtime.connector(op).unwrap(),
+                ambiguous: false,
+                recovery_registry: self.recovery,
+            },
             clock: HostClock,
         };
         let mut queue = QueueEngine::bootstrap(&self.bundle, handler, host()).unwrap();
@@ -754,4 +939,72 @@ fn adapter_bytes() -> Vec<u8> {
 /// This only builds reviewed source; it does not launch a worker or grant approval.
 pub fn prebuild() {
     let _ = build::current();
+}
+
+/// Model an acknowledged process start whose WI response was lost, without
+/// changing the provider operation or launching it twice.
+struct AmbiguousConnector<C> {
+    inner: C,
+    ambiguous: bool,
+    recovery_registry: bool,
+}
+impl<C: worldinterface_runtime::connector::Connector> worldinterface_runtime::connector::Connector
+    for AmbiguousConnector<C>
+{
+    fn descriptor(&self) -> &ConnectorDescriptor {
+        self.inner.descriptor()
+    }
+    fn registry_digest(&self) -> Result<ContentHash> {
+        if self.recovery_registry {
+            Ok(ContentHash::of(b"reviewed-recovery-only-registry"))
+        } else {
+            self.inner.registry_digest()
+        }
+    }
+    fn check_recovery(
+        &self,
+        r: &worldinterface_runtime::connector::ReconcileRequest,
+    ) -> Result<()> {
+        self.inner.check_recovery(r)
+    }
+    fn validate_artifact(&self, s: &ContentHash, b: &[u8]) -> Result<()> {
+        self.inner.validate_artifact(s, b)
+    }
+    fn resolve(
+        &self,
+        r: worldinterface_runtime::connector::ResolveRequest,
+    ) -> Result<worldinterface_runtime::connector::ResolveObservation> {
+        self.inner.resolve(r)
+    }
+    fn prepare(
+        &self,
+        r: &worldinterface_runtime::connector::AuthorizedInvocation,
+    ) -> worldinterface_runtime::connector::PrepareOutcome {
+        self.inner.prepare(r)
+    }
+    fn invoke(
+        &self,
+        r: worldinterface_runtime::connector::PreparedInvocation,
+        c: &actionqueue_executor_local::handler::CancellationToken,
+    ) -> Result<worldinterface_runtime::completion::PortObservation> {
+        let mut result = self.inner.invoke(r, c)?;
+        if self.ambiguous {
+            result.commit = worldinterface_domain::effect::CommitObservation::Unknown;
+            result.outcome = ExecutionOutcome::Uncertain;
+            result.outputs.clear();
+        }
+        Ok(result)
+    }
+    fn reconcile(
+        &self,
+        r: worldinterface_runtime::connector::ReconcileRequest,
+    ) -> Result<worldinterface_runtime::connector::ReconcileOutcome> {
+        self.inner.reconcile(r)
+    }
+    fn cancel(
+        &self,
+        r: worldinterface_runtime::connector::ReconcileRequest,
+    ) -> Result<worldinterface_runtime::connector::CancelObservation> {
+        self.inner.cancel(r)
+    }
 }

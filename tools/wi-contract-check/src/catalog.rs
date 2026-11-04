@@ -317,7 +317,16 @@ pub fn validate_disposition(
         let paths = surface_paths(root, expected, id, &sources);
         let actual: BTreeSet<_> = family.surfaces.iter().map(|s| s.path.clone()).collect();
         if actual != paths || family.surfaces.len() != paths.len() {
-            fail(&mut f, "CAT-SURFACE", id, "incomplete or duplicate removal surfaces (including shared exports, schemas, tests, docs and dependencies)");
+            fail(
+                &mut f,
+                "CAT-SURFACE",
+                id,
+                &format!(
+                    "incomplete or duplicate removal surfaces: missing {:?}; unexpected {:?}",
+                    paths.difference(&actual).collect::<Vec<_>>(),
+                    actual.difference(&paths).collect::<Vec<_>>()
+                ),
+            );
         }
         for s in &family.surfaces {
             if !paths.contains(&s.path) {
@@ -1059,10 +1068,77 @@ pub fn check(root: &Path) -> Result<Vec<Finding>> {
     let items = inventory::generate(root)?;
     let mut f = validate_disposition(root, &items, &d)?;
     f.extend(validate_catalog(&c));
+    let process: ProcessCatalogContract =
+        serde_json::from_value(read(&root.join("contracts/worker-process-catalog.json"))?)?;
+    f.extend(validate_process_catalog(&process));
     f.extend(validate_sandbox(&s));
     f.extend(validate_obligations(root, &o)?);
     f.extend(validate_forbidden_coverage(root, &d)?);
     Ok(f)
+}
+
+/// WIP-12 runtime contract; the historical WI-10 inventory remains definition-only.
+#[derive(Clone, Debug, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct ProcessCatalogContract {
+    pub version: u32,
+    pub scope: String,
+    pub operations: Vec<String>,
+    pub records: Vec<String>,
+    pub binding_fields: Vec<String>,
+    pub recovery_operations: Vec<String>,
+    pub quarantine_scope: String,
+    pub store_profile: String,
+    pub ordinary_use: bool,
+    pub self_promotion: bool,
+    pub runtime_pass_asserted: bool,
+}
+pub fn validate_process_catalog(c: &ProcessCatalogContract) -> Vec<Finding> {
+    if c.version != 1
+        || c.scope != "wi/WI-10/process-catalog"
+        || !exact(
+            &c.operations,
+            &["provision", "start", "inspect", "terminate", "collect_artifacts", "release"],
+        )
+        || !exact(&c.records, &["evaluation", "ordinary"])
+        || !exact(
+            &c.binding_fields,
+            &[
+                "profile",
+                "profile_definition",
+                "descriptor",
+                "adapter",
+                "executable",
+                "helper",
+                "dependencies",
+                "configuration",
+                "policy",
+                "controls",
+                "aq",
+                "wi",
+                "environment",
+                "fixture",
+                "inputs",
+                "exports",
+            ],
+        )
+        || !exact(&c.recovery_operations, &["inspect", "terminate", "reconcile"])
+        || c.quarantine_scope != "tenant-provider"
+        || c.store_profile != "local-worker-13"
+        || c.ordinary_use
+        || c.self_promotion
+        || c.runtime_pass_asserted
+    {
+        vec![finding(
+            "CATALOG-PROCESS",
+            "contracts/worker-process-catalog.json",
+            "contract",
+            "WIP-12",
+            "exact registration, drift, quarantine and recovery boundaries required",
+        )]
+    } else {
+        vec![]
+    }
 }
 
 #[cfg(test)]

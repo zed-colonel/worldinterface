@@ -47,6 +47,15 @@ pub fn verify_snapshot(
     at: &Timestamp,
 ) -> Result<VerifiedSnapshot> {
     let snapshot = authority.current_snapshot(tenant, submission)?;
+    if let Some(recovery) = &snapshot.recovery {
+        let b = &recovery.binding;
+        if &b.tenant != tenant
+            || root.worker_snapshot(tenant, &b.provider, &b.run)?.is_none_or(|s| s.binding != *b)
+            || root.worker_launch(b)?.is_none()
+        {
+            return Err("recovery requires exact durable worker".into());
+        }
+    }
     for reference in snapshot
         .bindings
         .iter()
@@ -55,6 +64,7 @@ pub fn verify_snapshot(
         .chain(snapshot.approvals.iter().map(|a| &a.evidence))
         .chain(snapshot.facts.iter().map(|f| &f.evidence))
         .chain(snapshot.worker.iter().map(|w| &w.evidence))
+        .chain(snapshot.recovery.iter().map(|r| &r.evidence))
         .chain(snapshot.fixture.iter().map(|q| &q.evidence))
         .chain(snapshot.qualification.iter().map(|q| &q.evidence))
     {
