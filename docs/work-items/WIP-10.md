@@ -3,13 +3,12 @@
 Candidate implementation under the accepted lifecycle design. AQ remains crates.io
 0.3.0, under WIP-07 operator cycle 47b9f34c-4ffd-4ef6-8849-55aae36a8999;
 imported 0.2.0 source criteria remain unchanged. Only CraftingTable integrates.
-Ordinary worker use remains disabled. G3 is open. Accepted evaluation at `7efff7f`
-passes all 27 crash cuts, all 15 adapter regressions and AB-WI-021. Nine adopted
-checks pass; runtime-test fails on WP-017's pending-only wake assertion and
-WP-018's regenerated agency expiry. The follow-up packet fixes these two test
-harness issues and passes non-live validation. Renewed exact-digest acceptance,
-positive verification and all adopted checks on the final committed candidate,
-and qualifying reviewed integration remain required.
+Ordinary worker use remains disabled. The accepted follow-up packet passes all
+12 lifecycle tests, all 27 crash cuts, all 15 adapter regressions and AB-WI-021.
+The G3 closure record is a review candidate, effective only through qualifying
+reviewed CraftingTable integration with all adopted checks passing on the exact
+committed head. No packet-bound source changed after acceptance. The final
+verification results are retained in this run's scratch/verification/final-worker-proof.
 
 ## Operator scheduling decision
 
@@ -332,17 +331,16 @@ and still checks authoritative event equality after AQ may have delivered wakes.
 
 Only tests/support/worker_fixture.rs, tests/worker_lifecycle.rs and the coverage/
 request metadata change in the packet. WorkerConnector, executor, outbox, process
-adapter, supervisor dispositions and evaluation scope remain unchanged. The
-accepted receipt and host anchor still authorize only the preceding packet.
-Current result: the follow-up packet is prepared. The new non-launching agency
+adapter, supervisor dispositions and evaluation scope remain unchanged. At preparation, the
+receipt and host anchor still authorized only the preceding packet.
+Preparation result: the follow-up packet was prepared. The new non-launching agency
 regression, runtime formatting and Clippy, all-runtime compile-only build, two
-build/provenance regressions and source hash refresh pass. No fixture/helper was
-launched after these test source changes. The canonical packet digest is
+build/provenance regressions and source hash refresh pass. No fixture/helper had
+been launched after these test source changes during preparation. The canonical packet digest is
 `fd64db73cb3ab3dc03e731a070c3421778a6908fbada1332ffa33991067798ee`.
-Positive evaluation awaits renewed exact-digest acceptance. All adopted evidence above belongs to the accepted head `7efff7f`; the test-only
-follow-up is committed separately. Live evaluation and adopted checks on that
-final candidate await renewed exact-digest acceptance. No gate closure or passing
-runtime-test result is asserted by this prepared packet.
+At preparation, positive evaluation awaited renewed acceptance. The adopted
+evidence above belongs to predecessor `7efff7f`; this test-only follow-up was
+committed separately at `d5a654f`. Its subsequent acceptance and results follow.
 
 
 ### Follow-up acceptance and current result, 2026-11-04
@@ -356,9 +354,36 @@ and trusted host anchor record only that actual acceptance. All 266 source
 bindings, both supervisor dispositions and measured support programs match.
 No packet-bound source changed to provision acceptance.
 
-Current result: corrected live lifecycle, crash, adapter and capacity verification
-is in progress. After passing focused evidence, the candidate G3 record and this
-note will be prepared for review, with every adopted check run on the committed
-candidate. Gate acceptance still requires qualifying reviewed CraftingTable
-integration; ordinary worker use remains disabled. Logs and reports are retained
-in this run's `scratch/verification/final-worker-proof/`.
+Current result: all 12 lifecycle tests pass, including the corrected WP-017 and
+WP-018 assertions and the non-launching agency regression. All 27 crash cuts pass
+(2 tests), all 15 process adapter tests pass, and AB-WI-021 passes. These runs use
+the accepted source packet through real WI admission, the existing executor on
+crates.io AQ 0.3.0 and the durable outbox. The recorded packet digest and all 266
+file bindings remain unchanged. Approval and gate/result records are separate
+from the packet as designed.
+
+F-001's strict publication contract is satisfied by deterministic declared
+acknowledgements, lifecycle evidence and boundary records; the executor is
+unchanged. F-002's complete matrix now reaches every cancel and cleanup cut,
+with at most one launch journal, quarantine/capacity retention before replacement,
+confirmed bounded cleanup and authoritative event/wake replay. F-003's attack
+copy is writable while private build artifact mode and sealed execution remain
+unchanged; its live regression passes. F-004's coverage pointer resolves to this
+current result while retaining the prior evaluated failure as historical data.
+These are implementation dispositions for the next reviewer to verify.
+
+The WI-WORKER-G3 record now has candidate status closed with its existing
+`effective_on: reviewed-merge-with-adopted-checks`. Every required case remains
+implemented with exact non-ignored test references and all prerequisite gates
+are closed. This candidate record grants no ordinary use or integration authority;
+qualifying review and CraftingTable integration remain required. WP-A03's durable
+start identity, conservative quarantine and capacity retention are exercised by
+the complete crash matrix. Artifact/provider qualification remains WIP-11 and
+catalog governance remains WIP-12.
+
+All ten adopted checks must pass on the final committed candidate. Their exact
+head, results and logs are recorded by CraftingTable and in this run's
+`scratch/verification/final-worker-proof/result.json` and `declared/`. The prior
+failing check results remain in `accepted-remediation/`; they are not passage
+claims for the final head. The final source/gate candidate is reviewed using its
+own adopted evidence. No check definition or supervisor pin has changed.
