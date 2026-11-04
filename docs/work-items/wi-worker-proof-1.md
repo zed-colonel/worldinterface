@@ -204,3 +204,14 @@ ordinary use and gate acceptance remain effective only through their qualifying
 reviewed integration. See [WIP-10](WIP-10.md) for decision provenance and the
 pending packet checkpoint. Blanket merge-only approval language in the imported
 plan does not override this narrow recorded exception.
+
+## WIP-11 artifact and seam candidate
+
+[WIP-11](WIP-11.md) adds exact run-bound artifact access, immutable collection
+policy, private validated snapshots, staged export/manifest publication before
+completion, durable quarantine and an asynchronous WI-owned seam simulation.
+WP-027/028/031 have exact non-ignored test mappings. WP-A05 is addressed at the
+simulated contract seam; remote-provider and isolation qualification are excluded.
+The store profile is `local-worker-12`. G4 stays open. Revised exact-packet
+acceptance, supervisor disposition, live verification and qualifying review remain
+due; the WIP-10 receipt cannot authorize these source or scope changes.

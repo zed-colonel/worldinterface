@@ -183,6 +183,28 @@ fn harness(task: Task, wall: u64, output: u64, exports: Vec<Export>) -> Harness 
     Harness { port, root, requests }
 }
 impl Harness {
+    fn locator(&self, reference: &str) -> worldinterface_worker::artifacts::ArtifactLocatorV2 {
+        let request = &self.requests[0];
+        let auth = ContentHash::of(format!("authorized-tenant-a-{}", request.run).as_bytes());
+        let (digest, size) = match reference {
+            "artifact-output.bin" => {
+                let b: Vec<_> = b"hello".iter().map(|v| v ^ 7).collect();
+                (ContentHash::of(&b), b.len() as u64)
+            }
+            "artifact-probe.json" => (ContentHash::of(b"{\"clean\":true}"), 14),
+            "artifact-churn.json" => (ContentHash::of(b"{\"reaped\":true}"), 15),
+            _ => (ContentHash::of(b"unknown"), 0),
+        };
+        worldinterface_worker::artifacts::ArtifactLocatorV2 {
+            provider: request.provider.clone(),
+            run: request.run.clone(),
+            authorization: auth,
+            reference: reference.into(),
+            digest,
+            size,
+        }
+    }
+
     async fn submit(&self, op: Operation) -> Result<Acknowledgment, String> {
         self.port.submit(&self.requests[OPS.iter().position(|x| *x == op).unwrap()]).await
     }
@@ -217,14 +239,14 @@ async fn transform_artifacts_are_scoped_integrity_checked_and_release_is_replay_
     let report = h.finished();
     assert!(report.exit_confirmed && report.cleanup_confirmed, "{report:?}");
     h.submit(Operation::CollectArtifacts).await.unwrap();
-    assert_eq!(h.port.read_artifact("artifact-output.bin").await.unwrap(), bytes);
-    assert!(h.port.read_artifact("other-run-artifact").await.is_err());
+    assert_eq!(h.port.read_artifact(&h.locator("artifact-output.bin")).await.unwrap(), bytes);
+    assert!(h.port.read_artifact(&h.locator("other-run-artifact")).await.is_err());
     let other = private_dir();
     let foreign = port(
         other.path(),
         HostScope { tenant: "tenant-b".into(), principal: "principal-b".into() },
     );
-    assert!(foreign.read_artifact("artifact-output.bin").await.is_err());
+    assert!(foreign.read_artifact(&h.locator("artifact-output.bin")).await.is_err());
     assert!(foreign.observe("local-proof", "run-a").await.is_err());
     let realization = h.port.realization(&h.requests[1]).unwrap();
     assert_eq!(
@@ -284,8 +306,28 @@ async fn coding_fixture_edits_the_copied_sample_and_exports_patch_and_report() {
     assert_eq!(fs::read_to_string(verification.path().join("src/lib.rs")).unwrap(), edited);
 
     h.submit(Operation::CollectArtifacts).await.unwrap();
-    assert_eq!(h.port.read_artifact("artifact-change.patch").await.unwrap(), patch);
-    assert_eq!(h.port.read_artifact("artifact-report.json").await.unwrap(), report);
+    assert_eq!(
+        h.port
+            .read_artifact(&worldinterface_worker::artifacts::ArtifactLocatorV2 {
+                digest: ContentHash::of(patch),
+                size: patch.len() as u64,
+                ..h.locator("artifact-change.patch")
+            })
+            .await
+            .unwrap(),
+        patch
+    );
+    assert_eq!(
+        h.port
+            .read_artifact(&worldinterface_worker::artifacts::ArtifactLocatorV2 {
+                digest: ContentHash::of(report),
+                size: report.len() as u64,
+                ..h.locator("artifact-report.json")
+            })
+            .await
+            .unwrap(),
+        report
+    );
     h.submit(Operation::Release).await.unwrap();
 }
 #[tokio::test]
@@ -336,7 +378,10 @@ async fn environment_and_deliberately_non_cloexec_descriptor_are_excluded() {
     assert!(report.cleanup_confirmed);
     assert!(report.helper_launch_clean, "helper inherited ambient authority: {report:?}");
     h.submit(Operation::CollectArtifacts).await.unwrap();
-    assert_eq!(h.port.read_artifact("artifact-probe.json").await.unwrap(), b"{\"clean\":true}");
+    assert_eq!(
+        h.port.read_artifact(&h.locator("artifact-probe.json")).await.unwrap(),
+        b"{\"clean\":true}"
+    );
     h.submit(Operation::Release).await.unwrap();
     std::env::remove_var("WI_SENTINEL_SECRET");
 }
@@ -358,7 +403,10 @@ async fn reaped_short_lived_grandchildren_do_not_quarantine_or_exhaust_handles()
     );
     assert_eq!(report.reason, "exited");
     h.submit(Operation::CollectArtifacts).await.unwrap();
-    assert_eq!(h.port.read_artifact("artifact-churn.json").await.unwrap(), b"{\"reaped\":true}");
+    assert_eq!(
+        h.port.read_artifact(&h.locator("artifact-churn.json")).await.unwrap(),
+        b"{\"reaped\":true}"
+    );
     h.submit(Operation::Release).await.unwrap();
     assert!(allocations(h.root.path()).is_empty());
     retained_journals_are_private_and_bounded(h.root.path());
@@ -478,8 +526,9 @@ async fn artifact_integrity_symlink_hardlink_and_special_files_are_quarantined()
             _ => fs::write(&file, b"larger-than-approved").unwrap(),
         }
         assert!(h.submit(Operation::CollectArtifacts).await.is_err(), "{attack}");
-        assert!(h.port.read_artifact("artifact-output.bin").await.is_err());
-        assert!(h.submit(Operation::Release).await.is_err());
+        assert!(h.port.read_artifact(&h.locator("artifact-output.bin")).await.is_err());
+        h.submit(Operation::Release).await.unwrap();
+        assert!(allocation.exists(), "quarantined evidence must survive resource release");
     }
 }
 #[tokio::test]
@@ -611,13 +660,21 @@ async fn expired_or_revoked_artifact_and_observation_access_is_denied() {
         h.start().await;
         assert!(h.finished().cleanup_confirmed);
         h.submit(Operation::CollectArtifacts).await.unwrap();
-        assert!(h.port.read_artifact("artifact-output.bin").await.is_ok());
+        assert!(h
+            .port
+            .read_artifact(&worldinterface_worker::artifacts::ArtifactLocatorV2 {
+                digest: ContentHash::of(b"hello"),
+                size: 5,
+                ..h.locator("artifact-output.bin")
+            })
+            .await
+            .is_ok());
         if revoke {
             h.port.revoke(1).unwrap();
         } else {
             clock.0.fetch_add(120_000, Ordering::SeqCst);
         }
-        assert!(h.port.read_artifact("artifact-output.bin").await.is_err());
+        assert!(h.port.read_artifact(&h.locator("artifact-output.bin")).await.is_err());
         assert!(h.port.observe("local-proof", "run-a").await.is_err());
     }
 }

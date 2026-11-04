@@ -30,7 +30,6 @@ async fn worker_crash_child() {
     h.operation(Operation::Start).await;
     h.operation(Operation::Terminate).await;
     h.finish().await;
-    h.operation(Operation::CollectArtifacts).await;
     h.operation(Operation::Release).await;
     panic!("worker crash boundary was not reached");
 }

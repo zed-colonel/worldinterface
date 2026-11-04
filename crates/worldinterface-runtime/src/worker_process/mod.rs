@@ -31,6 +31,7 @@ use std::{
 pub use supervision::{helper_main, CleanupReport};
 use worldinterface_protocol::ContentHash;
 use worldinterface_worker::{
+    artifacts::{ArtifactLocatorV2, ExportManifestV1, ExportV1},
     mapping::{Operation, ResolvedWorkerV1, WorkerRequestV1},
     ports::{Acknowledgment, Observation, ObservationKind, PortFuture, WorkerPort},
     Result,
@@ -204,12 +205,7 @@ impl ProcessWorkerPort {
             let run = run.lock().map_err(|_| "run unavailable")?;
             if run.authorization.operations.iter().any(|(old, _)| {
                 authorization.operations.iter().any(|(new, _)| old.request == new.request)
-            }) || run
-                .authorization
-                .exports
-                .iter()
-                .any(|old| authorization.exports.iter().any(|new| old.reference == new.reference))
-            {
+            }) {
                 return Err("request or artifact identity conflict".into());
             }
         }
@@ -267,6 +263,49 @@ impl ProcessWorkerPort {
         let run = shared.lock().map_err(|_| "run unavailable")?;
         self.authorize_read(&run, Operation::CollectArtifacts, Some(reference))?;
         run.artifacts.get(reference).cloned().ok_or_else(|| "artifact access denied".into())
+    }
+    pub fn read_scoped(&self, locator: &ArtifactLocatorV2) -> Result<Vec<u8>> {
+        let shared = self.run(&locator.provider, &locator.run)?;
+        let run = shared.lock().map_err(|_| "run unavailable")?;
+        if run.quarantined
+            || locator.authorization != run.authorization.credential.authorization_digest
+        {
+            return Err("artifact realization denied".into());
+        }
+        self.authorize_read(&run, Operation::CollectArtifacts, Some(&locator.reference))?;
+        let bytes =
+            run.artifacts.get(&locator.reference).cloned().ok_or("artifact access denied")?;
+        if bytes.len() as u64 != locator.size || ContentHash::of(&bytes) != locator.digest {
+            return Err("artifact locator mismatch".into());
+        }
+        Ok(bytes)
+    }
+    pub fn collection_manifest(&self, provider: &str, run: &str) -> Result<Vec<u8>> {
+        let shared = self.run(provider, run)?;
+        let run = shared.lock().map_err(|_| "run unavailable")?;
+        self.authorize_read(&run, Operation::CollectArtifacts, None)?;
+        if !run.collected || run.quarantined {
+            return Err("collection unavailable".into());
+        }
+        worldinterface_protocol::canonical_data(&ExportManifestV1 {
+            schema: 1,
+            provider: provider.into(),
+            run: run.authorization.controls.run.clone(),
+            owner: run.authorization.scope.principal.clone(),
+            exports: run
+                .authorization
+                .exports
+                .iter()
+                .map(|e| ExportV1 {
+                    reference: e.reference.clone(),
+                    relative_name: e.name.clone(),
+                    digest: e.digest.clone(),
+                    size: e.size,
+                    required_verifiers: vec![],
+                    passed_verifiers: vec![],
+                })
+                .collect(),
+        })
     }
     /// Recovery observes only exact private evidence; it never starts or adopts a process.
     pub fn recover_cleanup(
@@ -389,7 +428,10 @@ impl ProcessWorkerPort {
             return Err("exact operation not admitted".into());
         }
         if run.quarantined
-            && !matches!(request.operation, Operation::Inspect | Operation::Terminate)
+            && !matches!(
+                request.operation,
+                Operation::Inspect | Operation::Terminate | Operation::Release
+            )
         {
             return Err("run quarantined".into());
         }
@@ -504,7 +546,7 @@ impl ProcessWorkerPort {
                     Ok(artifacts) => {
                         run.artifacts = artifacts.into_iter().collect();
                         run.collected = true;
-                        run.event(ObservationKind::ArtifactPublished);
+                        run.event(ObservationKind::CollectionReady);
                     }
                     Err(e) => {
                         run.event(ObservationKind::Quarantined);
@@ -513,17 +555,18 @@ impl ProcessWorkerPort {
                 }
             }
             Operation::Release => {
-                if run.quarantined {
-                    return Err("quarantined allocation retained".into());
-                }
                 if run.started && !run.report.as_ref().is_some_and(|r| r.cleanup_confirmed) {
                     return Err("cleanup incomplete; allocation quarantined".into());
                 }
-                if !auth.exports.is_empty() && !run.collected {
+                if !run.quarantined && !auth.exports.is_empty() && !run.collected {
                     return Err("required exports not collected".into());
                 }
                 if let Some(workspace) = run.workspace.take() {
-                    io(workspace.dir.close())?;
+                    if run.quarantined || run.stop.load(Ordering::SeqCst) {
+                        workspace.preserve();
+                    } else {
+                        io(workspace.dir.close())?;
+                    }
                 }
                 run.released = true;
                 run.event(ObservationKind::Released);
@@ -545,18 +588,8 @@ impl WorkerPort for ProcessWorkerPort {
             Ok(run.observations.clone())
         })
     }
-    fn read_artifact<'a>(&'a self, reference: &'a str) -> PortFuture<'a, Vec<u8>> {
-        Box::pin(async move {
-            let runs = self.runs.lock().map_err(|_| "registry unavailable")?;
-            for shared in runs.values() {
-                let run = shared.lock().map_err(|_| "run unavailable")?;
-                if let Some(bytes) = run.artifacts.get(reference) {
-                    self.authorize_read(&run, Operation::CollectArtifacts, Some(reference))?;
-                    return Ok(bytes.clone());
-                }
-            }
-            Err("artifact access denied".into())
-        })
+    fn read_artifact<'a>(&'a self, locator: &'a ArtifactLocatorV2) -> PortFuture<'a, Vec<u8>> {
+        Box::pin(async move { self.read_scoped(locator) })
     }
 }
 fn monitor(

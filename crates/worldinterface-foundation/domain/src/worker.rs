@@ -34,6 +34,7 @@ impl WorkerBinding {
 pub enum WorkerFact {
     Provisioned,
     ArtifactsPublished,
+    CollectionReady,
     Released,
     StartAccepted,
     Running,
@@ -67,6 +68,8 @@ pub struct WorkerOperation {
 pub struct WorkerState {
     pub binding: WorkerBinding,
     pub revision: u64,
+    pub artifact_policy: Vec<WorkerArtifactPolicy>,
+    pub collection: WorkerCollection,
     pub accepted: bool,
     pub running: bool,
     pub stop_requested: bool,
@@ -86,6 +89,8 @@ impl WorkerState {
         Self {
             binding,
             revision: 1,
+            artifact_policy: Vec::new(),
+            collection: WorkerCollection::Absent,
             accepted: false,
             running: false,
             stop_requested: false,
@@ -103,7 +108,11 @@ impl WorkerState {
     pub fn transition(&mut self, fact: WorkerFact) -> Result<(), String> {
         match fact {
             WorkerFact::Provisioned if !self.cleanup_confirmed => {}
-            WorkerFact::ArtifactsPublished if self.exited && !self.quarantined => {}
+            WorkerFact::ArtifactsPublished
+                if self.exited
+                    && !self.quarantined
+                    && matches!(self.collection, WorkerCollection::Published(_)) => {}
+            WorkerFact::CollectionReady if self.exited => {}
             WorkerFact::Released if self.cleanup_confirmed => {}
             WorkerFact::StartAccepted
                 if !self.cleanup_confirmed
@@ -123,10 +132,16 @@ impl WorkerState {
                 self.exited = true;
                 self.running = false;
             }
-            WorkerFact::Completed if self.exited && !self.quarantined && !self.stop_requested => {
+            WorkerFact::Completed
+                if self.exited
+                    && !self.quarantined
+                    && !self.stop_requested
+                    && matches!(&self.collection, WorkerCollection::Published(p) if p.prepared.exit_success) =>
+            {
                 self.completed = true
             }
-            WorkerFact::Quarantined if !self.cleanup_confirmed => {
+            WorkerFact::Quarantined => {
+                self.completed = false;
                 self.quarantined = true;
                 self.stop_requested = true;
             }
@@ -145,7 +160,13 @@ impl WorkerState {
     }
     /// Keep gaps inspectable. Reordering never manufactures missing observations.
     pub fn observe(&mut self, observation: WorkerObservation) -> Result<bool, String> {
-        if matches!(observation.fact, WorkerFact::CleanupConfirmed | WorkerFact::NoProcess) {
+        if matches!(
+            observation.fact,
+            WorkerFact::CleanupConfirmed
+                | WorkerFact::NoProcess
+                | WorkerFact::ArtifactsPublished
+                | WorkerFact::Completed
+        ) {
             return Err("provider cannot release ownership capacity".into());
         }
         if observation.provider_sequence == 0 || self.observations.len() >= 4096 {
@@ -175,5 +196,88 @@ impl WorkerState {
             self.provider_sequence += 1;
         }
         Ok(true)
+    }
+}
+
+/// WI-owned policy and collection journal. Provider claims never populate publication state.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct WorkerExportPolicy {
+    pub reference: OpaqueRef,
+    pub name: String,
+    pub digest: ContentHash,
+    pub size: u64,
+    pub verifiers: Vec<OpaqueRef>,
+}
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct WorkerArtifactPolicy {
+    pub version: u32,
+    pub inputs: Vec<worldinterface_protocol::ArtifactRef>,
+    pub exports: Vec<WorkerExportPolicy>,
+    pub max_bytes: u64,
+}
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct WorkerVerifierFinding {
+    pub verifier: OpaqueRef,
+    pub reference: OpaqueRef,
+    pub digest: ContentHash,
+    pub passed: bool,
+}
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct WorkerPreparedCollection {
+    pub version: u32,
+    pub operation: OpaqueRef,
+    pub policy: ContentHash,
+    pub manifest: ContentHash,
+    pub findings: Vec<WorkerVerifierFinding>,
+    pub exit_success: bool,
+}
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct WorkerPublishedCollection {
+    pub prepared: WorkerPreparedCollection,
+    pub exports: BTreeMap<OpaqueRef, worldinterface_protocol::ArtifactRef>,
+    pub manifest: worldinterface_protocol::ArtifactRef,
+}
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct WorkerQuarantineReport {
+    pub version: u32,
+    pub binding: WorkerBinding,
+    pub operation: OpaqueRef,
+    pub policy: ContentHash,
+    pub codes: Vec<OpaqueRef>,
+    pub manifests: Vec<ContentHash>,
+    pub findings: Vec<WorkerVerifierFinding>,
+}
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(tag = "state", content = "record", rename_all = "snake_case", deny_unknown_fields)]
+pub enum WorkerCollection {
+    Absent,
+    Prepared(WorkerPreparedCollection),
+    Published(WorkerPublishedCollection),
+    Quarantined(WorkerQuarantineReport),
+}
+
+impl WorkerPreparedCollection {
+    pub fn publication_identity(
+        &self,
+        binding: &WorkerBinding,
+        reference: &str,
+    ) -> Result<OpaqueRef, String> {
+        Ok(format!(
+            "wi-worker-publication:{}",
+            ContentHash::of(&worldinterface_protocol::canonical_data(&(
+                "wi-worker-publication-2",
+                binding,
+                self,
+                reference
+            ))?)
+            .as_str()
+        )
+        .try_into()?)
     }
 }

@@ -8,6 +8,8 @@ use super::{
 mod anchor;
 #[path = "worker_build.rs"]
 mod build;
+#[path = "worker_seam.rs"]
+pub mod seam;
 use std::{
     collections::{BTreeMap, BTreeSet},
     path::Path,
@@ -58,7 +60,11 @@ impl TrustedWorkerBuild for Approval {
         fixture: &ContentHash,
         helper: &ContentHash,
     ) -> Result<()> {
-        if packet != &self.packet || fixture != &self.fixture || helper != &self.helper {
+        if packet != &self.packet
+            || !((fixture == &self.fixture && helper == &self.helper)
+                || (fixture == &seam::provenance().implementation
+                    && helper == &seam::provenance().helper))
+        {
             return Err("unverified test-host build".into());
         }
         Ok(())
@@ -70,7 +76,7 @@ pub fn evaluation() -> Arc<EvaluationVerifier<Approval>> {
         std::fs::read(source.join("conformance/wi-fabric-2/worker/evaluation-approval.json"))
             .unwrap();
     let expected = anchor::ACCEPTED_RECEIPT_SHA256.expect(
-        "operator acceptance of the completed WIP-10 packet is required before live evaluation",
+        "operator acceptance of the exact completed worker packet is required before live evaluation",
     );
     assert_eq!(ContentHash::of(&bytes).as_str(), expected, "approval provenance drift");
     let receipt: OperatorApprovalReceipt = serde_json::from_slice(&bytes).unwrap();
@@ -163,6 +169,33 @@ pub fn admission_fixture(
     }
     (submission, snapshot)
 }
+struct WorkerAqBoundary<H> {
+    inner: H,
+    bundle: Arc<StoreBundle>,
+    binding: Option<WorkerBinding>,
+}
+impl<H: actionqueue_executor_local::handler::ExecutorHandler>
+    actionqueue_executor_local::handler::ExecutorHandler for WorkerAqBoundary<H>
+{
+    fn execute(
+        &self,
+        ctx: actionqueue_executor_local::handler::ExecutorContext,
+    ) -> actionqueue_core::disposition::AttemptDisposition {
+        let result = self.inner.execute(ctx);
+        if let Some(b) = &self.binding {
+            if self
+                .bundle
+                .wi()
+                .worker_snapshot(&b.tenant, &b.provider, &b.run)
+                .unwrap()
+                .is_some_and(|s| matches!(s.collection, WorkerCollection::Published(_)))
+            {
+                worldinterface_storage::worker_boundary("worker-artifact-before-aq-disposition");
+            }
+        }
+        result
+    }
+}
 pub type Evidence = EvaluationAuthority<HostEvidence, Approval, HostClock>;
 pub struct Harness {
     pub temp: tempfile::TempDir,
@@ -171,6 +204,8 @@ pub struct Harness {
     pub evaluation: Arc<EvaluationVerifier<Approval>>,
     pub task: Task,
     pub exports: Vec<Export>,
+    pub inputs: Vec<ArtifactRef>,
+    pub seam: bool,
     pub case: String,
     pub controls: ControlEvidenceV1,
     pub auth: Auth,
@@ -243,11 +278,56 @@ impl Harness {
             evaluation,
             task,
             exports: vec![],
+            inputs: vec![],
+            seam: false,
             case: case.into(),
             controls,
             auth,
             run: "run-proof".into(),
         }
+    }
+    pub fn reopen(mut self) -> Self {
+        assert!(!self.seam);
+        drop(self.runtime);
+        drop(self.bundle);
+        self.bundle = Arc::new(StoreBundle::open(&self.temp.path().join("bundle")).unwrap());
+        self.runtime = Arc::new(
+            WorkerRuntime::install(
+                self.bundle.clone(),
+                HostScope {
+                    tenant: self.auth.0.as_str().into(),
+                    principal: self.auth.1.as_str().into(),
+                },
+                &self.temp.path().join("process"),
+                &build::current().fixture,
+                &build::current().helper,
+                self.evaluation.clone(),
+                Arc::new(HostClock),
+                1,
+            )
+            .unwrap(),
+        );
+        self
+    }
+    pub fn with_seam(mut self) -> (Self, Arc<seam::Seam>) {
+        let provider = Arc::new(seam::Seam::new());
+        self.runtime = Arc::new(
+            WorkerRuntime::install_provider(
+                self.bundle.clone(),
+                HostScope {
+                    tenant: self.auth.0.as_str().into(),
+                    principal: self.auth.1.as_str().into(),
+                },
+                provider.clone(),
+                seam::provenance(),
+                self.evaluation.clone(),
+                Arc::new(HostClock),
+                1,
+            )
+            .unwrap(),
+        );
+        self.seam = true;
+        (self, provider)
     }
     pub fn binding(&self) -> WorkerBinding {
         self.bundle
@@ -276,7 +356,18 @@ impl Harness {
             provider: "local-proof".into(),
             run: self.run.clone(),
             request: format!("local-proof:{}:{}", self.run, op.name()),
-            input_digest: AuthorizedRun::input_digest(&[]).unwrap(),
+            input_digest: AuthorizedRun::input_digest(
+                &self
+                    .inputs
+                    .iter()
+                    .map(|a| Input {
+                        reference: format!("input:{}", a.content.as_str()),
+                        digest: a.content.clone(),
+                        bytes: self.bundle.wi().read_artifact(a).unwrap(),
+                    })
+                    .collect::<Vec<_>>(),
+            )
+            .unwrap(),
             controls_digest: AuthorizedRun::controls_digest(&self.controls).unwrap(),
         };
         let effect = WorkerEffect {
@@ -285,7 +376,7 @@ impl Harness {
             worker: request.clone(),
             task: self.task.clone(),
             controls: self.controls.clone(),
-            inputs: vec![],
+            inputs: self.inputs.clone(),
             exports: self.exports.clone(),
         };
         let bytes = canonical_data(&effect).unwrap();
@@ -313,8 +404,18 @@ impl Harness {
         w.input = submission.input.artifact.clone();
         w.environment = self.evaluation.manifest.environment.clone();
         w.exports = digest(&effect.exports).unwrap();
-        w.manifest.executable =
-            self.bundle.wi().publish(self.auth.0.clone(), &build::current().fixture_bytes).unwrap();
+        w.manifest.executable = self
+            .bundle
+            .wi()
+            .publish(
+                self.auth.0.clone(),
+                if self.seam {
+                    include_bytes!("worker_seam.rs").as_slice()
+                } else {
+                    &build::current().fixture_bytes
+                },
+            )
+            .unwrap();
         w.manifest.configuration = self
             .bundle
             .wi()
@@ -324,7 +425,8 @@ impl Harness {
             )
             .unwrap();
         // Publish exact recipe-bound adapter/dependency bytes, with the same canonical identities the adapter verifies.
-        let adapter = adapter_bytes();
+        let adapter =
+            if self.seam { include_bytes!("worker_seam.rs").to_vec() } else { adapter_bytes() };
         w.manifest.adapter = self.bundle.wi().publish(self.auth.0.clone(), &adapter).unwrap();
         w.manifest.dependencies = vec![self
             .bundle
@@ -488,6 +590,11 @@ impl Harness {
             resolver: resolver.clone(),
             artifacts: Arc::new(config.clone()),
         };
+        let handler = WorkerAqBoundary {
+            inner: handler,
+            bundle: self.bundle.clone(),
+            binding: if op == Operation::CollectArtifacts { Some(self.binding()) } else { None },
+        };
         let mut queue = QueueEngine::bootstrap(&self.bundle, handler, host()).unwrap();
         let service = EffectService {
             root: self.bundle.wi(),
@@ -520,13 +627,61 @@ impl Harness {
             let state = self.bundle.wi().flow_run_snapshot(&self.auth.0, &id).unwrap();
             let run = &state.runs[&id];
             if run.outcome.is_some() {
-                assert_eq!(run.outcome, Some(FlowOutcome::Succeeded), "{run:?}");
+                assert_eq!(
+                    run.outcome,
+                    Some(if self.seam && op == Operation::Start {
+                        FlowOutcome::Uncertain
+                    } else {
+                        FlowOutcome::Succeeded
+                    }),
+                    "{run:?}"
+                );
                 break;
             }
             assert!(Instant::now() < deadline, "worker Flow deadline: {run:?}");
             tokio::time::sleep(Duration::from_millis(2)).await;
         }
         queue.shutdown().unwrap();
+    }
+    pub async fn reconcile_start(&self) {
+        use worldinterface_domain::{agency::AuthenticatedCaller, reconciliation::CaseStatus};
+        use worldinterface_runtime::reconciliation::{self, ReconciliationHandler};
+        let caller = AuthenticatedCaller::from_trusted_authentication(
+            self.auth.0.clone(),
+            self.auth.1.clone(),
+        );
+        let intent = self
+            .state()
+            .operations
+            .values()
+            .find(|o| o.operation.as_str() == "start")
+            .unwrap()
+            .intent
+            .clone();
+        let original = self.bundle.wi().effect_receipts(&self.auth.0, &intent).unwrap();
+        let handler = ReconciliationHandler {
+            bundle: self.bundle.clone(),
+            connector: self.runtime.connector(Operation::Start).unwrap(),
+            clock: HostClock,
+        };
+        let mut queue = QueueEngine::bootstrap(&self.bundle, handler, host()).unwrap();
+        reconciliation::deliver(&mut queue, &caller, &HostClock, &intent).unwrap();
+        let deadline = Instant::now() + Duration::from_secs(10);
+        loop {
+            let _ = queue.tick().await.unwrap();
+            let cases = self.bundle.wi().reconciliation_cases(&caller, &intent).unwrap();
+            if cases.iter().any(|c| c.status == CaseStatus::ConfirmedCommitted) {
+                break;
+            }
+            assert!(Instant::now() < deadline, "seam reconciliation deadline: {cases:?}");
+            tokio::time::sleep(Duration::from_millis(2)).await;
+        }
+        for _ in 0..5 {
+            tokio::time::sleep(Duration::from_millis(2)).await;
+            let _ = queue.tick().await.unwrap();
+        }
+        queue.shutdown().unwrap();
+        assert_eq!(self.bundle.wi().effect_receipts(&self.auth.0, &intent).unwrap(), original);
     }
     pub async fn finish(&self) -> CleanupReport {
         let deadline = Instant::now() + Duration::from_secs(12);

@@ -46,3 +46,5 @@ pub use continuation::continuation_signal_admitted;
 
 mod worker;
 pub use worker::worker_boundary;
+
+mod worker_collection;

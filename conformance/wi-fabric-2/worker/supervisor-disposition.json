@@ -2,17 +2,12 @@
   "version": 1,
   "status": "candidate-for-review",
   "effective_on": "explicit-operator-disposition-for-evaluation-then-qualifying-CraftingTable-review",
-  "scope": "same five WIP-09 supervisor files; generic continuation ban unchanged",
+  "scope": "same five supervisor files; WIP-11 candidate exact-source update; generic continuation ban unchanged",
   "updates": [
     {
       "path": "crates/worldinterface-runtime/src/worker_process/mod.rs",
-      "sha256": "2a2b85dee615c82ac15dcd7d6b2665da4d29657bfb3d7b472705a247ab0a728e",
-      "rationale": "WIP-10 durable private ownership journal, launch barrier, scoped artifacts and persistent stop delivery; proposed for explicit evaluation disposition and qualifying source review."
-    },
-    {
-      "path": "crates/worldinterface-runtime/src/worker_process/supervision.rs",
-      "sha256": "7210b73647db0ade87f0cdf489a901fed9151d52ca2950135bf10526590fb259",
-      "rationale": "WIP-10 launch journal and handshake ordering, including omission of an absent cleanup exit status from canonical JSON; proposed for renewed explicit evaluation disposition and qualifying source review."
+      "sha256": "e7670cb6bd56feac3140396fba9708fb50bc8938790f6b873ef2a5bfe1814795",
+      "rationale": "WIP-11 scoped artifact locators, collection-ready observations and retained quarantine allocations; candidate pin effective only upon explicit exact-packet evaluation acceptance and qualifying source review."
     }
   ]
 }
