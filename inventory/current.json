@@ -12510,7 +12510,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/tests/executor_aq_contract.rs",
     "name": "support",
-    "source_sha256": "94f5cac1833cea31ba532861f3f4f9c3e1c4e4279ef3e67507182084c11808a6",
+    "source_sha256": "f4c4e1e1370f9687e64cbd9d7473ac087b19a2b15ddb08c7262f4edace4cb4cb",
     "conditions": [],
     "registration_sites": []
   },
@@ -12519,7 +12519,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-runtime/tests/executor_aq_contract.rs",
     "name": "crates/worldinterface-runtime/tests/executor_aq_contract.rs",
-    "source_sha256": "94f5cac1833cea31ba532861f3f4f9c3e1c4e4279ef3e67507182084c11808a6",
+    "source_sha256": "f4c4e1e1370f9687e64cbd9d7473ac087b19a2b15ddb08c7262f4edace4cb4cb",
     "conditions": [],
     "registration_sites": []
   },
@@ -12528,7 +12528,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/executor_aq_contract.rs",
     "name": "At",
-    "source_sha256": "94f5cac1833cea31ba532861f3f4f9c3e1c4e4279ef3e67507182084c11808a6",
+    "source_sha256": "f4c4e1e1370f9687e64cbd9d7473ac087b19a2b15ddb08c7262f4edace4cb4cb",
     "conditions": [],
     "registration_sites": []
   },
@@ -12537,7 +12537,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/executor_aq_contract.rs",
     "name": "Clock",
-    "source_sha256": "94f5cac1833cea31ba532861f3f4f9c3e1c4e4279ef3e67507182084c11808a6",
+    "source_sha256": "f4c4e1e1370f9687e64cbd9d7473ac087b19a2b15ddb08c7262f4edace4cb4cb",
     "conditions": [],
     "registration_sites": []
   },
@@ -12546,7 +12546,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/executor_aq_contract.rs",
     "name": "Log",
-    "source_sha256": "94f5cac1833cea31ba532861f3f4f9c3e1c4e4279ef3e67507182084c11808a6",
+    "source_sha256": "f4c4e1e1370f9687e64cbd9d7473ac087b19a2b15ddb08c7262f4edace4cb4cb",
     "conditions": [],
     "registration_sites": []
   },
@@ -12555,7 +12555,7 @@
     "kind": "type",
     "path": "crates/worldinterface-runtime/tests/executor_aq_contract.rs",
     "name": "Authority",
-    "source_sha256": "94f5cac1833cea31ba532861f3f4f9c3e1c4e4279ef3e67507182084c11808a6",
+    "source_sha256": "f4c4e1e1370f9687e64cbd9d7473ac087b19a2b15ddb08c7262f4edace4cb4cb",
     "conditions": [],
     "registration_sites": []
   },
@@ -12564,7 +12564,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/tests/executor_aq_contract.rs",
     "name": "connectors",
-    "source_sha256": "94f5cac1833cea31ba532861f3f4f9c3e1c4e4279ef3e67507182084c11808a6",
+    "source_sha256": "f4c4e1e1370f9687e64cbd9d7473ac087b19a2b15ddb08c7262f4edace4cb4cb",
     "conditions": [],
     "registration_sites": []
   },
@@ -12573,7 +12573,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/tests/executor_aq_contract.rs",
     "name": "flow_fixture",
-    "source_sha256": "94f5cac1833cea31ba532861f3f4f9c3e1c4e4279ef3e67507182084c11808a6",
+    "source_sha256": "f4c4e1e1370f9687e64cbd9d7473ac087b19a2b15ddb08c7262f4edace4cb4cb",
     "conditions": [],
     "registration_sites": []
   },
@@ -12582,7 +12582,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/tests/executor_aq_contract.rs",
     "name": "spi_harness",
-    "source_sha256": "94f5cac1833cea31ba532861f3f4f9c3e1c4e4279ef3e67507182084c11808a6",
+    "source_sha256": "f4c4e1e1370f9687e64cbd9d7473ac087b19a2b15ddb08c7262f4edace4cb4cb",
     "conditions": [],
     "registration_sites": []
   },
@@ -12591,7 +12591,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/tests/executor_aq_contract.rs",
     "name": "worker_fixture",
-    "source_sha256": "94f5cac1833cea31ba532861f3f4f9c3e1c4e4279ef3e67507182084c11808a6",
+    "source_sha256": "f4c4e1e1370f9687e64cbd9d7473ac087b19a2b15ddb08c7262f4edace4cb4cb",
     "conditions": [],
     "registration_sites": []
   },

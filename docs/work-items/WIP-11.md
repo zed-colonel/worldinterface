@@ -140,3 +140,30 @@ evaluation and the adopted runtime suite await renewed exact-digest acceptance.
 The case mappings, task/operation/bound/environment scope and ordinary-use
 exclusions are unchanged. Qualifying review and CraftingTable integration remain
 due, and WI-WORKER-G4 remains open for WIP-16.
+
+## Cleanup-confirmation assertion follow-up, 2026-11-04
+
+The operator accepted follow-up packet
+`2b8be6d80b522c4b3bf6776009067ef58030f97ed97ef8a04b7f0704148fc921`, including
+its updated supervisor disposition, for up to seven days. Commit `1e369de` records
+the actual guidance in the separate receipt and test-host anchor. All five focused
+live tests passed, as did the stop-before-start cleanup regression. The adopted
+runtime check and an isolated reproduction found that AB-WI-021's added assertion
+expected WI durable cleanup confirmation before Release. The provider cleanup
+report and Exited observation at that boundary do not commit CleanupConfirmed;
+Release does. This was a test assertion error, not missing provider cleanup.
+
+The corrected test checks provider exit/cleanup, durable StopRequested/Exited and
+continued WI capacity reservation before Release. It verifies durable cleanup
+confirmation and released capacity after Release. It keeps both AQ wait policies,
+replacement-capacity rejection before release and acceptance afterward, and the
+assertions that stopped work has no collection publication or completion. Runtime
+and supervisor sources are unchanged. This correction changes packet-bound test
+bytes, so positive re-evaluation and the full adopted runtime check require renewed
+exact-digest acceptance. The actual receipt/anchor remain on the accepted packet.
+
+The remaining approved runtime targets completed. A receipt-proof fixture once
+observed RetryWait instead of Completed; its isolated reproduction and full
+eight-test target recheck passed. That transient result is retained in the run evidence and is not asserted as a suite
+pass. Qualifying review and CraftingTable integration remain due. No ordinary-use,
+remote-provider, isolation or WI-WORKER-G4 closure claim is added.

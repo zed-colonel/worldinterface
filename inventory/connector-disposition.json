@@ -1289,7 +1289,7 @@
         },
         {
           "path": "docs/work-items/WIP-11.md",
-          "source_sha256": "414a4f9f7e87982d86b59676177d16f4eaffd8c08001663c0b831821c9044383",
+          "source_sha256": "ca705808242fe04455fca112b9cbf7e0dd98f87e44623afc637489f8b018e9a3",
           "treatment": "Shared WIP-11 artifact/seam support or evidence: retain run scoping, publication and quarantine obligations; review selective legacy removal without deleting these contracts. Candidate disposition in docs/work-items/WIP-11.md."
         },
         {
@@ -6241,52 +6241,52 @@
         },
         {
           "id": "crates/worldinterface-runtime/tests/executor_aq_contract.rs::::module:support",
-          "source_sha256": "94f5cac1833cea31ba532861f3f4f9c3e1c4e4279ef3e67507182084c11808a6",
+          "source_sha256": "f4c4e1e1370f9687e64cbd9d7473ac087b19a2b15ddb08c7262f4edace4cb4cb",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/executor_aq_contract.rs::::source-module:crates/worldinterface-runtime/tests/executor_aq_contract.rs",
-          "source_sha256": "94f5cac1833cea31ba532861f3f4f9c3e1c4e4279ef3e67507182084c11808a6",
+          "source_sha256": "f4c4e1e1370f9687e64cbd9d7473ac087b19a2b15ddb08c7262f4edace4cb4cb",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/executor_aq_contract.rs::::struct:At",
-          "source_sha256": "94f5cac1833cea31ba532861f3f4f9c3e1c4e4279ef3e67507182084c11808a6",
+          "source_sha256": "f4c4e1e1370f9687e64cbd9d7473ac087b19a2b15ddb08c7262f4edace4cb4cb",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/executor_aq_contract.rs::::struct:Clock",
-          "source_sha256": "94f5cac1833cea31ba532861f3f4f9c3e1c4e4279ef3e67507182084c11808a6",
+          "source_sha256": "f4c4e1e1370f9687e64cbd9d7473ac087b19a2b15ddb08c7262f4edace4cb4cb",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/executor_aq_contract.rs::::struct:Log",
-          "source_sha256": "94f5cac1833cea31ba532861f3f4f9c3e1c4e4279ef3e67507182084c11808a6",
+          "source_sha256": "f4c4e1e1370f9687e64cbd9d7473ac087b19a2b15ddb08c7262f4edace4cb4cb",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/executor_aq_contract.rs::::type:Authority",
-          "source_sha256": "94f5cac1833cea31ba532861f3f4f9c3e1c4e4279ef3e67507182084c11808a6",
+          "source_sha256": "f4c4e1e1370f9687e64cbd9d7473ac087b19a2b15ddb08c7262f4edace4cb4cb",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/executor_aq_contract.rs::support::module:connectors",
-          "source_sha256": "94f5cac1833cea31ba532861f3f4f9c3e1c4e4279ef3e67507182084c11808a6",
+          "source_sha256": "f4c4e1e1370f9687e64cbd9d7473ac087b19a2b15ddb08c7262f4edace4cb4cb",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/executor_aq_contract.rs::support::module:flow_fixture",
-          "source_sha256": "94f5cac1833cea31ba532861f3f4f9c3e1c4e4279ef3e67507182084c11808a6",
+          "source_sha256": "f4c4e1e1370f9687e64cbd9d7473ac087b19a2b15ddb08c7262f4edace4cb4cb",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/executor_aq_contract.rs::support::module:spi_harness",
-          "source_sha256": "94f5cac1833cea31ba532861f3f4f9c3e1c4e4279ef3e67507182084c11808a6",
+          "source_sha256": "f4c4e1e1370f9687e64cbd9d7473ac087b19a2b15ddb08c7262f4edace4cb4cb",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/executor_aq_contract.rs::support::module:worker_fixture",
-          "source_sha256": "94f5cac1833cea31ba532861f3f4f9c3e1c4e4279ef3e67507182084c11808a6",
+          "source_sha256": "f4c4e1e1370f9687e64cbd9d7473ac087b19a2b15ddb08c7262f4edace4cb4cb",
           "registration_sites": []
         },
         {
@@ -8113,7 +8113,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/tests/executor_aq_contract.rs",
-          "source_sha256": "94f5cac1833cea31ba532861f3f4f9c3e1c4e4279ef3e67507182084c11808a6",
+          "source_sha256": "f4c4e1e1370f9687e64cbd9d7473ac087b19a2b15ddb08c7262f4edace4cb4cb",
           "treatment": "Retain target connector contracts, executor, reconciliation and conformance evidence; edit selectively when retiring legacy surfaces."
         },
         {
@@ -8398,7 +8398,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/tests/executor_aq_contract.rs",
-          "source_sha256": "94f5cac1833cea31ba532861f3f4f9c3e1c4e4279ef3e67507182084c11808a6",
+          "source_sha256": "f4c4e1e1370f9687e64cbd9d7473ac087b19a2b15ddb08c7262f4edace4cb4cb",
           "treatment": "Retain WIP-07 remediation and shared infrastructure; any legacy removal requires selective independently reviewed edits."
         },
         {
@@ -8578,7 +8578,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/tests/executor_aq_contract.rs",
-          "source_sha256": "94f5cac1833cea31ba532861f3f4f9c3e1c4e4279ef3e67507182084c11808a6",
+          "source_sha256": "f4c4e1e1370f9687e64cbd9d7473ac087b19a2b15ddb08c7262f4edace4cb4cb",
           "treatment": "Retain WIP-07 remediation and shared infrastructure; any legacy removal requires selective independently reviewed edits."
         },
         {
