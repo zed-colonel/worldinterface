@@ -11,6 +11,7 @@ use crate::{
     Result,
 };
 use actionqueue_executor_local::handler::CancellationToken;
+use serde::{Deserialize, Serialize};
 use std::{
     collections::BTreeMap,
     path::Path,
@@ -19,6 +20,35 @@ use std::{
 use worldinterface_domain::{effect::CommitObservation, worker::*};
 use worldinterface_protocol::*;
 use worldinterface_worker::mapping::{Operation, WorkerRequestV1};
+
+/// A deterministic acknowledgement can be declared before execution. Lifecycle
+/// state is observed at the boundary and belongs in evidence, not the manifest.
+#[derive(Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+struct WorkerAcknowledgement {
+    version: u32,
+    request: ContentHash,
+}
+pub fn acknowledgement(request: &WorkerRequestV1) -> Result<Vec<u8>> {
+    Ok(canonical_data(&WorkerAcknowledgement { version: 1, request: request.digest()? })?)
+}
+
+fn succeeded(request: &WorkerRequestV1, state: &WorkerState) -> Result<PortObservation> {
+    let bytes = canonical_data(state)?;
+    Ok(PortObservation {
+        commit: CommitObservation::ConfirmedCommitted,
+        outcome: ExecutionOutcome::Succeeded,
+        outputs: vec![acknowledgement(request)?],
+        evidence: vec![EvidenceBytes {
+            schema: "wi-worker-lifecycle:1".to_string().try_into()?,
+            bytes: bytes.clone(),
+        }],
+        boundary_record: Some(EvidenceBytes {
+            schema: "wi-worker-lifecycle:1".to_string().try_into()?,
+            bytes,
+        }),
+    })
+}
 
 pub fn descriptor(operation: Operation) -> Result<ConnectorDescriptor> {
     let d = ConnectorDescriptor {
@@ -159,6 +189,14 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
         let root = self.bundle.wi();
         let binding = &admitted.binding;
         let op = admitted.operation;
+        let request = admitted
+            .authorization
+            .operations
+            .iter()
+            .find(|(r, _)| r.operation == op)
+            .ok_or("worker operation absent")?
+            .0
+            .clone();
         if binding.tenant.as_str() != self.scope.tenant
             || binding.principal.as_str() != self.scope.principal
         {
@@ -174,10 +212,7 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
             if present {
                 self.poll(binding)?;
             }
-            let mut result =
-                observation(CommitObservation::ConfirmedCommitted, ExecutionOutcome::Succeeded);
-            result.outputs.push(canonical_data(&self.state(binding)?)?);
-            return Ok(result);
+            return succeeded(&request, &self.state(binding)?);
         }
         let provider_operation =
             admitted.provider_operation.clone().ok_or("worker provider operation absent")?;
@@ -198,10 +233,7 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
                 return Err("worker provider key conflict".into());
             }
             if old.acknowledged {
-                let mut result =
-                    observation(CommitObservation::ConfirmedCommitted, ExecutionOutcome::Succeeded);
-                result.outputs.push(canonical_data(&state)?);
-                return Ok(result);
+                return succeeded(&request, &state);
             }
             super::recovery::quarantine(root, binding)?;
             return Ok(observation(CommitObservation::Unknown, ExecutionOutcome::Uncertain));
@@ -211,10 +243,7 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
             super::recovery::quarantine(root, binding)?;
             if op == Operation::Terminate {
                 root.acknowledge_worker_operation(binding.clone(), provider_operation)?;
-                let mut result =
-                    observation(CommitObservation::ConfirmedCommitted, ExecutionOutcome::Succeeded);
-                result.outputs.push(canonical_data(&self.state(binding)?)?);
-                return Ok(result);
+                return succeeded(&request, &self.state(binding)?);
             }
             return Ok(observation(CommitObservation::Unknown, ExecutionOutcome::Uncertain));
         }
@@ -223,12 +252,6 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
             self.port.admit(admitted.authorization)?;
             live.insert(key.clone(), operations);
         }
-        let request = live[&key]
-            .iter()
-            .find(|(r, _)| r.operation == op)
-            .ok_or("worker operation absent")?
-            .0
-            .clone();
         if cancellation.is_cancelled() || op == Operation::Terminate {
             let current = self.state(binding)?;
             if !current.stop_requested && !current.cleanup_confirmed {
@@ -300,10 +323,7 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
             self.transition(binding, WorkerFact::Completed)?;
         }
         root.acknowledge_worker_operation(binding.clone(), provider_operation)?;
-        let mut result =
-            observation(CommitObservation::ConfirmedCommitted, ExecutionOutcome::Succeeded);
-        result.outputs.push(canonical_data(&self.state(binding)?)?);
-        Ok(result)
+        succeeded(&request, &self.state(binding)?)
     }
     pub fn read_artifact(&self, binding: &WorkerBinding, reference: &str) -> Result<Vec<u8>> {
         self.evaluation.verify(self.clock.unix_ms())?;
@@ -396,7 +416,10 @@ impl<S: TrustedWorkerBuild + 'static> Connector for WorkerConnector<S> {
     }
     fn validate_artifact(&self, schema: &ContentHash, bytes: &[u8]) -> Result<()> {
         if schema == &ContentHash::of(b"wi-worker-result:1") {
-            let _: WorkerState = serde_json::from_value(strict_json(bytes)?)?;
+            let result: WorkerAcknowledgement = serde_json::from_value(strict_json(bytes)?)?;
+            if result.version != 1 || canonical_data(&result)? != bytes {
+                return Err("worker acknowledgement encoding".into());
+            }
             return Ok(());
         }
         if schema != &ContentHash::of(b"wi-worker-effect:1") {
@@ -508,5 +531,96 @@ impl<S: TrustedWorkerBuild + 'static> Connector for WorkerConnector<S> {
         // A stop obligation survives grant/approval expiry; it cannot authorize fresh work.
         let _ = self.runtime.port.stop_admitted(w.provider.as_str(), w.run.as_str());
         Ok(CancelObservation::Requested)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use worldinterface_domain::{
+        effect::{validate_outcome_publication, OutcomeEvidence},
+        Phase,
+    };
+    use worldinterface_worker::profile::ProfileBinding;
+
+    /// No executable, runtime approval or provider is constructed. Exercise the
+    /// domain publication validator used by the executor against all success
+    /// responses: fresh completion, replay, inspect and quarantined termination.
+    #[test]
+    fn worker_success_publication_satisfies_the_executor_contract_without_launch() {
+        let binding = WorkerBinding {
+            tenant: "tenant:publication".to_string().try_into().unwrap(),
+            principal: "12345678-1234-4234-8234-123456789abc".to_string().try_into().unwrap(),
+            provider: "local-proof".to_string().try_into().unwrap(),
+            run: "run-proof".to_string().try_into().unwrap(),
+            request: "start-request".to_string().try_into().unwrap(),
+            realization: ContentHash::of(b"publication-only"),
+        };
+        let initial = WorkerState::start_intent(binding.clone());
+        let mut advanced = initial.clone();
+        advanced.transition(WorkerFact::StartAccepted).unwrap();
+        advanced.transition(WorkerFact::Running).unwrap();
+        advanced.revision += 2;
+        let mut quarantined = advanced.clone();
+        quarantined.transition(WorkerFact::Quarantined).unwrap();
+        let mut cleaned = quarantined.clone();
+        cleaned.transition(WorkerFact::CleanupConfirmed).unwrap();
+        let reference = |bytes: &[u8]| ArtifactRef {
+            scope: binding.tenant.clone(),
+            content: ContentHash::of(bytes),
+            size: bytes.len() as u64,
+        };
+        let evidence = |e: &EvidenceBytes| EvidenceRef {
+            artifact: reference(&e.bytes),
+            schema: e.schema.clone(),
+        };
+        let mut identities = std::collections::BTreeSet::new();
+        for op in super::super::admission::OPERATIONS {
+            let request = WorkerRequestV1 {
+                schema: 1,
+                profile: ProfileBinding::process_proof(),
+                operation: op,
+                provider: binding.provider.as_str().into(),
+                run: binding.run.as_str().into(),
+                request: format!("operation-{}", op.name()),
+                input_digest: ContentHash::of(b"input"),
+                controls_digest: ContentHash::of(b"controls"),
+            };
+            // The manifest is formed before lifecycle state or acknowledgement.
+            let declared = reference(&acknowledgement(&request).unwrap());
+            assert!(identities.insert(declared.content.clone()));
+            for state in [&initial, &advanced, &quarantined, &cleaned] {
+                let observed = succeeded(&request, state).unwrap();
+                let decoded: WorkerAcknowledgement =
+                    serde_json::from_value(strict_json(&observed.outputs[0]).unwrap()).unwrap();
+                assert_eq!(decoded.version, 1);
+                assert_eq!(decoded.request, request.digest().unwrap());
+                let boundary = observed.boundary_record.as_ref().unwrap();
+                assert_eq!(boundary.schema.as_str(), "wi-worker-lifecycle:1");
+                assert_eq!(serde_json::from_slice::<WorkerState>(&boundary.bytes).unwrap(), *state);
+                let mut outcome = OutcomeEvidence {
+                    classification: None,
+                    reconciliation_admission: None,
+                    intent: "12345678-1234-4234-8234-123456789abc".to_string().try_into().unwrap(),
+                    attempt: "attempt-1".to_string().try_into().unwrap(),
+                    connector_semantics: "worker:1".to_string().try_into().unwrap(),
+                    commit: observed.commit,
+                    outcome: observed.outcome,
+                    evidence: observed.evidence.iter().map(evidence).collect(),
+                    required_outputs: vec![declared.clone()],
+                    durable_outputs: observed.outputs.iter().map(|b| reference(b)).collect(),
+                    boundary_record: Some(evidence(boundary)),
+                };
+                assert_eq!(
+                    validate_outcome_publication(&binding.tenant, &outcome).unwrap(),
+                    Phase::Succeeded
+                );
+                outcome.boundary_record = None;
+                assert!(validate_outcome_publication(&binding.tenant, &outcome).is_err());
+                outcome.boundary_record = Some(evidence(boundary));
+                outcome.required_outputs.clear();
+                assert!(validate_outcome_publication(&binding.tenant, &outcome).is_err());
+            }
+        }
     }
 }

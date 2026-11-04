@@ -69,23 +69,35 @@ by this request or by the source-to-test mappings.
 
 ## Changes requiring renewed acceptance
 
-The prior receipt and test-host anchor still record only acceptance of packet
-`fcf4f9936abd712244a78f3499c4b76eb7acceb068385e1eda43e84169261ffc`
-at `70caa54`, expiring 2026-11-10T19:00:00Z. They do not authorize this revision.
-The 2026-11-03 follow-up permits preparation and non-live validation of the revised
-packet only. No positive live test has run on this revised source.
+The receipt and test-host anchor record only the actual acceptance of packet
+`4602f6c489562f1c73424786ed3180b091b79cfc93e6f51dc242fbddf8aacb53`
+at `747d4f5`, expiring 2026-11-10T19:00:00Z. That packet failed evaluation at
+`abd7a36`; its receipt does not authorize this revision. The current WIP-10
+remediation request authorizes these fixes and preparation of the revised packet.
+Renewed exact-digest acceptance is required before positive live evaluation.
 
-This revision addresses the executable artifact size, canonical journal nulls
-(including an absent cleanup exit status), and clean Cargo test build ordering.
-The new non-launching regressions exercise real artifact publication, trusted
-build digest/path drift rejection, and intent/ownership/cleanup journal replay
-with missing/false/true exit status and corrupt/truncated evidence rejection.
-The journal test observes only its own process; it launches and signals nothing.
+This revision addresses review findings F-001 through F-004. Every worker success
+path publishes a deterministic request acknowledgement matching the declared
+output artifact, plus authoritative lifecycle state as evidence and the boundary
+record. The executor's publication checks remain intact. A non-launching regression
+passes these publications through the domain's outcome validator for all six
+operations and advancing lifecycle states, and rejects missing boundary records
+and mismatched manifest outputs. Only the path-replacement test's attack copy is
+made writable; private build artifacts and sealed capabilities retain their
+protections. The crash matrix emits a completion line after each of its 27 cuts,
+including cancel and cleanup, so a subsequent authorized run can establish full
+coverage. No crash passage is asserted before that run.
 
-`supervisor-disposition.json` proposes the updated exact `supervision.rs` pin for
-the optional exit-status serialization attribute. Acceptance of this packet must
-include that pin. The five-file exception, other supervisor source pins, generic
-continuation ban, cases, tasks, operations and evaluation limits retain their scope.
-The existing receipt must not be retargeted without a new explicit acceptance of
-the canonical manifest digest and a finite expiry. All adopted live verification
-and qualifying review/integration remain due after that acceptance.
+The lifecycle coverage mapping records the prior evaluated failure and points to
+`docs/work-items/WIP-10.md#remediation-evaluation` for the current result. This
+keeps changing result metadata separate from the exact source packet; all test
+and case bindings in the coverage mapping remain hashed. Approval provenance
+continues to be provisioned only through the separate receipt and trusted anchor.
+The result note grants no executable authority.
+
+The supervisor sources and exact dispositions are unchanged from the last
+accepted packet. The five-file exception, generic continuation ban, cases,
+tasks, operations, environment and evaluation limits retain their scope.
+The receipt must not be retargeted without actual explicit acceptance of the new
+canonical manifest digest and finite expiry. All adopted live verification and
+qualifying review/integration remain due after that acceptance.

@@ -183,5 +183,6 @@ fn wp_019_and_wp_024_killed_lifecycle_boundaries_quarantine_without_replacement(
         assert_eq!(queue.drain_signals().unwrap().acknowledged, 0);
         queue.shutdown().unwrap();
         assert_eq!(journal_count(&path), count);
+        eprintln!("verified crash cut {point}: {count} launch journal(s), recovery and wake replay converged");
     }
 }

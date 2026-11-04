@@ -3,10 +3,11 @@
 Candidate implementation under the accepted lifecycle design. AQ remains crates.io
 0.3.0, under WIP-07 operator cycle 47b9f34c-4ffd-4ef6-8849-55aae36a8999;
 imported 0.2.0 source criteria remain unchanged. Only CraftingTable integrates.
-Ordinary worker use remains disabled. G3 is open. The prior approved evaluation
-exposed three blockers; this revision addresses them under the operator's
-preparation-only direction. Renewed exact packet acceptance, passing live tests,
-all ten adopted checks and qualifying review remain required.
+Ordinary worker use remains disabled. G3 is open. The last accepted packet failed
+runtime verification at `abd7a36`. This remediation fixes F-001/F-003, makes every
+crash-cut result visible for F-002, and corrects the evaluation metadata for F-004.
+Renewed exact packet acceptance, passing live tests, all ten adopted checks and
+qualifying review remain required.
 
 ## Operator scheduling decision
 
@@ -229,3 +230,56 @@ Live logs are retained in `scratch/verification/approved-revision/`. All ten
 adopted checks are requested on the committed candidate with these findings;
 individual commands/results are retained there. G3 remains open. No live passage,
 completed qualification or clean qualifying review is asserted by this record.
+
+## Remediation evaluation
+
+Review run f729811c-ddbb-4485-a380-88056015476e reported four findings at
+`abd7a36`. The current implementation run is
+69567943-836b-436e-aa25-c15d8636fb00. Its remediation instruction authorizes fixing
+the findings and preparing the completed revised packet. The recorded scheduling
+decision still requires actual exact-digest acceptance before positive live tests.
+The prior receipt and test-host anchor have not been retargeted.
+
+F-001: all four success branches now share one publication constructor. The output
+is an acknowledgement of the validated operation request, so its exact artifact
+can be declared before execution and remains stable across retries. Authoritative
+WorkerState is published as lifecycle evidence and the boundary record. The
+harness declares that exact acknowledgement. The existing executor and domain
+publication requirements are unchanged. The non-launching contract regression
+validates all six operations across initial, running, quarantined and cleaned
+states, checks state evidence, and rejects missing boundary or wrong outputs.
+
+F-002: the crash harness reports each completed cut, with its launch-journal count,
+after asserting bounded process cleanup, retained capacity or confirmed cleanup,
+quarantine before replacement, immutable run identity and authoritative event/wake
+replay. All 27 cuts, including four cancel and two cleanup cuts, still require a
+new authorized live run; no convergence result is claimed on the revised packet.
+
+F-003: only the test's attack copy receives owner-write permission after registry
+sealing. The private built fixture remains 0500; executable sealing and digest
+verification are unchanged. The live path-replacement regression awaits acceptance.
+
+F-004: lifecycle-coverage.json now records the previous packet as evaluated and
+failing, and refers here for the changing current evaluation result. Its complete
+case/test mappings stay packet-bound. This result note is separate from the
+packet, like approval provisioning, so recording verification after acceptance
+cannot invalidate the exact source that was approved. The note grants no authority.
+
+Current result: non-live preparation passed. The publication-contract test,
+two approval rejection tests, two build/provenance regressions, runtime formatting,
+runtime Clippy and compile-only build of every runtime test target pass. The fixed
+build recipe rechecks all 266 packet bindings before and after validation; both
+actual executables remain below the unchanged 16 MiB artifact limit. A first
+preparation attempt detected source drift while fixes were still being formatted;
+it was rerun successfully after packet refresh. No worker/helper was launched.
+
+The only structural inventory additions are WorkerAcknowledgement and its test
+module, explicitly assigned to existing fabric-support/runtime dispositions for
+review. Family owners, destinations, check definitions and supervisor pins are
+unchanged; the required source hash refresh passes.
+
+The revised canonical packet digest is
+`abd936f432985aae400a6ae3c3d4c3b3ab66ef3eea0abc311fa6e6805c4d6342`.
+Positive lifecycle, crash, concurrency and adapter tests, adopted runtime-test,
+and G3 closure remain pending renewed explicit packet acceptance and review.
+Non-live logs and results are retained in this run's scratch/verification.

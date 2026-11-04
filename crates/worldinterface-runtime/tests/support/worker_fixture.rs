@@ -260,7 +260,7 @@ impl Harness {
         let effect = WorkerEffect {
             version: 1,
             case: self.case.clone(),
-            worker: request,
+            worker: request.clone(),
             task: self.task.clone(),
             controls: self.controls.clone(),
             inputs: vec![],
@@ -393,7 +393,11 @@ impl Harness {
         qualification.expires_at = s.policy.expires_at.clone();
         s.worker = Some(w);
         s.fixture = Some(qualification);
-        s.required_outputs.clear();
+        s.required_outputs = vec![self
+            .bundle
+            .wi()
+            .publish(self.auth.0.clone(), &acknowledgement(&request).unwrap())
+            .unwrap()];
         let mut child = submission.clone();
         child.client_request_id = node_request_id(
             &submission.client_request_id,

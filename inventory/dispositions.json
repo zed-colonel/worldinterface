@@ -11317,5 +11317,19 @@
     "target": "worker-lifecycle-test-evidence",
     "rationale": "WIP-10 revised packet: trusted test-host compilation of verified locked sources, independent executable digests and private artifact copies, and non-launching build/journal regressions. Replaces pathname-only adapter registration binding. No source-generator exception or live evaluation approval.",
     "source": "docs/work-items/WIP-10.md; 2026-11-03 operator direction to prepare revised packet; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker/connector.rs::::module:tests@10d1b0eff34c",
+    "disposition": "retain-align",
+    "target": "worker-lifecycle-runtime",
+    "rationale": "WIP-10 F-001 remediation: deterministic operation acknowledgement and non-launching publication-contract regression; candidate for source review and renewed exact-packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; WIP-10 review F-001; WI-ADR-016"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker/connector.rs::::struct:WorkerAcknowledgement",
+    "disposition": "retain-align",
+    "target": "worker-lifecycle-runtime",
+    "rationale": "WIP-10 F-001 remediation: deterministic operation acknowledgement and non-launching publication-contract regression; candidate for source review and renewed exact-packet acceptance.",
+    "source": "docs/work-items/WIP-10.md; WIP-10 review F-001; WI-ADR-016"
   }
 ]

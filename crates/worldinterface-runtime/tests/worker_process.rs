@@ -503,6 +503,9 @@ fn executable_path_replacement_cannot_change_reviewed_bytes() {
     let expected = executable_digest(&copy).unwrap();
     let mut registry = ExecutableRegistry::default();
     registry.register("fixture-v1", &copy, &expected).unwrap();
+    // Only the attack copy is mutable; trusted build artifacts remain 0500.
+    use std::os::unix::fs::PermissionsExt;
+    fs::set_permissions(&copy, fs::Permissions::from_mode(0o700)).unwrap();
     fs::write(&copy, b"unreviewed replacement").unwrap();
     assert!(registry.register("replacement", &copy, &expected).is_err());
     // The registered capability is a sealed copy. Execute it after replacing its original pathname.
