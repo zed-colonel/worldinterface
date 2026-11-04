@@ -612,7 +612,10 @@ impl<S: TrustedWorkerBuild + 'static> Connector for WorkerConnector<S> {
             .ok_or("worker realization absent")?;
         let mut state =
             root.worker_snapshot(&r.tenant, &w.provider, &w.run)?.ok_or("worker absent")?;
-        if state.quarantined && self.descriptor.operation.as_str() == "collect_artifacts" {
+        if state.quarantined
+            && self.descriptor.operation.as_str() == "collect_artifacts"
+            && !matches!(state.collection, WorkerCollection::Published(_))
+        {
             return Ok(ReconcileOutcome::Unknown(vec![EvidenceBytes {
                 schema: "wi-worker-lifecycle:2".to_string().try_into()?,
                 bytes: canonical_data(&state)?,

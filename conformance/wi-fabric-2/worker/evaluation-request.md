@@ -1,25 +1,33 @@
-# WIP-11 restart-before-Release exact-packet evaluation request
+# WIP-11 collection reconciliation exact-packet evaluation request
 
 Explicit operator acceptance is requested for the canonical SHA-256 printed by
 `scripts/refresh-wi-worker-evaluation.py`, including the exact supervisor
 source disposition in `supervisor-disposition.json`. This is a candidate request,
 not an approval. The existing receipt and independent trusted test-host anchor
-authorize only the previously accepted WIP-11 cleanup-confirmation packet
-`0723acb0ab7ccbac3b20e8b97030a2a617bd9fa5543ddddcfcb5cf46a2b1b6d5`, accepted in
-`cc11859` and expiring 2026-11-11T00:00:00Z.
+authorize only the previously accepted WIP-11 restart remediation packet
+`1d13a48427d0f745268c7acdf2fcd58d7c0e34a08df25b7bee9b0124422bf298`, accepted in
+`9dbc0c4` and expiring 2026-11-11T00:00:00Z.
 
-That packet passed the full live evaluation and all ten adopted checks. Review
-then reproduced F-001: restart before Release retroactively replaced a completed
-Published collection with Quarantined and revoked export access. This remediation
-makes Published and Quarantined terminal in storage, preserves completion under
-later resource quarantine, and keys reads and acknowledged collection results to
-collection disposition. Allocation ambiguity still retains capacity and the private
-allocation. Normal WP-027 and eleven live WP-028 crash cuts now continue through
-AQ Release and reopen; non-live tests preserve both terminal outcomes and verify
-resource quarantine/rebuild. F-002 records the actual prior evaluation in the
-coverage and programme notes. Supervisor source/pin and task/operation/bound scope
-are unchanged. The changed source/test/status bytes have compilation/non-live
-evidence only until renewed exact acceptance.
+That packet completed full live evaluation and all ten adopted checks before this
+change. Nine adopted checks passed. The direct evaluation (continued across all
+targets) and adopted runtime-test both failed only WP-028's new crash-continuation
+assertion. An isolated exact-name reproduction also failed. Before a durable
+receipt, the executor correctly recovers a Running effect as Uncertain without
+reinvocation. The test incorrectly expected immediate Succeeded on resubmission.
+
+The follow-up asserts Uncertain for interrupted pre-receipt cuts and Succeeded
+only after a committed receipt. It confirms the interrupted collection using the
+real AQ reconciliation handler, preserving the original receipt, before checking
+completion through Release/rebuild/reopen. It also verifies that the original
+flow outcome remains unchanged and exact acknowledged collection reconciliation
+still reports Committed after resource quarantine. The connector now keys this
+last check to the terminal Published collection instead of allocation quarantine.
+Unpublished/quarantined collections still report Unknown. The initial F-001
+terminal collection, completion and scoped-read fixes remain; F-002 records the
+actual accepted evaluation and failure in coverage and programme notes.
+Supervisor source/pin and task/operation/bound scope are unchanged. These changed
+source/test/status bytes have compilation/non-live evidence only until renewed
+exact acceptance.
 
 The request adds WP-027, WP-028 and WP-031 to WP-017–026, AB-WI-021 and the
 source-bound WIP-09 regressions. It covers scoped artifact imports/exports, durable

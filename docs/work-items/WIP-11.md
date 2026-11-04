@@ -91,9 +91,9 @@ verifiers, cancellation, cross-scope reads, replay/reopen and snapshot corruptio
 Deterministic descriptor tests cover replacement/write races, links and FIFO.
 Nine non-live crash cuts cover snapshot retention through collection commit.
 Eleven additional positive-evaluation cuts cover real collection, acknowledgement,
-receipt and AQ disposition ordering. The accepted evaluation history below applies
-to its exact sources. Positive evaluation of the F-001 remediation requires renewed
-exact-packet acceptance before execution.
+receipt and AQ disposition ordering. The evaluation history below applies to its exact sources. The accepted F-001
+remediation failed the added crash-continuation assertion; positive evaluation of
+the reconciliation follow-up requires renewed exact-packet acceptance.
 
 The implementation uses crates.io AQ 0.3.0 under the recorded WIP-07 migration;
 imported 0.2.0 source/baseline records remain unchanged. Structural inventory
@@ -213,3 +213,39 @@ live evaluation and the full adopted runtime check require acceptance of the
 refreshed exact packet. The prior receipt/anchor remain unchanged. No supervisor,
 task, operation, environment or evaluation bounds are widened. Qualifying review
 and CraftingTable integration remain due; WI-WORKER-G4 remains open for WIP-16.
+
+
+## Accepted restart evaluation and reconciliation follow-up, 2026-11-04 (F-001/F-002)
+
+The operator accepted packet
+`1d13a48427d0f745268c7acdf2fcd58d7c0e34a08df25b7bee9b0124422bf298`, including
+its supervisor disposition, for seven days. Commit `9dbc0c4` records the actual
+guidance from run `f7d8e474-bcdc-4b06-92fe-d85f29376b1d` in the separate receipt
+and host anchor, expiring **2026-11-11T00:00:00Z**. The full direct runtime
+evaluation continued across all targets; every target except
+`worker_artifact_live_crash` passed, including normal WP-027 reopen/Release,
+seam simulation, worker lifecycle and stop-before-start cleanup. All ten adopted
+checks ran on that commit: nine passed and runtime-test reproduced the same
+WP-028 assertion. An isolated reproduction failed too. Results and logs are in
+that run's `scratch/verification/`. No full runtime-suite pass is claimed.
+
+The new continuation assertion expected immediate success when replaying a
+Running effect that had no durable receipt at the crash. The executor deliberately
+records Uncertain without reinvoking the provider. The corrected test checks
+Uncertain before receipt commit and Succeeded after it, then confirms interrupted
+collections through the existing real AQ reconciliation handler. It requires
+unchanged original receipts and flow outcomes, completion before Release, and the
+same terminal collection, completion and scoped exports after Release/rebuild/
+reopen. Exact acknowledged collection reconciliation is also checked afterward.
+The connector now preserves that Committed answer for Published collections under
+resource quarantine; unpublished/quarantined collection evidence remains Unknown.
+Capacity and ambiguous allocations stay reserved, with no replacement launch.
+
+This follow-up changes packet-bound runtime, test and status bytes. The receipt
+and host anchor retain the actual accepted packet above; they do not authorize
+these changed bytes. Compilation, non-live collection/security/crash checks and
+the source-bound build recipe precede a single renewed exact-packet acceptance
+request. Positive evaluation and the full adopted runtime check remain due after
+acceptance. Supervisor source/pin, tasks, operations, bounds and environment are
+unchanged. Qualifying review and CraftingTable integration remain due; ordinary
+use, remote-provider/isolation qualification and G4 closure remain excluded.

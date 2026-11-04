@@ -213,14 +213,25 @@ completion, durable quarantine and an asynchronous WI-owned seam simulation.
 WP-027/028/031 have exact non-ignored test mappings. WP-A05 is addressed at the
 simulated contract seam; remote-provider and isolation qualification are excluded.
 The store profile is `local-worker-12`. G4 stays open. Packet
-`0723acb0ab7ccbac3b20e8b97030a2a617bd9fa5543ddddcfcb5cf46a2b1b6d5`, including
-its supervisor disposition, was explicitly accepted in `cc11859` with expiry
-2026-11-11T00:00:00Z. Its full live evaluation and all ten adopted checks passed;
-review independently passed the focused WIP-11 targets. This evidence is limited
-to that evaluated scope. F-001's subsequent restart-before-Release remediation
+`0723acb0ab7ccbac3b20e8b97030a2a617bd9fa5543ddddcfcb5cf46a2b1b6d5` passed its
+accepted full evaluation and all ten adopted checks on `cc11859`. Review then
+reproduced F-001's restart-before-Release collection revocation. The remediation
 preserves terminal collection outcomes separately from resource quarantine and
-extends the normal and crash-cut AQ tests through Release/reopen. Its changed
+extends normal and crash-cut AQ tests through Release/reopen.
+
+The operator accepted remediation packet
+`1d13a48427d0f745268c7acdf2fcd58d7c0e34a08df25b7bee9b0124422bf298`, including
+its supervisor disposition, in `9dbc0c4`, expiring 2026-11-11T00:00:00Z. Its full
+direct evaluation and all ten adopted checks completed: nine adopted checks
+passed; direct evaluation and runtime-test failed only WP-028's added
+crash-continuation success assertion. That assertion bypassed the required
+reconciliation of a Running effect without a durable receipt. The follow-up
+checks the exact recovered flow outcome, confirms collection through real AQ
+reconciliation while preserving original receipts, and retains completion and
+export access through Release/reopen. Acknowledged collection reconciliation
+also preserves its Committed answer after resource quarantine. These changed
 packet bytes require renewed exact-digest acceptance and live verification.
-F-002 updates these status records with the actual accepted evaluation history.
-Qualifying review and CraftingTable integration remain due; ordinary use,
-remote-provider/isolation qualification and G4 closure are excluded.
+F-002 records the actual acceptance, expiry and scoped evaluation outcome here
+and in the coverage record. Qualifying review and CraftingTable integration remain
+due; ordinary use, remote-provider/isolation qualification and G4 closure are
+excluded.

@@ -675,6 +675,9 @@ impl Harness {
         queue.shutdown().unwrap();
     }
     pub async fn reconcile_start(&self) {
+        self.reconcile_operation(Operation::Start).await;
+    }
+    pub async fn reconcile_operation(&self, op: Operation) {
         use worldinterface_domain::{agency::AuthenticatedCaller, reconciliation::CaseStatus};
         use worldinterface_runtime::reconciliation::{self, ReconciliationHandler};
         let caller = AuthenticatedCaller::from_trusted_authentication(
@@ -685,14 +688,14 @@ impl Harness {
             .state()
             .operations
             .values()
-            .find(|o| o.operation.as_str() == "start")
+            .find(|o| o.operation.as_str() == op.name())
             .unwrap()
             .intent
             .clone();
         let original = self.bundle.wi().effect_receipts(&self.auth.0, &intent).unwrap();
         let handler = ReconciliationHandler {
             bundle: self.bundle.clone(),
-            connector: self.runtime.connector(Operation::Start).unwrap(),
+            connector: self.runtime.connector(op).unwrap(),
             clock: HostClock,
         };
         let mut queue = QueueEngine::bootstrap(&self.bundle, handler, host()).unwrap();
@@ -704,7 +707,7 @@ impl Harness {
             if cases.iter().any(|c| c.status == CaseStatus::ConfirmedCommitted) {
                 break;
             }
-            assert!(Instant::now() < deadline, "seam reconciliation deadline: {cases:?}");
+            assert!(Instant::now() < deadline, "{op:?} reconciliation deadline: {cases:?}");
             tokio::time::sleep(Duration::from_millis(2)).await;
         }
         for _ in 0..5 {

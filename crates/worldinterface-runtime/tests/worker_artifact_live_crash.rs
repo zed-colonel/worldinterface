@@ -16,6 +16,7 @@ use support::{child::KillOnDrop, worker_fixture::*};
 use worldinterface_domain::worker::*;
 use worldinterface_protocol::*;
 use worldinterface_runtime::{
+    connector::{Connector, ReconcileOutcome, ReconcileRequest},
     storage::StoreBundle,
     worker::{artifacts, recovery},
     worker_process::*,
@@ -121,8 +122,24 @@ async fn wp_028_live_collection_ack_receipt_and_aq_crashes_preserve_publication_
             size: 14,
         }];
         assert_eq!(h.binding(), b);
+        // A Running effect without a durable receipt recovers as Uncertain.
+        // Confirm its collection through AQ reconciliation; never reinvoke it or
+        // replace its original receipt with success merely because bytes exist.
+        let collected_outcome = if matches!(
+            point,
+            "fabric-receipt-committed"
+                | "worker-artifact-before-aq-disposition"
+                | "worker-artifact-aq-completed"
+        ) {
+            FlowOutcome::Succeeded
+        } else {
+            FlowOutcome::Uncertain
+        };
         if published {
-            h.operation(Operation::CollectArtifacts).await;
+            h.operation_expect(Operation::CollectArtifacts, collected_outcome.clone()).await;
+            if collected_outcome == FlowOutcome::Uncertain {
+                h.reconcile_operation(Operation::CollectArtifacts).await;
+            }
             assert!(h.state().completed, "{point}: recovered collection must complete");
         }
         let decided = h.state().collection;
@@ -136,6 +153,30 @@ async fn wp_028_live_collection_ack_receipt_and_aq_crashes_preserve_publication_
         assert_eq!(h.state(), after, "{point}: replay/reopen changed durable outcome");
         if published {
             assert_eq!(h.runtime.read_artifact(&b, "probe").unwrap(), b"{\"clean\":true}");
+            h.operation_expect(Operation::CollectArtifacts, collected_outcome).await;
+            let operation = after
+                .operations
+                .values()
+                .find(|o| o.operation.as_str() == "collect_artifacts")
+                .unwrap();
+            let effects = h.bundle.wi().effect_snapshot(&b.tenant).unwrap();
+            let resolution = effects.effects[&operation.intent].resolution.as_ref().unwrap();
+            let result = h
+                .runtime
+                .connector(Operation::CollectArtifacts)
+                .unwrap()
+                .reconcile(ReconcileRequest {
+                    tenant: b.tenant.clone(),
+                    intent: operation.intent.clone(),
+                    execution: resolution.resolved.connector_execution.clone().unwrap(),
+                    resource: resolution.resolved.resource.clone(),
+                })
+                .unwrap();
+            assert!(
+                matches!(result, ReconcileOutcome::Committed(_)),
+                "{point}: resource quarantine revoked acknowledged publication"
+            );
+            assert_eq!(h.state(), after, "{point}: reconciliation changed terminal state");
         } else {
             assert!(h.runtime.read_artifact(&b, "probe").is_err());
         }
