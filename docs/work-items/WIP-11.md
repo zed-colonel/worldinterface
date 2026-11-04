@@ -33,7 +33,10 @@ binds operation, policy and manifest digests, findings, and exact private snapsh
 Snapshots use an immutable, run-keyed Fabric SQLite BLOB table, outside the worker
 workspace and normal artifact index. This implements the proposed bounded private
 snapshot without another filesystem namespace. Raw bytes never enlarge canonical
-record bounds. The fresh-store profile advances `local-worker-11` to
+record bounds. Lifecycle boundary evidence advances to `wi-worker-lifecycle:2`
+because its aggregate now includes required collection fields; the deterministic
+acknowledgement and public receipt envelopes retain their existing encodings.
+The fresh-store profile advances `local-worker-11` to
 `local-worker-12`; prior profiles require fresh stores. Foundation storage remains
 independent of worker and AQ crates.
 

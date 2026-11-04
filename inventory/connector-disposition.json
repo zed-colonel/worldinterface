@@ -1289,7 +1289,7 @@
         },
         {
           "path": "docs/work-items/WIP-11.md",
-          "source_sha256": "7b200c0ee9b8b45777728f0e3915d18e562db71bfab41e1dc085da18e690e070",
+          "source_sha256": "9c62c1c91fc15a30164bd0eecbb7333c504f533f19455c018488590e90a969eb",
           "treatment": "Shared WIP-11 artifact/seam support or evidence: retain run scoping, publication and quarantine obligations; review selective legacy removal without deleting these contracts. Candidate disposition in docs/work-items/WIP-11.md."
         },
         {
@@ -5461,42 +5461,42 @@
         },
         {
           "id": "crates/worldinterface-runtime/src/worker/connector.rs::::connector:WorkerConnector < S >",
-          "source_sha256": "424ef8d0c7056bd13221774c319ea63d43b56d88c45ef0c23c9a0ce38d209fc6",
+          "source_sha256": "10b83d61c65f7f572c1d8e0dea9a52d0e03df516a9e03407cf6b11861f2eaf4c",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/worker/connector.rs::::module:tests@10d1b0eff34c",
-          "source_sha256": "424ef8d0c7056bd13221774c319ea63d43b56d88c45ef0c23c9a0ce38d209fc6",
+          "source_sha256": "10b83d61c65f7f572c1d8e0dea9a52d0e03df516a9e03407cf6b11861f2eaf4c",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/worker/connector.rs::::source-module:crates/worldinterface-runtime/src/worker/connector.rs",
-          "source_sha256": "424ef8d0c7056bd13221774c319ea63d43b56d88c45ef0c23c9a0ce38d209fc6",
+          "source_sha256": "10b83d61c65f7f572c1d8e0dea9a52d0e03df516a9e03407cf6b11861f2eaf4c",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/worker/connector.rs::::struct:WorkerAcknowledgement",
-          "source_sha256": "424ef8d0c7056bd13221774c319ea63d43b56d88c45ef0c23c9a0ce38d209fc6",
+          "source_sha256": "10b83d61c65f7f572c1d8e0dea9a52d0e03df516a9e03407cf6b11861f2eaf4c",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/worker/connector.rs::::struct:WorkerConnector",
-          "source_sha256": "424ef8d0c7056bd13221774c319ea63d43b56d88c45ef0c23c9a0ce38d209fc6",
+          "source_sha256": "10b83d61c65f7f572c1d8e0dea9a52d0e03df516a9e03407cf6b11861f2eaf4c",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/worker/connector.rs::::struct:WorkerRuntime",
-          "source_sha256": "424ef8d0c7056bd13221774c319ea63d43b56d88c45ef0c23c9a0ce38d209fc6",
+          "source_sha256": "10b83d61c65f7f572c1d8e0dea9a52d0e03df516a9e03407cf6b11861f2eaf4c",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/worker/connector.rs::::trait:TrustedWorkerBuild",
-          "source_sha256": "424ef8d0c7056bd13221774c319ea63d43b56d88c45ef0c23c9a0ce38d209fc6",
+          "source_sha256": "10b83d61c65f7f572c1d8e0dea9a52d0e03df516a9e03407cf6b11861f2eaf4c",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/worker/connector.rs::::type:LiveRuns",
-          "source_sha256": "424ef8d0c7056bd13221774c319ea63d43b56d88c45ef0c23c9a0ce38d209fc6",
+          "source_sha256": "10b83d61c65f7f572c1d8e0dea9a52d0e03df516a9e03407cf6b11861f2eaf4c",
           "registration_sites": []
         },
         {
@@ -7998,7 +7998,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/src/worker/connector.rs",
-          "source_sha256": "424ef8d0c7056bd13221774c319ea63d43b56d88c45ef0c23c9a0ce38d209fc6",
+          "source_sha256": "10b83d61c65f7f572c1d8e0dea9a52d0e03df516a9e03407cf6b11861f2eaf4c",
           "treatment": "WIP-10 candidate worker source or associated build/test surface; preserve exact evaluation bindings and review ownership changes before integration."
         },
         {
@@ -9639,7 +9639,7 @@
         },
         {
           "id": "crates/worldinterface-runtime/src/worker/connector.rs::impl WorkerRuntime < S >::registration:fa416ed0d58305fbaee2fdf42993dd38729851f0222aa6c069942d3c5b9b297a#1",
-          "source_sha256": "424ef8d0c7056bd13221774c319ea63d43b56d88c45ef0c23c9a0ce38d209fc6",
+          "source_sha256": "10b83d61c65f7f572c1d8e0dea9a52d0e03df516a9e03407cf6b11861f2eaf4c",
           "registration_sites": [
             "crates/worldinterface-runtime/src/worker/connector.rs::impl WorkerRuntime < S >"
           ]
@@ -9795,7 +9795,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/src/worker/connector.rs",
-          "source_sha256": "424ef8d0c7056bd13221774c319ea63d43b56d88c45ef0c23c9a0ce38d209fc6",
+          "source_sha256": "10b83d61c65f7f572c1d8e0dea9a52d0e03df516a9e03407cf6b11861f2eaf4c",
           "treatment": "WIP-10 candidate worker source or associated build/test surface; preserve exact evaluation bindings and review ownership changes before integration."
         },
         {

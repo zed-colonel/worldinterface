@@ -40,11 +40,11 @@ fn succeeded(request: &WorkerRequestV1, state: &WorkerState) -> Result<PortObser
         outcome: ExecutionOutcome::Succeeded,
         outputs: vec![acknowledgement(request)?],
         evidence: vec![EvidenceBytes {
-            schema: "wi-worker-lifecycle:1".to_string().try_into()?,
+            schema: "wi-worker-lifecycle:2".to_string().try_into()?,
             bytes: bytes.clone(),
         }],
         boundary_record: Some(EvidenceBytes {
-            schema: "wi-worker-lifecycle:1".to_string().try_into()?,
+            schema: "wi-worker-lifecycle:2".to_string().try_into()?,
             bytes,
         }),
     })
@@ -102,7 +102,7 @@ pub fn descriptor(operation: Operation) -> Result<ConnectorDescriptor> {
             automatic: true,
         },
         cancellation_supported: true,
-        evidence_schema: "wi-worker-lifecycle:1".to_string().try_into()?,
+        evidence_schema: "wi-worker-lifecycle:2".to_string().try_into()?,
         max_evidence_bytes: 64 * 1024,
     };
     worldinterface_worker::mapping::validate_spi_descriptor(operation, &d)?;
@@ -615,7 +615,7 @@ impl<S: TrustedWorkerBuild + 'static> Connector for WorkerConnector<S> {
             root.worker_snapshot(&r.tenant, &w.provider, &w.run)?.ok_or("worker absent")?;
         if state.quarantined && self.descriptor.operation.as_str() == "collect_artifacts" {
             return Ok(ReconcileOutcome::Unknown(vec![EvidenceBytes {
-                schema: "wi-worker-lifecycle:1".to_string().try_into()?,
+                schema: "wi-worker-lifecycle:2".to_string().try_into()?,
                 bytes: canonical_data(&state)?,
             }]));
         }
@@ -671,7 +671,7 @@ impl<S: TrustedWorkerBuild + 'static> Connector for WorkerConnector<S> {
             }
         }
         let evidence = vec![EvidenceBytes {
-            schema: "wi-worker-lifecycle:1".to_string().try_into()?,
+            schema: "wi-worker-lifecycle:2".to_string().try_into()?,
             bytes: canonical_data(&state)?,
         }];
         if let Some(key) = &r.execution.provider_key {
@@ -780,7 +780,7 @@ mod tests {
                 assert_eq!(decoded.version, 1);
                 assert_eq!(decoded.request, request.digest().unwrap());
                 let boundary = observed.boundary_record.as_ref().unwrap();
-                assert_eq!(boundary.schema.as_str(), "wi-worker-lifecycle:1");
+                assert_eq!(boundary.schema.as_str(), "wi-worker-lifecycle:2");
                 assert_eq!(serde_json::from_slice::<WorkerState>(&boundary.bytes).unwrap(), *state);
                 let mut outcome = OutcomeEvidence {
                     classification: None,
