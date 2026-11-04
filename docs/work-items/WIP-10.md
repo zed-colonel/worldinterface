@@ -343,3 +343,22 @@ Positive evaluation awaits renewed exact-digest acceptance. All adopted evidence
 follow-up is committed separately. Live evaluation and adopted checks on that
 final candidate await renewed exact-digest acceptance. No gate closure or passing
 runtime-test result is asserted by this prepared packet.
+
+
+### Follow-up acceptance and current result, 2026-11-04
+
+The operator accepted the completed follow-up packet: “Yes, I accept the follow-up
+packet, with unchanged supervisor disposition and evaluation-only scope.” This
+answers the exact canonical digest and finite expiry question for
+`fd64db73cb3ab3dc03e731a070c3421778a6908fbada1332ffa33991067798ee`
+at `d5a654f`, through 2026-11-10T19:00:00Z, in this implementation run. The receipt
+and trusted host anchor record only that actual acceptance. All 266 source
+bindings, both supervisor dispositions and measured support programs match.
+No packet-bound source changed to provision acceptance.
+
+Current result: corrected live lifecycle, crash, adapter and capacity verification
+is in progress. After passing focused evidence, the candidate G3 record and this
+note will be prepared for review, with every adopted check run on the committed
+candidate. Gate acceptance still requires qualifying reviewed CraftingTable
+integration; ordinary worker use remains disabled. Logs and reports are retained
+in this run's `scratch/verification/final-worker-proof/`.
