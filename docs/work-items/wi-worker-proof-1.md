@@ -237,3 +237,35 @@ due; ordinary use, remote-provider/isolation qualification and G4 closure are
 excluded.
 
 WIP-12 adds exact runtime catalog records, provider quarantine and separate recovery authority. See [WIP-12](WIP-12.md). Packet d06bd813 was accepted in e5fc3b6 through 2026-11-11T00:00:00Z. Evaluation exposed two undeclared Probe exports and a WP-024 pending-signal timing assertion; the test-composition remediation requires renewed exact-packet acceptance and live verification. Ordinary process use and G4 closure remain disabled; all adopted committed-head checks and qualifying review remain due.
+
+## WIP-13 control-plane domain candidate
+
+[WIP-13](WIP-13.md) adds AQ-free embedded/local-development profiles, opaque-session
+application services, server-owned scoped agency, exact read/query authority,
+attributed policy/grant/binding revisions and reference-only credential brokerage.
+Fabric journals administration, request/use accounting, issuance and revocation
+state with replay/rebuild/restore validation. The fresh-store feature profile is
+`local-control-plane-14`; older layouts are rejected. The checked WI-11/domain
+obligation matrix has no assigned cases and changes no gate status. WIP-14 owns
+runtime wiring, custody-provider selection and effect/accounting composition.
+No server or production authentication implementation is exposed. Adopted
+committed-head checks, qualifying review and CraftingTable integration remain due.
+
+WIP-13's adopted runtime test exposed the reviewed worker packet's expected
+source-drift guard. A refreshed exact-source packet and non-live build are
+prepared for renewed operator acceptance; the old receipt/host anchor remain
+unchanged. Positive worker tests and complete adopted-check passage remain due
+after acceptance. See the concrete WIP-13 evaluation request and work-item notes.
+
+## WIP-14 required control-plane recovery carry-forward
+
+WIP-13 review finding **F-007** is carried into WIP-14 using the review's explicit
+reconciliation alternative. Interrupted credential delivery currently remains
+Pending without a durable attempt marker, including when custody succeeded but
+its result was not committed. WIP-14 owns the required attempt claim, exclusive
+host recovery, durable Unresolved/Uncertain classification, custody quarantine
+and crash/retry evidence specified in
+[WIP-13's F-007 obligation](WIP-13.md#f-007-required-wip-14-interrupted-delivery-reconciliation).
+The current fail-closed retries and lifetime bounds do not complete this
+obligation; WIP-14 must preserve the tested guarantee that an identical caller
+retry cannot cancel a live delivery or cause another custody call.

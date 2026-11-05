@@ -1124,7 +1124,7 @@ pub fn validate_process_catalog(c: &ProcessCatalogContract) -> Vec<Finding> {
         )
         || !exact(&c.recovery_operations, &["inspect", "terminate", "reconcile"])
         || c.quarantine_scope != "tenant-provider"
-        || c.store_profile != "local-worker-13"
+        || c.store_profile != "local-control-plane-15"
         || c.ordinary_use
         || c.self_promotion
         || c.runtime_pass_asserted

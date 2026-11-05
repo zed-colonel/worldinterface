@@ -15,4 +15,5 @@ pub use ingress::*;
 pub mod connector;
 pub use connector::*;
 
+pub mod control_plane;
 pub mod plan;

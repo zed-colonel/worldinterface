@@ -48,3 +48,5 @@ mod worker;
 pub use worker::worker_boundary;
 
 mod worker_collection;
+
+pub mod control_plane;

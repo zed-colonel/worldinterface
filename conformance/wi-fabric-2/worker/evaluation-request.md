@@ -1,3 +1,52 @@
+# WIP-13 documentation-remediation evaluation request
+
+This candidate addresses F-007 using the review's explicit alternative: record
+interrupted-delivery reconciliation as a required WIP-14 composition obligation,
+with ownership, attempt journaling, uncertainty/quarantine and crash/retry tests.
+It also corrects F-008's description of the public host-only authorization APIs.
+Only the WIP-13 note, active ledger and this request change covered packet bytes;
+foundation/runtime code, fixtures, supervisor disposition and evaluation limits
+remain those accepted in packet
+`e873492675e10878af51baf023255f5650347465d62a98bade03fe516e2bb594`.
+
+Accept only the new canonical digest printed by
+`scripts/refresh-wi-worker-evaluation.py`, after the source-bound non-live build
+passes. Requested expiry remains **2026-11-11T00:00:00Z**, with unchanged fixture
+limits: six operations, nonsensitive inputs, 15000 ms wall time and 65536 retained
+output bytes. No ordinary use or production credentials are requested. The
+previous approval receipt and trusted host anchor remain unchanged pending an
+actual operator decision. Documentation is covered by the same exact-source
+acceptance rule; these edits do not inherit acceptance of the previous digest.
+
+## Historical foundation-source request
+
+WIP-13 adds the AQ-free embedded control-plane models, scoped application
+services and Fabric persistence described in `docs/work-items/WIP-13.md`.
+The review remediation addresses F-001 through F-006 with exact host-authorized
+administration, non-mutating reads, indexed projection entries, grant recovery,
+scoped binding resolution and concurrent issuance retries. Its foundation source,
+tests, inventory dispositions, store profile (`local-control-plane-15`) and
+contract coverage change files covered by the previously accepted worker packet.
+The adopted runtime suite correctly rejects that source drift before launching
+a reviewed fixture. No worker/provider source or supervisor disposition changes.
+
+Accept only the new canonical digest printed by
+`scripts/refresh-wi-worker-evaluation.py`, including the unchanged supervisor
+disposition. Requested expiry remains **2026-11-11T00:00:00Z**. Tasks,
+six operations, nonsensitive inputs, 15000 ms wall time and 65536 retained
+output bytes remain unchanged. No ordinary use, production credentials,
+hostile code, publication, integration or gate closure is requested.
+
+Non-live compilation and the source-bound worker build must pass before this
+request is presented for exact-digest acceptance. The separate approval receipt
+and trusted host anchor remain the previous operator decision until an actual
+new decision is received. A changed covered byte requires renewed acceptance.
+No test may create or retarget that approval. The complete adopted runtime suite
+must be rerun after acceptance; its present failure is an authorization guard,
+not a passing live evaluation.
+
+## Historical predecessor request
+
 # WIP-12 review-remediation evaluation request
 
 Packet `34f2d904342b8c49d915f11f631878084e07978000cc2ec3abe528b0b781b957`
