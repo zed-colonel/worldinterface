@@ -325,7 +325,7 @@ fn control_worker_and_connector_credentials_reject_each_scope_mismatch() {
 
 #[test]
 fn control_permits_require_current_exact_authorization_and_bound_expiries() {
-    let (state, permit, _, snapshot, intent) = issue_fixture(false, Profile::Embedded);
+    let (state, permit, issue, snapshot, intent) = issue_fixture(false, Profile::Embedded);
     let input = || cp::PermitInput {
         reference: reference(&permit.binding().scope, ObjectKind::Authorization, "another"),
         secret: permit.binding().secret.clone(),
@@ -363,6 +363,36 @@ fn control_permits_require_current_exact_authorization_and_bound_expiries() {
         )
         .is_err());
     }
+    // A newly applicable grant changes the complete authority snapshot even if
+    // its authority hashes equal the original grant's hashes.
+    let mut changed = state.clone();
+    let mut revision = changed
+        .history
+        .iter()
+        .find(|r| matches!(r.content, cp::Content::Grant(_)))
+        .unwrap()
+        .clone();
+    revision.reference.id = o("grant:added");
+    if let cp::Content::Grant(g) = &mut revision.content {
+        g.id = o("grant:added");
+    }
+    revision.content_digest = digest(&revision.content).unwrap();
+    changed.history.push(revision);
+    assert!(cp::prepare_permit(
+        &changed,
+        &caller(&snapshot),
+        &intent,
+        &VerifiedSnapshot::from_trusted_verifier(snapshot.clone()).unwrap(),
+        input(),
+        now()
+    )
+    .is_err());
+    assert!(cp::apply(&changed, &caller(&snapshot), &issue, now()).is_err());
+    let (pending, out) = cp::apply(&state, &caller(&snapshot), &issue, now()).unwrap();
+    let cp::Outcome::Credential(m) = out else { panic!() };
+    let mut pending = pending;
+    pending.history.push(changed.history.last().unwrap().clone());
+    assert!(cp::delivery_reference(&pending, &m.issuance, now()).is_err());
     let digest = digest(permit.binding()).unwrap();
     assert_ne!(digest, ContentHash::of(b"token"));
 }

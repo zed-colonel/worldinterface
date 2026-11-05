@@ -187,6 +187,7 @@ pub struct Permit {
     binding: CredentialScope,
     expires_at_ms: u64,
     reservations: Vec<UseLimit>,
+    demand: ContentHash,
     revoked: bool,
 }
 
@@ -228,6 +229,25 @@ impl State {
             .rev()
             .filter(|r| r.reference.scope == *scope && seen.insert(r.reference.clone()))
             .collect()
+    }
+    fn authority_revisions(
+        &self,
+        scope: &Scope,
+        principal: &PrincipalId,
+    ) -> Result<BTreeMap<OpaqueRef, ContentHash>> {
+        let mut revisions = BTreeMap::new();
+        for r in self.contents(scope) {
+            let applicable = match &r.content {
+                Content::Policy(_) => true,
+                Content::Binding(b) => &b.principal == principal,
+                Content::Grant(g) => &g.subject == principal,
+                _ => false,
+            };
+            if applicable && revisions.insert(r.reference.id.clone(), hash(r)?).is_some() {
+                return Err(Error::Unavailable);
+            }
+        }
+        Ok(revisions)
     }
     fn bindings(&self) -> Vec<Binding> {
         let mut seen = BTreeSet::new();
@@ -803,6 +823,9 @@ pub fn apply(
                 .iter()
                 .find(|p| p.reference == credential.permit)
                 .ok_or(Error::Unavailable)?;
+            if !authority.contains(&permit.demand) {
+                return Err(Error::Unavailable);
+            }
             limits.extend(permit.reservations.clone());
             // A logical use shared by both paths is reserved once.
             limits.sort_by(|a, b| a.key.cmp(&b.key));
@@ -843,6 +866,9 @@ fn validate_credential(s: &State, request: &CredentialRequest, now: u64) -> Resu
             && b.class == CredentialClass::Production
         || b.audience == Audience::Worker && b.class == CredentialClass::Production
     {
+        return Err(Error::Unavailable);
+    }
+    if b.revisions != s.authority_revisions(&b.scope, &b.principal)? {
         return Err(Error::Unavailable);
     }
     for (id, revision) in &b.revisions {
@@ -934,6 +960,9 @@ pub fn prepare_permit(
             return Err(Error::Invalid);
         }
     }
+    if revisions != s.authority_revisions(&scope, caller.principal())? {
+        return Err(Error::Unavailable);
+    }
     let r = s.current(&input.secret).ok_or(Error::Unavailable)?;
     let Content::Secret(secret) = &r.content else {
         return Err(Error::Unavailable);
@@ -966,6 +995,7 @@ pub fn prepare_permit(
         },
         expires_at_ms,
         reservations: evaluation.reservations,
+        demand: hash(&intent.submission)?,
         revoked: false,
     })
 }
@@ -1085,7 +1115,15 @@ pub fn delivery_reference(s: &State, id: &ContentHash, now: u64) -> Result<Opaqu
         m.binding.principal.clone(),
     );
     let (scope, b, a) = s.scope(&caller, &IdentityClaims::default(), now)?;
-    s.authority(&scope, &b, &a, now)?;
+    let (effective, _, _) = s.authority(&scope, &b, &a, now)?;
+    let request = CredentialRequest {
+        request: "delivery".to_string().try_into().map_err(|_| Error::Invalid)?,
+        permit: m.permit.clone(),
+        binding: m.binding.clone(),
+    };
+    if !effective.contains(&permit.demand) || !effective.contains(&issue_demand(&request)?) {
+        return Err(Error::Unavailable);
+    }
     match &s.current(&m.binding.secret).ok_or(Error::Unavailable)?.content {
         Content::Secret(secret) => Ok(secret.custody.clone()),
         _ => Err(Error::Unavailable),

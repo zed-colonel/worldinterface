@@ -78,7 +78,9 @@ including worker profile exclusions. Managed policy/binding/grants must equal
 those facts. A permit binds tenant, organization, principal, worker/connector
 recipient and provider, operation, canonical resource/version, run, authorization
 digest, managed revision digests, credential class, secret version and revocation
-generation. Every request dimension must match; only expiry may attenuate.
+generation. Every request dimension must match; only expiry may attenuate. The revision set
+must equal the complete current applicable binding/policy/grant set, including
+newly added grants, both at intent creation and immediately before delivery.
 
 WIP-14 must call trusted permit withdrawal when a run, approval or external
 evidence is withdrawn; withdrawal is journaled and blocks new issuance and
