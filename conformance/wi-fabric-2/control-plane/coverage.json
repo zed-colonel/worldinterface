@@ -145,7 +145,7 @@
       {
         "manifest": "crates/worldinterface-foundation/Cargo.toml",
         "package": "worldinterface-storage",
-        "test": "control_projection_entries_do_not_share_a_16_mib_ceiling"
+        "test": "control_plane::tests::control_projection_entries_do_not_share_a_16_mib_ceiling"
       }
     ],
     "secret-exclusion": [

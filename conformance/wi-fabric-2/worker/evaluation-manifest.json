@@ -13,7 +13,7 @@
     "conformance/wi-fabric-2/completion/coverage.json": "8b9a4ad408e70258e88ba429c208e1544f3dedabcd553356fd914721007683a3",
     "conformance/wi-fabric-2/connectors/coverage.json": "7a8ff648022510e11872960e9d6a2034675d3dde8b308af15690b6e14630edde",
     "conformance/wi-fabric-2/continuations/coverage.json": "d3798c05d6567159ae011cd6d8ee0f9fc272ec5ca3fe01de429b34ed197d25cb",
-    "conformance/wi-fabric-2/control-plane/coverage.json": "3bb35adb3c70e30914a1cac5b86ac04036c6be0fa0bcb6744265787f2a59e262",
+    "conformance/wi-fabric-2/control-plane/coverage.json": "2f58080203f635a7e5fa2dc25a514992e4679aee78ed6c0cf2c7b4867b953b20",
     "conformance/wi-fabric-2/domain/README.md": "d40fcecf8bc439be4b5aa83a4a4cae62826d737553ba09c6a13bb695171e4654",
     "conformance/wi-fabric-2/domain/canonical-vectors.json": "19f7b2817c38775c06c376e070b1d5b393d39bef0b12cd344a5649651ae46059",
     "conformance/wi-fabric-2/domain/coverage.json": "1618ec4dd1da0e4da1dab2de3b439d40c2a7995b4e9db2576c23a6950e6a1ecb",
