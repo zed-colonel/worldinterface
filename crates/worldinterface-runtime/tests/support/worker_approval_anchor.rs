@@ -1,15 +1,15 @@
 //! Trusted test-host provisioning, separate from the source packet it approves.
 //! Actual operator guidance supplied at startup of CraftingTable run
-//! e3b25e99-9087-437b-8bb8-7fdd01be3b5a on 2026-11-05 (UTC):
+//! 2f4590d2-b14c-49b6-be70-19b9f60c8a3d on 2026-11-05 (UTC):
 //! "I approved and accept packet
-//! e873492675e10878af51baf023255f5650347465d62a98bade03fe516e2bb594
+//! c977d25a9a328229354c086ed797dc86a0033414c7e62b60ef6d2ff3e8998b88
 //! through 2026-11-11T00:00:00Z, with unchanged fixture limits."
 //! The receipt identifies that supplied guidance, not a controller-issued
 //! decision ID or an independently inferred operator UUID. Its finite expiry
 //! ends at the explicitly accepted 2026-11-11T00:00:00Z.
 //!
 //! Accepted canonical packet:
-//! e873492675e10878af51baf023255f5650347465d62a98bade03fe516e2bb594.
+//! c977d25a9a328229354c086ed797dc86a0033414c7e62b60ef6d2ff3e8998b88.
 //! Includes supervisor-disposition.json's exact worker_process/mod.rs pin
 //! f6e7aaa9abc4b98a8f91f9b090920dc7a9e329a33d58c14378f7d9361dcf35af.
 //! The original five-file exception and generic continuation ban are unchanged.
@@ -23,4 +23,4 @@
 //! hostile code, same-user isolation claim, publication, integration or gate
 //! acceptance. These records encode only that supplied acceptance.
 pub const ACCEPTED_RECEIPT_SHA256: Option<&str> =
-    Some("42aa433da650a5cab1d541f47eacfb309ea4b4e0ad7db8c5755fa5a5e42636b8");
+    Some("01aa4bb8a1f87c7d2002411d86bc53df9f3667c8ea26dcc8589a19ea49a83a2c");
