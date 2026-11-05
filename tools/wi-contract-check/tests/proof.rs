@@ -651,3 +651,50 @@ fn catalog_coverage_rejects_missing_cases_obligations_ignored_or_fabricated_test
         assert!(!proof::validate_worker_catalog(t.path(), &index).unwrap().is_empty(), "{mode}");
     }
 }
+
+#[test]
+fn wi11_control_plane_requires_complete_exact_foundation_evidence_without_case_claims() {
+    let path = "conformance/wi-fabric-2/control-plane/coverage.json";
+    let coverage = read(&root().join(path)).unwrap();
+    let obligations: std::collections::BTreeMap<String, Vec<TestRef>> =
+        serde_json::from_value(coverage["required_obligations"].clone()).unwrap();
+    let index: TestIndex = obligations.values().flatten().cloned().map(|t| (t, 1)).collect();
+    assert!(proof::validate_control_plane(&root(), &index).unwrap().is_empty());
+    let chosen = obligations["secret-exclusion"][0].clone();
+    for count in [0, 2] {
+        let mut index = index.clone();
+        index.insert(chosen.clone(), count);
+        assert!(!proof::validate_control_plane(&root(), &index).unwrap().is_empty());
+    }
+    let mut missing = index.clone();
+    missing.remove(&chosen);
+    assert!(!proof::validate_control_plane(&root(), &missing).unwrap().is_empty());
+    let t = fixture();
+    for mutation in 0..8 {
+        let mut changed = coverage.clone();
+        match mutation {
+            0 => {
+                changed["required_obligations"].as_object_mut().unwrap().remove("secret-exclusion");
+            }
+            1 => changed["runtime_conformance"] = json!(true),
+            2 => changed["assigned_cases"] = json!({"WP-029":[]}),
+            3 => changed["required_obligations"]["secret-exclusion"] = json!([]),
+            4 => {
+                changed["required_obligations"]["secret-exclusion"][0]["manifest"] =
+                    json!("crates/worldinterface-runtime/Cargo.toml")
+            }
+            5 => changed["required_obligations"]["secret-exclusion"] = json!([chosen, chosen]),
+            6 => {
+                changed["required_obligations"]["secret-exclusion"][0]["package"] =
+                    json!("worldinterface-runtime")
+            }
+            _ => changed["upstream_conformance"] = json!(true),
+        }
+        fs::write(t.path().join(path), serde_json::to_vec(&changed).unwrap()).unwrap();
+        assert!(!proof::validate_control_plane(t.path(), &index).unwrap().is_empty());
+    }
+    let (registry, _, _) = records();
+    for id in ["WP-029", "WP-030", "AB-WI-019"] {
+        assert_eq!(registry.cases.iter().find(|c| c.id == id).unwrap().owning_item, "WIP-14");
+    }
+}

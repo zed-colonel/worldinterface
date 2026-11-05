@@ -64,12 +64,26 @@ pub struct AgencyRecord {
     pub context: AgencyContext,
     pub effective: Authority,
 }
-pub fn resolve_agency(
+/// Optional assertions only constrain already resolved facts.
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct IdentityClaims {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub actor: Option<ActorId>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub accountable: Option<PrincipalId>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub capacity: Option<ActingCapacityRef>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub delegation: Option<EvidenceRef>,
+}
+
+pub fn resolve_binding(
     caller: &AuthenticatedCaller,
-    s: &EffectSubmission,
+    claims: &IdentityClaims,
     bindings: &[Binding],
     now: &Timestamp,
-) -> Result<AgencyRecord> {
+) -> Result<(Binding, Authority)> {
     if bindings.len() > 256 {
         return Err("binding snapshot bound".into());
     }
@@ -91,9 +105,9 @@ pub fn resolve_agency(
         || b.principal_authority.len() > 256
         || !b.capacity_authority.is_subset(&b.principal_authority)
         || b.capacity.principal_ref != b.accountable
-        || s.submitted_by.as_ref().is_some_and(|v| v != &b.actor)
-        || s.requested_accountable_principal.as_ref().is_some_and(|v| v != &b.accountable)
-        || s.acting_capacity.as_ref().is_some_and(|v| v != &b.capacity)
+        || claims.actor.as_ref().is_some_and(|v| v != &b.actor)
+        || claims.accountable.as_ref().is_some_and(|v| v != &b.accountable)
+        || claims.capacity.as_ref().is_some_and(|v| v != &b.capacity)
         || b.capacity.attestation_ref.as_ref().is_some_and(|v| v.artifact.scope != caller.tenant)
     {
         return Err("agency assertion or capacity mismatch".into());
@@ -122,14 +136,36 @@ pub fn resolve_agency(
         effective = d.authority.clone();
     }
     if current != caller.principal
-        || s.delegation_credential
+        || claims
+            .delegation
             .as_ref()
             .is_some_and(|e| b.delegations.last().is_none_or(|d| &d.evidence != e))
     {
         return Err("delegation endpoint or credential mismatch".into());
     }
-    // Size/canonical validation applies even to trusted in-memory facts.
     digest(b)?;
+    Ok((b.clone(), effective))
+}
+
+pub fn resolve_agency(
+    caller: &AuthenticatedCaller,
+    s: &EffectSubmission,
+    bindings: &[Binding],
+    now: &Timestamp,
+) -> Result<AgencyRecord> {
+    let (b, effective) = resolve_binding(
+        caller,
+        &IdentityClaims {
+            actor: s.submitted_by.clone(),
+            accountable: s.requested_accountable_principal.clone(),
+            capacity: s.acting_capacity.clone(),
+            delegation: s.delegation_credential.clone(),
+        },
+        bindings,
+        now,
+    )?;
+    // Size/canonical validation applies even to trusted in-memory facts.
+    digest(&b)?;
     Ok(AgencyRecord {
         binding: b.clone(),
         effective,

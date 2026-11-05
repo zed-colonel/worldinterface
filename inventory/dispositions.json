@@ -11877,5 +11877,397 @@
     "target": "worker-process-catalog",
     "rationale": "WIP-12 F-002 candidate disposition: deterministic host clock for expiry, revocation and recovery-only polling regression; subject to qualifying review, no executable approval or ordinary-use authority.",
     "source": "docs/work-items/WIP-12.md; WI-ADR-017; review F-002"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/agency.rs::::struct:IdentityClaims",
+    "disposition": "retain-align",
+    "target": "foundation/domain/control-plane",
+    "rationale": "WIP-13 scoped embedded control-plane models and trusted ports; no server or runtime composition",
+    "source": "docs/work-items/WIP-13.md; WI-ADR-018; accepted WIP-13 design"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/control_plane/mod.rs::::enum:Content",
+    "disposition": "retain-align",
+    "target": "foundation/domain/control-plane",
+    "rationale": "WIP-13 scoped embedded control-plane models and trusted ports; no server or runtime composition",
+    "source": "docs/work-items/WIP-13.md; WI-ADR-018; accepted WIP-13 design"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/control_plane/mod.rs::::enum:Error",
+    "disposition": "retain-align",
+    "target": "foundation/domain/control-plane",
+    "rationale": "WIP-13 scoped embedded control-plane models and trusted ports; no server or runtime composition",
+    "source": "docs/work-items/WIP-13.md; WI-ADR-018; accepted WIP-13 design"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/control_plane/mod.rs::::enum:Operation",
+    "disposition": "retain-align",
+    "target": "foundation/domain/control-plane",
+    "rationale": "WIP-13 scoped embedded control-plane models and trusted ports; no server or runtime composition",
+    "source": "docs/work-items/WIP-13.md; WI-ADR-018; accepted WIP-13 design"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/control_plane/mod.rs::::enum:Outcome",
+    "disposition": "retain-align",
+    "target": "foundation/domain/control-plane",
+    "rationale": "WIP-13 scoped embedded control-plane models and trusted ports; no server or runtime composition",
+    "source": "docs/work-items/WIP-13.md; WI-ADR-018; accepted WIP-13 design"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/control_plane/mod.rs::::source-module:crates/worldinterface-foundation/domain/src/control_plane/mod.rs",
+    "disposition": "retain-align",
+    "target": "foundation/domain/control-plane",
+    "rationale": "WIP-13 scoped embedded control-plane models and trusted ports; no server or runtime composition",
+    "source": "docs/work-items/WIP-13.md; WI-ADR-018; accepted WIP-13 design"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/control_plane/mod.rs::::struct:AdminCommand",
+    "disposition": "retain-align",
+    "target": "foundation/domain/control-plane",
+    "rationale": "WIP-13 scoped embedded control-plane models and trusted ports; no server or runtime composition",
+    "source": "docs/work-items/WIP-13.md; WI-ADR-018; accepted WIP-13 design"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/control_plane/mod.rs::::struct:Attribution",
+    "disposition": "retain-align",
+    "target": "foundation/domain/control-plane",
+    "rationale": "WIP-13 scoped embedded control-plane models and trusted ports; no server or runtime composition",
+    "source": "docs/work-items/WIP-13.md; WI-ADR-018; accepted WIP-13 design"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/control_plane/mod.rs::::struct:Bootstrap",
+    "disposition": "retain-align",
+    "target": "foundation/domain/control-plane",
+    "rationale": "WIP-13 scoped embedded control-plane models and trusted ports; no server or runtime composition",
+    "source": "docs/work-items/WIP-13.md; WI-ADR-018; accepted WIP-13 design"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/control_plane/mod.rs::::struct:Configuration",
+    "disposition": "retain-align",
+    "target": "foundation/domain/control-plane",
+    "rationale": "WIP-13 scoped embedded control-plane models and trusted ports; no server or runtime composition",
+    "source": "docs/work-items/WIP-13.md; WI-ADR-018; accepted WIP-13 design"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/control_plane/mod.rs::::struct:Permit",
+    "disposition": "retain-align",
+    "target": "foundation/domain/control-plane",
+    "rationale": "WIP-13 scoped embedded control-plane models and trusted ports; no server or runtime composition",
+    "source": "docs/work-items/WIP-13.md; WI-ADR-018; accepted WIP-13 design"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/control_plane/mod.rs::::struct:PermitInput",
+    "disposition": "retain-align",
+    "target": "foundation/domain/control-plane",
+    "rationale": "WIP-13 scoped embedded control-plane models and trusted ports; no server or runtime composition",
+    "source": "docs/work-items/WIP-13.md; WI-ADR-018; accepted WIP-13 design"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/control_plane/mod.rs::::struct:Request",
+    "disposition": "retain-align",
+    "target": "foundation/domain/control-plane",
+    "rationale": "WIP-13 scoped embedded control-plane models and trusted ports; no server or runtime composition",
+    "source": "docs/work-items/WIP-13.md; WI-ADR-018; accepted WIP-13 design"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/control_plane/mod.rs::::struct:Retry",
+    "disposition": "retain-align",
+    "target": "foundation/domain/control-plane",
+    "rationale": "WIP-13 scoped embedded control-plane models and trusted ports; no server or runtime composition",
+    "source": "docs/work-items/WIP-13.md; WI-ADR-018; accepted WIP-13 design"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/control_plane/mod.rs::::struct:Revision",
+    "disposition": "retain-align",
+    "target": "foundation/domain/control-plane",
+    "rationale": "WIP-13 scoped embedded control-plane models and trusted ports; no server or runtime composition",
+    "source": "docs/work-items/WIP-13.md; WI-ADR-018; accepted WIP-13 design"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/control_plane/mod.rs::::struct:Secret",
+    "disposition": "retain-align",
+    "target": "foundation/domain/control-plane",
+    "rationale": "WIP-13 scoped embedded control-plane models and trusted ports; no server or runtime composition",
+    "source": "docs/work-items/WIP-13.md; WI-ADR-018; accepted WIP-13 design"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/control_plane/mod.rs::::struct:Service",
+    "disposition": "retain-align",
+    "target": "foundation/domain/control-plane",
+    "rationale": "WIP-13 scoped embedded control-plane models and trusted ports; no server or runtime composition",
+    "source": "docs/work-items/WIP-13.md; WI-ADR-018; accepted WIP-13 design"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/control_plane/mod.rs::::struct:State",
+    "disposition": "retain-align",
+    "target": "foundation/domain/control-plane",
+    "rationale": "WIP-13 scoped embedded control-plane models and trusted ports; no server or runtime composition",
+    "source": "docs/work-items/WIP-13.md; WI-ADR-018; accepted WIP-13 design"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/control_plane/mod.rs::::trait:Authentication",
+    "disposition": "retain-align",
+    "target": "foundation/domain/control-plane",
+    "rationale": "WIP-13 scoped embedded control-plane models and trusted ports; no server or runtime composition",
+    "source": "docs/work-items/WIP-13.md; WI-ADR-018; accepted WIP-13 design"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/control_plane/mod.rs::::trait:Custody",
+    "disposition": "retain-align",
+    "target": "foundation/domain/control-plane",
+    "rationale": "WIP-13 scoped embedded control-plane models and trusted ports; no server or runtime composition",
+    "source": "docs/work-items/WIP-13.md; WI-ADR-018; accepted WIP-13 design"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/control_plane/mod.rs::::trait:Repository",
+    "disposition": "retain-align",
+    "target": "foundation/domain/control-plane",
+    "rationale": "WIP-13 scoped embedded control-plane models and trusted ports; no server or runtime composition",
+    "source": "docs/work-items/WIP-13.md; WI-ADR-018; accepted WIP-13 design"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/control_plane/mod.rs::::trait:TrustedClock",
+    "disposition": "retain-align",
+    "target": "foundation/domain/control-plane",
+    "rationale": "WIP-13 scoped embedded control-plane models and trusted ports; no server or runtime composition",
+    "source": "docs/work-items/WIP-13.md; WI-ADR-018; accepted WIP-13 design"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/control_plane/mod.rs::::type:Result",
+    "disposition": "retain-align",
+    "target": "foundation/domain/control-plane",
+    "rationale": "WIP-13 scoped embedded control-plane models and trusted ports; no server or runtime composition",
+    "source": "docs/work-items/WIP-13.md; WI-ADR-018; accepted WIP-13 design"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/lib.rs::::module:control_plane",
+    "disposition": "retain-align",
+    "target": "foundation/domain/control-plane",
+    "rationale": "WIP-13 scoped embedded control-plane models and trusted ports; no server or runtime composition",
+    "source": "docs/work-items/WIP-13.md; WI-ADR-018; accepted WIP-13 design"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/tests/control_plane.rs::::module:support",
+    "disposition": "test-evidence",
+    "target": "foundation/domain/control-plane",
+    "rationale": "WIP-13 scoped embedded control-plane executable evidence; no server or runtime composition",
+    "source": "docs/work-items/WIP-13.md; WI-ADR-018; accepted WIP-13 design"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/tests/control_plane.rs::::source-module:crates/worldinterface-foundation/domain/tests/control_plane.rs",
+    "disposition": "test-evidence",
+    "target": "foundation/domain/control-plane",
+    "rationale": "WIP-13 scoped embedded control-plane executable evidence; no server or runtime composition",
+    "source": "docs/work-items/WIP-13.md; WI-ADR-018; accepted WIP-13 design"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/tests/support/control_plane.rs::::source-module:crates/worldinterface-foundation/domain/tests/support/control_plane.rs",
+    "disposition": "test-evidence",
+    "target": "foundation/domain/control-plane",
+    "rationale": "WIP-13 scoped embedded control-plane executable evidence; no server or runtime composition",
+    "source": "docs/work-items/WIP-13.md; WI-ADR-018; accepted WIP-13 design"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/control_plane.rs::::enum:Audience",
+    "disposition": "retain-align",
+    "target": "foundation/protocol/control-plane",
+    "rationale": "WIP-13 scoped embedded control-plane models and trusted ports; no server or runtime composition",
+    "source": "docs/work-items/WIP-13.md; WI-ADR-018; accepted WIP-13 design"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/control_plane.rs::::enum:CredentialClass",
+    "disposition": "retain-align",
+    "target": "foundation/protocol/control-plane",
+    "rationale": "WIP-13 scoped embedded control-plane models and trusted ports; no server or runtime composition",
+    "source": "docs/work-items/WIP-13.md; WI-ADR-018; accepted WIP-13 design"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/control_plane.rs::::enum:CustodyReason",
+    "disposition": "retain-align",
+    "target": "foundation/protocol/control-plane",
+    "rationale": "WIP-13 scoped embedded control-plane models and trusted ports; no server or runtime composition",
+    "source": "docs/work-items/WIP-13.md; WI-ADR-018; accepted WIP-13 design"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/control_plane.rs::::enum:IssuanceStatus",
+    "disposition": "retain-align",
+    "target": "foundation/protocol/control-plane",
+    "rationale": "WIP-13 scoped embedded control-plane models and trusted ports; no server or runtime composition",
+    "source": "docs/work-items/WIP-13.md; WI-ADR-018; accepted WIP-13 design"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/control_plane.rs::::enum:ObjectKind",
+    "disposition": "retain-align",
+    "target": "foundation/protocol/control-plane",
+    "rationale": "WIP-13 scoped embedded control-plane models and trusted ports; no server or runtime composition",
+    "source": "docs/work-items/WIP-13.md; WI-ADR-018; accepted WIP-13 design"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/control_plane.rs::::enum:Profile",
+    "disposition": "retain-align",
+    "target": "foundation/protocol/control-plane",
+    "rationale": "WIP-13 scoped embedded control-plane models and trusted ports; no server or runtime composition",
+    "source": "docs/work-items/WIP-13.md; WI-ADR-018; accepted WIP-13 design"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/control_plane.rs::::source-module:crates/worldinterface-foundation/protocol/src/control_plane.rs",
+    "disposition": "retain-align",
+    "target": "foundation/protocol/control-plane",
+    "rationale": "WIP-13 scoped embedded control-plane models and trusted ports; no server or runtime composition",
+    "source": "docs/work-items/WIP-13.md; WI-ADR-018; accepted WIP-13 design"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/control_plane.rs::::struct:CredentialMetadata",
+    "disposition": "retain-align",
+    "target": "foundation/protocol/control-plane",
+    "rationale": "WIP-13 scoped embedded control-plane models and trusted ports; no server or runtime composition",
+    "source": "docs/work-items/WIP-13.md; WI-ADR-018; accepted WIP-13 design"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/control_plane.rs::::struct:CredentialRequest",
+    "disposition": "retain-align",
+    "target": "foundation/protocol/control-plane",
+    "rationale": "WIP-13 scoped embedded control-plane models and trusted ports; no server or runtime composition",
+    "source": "docs/work-items/WIP-13.md; WI-ADR-018; accepted WIP-13 design"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/control_plane.rs::::struct:CredentialScope",
+    "disposition": "retain-align",
+    "target": "foundation/protocol/control-plane",
+    "rationale": "WIP-13 scoped embedded control-plane models and trusted ports; no server or runtime composition",
+    "source": "docs/work-items/WIP-13.md; WI-ADR-018; accepted WIP-13 design"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/control_plane.rs::::struct:Cursor",
+    "disposition": "retain-align",
+    "target": "foundation/protocol/control-plane",
+    "rationale": "WIP-13 scoped embedded control-plane models and trusted ports; no server or runtime composition",
+    "source": "docs/work-items/WIP-13.md; WI-ADR-018; accepted WIP-13 design"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/control_plane.rs::::struct:ObjectRef",
+    "disposition": "retain-align",
+    "target": "foundation/protocol/control-plane",
+    "rationale": "WIP-13 scoped embedded control-plane models and trusted ports; no server or runtime composition",
+    "source": "docs/work-items/WIP-13.md; WI-ADR-018; accepted WIP-13 design"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/control_plane.rs::::struct:ObjectView",
+    "disposition": "retain-align",
+    "target": "foundation/protocol/control-plane",
+    "rationale": "WIP-13 scoped embedded control-plane models and trusted ports; no server or runtime composition",
+    "source": "docs/work-items/WIP-13.md; WI-ADR-018; accepted WIP-13 design"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/control_plane.rs::::struct:Page",
+    "disposition": "retain-align",
+    "target": "foundation/protocol/control-plane",
+    "rationale": "WIP-13 scoped embedded control-plane models and trusted ports; no server or runtime composition",
+    "source": "docs/work-items/WIP-13.md; WI-ADR-018; accepted WIP-13 design"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/control_plane.rs::::struct:ProfileStatus",
+    "disposition": "retain-align",
+    "target": "foundation/protocol/control-plane",
+    "rationale": "WIP-13 scoped embedded control-plane models and trusted ports; no server or runtime composition",
+    "source": "docs/work-items/WIP-13.md; WI-ADR-018; accepted WIP-13 design"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/control_plane.rs::::struct:Query",
+    "disposition": "retain-align",
+    "target": "foundation/protocol/control-plane",
+    "rationale": "WIP-13 scoped embedded control-plane models and trusted ports; no server or runtime composition",
+    "source": "docs/work-items/WIP-13.md; WI-ADR-018; accepted WIP-13 design"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/control_plane.rs::::struct:Scope",
+    "disposition": "retain-align",
+    "target": "foundation/protocol/control-plane",
+    "rationale": "WIP-13 scoped embedded control-plane models and trusted ports; no server or runtime composition",
+    "source": "docs/work-items/WIP-13.md; WI-ADR-018; accepted WIP-13 design"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/lib.rs::::module:control_plane",
+    "disposition": "retain-align",
+    "target": "foundation/protocol/control-plane",
+    "rationale": "WIP-13 scoped embedded control-plane models and trusted ports; no server or runtime composition",
+    "source": "docs/work-items/WIP-13.md; WI-ADR-018; accepted WIP-13 design"
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/tests/control_plane.rs::::source-module:crates/worldinterface-foundation/protocol/tests/control_plane.rs",
+    "disposition": "test-evidence",
+    "target": "foundation/protocol/control-plane",
+    "rationale": "WIP-13 scoped embedded control-plane executable evidence; no server or runtime composition",
+    "source": "docs/work-items/WIP-13.md; WI-ADR-018; accepted WIP-13 design"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/control_plane.rs::::enum:Event",
+    "disposition": "retain-align",
+    "target": "foundation/storage/control-plane",
+    "rationale": "WIP-13 scoped embedded control-plane models and trusted ports; no server or runtime composition",
+    "source": "docs/work-items/WIP-13.md; WI-ADR-018; accepted WIP-13 design"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/control_plane.rs::::source-module:crates/worldinterface-foundation/storage/src/control_plane.rs",
+    "disposition": "retain-align",
+    "target": "foundation/storage/control-plane",
+    "rationale": "WIP-13 scoped embedded control-plane models and trusted ports; no server or runtime composition",
+    "source": "docs/work-items/WIP-13.md; WI-ADR-018; accepted WIP-13 design"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/control_plane.rs::::struct:ControlPlaneRepository",
+    "disposition": "retain-align",
+    "target": "foundation/storage/control-plane",
+    "rationale": "WIP-13 scoped embedded control-plane models and trusted ports; no server or runtime composition",
+    "source": "docs/work-items/WIP-13.md; WI-ADR-018; accepted WIP-13 design"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/lib.rs::::module:control_plane",
+    "disposition": "retain-align",
+    "target": "foundation/storage/control-plane",
+    "rationale": "WIP-13 scoped embedded control-plane models and trusted ports; no server or runtime composition",
+    "source": "docs/work-items/WIP-13.md; WI-ADR-018; accepted WIP-13 design"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/tests/control_plane.rs::::module:support",
+    "disposition": "test-evidence",
+    "target": "foundation/storage/control-plane",
+    "rationale": "WIP-13 scoped embedded control-plane executable evidence; no server or runtime composition",
+    "source": "docs/work-items/WIP-13.md; WI-ADR-018; accepted WIP-13 design"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/tests/control_plane.rs::::source-module:crates/worldinterface-foundation/storage/tests/control_plane.rs",
+    "disposition": "test-evidence",
+    "target": "foundation/storage/control-plane",
+    "rationale": "WIP-13 scoped embedded control-plane executable evidence; no server or runtime composition",
+    "source": "docs/work-items/WIP-13.md; WI-ADR-018; accepted WIP-13 design"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/tests/control_plane.rs::::struct:Auth",
+    "disposition": "test-evidence",
+    "target": "foundation/storage/control-plane",
+    "rationale": "WIP-13 scoped embedded control-plane executable evidence; no server or runtime composition",
+    "source": "docs/work-items/WIP-13.md; WI-ADR-018; accepted WIP-13 design"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/tests/control_plane.rs::::struct:Clock",
+    "disposition": "test-evidence",
+    "target": "foundation/storage/control-plane",
+    "rationale": "WIP-13 scoped embedded control-plane executable evidence; no server or runtime composition",
+    "source": "docs/work-items/WIP-13.md; WI-ADR-018; accepted WIP-13 design"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/tests/control_plane.rs::::struct:Vault",
+    "disposition": "test-evidence",
+    "target": "foundation/storage/control-plane",
+    "rationale": "WIP-13 scoped embedded control-plane executable evidence; no server or runtime composition",
+    "source": "docs/work-items/WIP-13.md; WI-ADR-018; accepted WIP-13 design"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/tests/control_plane.rs::control_custody_secret_and_hostile_errors_never_enter_serialized_or_durable_paths::struct:HostileVault",
+    "disposition": "test-evidence",
+    "target": "foundation/storage/control-plane",
+    "rationale": "WIP-13 scoped embedded control-plane executable evidence; no server or runtime composition",
+    "source": "docs/work-items/WIP-13.md; WI-ADR-018; accepted WIP-13 design"
   }
 ]

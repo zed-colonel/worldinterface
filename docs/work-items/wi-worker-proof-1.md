@@ -237,3 +237,16 @@ due; ordinary use, remote-provider/isolation qualification and G4 closure are
 excluded.
 
 WIP-12 adds exact runtime catalog records, provider quarantine and separate recovery authority. See [WIP-12](WIP-12.md). Packet d06bd813 was accepted in e5fc3b6 through 2026-11-11T00:00:00Z. Evaluation exposed two undeclared Probe exports and a WP-024 pending-signal timing assertion; the test-composition remediation requires renewed exact-packet acceptance and live verification. Ordinary process use and G4 closure remain disabled; all adopted committed-head checks and qualifying review remain due.
+
+## WIP-13 control-plane domain candidate
+
+[WIP-13](WIP-13.md) adds AQ-free embedded/local-development profiles, opaque-session
+application services, server-owned scoped agency, exact read/query authority,
+attributed policy/grant/binding revisions and reference-only credential brokerage.
+Fabric journals administration, request/use accounting, issuance and revocation
+state with replay/rebuild/restore validation. The fresh-store feature profile is
+`local-control-plane-14`; older layouts are rejected. The checked WI-11/domain
+obligation matrix has no assigned cases and changes no gate status. WIP-14 owns
+runtime wiring, custody-provider selection and effect/accounting composition.
+No server or production authentication implementation is exposed. Adopted
+committed-head checks, qualifying review and CraftingTable integration remain due.
