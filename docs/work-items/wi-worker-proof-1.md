@@ -256,3 +256,16 @@ source-drift guard. A refreshed exact-source packet and non-live build are
 prepared for renewed operator acceptance; the old receipt/host anchor remain
 unchanged. Positive worker tests and complete adopted-check passage remain due
 after acceptance. See the concrete WIP-13 evaluation request and work-item notes.
+
+## WIP-14 required control-plane recovery carry-forward
+
+WIP-13 review finding **F-007** is carried into WIP-14 using the review's explicit
+reconciliation alternative. Interrupted credential delivery currently remains
+Pending without a durable attempt marker, including when custody succeeded but
+its result was not committed. WIP-14 owns the required attempt claim, exclusive
+host recovery, durable Unresolved/Uncertain classification, custody quarantine
+and crash/retry evidence specified in
+[WIP-13's F-007 obligation](WIP-13.md#f-007-required-wip-14-interrupted-delivery-reconciliation).
+The current fail-closed retries and lifetime bounds do not complete this
+obligation; WIP-14 must preserve the tested guarantee that an identical caller
+retry cannot cancel a live delivery or cause another custody call.

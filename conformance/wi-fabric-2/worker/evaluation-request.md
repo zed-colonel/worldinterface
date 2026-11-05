@@ -1,4 +1,24 @@
-# WIP-13 foundation-source evaluation request
+# WIP-13 documentation-remediation evaluation request
+
+This candidate addresses F-007 using the review's explicit alternative: record
+interrupted-delivery reconciliation as a required WIP-14 composition obligation,
+with ownership, attempt journaling, uncertainty/quarantine and crash/retry tests.
+It also corrects F-008's description of the public host-only authorization APIs.
+Only the WIP-13 note, active ledger and this request change covered packet bytes;
+foundation/runtime code, fixtures, supervisor disposition and evaluation limits
+remain those accepted in packet
+`e873492675e10878af51baf023255f5650347465d62a98bade03fe516e2bb594`.
+
+Accept only the new canonical digest printed by
+`scripts/refresh-wi-worker-evaluation.py`, after the source-bound non-live build
+passes. Requested expiry remains **2026-11-11T00:00:00Z**, with unchanged fixture
+limits: six operations, nonsensitive inputs, 15000 ms wall time and 65536 retained
+output bytes. No ordinary use or production credentials are requested. The
+previous approval receipt and trusted host anchor remain unchanged pending an
+actual operator decision. Documentation is covered by the same exact-source
+acceptance rule; these edits do not inherit acceptance of the previous digest.
+
+## Historical foundation-source request
 
 WIP-13 adds the AQ-free embedded control-plane models, scoped application
 services and Fabric persistence described in `docs/work-items/WIP-13.md`.

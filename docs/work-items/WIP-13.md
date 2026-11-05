@@ -137,8 +137,11 @@ new generation delivery is blocked until custody confirms. Failed/uncertain
 revocation stays unresolved. A concurrent identical retry observes Pending without changing it or competing
 for delivery. Only the call that committed intent owns the delivery attempt.
 Pending after interruption also remains Pending and never repeats automatically;
-it requires host reconciliation and is not evidence of delivery. Confirmed
-backend uncertainty is recorded as Unresolved. Duplicate pending revocation
+it is not evidence of delivery. There is currently no durable attempt marker or
+reconciliation operation: a crash after custody succeeds but before the Delivery
+event commits is indistinguishable from an attempt still in flight or one that
+never reached custody. The explicit WIP-14 obligation below covers that gap.
+Confirmed backend uncertainty is recorded as Unresolved. Duplicate pending revocation
 requests likewise cannot invalidate the original call. An operator reconciliation mechanism
 and provider qualification are future composition work; retry alone grants no
 active capability. Custody must quarantine/invalidate possibly issued credentials
@@ -153,6 +156,45 @@ write path into receipts, telemetry, Flows or worker transcripts. Existing recor
 serialization/export paths are exercised with returned safe references. This
 proves the brokerage boundary for those paths; it does not assert that arbitrary
 host-supplied artifact bytes or identifiers are secret-free.
+
+### F-007: required WIP-14 interrupted-delivery reconciliation
+
+The review permits carrying F-007 into WIP-14's embedded composition. Recovery
+implementation is deferred to that owner because it must establish exclusive
+host ownership, coordinate in-flight delivery and obtain provider evidence. This
+is a required composition obligation, not completed WIP-13 recovery evidence.
+Until then, interrupted issuance can remain Pending indefinitely. Current retries
+never contact custody again, Pending cannot validate as an active credential,
+credential lifetime is at most 120 seconds and rotation invalidates older
+generations. These bounds do not classify or reconcile an interrupted attempt.
+
+WIP-14 must implement and verify the following before claiming composition
+recovery complete:
+
+1. Durably record an exclusive delivery-attempt claim before contacting custody,
+   identifying its issuance and host ownership. Recovery must distinguish an
+   unattempted intent, an attempt still owned by a live host and an abandoned
+   attempt whose custody outcome may have been lost.
+2. After proving the previous owner cannot still deliver, journal an abandoned
+   attempt as Unresolved with reason Uncertain and quarantine or invalidate any
+   possibly issued credential through custody. A normal identical caller retry
+   must only observe current status; it must never cancel a live attempt or
+   reissue a credential. Missing provider evidence must leave recovery unresolved.
+3. Bind reconciliation evidence and any resulting status to the exact issuance,
+   scope, expiry and secret version/generation. Preserve attribution, journal
+   replay, rebuild and offline restore. Retry alone must never promote an
+   unresolved issuance to Delivered or bypass current authorization.
+4. Test process crashes after intent commit, after attempt-claim commit, after
+   custody succeeds but before Delivery commits, and after Delivery commits.
+   Exercise restart and repeated recovery, concurrent identical caller retries,
+   expiry, rotation and uncertain custody outcomes. Assert no duplicate custody
+   delivery, no cancellation of a live attempt and no active unresolved credential.
+
+Existing storage regressions in `storage/tests/control_plane.rs`,
+`control_crash_between_intent_and_delivery_and_backend_uncertainty_fail_closed`
+and `control_identical_retry_cannot_cancel_an_in_flight_issue`, establish the
+current fail-closed behavior and the concurrency invariant WIP-14 must preserve;
+they do not prove the deferred recovery behavior.
 
 ## Inventory and verification
 
@@ -202,7 +244,13 @@ current caller's active bindings and tests 261 global bindings. F-005 pauses the
 original issue between intent and delivery and proves an identical concurrent
 retry leaves it Pending, then observes one successful custody call. F-006
 corrects the Permit trust comment: serde is for trusted journal facts and does
-not authenticate them. No additional public operation or listener is exposed.
+not authenticate them. No additional Service/caller operation or listener is
+exposed; the new host-only authorization APIs are described above (F-008).
+
+F-007 follows the review's explicit WIP-14 reconciliation alternative: the
+required ownership, attempt journal, uncertainty/quarantine and crash-test
+obligations are recorded above and linked from the active ledger. Recovery code
+remains deferred; the Pending ambiguity is documented without claiming it fixed.
 
 The added declarations/tests and the storage profile revision are an explicit
 inventory/disposition proposal for this remediation's review. The obligation
