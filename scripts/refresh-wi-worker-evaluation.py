@@ -39,7 +39,7 @@ for name in [
     "scripts/check-wi-contract.sh", "scripts/check-wi-domain.sh",
     "scripts/check-wi-domain-isolation.py", "scripts/check-wi-integration.sh",
     "scripts/check-wi-integration.py", "scripts/wi_crash_isolation.py",
-    "docs/work-items/WIP-11.md", "docs/work-items/WIP-12.md", "docs/work-items/wi-worker-proof-1.md",
+    "docs/work-items/WIP-11.md", "docs/work-items/WIP-12.md", "docs/work-items/WIP-13.md", "docs/work-items/wi-worker-proof-1.md",
 ]:
     files.add(name)
 # Bind the actual fixture and normative data, not only source references to their paths.

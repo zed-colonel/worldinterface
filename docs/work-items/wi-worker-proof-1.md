@@ -250,3 +250,9 @@ obligation matrix has no assigned cases and changes no gate status. WIP-14 owns
 runtime wiring, custody-provider selection and effect/accounting composition.
 No server or production authentication implementation is exposed. Adopted
 committed-head checks, qualifying review and CraftingTable integration remain due.
+
+WIP-13's adopted runtime test exposed the reviewed worker packet's expected
+source-drift guard. A refreshed exact-source packet and non-live build are
+prepared for renewed operator acceptance; the old receipt/host anchor remain
+unchanged. Positive worker tests and complete adopted-check passage remain due
+after acceptance. See the concrete WIP-13 evaluation request and work-item notes.

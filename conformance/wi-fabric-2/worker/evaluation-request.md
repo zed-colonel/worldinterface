@@ -1,3 +1,29 @@
+# WIP-13 foundation-source evaluation request
+
+WIP-13 adds the AQ-free embedded control-plane models, scoped application
+services and Fabric persistence described in `docs/work-items/WIP-13.md`.
+Its foundation source, tests, inventory dispositions, store profile and contract
+coverage change files covered by the previously accepted worker packet.
+The adopted runtime suite correctly rejects that source drift before launching
+a reviewed fixture. No worker/provider source or supervisor disposition changes.
+
+Accept only the new canonical digest printed by
+`scripts/refresh-wi-worker-evaluation.py`, including the unchanged supervisor
+disposition. Requested expiry remains **2026-11-11T00:00:00Z**. Tasks,
+six operations, nonsensitive inputs, 15000 ms wall time and 65536 retained
+output bytes remain unchanged. No ordinary use, production credentials,
+hostile code, publication, integration or gate closure is requested.
+
+Non-live compilation and the source-bound worker build must pass before this
+request is presented for exact-digest acceptance. The separate approval receipt
+and trusted host anchor remain the previous operator decision until an actual
+new decision is received. A changed covered byte requires renewed acceptance.
+No test may create or retarget that approval. The complete adopted runtime suite
+must be rerun after acceptance; its present failure is an authorization guard,
+not a passing live evaluation.
+
+## Historical predecessor request
+
 # WIP-12 review-remediation evaluation request
 
 Packet `34f2d904342b8c49d915f11f631878084e07978000cc2ec3abe528b0b781b957`

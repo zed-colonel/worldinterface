@@ -144,3 +144,16 @@ run are under `scratch/verification` in run
 `8fce9c71-7dd8-4c4a-9095-a54647b700bf`. Qualifying review and CraftingTable
 integration remain required. No gate closure, upstream result or production
 provider qualification is asserted.
+
+
+## Evaluation acceptance dependency
+
+The adopted runtime suite on `43c8635` reached the existing reviewed process
+fixture and rejected `evaluation source drift` in
+`ab_wi_021_awaiting_release_hold_and_resume_keep_durable_worker_capacity`.
+WIP-13 changes foundation files covered by that exact-source packet. The
+candidate manifest/request is refreshed without modifying the previous approval
+receipt or trusted host anchor. The source-bound non-live build is required
+before presenting the candidate digest. Renewed operator acceptance of that
+exact digest is required for positive worker execution and the adopted runtime
+suite. No permission or result is inferred from earlier packet acceptance.
