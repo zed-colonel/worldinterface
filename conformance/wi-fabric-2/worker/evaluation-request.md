@@ -1,6 +1,37 @@
-# WIP-12 exact-packet evaluation request
+# WIP-12 export-scope and event-ordering evaluation request
 
-The completed candidate adds WP-007 and WP-032 catalog registration, exact policy and measurement verification, durable provider quarantine and separately authorized recovery through WI/AQ after recovery-only reopen. Accept only the exact canonical digest printed by the refresh script, including the updated supervisor disposition, for evaluation of this candidate and CraftingTable review. The maximum requested validity is seven days from actual acceptance. Ordinary use, production credentials, hostile code, publication, integration and gate closure remain excluded. The existing receipt and test-host anchor cover the predecessor packet only; the recorded willingness to accept WIP-12 does not accept unseen bytes.
+The operator accepted WIP-12 packet
+`d06bd8139cc46bcd792873e7ad829d5226222e5ffb3966d65b5c98357851d7a9`, including
+its supervisor disposition, in run `29e02a4e-673a-400c-80f1-3e1f27d9a219`.
+Receipt and test-host anchor commit: `e5fc3b6`. Acceptance expires
+2026-11-11T00:00:00Z and covers evaluation-only verification and review, the
+reviewed fixtures, six supported operations, nonsensitive inputs, 15000 ms wall
+time and 65536 bytes retained output. This actual decision authorized live tests.
+
+Direct catalog evaluation passed eight tests, including recovery through WI/AQ
+after quarantine, revocation and recovery-only reopen. WP-007 and WP-032's success
+paths failed with Uncertain at collection: the Probe fixture writes `probe.json`,
+but those two compositions declared no exports. WP-007 also failed alone. The
+collector correctly rejected the unlisted file. The candidate now declares that
+exact 14-byte JSON export, checks its published content and preserves the strict
+export allowlist. Operation assertions also identify the failed operation.
+
+The six-target worker regression run passed 33 tests and failed WP-024's pending
+signal assertion. That test passed alone: Start's AQ ticks can deliver all process
+observations before the assertion. The candidate now commits a distinct late exit
+through the same observation boundary after process completion, then asserts its
+signal is pending before any queue tick. It retains the authoritative event/state,
+delivery and duplicate-drain checks. Production and supervisor sources are
+unchanged by these test-composition fixes.
+
+Accept only the new canonical digest printed by the refresh script, including the
+unchanged supervisor disposition, for evaluation of the revised candidate and
+CraftingTable review. The existing receipt and trusted test-host anchor continue
+to cover only the accepted d06bd813 packet. They do not authorize these changed
+bytes. The requested expiry remains **2026-11-11T00:00:00Z**, within seven days of
+actual acceptance; no extension or broader operation/task/input scope is requested.
+Ordinary use, production credentials, hostile code, publication, integration and
+gate closure remain excluded.
 
 Non-live validation and the source-bound build must complete before requesting the digest acceptance. All changed sources/contracts and these limits are bound in the packet. A changed covered byte requires renewed acceptance.
 

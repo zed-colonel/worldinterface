@@ -2,7 +2,7 @@
 
 Candidate implementation under the accepted WIP-12 design and WI-ADR-017.
 Ordinary process use remains disabled. G4 remains open for WIP-16. Source review,
-exact-packet evaluation acceptance, positive live verification and adopted checks
+renewed exact-packet evaluation acceptance, positive live verification and adopted checks
 on the committed candidate remain due; this note grants none of them.
 
 The foundation capability module declares bounded version-1 catalog bindings,
@@ -83,4 +83,38 @@ isolated test. Earlier failures during development (optional journal null encodi
 private test-directory permissions and stale inventory hashes) were corrected.
 The source-bound build record and subsequent adopted-check results are retained
 outside the packet under the supplied scratch/verification directory. Positive
-live results and a WIP-12 acceptance receipt are deliberately not asserted here.
+live results for the revised packet are not asserted here.
+
+## Accepted evaluation and test-composition remediation
+
+The operator accepted packet
+`d06bd8139cc46bcd792873e7ad829d5226222e5ffb3966d65b5c98357851d7a9`, including
+its supervisor disposition, in run `29e02a4e-673a-400c-80f1-3e1f27d9a219`.
+Commit `e5fc3b6` records that actual decision in the separate receipt and trusted
+test-host anchor. Its finite expiry is 2026-11-11T00:00:00Z. Scope remains the
+reviewed fixtures and six operations, nonsensitive inputs, 15000 ms wall time
+and 65536 retained output bytes. Ordinary use remains disabled.
+
+The accepted direct catalog evaluation passed eight tests and failed the two
+WP-007/WP-032 collection success assertions; WP-007 also failed alone. Both
+compositions used Probe without declaring its `probe.json` export, so the strict
+collector correctly rejected that unlisted file. The remediation declares the
+exact 14-byte JSON export in those two compositions and checks the published
+content. It changes no collector or admission policy. Shared operation assertions
+now identify the failed operation.
+
+The accepted six-target worker regression run passed 33 tests, including live
+collection crash/reconciliation, lifecycle crash, process cleanup and seam tests.
+WP-024's pending-signal assertion failed in that run and passed alone. Start's AQ
+ticks can already have delivered every observation before finish returns. The
+remediation commits a distinct late exit through the existing observation boundary
+after process completion, verifies its pending obligation before ticking AQ, then
+retains authoritative event/state, delivery and duplicate-drain assertions. This
+removes the scheduling assumption without weakening the ordering assertion.
+
+These changed test and status bytes require a new packet acceptance. The receipt
+and host anchor retain the actual accepted d06bd813 identity; no test or agent
+retargets that decision. The supervisor disposition is unchanged. Source-bound
+build, non-live evidence and committed-head check results are retained in the
+current run's scratch/verification. Renewed acceptance, revised live verification,
+qualifying review and CraftingTable integration remain due.

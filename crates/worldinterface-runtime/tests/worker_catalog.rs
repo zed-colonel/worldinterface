@@ -438,13 +438,25 @@ fn catalog_recovery_is_exact_to_caller_binding_operation_and_current_policy() {
     }
 }
 
+fn probe_harness(case: &str) -> support::worker_fixture::Harness {
+    let mut h = support::worker_fixture::Harness::new(Task::Probe, case, 1500, 65536);
+    // Probe writes this exact file; collection must retain the export allowlist.
+    h.exports = vec![worldinterface_runtime::worker_process::Export {
+        reference: "probe".into(),
+        name: "probe.json".into(),
+        digest: ContentHash::of(b"{\"clean\":true}"),
+        size: 14,
+    }];
+    h
+}
 #[tokio::test]
 async fn wp_007_exact_operator_packet_runs_only_supported_bounded_evaluation_through_wi_aq() {
-    let h = support::worker_fixture::Harness::new(Task::Probe, "WP-007", 1500, 65536);
+    let h = probe_harness("WP-007");
     h.operation(Operation::Start).await;
     h.operation(Operation::Inspect).await;
     assert!(h.finish().await.cleanup_confirmed);
     h.operation(Operation::CollectArtifacts).await;
+    assert_eq!(h.runtime.read_artifact(&h.binding(), "probe").unwrap(), b"{\"clean\":true}");
     h.operation(Operation::Release).await;
     assert!(!h.state().capacity_reserved);
     assert_eq!(inspect_profile().unwrap().registration.as_str(), "unverified");
@@ -453,10 +465,11 @@ async fn wp_007_exact_operator_packet_runs_only_supported_bounded_evaluation_thr
 async fn wp_032_drift_denies_new_admissions_before_allocation_through_real_wi_aq() {
     use worldinterface_domain::ingress::digest;
     use worldinterface_storage::flow::FlowOutcome;
-    let mut h = support::worker_fixture::Harness::new(Task::Probe, "WP-032", 1500, 65536);
+    let mut h = probe_harness("WP-032");
     h.operation(Operation::Start).await;
     assert!(h.finish().await.cleanup_confirmed);
     h.operation(Operation::CollectArtifacts).await;
+    assert_eq!(h.runtime.read_artifact(&h.binding(), "probe").unwrap(), b"{\"clean\":true}");
     h.operation(Operation::Release).await;
     h.rejects_helper_drift();
     let original = h.binding();

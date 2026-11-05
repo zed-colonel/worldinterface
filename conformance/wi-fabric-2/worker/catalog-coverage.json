@@ -2,6 +2,7 @@
   "version": 1,
   "scope": "wi/WI-10/process-catalog",
   "runtime_pass_asserted": false,
+  "evaluation": "Packet d06bd8139cc46bcd792873e7ad829d5226222e5ffb3966d65b5c98357851d7a9 accepted in e5fc3b6, expires 2026-11-11T00:00:00Z. Direct catalog evaluation: eight passed, WP-007 and WP-032 success paths failed at collection because Probe exports were not declared; WP-007 also failed alone. Six-target worker regression: 33 passed, WP-024 pending-signal timing assertion failed and then passed alone. Test-composition fixes require renewed exact-packet acceptance and live verification; see evaluation-request.md and docs/work-items/WIP-12.md.",
   "assigned_cases": {
     "WP-007": [
       "catalog_registration_is_exact_bounded_and_inspection_grants_no_authority",

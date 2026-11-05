@@ -775,7 +775,11 @@ impl Harness {
     }
     pub async fn operation_expect(&self, op: Operation, expected: FlowOutcome) {
         let snapshot = self.demand(op).1;
-        assert_eq!(self.operation_snapshot(op, snapshot).await, expected);
+        assert_eq!(
+            self.operation_snapshot(op, snapshot).await,
+            expected,
+            "worker operation {op:?}"
+        );
     }
     pub async fn operation_snapshot(
         &self,
