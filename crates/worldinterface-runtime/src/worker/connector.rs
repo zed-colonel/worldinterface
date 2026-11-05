@@ -475,10 +475,15 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
                 self.port.submit(&provision)
             })?;
         }
-        let result = root.fence_worker_dispatch(binding, &admitted.catalog, || {
+        let submit = || {
             self.check_registration(&admitted.registration)?;
             self.port.submit(&request)
-        });
+        };
+        let result = if op == Operation::Terminate {
+            root.fence_worker_termination(binding, &admitted.catalog, submit)
+        } else {
+            root.fence_worker_dispatch(binding, &admitted.catalog, submit)
+        };
         if result
             .as_ref()
             .is_ok_and(|a| *a == worldinterface_worker::ports::Acknowledgment::Uncertain)
@@ -656,25 +661,8 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
                 .worker_provider_quarantine(&binding.tenant, &binding.provider)?
                 .is_some()
         {
-            if self
-                .bundle
-                .wi()
-                .worker_provider_quarantine(&binding.tenant, &binding.provider)?
-                .is_none()
-            {
-                let launch =
-                    self.bundle.wi().worker_launch(binding)?.ok_or("worker launch absent")?;
-                self.bundle.wi().quarantine_worker_provider(WorkerProviderQuarantine {
-                    version: 1,
-                    tenant: binding.tenant.clone(),
-                    provider: binding.provider.clone(),
-                    revision: 1,
-                    affected: vec![launch.catalog],
-                    reason: "registration-invalidated".to_string().try_into()?,
-                    evidence: binding.realization.clone(),
-                    attributed_to: binding.principal.clone(),
-                })?;
-            }
+            // Approval invalidation fences this run. Only an attributed incident
+            // decision may permanently quarantine the tenant/provider.
             super::recovery::quarantine(self.bundle.wi(), binding)?;
             let _ = self.port.stop(binding.provider.as_str(), binding.run.as_str());
         }

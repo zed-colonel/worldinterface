@@ -921,6 +921,16 @@
           "manifest": "crates/worldinterface-runtime/Cargo.toml",
           "package": "worldinterface-runtime",
           "test": "wp_032_quarantine_revocation_and_recovery_only_reopen_keep_inspect_terminate_and_aq_reconcile"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "catalog_poll_invalid_approval_quarantines_only_the_run_and_preserves_provider_admission"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_032_ordinary_terminate_under_provider_quarantine_acknowledges_and_reconciles"
         }
       ]
     },

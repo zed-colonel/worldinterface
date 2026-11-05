@@ -11870,5 +11870,12 @@
     "target": "worker-process-catalog",
     "rationale": "WIP-12 candidate disposition: exact catalog records, independent provenance, durable tenant/provider quarantine and separately authorized recovery. Effective through qualifying source review; no ordinary admission or promotion.",
     "source": "docs/work-items/WIP-12.md; accepted WIP-12 design; WI-ADR-017"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_catalog.rs::::struct:CatalogClock",
+    "disposition": "test-evidence",
+    "target": "worker-process-catalog",
+    "rationale": "WIP-12 F-002 candidate disposition: deterministic host clock for expiry, revocation and recovery-only polling regression; subject to qualifying review, no executable approval or ordinary-use authority.",
+    "source": "docs/work-items/WIP-12.md; WI-ADR-017; review F-002"
   }
 ]

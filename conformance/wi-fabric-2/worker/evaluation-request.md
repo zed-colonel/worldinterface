@@ -1,39 +1,32 @@
-# WIP-12 export-scope and event-ordering evaluation request
+# WIP-12 review-remediation evaluation request
 
-The operator accepted WIP-12 packet
-`d06bd8139cc46bcd792873e7ad829d5226222e5ffb3966d65b5c98357851d7a9`, including
-its supervisor disposition, in run `29e02a4e-673a-400c-80f1-3e1f27d9a219`.
-Receipt and test-host anchor commit: `e5fc3b6`. Acceptance expires
-2026-11-11T00:00:00Z and covers evaluation-only verification and review, the
-reviewed fixtures, six supported operations, nonsensitive inputs, 15000 ms wall
-time and 65536 bytes retained output. This actual decision authorized live tests.
+Packet `34f2d904342b8c49d915f11f631878084e07978000cc2ec3abe528b0b781b957`
+was explicitly accepted in run `c0deea63-825e-4724-bf55-c15ceafb2c40` through
+2026-11-11T00:00:00Z. Receipt and host-anchor commit `d73d56a` passed all ten
+adopted checks and positive catalog/lifecycle verification. Its historical Probe
+export and WP-024 timing failures had been corrected. The review was mergeable.
 
-Direct catalog evaluation passed eight tests, including recovery through WI/AQ
-after quarantine, revocation and recovery-only reopen. WP-007 and WP-032's success
-paths failed with Uncertain at collection: the Probe fixture writes `probe.json`,
-but those two compositions declared no exports. WP-007 also failed alone. The
-collector correctly rejected the unlisted file. The candidate now declares that
-exact 14-byte JSON export, checks its published content and preserves the strict
-export allowlist. Operation assertions also identify the failed operation.
+This candidate addresses F-001–F-004: current status records, run-only quarantine
+on approval invalidation, ordinary Terminate acknowledgement under provider
+quarantine, and documented synthesized binding/host provenance. WP-032 adds
+regressions for expired/revoked/absent approval and renewed provider admission,
+and termination/reconciliation through the recording seam simulation. The exact
+launch/catalog binding remains checked. Other admissions and exports stay fenced;
+ordinary use and self-promotion stay disabled. Supervisor source/disposition and
+evaluation scope are unchanged.
 
-The six-target worker regression run passed 33 tests and failed WP-024's pending
-signal assertion. That test passed alone: Start's AQ ticks can deliver all process
-observations before the assertion. The candidate now commits a distinct late exit
-through the same observation boundary after process completion, then asserts its
-signal is pending before any queue tick. It retains the authoritative event/state,
-delivery and duplicate-drain checks. Production and supervisor sources are
-unchanged by these test-composition fixes.
+Accept only the new canonical digest printed by the refresh script, including
+the unchanged supervisor disposition. The requested finite expiry remains
+**2026-11-11T00:00:00Z**. Scope remains reviewed typed fixtures, six operations,
+nonsensitive inputs, 15000 ms wall time and 65536 retained output bytes.
+No extension, ordinary use, production credentials, hostile code, publication,
+integration or gate closure is requested.
 
-Accept only the new canonical digest printed by the refresh script, including the
-unchanged supervisor disposition, for evaluation of the revised candidate and
-CraftingTable review. The existing receipt and trusted test-host anchor continue
-to cover only the accepted d06bd813 packet. They do not authorize these changed
-bytes. The requested expiry remains **2026-11-11T00:00:00Z**, within seven days of
-actual acceptance; no extension or broader operation/task/input scope is requested.
-Ordinary use, production credentials, hostile code, publication, integration and
-gate closure remain excluded.
-
-Non-live validation and the source-bound build must complete before requesting the digest acceptance. All changed sources/contracts and these limits are bound in the packet. A changed covered byte requires renewed acceptance.
+Non-live validation and the source-bound build must complete before requesting
+digest acceptance. All changed sources/contracts and these limits are bound in
+the packet. A changed covered byte requires renewed acceptance. The separate
+receipt and trusted anchor retain the historical acceptance until the operator
+accepts this concrete revision; tests cannot retarget that decision.
 
 ## Historical predecessor request
 

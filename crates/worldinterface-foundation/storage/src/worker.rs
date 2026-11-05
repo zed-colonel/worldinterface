@@ -544,6 +544,25 @@ impl StoreRoot {
         tx.commit()?;
         Ok(result)
     }
+
+    /// Termination retains the exact launch binding even during provider quarantine.
+    /// The trusted callback may only submit termination, never new work or exports,
+    /// and must not re-enter Fabric storage.
+    pub fn fence_worker_termination<T>(
+        &self,
+        binding: &WorkerBinding,
+        catalog: &ContentHash,
+        terminate: impl FnOnce() -> Result<T>,
+    ) -> Result<T> {
+        let mut c = self.connect(StoreKind::Fabric)?;
+        let tx = c.transaction_with_behavior(TransactionBehavior::Immediate)?;
+        if launch_record(&tx, binding)?.is_none_or(|r| r.catalog != *catalog) {
+            return Err(invalid("stale termination catalog binding"));
+        }
+        let result = terminate()?;
+        tx.commit()?;
+        Ok(result)
+    }
 }
 
 impl StoreRoot {

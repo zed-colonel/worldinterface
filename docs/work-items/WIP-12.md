@@ -1,9 +1,10 @@
 # WIP-12: process catalog and provider quarantine
 
-Candidate implementation under the accepted WIP-12 design and WI-ADR-017.
-Ordinary process use remains disabled. G4 remains open for WIP-16. Source review,
-renewed exact-packet evaluation acceptance, positive live verification and adopted checks
-on the committed candidate remain due; this note grants none of them.
+Implementation under the accepted WIP-12 design and WI-ADR-017. Ordinary process
+use remains disabled. G4 remains open for WIP-16. Packet `34f2d904…` was accepted
+through 2026-11-11T00:00:00Z and passed live verification and all ten adopted checks
+on `d73d56a`. The review remediation below changes the packet and requires renewed
+exact-packet acceptance and verification; earlier acceptance remains historical.
 
 The foundation capability module declares bounded version-1 catalog bindings,
 evaluation/ordinary record variants and inspection results. Runtime verification
@@ -24,6 +25,16 @@ concrete accommodation required by the existing exact-demand policy model.
 Trusted host registration must authenticate current measurements and policy;
 parsing a declaration or copying current values into a record is insufficient.
 
+The runtime synthesizes the catalog binding from facts already checked by `derive`
+and authenticates it through `TrustedApprovals::registered`. Dispatch rechecks that
+host provenance and the approval, then fences the persisted launch/catalog identity.
+The verifier API also compares a supplied record and current binding, but these
+are the same verified binding in this composition; that equality is not an
+independent runtime measurement. The per-field verifier test covers the API only;
+WP-032's WI/AQ drift test covers the production derive checks. The process host
+seals executable bytes at installation, and authenticates executable/helper build
+provenance separately.
+
 Provider quarantine keys on tenant/provider, records affected catalog bindings,
 revision 1, reason, incident evidence and principal attribution, and has no clear
 or promotion API. It shares the worker command journal with reservation and
@@ -31,6 +42,17 @@ recovery material. A SQLite immediate transaction serializes the final dispatch
 fence with quarantine. Quarantine committed first rejects a stale capability;
 dispatch ordered first may finish before quarantine commits. New run names,
 replacement records, cleanup and projection rebuild cannot clear quarantine.
+Approval expiry, revocation or absence is an admission denial, not an incident
+decision. Poll and reconcile apply run-level quarantine and retain stop/recovery
+authority without creating a permanent provider record or attributing an incident
+to the run principal. A renewed valid approval may admit other runs on that
+provider; it does not clear a run's quarantine or an explicit provider incident.
+Ordinary Terminate retains current approval/registration checks and the exact
+persisted launch/catalog fence while remaining available under provider
+quarantine. It submits and durably acknowledges termination, so reconciliation
+can confirm it. Release still requires admission and verified cleanup/collection;
+quarantine does not authorize export publication or capacity release.
+
 The reservation atomically persists the original operation realizations and
 connector bindings before any provider admission or process launch.
 
@@ -75,46 +97,32 @@ The packet builder covers WP-007, WP-032 and the new sources/contracts. Separate
 approval provisioning stays outside its own digest. Verification logs and the
 source-bound build record belong in the supplied run scratch/verification.
 
-Pre-approval verification in this implement run: the complete foundation suite,
-foundation isolation and Clippy passed; runtime Clippy passed; seven catalog tests
-and ten evaluation/artifact validation/crash tests passed without launching a
-worker fixture or helper. The former local-worker-12 profile also rejects in an
-isolated test. Earlier failures during development (optional journal null encoding,
-private test-directory permissions and stale inventory hashes) were corrected.
-The source-bound build record and subsequent adopted-check results are retained
-outside the packet under the supplied scratch/verification directory. Positive
-live results for the revised packet are not asserted here.
-
-## Accepted evaluation and test-composition remediation
+## Accepted evaluation and review remediation
 
 The operator accepted packet
-`d06bd8139cc46bcd792873e7ad829d5226222e5ffb3966d65b5c98357851d7a9`, including
-its supervisor disposition, in run `29e02a4e-673a-400c-80f1-3e1f27d9a219`.
-Commit `e5fc3b6` records that actual decision in the separate receipt and trusted
-test-host anchor. Its finite expiry is 2026-11-11T00:00:00Z. Scope remains the
-reviewed fixtures and six operations, nonsensitive inputs, 15000 ms wall time
-and 65536 retained output bytes. Ordinary use remains disabled.
+`34f2d904342b8c49d915f11f631878084e07978000cc2ec3abe528b0b781b957`, including
+its unchanged supervisor disposition, in run
+`c0deea63-825e-4724-bf55-c15ceafb2c40`. Commit `d73d56a` records that actual
+receipt and trusted host anchor through **2026-11-11T00:00:00Z**. All ten adopted
+checks passed on that commit (285 runtime, 189 foundation and 92 contract tests).
+The independent review also passed catalog 10/10 and lifecycle 12/12, none ignored,
+and recomputed all 287 packet file hashes. Review verdict was mergeable.
 
-The accepted direct catalog evaluation passed eight tests and failed the two
-WP-007/WP-032 collection success assertions; WP-007 also failed alone. Both
-compositions used Probe without declaring its `probe.json` export, so the strict
-collector correctly rejected that unlisted file. The remediation declares the
-exact 14-byte JSON export in those two compositions and checks the published
-content. It changes no collector or admission policy. Shared operation assertions
-now identify the failed operation.
+The earlier d06bd813 evaluation exposed missing Probe export declarations and a
+WP-024 event scheduling assumption. Both were corrected before the accepted
+34f2d904 evaluation; they are historical failures, not outstanding results.
 
-The accepted six-target worker regression run passed 33 tests, including live
-collection crash/reconciliation, lifecycle crash, process cleanup and seam tests.
-WP-024's pending-signal assertion failed in that run and passed alone. Start's AQ
-ticks can already have delivered every observation before finish returns. The
-remediation commits a distinct late exit through the existing observation boundary
-after process completion, verifies its pending obligation before ticking AQ, then
-retains authoritative event/state, delivery and duplicate-drain assertions. This
-removes the scheduling assumption without weakening the ordering assertion.
+This revision addresses F-001 with accurate historical status, F-002 with
+run-only approval invalidation, F-003 with termination acknowledgement under
+provider quarantine, and F-004 with explicit binding/provenance documentation.
+New WP-032 regressions cover expired/revoked/absent approval without an existing
+provider incident, renewed admission, and ordinary termination/acknowledgement/
+reconciliation against the recording seam provider. The latter is seam simulation,
+not external backend qualification. The existing drift test exercises derive.
+The termination fence also rejects changed catalog or launch bindings.
 
-These changed test and status bytes require a new packet acceptance. The receipt
-and host anchor retain the actual accepted d06bd813 identity; no test or agent
-retargets that decision. The supervisor disposition is unchanged. Source-bound
-build, non-live evidence and committed-head check results are retained in the
-current run's scratch/verification. Renewed acceptance, revised live verification,
-qualifying review and CraftingTable integration remain due.
+The current candidate is identified by `evaluation-manifest.json`, not by the
+historical accepted digest above. Source-bound build and non-live evidence go in
+the supplied run's scratch/verification. Renewed acceptance, live verification,
+committed-head adopted checks, qualifying review and CraftingTable integration
+remain due for this revision. No record here grants acceptance or promotion.

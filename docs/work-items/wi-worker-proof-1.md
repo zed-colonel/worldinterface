@@ -118,7 +118,7 @@ The transitive closure of `WI-EMBEDDED-WORKER-PROOF-1` over the map's checkpoint
 | wi/WI-09/domain | verified | yes | DONE | — |
 | wi/WI-09/process-provider | — | no | NOT STARTED | WIP-09, WIP-10, WIP-11 |
 | wi/WI-10/domain | verified | yes | DONE | WIP-01 re-registers WP-007 |
-| wi/WI-10/process-catalog | WIP-12 candidate | no | IMPLEMENTED; test-composition remediation, renewed exact packet acceptance/live verification and review due | WIP-12 |
+| wi/WI-10/process-catalog | WIP-12 candidate | no | IMPLEMENTED; 34f2d904 evaluation and ten adopted checks passed on d73d56a; review remediation requires renewed packet acceptance/verification | WIP-12 |
 | wi/WI-11/domain | — | no | NOT STARTED | WIP-13 |
 | wi/WI-11/embedded-runtime | — | no | NOT STARTED | WIP-14 |
 | wi/WI-13/worker-conformance | — | no | NOT STARTED | WIP-15 |

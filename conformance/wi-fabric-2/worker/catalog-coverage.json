@@ -2,7 +2,7 @@
   "version": 1,
   "scope": "wi/WI-10/process-catalog",
   "runtime_pass_asserted": false,
-  "evaluation": "Packet d06bd8139cc46bcd792873e7ad829d5226222e5ffb3966d65b5c98357851d7a9 accepted in e5fc3b6, expires 2026-11-11T00:00:00Z. Direct catalog evaluation: eight passed, WP-007 and WP-032 success paths failed at collection because Probe exports were not declared; WP-007 also failed alone. Six-target worker regression: 33 passed, WP-024 pending-signal timing assertion failed and then passed alone. Test-composition fixes require renewed exact-packet acceptance and live verification; see evaluation-request.md and docs/work-items/WIP-12.md.",
+  "evaluation": "Packet 34f2d904342b8c49d915f11f631878084e07978000cc2ec3abe528b0b781b957 was accepted in d73d56a through 2026-11-11T00:00:00Z. All ten adopted checks passed on d73d56a; catalog 10/10 and lifecycle 12/12 passed with none ignored. The current F-001\u2013F-004 remediation changes covered source, tests and status records and requires renewed exact-packet acceptance before live verification; evaluation-manifest.json identifies that candidate. Historical test-composition failures were corrected before the 34f2d904 acceptance. Ordinary use stays disabled and G4 stays open.",
   "assigned_cases": {
     "WP-007": [
       "catalog_registration_is_exact_bounded_and_inspection_grants_no_authority",
@@ -17,7 +17,9 @@
       "wp_032_quarantine_revocation_and_recovery_only_reopen_keep_inspect_terminate_and_aq_reconcile",
       "catalog_quarantine_serializes_with_dispatch_and_fences_every_later_dispatch",
       "catalog_recovery_only_construction_requires_no_approval_or_executable_files",
-      "catalog_invalid_recovery_policy_denies_before_any_provider_read_or_stop"
+      "catalog_invalid_recovery_policy_denies_before_any_provider_read_or_stop",
+      "catalog_poll_invalid_approval_quarantines_only_the_run_and_preserves_provider_admission",
+      "wp_032_ordinary_terminate_under_provider_quarantine_acknowledges_and_reconciles"
     ]
   },
   "required_obligations": {
@@ -62,6 +64,16 @@
         "manifest": "crates/worldinterface-runtime/Cargo.toml",
         "package": "worldinterface-runtime",
         "test": "catalog_quarantine_serializes_with_dispatch_and_fences_every_later_dispatch"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "catalog_poll_invalid_approval_quarantines_only_the_run_and_preserves_provider_admission"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "wp_032_ordinary_terminate_under_provider_quarantine_acknowledges_and_reconciles"
       }
     ],
     "recovery": [
@@ -84,6 +96,16 @@
         "manifest": "crates/worldinterface-runtime/Cargo.toml",
         "package": "worldinterface-runtime",
         "test": "catalog_invalid_recovery_policy_denies_before_any_provider_read_or_stop"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "catalog_poll_invalid_approval_quarantines_only_the_run_and_preserves_provider_admission"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "wp_032_ordinary_terminate_under_provider_quarantine_acknowledges_and_reconciles"
       }
     ],
     "live-wi-aq": [
@@ -101,6 +123,11 @@
         "manifest": "crates/worldinterface-runtime/Cargo.toml",
         "package": "worldinterface-runtime",
         "test": "wp_032_quarantine_revocation_and_recovery_only_reopen_keep_inspect_terminate_and_aq_reconcile"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "wp_032_ordinary_terminate_under_provider_quarantine_acknowledges_and_reconciles"
       }
     ]
   },

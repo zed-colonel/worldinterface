@@ -204,6 +204,8 @@ fn catalog_registration_is_exact_bounded_and_inspection_grants_no_authority() {
     );
     assert!(worldinterface_runtime::worker::admission::WorkerEffect::decode(&bytes).is_err());
     verify_registration(&registration(&binding), &binding, &v, 100).unwrap();
+    // Verifier API checks only. Production synthesizes this binding after derive
+    // checks current facts; the WP-032 WI/AQ drift test exercises that actual path.
     for field in [
         "profile",
         "profile_definition",
@@ -349,6 +351,28 @@ fn catalog_quarantine_fences_stale_admission_and_survives_cleanup_replacement_re
         })
         .is_err());
     assert!(!calls.load(Ordering::SeqCst));
+    root.fence_worker_termination(&worker, &digest, || {
+        calls.store(true, Ordering::SeqCst);
+        Ok(())
+    })
+    .unwrap();
+    assert!(calls.swap(false, Ordering::SeqCst));
+    for drift in ["catalog", "launch"] {
+        let mut b = worker.clone();
+        let mut catalog = digest.clone();
+        if drift == "catalog" {
+            catalog = ContentHash::of(b"changed-catalog");
+        } else {
+            b.realization = ContentHash::of(b"changed-launch");
+        }
+        assert!(root
+            .fence_worker_termination(&b, &catalog, || {
+                calls.store(true, Ordering::SeqCst);
+                Ok(())
+            })
+            .is_err());
+        assert!(!calls.load(Ordering::SeqCst));
+    }
     assert!(root
         .fence_worker_publication(&worker, || {
             calls.store(true, Ordering::SeqCst);
@@ -809,4 +833,175 @@ fn catalog_invalid_recovery_policy_denies_before_any_provider_read_or_stop() {
     assert!(runtime.cleanup_report(&worker).is_err());
     assert!(runtime.recovery_evidence(&worker).is_err());
     assert_eq!(provider.0.load(Ordering::SeqCst), 0);
+}
+
+struct CatalogClock(std::sync::atomic::AtomicU64);
+impl worldinterface_runtime::worker_process::Clock for CatalogClock {
+    fn unix_ms(&self) -> u64 {
+        self.0.load(Ordering::SeqCst)
+    }
+}
+
+#[test]
+fn catalog_poll_invalid_approval_quarantines_only_the_run_and_preserves_provider_admission() {
+    use worldinterface_runtime::{
+        storage::StoreBundle,
+        worker::{connector::WorkerRuntime, provider::ProviderProvenance},
+        worker_process::HostScope,
+    };
+    for invalidation in ["expired", "revoked", "absent"] {
+        let (temp, verifier, binding) = fixture();
+        use std::os::unix::fs::PermissionsExt;
+        std::fs::set_permissions(temp.path(), std::fs::Permissions::from_mode(0o700)).unwrap();
+        let bundle = Arc::new(
+            StoreBundle::initialize(
+                &temp.path().join("bundle"),
+                StoreProfile {
+                    instance: InstanceId::generate(),
+                    created_at: Timestamp::from_epoch_millis(1).unwrap(),
+                    platform: false,
+                },
+            )
+            .unwrap(),
+        );
+        let worker = worker();
+        bundle
+            .wi()
+            .reserve_catalog_start(launch(worker.clone(), binding.digest().unwrap()), 2)
+            .unwrap();
+        let scope = HostScope {
+            tenant: worker.tenant.as_str().into(),
+            principal: worker.principal.as_str().into(),
+        };
+        let clock = Arc::new(CatalogClock(std::sync::atomic::AtomicU64::new(100)));
+        let verifier = Arc::new(verifier);
+        let provider = Arc::new(DenialProvider(std::sync::atomic::AtomicUsize::new(0)));
+        let runtime = if invalidation == "absent" {
+            let implementation = descriptor(Operation::Start).unwrap().implementation;
+            WorkerRuntime::install_recovery(
+                bundle.clone(),
+                scope.clone(),
+                temp.path(),
+                RecoveryPolicy::new(
+                    scope,
+                    implementation.clone(),
+                    vec![implementation],
+                    ContentHash::of(b"recovery-policy"),
+                )
+                .unwrap(),
+                clock.clone(),
+            )
+            .unwrap()
+        } else {
+            WorkerRuntime::install_provider(
+                bundle.clone(),
+                scope,
+                provider.clone(),
+                ProviderProvenance {
+                    implementation: binding.executable.clone(),
+                    helper: binding.helper.clone(),
+                    adapter: binding.adapter.clone(),
+                    seam_simulation: true,
+                },
+                verifier.clone(),
+                clock.clone(),
+                2,
+            )
+            .unwrap()
+        };
+        if invalidation == "expired" {
+            clock.0.store(200, Ordering::SeqCst);
+        } else {
+            verifier.trusted.revoked.store(true, Ordering::SeqCst);
+        }
+        runtime.poll(&worker).unwrap();
+        let root = bundle.wi();
+        assert!(
+            root.worker_snapshot(&worker.tenant, &worker.provider, &worker.run)
+                .unwrap()
+                .unwrap()
+                .quarantined,
+            "{invalidation}"
+        );
+        assert!(
+            root.worker_provider_quarantine(&worker.tenant, &worker.provider).unwrap().is_none(),
+            "{invalidation}"
+        );
+        assert!(verify_registration(
+            &registration(&binding),
+            &binding,
+            &verifier,
+            clock.0.load(Ordering::SeqCst)
+        )
+        .is_err());
+        // Renewed valid host provenance can admit another run. No incident was
+        // invented or attributed to the principal while processing invalidation.
+        clock.0.store(100, Ordering::SeqCst);
+        verifier.trusted.revoked.store(false, Ordering::SeqCst);
+        let registration =
+            verify_registration(&registration(&binding), &binding, &verifier, 100).unwrap();
+        let mut replacement = worker.clone();
+        replacement.run = "renewed-run".to_string().try_into().unwrap();
+        replacement.request = "renewed-start".to_string().try_into().unwrap();
+        let catalog = authorize_admission(root, &replacement, &registration).unwrap();
+        assert!(root.reserve_catalog_start(launch(replacement, catalog), 2).unwrap());
+        root.repository(StoreKind::Fabric).unwrap().rebuild().unwrap();
+        assert!(root
+            .worker_provider_quarantine(&worker.tenant, &worker.provider)
+            .unwrap()
+            .is_none());
+    }
+}
+
+#[tokio::test]
+async fn wp_032_ordinary_terminate_under_provider_quarantine_acknowledges_and_reconciles() {
+    use worldinterface_runtime::{
+        connector::{Connector, ReconcileOutcome, ReconcileRequest},
+        worker::provider::AdmittedProvider,
+    };
+    let (h, provider) = probe_harness("WP-032").with_seam();
+    h.operation(Operation::Start).await;
+    h.reconcile_start().await;
+    h.finish().await;
+    let binding = h.binding();
+    let launch = h.bundle.wi().worker_launch(&binding).unwrap().unwrap();
+    quarantine(h.bundle.wi(), &binding, launch.catalog);
+    assert!(!h.recovery);
+    h.operation(Operation::Terminate).await;
+    let state = h.state();
+    let op = state.operations.values().find(|o| o.operation.as_str() == "terminate").unwrap();
+    assert!(op.acknowledged);
+    let requests: Vec<(
+        worldinterface_worker::mapping::WorkerRequestV1,
+        worldinterface_worker::mapping::ResolvedWorkerV1,
+    )> = serde_json::from_slice(&launch.operations).unwrap();
+    let request = &requests.iter().find(|(r, _)| r.operation == Operation::Terminate).unwrap().0;
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(5);
+    while !provider.acknowledged(request).unwrap() {
+        assert!(std::time::Instant::now() < deadline);
+        tokio::time::sleep(std::time::Duration::from_millis(5)).await;
+    }
+    let effects = h.bundle.wi().effect_snapshot(&binding.tenant).unwrap();
+    let effect = &effects.effects[&op.intent];
+    let resolved = &effect.resolution.as_ref().unwrap().resolved;
+    assert!(matches!(
+        h.runtime
+            .connector(Operation::Terminate)
+            .unwrap()
+            .reconcile(ReconcileRequest {
+                tenant: binding.tenant.clone(),
+                intent: op.intent.clone(),
+                resource: resolved.resource.clone(),
+                execution: resolved.connector_execution.clone().unwrap(),
+            })
+            .unwrap(),
+        ReconcileOutcome::Committed(_)
+    ));
+    assert_eq!(provider.launches(), 1);
+    assert!(h
+        .bundle
+        .wi()
+        .worker_provider_quarantine(&binding.tenant, &binding.provider)
+        .unwrap()
+        .is_some());
 }
