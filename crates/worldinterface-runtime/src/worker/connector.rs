@@ -253,7 +253,7 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
         {
             return Err("worker recovery authorization drift".into());
         }
-        let demand = super::admission::WorkerEffect::decode(&bound.input)?;
+        let demand = super::admission::WorkerEffect::decode_structure(&bound.input)?;
         let caller =
             worldinterface_domain::agency::AuthenticatedCaller::from_trusted_authentication(
                 bound.tenant.clone(),
@@ -626,6 +626,7 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
         self.port.recover_cleanup(binding.provider.as_str(), binding.run.as_str(), &operations)
     }
     pub fn cleanup_report(&self, binding: &WorkerBinding) -> Result<Option<CleanupReport>> {
+        self.recovery_authorization(binding, "inspect")?;
         if binding.tenant.as_str() != self.scope.tenant
             || binding.principal.as_str() != self.scope.principal
             || self.state(binding)?.binding != *binding
@@ -644,10 +645,10 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
         if self.state(binding)?.binding != *binding {
             return Err("worker polling realization mismatch".into());
         }
+        self.recovery_authorization(binding, "inspect")?;
         if self.state(binding)?.stop_requested {
             let _ = self.port.stop(binding.provider.as_str(), binding.run.as_str());
         }
-        self.recovery_authorization(binding, "inspect")?;
         if self.evaluation.as_ref().is_none_or(|e| e.verify(self.clock.unix_ms()).is_err())
             || self
                 .bundle
@@ -728,7 +729,7 @@ impl<S: TrustedWorkerBuild + 'static> Connector for WorkerConnector<S> {
         if schema != &ContentHash::of(b"wi-worker-effect:1") {
             return Err("worker artifact schema mismatch".into());
         }
-        super::admission::WorkerEffect::decode(bytes)?;
+        super::admission::WorkerEffect::decode_structure(bytes)?;
         Ok(())
     }
     fn resolve(&self, r: ResolveRequest) -> Result<ResolveObservation> {
@@ -946,6 +947,7 @@ impl<S: TrustedWorkerBuild + 'static> Connector for WorkerConnector<S> {
         {
             return Err("worker cleanup scope mismatch".into());
         }
+        self.runtime.recovery_authorization(&state.binding, "terminate")?;
         if !state.stop_requested && !state.cleanup_confirmed {
             root.request_worker_stop(&state)?;
         }

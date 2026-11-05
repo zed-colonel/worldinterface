@@ -885,6 +885,11 @@
         {
           "manifest": "crates/worldinterface-runtime/Cargo.toml",
           "package": "worldinterface-runtime",
+          "test": "catalog_invalid_recovery_policy_denies_before_any_provider_read_or_stop"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
           "test": "catalog_quarantine_fences_stale_admission_and_survives_cleanup_replacement_rebuild_and_reopen"
         },
         {

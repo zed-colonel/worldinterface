@@ -40,7 +40,9 @@ pub struct AdmittedWorker {
     pub provider_operation: Option<WorkerOperation>,
 }
 impl WorkerEffect {
-    pub fn decode(bytes: &[u8]) -> Result<Self> {
+    /// Bounded canonical parsing grants no authority and preserves historical
+    /// profile values for exact comparison with durable recovery bindings.
+    pub fn decode_structure(bytes: &[u8]) -> Result<Self> {
         if bytes.len() > 64 * 1024 {
             return Err("worker effect bound".into());
         }
@@ -48,6 +50,10 @@ impl WorkerEffect {
         if effect.version != 1 || canonical_data(&effect)? != bytes {
             return Err("worker effect encoding".into());
         }
+        Ok(effect)
+    }
+    pub fn decode(bytes: &[u8]) -> Result<Self> {
+        let effect = Self::decode_structure(bytes)?;
         effect.worker.validate()?;
         effect.controls.validate()?;
         Ok(effect)

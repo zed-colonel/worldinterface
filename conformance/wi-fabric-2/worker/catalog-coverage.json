@@ -15,7 +15,8 @@
       "wp_032_drift_denies_new_admissions_before_allocation_through_real_wi_aq",
       "wp_032_quarantine_revocation_and_recovery_only_reopen_keep_inspect_terminate_and_aq_reconcile",
       "catalog_quarantine_serializes_with_dispatch_and_fences_every_later_dispatch",
-      "catalog_recovery_only_construction_requires_no_approval_or_executable_files"
+      "catalog_recovery_only_construction_requires_no_approval_or_executable_files",
+      "catalog_invalid_recovery_policy_denies_before_any_provider_read_or_stop"
     ]
   },
   "required_obligations": {
@@ -77,6 +78,11 @@
         "manifest": "crates/worldinterface-runtime/Cargo.toml",
         "package": "worldinterface-runtime",
         "test": "catalog_recovery_only_construction_requires_no_approval_or_executable_files"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "catalog_invalid_recovery_policy_denies_before_any_provider_read_or_stop"
       }
     ],
     "live-wi-aq": [

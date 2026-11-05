@@ -168,6 +168,41 @@ fn catalog_registration_is_exact_bounded_and_inspection_grants_no_authority() {
         assert!(descriptor(op).is_err());
     }
     assert_eq!(profile.denial_reasons[0].as_str(), "ordinary-use-disabled");
+    // A historical profile must remain parseable for exact durable recovery,
+    // while ordinary admission still applies the current profile validator.
+    let mut historical = worldinterface_worker::profile::ProfileBinding::process_proof();
+    historical.definition_sha256 = ContentHash::of(b"previous-profile-definition").as_str().into();
+    let demand = worldinterface_runtime::worker::admission::WorkerEffect {
+        version: 1,
+        case: "WP-032".into(),
+        worker: worldinterface_worker::mapping::WorkerRequestV1 {
+            schema: 1,
+            profile: historical,
+            operation: Operation::Inspect,
+            provider: "provider".into(),
+            run: "run".into(),
+            request: "inspect".into(),
+            input_digest: ContentHash::of(b"input"),
+            controls_digest: ContentHash::of(b"controls"),
+        },
+        task: Task::Probe,
+        controls: worldinterface_worker::controls::ControlEvidenceV1 {
+            schema: 1,
+            provider: "provider".into(),
+            run: "run".into(),
+            requested: vec![],
+            advertised: vec![],
+            applied: vec![],
+            observed: vec![],
+        },
+        inputs: vec![],
+        exports: vec![],
+    };
+    let bytes = canonical_data(&demand).unwrap();
+    assert!(
+        worldinterface_runtime::worker::admission::WorkerEffect::decode_structure(&bytes).is_ok()
+    );
+    assert!(worldinterface_runtime::worker::admission::WorkerEffect::decode(&bytes).is_err());
     verify_registration(&registration(&binding), &binding, &v, 100).unwrap();
     for field in [
         "profile",
@@ -621,4 +656,144 @@ fn catalog_recovery_only_construction_requires_no_approval_or_executable_files()
         "absent original binding gained recovery authority"
     );
     assert_eq!(std::fs::read_dir(temp.path()).unwrap().count(), before);
+}
+
+/// This provider records boundary calls and never admits or executes anything.
+struct DenialProvider(std::sync::atomic::AtomicUsize);
+impl worldinterface_runtime::worker_process::Clock for DenialProvider {
+    fn unix_ms(&self) -> u64 {
+        100
+    }
+}
+impl worldinterface_runtime::worker::connector::TrustedWorkerBuild for Trust {
+    fn verify_build(
+        &self,
+        packet: &ContentHash,
+        fixture: &ContentHash,
+        helper: &ContentHash,
+    ) -> Result<()> {
+        let ProcessRegistrationRecord::Evaluation { binding, .. } = &self.registration else {
+            return Err("negative fixture only".into());
+        };
+        if packet != &self.receipt.manifest
+            || fixture != &binding.executable
+            || helper != &binding.helper
+        {
+            return Err("negative fixture provenance mismatch".into());
+        }
+        Ok(())
+    }
+}
+impl worldinterface_runtime::worker::provider::AdmittedProvider for DenialProvider {
+    fn admit(&self, _: worldinterface_runtime::worker_process::AuthorizedRun) -> Result<()> {
+        self.0.fetch_add(1, Ordering::SeqCst);
+        Err("recording provider cannot admit".into())
+    }
+    fn submit(
+        &self,
+        _: &worldinterface_worker::mapping::WorkerRequestV1,
+    ) -> Result<worldinterface_worker::ports::Acknowledgment> {
+        self.0.fetch_add(1, Ordering::SeqCst);
+        Err("recording provider cannot execute".into())
+    }
+    fn observe(&self, _: &str, _: &str) -> Result<Vec<worldinterface_worker::ports::Observation>> {
+        self.0.fetch_add(1, Ordering::SeqCst);
+        Ok(vec![])
+    }
+    fn read(&self, _: &worldinterface_worker::artifacts::ArtifactLocatorV2) -> Result<Vec<u8>> {
+        self.0.fetch_add(1, Ordering::SeqCst);
+        Err("recording provider cannot export".into())
+    }
+    fn manifest(&self, _: &str, _: &str) -> Result<Vec<u8>> {
+        self.0.fetch_add(1, Ordering::SeqCst);
+        Err("recording provider cannot export".into())
+    }
+    fn evidence(
+        &self,
+        _: &str,
+        _: &str,
+    ) -> Result<Option<worldinterface_runtime::worker_process::CleanupReport>> {
+        self.0.fetch_add(1, Ordering::SeqCst);
+        Ok(None)
+    }
+    fn stop(&self, _: &str, _: &str) -> Result<()> {
+        self.0.fetch_add(1, Ordering::SeqCst);
+        Ok(())
+    }
+    fn recover_cleanup(
+        &self,
+        _: &str,
+        _: &str,
+        _: &[(
+            worldinterface_worker::mapping::WorkerRequestV1,
+            worldinterface_worker::mapping::ResolvedWorkerV1,
+        )],
+    ) -> Result<Option<worldinterface_runtime::worker_process::CleanupReport>> {
+        self.0.fetch_add(1, Ordering::SeqCst);
+        Ok(None)
+    }
+}
+#[test]
+fn catalog_invalid_recovery_policy_denies_before_any_provider_read_or_stop() {
+    use worldinterface_runtime::{
+        storage::StoreBundle,
+        worker::{connector::WorkerRuntime, provider::ProviderProvenance},
+        worker_process::HostScope,
+    };
+    let (temp, verifier, binding) = fixture();
+    let bundle = Arc::new(
+        StoreBundle::initialize(
+            &temp.path().join("bundle"),
+            StoreProfile {
+                instance: InstanceId::generate(),
+                created_at: Timestamp::from_epoch_millis(1).unwrap(),
+                platform: false,
+            },
+        )
+        .unwrap(),
+    );
+    let worker = worker();
+    bundle
+        .wi()
+        .reserve_catalog_start(launch(worker.clone(), binding.digest().unwrap()), 1)
+        .unwrap();
+    let state = bundle
+        .wi()
+        .worker_snapshot(&worker.tenant, &worker.provider, &worker.run)
+        .unwrap()
+        .unwrap();
+    bundle.wi().request_worker_stop(&state).unwrap();
+    let scope = HostScope {
+        tenant: worker.tenant.as_str().into(),
+        principal: worker.principal.as_str().into(),
+    };
+    let provider = Arc::new(DenialProvider(std::sync::atomic::AtomicUsize::new(0)));
+    let runtime = WorkerRuntime::install_provider(
+        bundle,
+        scope.clone(),
+        provider.clone(),
+        ProviderProvenance {
+            implementation: binding.executable,
+            helper: binding.helper,
+            adapter: binding.adapter,
+            seam_simulation: true,
+        },
+        Arc::new(verifier),
+        provider.clone(),
+        1,
+    )
+    .unwrap()
+    .with_recovery_policy(
+        RecoveryPolicy::new(
+            scope,
+            ContentHash::of(b"wrong-current-implementation"),
+            vec![descriptor(Operation::Start).unwrap().implementation],
+            ContentHash::of(b"policy"),
+        )
+        .unwrap(),
+    );
+    assert!(runtime.poll(&worker).is_err());
+    assert!(runtime.cleanup_report(&worker).is_err());
+    assert!(runtime.recovery_evidence(&worker).is_err());
+    assert_eq!(provider.0.load(Ordering::SeqCst), 0);
 }

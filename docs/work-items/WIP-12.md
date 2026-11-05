@@ -39,6 +39,8 @@ The fresh-store feature profile advances from `local-worker-12` to
 there is no silent migration. Replay and projection validation include provider
 quarantine and original launch material.
 
+Recovery parses historical profile values structurally, then checks the exact persisted operation rather than re-admitting its old profile under current definitions. New work retains strict current-profile validation.
+
 Recovery uses current host policy, authenticated caller, tenant, exact durable
 WorkerBinding, operation and original/current implementation identities. It
 permits inspect, terminate and reconciliation only. The domain and evidence
@@ -74,7 +76,7 @@ approval provisioning stays outside its own digest. Verification logs and the
 source-bound build record belong in the supplied run scratch/verification.
 
 Pre-approval verification in this implement run: the complete foundation suite,
-foundation isolation and Clippy passed; runtime Clippy passed; six catalog tests
+foundation isolation and Clippy passed; runtime Clippy passed; seven catalog tests
 and ten evaluation/artifact validation/crash tests passed without launching a
 worker fixture or helper. The former local-worker-12 profile also rejects in an
 isolated test. Earlier failures during development (optional journal null encoding,
