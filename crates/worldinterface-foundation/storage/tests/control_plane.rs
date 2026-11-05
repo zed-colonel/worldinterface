@@ -124,7 +124,7 @@ fn control_journal_replays_attribution_retries_and_stable_grant_use_across_resto
         artifact: None,
     })
     .unwrap();
-    for n in 0..4 {
+    for n in 0..10 {
         repo.execute(
             &caller(&snapshot),
             &request(&format!("read-{n}"), cp::Operation::Get { reference: reference.clone() }),
@@ -132,11 +132,14 @@ fn control_journal_replays_attribution_retries_and_stable_grant_use_across_resto
         )
         .unwrap();
     }
-    assert!(repo
-        .execute(&caller(&snapshot), &request("exhausted", cp::Operation::Get { reference }), now())
-        .is_err());
+    repo.execute(
+        &caller(&snapshot),
+        &request("read-again", cp::Operation::Get { reference }),
+        now(),
+    )
+    .unwrap();
     let state = root.control_plane_snapshot().unwrap();
-    assert_eq!(state.uses.values().copied().collect::<Vec<_>>(), vec![5]);
+    assert_eq!(state.uses.values().copied().collect::<Vec<_>>(), vec![1]);
     root.repository(StoreKind::Fabric).unwrap().rebuild().unwrap();
     assert_eq!(root.control_plane_snapshot().unwrap(), state);
     drop(root);
@@ -225,7 +228,7 @@ fn control_crash_between_intent_and_delivery_and_backend_uncertainty_fail_closed
             assert!(!fresh);
             let m =
                 root.control_plane().deliver(&m.issuance, &Clock(now()), &vault, fresh).unwrap();
-            assert_eq!(m.status, IssuanceStatus::Unresolved);
+            assert_eq!(m.status, IssuanceStatus::Pending);
             assert_eq!(vault.calls.get(), 0);
         } else {
             let service = cp::Service::new(
@@ -327,6 +330,51 @@ fn control_rotation_revocation_and_stale_intents_block_delivery() {
         assert_eq!(m.reason, Some(CustodyReason::Stale));
         assert_eq!(vault.calls.get(), 0);
         assert!(root.control_plane().execute(&caller(&snapshot), &issue, now()).is_err());
+        if !failure {
+            let current = root.control_plane_snapshot().unwrap();
+            let rotated = cp::prepare_permit(
+                &current,
+                &caller(&snapshot),
+                &intent,
+                &VerifiedSnapshot::from_trusted_verifier(snapshot.clone()).unwrap(),
+                cp::PermitInput {
+                    reference: reference(&scope, ObjectKind::Authorization, "rotated-permit"),
+                    secret: reference(&scope, ObjectKind::Secret, "secret"),
+                    recipient: o("recipient:trusted"),
+                    run: o("run:fixture"),
+                    run_expires_at_ms: now() + 180_000,
+                    class: CredentialClass::Test,
+                },
+                now(),
+            )
+            .unwrap();
+            let mut binding = rotated.binding().clone();
+            binding.expires_at_ms = now() + 120_000;
+            assert_eq!(binding.secret_version, 2);
+            assert_eq!(binding.generation, 1);
+            root.register_control_permit(rotated).unwrap();
+            let out = service
+                .execute(
+                    &(),
+                    &request(
+                        "after-rotation",
+                        cp::Operation::Issue {
+                            request: Box::new(CredentialRequest {
+                                request: id("after-rotation"),
+                                permit: reference(
+                                    &scope,
+                                    ObjectKind::Authorization,
+                                    "rotated-permit",
+                                ),
+                                binding,
+                            }),
+                        },
+                    ),
+                )
+                .unwrap();
+            let cp::Outcome::Credential(m) = out else { panic!() };
+            assert_eq!(m.status, IssuanceStatus::Delivered);
+        }
         root.repository(StoreKind::Fabric).unwrap().rebuild().unwrap();
     }
 }
@@ -466,4 +514,192 @@ fn control_custody_secret_and_hostile_errors_never_enter_serialized_or_durable_p
     let backup = t.path().join("export");
     StoreRoot::backup_offline(&path, &backup).unwrap();
     scan(&backup);
+}
+
+#[test]
+fn control_sustained_reads_leave_administration_and_revocation_available() {
+    let (_, mut snapshot) = fixture(false);
+    let scope = Scope { tenant: snapshot.bindings[0].tenant.clone(), organization: None };
+    let query = Query { kind: ObjectKind::Receipt, tenant_filter: None, limit: 100, cursor: None };
+    let objects: Vec<_> = (0..100)
+        .map(|n| ObjectView {
+            reference: reference(&scope, ObjectKind::Receipt, &format!("receipt-{n:03}")),
+            revision: 1,
+            content: ContentHash::of(b"safe"),
+            artifact: None,
+        })
+        .collect();
+    let mut authority =
+        std::collections::BTreeSet::from([cp::query_demand(&scope, &query).unwrap()]);
+    for o in &objects {
+        authority.insert(cp::read_demand(&o.reference).unwrap());
+    }
+    set_authority(&mut snapshot, &authority);
+    let t = tempfile::tempdir().unwrap();
+    let path = t.path().join("root");
+    let root = create(&path);
+    root.bootstrap_control_plane(bundle(&snapshot, Profile::Embedded), now()).unwrap();
+    for object in objects {
+        root.register_control_object(object).unwrap();
+    }
+    let before = root.control_plane_snapshot().unwrap();
+    let db = rusqlite::Connection::open(path.join("fabric.sqlite")).unwrap();
+    let journal_count: u64 =
+        db.query_row("SELECT count(*) FROM control_history", [], |r| r.get(0)).unwrap();
+    let bytes: u64 =
+        db.query_row("SELECT sum(length(value)) FROM control_entries", [], |r| r.get(0)).unwrap();
+    for n in 0..1200 {
+        let (out, fresh) = root
+            .control_plane()
+            .execute(
+                &caller(&snapshot),
+                &request(&format!("query-{n}"), cp::Operation::Query { query: query.clone() }),
+                now(),
+            )
+            .unwrap();
+        let cp::Outcome::Page(page) = out else { panic!() };
+        assert!(!fresh);
+        assert_eq!(page.visible_count, 100);
+    }
+    assert_eq!(root.control_plane_snapshot().unwrap(), before);
+    assert_eq!(
+        db.query_row("SELECT count(*) FROM control_history", [], |r| r.get::<_, u64>(0)).unwrap(),
+        journal_count
+    );
+    assert_eq!(
+        db.query_row("SELECT sum(length(value)) FROM control_entries", [], |r| r.get::<_, u64>(0))
+            .unwrap(),
+        bytes
+    );
+    let mut grant = snapshot.grants[0].clone();
+    grant.version = 2;
+    grant.revoked = true;
+    let command = cp::AdminCommand {
+        request: id("revoke-after-reads"),
+        reference: reference(&scope, ObjectKind::Grant, grant.id.as_str()),
+        expected_revision: 1,
+        content: cp::Content::Grant(grant),
+        claims: IdentityClaims::default(),
+        approvals: vec![],
+    };
+    let authorizer = AuthenticatedCaller::from_trusted_authentication(
+        scope.tenant,
+        snapshot.policy.authorizer.clone(),
+    );
+    root.authorize_control_administration(
+        &authorizer,
+        &caller(&snapshot),
+        command.clone(),
+        now() + 1000,
+        now(),
+    )
+    .unwrap();
+    let revocation =
+        request("revoke-after-reads", cp::Operation::Admin { command: Box::new(command) });
+    root.control_plane().execute(&caller(&snapshot), &revocation, now()).unwrap();
+    assert!(root
+        .control_plane()
+        .execute(&caller(&snapshot), &request("denied", cp::Operation::Query { query }), now())
+        .is_err());
+    let final_state = root.control_plane_snapshot().unwrap();
+    assert!(final_state.history.last().unwrap().attribution.authorization.is_some());
+    root.repository(StoreKind::Fabric).unwrap().rebuild().unwrap();
+    assert_eq!(root.control_plane_snapshot().unwrap(), final_state);
+    drop(db);
+    drop(root);
+    let root = StoreRoot::open_existing(&path).unwrap();
+    assert_eq!(root.control_plane_snapshot().unwrap(), final_state);
+}
+
+#[test]
+fn control_identical_retry_cannot_cancel_an_in_flight_issue() {
+    use std::sync::atomic::{AtomicUsize, Ordering};
+    struct Paused<'a> {
+        repository: worldinterface_storage::control_plane::ControlPlaneRepository<'a>,
+        committed: Arc<Barrier>,
+        resume: Arc<Barrier>,
+    }
+    impl cp::Repository for Paused<'_> {
+        fn execute(
+            &self,
+            caller: &AuthenticatedCaller,
+            request: &cp::Request,
+            now: u64,
+        ) -> cp::Result<(cp::Outcome, bool)> {
+            let result = self.repository.execute(caller, request, now)?;
+            if result.1 {
+                self.committed.wait();
+                self.resume.wait();
+            }
+            Ok(result)
+        }
+        fn deliver(
+            &self,
+            id: &ContentHash,
+            clock: &impl cp::TrustedClock,
+            custody: &impl cp::Custody,
+            fresh: bool,
+        ) -> cp::Result<CredentialMetadata> {
+            self.repository.deliver(id, clock, custody, fresh)
+        }
+        fn revoke(
+            &self,
+            revision: &cp::Revision,
+            custody: &impl cp::Custody,
+            fresh: bool,
+        ) -> cp::Result<()> {
+            self.repository.revoke(revision, custody, fresh)
+        }
+    }
+    struct Counting(Arc<AtomicUsize>);
+    impl cp::Custody for Counting {
+        fn deliver(
+            &self,
+            _: &OpaqueRef,
+            _: &CredentialMetadata,
+        ) -> std::result::Result<(), CustodyReason> {
+            self.0.fetch_add(1, Ordering::SeqCst);
+            Ok(())
+        }
+        fn revoke(&self, _: &ObjectRef, _: u64, _: u64) -> std::result::Result<(), CustodyReason> {
+            Ok(())
+        }
+    }
+    let t = tempfile::tempdir().unwrap();
+    let root = create(&t.path().join("root"));
+    let (req, snapshot) = initialize_issue(&root, false);
+    let committed = Arc::new(Barrier::new(2));
+    let resume = Arc::new(Barrier::new(2));
+    let calls = Arc::new(AtomicUsize::new(0));
+    let service = cp::Service::new(
+        root.control_plane(),
+        Auth(caller(&snapshot)),
+        Clock(now()),
+        Counting(calls.clone()),
+    );
+    std::thread::scope(|threads| {
+        let first = cp::Service::new(
+            Paused {
+                repository: root.control_plane(),
+                committed: committed.clone(),
+                resume: resume.clone(),
+            },
+            Auth(caller(&snapshot)),
+            Clock(now()),
+            Counting(calls.clone()),
+        );
+        let req_ref = &req;
+        let job = threads.spawn(move || first.execute(&(), req_ref).unwrap());
+        committed.wait();
+        let state = root.control_plane_snapshot().unwrap();
+        let cp::Outcome::Credential(m) = service.execute(&(), &req).unwrap() else { panic!() };
+        assert_eq!(m.status, IssuanceStatus::Pending);
+        assert_eq!(root.control_plane_snapshot().unwrap(), state);
+        assert_eq!(calls.load(Ordering::SeqCst), 0);
+        resume.wait();
+        let cp::Outcome::Credential(m) = job.join().unwrap() else { panic!() };
+        assert_eq!(m.status, IssuanceStatus::Delivered);
+        assert_eq!(service.execute(&(), &req).unwrap(), cp::Outcome::Credential(m));
+    });
+    assert_eq!(calls.load(Ordering::SeqCst), 1);
 }

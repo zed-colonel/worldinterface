@@ -12269,5 +12269,40 @@
     "target": "foundation/storage/control-plane",
     "rationale": "WIP-13 scoped embedded control-plane executable evidence; no server or runtime composition",
     "source": "docs/work-items/WIP-13.md; WI-ADR-018; accepted WIP-13 design"
+  },
+  {
+    "id": "crates/worldinterface-foundation/domain/src/control_plane/mod.rs::::struct:AdministrationAuthorization",
+    "disposition": "retain-align",
+    "target": "foundation/domain/control-plane",
+    "rationale": "Retain AQ-free exact host authorization, indexed control-plane projection, and concurrent-retry regression evidence for WIP-13 review findings F-001 through F-005.",
+    "source": "WI-WORKER-PROOF-1 WIP-13; WI-ADR-018, WI-ADR-004; review remediation F-001 through F-005"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/control_plane.rs::::module:tests@10d1b0eff34c",
+    "disposition": "test-evidence",
+    "target": "foundation/storage/control-plane",
+    "rationale": "Retain AQ-free exact host authorization, indexed control-plane projection, and concurrent-retry regression evidence for WIP-13 review findings F-001 through F-005.",
+    "source": "WI-WORKER-PROOF-1 WIP-13; WI-ADR-018, WI-ADR-004; review remediation F-001 through F-005"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/control_plane.rs::::type:ProjectionEntries",
+    "disposition": "retain-align",
+    "target": "foundation/storage/control-plane",
+    "rationale": "Retain AQ-free exact host authorization, indexed control-plane projection, and concurrent-retry regression evidence for WIP-13 review findings F-001 through F-005.",
+    "source": "WI-WORKER-PROOF-1 WIP-13; WI-ADR-018, WI-ADR-004; review remediation F-001 through F-005"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/tests/control_plane.rs::control_identical_retry_cannot_cancel_an_in_flight_issue::struct:Counting",
+    "disposition": "test-evidence",
+    "target": "foundation/storage/control-plane",
+    "rationale": "Retain AQ-free exact host authorization, indexed control-plane projection, and concurrent-retry regression evidence for WIP-13 review findings F-001 through F-005.",
+    "source": "WI-WORKER-PROOF-1 WIP-13; WI-ADR-018, WI-ADR-004; review remediation F-001 through F-005"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/tests/control_plane.rs::control_identical_retry_cannot_cancel_an_in_flight_issue::struct:Paused",
+    "disposition": "test-evidence",
+    "target": "foundation/storage/control-plane",
+    "rationale": "Retain AQ-free exact host authorization, indexed control-plane projection, and concurrent-retry regression evidence for WIP-13 review findings F-001 through F-005.",
+    "source": "WI-WORKER-PROOF-1 WIP-13; WI-ADR-018, WI-ADR-004; review remediation F-001 through F-005"
   }
 ]

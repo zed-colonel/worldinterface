@@ -50,32 +50,56 @@ Later grant/binding/policy references require already registered scoped principa
 Membership and role labels supply no permissions.
 
 Administrative authority intersects agency, platform, resource, information-use
-and current grants. It must cover the exact mutation and every authority hash
-being issued. Approval checks bind mutation, policy and binding, enforce expiry,
+and current active grants. Ordinary commands must cover the exact mutation and
+every authority hash being issued. Revoked, expired and exhausted grants supply
+no authority and do not disable another current grant. All remaining grant bounds
+still intersect; there is no union of roles or grants. Approval checks bind mutation, policy and binding, enforce expiry,
 revocation, use limits and separation of duties. Revoke a grant or binding by
 writing a new version with `revoked: true`; revoke a policy by attenuating its
 sets. Stable tenant/issuer/grant keys retain use counts across revisions.
-Expected revisions, request mappings, attributed history and logical-use counts
-commit in one Fabric transaction. Identical administrative retries acknowledge
+When new objects or operations need authority after bootstrap, the trusted host
+calls `authorize_control_administration` with separately authenticated policy
+authorizer and requester contexts. It journals one exact command under the current
+policy and binding, expiring within 120 seconds. This path can extend policy,
+binding and grant ceilings and recover a requester with no usable grant; it
+confers no ambient permission. It cannot be invoked through `Service`, and caller
+DTOs have no attestation field. Execution still validates scope, registered
+principals, allowed grant issuers, expected revisions, approvals, separation of
+duties and provenance. Resulting revisions reference the authorization in their
+attribution. Policy or binding drift invalidates outstanding attestations.
+
+Expected revisions, mutation request mappings, attributed history and logical-use
+counts commit in one Fabric transaction. Reads consume no uses and retain no
+retry outcomes or journal events; repeated reads evaluate the current projection.
+Only ordinary administration and credential issuance reserve grant uses, plus
+any required approval/permit reservations. A reserved last use remains valid for
+its own delivery and identical retry; it cannot fund another issuance. Identical administrative retries acknowledge
 the original outcome even after self-revocation, without authorizing another
-mutation. Conflicting request reuse fails. Read and credential retries require
-current access; no retry repeats custody delivery.
+mutation. Conflicting request reuse fails. Reads and credential retries require current access; no retry repeats custody
+delivery.
 
 The append-only control journal and its projection participate in initialization,
 deterministic replay, comparison, rebuild, offline backup and restore. Store
-profile advances from `local-worker-13` to `local-control-plane-14`, retaining
+profile advances from `local-worker-13` through `local-control-plane-14` to
+`local-control-plane-15`, retaining
 schema 1 and rejecting older layouts rather than silently migrating them. The
 process catalog's expected profile advances with it; check definitions do not
-change. The projection is a bounded local aggregate using the existing 16 MiB
-collection encoding; large-scale paging/index optimization is not claimed.
+change. The projection keeps a small header and indexed entries for history, objects,
+permits, issuances, revocations, uses, mutation retries and authorizations. Each
+entry retains the existing encoding bounds, while aggregate growth has no shared
+16 MiB ceiling. Mutations update changed entries; reads add none. Replay, rebuild
+and projection comparison include every entry. The pure reducer still evaluates
+an in-memory aggregate; large-scale paging/index optimization is not claimed.
+Existing stores require a fresh layout; no silent migration is provided.
 
 ## Custody and the WIP-14 contract
 
 Trusted ingestion calls `prepare_permit` with the existing verified authorization
 snapshot, immutable effect intent, host-selected recipient and authoritative run
 deadline. It resolves the resource and reruns existing exact authorization,
-including worker profile exclusions. Managed policy/binding/grants must equal
-those facts. A permit binds tenant, organization, principal, worker/connector
+including worker profile exclusions. Managed policy/binding and every usable grant must equal those facts. Retired
+grants contribute no authorization evidence, but remain in the complete revision
+binding so later changes still invalidate stale permits. A permit binds tenant, organization, principal, worker/connector
 recipient and provider, operation, canonical resource/version, run, authorization
 digest, managed revision digests, credential class, secret version and revocation
 generation. Every request dimension must match; only expiry may attenuate. The revision set
@@ -88,7 +112,9 @@ pending delivery without discarding historical outcomes. Delivery retains the
 original permit identity, including when several permits share one authorization.
 
 The issuance authority hash covers the capability ceiling, excluding recursive
-policy/authorization hashes and expiry. Fresh exact revisions, authorization and
+policy/authorization hashes, secret version/generation and expiry. Rotation
+therefore preserves the authority ceiling, while the exact new version and
+generation remain mandatory in the newly verified permit. Fresh exact revisions, authorization and
 all expiry bounds are independently checked against the verified permit. The
 120-second ceiling can be shortened and is bounded by policy, grants, bindings,
 delegations, approved resolution, worker qualification, secret and run expiry.
@@ -108,8 +134,12 @@ Intent commits before custody interaction. A second immediate Fabric transaction
 revalidates current state and serializes delivery against administration and
 rotation. Successful rotation/revocation invalidates prior generations at custody;
 new generation delivery is blocked until custody confirms. Failed/uncertain
-revocation stays unresolved. Pending delivery after interruption becomes
-Unresolved and never repeats automatically. An operator reconciliation mechanism
+revocation stays unresolved. A concurrent identical retry observes Pending without changing it or competing
+for delivery. Only the call that committed intent owns the delivery attempt.
+Pending after interruption also remains Pending and never repeats automatically;
+it requires host reconciliation and is not evidence of delivery. Confirmed
+backend uncertainty is recorded as Unresolved. Duplicate pending revocation
+requests likewise cannot invalidate the original call. An operator reconciliation mechanism
 and provider qualification are future composition work; retry alone grants no
 active capability. Custody must quarantine/invalidate possibly issued credentials
 on uncertainty. WIP-14 must also compose this administration state and logical
@@ -157,3 +187,23 @@ receipt or trusted host anchor. The source-bound non-live build is required
 before presenting the candidate digest. Renewed operator acceptance of that
 exact digest is required for positive worker execution and the adopted runtime
 suite. No permission or result is inferred from earlier packet acceptance.
+
+
+## Review remediation
+
+F-001 adds exact attributed host authorization beyond bootstrap and verifies
+post-bootstrap receipt reads/queries and issuance after rotation. F-002 removes
+read persistence and replaces the aggregate blob with indexed bounded entries;
+regressions cover 1,200 full pages, subsequent grant revocation, replay/reopen and
+a projection larger than 16 MiB. Five new inventory entries retain their owning
+foundation layers and regression evidence; no existing disposition is removed. F-003 preserves read budgets, excludes inactive
+grants and verifies recovery plus the reserved last use. F-004 resolves only the
+current caller's active bindings and tests 261 global bindings. F-005 pauses the
+original issue between intent and delivery and proves an identical concurrent
+retry leaves it Pending, then observes one successful custody call. F-006
+corrects the Permit trust comment: serde is for trusted journal facts and does
+not authenticate them. No additional public operation or listener is exposed.
+
+The added declarations/tests and the storage profile revision are an explicit
+inventory/disposition proposal for this remediation's review. The obligation
+matrix preserves its authoritative WI-11/domain scope and exact test references.

@@ -37,7 +37,7 @@
     "reconcile"
   ],
   "quarantine_scope": "tenant-provider",
-  "store_profile": "local-control-plane-14",
+  "store_profile": "local-control-plane-15",
   "ordinary_use": false,
   "self_promotion": false,
   "runtime_pass_asserted": false

@@ -24,6 +24,11 @@
         "manifest": "crates/worldinterface-foundation/Cargo.toml",
         "package": "worldinterface-domain",
         "test": "control_caller_claims_and_invalid_server_bindings_cannot_select_identity"
+      },
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-domain",
+        "test": "control_binding_resolution_is_per_principal_beyond_256_global_bindings"
       }
     ],
     "tenant-organization-scoping": [
@@ -50,6 +55,11 @@
         "manifest": "crates/worldinterface-foundation/Cargo.toml",
         "package": "worldinterface-domain",
         "test": "control_administration_requires_exact_approvals_and_known_scoped_principals"
+      },
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-domain",
+        "test": "control_exact_host_authorizations_extend_post_bootstrap_authority"
       }
     ],
     "durable-revisions-use-accounting": [
@@ -57,6 +67,16 @@
         "manifest": "crates/worldinterface-foundation/Cargo.toml",
         "package": "worldinterface-storage",
         "test": "control_journal_replays_attribution_retries_and_stable_grant_use_across_restore"
+      },
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-domain",
+        "test": "control_inactive_grants_do_not_poison_current_grants_and_host_can_recover"
+      },
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-domain",
+        "test": "control_last_reserved_grant_use_delivers_and_retries_but_cannot_issue_again"
       }
     ],
     "concurrent-administration": [
@@ -78,6 +98,11 @@
         "manifest": "crates/worldinterface-foundation/Cargo.toml",
         "package": "worldinterface-domain",
         "test": "control_permits_require_current_exact_authorization_and_bound_expiries"
+      },
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-domain",
+        "test": "control_fresh_permits_can_use_current_grants_after_another_grant_retires"
       }
     ],
     "durable-issuance": [
@@ -92,6 +117,11 @@
         "manifest": "crates/worldinterface-foundation/Cargo.toml",
         "package": "worldinterface-storage",
         "test": "control_crash_between_intent_and_delivery_and_backend_uncertainty_fail_closed"
+      },
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-storage",
+        "test": "control_identical_retry_cannot_cancel_an_in_flight_issue"
       }
     ],
     "rotation-revocation": [
@@ -106,6 +136,16 @@
         "manifest": "crates/worldinterface-foundation/Cargo.toml",
         "package": "worldinterface-storage",
         "test": "control_projection_tampering_and_incomplete_commits_are_detected_or_rolled_back"
+      },
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-storage",
+        "test": "control_sustained_reads_leave_administration_and_revocation_available"
+      },
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-storage",
+        "test": "control_projection_entries_do_not_share_a_16_mib_ceiling"
       }
     ],
     "secret-exclusion": [

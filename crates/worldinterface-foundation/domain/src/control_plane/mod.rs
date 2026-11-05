@@ -126,6 +126,8 @@ pub struct Attribution {
     pub request: ClientRequestId,
     pub command: ContentHash,
     pub bootstrap: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub authorization: Option<ContentHash>,
 }
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -179,7 +181,8 @@ struct Retry {
     outcome: Outcome,
 }
 
-/// Produced only by trusted authorization ingestion. No public wire constructor.
+/// Trusted-host journal facts, including serde persistence. Deserialization does
+/// not verify provenance; only trusted composition may register these facts.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct Permit {
@@ -189,6 +192,20 @@ pub struct Permit {
     reservations: Vec<UseLimit>,
     demand: ContentHash,
     revoked: bool,
+}
+
+/// Exact host attestation, never an input accepted by Service. The host authenticates
+/// the policy authorizer separately from the requester before recording this fact.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct AdministrationAuthorization {
+    command: ContentHash,
+    requester: PrincipalId,
+    authorizer: PrincipalId,
+    policy: ContentHash,
+    binding: ContentHash,
+    at_ms: u64,
+    expires_at_ms: u64,
 }
 
 /// Trusted-host bootstrap is separate from ordinary commands and runs once.
@@ -214,6 +231,8 @@ pub struct State {
     pub revocations: BTreeMap<ContentHash, IssuanceStatus>,
     pub uses: BTreeMap<ContentHash, u32>,
     requests: BTreeMap<ContentHash, Retry>,
+    #[serde(default, skip_serializing_if = "BTreeMap::is_empty")]
+    administration_authorizations: BTreeMap<ContentHash, AdministrationAuthorization>,
 }
 impl State {
     fn config(&self) -> Result<&Configuration> {
@@ -249,14 +268,21 @@ impl State {
         }
         Ok(revisions)
     }
-    fn bindings(&self) -> Vec<Binding> {
+    fn bindings(&self, caller: &AuthenticatedCaller, now: &Timestamp) -> Vec<Binding> {
         let mut seen = BTreeSet::new();
         self.history
             .iter()
             .rev()
             .filter(|r| seen.insert(r.reference.clone()))
             .filter_map(|r| match &r.content {
-                Content::Binding(b) => Some(b.clone()),
+                Content::Binding(b)
+                    if &b.tenant == caller.tenant()
+                        && &b.principal == caller.principal()
+                        && !b.revoked
+                        && b.expires_at > *now =>
+                {
+                    Some(b.clone())
+                }
                 _ => None,
             })
             .collect()
@@ -270,7 +296,8 @@ impl State {
         if caller.tenant() != &self.config()?.status.tenant {
             return Err(Error::Unavailable);
         }
-        let (b, a) = resolve_binding(caller, claims, &self.bindings(), &timestamp(now)?)
+        let time = timestamp(now)?;
+        let (b, a) = resolve_binding(caller, claims, &self.bindings(caller, &time), &time)
             .map_err(|_| Error::Unavailable)?;
         let scope = Scope {
             tenant: caller.tenant().clone(),
@@ -306,6 +333,7 @@ impl State {
         b: &Binding,
         agency: &Authority,
         now: u64,
+        reserved: &[UseLimit],
     ) -> Result<(Authority, Policy, Vec<UseLimit>)> {
         let policy = self.policy(scope, now)?;
         let mut effective = agency.clone();
@@ -320,16 +348,24 @@ impl State {
                 _ => None,
             })
             .collect();
-        if grants.is_empty() {
-            return Err(Error::Unavailable);
-        }
         let mut limits = Vec::new();
         for g in grants {
+            let key = hash(&("grant", &g.tenant, &g.issuer, &g.id))?;
+            let used = self.uses.get(&key).copied().unwrap_or(0);
+            // Inactive evidence supplies no authority and cannot poison another
+            // current grant. Delivery/retry may check the already reserved last use.
             if g.revoked
-                || g.version == 0
+                || g.expires_at <= timestamp(now)?
+                || used >= g.max_uses
+                    && !reserved
+                        .iter()
+                        .any(|l| l.key == key && l.max_uses == g.max_uses && used == l.max_uses)
+            {
+                continue;
+            }
+            if g.version == 0
                 || g.tenant != scope.tenant
                 || g.evidence.artifact.scope != scope.tenant
-                || g.expires_at <= timestamp(now)?
                 || !policy.grant_issuers.contains(&g.issuer)
                 || g.max_uses == 0
                 || g.max_uses > 10_000
@@ -337,10 +373,10 @@ impl State {
                 return Err(Error::Unavailable);
             }
             effective = effective.intersection(&g.authority).cloned().collect();
-            limits.push(UseLimit {
-                key: hash(&("grant", &g.tenant, &g.issuer, &g.id))?,
-                max_uses: g.max_uses,
-            });
+            limits.push(UseLimit { key, max_uses: g.max_uses });
+        }
+        if limits.is_empty() {
+            return Err(Error::Unavailable);
         }
         Ok((effective, policy, limits))
     }
@@ -402,7 +438,7 @@ pub fn admin_demand(command: &AdminCommand) -> Result<ContentHash> {
 pub fn issue_demand(request: &CredentialRequest) -> Result<ContentHash> {
     let b = &request.binding;
     hash(&(
-        "wi-control-issue-v1",
+        "wi-control-issue-v2",
         &b.scope,
         &b.principal,
         b.audience,
@@ -413,8 +449,6 @@ pub fn issue_demand(request: &CredentialRequest) -> Result<ContentHash> {
         &b.run,
         b.class,
         &b.secret,
-        b.secret_version,
-        b.generation,
     ))
 }
 
@@ -583,6 +617,7 @@ pub fn bootstrap(old: &State, command: &Bootstrap, now: u64) -> Result<State> {
                 request: command.request.clone(),
                 command: hash(command)?,
                 bootstrap: true,
+                authorization: None,
             },
         })?;
     }
@@ -648,6 +683,79 @@ pub fn administration_approval_binding(
     ))
 }
 
+fn administration_key(caller: &AuthenticatedCaller, command: &AdminCommand) -> Result<ContentHash> {
+    hash(&("wi-administration-authorization-v1", caller.tenant(), caller.principal(), command))
+}
+
+/// Trusted-host path for extending authority beyond bootstrap. This records one
+/// exact command, under current policy and agency, for at most 120 seconds. It
+/// neither applies the mutation nor waives its approvals or validation. Service
+/// has no operation that can create this attestation.
+pub fn authorize_administration(
+    old: &State,
+    authorizer: &AuthenticatedCaller,
+    requester: &AuthenticatedCaller,
+    command: &AdminCommand,
+    expires_at_ms: u64,
+    now: u64,
+) -> Result<State> {
+    let (scope, binding, _) = old.scope(requester, &command.claims, now)?;
+    let policy = old.policy(&scope, now)?;
+    if now < old.last_at_ms
+        || authorizer.tenant() != &scope.tenant
+        || authorizer.principal() != &policy.authorizer
+        || command.reference.scope != scope
+        || expires_at_ms <= now
+        || expires_at_ms > now.checked_add(120_000).ok_or(Error::Invalid)?
+        || expires_at_ms > policy.expires_at.epoch_millis().map_err(|_| Error::Invalid)?
+        || old.current(&command.reference).map_or(0, |r| r.revision) != command.expected_revision
+    {
+        return Err(Error::Unavailable);
+    }
+    validate_content(&command.reference, &command.content, old.current(&command.reference), now)?;
+    validate_principals(old, &scope, &command.content)?;
+    let key = administration_key(requester, command)?;
+    let authorization = AdministrationAuthorization {
+        command: hash(command)?,
+        requester: requester.principal().clone(),
+        authorizer: authorizer.principal().clone(),
+        policy: hash(&policy)?,
+        binding: hash(&binding)?,
+        at_ms: now,
+        expires_at_ms,
+    };
+    if let Some(previous) = old.administration_authorizations.get(&key) {
+        return if previous == &authorization { Ok(old.clone()) } else { Err(Error::Conflict) };
+    }
+    let mut new = old.clone();
+    new.administration_authorizations.insert(key, authorization);
+    new.revision = new.revision.checked_add(1).ok_or(Error::Invalid)?;
+    new.last_at_ms = now;
+    Ok(new)
+}
+
+fn administration_authorization(
+    s: &State,
+    caller: &AuthenticatedCaller,
+    command: &AdminCommand,
+    binding: &Binding,
+    policy: &Policy,
+    now: u64,
+) -> Result<Option<ContentHash>> {
+    let key = administration_key(caller, command)?;
+    Ok(s.administration_authorizations
+        .get(&key)
+        .filter(|a| {
+            a.requester == *caller.principal()
+                && a.authorizer == policy.authorizer
+                && hash(policy).as_ref() == Ok(&a.policy)
+                && hash(binding).as_ref() == Ok(&a.binding)
+                && a.at_ms <= now
+                && now < a.expires_at_ms
+        })
+        .map(|_| key))
+}
+
 pub fn apply(
     old: &State,
     caller: &AuthenticatedCaller,
@@ -677,7 +785,28 @@ pub fn apply(
         _ => IdentityClaims::default(),
     };
     let (scope, b, agency) = old.scope(caller, &claims, now)?;
-    let (authority, policy, mut limits) = old.authority(&scope, &b, &agency, now)?;
+    let policy = old.policy(&scope, now)?;
+    let authorization = match &request.operation {
+        Operation::Admin { command } => {
+            administration_authorization(old, caller, command, &b, &policy, now)?
+        }
+        _ => None,
+    };
+    let reserved = match &request.operation {
+        Operation::Issue { request } if old.requests.contains_key(&key) => old
+            .permits
+            .iter()
+            .find(|p| p.reference == request.permit)
+            .map(|p| p.reservations.as_slice())
+            .unwrap_or(&[]),
+        _ => &[],
+    };
+    let (authority, mut limits) = if authorization.is_some() {
+        (Authority::new(), vec![])
+    } else {
+        let (a, _, l) = old.authority(&scope, &b, &agency, now, reserved)?;
+        (a, l)
+    };
     if let Some(retry) = old.requests.get(&key) {
         if retry.digest != exact {
             return Err(Error::Conflict);
@@ -760,8 +889,9 @@ pub fn apply(
         Operation::Admin { command } => {
             if command.request != request.id
                 || command.reference.scope != scope
-                || !authority.contains(&admin_demand(command)?)
-                || !command.content.authority().is_subset(&authority)
+                || authorization.is_none()
+                    && (!authority.contains(&admin_demand(command)?)
+                        || !command.content.authority().is_subset(&authority))
             {
                 return Err(Error::Unavailable);
             }
@@ -778,9 +908,12 @@ pub fn apply(
                     return Err(Error::Invalid);
                 }
             }
-            // Issuer/authorizer provenance cannot be assigned to an unrelated principal.
-            if matches!(&command.content, Content::Grant(g) if previous.is_none() && (g.issuer != b.accountable || !policy.grant_issuers.contains(&g.issuer)))
-                || matches!(&command.content, Content::Policy(p) if p.authorizer != b.accountable)
+            // Ordinary delegation can only issue as the accountable principal.
+            // A separate exact host attestation may authorize another registered
+            // policy authorizer/issuer; it cannot invent an untrusted grant issuer.
+            if matches!(&command.content, Content::Grant(g) if previous.is_none() && (!policy.grant_issuers.contains(&g.issuer) || authorization.is_none() && g.issuer != b.accountable))
+                || authorization.is_none()
+                    && matches!(&command.content, Content::Policy(p) if p.authorizer != b.accountable)
             {
                 return Err(Error::Unavailable);
             }
@@ -803,6 +936,7 @@ pub fn apply(
                     request: request.id.clone(),
                     command: exact.clone(),
                     bootstrap: false,
+                    authorization: authorization.clone(),
                 },
             };
             new.push_revision(r.clone())?;
@@ -843,6 +977,11 @@ pub fn apply(
             Outcome::Credential(Box::new(m))
         }
     };
+    // Reads are current views, not logical mutations. They retain no outcomes,
+    // consume no uses and cannot fill the journal or projection with retry data.
+    if matches!(request.operation, Operation::Get { .. } | Operation::Query { .. }) {
+        return Ok((old.clone(), outcome));
+    }
     new.consume(&limits)?;
     new.requests.insert(key, Retry { digest: exact, outcome: outcome.clone() });
     new.revision = new.revision.checked_add(1).ok_or(Error::Invalid)?;
@@ -945,23 +1084,33 @@ pub fn prepare_permit(
     {
         return Err(Error::Unavailable);
     }
-    let mut revisions = BTreeMap::new();
-    // Exact managed bindings, policy and grants, including every referenced version.
+    // Effect evidence selects exactly the usable managed grants. Retired grants
+    // remain in the revision binding so any later revision still forces reevaluation,
+    // but they cannot poison fresh authorization through a current grant.
+    let (_, _, active) = s.authority(&scope, &binding, &agency.effective, now, &[])?;
+    if facts.grants.len() != active.len() {
+        return Err(Error::Unavailable);
+    }
+    let revisions = s.authority_revisions(&scope, caller.principal())?;
+    let mut seen = BTreeSet::new();
     for content in std::iter::once(Content::Policy(facts.policy.clone()))
         .chain(std::iter::once(Content::Binding(binding)))
         .chain(facts.grants.iter().cloned().map(Content::Grant))
     {
+        if let Content::Grant(g) = &content {
+            let key = hash(&("grant", &g.tenant, &g.issuer, &g.id))?;
+            if !active.iter().any(|l| l.key == key && l.max_uses == g.max_uses) {
+                return Err(Error::Unavailable);
+            }
+        }
         let r = s
             .contents(&scope)
             .into_iter()
             .find(|r| r.content == content)
             .ok_or(Error::Unavailable)?;
-        if revisions.insert(r.reference.id.clone(), hash(r)?).is_some() {
+        if !seen.insert(r.reference.id.clone()) {
             return Err(Error::Invalid);
         }
-    }
-    if revisions != s.authority_revisions(&scope, caller.principal())? {
-        return Err(Error::Unavailable);
     }
     let r = s.current(&input.secret).ok_or(Error::Unavailable)?;
     let Content::Secret(secret) = &r.content else {
@@ -1115,7 +1264,7 @@ pub fn delivery_reference(s: &State, id: &ContentHash, now: u64) -> Result<Opaqu
         m.binding.principal.clone(),
     );
     let (scope, b, a) = s.scope(&caller, &IdentityClaims::default(), now)?;
-    let (effective, _, _) = s.authority(&scope, &b, &a, now)?;
+    let (effective, _, _) = s.authority(&scope, &b, &a, now, &permit.reservations)?;
     let request = CredentialRequest {
         request: "delivery".to_string().try_into().map_err(|_| Error::Invalid)?,
         permit: m.permit.clone(),

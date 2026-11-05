@@ -443,6 +443,27 @@ fn control_administration_requires_exact_approvals_and_known_scoped_principals()
         max_uses: 1,
         evidence: snapshot.grants[0].evidence.clone(),
     });
+    // Host authorization does not waive required approvals or separation of duties.
+    let host = AuthenticatedCaller::from_trusted_authentication(
+        scope.tenant.clone(),
+        snapshot.policy.authorizer.clone(),
+    );
+    let attested = cp::authorize_administration(
+        &state,
+        &host,
+        &caller(&snapshot),
+        &command,
+        now() + 1000,
+        now(),
+    )
+    .unwrap();
+    assert!(cp::apply(
+        &attested,
+        &caller(&snapshot),
+        &request("secret-admin", cp::Operation::Admin { command: Box::new(command.clone()) }),
+        now()
+    )
+    .is_err());
     // The authorizer is excluded when separation of duties applies.
     assert!(cp::apply(
         &state,
@@ -509,4 +530,444 @@ fn control_administration_requires_exact_approvals_and_known_scoped_principals()
         now()
     )
     .is_err());
+}
+
+fn host_admin(
+    state: &cp::State,
+    snapshot: &AuthorizationSnapshot,
+    command: cp::AdminCommand,
+) -> cp::State {
+    let authorizer = AuthenticatedCaller::from_trusted_authentication(
+        snapshot.bindings[0].tenant.clone(),
+        snapshot.policy.authorizer.clone(),
+    );
+    let attested = cp::authorize_administration(
+        state,
+        &authorizer,
+        &caller(snapshot),
+        &command,
+        now() + 1000,
+        now(),
+    )
+    .unwrap();
+    let req = cp::Request {
+        id: command.request.clone(),
+        operation: cp::Operation::Admin { command: Box::new(command) },
+    };
+    let (next, outcome) = cp::apply(&attested, &caller(snapshot), &req, now()).unwrap();
+    let cp::Outcome::Revision(r) = outcome else { panic!() };
+    assert!(r.attribution.authorization.is_some());
+    assert_eq!(r.attribution.authorizer, snapshot.policy.authorizer);
+    assert!(!r.attribution.bootstrap);
+    next
+}
+
+#[test]
+fn control_exact_host_authorizations_extend_post_bootstrap_authority() {
+    let (_, mut snapshot) = fixture(false);
+    let scope = Scope { tenant: snapshot.bindings[0].tenant.clone(), organization: None };
+    let query = Query { kind: ObjectKind::Receipt, tenant_filter: None, limit: 100, cursor: None };
+    set_authority(&mut snapshot, &BTreeSet::from([cp::query_demand(&scope, &query).unwrap()]));
+    let mut state =
+        cp::bootstrap(&cp::State::default(), &bundle(&snapshot, Profile::Embedded), now()).unwrap();
+    let object = ObjectView {
+        reference: reference(&scope, ObjectKind::Receipt, "post-bootstrap"),
+        revision: 1,
+        content: ContentHash::of(b"receipt"),
+        artifact: None,
+    };
+    state = cp::register_object(&state, &object).unwrap();
+    let get = request("get", cp::Operation::Get { reference: object.reference.clone() });
+    let list = request("list", cp::Operation::Query { query });
+    assert_eq!(cp::apply(&state, &caller(&snapshot), &get, now()), Err(cp::Error::Unavailable));
+    let cp::Outcome::Page(page) = cp::apply(&state, &caller(&snapshot), &list, now()).unwrap().1
+    else {
+        panic!()
+    };
+    assert_eq!(page.visible_count, 0);
+    let mut authority = snapshot.policy.platform.clone();
+    authority.insert(cp::read_demand(&object.reference).unwrap());
+    snapshot.policy.platform = authority.clone();
+    snapshot.policy.resource = authority.clone();
+    snapshot.policy.information_use = authority.clone();
+    let command = cp::AdminCommand {
+        request: id("new-policy"),
+        reference: reference(&scope, ObjectKind::Policy, "policy"),
+        expected_revision: 1,
+        content: cp::Content::Policy(snapshot.policy.clone()),
+        claims: IdentityClaims::default(),
+        approvals: vec![],
+    };
+    let req = request("new-policy", cp::Operation::Admin { command: Box::new(command.clone()) });
+    assert!(cp::apply(&state, &caller(&snapshot), &req, now()).is_err());
+    let authorizer = AuthenticatedCaller::from_trusted_authentication(
+        scope.tenant.clone(),
+        snapshot.policy.authorizer.clone(),
+    );
+    for bad in [
+        caller(&snapshot),
+        AuthenticatedCaller::from_trusted_authentication(
+            o("foreign"),
+            snapshot.policy.authorizer.clone(),
+        ),
+    ] {
+        if bad.tenant() != authorizer.tenant() || bad.principal() != authorizer.principal() {
+            assert!(cp::authorize_administration(
+                &state,
+                &bad,
+                &caller(&snapshot),
+                &command,
+                now() + 1000,
+                now()
+            )
+            .is_err());
+        }
+    }
+    let wrong = AuthenticatedCaller::from_trusted_authentication(
+        scope.tenant.clone(),
+        PrincipalId::generate(),
+    );
+    assert!(cp::authorize_administration(
+        &state,
+        &wrong,
+        &caller(&snapshot),
+        &command,
+        now() + 1000,
+        now()
+    )
+    .is_err());
+    let attested = cp::authorize_administration(
+        &state,
+        &authorizer,
+        &caller(&snapshot),
+        &command,
+        now() + 1000,
+        now(),
+    )
+    .unwrap();
+    assert!(cp::apply(&attested, &caller(&snapshot), &req, now() + 1000).is_err());
+    let mut tampered = command.clone();
+    if let cp::Content::Policy(p) = &mut tampered.content {
+        p.platform.insert(ContentHash::of(b"unattested"));
+    }
+    assert!(cp::apply(
+        &attested,
+        &caller(&snapshot),
+        &request("new-policy", cp::Operation::Admin { command: Box::new(tampered) }),
+        now()
+    )
+    .is_err());
+    let mut changed_binding = snapshot.bindings[0].clone();
+    changed_binding.version = 2;
+    let drifted = host_admin(
+        &attested,
+        &snapshot,
+        cp::AdminCommand {
+            request: id("binding-drift"),
+            reference: reference(&scope, ObjectKind::Binding, changed_binding.id.as_str()),
+            expected_revision: 1,
+            content: cp::Content::Binding(changed_binding),
+            claims: IdentityClaims::default(),
+            approvals: vec![],
+        },
+    );
+    assert!(cp::apply(&drifted, &caller(&snapshot), &req, now()).is_err());
+    state = host_admin(&state, &snapshot, command);
+    assert!(cp::apply(&state, &caller(&snapshot), &get, now()).is_err());
+    snapshot.bindings[0].version = 2;
+    snapshot.bindings[0].principal_authority = authority.clone();
+    snapshot.bindings[0].capacity_authority = authority.clone();
+    state = host_admin(
+        &state,
+        &snapshot,
+        cp::AdminCommand {
+            request: id("new-binding"),
+            reference: reference(&scope, ObjectKind::Binding, snapshot.bindings[0].id.as_str()),
+            expected_revision: 1,
+            content: cp::Content::Binding(snapshot.bindings[0].clone()),
+            claims: IdentityClaims::default(),
+            approvals: vec![],
+        },
+    );
+    assert!(cp::apply(&state, &caller(&snapshot), &get, now()).is_err());
+    snapshot.grants[0].version = 2;
+    snapshot.grants[0].authority = authority;
+    state = host_admin(
+        &state,
+        &snapshot,
+        cp::AdminCommand {
+            request: id("new-grant"),
+            reference: reference(&scope, ObjectKind::Grant, snapshot.grants[0].id.as_str()),
+            expected_revision: 1,
+            content: cp::Content::Grant(snapshot.grants[0].clone()),
+            claims: IdentityClaims::default(),
+            approvals: vec![],
+        },
+    );
+    assert!(cp::apply(&state, &caller(&snapshot), &get, now()).is_ok());
+    let cp::Outcome::Page(page) = cp::apply(&state, &caller(&snapshot), &list, now()).unwrap().1
+    else {
+        panic!()
+    };
+    assert_eq!(page.objects, vec![object]);
+    assert_eq!(page.visible_count, 1);
+    let mut foreign = req.clone();
+    if let cp::Operation::Admin { command } = &mut foreign.operation {
+        command.reference.scope.tenant = o("foreign");
+    }
+    assert!(cp::apply(&state, &caller(&snapshot), &foreign, now()).is_err());
+}
+
+#[test]
+fn control_inactive_grants_do_not_poison_current_grants_and_host_can_recover() {
+    let (_, mut snapshot) = fixture(false);
+    let scope = Scope { tenant: snapshot.bindings[0].tenant.clone(), organization: None };
+    let object = reference(&scope, ObjectKind::Principal, snapshot.bindings[0].principal.as_str());
+    set_authority(&mut snapshot, &BTreeSet::from([cp::read_demand(&object).unwrap()]));
+    let original =
+        cp::bootstrap(&cp::State::default(), &bundle(&snapshot, Profile::Embedded), now()).unwrap();
+    for inactive in 0..3 {
+        let mut state = original.clone();
+        let mut second = snapshot.grants[0].clone();
+        second.id = o("independent-current-grant");
+        state = host_admin(
+            &state,
+            &snapshot,
+            cp::AdminCommand {
+                request: id("add-current-grant"),
+                reference: reference(&scope, ObjectKind::Grant, second.id.as_str()),
+                expected_revision: 0,
+                content: cp::Content::Grant(second),
+                claims: IdentityClaims::default(),
+                approvals: vec![],
+            },
+        );
+        let key = digest(&(
+            "grant",
+            &snapshot.grants[0].tenant,
+            &snapshot.grants[0].issuer,
+            &snapshot.grants[0].id,
+        ))
+        .unwrap();
+        if inactive == 2 {
+            state.uses.insert(key, snapshot.grants[0].max_uses);
+        } else {
+            let mut first = snapshot.grants[0].clone();
+            first.version = 2;
+            first.revoked = inactive == 0;
+            if inactive == 1 {
+                first.expires_at = Timestamp::from_epoch_millis(now() + 1).unwrap();
+            }
+            state = host_admin(
+                &state,
+                &snapshot,
+                cp::AdminCommand {
+                    request: id("disable-first"),
+                    reference: reference(&scope, ObjectKind::Grant, first.id.as_str()),
+                    expected_revision: 1,
+                    content: cp::Content::Grant(first),
+                    claims: IdentityClaims::default(),
+                    approvals: vec![],
+                },
+            );
+        }
+        let before = state.clone();
+        let at = now() + u64::from(inactive == 1);
+        for n in 0..10 {
+            state = cp::apply(
+                &state,
+                &caller(&snapshot),
+                &request(&format!("read-{n}"), cp::Operation::Get { reference: object.clone() }),
+                at,
+            )
+            .unwrap()
+            .0;
+        }
+        assert_eq!(state, before);
+    }
+    // Even exhausting the sole grant cannot prevent the trusted authorizer from
+    // recording a new exact grant. Stable identity does not reset the old budget.
+    let mut state = original;
+    let key = digest(&(
+        "grant",
+        &snapshot.grants[0].tenant,
+        &snapshot.grants[0].issuer,
+        &snapshot.grants[0].id,
+    ))
+    .unwrap();
+    state.uses.insert(key.clone(), snapshot.grants[0].max_uses);
+    let mut replacement = snapshot.grants[0].clone();
+    replacement.id = o("recovery-grant");
+    state = host_admin(
+        &state,
+        &snapshot,
+        cp::AdminCommand {
+            request: id("recover"),
+            reference: reference(&scope, ObjectKind::Grant, replacement.id.as_str()),
+            expected_revision: 0,
+            content: cp::Content::Grant(replacement),
+            claims: IdentityClaims::default(),
+            approvals: vec![],
+        },
+    );
+    assert!(cp::apply(
+        &state,
+        &caller(&snapshot),
+        &request("recovered", cp::Operation::Get { reference: object }),
+        now()
+    )
+    .is_ok());
+    assert_eq!(state.uses[&key], snapshot.grants[0].max_uses);
+}
+
+#[test]
+fn control_binding_resolution_is_per_principal_beyond_256_global_bindings() {
+    let (_, mut snapshot) = fixture(false);
+    let scope = Scope { tenant: snapshot.bindings[0].tenant.clone(), organization: None };
+    let object = reference(&scope, ObjectKind::Principal, snapshot.bindings[0].principal.as_str());
+    set_authority(&mut snapshot, &BTreeSet::from([cp::read_demand(&object).unwrap()]));
+    let mut state =
+        cp::bootstrap(&cp::State::default(), &bundle(&snapshot, Profile::Embedded), now()).unwrap();
+    for n in 0..260 {
+        let mut b = snapshot.bindings[0].clone();
+        b.id = o(&format!("other-binding-{n}"));
+        b.principal = PrincipalId::generate();
+        b.accountable = b.principal.clone();
+        b.capacity.principal_ref = b.principal.clone();
+        state = cp::register_object(
+            &state,
+            &ObjectView {
+                reference: reference(&scope, ObjectKind::Principal, b.principal.as_str()),
+                revision: 1,
+                content: ContentHash::of(b"principal"),
+                artifact: None,
+            },
+        )
+        .unwrap();
+        state = host_admin(
+            &state,
+            &snapshot,
+            cp::AdminCommand {
+                request: id(&format!("add-binding-{n}")),
+                reference: reference(&scope, ObjectKind::Binding, b.id.as_str()),
+                expected_revision: 0,
+                content: cp::Content::Binding(b),
+                claims: IdentityClaims::default(),
+                approvals: vec![],
+            },
+        );
+    }
+    assert!(cp::apply(
+        &state,
+        &caller(&snapshot),
+        &request("read", cp::Operation::Get { reference: object }),
+        now()
+    )
+    .is_ok());
+    let mut b = snapshot.bindings[0].clone();
+    b.version = 2;
+    b.revoked = true;
+    state = host_admin(
+        &state,
+        &snapshot,
+        cp::AdminCommand {
+            request: id("revoke-self"),
+            reference: reference(&scope, ObjectKind::Binding, b.id.as_str()),
+            expected_revision: 1,
+            content: cp::Content::Binding(b),
+            claims: IdentityClaims::default(),
+            approvals: vec![],
+        },
+    );
+    assert!(cp::apply(
+        &state,
+        &caller(&snapshot),
+        &request("denied", cp::Operation::Get { reference: state.objects[0].reference.clone() }),
+        now()
+    )
+    .is_err());
+}
+
+#[test]
+fn control_last_reserved_grant_use_delivers_and_retries_but_cannot_issue_again() {
+    let (mut state, _, req, snapshot, _) = issue_fixture(false, Profile::Embedded);
+    let grant = &snapshot.grants[0];
+    let key = digest(&("grant", &grant.tenant, &grant.issuer, &grant.id)).unwrap();
+    state.uses.insert(key.clone(), grant.max_uses - 1);
+    let (pending, out) = cp::apply(&state, &caller(&snapshot), &req, now()).unwrap();
+    assert_eq!(pending.uses[&key], grant.max_uses);
+    let cp::Outcome::Credential(m) = out else { panic!() };
+    assert!(cp::delivery_reference(&pending, &m.issuance, now()).is_ok());
+    assert_eq!(cp::apply(&pending, &caller(&snapshot), &req, now()).unwrap().0, pending);
+    let mut another = req;
+    another.id = id("another-issue");
+    if let cp::Operation::Issue { request } = &mut another.operation {
+        request.request = another.id.clone();
+    }
+    assert!(cp::apply(&pending, &caller(&snapshot), &another, now()).is_err());
+}
+
+#[test]
+fn control_fresh_permits_can_use_current_grants_after_another_grant_retires() {
+    for retired in 0..3 {
+        let (mut state, _, _, snapshot, intent) = issue_fixture(false, Profile::Embedded);
+        let scope = Scope { tenant: snapshot.bindings[0].tenant.clone(), organization: None };
+        let mut inactive = snapshot.grants[0].clone();
+        inactive.id = o("retired-grant");
+        inactive.revoked = retired == 0;
+        if retired == 1 {
+            inactive.expires_at = Timestamp::from_epoch_millis(now() + 1).unwrap();
+        }
+        state = host_admin(
+            &state,
+            &snapshot,
+            cp::AdminCommand {
+                request: id("other-grant"),
+                reference: reference(&scope, ObjectKind::Grant, inactive.id.as_str()),
+                expected_revision: 0,
+                content: cp::Content::Grant(inactive.clone()),
+                claims: IdentityClaims::default(),
+                approvals: vec![],
+            },
+        );
+        if retired == 2 {
+            state.uses.insert(
+                digest(&("grant", &inactive.tenant, &inactive.issuer, &inactive.id)).unwrap(),
+                inactive.max_uses,
+            );
+        }
+        let at = now() + u64::from(retired == 1);
+        let permit = cp::prepare_permit(
+            &state,
+            &caller(&snapshot),
+            &intent,
+            &VerifiedSnapshot::from_trusted_verifier(snapshot.clone()).unwrap(),
+            cp::PermitInput {
+                reference: reference(&scope, ObjectKind::Authorization, "fresh"),
+                secret: reference(&scope, ObjectKind::Secret, "secret"),
+                recipient: o("recipient:trusted"),
+                run: o("run:fixture"),
+                run_expires_at_ms: now() + 180_000,
+                class: CredentialClass::Test,
+            },
+            at,
+        )
+        .unwrap();
+        let mut binding = permit.binding().clone();
+        binding.expires_at_ms = now() + 120_000;
+        let credential = request(
+            "fresh",
+            cp::Operation::Issue {
+                request: Box::new(CredentialRequest {
+                    request: id("fresh"),
+                    permit: reference(&scope, ObjectKind::Authorization, "fresh"),
+                    binding,
+                }),
+            },
+        );
+        state = cp::register_permit(&state, &permit).unwrap();
+        let (pending, out) = cp::apply(&state, &caller(&snapshot), &credential, at).unwrap();
+        let cp::Outcome::Credential(m) = out else { panic!() };
+        assert!(cp::delivery_reference(&pending, &m.issuance, at).is_ok());
+    }
 }

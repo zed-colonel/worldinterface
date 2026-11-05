@@ -162,7 +162,7 @@ impl StoreRoot {
             contract: CONTRACT.into(),
             schema: 1,
             canonical_profile: CANONICAL_PROFILE.into(),
-            feature_profile: "local-control-plane-14".into(),
+            feature_profile: "local-control-plane-15".into(),
             stores: kinds(profile.platform),
             profile,
             complete: true,
@@ -233,7 +233,7 @@ impl StoreRoot {
             || manifest.contract != CONTRACT
             || manifest.schema != 1
             || manifest.canonical_profile != CANONICAL_PROFILE
-            || manifest.feature_profile != "local-control-plane-14"
+            || manifest.feature_profile != "local-control-plane-15"
             || !manifest.complete
             || manifest.stores != kinds(manifest.profile.platform)
             || path.join("initializing").exists()

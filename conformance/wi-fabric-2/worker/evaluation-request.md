@@ -2,8 +2,11 @@
 
 WIP-13 adds the AQ-free embedded control-plane models, scoped application
 services and Fabric persistence described in `docs/work-items/WIP-13.md`.
-Its foundation source, tests, inventory dispositions, store profile and contract
-coverage change files covered by the previously accepted worker packet.
+The review remediation addresses F-001 through F-006 with exact host-authorized
+administration, non-mutating reads, indexed projection entries, grant recovery,
+scoped binding resolution and concurrent issuance retries. Its foundation source,
+tests, inventory dispositions, store profile (`local-control-plane-15`) and
+contract coverage change files covered by the previously accepted worker packet.
 The adopted runtime suite correctly rejects that source drift before launching
 a reviewed fixture. No worker/provider source or supervisor disposition changes.
 
