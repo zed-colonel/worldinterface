@@ -1,6 +1,6 @@
 {
-  "decision": "operator-acceptance:2026-11-05:29e02a4e-673a-400c-80f1-3e1f27d9a219:d06bd8139cc46bcd792873e7ad829d5226222e5ffb3966d65b5c98357851d7a9",
-  "operator": "CraftingTable operator guidance for run 29e02a4e-673a-400c-80f1-3e1f27d9a219",
-  "manifest": "d06bd8139cc46bcd792873e7ad829d5226222e5ffb3966d65b5c98357851d7a9",
+  "decision": "operator-acceptance:2026-11-05:c0deea63-825e-4724-bf55-c15ceafb2c40:34f2d904342b8c49d915f11f631878084e07978000cc2ec3abe528b0b781b957",
+  "operator": "CraftingTable operator guidance for run c0deea63-825e-4724-bf55-c15ceafb2c40",
+  "manifest": "34f2d904342b8c49d915f11f631878084e07978000cc2ec3abe528b0b781b957",
   "expires_unix_ms": 1794355200000
 }
