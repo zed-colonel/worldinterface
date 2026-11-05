@@ -150,7 +150,7 @@ impl Run {
 pub struct ProcessWorkerPort {
     scope: HostScope,
     root: PathBuf,
-    helper: Arc<Executable>,
+    helper: Option<Arc<Executable>>,
     registry: ExecutableRegistry,
     clock: Arc<dyn Clock>,
     generation: AtomicU64,
@@ -166,6 +166,14 @@ impl ProcessWorkerPort {
         clock: Arc<dyn Clock>,
     ) -> Result<Self> {
         ownership::probe()?;
+        let mut port = Self::new_recovery(scope, root, clock)?;
+        port.helper = Some(Arc::new(Executable::review(helper, helper_digest)?));
+        port.registry = registry;
+        Ok(port)
+    }
+    /// Read original private cleanup evidence without executable files, launch
+    /// capabilities, fixture credentials or kernel process-adoption probes.
+    pub fn new_recovery(scope: HostScope, root: &Path, clock: Arc<dyn Clock>) -> Result<Self> {
         worldinterface_worker::nonempty(&scope.tenant)?;
         worldinterface_worker::nonempty(&scope.principal)?;
         let metadata = io(std::fs::symlink_metadata(root))?;
@@ -179,8 +187,8 @@ impl ProcessWorkerPort {
         Ok(Self {
             scope,
             root: root.into(),
-            helper: Arc::new(Executable::review(helper, helper_digest)?),
-            registry,
+            helper: None,
+            registry: ExecutableRegistry::default(),
             clock,
             generation: AtomicU64::new(0),
             runs: Mutex::new(BTreeMap::new()),
@@ -239,7 +247,9 @@ impl ProcessWorkerPort {
     ) -> Result<Vec<Observation>> {
         let shared = self.run(provider, run)?;
         let run = shared.lock().map_err(|_| "run unavailable")?;
-        self.authorize_read(&run, Operation::Inspect, None)?;
+        if run.authorization.scope != self.scope {
+            return Err("recovery scope mismatch".into());
+        }
         Ok(run.observations.clone())
     }
     #[allow(dead_code)] // Cleanup authority is narrower than fresh work authorization.
@@ -473,7 +483,7 @@ impl ProcessWorkerPort {
                 let (socket, child_socket) = io(std::os::unix::net::UnixStream::pair())?;
                 worldinterface_storage::worker_boundary("worker-helper-before-spawn");
                 let child = launch::helper(
-                    &self.helper,
+                    self.helper.as_ref().ok_or("recovery-only port cannot launch")?,
                     executable,
                     &child_socket,
                     workspace.dir.path(),

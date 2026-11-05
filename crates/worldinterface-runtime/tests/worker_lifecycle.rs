@@ -214,10 +214,36 @@ async fn wp_026_unavailable_operations_are_not_registered_or_decoded_as_availabl
 }
 #[tokio::test]
 async fn wp_024_worker_state_and_event_are_authoritative_before_aq_wake() {
+    use worldinterface_domain::continuation::{EventKind, EventRoute};
+    use worldinterface_worker::ports::{Observation, ObservationKind};
     let h = Harness::new(Task::Probe, "WP-024", 1500, 65536);
     h.operation(Operation::Start).await;
     h.finish().await;
     let b = h.binding();
+    // Start's AQ ticks can already have delivered every process observation.
+    // Commit a distinct late exit through the same observation boundary, with
+    // no intervening queue tick, to exercise commit-before-wake deterministically.
+    assert!(h.state().exited);
+    let event = worldinterface_runtime::worker::observation::commit(
+        h.bundle.wi(),
+        &b,
+        EventRoute {
+            tenant: b.tenant.clone(),
+            audience: b.principal.clone(),
+            kind: EventKind::WorkerObservation,
+            correlation: b.event_correlation().unwrap(),
+            generation: None,
+        },
+        Observation {
+            provider: b.provider.as_str().into(),
+            run: b.run.as_str().into(),
+            event: "wp-024-final-exit".into(),
+            sequence: h.state().provider_sequence + 1,
+            kind: ObservationKind::Exited,
+        },
+    )
+    .unwrap();
+    assert!(h.bundle.wi().signal_obligation(StoreKind::Fabric, &event).unwrap().sequence.is_none());
     let mut q = worldinterface_runtime::aq_adapter::QueueEngine::bootstrap(
         &h.bundle,
         support::spi_harness::Noop,

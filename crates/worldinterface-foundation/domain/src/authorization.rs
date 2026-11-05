@@ -140,6 +140,16 @@ pub struct OrdinaryQualification {
     pub quarantined: bool,
     pub evidence: EvidenceRef,
 }
+/// Current host-authorized recovery of an existing durable execution.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct WorkerRecovery {
+    pub binding: crate::worker::WorkerBinding,
+    pub operation: OpaqueRef,
+    pub policy: ContentHash,
+    pub expires_at: Timestamp,
+    pub evidence: EvidenceRef,
+}
 /// Serializable journal facts, NOT a wire authentication/verification context.
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -152,6 +162,8 @@ pub struct AuthorizationSnapshot {
     pub approvals: Vec<Approval>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub worker: Option<WorkerRealization>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub recovery: Option<WorkerRecovery>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub fixture: Option<FixtureQualification>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
@@ -232,12 +244,31 @@ pub fn approval_binding(
 fn worker_reason(
     w: &WorkerRealization,
     q: Option<&FixtureQualification>,
+    recovery: Option<&WorkerRecovery>,
     ordinary: Option<&OrdinaryQualification>,
     intent: &EffectIntent,
     agency: &AgencyRecord,
     resolution: &ResolutionRecord,
     now: &Timestamp,
 ) -> Result<Option<Reason>> {
+    if let Some(r) = recovery {
+        if !["inspect", "terminate"].contains(&r.operation.as_str())
+            || r.operation != w.operation
+            || r.binding.tenant != agency.binding.tenant
+            || r.binding.principal != agency.binding.principal
+            || r.binding.provider != w.provider
+            || r.binding.run != w.run
+            || r.expires_at <= *now
+            || q.is_some()
+            || ordinary.is_some()
+            || w.input != intent.submission.input.artifact
+            || !matches!(&resolution.fact.document.target, Target::Worker { provider, run, resource, operation }
+                if provider == &w.provider && run == &w.run && resource == &w.resource && operation == &w.operation)
+        {
+            return Ok(Some(Reason::ProfileDrift));
+        }
+        return Ok(None);
+    }
     if !w.reviewed_executable {
         return Ok(Some(Reason::Executable));
     }
@@ -475,6 +506,7 @@ pub fn authorize(
                 if let Some(r) = worker_reason(
                     w,
                     s.fixture.as_ref(),
+                    s.recovery.as_ref(),
                     s.qualification.as_ref(),
                     intent,
                     agency,
@@ -483,8 +515,13 @@ pub fn authorize(
                 )? {
                     reasons.push(r);
                 }
-                if let Credential::Test { expires_at, .. } = &w.credential {
-                    a.expires_at = a.expires_at.min(expires_at.clone());
+                if let Some(r) = &s.recovery {
+                    a.expires_at = a.expires_at.min(r.expires_at.clone());
+                }
+                if s.recovery.is_none() {
+                    if let Credential::Test { expires_at, .. } = &w.credential {
+                        a.expires_at = a.expires_at.min(expires_at.clone());
+                    }
                 }
                 if let Some(q) = &s.fixture {
                     a.expires_at = a.expires_at.min(q.expires_at.clone());
@@ -495,7 +532,11 @@ pub fn authorize(
             }
             None => reasons.push(Reason::FixtureOnly),
         }
-    } else if s.worker.is_some() || s.fixture.is_some() || s.qualification.is_some() {
+    } else if s.recovery.is_some()
+        || s.worker.is_some()
+        || s.fixture.is_some()
+        || s.qualification.is_some()
+    {
         reasons.push(Reason::ProfileDrift);
     }
     let mut approval_ids = BTreeSet::new();

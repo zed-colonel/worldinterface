@@ -31,6 +31,8 @@ pub struct WorkerEffect {
     pub exports: Vec<Export>,
 }
 pub struct AdmittedWorker {
+    pub catalog: ContentHash,
+    pub registration: worldinterface_capability::process_catalog::ProcessRegistrationRecord,
     pub artifact_policy: worldinterface_domain::worker::WorkerArtifactPolicy,
     pub authorization: AuthorizedRun,
     pub binding: WorkerBinding,
@@ -38,7 +40,9 @@ pub struct AdmittedWorker {
     pub provider_operation: Option<WorkerOperation>,
 }
 impl WorkerEffect {
-    pub fn decode(bytes: &[u8]) -> Result<Self> {
+    /// Bounded canonical parsing grants no authority and preserves historical
+    /// profile values for exact comparison with durable recovery bindings.
+    pub fn decode_structure(bytes: &[u8]) -> Result<Self> {
         if bytes.len() > 64 * 1024 {
             return Err("worker effect bound".into());
         }
@@ -46,6 +50,10 @@ impl WorkerEffect {
         if effect.version != 1 || canonical_data(&effect)? != bytes {
             return Err("worker effect encoding".into());
         }
+        Ok(effect)
+    }
+    pub fn decode(bytes: &[u8]) -> Result<Self> {
+        let effect = Self::decode_structure(bytes)?;
         effect.worker.validate()?;
         effect.controls.validate()?;
         Ok(effect)
@@ -85,7 +93,8 @@ pub fn derive<S: TrustedApprovals>(
         || w.manifest.configuration.content
             != AuthorizedRun::configuration_digest(&demand.task, &demand.exports)?
         || w.manifest.adapter.content != *adapter
-        || w.manifest.dependencies.first().map(|d| &d.content) != Some(&dependencies_digest())
+        || w.manifest.dependencies.iter().map(|d| d.content.clone()).collect::<Vec<_>>()
+            != vec![dependencies_digest()]
         || request.controls_digest != AuthorizedRun::controls_digest(&demand.controls)?
         || demand.controls.provider != request.provider
         || demand.controls.run != request.run
@@ -137,9 +146,48 @@ pub fn derive<S: TrustedApprovals>(
     if request.input_digest != AuthorizedRun::input_digest(&inputs)? {
         return Err("worker input digest drift".into());
     }
+    let current = worldinterface_capability::process_catalog::ProcessCatalogBinding {
+        version: 1,
+        profile: w.profile.clone(),
+        profile_definition: w.manifest.profile_definition.content.clone(),
+        descriptor: ContentHash::of(&canonical_data(
+            &OPERATIONS
+                .iter()
+                .map(|op| super::connector::descriptor(*op))
+                .collect::<Result<Vec<_>>>()?,
+        )?),
+        adapter: adapter.clone(),
+        executable: executable.clone(),
+        helper: helper.clone(),
+        dependencies: vec![dependencies_digest()],
+        configuration: w.manifest.configuration.content.clone(),
+        // Exact-demand sets vary by operation and are reauthorized by the domain.
+        // The policy revision and governing rules must remain stable across a run.
+        policy: ContentHash::of(&canonical_data(&facts.policy)?),
+        controls: request.controls_digest.clone(),
+        aq: w.aq_version.clone(),
+        wi: w.wi_version.clone(),
+        environment: w.environment.clone(),
+        fixture: verified.digest().clone(),
+        inputs: request.input_digest.clone(),
+        exports: w.exports.clone(),
+    };
+    let record =
+        worldinterface_capability::process_catalog::ProcessRegistrationRecord::Evaluation {
+            binding: current.clone(),
+            approval: verified.digest().clone(),
+        };
+    let registration = super::catalog::verify_registration(&record, &current, evaluation, now_ms)?;
+    // A run spans several exact-demand policies. Each complete policy is
+    // independently registered above; only its stable governing rules enter
+    // the shared run identity and quarantine fence.
+    let mut run_catalog = registration.binding().clone();
+    run_catalog.policy = super::catalog::policy_digest(&facts.policy)?;
+    let catalog = run_catalog.digest()?;
     let principal = effect.agency.binding.principal.clone();
     let run_digest = ContentHash::of(&canonical_data(&(
-        "wi-worker-run-1",
+        "wi-worker-run-2",
+        &catalog,
         verified.digest(),
         &bound.tenant,
         &principal,
@@ -216,7 +264,12 @@ pub fn derive<S: TrustedApprovals>(
             acknowledged: false,
         })
     };
+    if !matches!(request.operation, Operation::Inspect | Operation::Terminate) {
+        super::catalog::authorize_admission(root, &binding, &registration)?;
+    }
     Ok(AdmittedWorker {
+        catalog,
+        registration: record,
         artifact_policy: super::artifacts::policy(
             demand.inputs.clone(),
             &demand.exports,

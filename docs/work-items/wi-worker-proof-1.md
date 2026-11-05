@@ -118,7 +118,7 @@ The transitive closure of `WI-EMBEDDED-WORKER-PROOF-1` over the map's checkpoint
 | wi/WI-09/domain | verified | yes | DONE | — |
 | wi/WI-09/process-provider | — | no | NOT STARTED | WIP-09, WIP-10, WIP-11 |
 | wi/WI-10/domain | verified | yes | DONE | WIP-01 re-registers WP-007 |
-| wi/WI-10/process-catalog | — | no | NOT STARTED | WIP-12 |
+| wi/WI-10/process-catalog | WIP-12 candidate | no | IMPLEMENTED; 34f2d904 evaluation and ten adopted checks passed on d73d56a; review remediation requires renewed packet acceptance/verification | WIP-12 |
 | wi/WI-11/domain | — | no | NOT STARTED | WIP-13 |
 | wi/WI-11/embedded-runtime | — | no | NOT STARTED | WIP-14 |
 | wi/WI-13/worker-conformance | — | no | NOT STARTED | WIP-15 |
@@ -235,3 +235,5 @@ F-002 records the actual acceptance, expiry and scoped evaluation outcome here
 and in the coverage record. Qualifying review and CraftingTable integration remain
 due; ordinary use, remote-provider/isolation qualification and G4 closure are
 excluded.
+
+WIP-12 adds exact runtime catalog records, provider quarantine and separate recovery authority. See [WIP-12](WIP-12.md). Packet d06bd813 was accepted in e5fc3b6 through 2026-11-11T00:00:00Z. Evaluation exposed two undeclared Probe exports and a WP-024 pending-signal timing assertion; the test-composition remediation requires renewed exact-packet acceptance and live verification. Ordinary process use and G4 closure remain disabled; all adopted committed-head checks and qualifying review remain due.

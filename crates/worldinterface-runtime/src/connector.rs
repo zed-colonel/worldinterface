@@ -115,6 +115,11 @@ pub trait Connector: Send + Sync {
         request: PreparedInvocation,
         cancellation: &CancellationToken,
     ) -> Result<PortObservation>;
+    /// Trusted recovery may authenticate an original execution and the current
+    /// recovery implementation. This hook is never used for prepare or invoke.
+    fn check_recovery(&self, _request: &ReconcileRequest) -> Result<()> {
+        Err("recovery binding unavailable".into())
+    }
     fn reconcile(&self, request: ReconcileRequest) -> Result<ReconcileOutcome>;
     /// Called under cancellation only when invoke reported Unknown or Possible
     /// commit. Definitive commit or noncommit observations skip this phase.
@@ -138,6 +143,9 @@ impl<T: Connector + ?Sized> Connector for Arc<T> {
     }
     fn invoke(&self, r: PreparedInvocation, c: &CancellationToken) -> Result<PortObservation> {
         (**self).invoke(r, c)
+    }
+    fn check_recovery(&self, r: &ReconcileRequest) -> Result<()> {
+        (**self).check_recovery(r)
     }
     fn reconcile(&self, r: ReconcileRequest) -> Result<ReconcileOutcome> {
         (**self).reconcile(r)

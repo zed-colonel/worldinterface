@@ -1,3 +1,35 @@
+# WIP-12 review-remediation evaluation request
+
+Packet `34f2d904342b8c49d915f11f631878084e07978000cc2ec3abe528b0b781b957`
+was explicitly accepted in run `c0deea63-825e-4724-bf55-c15ceafb2c40` through
+2026-11-11T00:00:00Z. Receipt and host-anchor commit `d73d56a` passed all ten
+adopted checks and positive catalog/lifecycle verification. Its historical Probe
+export and WP-024 timing failures had been corrected. The review was mergeable.
+
+This candidate addresses F-001–F-004: current status records, run-only quarantine
+on approval invalidation, ordinary Terminate acknowledgement under provider
+quarantine, and documented synthesized binding/host provenance. WP-032 adds
+regressions for expired/revoked/absent approval and renewed provider admission,
+and termination/reconciliation through the recording seam simulation. The exact
+launch/catalog binding remains checked. Other admissions and exports stay fenced;
+ordinary use and self-promotion stay disabled. Supervisor source/disposition and
+evaluation scope are unchanged.
+
+Accept only the new canonical digest printed by the refresh script, including
+the unchanged supervisor disposition. The requested finite expiry remains
+**2026-11-11T00:00:00Z**. Scope remains reviewed typed fixtures, six operations,
+nonsensitive inputs, 15000 ms wall time and 65536 retained output bytes.
+No extension, ordinary use, production credentials, hostile code, publication,
+integration or gate closure is requested.
+
+Non-live validation and the source-bound build must complete before requesting
+digest acceptance. All changed sources/contracts and these limits are bound in
+the packet. A changed covered byte requires renewed acceptance. The separate
+receipt and trusted anchor retain the historical acceptance until the operator
+accepts this concrete revision; tests cannot retarget that decision.
+
+## Historical predecessor request
+
 # WIP-11 collection reconciliation exact-packet evaluation request
 
 Explicit operator acceptance is requested for the canonical SHA-256 printed by

@@ -2,12 +2,12 @@
   "version": 1,
   "status": "candidate-for-review",
   "effective_on": "explicit-operator-disposition-for-evaluation-then-qualifying-CraftingTable-review",
-  "scope": "same five supervisor files; WIP-11 candidate exact-source update; generic continuation ban unchanged",
+  "scope": "same five supervisor files; WIP-12 candidate exact-source update; generic continuation ban unchanged",
   "updates": [
     {
       "path": "crates/worldinterface-runtime/src/worker_process/mod.rs",
-      "sha256": "259143d2a3465cf8cf90a53dbcd1c9368f8fa3fd8d110c413c11147fb63c7e72",
-      "rationale": "WIP-11 scoped collection and retained unsafe allocations, with follow-up release cleanup for confirmed unlaunched, unquarantined allocations. Candidate pin effective only upon explicit exact-packet evaluation acceptance and qualifying source review."
+      "sha256": "f6e7aaa9abc4b98a8f91f9b090920dc7a9e329a33d58c14378f7d9361dcf35af",
+      "rationale": "WIP-12 trusted host observations survive fixture credential expiry. Recovery-only construction reads private cleanup evidence without executable/helper files, fixture credentials, process-adoption probes or launch capabilities. No export or numeric-PID authority is added. Candidate pin requires explicit exact-packet acceptance and qualifying source review."
     }
   ]
 }

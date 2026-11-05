@@ -1,4 +1,5 @@
 //! Structural declarations, never policy evaluation or execution.
+pub mod process_catalog;
 use serde::{Deserialize, Serialize};
 use worldinterface_protocol::{CanonicalResourceRef, ContentHash, EffectClass, OpaqueRef};
 

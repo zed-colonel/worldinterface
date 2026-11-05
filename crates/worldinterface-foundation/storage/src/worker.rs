@@ -13,11 +13,16 @@ CREATE TABLE worker_runs(tenant TEXT NOT NULL, provider TEXT NOT NULL, run TEXT 
 CREATE TABLE worker_snapshots(identity TEXT PRIMARY KEY, content TEXT NOT NULL, bytes BLOB NOT NULL);
 CREATE TRIGGER worker_snapshot_no_update BEFORE UPDATE ON worker_snapshots BEGIN SELECT RAISE(ABORT,'immutable'); END;
 CREATE TRIGGER worker_snapshot_no_delete BEFORE DELETE ON worker_snapshots BEGIN SELECT RAISE(ABORT,'immutable'); END;
+CREATE TABLE worker_launches(tenant TEXT NOT NULL, provider TEXT NOT NULL, run TEXT NOT NULL, record BLOB NOT NULL, PRIMARY KEY(tenant,provider,run));
+CREATE TABLE worker_providers(tenant TEXT NOT NULL, provider TEXT NOT NULL, record BLOB NOT NULL, PRIMARY KEY(tenant,provider));
 CREATE TABLE worker_limits(tenant TEXT PRIMARY KEY, slots INTEGER NOT NULL);
 ";
 #[derive(Serialize, Deserialize)]
 #[serde(tag = "operation", rename_all = "snake_case", deny_unknown_fields)]
 enum Command {
+    Quarantine {
+        record: WorkerProviderQuarantine,
+    },
     Policy {
         binding: WorkerBinding,
         policy: WorkerArtifactPolicy,
@@ -34,6 +39,8 @@ enum Command {
     Reserve {
         binding: WorkerBinding,
         slots: u32,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        launch: Option<WorkerLaunchRecord>,
     },
     Transition {
         tenant: OpaqueRef,
@@ -75,6 +82,29 @@ fn save(c: &Connection, s: &WorkerState) -> Result<()> {
 }
 fn apply(c: &Connection, command: &Command) -> Result<bool> {
     match command {
+        Command::Quarantine { record } => {
+            if record.version != 1
+                || record.revision != 1
+                || record.affected.is_empty()
+                || record.affected.len() > 32
+            {
+                return Err(invalid("provider quarantine bounds"));
+            }
+            if let Some(old) = provider_quarantine(c, &record.tenant, &record.provider)? {
+                if old == *record {
+                    return Ok(false);
+                }
+                return Err(invalid("provider quarantine is irreversible"));
+            }
+            c.execute(
+                "INSERT INTO worker_providers VALUES(?,?,?)",
+                params![
+                    record.tenant.as_str(),
+                    record.provider.as_str(),
+                    canonical_data(record).map_err(invalid)?
+                ],
+            )?;
+        }
         Command::Policy { binding, policy } => {
             let mut state = snapshot(c, &binding.tenant, &binding.provider, &binding.run)?
                 .ok_or_else(|| invalid("worker absent"))?;
@@ -100,6 +130,11 @@ fn apply(c: &Connection, command: &Command) -> Result<bool> {
             }
             if state.collection == *collection {
                 return Ok(false);
+            }
+            if matches!(collection, WorkerCollection::Prepared(_) | WorkerCollection::Published(_))
+                && provider_quarantine(c, &binding.tenant, &binding.provider)?.is_some()
+            {
+                return Err(invalid("provider quarantine forbids new export publication"));
             }
             crate::worker_collection::advance(&mut state, collection, events)?;
             state.revision += 1;
@@ -131,7 +166,26 @@ fn apply(c: &Connection, command: &Command) -> Result<bool> {
                 state.revision.checked_add(1).ok_or_else(|| invalid("worker revision overflow"))?;
             save(c, &state)?;
         }
-        Command::Reserve { binding, slots } => {
+        Command::Reserve { binding, slots, launch } => {
+            if provider_quarantine(c, &binding.tenant, &binding.provider)?.is_some() {
+                return Err(invalid("provider quarantined"));
+            }
+            if let Some(launch) = launch {
+                if launch.version != 1
+                    || launch.binding != *binding
+                    || launch.operations.is_empty()
+                    || launch.operations.len() > 65536
+                    || launch.connectors.len() != 6
+                    || launch.connectors.iter().any(|b| b.validate().is_err())
+                {
+                    return Err(invalid("worker launch binding or bound"));
+                }
+                if let Some(old) = launch_record(c, binding)? {
+                    if old != *launch {
+                        return Err(invalid("immutable worker launch"));
+                    }
+                }
+            }
             if *slots == 0 || *slots > 1024 {
                 return Err(invalid("worker capacity bound"));
             }
@@ -164,6 +218,17 @@ fn apply(c: &Connection, command: &Command) -> Result<bool> {
                 params![binding.tenant.as_str(), slots],
             )?;
             save(c, &WorkerState::start_intent(binding.clone()))?;
+            if let Some(launch) = launch {
+                c.execute(
+                    "INSERT INTO worker_launches VALUES(?,?,?,?)",
+                    params![
+                        binding.tenant.as_str(),
+                        binding.provider.as_str(),
+                        binding.run.as_str(),
+                        canonical_data(launch).map_err(invalid)?
+                    ],
+                )?;
+            }
         }
         Command::Transition { tenant, provider, run, revision, fact } => {
             let mut state =
@@ -328,7 +393,7 @@ impl StoreRoot {
     /// True only for the transaction that created the immutable start intent.
     /// False authorizes reconciliation of the original run, never another spawn.
     pub fn reserve_start(&self, binding: WorkerBinding, slots: u32) -> Result<bool> {
-        transact(self, &Command::Reserve { binding, slots })
+        transact(self, &Command::Reserve { binding, slots, launch: None })
     }
     pub fn worker_snapshot(
         &self,
@@ -409,4 +474,118 @@ pub fn worker_boundary(name: &str) {
     crate::crashpoint::checkpoint(name);
     #[cfg(any(not(feature = "crash-points"), test))]
     let _ = name;
+}
+
+fn provider_quarantine(
+    c: &Connection,
+    tenant: &OpaqueRef,
+    provider: &OpaqueRef,
+) -> Result<Option<WorkerProviderQuarantine>> {
+    let bytes: Option<Vec<u8>> = c
+        .query_row(
+            "SELECT record FROM worker_providers WHERE tenant=? AND provider=?",
+            params![tenant.as_str(), provider.as_str()],
+            |r| r.get(0),
+        )
+        .optional()?;
+    bytes.map(|b| decode(&b)).transpose()
+}
+fn launch_record(c: &Connection, b: &WorkerBinding) -> Result<Option<WorkerLaunchRecord>> {
+    let bytes: Option<Vec<u8>> = c
+        .query_row(
+            "SELECT record FROM worker_launches WHERE tenant=? AND provider=? AND run=?",
+            params![b.tenant.as_str(), b.provider.as_str(), b.run.as_str()],
+            |r| r.get(0),
+        )
+        .optional()?;
+    let record: Option<WorkerLaunchRecord> = bytes.map(|b| decode(&b)).transpose()?;
+    if record.as_ref().is_some_and(|r| r.binding != *b) {
+        return Err(invalid("recovery realization mismatch"));
+    }
+    Ok(record)
+}
+impl StoreRoot {
+    pub fn quarantine_worker_provider(&self, record: WorkerProviderQuarantine) -> Result<()> {
+        transact(self, &Command::Quarantine { record })?;
+        Ok(())
+    }
+    pub fn worker_provider_quarantine(
+        &self,
+        tenant: &OpaqueRef,
+        provider: &OpaqueRef,
+    ) -> Result<Option<WorkerProviderQuarantine>> {
+        provider_quarantine(&self.connect(StoreKind::Fabric)?, tenant, provider)
+    }
+    pub fn worker_launch(&self, binding: &WorkerBinding) -> Result<Option<WorkerLaunchRecord>> {
+        launch_record(&self.connect(StoreKind::Fabric)?, binding)
+    }
+    pub fn reserve_catalog_start(&self, launch: WorkerLaunchRecord, slots: u32) -> Result<bool> {
+        transact(
+            self,
+            &Command::Reserve { binding: launch.binding.clone(), slots, launch: Some(launch) },
+        )
+    }
+    /// Serialize the last admission check and dispatch against provider quarantine.
+    /// The callback must not re-enter Fabric storage; it may only dispatch already validated work.
+    pub fn fence_worker_dispatch<T>(
+        &self,
+        binding: &WorkerBinding,
+        catalog: &ContentHash,
+        dispatch: impl FnOnce() -> Result<T>,
+    ) -> Result<T> {
+        let mut c = self.connect(StoreKind::Fabric)?;
+        let tx = c.transaction_with_behavior(TransactionBehavior::Immediate)?;
+        if provider_quarantine(&tx, &binding.tenant, &binding.provider)?.is_some()
+            || launch_record(&tx, binding)?.is_none_or(|r| r.catalog != *catalog)
+        {
+            return Err(invalid("stale catalog admission or provider quarantine"));
+        }
+        let result = dispatch()?;
+        tx.commit()?;
+        Ok(result)
+    }
+
+    /// Termination retains the exact launch binding even during provider quarantine.
+    /// The trusted callback may only submit termination, never new work or exports,
+    /// and must not re-enter Fabric storage.
+    pub fn fence_worker_termination<T>(
+        &self,
+        binding: &WorkerBinding,
+        catalog: &ContentHash,
+        terminate: impl FnOnce() -> Result<T>,
+    ) -> Result<T> {
+        let mut c = self.connect(StoreKind::Fabric)?;
+        let tx = c.transaction_with_behavior(TransactionBehavior::Immediate)?;
+        if launch_record(&tx, binding)?.is_none_or(|r| r.catalog != *catalog) {
+            return Err(invalid("stale termination catalog binding"));
+        }
+        let result = terminate()?;
+        tx.commit()?;
+        Ok(result)
+    }
+}
+
+impl StoreRoot {
+    /// Order ContextStore publication against Fabric provider quarantine. The
+    /// callback may access ContextStore, but must not write Fabric state.
+    pub fn fence_worker_publication<T>(
+        &self,
+        binding: &WorkerBinding,
+        publish: impl FnOnce() -> Result<T>,
+    ) -> Result<T> {
+        let mut c = self.connect(StoreKind::Fabric)?;
+        let tx = c.transaction_with_behavior(TransactionBehavior::Immediate)?;
+        let state = snapshot(&tx, &binding.tenant, &binding.provider, &binding.run)?
+            .ok_or_else(|| invalid("worker absent"))?;
+        if state.binding != *binding
+            || state.quarantined
+            || state.stop_requested
+            || provider_quarantine(&tx, &binding.tenant, &binding.provider)?.is_some()
+        {
+            return Err(invalid("worker publication quarantined"));
+        }
+        let result = publish()?;
+        tx.commit()?;
+        Ok(result)
+    }
 }

@@ -80,7 +80,7 @@ fn inventory_is_complete_and_deterministic() {
         ("workspace-crate", 10),
         ("auxiliary-crate", 11),
         ("foundation-crate", 7),
-        ("connector", 28), // WIP-10 adds the embedded WorkerConnector.
+        ("connector", 29), // WIP-12 adds the trusted test response/registry wrapper.
         ("wasm-manifest", 15),
         ("generated-id", 4),
     ] {

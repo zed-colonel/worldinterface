@@ -87,6 +87,24 @@ pub struct OperatorApprovalReceipt {
 /// Implementations must check actual acceptance provenance, current revocation and expiry.
 pub trait TrustedApprovals: Send + Sync {
     fn accepted(&self, receipt: &OperatorApprovalReceipt, now_ms: u64) -> Result<bool>;
+    /// Authenticate the exact catalog binding from host registration provenance.
+    /// A request, record file or successful evaluation cannot install itself.
+    fn registered(
+        &self,
+        _record: &worldinterface_capability::process_catalog::ProcessRegistrationRecord,
+        _now_ms: u64,
+    ) -> Result<bool> {
+        Ok(false)
+    }
+    /// Authenticate producer proof, results, reviewer evidence and operator decision
+    /// against independent host provenance. Repository JSON alone is insufficient.
+    fn qualified(
+        &self,
+        _record: &worldinterface_capability::process_catalog::OrdinaryQualificationRecord,
+        _now_ms: u64,
+    ) -> Result<bool> {
+        Ok(false)
+    }
 }
 /// No Deserialize implementation: only successful verification produces this capability.
 pub struct VerifiedEvaluation {
@@ -153,7 +171,14 @@ impl<A: EvidenceAuthority, S: TrustedApprovals, C: crate::worker_process::Clock>
         submission: &EffectSubmission,
     ) -> Result<AuthorizationSnapshot> {
         let snapshot = self.base.current_snapshot(tenant, submission)?;
-        if let Some(worker) = &snapshot.worker {
+        if let Some(recovery) = &snapshot.recovery {
+            if !["inspect", "terminate"].contains(&recovery.operation.as_str())
+                || snapshot.fixture.is_some()
+                || snapshot.qualification.is_some()
+            {
+                return Err("invalid recovery scope".into());
+            }
+        } else if let Some(worker) = &snapshot.worker {
             self.evaluation.verify(self.clock.unix_ms())?;
             if snapshot.qualification.is_some()
                 || snapshot.fixture.is_none()
