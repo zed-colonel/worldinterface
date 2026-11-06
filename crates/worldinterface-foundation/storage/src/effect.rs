@@ -1099,6 +1099,7 @@ mod tests {
         c.execute_batch(SCHEMA).unwrap();
         c.execute_batch(crate::continuation::SCHEMA).unwrap();
         c.execute_batch(crate::repository::SCHEMA).unwrap();
+        c.execute_batch(crate::control_plane::SCHEMA).unwrap();
         let actions = vec![
             worldinterface_domain::effect::EffectAction::Submit {
                 id: id.clone(),

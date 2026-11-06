@@ -4636,37 +4636,37 @@
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/effect.rs::::module:tests@10d1b0eff34c",
-          "source_sha256": "46d48ba7b1400bcf7e307828d54db45c16bc564b2b37977258c5e8d2091f6075",
+          "source_sha256": "14fb2e9e24803c5771f482d08aaa29084f64099176b53ca21b7dd7e888d74dd7",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/effect.rs::::source-module:crates/worldinterface-foundation/storage/src/effect.rs",
-          "source_sha256": "46d48ba7b1400bcf7e307828d54db45c16bc564b2b37977258c5e8d2091f6075",
+          "source_sha256": "14fb2e9e24803c5771f482d08aaa29084f64099176b53ca21b7dd7e888d74dd7",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/effect.rs::::struct:DispatchFault",
-          "source_sha256": "46d48ba7b1400bcf7e307828d54db45c16bc564b2b37977258c5e8d2091f6075",
+          "source_sha256": "14fb2e9e24803c5771f482d08aaa29084f64099176b53ca21b7dd7e888d74dd7",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/effect.rs::::struct:EffectExecutionTimes",
-          "source_sha256": "46d48ba7b1400bcf7e307828d54db45c16bc564b2b37977258c5e8d2091f6075",
+          "source_sha256": "14fb2e9e24803c5771f482d08aaa29084f64099176b53ca21b7dd7e888d74dd7",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/effect.rs::::struct:EffectJournalConflict",
-          "source_sha256": "46d48ba7b1400bcf7e307828d54db45c16bc564b2b37977258c5e8d2091f6075",
+          "source_sha256": "14fb2e9e24803c5771f482d08aaa29084f64099176b53ca21b7dd7e888d74dd7",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/effect.rs::::struct:EffectReceiptCommand",
-          "source_sha256": "46d48ba7b1400bcf7e307828d54db45c16bc564b2b37977258c5e8d2091f6075",
+          "source_sha256": "14fb2e9e24803c5771f482d08aaa29084f64099176b53ca21b7dd7e888d74dd7",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/effect.rs::::struct:EffectReceiptSource",
-          "source_sha256": "46d48ba7b1400bcf7e307828d54db45c16bc564b2b37977258c5e8d2091f6075",
+          "source_sha256": "14fb2e9e24803c5771f482d08aaa29084f64099176b53ca21b7dd7e888d74dd7",
           "registration_sites": []
         },
         {
@@ -8493,7 +8493,7 @@
         },
         {
           "path": "crates/worldinterface-foundation/storage/src/effect.rs",
-          "source_sha256": "46d48ba7b1400bcf7e307828d54db45c16bc564b2b37977258c5e8d2091f6075",
+          "source_sha256": "14fb2e9e24803c5771f482d08aaa29084f64099176b53ca21b7dd7e888d74dd7",
           "treatment": "Retain WI-04 guarded domain and production admission binding; review selective changes without weakening replacement or qualification gates."
         },
         {

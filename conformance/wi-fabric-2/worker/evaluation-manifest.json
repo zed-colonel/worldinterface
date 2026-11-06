@@ -145,7 +145,7 @@
     "crates/worldinterface-foundation/storage/src/continuation.rs": "bbe6e736b706b00407ef2bc1a57931b9582690e8b870ff23b0ebeddc2c166038",
     "crates/worldinterface-foundation/storage/src/control_plane.rs": "fd91c2ff4c3bc0a9b8aa8f83e9e87ac8b263ee38bd5d457cb628cde9fb012631",
     "crates/worldinterface-foundation/storage/src/crashpoint.rs": "c8c9d9f983ca833ffdd0d22552379aea3a5976ce39b6a537d2d3ac6a784f4e14",
-    "crates/worldinterface-foundation/storage/src/effect.rs": "46d48ba7b1400bcf7e307828d54db45c16bc564b2b37977258c5e8d2091f6075",
+    "crates/worldinterface-foundation/storage/src/effect.rs": "14fb2e9e24803c5771f482d08aaa29084f64099176b53ca21b7dd7e888d74dd7",
     "crates/worldinterface-foundation/storage/src/flow.rs": "fe58ef1c862e8987243406e302085dde4ce7509c154c87a62c6243b13d6f5b9c",
     "crates/worldinterface-foundation/storage/src/ingress.rs": "bd36b6080eac00f1957a54ae7f1f58a718f51438f7eb416d42d54c06cf7e9d88",
     "crates/worldinterface-foundation/storage/src/lib.rs": "57e90a9c46b98064c2c1be77f24952412c88ce2fa73832bf4392156673075784",

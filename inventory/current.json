@@ -8495,7 +8495,7 @@
     "kind": "module",
     "path": "crates/worldinterface-foundation/storage/src/effect.rs",
     "name": "tests",
-    "source_sha256": "46d48ba7b1400bcf7e307828d54db45c16bc564b2b37977258c5e8d2091f6075",
+    "source_sha256": "14fb2e9e24803c5771f482d08aaa29084f64099176b53ca21b7dd7e888d74dd7",
     "conditions": [
       "# [cfg (test)]"
     ],
@@ -8506,7 +8506,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-foundation/storage/src/effect.rs",
     "name": "crates/worldinterface-foundation/storage/src/effect.rs",
-    "source_sha256": "46d48ba7b1400bcf7e307828d54db45c16bc564b2b37977258c5e8d2091f6075",
+    "source_sha256": "14fb2e9e24803c5771f482d08aaa29084f64099176b53ca21b7dd7e888d74dd7",
     "conditions": [],
     "registration_sites": []
   },
@@ -8515,7 +8515,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/storage/src/effect.rs",
     "name": "DispatchFault",
-    "source_sha256": "46d48ba7b1400bcf7e307828d54db45c16bc564b2b37977258c5e8d2091f6075",
+    "source_sha256": "14fb2e9e24803c5771f482d08aaa29084f64099176b53ca21b7dd7e888d74dd7",
     "conditions": [],
     "registration_sites": []
   },
@@ -8524,7 +8524,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/storage/src/effect.rs",
     "name": "EffectExecutionTimes",
-    "source_sha256": "46d48ba7b1400bcf7e307828d54db45c16bc564b2b37977258c5e8d2091f6075",
+    "source_sha256": "14fb2e9e24803c5771f482d08aaa29084f64099176b53ca21b7dd7e888d74dd7",
     "conditions": [],
     "registration_sites": []
   },
@@ -8533,7 +8533,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/storage/src/effect.rs",
     "name": "EffectJournalConflict",
-    "source_sha256": "46d48ba7b1400bcf7e307828d54db45c16bc564b2b37977258c5e8d2091f6075",
+    "source_sha256": "14fb2e9e24803c5771f482d08aaa29084f64099176b53ca21b7dd7e888d74dd7",
     "conditions": [],
     "registration_sites": []
   },
@@ -8542,7 +8542,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/storage/src/effect.rs",
     "name": "EffectReceiptCommand",
-    "source_sha256": "46d48ba7b1400bcf7e307828d54db45c16bc564b2b37977258c5e8d2091f6075",
+    "source_sha256": "14fb2e9e24803c5771f482d08aaa29084f64099176b53ca21b7dd7e888d74dd7",
     "conditions": [],
     "registration_sites": []
   },
@@ -8551,7 +8551,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/storage/src/effect.rs",
     "name": "EffectReceiptSource",
-    "source_sha256": "46d48ba7b1400bcf7e307828d54db45c16bc564b2b37977258c5e8d2091f6075",
+    "source_sha256": "14fb2e9e24803c5771f482d08aaa29084f64099176b53ca21b7dd7e888d74dd7",
     "conditions": [],
     "registration_sites": []
   },
