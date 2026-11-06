@@ -13497,7 +13497,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/tests/embedded_restore.rs",
     "name": "setup",
-    "source_sha256": "abaccc6a35a5305fad73f3ac25dcdc2a63e623a2323a0fd538f998fb2fed0945",
+    "source_sha256": "8669aa3e44b746f0ef9c03cc15edc5c8963db1d5d33932a51eecd1111e88c0c5",
     "conditions": [],
     "registration_sites": []
   },
@@ -13506,7 +13506,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-runtime/tests/embedded_restore.rs",
     "name": "crates/worldinterface-runtime/tests/embedded_restore.rs",
-    "source_sha256": "abaccc6a35a5305fad73f3ac25dcdc2a63e623a2323a0fd538f998fb2fed0945",
+    "source_sha256": "8669aa3e44b746f0ef9c03cc15edc5c8963db1d5d33932a51eecd1111e88c0c5",
     "conditions": [],
     "registration_sites": []
   },
@@ -13515,7 +13515,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/embedded_restore.rs",
     "name": "Complete",
-    "source_sha256": "abaccc6a35a5305fad73f3ac25dcdc2a63e623a2323a0fd538f998fb2fed0945",
+    "source_sha256": "8669aa3e44b746f0ef9c03cc15edc5c8963db1d5d33932a51eecd1111e88c0c5",
     "conditions": [],
     "registration_sites": []
   },

@@ -6786,17 +6786,17 @@
         },
         {
           "id": "crates/worldinterface-runtime/tests/embedded_restore.rs::::module:setup",
-          "source_sha256": "abaccc6a35a5305fad73f3ac25dcdc2a63e623a2323a0fd538f998fb2fed0945",
+          "source_sha256": "8669aa3e44b746f0ef9c03cc15edc5c8963db1d5d33932a51eecd1111e88c0c5",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/embedded_restore.rs::::source-module:crates/worldinterface-runtime/tests/embedded_restore.rs",
-          "source_sha256": "abaccc6a35a5305fad73f3ac25dcdc2a63e623a2323a0fd538f998fb2fed0945",
+          "source_sha256": "8669aa3e44b746f0ef9c03cc15edc5c8963db1d5d33932a51eecd1111e88c0c5",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/embedded_restore.rs::::struct:Complete",
-          "source_sha256": "abaccc6a35a5305fad73f3ac25dcdc2a63e623a2323a0fd538f998fb2fed0945",
+          "source_sha256": "8669aa3e44b746f0ef9c03cc15edc5c8963db1d5d33932a51eecd1111e88c0c5",
           "registration_sites": []
         },
         {
@@ -8908,7 +8908,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/tests/embedded_restore.rs",
-          "source_sha256": "abaccc6a35a5305fad73f3ac25dcdc2a63e623a2323a0fd538f998fb2fed0945",
+          "source_sha256": "8669aa3e44b746f0ef9c03cc15edc5c8963db1d5d33932a51eecd1111e88c0c5",
           "treatment": "Retain WIP-14 embedded runtime, AQ-free control-plane ownership and WI-owned consumer proof; no connector removal or qualification claim."
         },
         {

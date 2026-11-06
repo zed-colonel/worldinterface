@@ -38,7 +38,11 @@ fn host() -> actionqueue_core::control::HostControlContext {
 }
 async fn populate(path: &Path) -> (uuid::Uuid, TaskId) {
     let mut engine = ActionQueueEngine::new(
-        RuntimeConfig { data_dir: path.into(), ..Default::default() },
+        RuntimeConfig {
+            data_dir: path.into(),
+            snapshot_event_threshold: Some(1),
+            ..Default::default()
+        },
         Complete,
     )
     .bootstrap()
@@ -182,8 +186,8 @@ async fn ab_wi_019_two_independent_stores_restore_complete_wal_artifacts_and_con
         engine.shutdown().unwrap();
     }
 }
-#[test]
-fn ab_wi_019_invalid_restore_never_publishes_partial_destination() {
+#[tokio::test]
+async fn ab_wi_019_invalid_restore_never_publishes_partial_destination() {
     for damage in ["snapshot-only", "artifact", "wi-profile", "aq-profile", "identity"] {
         let t = tempfile::tempdir().unwrap();
         let source = t.path().join("source");
@@ -194,10 +198,19 @@ fn ab_wi_019_invalid_restore_never_publishes_partial_destination() {
         .unwrap();
         let a = b.wi().publish(o("tenant"), b"required").unwrap();
         drop(b);
+        if damage == "snapshot-only" {
+            let _ = populate(&source.join("aq")).await;
+        }
         let backup = t.path().join("backup");
         StoreBundle::backup(&source, &backup).unwrap();
         match damage {
-            "snapshot-only" => fs::remove_file(backup.join("aq/wal/actionqueue.wal")).unwrap(),
+            "snapshot-only" => {
+                assert!(
+                    backup.join("aq/snapshots/snapshot.bin").is_file(),
+                    "real AQ snapshot required"
+                );
+                fs::remove_file(backup.join("aq/wal/actionqueue.wal")).unwrap();
+            }
             "artifact" => {
                 fs::remove_file(backup.join("wi/artifacts").join(a.content.as_str())).unwrap()
             }

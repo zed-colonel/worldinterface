@@ -234,7 +234,7 @@
     "crates/worldinterface-runtime/tests/continuations.rs": "3b90fdc78d863b81af24f138f5865ce314d058f262b52b6a7ac80ae93757504e",
     "crates/worldinterface-runtime/tests/effect_service.rs": "bce2958d5fbd1114e15c5d44a1c20de4a87ea9b59527b9e251ed08af332aefee",
     "crates/worldinterface-runtime/tests/embedded_credentials.rs": "a946c2e0e857caaae67e43964fa9df0d0e648b27d1707a41d9c3bd79bbd451b5",
-    "crates/worldinterface-runtime/tests/embedded_restore.rs": "abaccc6a35a5305fad73f3ac25dcdc2a63e623a2323a0fd538f998fb2fed0945",
+    "crates/worldinterface-runtime/tests/embedded_restore.rs": "8669aa3e44b746f0ef9c03cc15edc5c8963db1d5d33932a51eecd1111e88c0c5",
     "crates/worldinterface-runtime/tests/embedded_worker.rs": "ddb8fa81beab8aa457524d1f226b99944e3b50736ecc4d94dd0beb35472850e1",
     "crates/worldinterface-runtime/tests/executor_aq_contract.rs": "f4c4e1e1370f9687e64cbd9d7473ac087b19a2b15ddb08c7262f4edace4cb4cb",
     "crates/worldinterface-runtime/tests/flow.rs": "4d017b978487324282be3d8b577e2f374bb892f49b5a4aa491cf35c757457915",
