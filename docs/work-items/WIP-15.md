@@ -1,12 +1,26 @@
 # WIP-15: WI-owned worker acceptance campaign
 
-This candidate adds the non-ignored `worker_campaign` runtime target. It invokes
-contract tooling as a subprocess and discovers compiled harnesses in the three
-adopted configurations. Two harness groups run concurrently; each registered test runs once by exact
-name under a 600-second timeout. Harness bytes are measured before and after
-each group, and receipt validation measures every distinct harness again. Zero-test, ignored, missing, ambiguous and unsuccessful
-results fail the campaign. Discovery never asserts passage. Authoritative scope
-coverage and definition-review evidence classes remain registered separately.
+The adopted `runtime-test` runs the non-ignored `worker_campaign` entry point.
+It invokes contract tooling as a subprocess, discovers the three workspace
+configurations once, and executes every registered test by exact name under a
+600-second per-test limit. The campaign owns all runtime unit and integration
+tests: their Cargo targets use `test = false` for default selection, while the
+campaign explicitly builds them with `--lib --test '*'`. Targeted `--lib` and
+`--test NAME` diagnosis remains available. The checker rejects a missing entry,
+feature-gated entry or a second default owner. Unregistered runtime tests run
+once as the remainder of the suite and must pass, with separate receipt outcomes.
+Shared support tests keep a separate outcome and log for each compiled harness,
+even when their names coincide; registered tests still require exactly one
+eligible harness. There is no ordinary runtime test pass followed by a repeated
+campaign pass.
+
+Two harness groups run concurrently. Harness bytes are measured before and after
+each group and once in receipt validation. The same compiled listings serve
+execution and validation; independent receipt checks perform fresh discovery.
+Zero-test, ignored, missing, ambiguous and unsuccessful results fail. Discovery
+never asserts passage. The campaign subprocess has a 1500-second timeout plus a
+15-second kill grace within the unchanged 1800-second adopted check budget.
+Authoritative scope coverage and definition-review evidence remain separate.
 
 The embedded composition now accepts a trusted, evaluation-only seam installation
 through the existing provenance verifier. Unqualified external providers remain
@@ -83,10 +97,53 @@ remain mandatory. The receipt records the applied campaign parallelism. A
 bounded two-harness regression proves overlap, retained child failures and
 rejection of conflicting or replaced executable pins.
 
-These changed covered bytes require renewed exact-packet acceptance after the
-source-bound non-live build. The actual receipt/anchor retain only the accepted
-historical packet above. Positive verification of the remediation and complete
-adopted-check passage remain due after acceptance. Non-live check results and
-external evidence paths are reported in the implementation run's final message;
-scratch reports are not committed source. WIP-16 retains final handoff
-publication and G4/target closure.
+The operator then accepted the final packet
+`4dcbe731183fb3f5e461ecaf52101f0b40a12187e136e019891c4423d7f973ae`
+in run `328acdc1-0146-4bed-b13e-b7553acdbd99` through
+2026-11-11T00:00:00Z. Commit `b92a58ebd2a65c4e8ec14dfe44f4b97c77a287b7`
+records that decision. The campaign passed **224/224 registered tests and 55/55
+cases** on that clean commit. Receipt SHA-256:
+`fe85c995fd2390ee89a14d1e87935ced74e7746fc0fc0523423189dcbb54cbfc`;
+handoff candidate SHA-256:
+`63d2a2358f1f8a995937fc96701830cd5a6d40bdc622fb789a5bd75d31dd4d65`.
+The receipt and individual logs are in that run's
+`scratch/verification/accepted-campaign/`; its consolidated check report is
+`scratch/review/wip-15-status.json`. All ten adopted checks passed, with
+runtime-test passing only on retry after a 30-minute timeout. The first run's
+cold build took 8m09s while overlapping an independent campaign. The warm retry
+built in 2m24s and used about 1543 seconds of test time. The independent review's
+adopted run built in 3m07s and used 1598.7 seconds of test time: about 29m48s
+against the unchanged 30-minute budget. These were passing historical results,
+not sufficient headroom for the next integration.
+
+## Review remediation F-001, F-002 and F-003
+
+F-001 removes the duplicate runtime execution and second discovery as described
+above. Receipt version 2 binds both the registered outcomes and every additional
+runtime outcome; omitted, duplicate, ignored or failed remainder tests fail
+validation. Non-live compiled Cargo fixtures prove one default entry, eligibility
+of explicitly selected `test = false` targets, retained ignored-test exclusion,
+and rejection of competing owners. Existing failure/log/binary substitution
+regressions remain mandatory. F-002 records the actual accepted packet and
+passing campaign above and in the active ledger. F-003 now generates a candidate
+from fixture receipt evidence and all three observation files, then exercises
+the payload validator shared by `validate_handoff` against substituted producer
+pins, fixture bytes, observations, claims and missing embedded evidence.
+
+Cold verification uses this worktree's supplied `CARGO_TARGET_DIR` after
+`cargo clean`, without a competing campaign. A run records discovery/build/listing,
+registered campaign, remainder suite and validation wall times in the external
+campaign directory's `timing.json`; the enclosing log records Cargo's initial
+build time and the unchanged 1800-second limit. The durable record for this
+remediation is run `24df84b8-18b0-4165-81d4-f67f66bbd251`,
+`scratch/verification/cold-runtime-timing.json`, with the full log at
+`scratch/verification/cold-runtime-test.log`. This record must show measured
+build, campaign and rest-of-suite durations and headroom before F-001 is claimed
+verified. No cold live result is asserted by the source changes alone.
+
+The replaced packet needs renewed exact acceptance after its source-bound
+non-live build. The actual receipt and trusted anchor retain the historical
+`4dcbe731…` acceptance until an operator accepts the concrete replacement.
+Positive evaluation and adopted runtime-test must use that accepted replacement;
+non-live checks may run beforehand. WIP-16 retains final handoff publication
+and G4/target closure. Scratch evidence is not committed source.

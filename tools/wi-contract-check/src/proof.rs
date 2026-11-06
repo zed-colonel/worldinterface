@@ -217,6 +217,13 @@ pub fn discover_harnesses(root: &Path, manifest: &str, flags: &[&str]) -> Result
     let mut args =
         vec!["test", "--locked", "--manifest-path", manifest, "--no-run", "--message-format=json"];
     args.extend(flags);
+    // runtime-test delegates these harnesses to the campaign. Explicit selection
+    // builds test=false targets without making Cargo execute them a second time.
+    let campaign_owned = manifest == RUNTIME;
+    if campaign_owned {
+        args.extend(["--lib", "--test", "*"]);
+        validate_runtime_ownership(&packages)?;
+    }
     let output = cargo(root, &args)?;
     let mut index = HarnessIndex::new();
     let mut executables = BTreeSet::new();
@@ -235,7 +242,9 @@ pub fn discover_harnesses(root: &Path, manifest: &str, flags: &[&str]) -> Result
             continue;
         }
         let declared = array(package, "targets")?.iter().any(|t| {
-            t["test"] == true
+            (t["test"] == true
+                || (campaign_owned && t["kind"] == json!(["test"]))
+                || (campaign_owned && t["kind"] == json!(["lib"])))
                 && t["name"] == a["target"]["name"]
                 && t["src_path"] == a["target"]["src_path"]
         });
@@ -257,7 +266,42 @@ pub fn discover_harnesses(root: &Path, manifest: &str, flags: &[&str]) -> Result
             }
         }
     }
+    if campaign_owned {
+        let entry = TestRef {
+            manifest: RUNTIME.into(),
+            package: "worldinterface-runtime".into(),
+            test: crate::worker_campaign::ENTRY.into(),
+        };
+        if index.get(&entry).map(Vec::len) != Some(1) {
+            return Err("missing, ignored or ambiguous adopted campaign entry point".into());
+        }
+    }
     Ok(index)
+}
+
+/// Prevent a new auto-discovered target from silently executing twice, and keep
+/// the campaign mandatory in the adopted default Cargo invocation.
+fn validate_runtime_ownership(packages: &BTreeMap<String, &Value>) -> Result<()> {
+    let package = packages
+        .values()
+        .find(|p| p["name"] == "worldinterface-runtime")
+        .ok_or("missing runtime package")?;
+    let mut entry = false;
+    for target in array(package, "targets")? {
+        if target["kind"] == json!(["test"]) {
+            let is_entry = target["name"] == "worker_campaign";
+            if target["test"] != is_entry || target.get("required-features").is_some() {
+                return Err("runtime harness must have exactly one campaign owner".into());
+            }
+            entry |= is_entry;
+        } else if target["kind"] == json!(["lib"]) && target["test"] != false {
+            return Err("runtime unit tests must be owned by the campaign".into());
+        }
+    }
+    if !entry {
+        return Err("missing adopted runtime campaign entry point".into());
+    }
+    Ok(())
 }
 
 fn allocation(id: &str, source: &Value) -> Result<(String, String)> {

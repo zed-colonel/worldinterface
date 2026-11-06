@@ -8,6 +8,144 @@ edition = "2021"
 rust-version = "1.89"
 publish = false
 
+# The adopted runtime-test runs the campaign entry point. It explicitly builds
+# and executes every other runtime harness once, including tests outside the case
+# registry. Explicit --lib / --test NAME commands remain available for diagnosis.
+[lib]
+test = false
+
+[[test]]
+name = "completion_crash"
+test = false
+
+[[test]]
+name = "completion_regressions"
+test = false
+
+[[test]]
+name = "connector_spi"
+test = false
+
+[[test]]
+name = "continuation_crash"
+test = false
+
+[[test]]
+name = "continuation_producers"
+test = false
+
+[[test]]
+name = "continuation_recovery"
+test = false
+
+[[test]]
+name = "continuations"
+test = false
+
+[[test]]
+name = "effect_service"
+test = false
+
+[[test]]
+name = "embedded_credentials"
+test = false
+
+[[test]]
+name = "embedded_restore"
+test = false
+
+[[test]]
+name = "embedded_worker"
+test = false
+
+[[test]]
+name = "executor_aq_contract"
+test = false
+
+[[test]]
+name = "flow"
+test = false
+
+[[test]]
+name = "flow_crash"
+test = false
+
+[[test]]
+name = "g2_admission"
+test = false
+
+[[test]]
+name = "ingress"
+test = false
+
+[[test]]
+name = "ingress_recovery"
+test = false
+
+[[test]]
+name = "integration"
+test = false
+
+[[test]]
+name = "receipt_inspection"
+test = false
+
+[[test]]
+name = "reconciliation"
+test = false
+
+[[test]]
+name = "reconciliation_crash"
+test = false
+
+[[test]]
+name = "worker_artifact_crash"
+test = false
+
+[[test]]
+name = "worker_artifact_live_crash"
+test = false
+
+[[test]]
+name = "worker_artifact_validation"
+test = false
+
+[[test]]
+name = "worker_artifacts"
+test = false
+
+[[test]]
+name = "worker_build"
+test = false
+
+[[test]]
+name = "worker_campaign_cases"
+test = false
+
+[[test]]
+name = "worker_catalog"
+test = false
+
+[[test]]
+name = "worker_evaluation"
+test = false
+
+[[test]]
+name = "worker_lifecycle"
+test = false
+
+[[test]]
+name = "worker_lifecycle_crash"
+test = false
+
+[[test]]
+name = "worker_process"
+test = false
+
+[[test]]
+name = "worker_seam"
+test = false
+
 [[bin]]
 name = "wi-process-reaper"
 path = "src/bin/wi-process-reaper.rs"

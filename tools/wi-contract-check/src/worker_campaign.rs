@@ -13,6 +13,7 @@ use std::{
     path::{Path, PathBuf},
     process::Command,
     sync::Mutex,
+    time::Instant,
 };
 
 pub const COVERAGE: &str = "conformance/wi-fabric-2/worker/campaign-coverage.json";
@@ -253,6 +254,7 @@ fn discover(root: &Path) -> Result<HarnessIndex> {
     Ok(harnesses)
 }
 pub fn run(root: &Path, directory: &Path) -> Result<()> {
+    let started = Instant::now();
     if std::env::var_os("WI_WORKER_CAMPAIGN_CHILD").is_some() {
         return Err("recursive campaign execution rejected".into());
     }
@@ -267,14 +269,30 @@ pub fn run(root: &Path, directory: &Path) -> Result<()> {
     let gates = gate_states(root)?;
     validate_gates(&gates)?;
     let (registry, gate_records) = proof::load(root)?;
+    let discovery_started = Instant::now();
     let harnesses = discover(root)?;
+    let discovery_seconds = discovery_started.elapsed().as_secs_f64();
     let index = harnesses.iter().map(|(t, p)| (t.clone(), p.len())).collect();
     if !proof::validate(root, &registry, &gate_records, &index)?.is_empty() {
         return Err("campaign registry validation failed".into());
     }
     validate_coverage(root, &registry, &index)?;
     let selected = select(&registry, &harnesses)?;
+    let execution_started = Instant::now();
     let outcomes = execute_selected(root, &selected, &directory)?;
+    let execution_seconds = execution_started.elapsed().as_secs_f64();
+    // The campaign is also the sole owner of non-registered runtime tests. Do
+    // not lose suite coverage when removing Cargo's duplicate default execution.
+    let runtime_suite = runtime_remainder(&harnesses, &selected)?;
+    let remainder_started = Instant::now();
+    let runtime_suite_outcomes = execute_harnesses(
+        root,
+        runtime_suite
+            .iter()
+            .flat_map(|(r, paths)| paths.iter().map(move |p| (r.clone(), p.clone()))),
+        &directory,
+    )?;
+    let remainder_seconds = remainder_started.elapsed().as_secs_f64();
     let mut observations = BTreeMap::new();
     for name in ["coding.json", "transform.json", "seam.json"] {
         observations.insert(name.to_string(), digest_file(&directory, name).ok());
@@ -293,20 +311,50 @@ pub fn run(root: &Path, directory: &Path) -> Result<()> {
             )
         })
         .collect();
-    let receipt = json!({"version":1,"before":before,"after":after,"os":{
+    let receipt = json!({"version":2,"before":before,"after":after,"os":{
         "kernel":output(root,"uname", &["-srv"])? ,"architecture":output(root,"uname", &["-m"])? ,
         "release":fs::read_to_string("/etc/os-release")?},"execution_identity":output(root,"id",&[])? ,
-        "evaluation_approval":acceptance,"outcomes":outcomes,"cases":cases,"embedded_observations":observations,
+        "evaluation_approval":acceptance,"outcomes":outcomes,"runtime_suite_outcomes":runtime_suite_outcomes,"cases":cases,"embedded_observations":observations,
         "gates":gates,"claims":claims(),"limitations":limitations(),
         "campaign_parallelism":PARALLELISM});
     fs::write(directory.join("receipt.json"), serde_json::to_vec_pretty(&receipt)?)?;
-    let handoff = candidate(root, &receipt, &directory)?;
+    let validation_started = Instant::now();
+    // Reuse this run's compiled listings. Independent receipt checking rediscovers
+    // the current binaries, but generation must build/list each configuration once.
+    validate_receipt_with_harnesses(root, &receipt, &directory, &harnesses)?;
+    let handoff = handoff_candidate(&receipt, &directory)?;
     fs::write(directory.join("handoff-candidate.json"), serde_json::to_vec_pretty(&handoff)?)?;
-    // candidate() has already validated the complete execution receipt. Check the
-    // persisted value against that validated candidate without repeating discovery
-    // and every binary measurement. External handoffs still use validate_handoff().
+    // The complete receipt is validated above; compare persisted candidate bytes
+    // without redoing discovery or executable measurement.
     validate_contract(&read(&directory.join("handoff-candidate.json"))?, &handoff)?;
+    let timing = json!({"discovery_build_and_listing_seconds":discovery_seconds,
+        "registered_campaign_seconds":execution_seconds,"rest_of_runtime_suite_seconds":remainder_seconds,
+        "receipt_validation_seconds":validation_started.elapsed().as_secs_f64(),
+        "total_seconds":started.elapsed().as_secs_f64(),"discovery_passes":1,
+        "registered_tests":outcomes.len(),"additional_runtime_tests":runtime_suite_outcomes.len()});
+    fs::write(directory.join("timing.json"), serde_json::to_vec_pretty(&timing)?)?;
+    eprintln!("campaign timing: {timing}");
     Ok(())
+}
+/// Every eligible runtime test absent from the registry still runs exactly once.
+pub fn runtime_remainder(
+    harnesses: &HarnessIndex,
+    registered: &BTreeMap<TestRef, PathBuf>,
+) -> Result<HarnessIndex> {
+    let mut remainder = BTreeMap::new();
+    for (reference, paths) in harnesses {
+        if reference.manifest != RUNTIME
+            || reference.test == ENTRY
+            || registered.contains_key(reference)
+        {
+            continue;
+        }
+        if paths.is_empty() {
+            return Err("missing additional runtime harness".into());
+        }
+        remainder.insert(reference.clone(), paths.clone());
+    }
+    Ok(remainder)
 }
 /// Independent harnesses have private stores and child processes. Bound their
 /// concurrency, retain every individual outcome, and measure each harness before
@@ -316,9 +364,16 @@ pub fn execute_selected(
     selected: &BTreeMap<TestRef, PathBuf>,
     directory: &Path,
 ) -> Result<Vec<Outcome>> {
+    execute_harnesses(root, selected.iter().map(|(r, p)| (r.clone(), p.clone())), directory)
+}
+fn execute_harnesses(
+    root: &Path,
+    selected: impl Iterator<Item = (TestRef, PathBuf)>,
+    directory: &Path,
+) -> Result<Vec<Outcome>> {
     let mut groups = BTreeMap::<PathBuf, Vec<TestRef>>::new();
     for (reference, executable) in selected {
-        groups.entry(executable.clone()).or_default().push(reference.clone());
+        groups.entry(executable).or_default().push(reference);
     }
     let pending = Mutex::new(VecDeque::from_iter(groups));
     let batches = std::thread::scope(|scope| {
@@ -368,7 +423,7 @@ pub fn execute_selected(
             outcomes.extend(batch.map_err(|e| format!("campaign harness failed: {e}"))?);
         }
     }
-    outcomes.sort_by(|a, b| a.reference.cmp(&b.reference));
+    outcomes.sort_by(|a, b| (&a.reference, &a.log).cmp(&(&b.reference, &b.log)));
     Ok(outcomes)
 }
 pub fn execute(
@@ -384,6 +439,9 @@ pub fn execute(
     }
     Ok(outcome)
 }
+fn log_name(reference: &TestRef, executable: &Path) -> Result<String> {
+    Ok(format!("{}.log", hash(serde_json::to_vec(&(reference, executable))?)))
+}
 fn execute_bound(
     root: &Path,
     reference: TestRef,
@@ -391,7 +449,7 @@ fn execute_bound(
     directory: &Path,
     executable_sha256: &str,
 ) -> Result<Outcome> {
-    let name = format!("{}.log", hash(serde_json::to_vec(&reference)?));
+    let name = log_name(&reference, executable)?;
     let out = Command::new("timeout")
         .args(["--kill-after=10s", "600s"])
         .arg(executable)
@@ -437,6 +495,14 @@ fn keys(value: &Value, expected: &[&str]) -> Result<()> {
     Ok(())
 }
 pub fn validate_receipt(root: &Path, receipt: &Value, base: &Path) -> Result<()> {
+    validate_receipt_with_harnesses(root, receipt, base, &discover(root)?)
+}
+fn validate_receipt_with_harnesses(
+    root: &Path,
+    receipt: &Value,
+    base: &Path,
+    harnesses: &HarnessIndex,
+) -> Result<()> {
     keys(
         receipt,
         &[
@@ -447,6 +513,7 @@ pub fn validate_receipt(root: &Path, receipt: &Value, base: &Path) -> Result<()>
             "execution_identity",
             "evaluation_approval",
             "outcomes",
+            "runtime_suite_outcomes",
             "cases",
             "embedded_observations",
             "gates",
@@ -455,7 +522,7 @@ pub fn validate_receipt(root: &Path, receipt: &Value, base: &Path) -> Result<()>
             "campaign_parallelism",
         ],
     )?;
-    if receipt["version"] != 1 || receipt["campaign_parallelism"] != PARALLELISM {
+    if receipt["version"] != 2 || receipt["campaign_parallelism"] != PARALLELISM {
         return Err("unsupported campaign receipt".into());
     }
     validate_generation(&receipt["before"], &receipt["after"])?;
@@ -483,7 +550,11 @@ pub fn validate_receipt(root: &Path, receipt: &Value, base: &Path) -> Result<()>
     let (registry, _) = proof::load(root)?;
     let outcomes: Vec<Outcome> = serde_json::from_value(receipt["outcomes"].clone())?;
     validate_results(&registry, &outcomes, base)?;
-    let selected = select(&registry, &discover(root)?)?;
+    let selected = select(&registry, harnesses)?;
+    let runtime_suite = runtime_remainder(harnesses, &selected)?;
+    let additional: Vec<Outcome> =
+        serde_json::from_value(receipt["runtime_suite_outcomes"].clone())?;
+    validate_runtime_results(&runtime_suite, &additional, base)?;
     validate_executables(&outcomes, &selected)?;
     let cases = receipt["cases"].as_object().ok_or("missing case outcomes")?;
     if cases.len() != 55
@@ -565,10 +636,53 @@ pub fn validate_executables(
 pub fn validate_results(registry: &Registry, outcomes: &[Outcome], base: &Path) -> Result<()> {
     let expected: BTreeSet<_> =
         registry.cases.iter().flat_map(|c| c.tests.iter().cloned()).collect();
+    validate_outcomes(&expected, outcomes, base)
+}
+fn validate_outcomes(
+    expected: &BTreeSet<TestRef>,
+    outcomes: &[Outcome],
+    base: &Path,
+) -> Result<()> {
     let actual: BTreeSet<_> = outcomes.iter().map(|o| o.reference.clone()).collect();
-    if actual != expected || actual.len() != outcomes.len() {
+    if &actual != expected || actual.len() != outcomes.len() {
         return Err("incomplete or duplicate individual outcomes".into());
     }
+    validate_logs(outcomes, base)
+}
+/// Shared support tests can have the same reference in several runtime harnesses.
+/// Bind each occurrence to its current binary and unique per-harness log, retaining
+/// the registry's stricter one-harness rule for registered acceptance references.
+pub fn validate_runtime_results(
+    expected: &HarnessIndex,
+    outcomes: &[Outcome],
+    base: &Path,
+) -> Result<()> {
+    let mut digests = BTreeMap::new();
+    let mut expected_keys = BTreeSet::new();
+    for (reference, paths) in expected {
+        for path in paths {
+            if !digests.contains_key(path) {
+                digests.insert(path.clone(), hash(fs::read(path)?));
+            }
+            if !expected_keys.insert((
+                reference.clone(),
+                digests[path].clone(),
+                log_name(reference, path)?,
+            )) {
+                return Err("duplicate runtime harness".into());
+            }
+        }
+    }
+    let actual: BTreeSet<_> = outcomes
+        .iter()
+        .map(|o| (o.reference.clone(), o.executable_sha256.clone(), o.log.clone()))
+        .collect();
+    if expected_keys != actual || actual.len() != outcomes.len() {
+        return Err("missing, duplicate or substituted additional runtime outcome".into());
+    }
+    validate_logs(outcomes, base)
+}
+fn validate_logs(outcomes: &[Outcome], base: &Path) -> Result<()> {
     for o in outcomes {
         let bytes = fs::read(local(base, &o.log)?)?;
         if !o.passed
@@ -653,9 +767,14 @@ pub fn validate_observation(v: &Value, seam: bool) -> Result<()> {
 /// time. WIP-16 publishes the final handoff; this function grants no gate closure.
 pub fn candidate(root: &Path, receipt: &Value, base: &Path) -> Result<Value> {
     validate_receipt(root, receipt, base)?;
+    handoff_candidate(receipt, base)
+}
+/// Generate the contract payload from receipt evidence. Callers granting passage
+/// must first validate the receipt; this function also supports non-live fixtures.
+pub fn handoff_candidate(receipt: &Value, base: &Path) -> Result<Value> {
     Ok(json!({"version":1,"kind":"wi-producer-evidence-v1", "producer":receipt["after"],
         "campaign_sha256":hash(serde_json::to_vec(receipt)?),"cases":receipt["cases"],
-        "tests":receipt["outcomes"],"observations":receipt["embedded_observations"],
+        "tests":receipt["outcomes"],"runtime_suite_tests":receipt["runtime_suite_outcomes"],"observations":receipt["embedded_observations"],
         "gates":receipt["gates"],"claims":claims(),
         "producer_execution": [read(&local(base,"coding.json")?)?,read(&local(base,"transform.json")?)?,read(&local(base,"seam.json")?)?],"limitations":limitations(),
         "supported_operations":["provision","start","inspect","terminate","collect_artifacts","release"],
@@ -663,7 +782,13 @@ pub fn candidate(root: &Path, receipt: &Value, base: &Path) -> Result<Value> {
         "consumer_acceptance":"requires independent application validation; worker exit and WI receipt are insufficient"}))
 }
 pub fn validate_handoff(root: &Path, handoff: &Value, receipt: &Value, base: &Path) -> Result<()> {
-    validate_contract(handoff, &candidate(root, receipt, base)?)
+    validate_receipt(root, receipt, base)?;
+    validate_handoff_payload(handoff, receipt, base)
+}
+/// Shared generated-payload check, independently testable with a fixture receipt.
+/// validate_handoff also verifies the receipt's live source and executable pins.
+pub fn validate_handoff_payload(handoff: &Value, receipt: &Value, base: &Path) -> Result<()> {
+    validate_contract(handoff, &handoff_candidate(receipt, base)?)
 }
 pub fn validate_contract(handoff: &Value, expected: &Value) -> Result<()> {
     validate_claims(&handoff["claims"])?;

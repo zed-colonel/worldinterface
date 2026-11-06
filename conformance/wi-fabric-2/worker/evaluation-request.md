@@ -1,3 +1,33 @@
+# WIP-15 F-001/F-002/F-003 campaign cost remediation
+
+Packet `4dcbe731183fb3f5e461ecaf52101f0b40a12187e136e019891c4423d7f973ae`
+was accepted in run `328acdc1-0146-4bed-b13e-b7553acdbd99` through
+2026-11-11T00:00:00Z. Its campaign passed 224/224 tests and all 55 cases on
+`b92a58e`; all adopted checks passed, but runtime-test needed a retry and review
+measured only about 12 seconds of headroom under its unchanged 1800-second limit.
+
+This remediation gives the campaign sole ownership of runtime tests, retaining
+all unregistered tests as checked additional outcomes. Runtime discovery builds
+explicitly selected harnesses once and receipt generation reuses those listings.
+The campaign timeout becomes 1500 seconds plus 15 seconds kill grace. Fixture
+regressions prove default ownership, ignored/ambiguous rejection and generated
+WP-034 handoff substitution checks. The item note and active ledger record the
+final accepted packet, passing receipt and timeout history. Provider source,
+supervisor disposition, operations, fixture tasks and execution limits stay the
+same. See `docs/work-items/WIP-15.md` for the cold-run timing evidence location.
+
+Request acceptance only of the exact canonical digest printed by
+`scripts/refresh-wi-worker-evaluation.py`, after the complete source-bound
+non-live build succeeds. Requested expiry remains **2026-11-11T00:00:00Z**.
+Limits remain six operations, reviewed nonsensitive fixtures, 15000 ms wall time
+and 65536 retained output bytes. No ordinary use, production credentials,
+hostile code, publication, integration or gate closure is requested. G4 and
+target closure remain with WIP-16. The separate receipt and trusted anchor
+retain only the actual historical acceptance. They do not authorize changed
+packet bytes; tests cannot create or retarget that acceptance.
+
+## Historical predecessor request
+
 # WIP-15 evidence writer and campaign runtime remediation
 
 Packet `4780080955b38a775f724de0970c02531cbe542a145bf15b2ecc8088c549ed83`

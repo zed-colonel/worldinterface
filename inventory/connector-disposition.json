@@ -1294,7 +1294,7 @@
         },
         {
           "path": "docs/work-items/WIP-15.md",
-          "source_sha256": "1ddb6d797360f823c492c9556b58ffd4edf0798714153b26b7ea5334270f35fd",
+          "source_sha256": "a7949687136476d5fe9f0038b4f3e63ea582571a5eaf4f126eb43d2c0eceaaec",
           "treatment": "Preserve WIP-15 seam simulation timing evidence when reviewing legacy delay deletion; no legacy connector is composed or removed here."
         },
         {
@@ -5231,7 +5231,7 @@
         },
         {
           "id": "crates/worldinterface-runtime/Cargo.toml::auxiliary-crate:worldinterface-runtime",
-          "source_sha256": "7eded72021431f7b86db376eae758d16259572fe4cfc25521f91bf15a61bced1",
+          "source_sha256": "dcedd59c9dfd8bd67b4f37ac645e97ff4e549a7f55907e859ac9566ffdbc039a",
           "registration_sites": []
         },
         {
@@ -7671,7 +7671,7 @@
         },
         {
           "id": "crates/worldinterface-runtime/tests/worker_campaign.rs::::source-module:crates/worldinterface-runtime/tests/worker_campaign.rs",
-          "source_sha256": "e46144f853184344239777335961477d2ea1dc636ea02ecae5f926cfd4f372d4",
+          "source_sha256": "f0c60b22645cf878320b0b079893c29f731496b4f6069bea675eaead08058797",
           "registration_sites": []
         },
         {
@@ -8703,7 +8703,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/Cargo.toml",
-          "source_sha256": "7eded72021431f7b86db376eae758d16259572fe4cfc25521f91bf15a61bced1",
+          "source_sha256": "dcedd59c9dfd8bd67b4f37ac645e97ff4e549a7f55907e859ac9566ffdbc039a",
           "treatment": "Retain target integration source and tests; audit shared declarations before any later selective removal."
         },
         {
@@ -9138,7 +9138,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/tests/worker_campaign.rs",
-          "source_sha256": "e46144f853184344239777335961477d2ea1dc636ea02ecae5f926cfd4f372d4",
+          "source_sha256": "f0c60b22645cf878320b0b079893c29f731496b4f6069bea675eaead08058797",
           "treatment": "Retain WIP-15 campaign infrastructure and executable producer evidence; no legacy removal or replacement qualification is asserted."
         },
         {
@@ -10690,7 +10690,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/Cargo.toml",
-          "source_sha256": "7eded72021431f7b86db376eae758d16259572fe4cfc25521f91bf15a61bced1",
+          "source_sha256": "dcedd59c9dfd8bd67b4f37ac645e97ff4e549a7f55907e859ac9566ffdbc039a",
           "treatment": "WIP-09: retain reviewed process adapter mechanics and fixture evidence; selective shared-infrastructure maintenance only, with no legacy removal or new approval claim."
         },
         {

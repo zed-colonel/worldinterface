@@ -290,20 +290,32 @@ the predecessor state, not an assertion that WIP-14 recovery remains unimplement
 
 [WIP-15](WIP-15.md) adds one adopted-runtime-test campaign over all 55 cases,
 scoped embedded control/cleanup inspection and the reviewed seam installation.
-WP-033/034 now have executable registrations. The operator approved moving
+WP-033/034 have executable registrations. The operator approved moving
 WP-034's executable contract to WIP-15; WIP-16 retains consumer documentation,
 final handoff publication and G4/target closure. Imported matrix bytes are
-unchanged and AQ remains the authorized crates.io 0.3.0 runtime. The changed
-packet requires renewed exact acceptance after its non-live build; the prior
-receipt/host anchor remain historical. No positive campaign passage or new gate
-closure is asserted by this candidate's source registration.
+unchanged and AQ remains the authorized crates.io 0.3.0 runtime.
 
-WIP-15 packet `47800809…88c549ed83` was accepted in run
+Packet `47800809…88c549ed83` was accepted in run
 `23917702-7b27-4be4-8317-2ff31d928044` through 2026-11-11T00:00:00Z.
 On `4e9feaa`, its campaign passed 221/222 tests but failed the seam observation's
-null encoding, leaving WP-031/034 failed. Adopted runtime-test timed out during
-the nested campaign. The remediation preserves unknown JSON observations,
-checks immutable publication, bounds independent harness concurrency to two and
-removes duplicate binary hashing/validation. Changed bytes require a fresh
-exact-packet acceptance and live verification; the actual receipt and anchor
-remain historical. See [WIP-15](WIP-15.md). No new gate closure is asserted.
+null encoding, leaving WP-031/034 failed. Runtime-test timed out. After the
+observation and runner repairs, the operator accepted final packet
+`4dcbe731183fb3f5e461ecaf52101f0b40a12187e136e019891c4423d7f973ae`
+in run `328acdc1-0146-4bed-b13e-b7553acdbd99`, recorded by `b92a58e`.
+On that commit the campaign passed 224/224 tests and 55/55 cases; receipt SHA-256
+`fe85c995fd2390ee89a14d1e87935ced74e7746fc0fc0523423189dcbb54cbfc`.
+All ten adopted checks passed, with runtime-test passing only after an initial
+30-minute timeout. Review measured about 29m48s including its build, leaving
+about 12 seconds of the unchanged check budget.
+
+F-001's remediation makes the campaign the sole runtime test runner, preserving
+all unregistered tests and exact outcome/log/binary checks, reuses one discovery
+pass, and bounds the campaign to 1500 seconds plus 15 seconds kill grace.
+F-002 records the actual final packet and passing history here and in the item
+note. F-003 checks a generated fixture handoff with embedded evidence.
+The item note identifies the cold-run timing report (build, campaign, remainder
+suite and headroom) and reproduction procedure. Changed bytes require renewed
+exact-packet acceptance after the non-live build; the receipt and anchor retain
+the historical `4dcbe731…` acceptance. Positive campaign verification and adopted
+runtime-test remain due on the replacement until that acceptance. No new gate
+closure is asserted.

@@ -38,25 +38,81 @@ fn wp_033_inflated_claims_cannot_convert_worker_success_to_consumer_acceptance()
 }
 #[test]
 fn wp_034_handoff_rejects_substituted_pins_missing_evidence_and_semantic_completion() {
-    let expected = json!({"producer":{"commit":"a","tree":"b","sources":{"profile":"p","fixture":"f"}},"tests":["exact-test"],"observations":{"coding":"digest"},"claims":campaign::claims()});
-    campaign::validate_contract(&expected, &expected).unwrap();
+    let temp = tempfile::tempdir().unwrap();
+    let observation = |seam| {
+        let controls = ["requested", "advertised", "applied", "observed"]
+            .into_iter()
+            .map(|key| {
+                (
+                    key.to_string(),
+                    json!([
+                        {"kind":"wall_time_ms","state":{"supported":1500}},
+                        {"kind":"output_bytes","state":{"supported":65536}},
+                        {"kind":"memory_bytes","state":"unsupported"}
+                    ]),
+                )
+            })
+            .chain([
+                ("schema".into(), json!(1)),
+                ("provider".into(), json!("fixture-provider")),
+                ("run".into(), json!("fixture-run")),
+            ])
+            .collect::<serde_json::Map<_, _>>();
+        json!({"schema":1,"evidence":{
+            "binding":{"tenant":"fixture-tenant","principal":"fixture-principal",
+                "provider":"fixture-provider","run":"fixture-run","request":"r","realization":"v"},
+            "seam_simulation":seam,"controls":if seam {serde_json::Value::Null} else {json!(controls)},
+            "cleanup":{"exit_confirmed":true,"exit_success":true,"cleanup_confirmed":true,
+                "retained_output_bytes":12,"term_signals":0,"kill_signals":0,"descendants_observed":0}},
+            "build":{"packet":"fixture-packet","fixture":"fixture-binary","helper":"helper-binary"},
+            "completed":true,"capacity_reserved":false,"receipt_count":6})
+    };
+    let mut observations = serde_json::Map::new();
+    for (name, seam) in [("coding.json", false), ("transform.json", false), ("seam.json", true)] {
+        let value = observation(seam);
+        campaign::validate_observation(&value, seam).unwrap();
+        let bytes = serde_json::to_vec(&value).unwrap();
+        observations.insert(name.into(), json!(wi_contract_check::hash(&bytes)));
+        fs::write(temp.path().join(name), bytes).unwrap();
+    }
+    let receipt = json!({"version":2,
+        "after":{"commit":"fixture-commit","tree":"fixture-tree",
+            "sources":{"profile":"fixture-profile","fixture":"fixture-source"}},
+        "outcomes":[{"reference":reference("exact-test"),"passed":true}],
+        "runtime_suite_outcomes":[],"embedded_observations":observations,
+        "cases":{"WP-034":true},"gates":{"WI-WORKER-G4":"open"},"claims":campaign::claims()});
+    let expected = campaign::handoff_candidate(&receipt, temp.path()).unwrap();
+    campaign::validate_handoff_payload(&expected, &receipt, temp.path()).unwrap();
     for pointer in [
         "/producer/commit",
         "/producer/tree",
         "/producer/sources/profile",
         "/producer/sources/fixture",
         "/tests/0",
-        "/observations/coding",
+        "/observations/coding.json",
+        "/producer_execution/0/build/fixture",
+        "/producer_execution/2/evidence/controls",
         "/claims/worker_completion",
         "/claims/consumer_task_acceptance",
     ] {
         let mut candidate = expected.clone();
         *candidate.pointer_mut(pointer).unwrap() = json!("substituted");
-        assert!(campaign::validate_contract(&candidate, &expected).is_err(), "{pointer}");
+        assert!(
+            campaign::validate_handoff_payload(&candidate, &receipt, temp.path()).is_err(),
+            "{pointer}"
+        );
     }
-    let mut candidate = expected.clone();
-    candidate.as_object_mut().unwrap().remove("tests");
-    assert!(campaign::validate_contract(&candidate, &expected).is_err());
+    for field in ["tests", "producer_execution", "observations", "runtime_suite_tests"] {
+        let mut candidate = expected.clone();
+        candidate.as_object_mut().unwrap().remove(field);
+        assert!(
+            campaign::validate_handoff_payload(&candidate, &receipt, temp.path()).is_err(),
+            "{field}"
+        );
+    }
+    // Embedded evidence is loaded by generation, not copied from the candidate.
+    fs::remove_file(temp.path().join("seam.json")).unwrap();
+    assert!(campaign::validate_handoff_payload(&expected, &receipt, temp.path()).is_err());
 }
 #[test]
 fn campaign_dirty_source_changing_or_stale_generation_is_rejected() {
@@ -196,4 +252,61 @@ fn campaign_parallel_harnesses_retain_failures_and_reject_substituted_binary_pin
     assert!(campaign::validate_executables(&outcomes, &selected).is_err());
     let replaced = BTreeMap::from([(reference("replace"), left)]);
     assert!(campaign::execute_selected(temp.path(), &replaced, temp.path()).is_err());
+}
+
+#[test]
+fn campaign_runtime_remainder_runs_unregistered_tests_without_repeating_registered_or_entry() {
+    let reference = |name: &str| TestRef {
+        manifest: "crates/worldinterface-runtime/Cargo.toml".into(),
+        package: "worldinterface-runtime".into(),
+        test: name.into(),
+    };
+    let mut harnesses = BTreeMap::new();
+    for name in ["registered", "unregistered", campaign::ENTRY] {
+        harnesses.insert(reference(name), vec![PathBuf::from(name)]);
+    }
+    let registered = BTreeMap::from([(reference("registered"), PathBuf::from("registered"))]);
+    let rest = campaign::runtime_remainder(&harnesses, &registered).unwrap();
+    assert_eq!(
+        rest,
+        BTreeMap::from([(reference("unregistered"), vec![PathBuf::from("unregistered")])])
+    );
+    harnesses.get_mut(&reference("unregistered")).unwrap().push("ambiguous".into());
+    assert_eq!(
+        campaign::runtime_remainder(&harnesses, &registered).unwrap()[&reference("unregistered")]
+            .len(),
+        2
+    );
+    harnesses.insert(reference("unregistered"), vec![]);
+    assert!(campaign::runtime_remainder(&harnesses, &registered).is_err());
+}
+
+#[test]
+fn campaign_shared_runtime_support_tests_retain_each_harness_and_reject_omission_or_substitution() {
+    let temp = tempfile::tempdir().unwrap();
+    let source = temp.path().join("fixture.rs");
+    fs::write(&source, "#[test] fn shared() {}\n").unwrap();
+    let left = temp.path().join("left");
+    let right = temp.path().join("right");
+    assert!(Command::new("timeout")
+        .args(["60s", "rustc", "--test"])
+        .arg(source)
+        .arg("-o")
+        .arg(&left)
+        .status()
+        .unwrap()
+        .success());
+    fs::copy(&left, &right).unwrap();
+    let reference = reference("shared");
+    let expected = BTreeMap::from([(reference.clone(), vec![left.clone(), right.clone()])]);
+    let first = campaign::execute(temp.path(), reference.clone(), &left, temp.path()).unwrap();
+    let second = campaign::execute(temp.path(), reference, &right, temp.path()).unwrap();
+    assert_ne!(first.log, second.log);
+    let outcomes = vec![first.clone(), second];
+    campaign::validate_runtime_results(&expected, &outcomes, temp.path()).unwrap();
+    assert!(campaign::validate_runtime_results(&expected, &[first.clone()], temp.path()).is_err());
+    assert!(campaign::validate_runtime_results(&expected, &[first.clone(), first], temp.path())
+        .is_err());
+    fs::write(right, b"substituted binary").unwrap();
+    assert!(campaign::validate_runtime_results(&expected, &outcomes, temp.path()).is_err());
 }

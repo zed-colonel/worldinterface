@@ -21,7 +21,7 @@ fn wi_owned_worker_acceptance_campaign() {
     let status = std::process::Command::new("timeout")
         .args([
             "--kill-after=15s",
-            "7200s",
+            "1500s",
             "cargo",
             "run",
             "--locked",
