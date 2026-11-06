@@ -318,8 +318,8 @@ impl<
                 {
                     return Err(rejected("Flow authority enlargement"));
                 }
-                if self.effect.port.descriptor() != &connector.descriptor
-                    || self.effect.port.registry_digest()? != p.document().registry_digest
+                if self.effect.port.check_binding(connector).is_err()
+                    || connector.registry_digest != p.document().registry_digest
                 {
                     return Err(rejected("Flow installed connector mismatch"));
                 }

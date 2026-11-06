@@ -1,3 +1,29 @@
+# WIP-14 embedded composition evaluation request
+
+Request acceptance only of the exact new canonical SHA-256 printed by
+`scripts/refresh-wi-worker-evaluation.py`, after the complete source-bound non-live
+build succeeds. The candidate adds WP-029 and WP-030: one embedded AQ engine,
+scoped application services, real coding/transform fixtures, lifecycle receipts,
+quarantine, crash recovery and restored published artifacts. It also includes
+F-007 durable custody ownership/fencing and shared Fabric grant-use accounting.
+AB-WI-019's second independent AQ store is WI-owned substitute evidence, not an
+EXO cognition integration claim. See `docs/work-items/WIP-14.md`.
+
+The storage profile becomes `local-embedded-16`. All changed source, coverage,
+contracts, dispositions, documentation and recipes are bound in the packet.
+Existing fixture limits remain: six supported operations, nonsensitive inputs,
+15000 ms wall time, 65536 retained output bytes, no production credentials and
+no ordinary use. Requested finite expiry remains **2026-11-11T00:00:00Z**.
+The process supervisor source and five-file exception are unchanged.
+
+The prior receipt and host anchor authorize only their historical packet. They
+remain unchanged until actual operator acceptance of this new digest. Acceptance
+is an execution gate; it grants no integration, publication, G4 closure, daemon,
+remote-provider or hostile-code qualification. Run targeted live cases and all
+ten adopted checks on the committed candidate after acceptance.
+
+## Historical predecessor requests
+
 # WIP-13 documentation-remediation evaluation request
 
 This candidate addresses F-007 using the review's explicit alternative: record

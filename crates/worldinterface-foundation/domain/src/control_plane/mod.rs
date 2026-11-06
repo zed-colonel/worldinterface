@@ -228,6 +228,9 @@ pub struct State {
     pub objects: Vec<ObjectView>,
     pub permits: Vec<Permit>,
     pub issuances: BTreeMap<ContentHash, CredentialMetadata>,
+    pub delivery_attempts: BTreeMap<ContentHash, CredentialDeliveryAttempt>,
+    pub delivery_reconciliations: BTreeMap<ContentHash, DeliveryReconciliation>,
+    pub effect_reservations: BTreeMap<ContentHash, Vec<UseLimit>>,
     pub revocations: BTreeMap<ContentHash, IssuanceStatus>,
     pub uses: BTreeMap<ContentHash, u32>,
     requests: BTreeMap<ContentHash, Retry>,
@@ -235,6 +238,48 @@ pub struct State {
     administration_authorizations: BTreeMap<ContentHash, AdministrationAuthorization>,
 }
 impl State {
+    pub fn caller_scope(&self, caller: &AuthenticatedCaller, now: u64) -> Result<Scope> {
+        self.scope(caller, &IdentityClaims::default(), now).map(|v| v.0)
+    }
+    pub fn authorize_demand(
+        &self,
+        caller: &AuthenticatedCaller,
+        demand: &ContentHash,
+        now: u64,
+    ) -> Result<Scope> {
+        let (scope, binding, agency) = self.scope(caller, &IdentityClaims::default(), now)?;
+        let (authority, _, _) = self.authority(&scope, &binding, &agency, now, &[])?;
+        if !authority.contains(demand) {
+            return Err(Error::Unavailable);
+        }
+        Ok(scope)
+    }
+    /// Trusted execution adapter: replace caller-independent evidence with the
+    /// current managed policy, unique binding and active grants.
+    pub fn execution_authority(
+        &self,
+        caller: &AuthenticatedCaller,
+        now: u64,
+        snapshot: &mut AuthorizationSnapshot,
+    ) -> Result<Scope> {
+        let (scope, binding, agency) = self.scope(caller, &IdentityClaims::default(), now)?;
+        let (_, policy, limits) = self.authority(&scope, &binding, &agency, now, &[])?;
+        snapshot.bindings = vec![binding];
+        snapshot.policy = policy;
+        snapshot.grants = self
+            .contents(&scope)
+            .into_iter()
+            .filter_map(|r| {
+                if let Content::Grant(g) = &r.content {
+                    let key = hash(&("grant", &g.tenant, &g.issuer, &g.id)).ok()?;
+                    limits.iter().any(|l| l.key == key).then(|| g.clone())
+                } else {
+                    None
+                }
+            })
+            .collect();
+        Ok(scope)
+    }
     fn config(&self) -> Result<&Configuration> {
         self.configuration.as_ref().ok_or(Error::Uninitialized)
     }
@@ -1158,6 +1203,9 @@ pub struct PermitInput {
     pub class: CredentialClass,
 }
 impl Permit {
+    pub fn reference(&self) -> &ObjectRef {
+        &self.reference
+    }
     pub fn binding(&self) -> &CredentialScope {
         &self.binding
     }
@@ -1231,12 +1279,91 @@ pub trait Custody {
         custody: &OpaqueRef,
         metadata: &CredentialMetadata,
     ) -> std::result::Result<(), CustodyReason>;
+    /// Ownership-aware delivery. A custody adapter that supplies fencing evidence
+    /// must reject the fenced attempt on every endpoint, including a late return
+    /// from the original host. Legacy adapters have no fencing evidence.
+    fn deliver_attempt(
+        &self,
+        custody: &OpaqueRef,
+        metadata: &CredentialMetadata,
+        _attempt: &CredentialDeliveryAttempt,
+    ) -> std::result::Result<(), CustodyReason> {
+        self.deliver(custody, metadata)
+    }
     fn revoke(
         &self,
         secret: &ObjectRef,
         version: u64,
         generation: u64,
     ) -> std::result::Result<(), CustodyReason>;
+    /// Atomically fence the original delivery owner, including on another host.
+    /// A local filesystem lock or elapsed deadline is not fencing evidence.
+    fn fence(
+        &self,
+        _attempt: &CredentialDeliveryAttempt,
+    ) -> std::result::Result<ContentHash, CustodyReason> {
+        Err(CustodyReason::Uncertain)
+    }
+    /// Invalidate precisely this possibly issued capability after fencing.
+    fn invalidate(
+        &self,
+        _metadata: &CredentialMetadata,
+        _attempt: &CredentialDeliveryAttempt,
+    ) -> std::result::Result<(), CustodyReason> {
+        Err(CustodyReason::Uncertain)
+    }
+}
+
+pub fn fencing_binding(attempt: &CredentialDeliveryAttempt) -> Result<ContentHash> {
+    hash(&("wi-delivery-fenced-v1", attempt))
+}
+pub fn claim_delivery(old: &State, attempt: &CredentialDeliveryAttempt) -> Result<State> {
+    let m = old.issuances.get(&attempt.issuance).ok_or(Error::Unavailable)?;
+    if m.status != IssuanceStatus::Pending
+        || old.delivery_attempts.contains_key(&attempt.issuance)
+        || attempt.metadata != hash(m)?
+        || attempt.claimed_at_ms < old.last_at_ms
+    {
+        return Err(Error::Conflict);
+    }
+    let mut new = old.clone();
+    new.delivery_attempts.insert(attempt.issuance.clone(), attempt.clone());
+    new.revision += 1;
+    Ok(new)
+}
+pub fn reconcile_delivery(old: &State, evidence: &DeliveryReconciliation) -> Result<State> {
+    let id = &evidence.attempt.issuance;
+    if old.delivery_attempts.get(id) != Some(&evidence.attempt)
+        || evidence.fenced != fencing_binding(&evidence.attempt)?
+    {
+        return Err(Error::Unavailable);
+    }
+    if old.delivery_reconciliations.get(id) == Some(evidence) {
+        return Ok(old.clone());
+    }
+    let mut new = old.clone();
+    let m = new.issuances.get_mut(id).ok_or(Error::Unavailable)?;
+    if !matches!(m.status, IssuanceStatus::Pending | IssuanceStatus::Unresolved) {
+        return Err(Error::Conflict);
+    }
+    m.status = IssuanceStatus::Unresolved;
+    m.reason = Some(CustodyReason::Uncertain);
+    new.delivery_reconciliations.insert(id.clone(), evidence.clone());
+    new.revision += 1;
+    Ok(new)
+}
+
+/// Effect reservations share the administration/issuance ledger. The identity
+/// includes the immutable effect and dispatch; replay never spends another use.
+pub fn reserve_effect(old: &State, operation: &ContentHash, limits: &[UseLimit]) -> Result<State> {
+    if let Some(previous) = old.effect_reservations.get(operation) {
+        return if previous == limits { Ok(old.clone()) } else { Err(Error::Conflict) };
+    }
+    let mut new = old.clone();
+    new.consume(limits)?;
+    new.effect_reservations.insert(operation.clone(), limits.to_vec());
+    new.revision += 1;
+    Ok(new)
 }
 
 /// Revalidate within the store's exclusive delivery/revocation transaction.
@@ -1277,6 +1404,17 @@ pub fn delivery_reference(s: &State, id: &ContentHash, now: u64) -> Result<Opaqu
         Content::Secret(secret) => Ok(secret.custody.clone()),
         _ => Err(Error::Unavailable),
     }
+}
+/// A stored delivery is historical evidence, not perpetual credential authority.
+pub fn active_credential(s: &State, id: &ContentHash, now: u64) -> Result<CredentialMetadata> {
+    let metadata = s.issuances.get(id).ok_or(Error::Unavailable)?;
+    if metadata.status != IssuanceStatus::Delivered {
+        return Err(Error::Unresolved);
+    }
+    let mut pending = s.clone();
+    pending.issuances.get_mut(id).ok_or(Error::Unavailable)?.status = IssuanceStatus::Pending;
+    delivery_reference(&pending, id, now)?;
+    Ok(metadata.clone())
 }
 pub fn finish_delivery(
     old: &State,

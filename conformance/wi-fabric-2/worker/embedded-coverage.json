@@ -1,0 +1,153 @@
+{
+  "version": 1,
+  "scope": "wi/WI-11/embedded-runtime",
+  "runtime_pass_asserted": false,
+  "evaluation": "Implementation candidate; positive live evaluation and adopted runtime-test await operator acceptance of the exact new source packet. Non-live evidence is recorded in WIP-14.md. G4 remains open.",
+  "second_store": "WI-owned independent AQ fixture; substitute for EXO cognition only",
+  "assumptions": {
+    "WP-A07": "Embedded Rust application composition only; no daemon, EXO cognition binary, Platform or isolation claim."
+  },
+  "consumer_sources": [
+    "crates/worldinterface-runtime/tests/embedded_worker.rs",
+    "crates/worldinterface-runtime/tests/support/embedded_consumer.rs"
+  ],
+  "assigned_cases": {
+    "WP-029": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "wp_029_embedded_coding_and_transform_use_one_engine_and_application_services"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "wp_029_restored_publication_is_readable_without_original_workspace_and_keeps_capacity"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "wp_029_embedded_crash_recovery_quarantines_without_replacement"
+      }
+    ],
+    "WP-030": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "wp_030_consumer_and_helper_imports_stay_inside_application_boundary"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "wp_030_embedded_forgery_scope_and_unauthorized_controls_fail_closed"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "wp_030_recovery_only_facade_enforces_disclosure_revocation_and_exclusive_ownership"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "wp_030_catalog_quarantine_and_revocation_fence_queued_execution"
+      }
+    ],
+    "AB-WI-019": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "ab_wi_019_two_independent_stores_restore_complete_wal_artifacts_and_control_history"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "ab_wi_019_invalid_restore_never_publishes_partial_destination"
+      }
+    ]
+  },
+  "required_obligations": {
+    "composition": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "wp_029_embedded_coding_and_transform_use_one_engine_and_application_services"
+      }
+    ],
+    "consumer-boundary": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "wp_030_consumer_and_helper_imports_stay_inside_application_boundary"
+      }
+    ],
+    "scoped-disclosure": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "wp_030_embedded_forgery_scope_and_unauthorized_controls_fail_closed"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "wp_030_recovery_only_facade_enforces_disclosure_revocation_and_exclusive_ownership"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "wp_030_catalog_quarantine_and_revocation_fence_queued_execution"
+      }
+    ],
+    "shared-use-accounting": [
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-storage",
+        "test": "control_plane::tests::shared_effect_and_credential_reservations_have_one_atomic_last_use"
+      }
+    ],
+    "interrupted-delivery": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "f007_crash_cuts_reconcile_exact_ownership_without_redelivery"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "f007_restored_pending_attempt_requires_custody_fencing_and_uncertainty_stays_unresolved"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "f007_live_delivery_excludes_recovery_and_concurrent_retry"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "f007_expiry_rotation_and_recovery_preserve_the_original_credential_generation"
+      }
+    ],
+    "offline-restore": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "ab_wi_019_two_independent_stores_restore_complete_wal_artifacts_and_control_history"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "ab_wi_019_invalid_restore_never_publishes_partial_destination"
+      }
+    ],
+    "restart-quarantine": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "wp_029_restored_publication_is_readable_without_original_workspace_and_keeps_capacity"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "wp_029_embedded_crash_recovery_quarantines_without_replacement"
+      }
+    ]
+  }
+}

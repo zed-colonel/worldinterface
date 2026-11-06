@@ -839,9 +839,27 @@
       "source_record_sha256": "b9e4b2903e329810e399c1624d661e8223802ad6d482f45bf0e9d3c65a515994",
       "gate": "WI-WORKER-G4",
       "owning_item": "WIP-14",
-      "status": "planned",
-      "coverage_refs": [],
-      "tests": []
+      "status": "implemented",
+      "coverage_refs": [
+        "conformance/wi-fabric-2/worker/embedded-coverage.json"
+      ],
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_029_embedded_coding_and_transform_use_one_engine_and_application_services"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_029_restored_publication_is_readable_without_original_workspace_and_keeps_capacity"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_029_embedded_crash_recovery_quarantines_without_replacement"
+        }
+      ]
     },
     {
       "id": "WP-030",
@@ -849,9 +867,32 @@
       "source_record_sha256": "4bcf5c2a44cff6d7caed288b627dee36e1f462a71cf6e6453d243b23e6fe23f7",
       "gate": "WI-WORKER-G4",
       "owning_item": "WIP-14",
-      "status": "planned",
-      "coverage_refs": [],
-      "tests": []
+      "status": "implemented",
+      "coverage_refs": [
+        "conformance/wi-fabric-2/worker/embedded-coverage.json"
+      ],
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_030_consumer_and_helper_imports_stay_inside_application_boundary"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_030_embedded_forgery_scope_and_unauthorized_controls_fail_closed"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_030_recovery_only_facade_enforces_disclosure_revocation_and_exclusive_ownership"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_030_catalog_quarantine_and_revocation_fence_queued_execution"
+        }
+      ]
     },
     {
       "id": "WP-031",
@@ -1603,9 +1644,22 @@
       "source_record_sha256": "f70c3b2ce740051245605dc5792bab0d24629dd97e19568ca160fe8ea1b211a0",
       "gate": "WI-WORKER-G4",
       "owning_item": "WIP-14",
-      "status": "planned",
-      "coverage_refs": [],
-      "tests": []
+      "status": "implemented",
+      "coverage_refs": [
+        "conformance/wi-fabric-2/worker/embedded-coverage.json"
+      ],
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_019_two_independent_stores_restore_complete_wal_artifacts_and_control_history"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_019_invalid_restore_never_publishes_partial_destination"
+        }
+      ]
     },
     {
       "id": "AB-WI-020",

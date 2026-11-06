@@ -255,3 +255,12 @@ remains deferred; the Pending ambiguity is documented without claiming it fixed.
 The added declarations/tests and the storage profile revision are an explicit
 inventory/disposition proposal for this remediation's review. The obligation
 matrix preserves its authoritative WI-11/domain scope and exact test references.
+
+## WIP-14 implementation successor
+
+The F-007 gap above describes this predecessor's delivered boundary. The WIP-14
+candidate implements durable claims, exclusive local delivery ownership, exact
+custody fencing and uncertainty/invalidation reconciliation, with crash and restore
+tests. See [WIP-14](WIP-14.md). Its storage profile is `local-embedded-16`; this
+predecessor's profile remains historical. Positive worker verification of the
+composed runtime still requires acceptance of the revised source packet.

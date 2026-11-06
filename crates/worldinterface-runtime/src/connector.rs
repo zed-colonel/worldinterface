@@ -98,6 +98,18 @@ pub enum ReconcileOutcome {
 /// Invoke observations cannot change resource, key, operation or authorization.
 pub trait Connector: Send + Sync {
     fn descriptor(&self) -> &ConnectorDescriptor;
+    /// Validate the exact persisted binding against the immutable installed
+    /// registry. Dispatchers override this without weakening either identity.
+    fn check_binding(&self, binding: &ConnectorBinding) -> Result<()> {
+        binding.validate()?;
+        validate_connector(self.descriptor())?;
+        if self.registry_digest()? != binding.registry_digest
+            || self.descriptor() != &binding.descriptor
+        {
+            return Err("installed connector drift".into());
+        }
+        Ok(())
+    }
     /// Host composition may bind a larger immutable snapshot. Singleton registration is the default.
     fn registry_digest(&self) -> Result<ContentHash> {
         Ok(ConnectorRegistry::new(vec![self.descriptor().clone()])?.digest().clone())
@@ -126,6 +138,9 @@ pub trait Connector: Send + Sync {
     fn cancel(&self, request: ReconcileRequest) -> Result<CancelObservation>;
 }
 impl<T: Connector + ?Sized> Connector for Arc<T> {
+    fn check_binding(&self, b: &ConnectorBinding) -> Result<()> {
+        (**self).check_binding(b)
+    }
     fn descriptor(&self) -> &ConnectorDescriptor {
         (**self).descriptor()
     }
@@ -172,14 +187,7 @@ pub(crate) fn check_installed(
     connector: &impl Connector,
     execution: &ConnectorExecution,
 ) -> Result<()> {
-    execution.binding.validate()?;
-    validate_connector(connector.descriptor())?;
-    if connector.registry_digest()? != execution.binding.registry_digest
-        || connector.descriptor() != &execution.binding.descriptor
-    {
-        return Err("installed connector drift".into());
-    }
-    Ok(())
+    connector.check_binding(&execution.binding)
 }
 
 /// An implementation can inspect an envelope but cannot substitute its authority.

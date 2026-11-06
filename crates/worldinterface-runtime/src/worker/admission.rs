@@ -31,6 +31,10 @@ pub struct WorkerEffect {
     pub exports: Vec<Export>,
 }
 pub struct AdmittedWorker {
+    pub(crate) connectors: Vec<ConnectorBinding>,
+    pub(crate) intent: EffectIntentId,
+    pub(crate) dispatch: usize,
+    pub(crate) authority: worldinterface_domain::authorization::AuthorizationSnapshot,
     pub catalog: ContentHash,
     pub registration: worldinterface_capability::process_catalog::ProcessRegistrationRecord,
     pub artifact_policy: worldinterface_domain::worker::WorkerArtifactPolicy,
@@ -267,7 +271,37 @@ pub fn derive<S: TrustedApprovals>(
     if !matches!(request.operation, Operation::Inspect | Operation::Terminate) {
         super::catalog::authorize_admission(root, &binding, &registration)?;
     }
+    let installed =
+        bound.resolved.connector_execution.as_ref().ok_or("worker connector binding absent")?;
+    let combined = crate::connector::ConnectorRegistry::new(
+        OPERATIONS
+            .iter()
+            .map(|op| super::connector::descriptor(*op))
+            .collect::<Result<Vec<_>>>()?,
+    )?
+    .bindings()?;
+    let singleton = OPERATIONS
+        .iter()
+        .map(|op| {
+            Ok(crate::connector::ConnectorRegistry::new(vec![super::connector::descriptor(*op)?])?
+                .bindings()?)
+        })
+        .collect::<Result<Vec<_>>>()?
+        .into_iter()
+        .flatten()
+        .collect::<Vec<_>>();
+    let connectors = if combined.contains(&installed.binding) {
+        combined
+    } else if singleton.contains(&installed.binding) {
+        singleton
+    } else {
+        return Err("worker installed registry mismatch".into());
+    };
     Ok(AdmittedWorker {
+        connectors,
+        intent: bound.intent.clone(),
+        dispatch: effect.dispatches.len(),
+        authority: facts.clone(),
         catalog,
         registration: record,
         artifact_policy: super::artifacts::policy(

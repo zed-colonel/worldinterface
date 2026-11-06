@@ -32,3 +32,6 @@ pub mod worker_process;
 
 #[cfg(target_os = "linux")]
 pub mod worker;
+
+#[cfg(target_os = "linux")]
+pub mod embedded;

@@ -50,6 +50,15 @@ pub struct Approval {
     fixture: ContentHash,
     helper: ContentHash,
 }
+impl Approval {
+    pub fn approve_policy(&self, p: &Policy) {
+        self.approved_policies.lock().unwrap().insert(ContentHash::of(&canonical_data(p).unwrap()));
+    }
+}
+pub fn embedded_build() -> (std::path::PathBuf, std::path::PathBuf) {
+    let b = build::current();
+    (b.fixture.clone(), b.helper.clone())
+}
 impl TrustedApprovals for Approval {
     fn registered(
         &self,

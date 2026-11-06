@@ -5337,7 +5337,7 @@
     "kind": "enum",
     "path": "crates/worldinterface-foundation/domain/src/control_plane/mod.rs",
     "name": "Content",
-    "source_sha256": "d3079f6a60bea3207313c35d4df598095856a7aaae316acf697b3bf020da03a4",
+    "source_sha256": "baaabd35701117a944f038a540519f89a691b35696992d3b92d07aec81df928f",
     "conditions": [],
     "registration_sites": []
   },
@@ -5346,7 +5346,7 @@
     "kind": "enum",
     "path": "crates/worldinterface-foundation/domain/src/control_plane/mod.rs",
     "name": "Error",
-    "source_sha256": "d3079f6a60bea3207313c35d4df598095856a7aaae316acf697b3bf020da03a4",
+    "source_sha256": "baaabd35701117a944f038a540519f89a691b35696992d3b92d07aec81df928f",
     "conditions": [],
     "registration_sites": []
   },
@@ -5355,7 +5355,7 @@
     "kind": "enum",
     "path": "crates/worldinterface-foundation/domain/src/control_plane/mod.rs",
     "name": "Operation",
-    "source_sha256": "d3079f6a60bea3207313c35d4df598095856a7aaae316acf697b3bf020da03a4",
+    "source_sha256": "baaabd35701117a944f038a540519f89a691b35696992d3b92d07aec81df928f",
     "conditions": [],
     "registration_sites": []
   },
@@ -5364,7 +5364,7 @@
     "kind": "enum",
     "path": "crates/worldinterface-foundation/domain/src/control_plane/mod.rs",
     "name": "Outcome",
-    "source_sha256": "d3079f6a60bea3207313c35d4df598095856a7aaae316acf697b3bf020da03a4",
+    "source_sha256": "baaabd35701117a944f038a540519f89a691b35696992d3b92d07aec81df928f",
     "conditions": [],
     "registration_sites": []
   },
@@ -5373,7 +5373,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-foundation/domain/src/control_plane/mod.rs",
     "name": "crates/worldinterface-foundation/domain/src/control_plane/mod.rs",
-    "source_sha256": "d3079f6a60bea3207313c35d4df598095856a7aaae316acf697b3bf020da03a4",
+    "source_sha256": "baaabd35701117a944f038a540519f89a691b35696992d3b92d07aec81df928f",
     "conditions": [],
     "registration_sites": []
   },
@@ -5382,7 +5382,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/domain/src/control_plane/mod.rs",
     "name": "AdminCommand",
-    "source_sha256": "d3079f6a60bea3207313c35d4df598095856a7aaae316acf697b3bf020da03a4",
+    "source_sha256": "baaabd35701117a944f038a540519f89a691b35696992d3b92d07aec81df928f",
     "conditions": [],
     "registration_sites": []
   },
@@ -5391,7 +5391,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/domain/src/control_plane/mod.rs",
     "name": "AdministrationAuthorization",
-    "source_sha256": "d3079f6a60bea3207313c35d4df598095856a7aaae316acf697b3bf020da03a4",
+    "source_sha256": "baaabd35701117a944f038a540519f89a691b35696992d3b92d07aec81df928f",
     "conditions": [],
     "registration_sites": []
   },
@@ -5400,7 +5400,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/domain/src/control_plane/mod.rs",
     "name": "Attribution",
-    "source_sha256": "d3079f6a60bea3207313c35d4df598095856a7aaae316acf697b3bf020da03a4",
+    "source_sha256": "baaabd35701117a944f038a540519f89a691b35696992d3b92d07aec81df928f",
     "conditions": [],
     "registration_sites": []
   },
@@ -5409,7 +5409,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/domain/src/control_plane/mod.rs",
     "name": "Bootstrap",
-    "source_sha256": "d3079f6a60bea3207313c35d4df598095856a7aaae316acf697b3bf020da03a4",
+    "source_sha256": "baaabd35701117a944f038a540519f89a691b35696992d3b92d07aec81df928f",
     "conditions": [],
     "registration_sites": []
   },
@@ -5418,7 +5418,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/domain/src/control_plane/mod.rs",
     "name": "Configuration",
-    "source_sha256": "d3079f6a60bea3207313c35d4df598095856a7aaae316acf697b3bf020da03a4",
+    "source_sha256": "baaabd35701117a944f038a540519f89a691b35696992d3b92d07aec81df928f",
     "conditions": [],
     "registration_sites": []
   },
@@ -5427,7 +5427,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/domain/src/control_plane/mod.rs",
     "name": "Permit",
-    "source_sha256": "d3079f6a60bea3207313c35d4df598095856a7aaae316acf697b3bf020da03a4",
+    "source_sha256": "baaabd35701117a944f038a540519f89a691b35696992d3b92d07aec81df928f",
     "conditions": [],
     "registration_sites": []
   },
@@ -5436,7 +5436,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/domain/src/control_plane/mod.rs",
     "name": "PermitInput",
-    "source_sha256": "d3079f6a60bea3207313c35d4df598095856a7aaae316acf697b3bf020da03a4",
+    "source_sha256": "baaabd35701117a944f038a540519f89a691b35696992d3b92d07aec81df928f",
     "conditions": [],
     "registration_sites": []
   },
@@ -5445,7 +5445,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/domain/src/control_plane/mod.rs",
     "name": "Request",
-    "source_sha256": "d3079f6a60bea3207313c35d4df598095856a7aaae316acf697b3bf020da03a4",
+    "source_sha256": "baaabd35701117a944f038a540519f89a691b35696992d3b92d07aec81df928f",
     "conditions": [],
     "registration_sites": []
   },
@@ -5454,7 +5454,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/domain/src/control_plane/mod.rs",
     "name": "Retry",
-    "source_sha256": "d3079f6a60bea3207313c35d4df598095856a7aaae316acf697b3bf020da03a4",
+    "source_sha256": "baaabd35701117a944f038a540519f89a691b35696992d3b92d07aec81df928f",
     "conditions": [],
     "registration_sites": []
   },
@@ -5463,7 +5463,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/domain/src/control_plane/mod.rs",
     "name": "Revision",
-    "source_sha256": "d3079f6a60bea3207313c35d4df598095856a7aaae316acf697b3bf020da03a4",
+    "source_sha256": "baaabd35701117a944f038a540519f89a691b35696992d3b92d07aec81df928f",
     "conditions": [],
     "registration_sites": []
   },
@@ -5472,7 +5472,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/domain/src/control_plane/mod.rs",
     "name": "Secret",
-    "source_sha256": "d3079f6a60bea3207313c35d4df598095856a7aaae316acf697b3bf020da03a4",
+    "source_sha256": "baaabd35701117a944f038a540519f89a691b35696992d3b92d07aec81df928f",
     "conditions": [],
     "registration_sites": []
   },
@@ -5481,7 +5481,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/domain/src/control_plane/mod.rs",
     "name": "Service",
-    "source_sha256": "d3079f6a60bea3207313c35d4df598095856a7aaae316acf697b3bf020da03a4",
+    "source_sha256": "baaabd35701117a944f038a540519f89a691b35696992d3b92d07aec81df928f",
     "conditions": [],
     "registration_sites": []
   },
@@ -5490,7 +5490,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/domain/src/control_plane/mod.rs",
     "name": "State",
-    "source_sha256": "d3079f6a60bea3207313c35d4df598095856a7aaae316acf697b3bf020da03a4",
+    "source_sha256": "baaabd35701117a944f038a540519f89a691b35696992d3b92d07aec81df928f",
     "conditions": [],
     "registration_sites": []
   },
@@ -5499,7 +5499,7 @@
     "kind": "trait",
     "path": "crates/worldinterface-foundation/domain/src/control_plane/mod.rs",
     "name": "Authentication",
-    "source_sha256": "d3079f6a60bea3207313c35d4df598095856a7aaae316acf697b3bf020da03a4",
+    "source_sha256": "baaabd35701117a944f038a540519f89a691b35696992d3b92d07aec81df928f",
     "conditions": [],
     "registration_sites": []
   },
@@ -5508,7 +5508,7 @@
     "kind": "trait",
     "path": "crates/worldinterface-foundation/domain/src/control_plane/mod.rs",
     "name": "Custody",
-    "source_sha256": "d3079f6a60bea3207313c35d4df598095856a7aaae316acf697b3bf020da03a4",
+    "source_sha256": "baaabd35701117a944f038a540519f89a691b35696992d3b92d07aec81df928f",
     "conditions": [],
     "registration_sites": []
   },
@@ -5517,7 +5517,7 @@
     "kind": "trait",
     "path": "crates/worldinterface-foundation/domain/src/control_plane/mod.rs",
     "name": "Repository",
-    "source_sha256": "d3079f6a60bea3207313c35d4df598095856a7aaae316acf697b3bf020da03a4",
+    "source_sha256": "baaabd35701117a944f038a540519f89a691b35696992d3b92d07aec81df928f",
     "conditions": [],
     "registration_sites": []
   },
@@ -5526,7 +5526,7 @@
     "kind": "trait",
     "path": "crates/worldinterface-foundation/domain/src/control_plane/mod.rs",
     "name": "TrustedClock",
-    "source_sha256": "d3079f6a60bea3207313c35d4df598095856a7aaae316acf697b3bf020da03a4",
+    "source_sha256": "baaabd35701117a944f038a540519f89a691b35696992d3b92d07aec81df928f",
     "conditions": [],
     "registration_sites": []
   },
@@ -5535,7 +5535,7 @@
     "kind": "type",
     "path": "crates/worldinterface-foundation/domain/src/control_plane/mod.rs",
     "name": "Result",
-    "source_sha256": "d3079f6a60bea3207313c35d4df598095856a7aaae316acf697b3bf020da03a4",
+    "source_sha256": "baaabd35701117a944f038a540519f89a691b35696992d3b92d07aec81df928f",
     "conditions": [],
     "registration_sites": []
   },
@@ -7011,7 +7011,7 @@
     "kind": "enum",
     "path": "crates/worldinterface-foundation/protocol/src/control_plane.rs",
     "name": "Audience",
-    "source_sha256": "b470fd83e46a14bb47963739a0d11173e87cd97fe8bca0347093886a3c4bcba4",
+    "source_sha256": "dc05b21b2a3d96202a1ee300c2e3cb66dbf00fe8843ac9775947d14787a13b62",
     "conditions": [],
     "registration_sites": []
   },
@@ -7020,7 +7020,7 @@
     "kind": "enum",
     "path": "crates/worldinterface-foundation/protocol/src/control_plane.rs",
     "name": "CredentialClass",
-    "source_sha256": "b470fd83e46a14bb47963739a0d11173e87cd97fe8bca0347093886a3c4bcba4",
+    "source_sha256": "dc05b21b2a3d96202a1ee300c2e3cb66dbf00fe8843ac9775947d14787a13b62",
     "conditions": [],
     "registration_sites": []
   },
@@ -7029,7 +7029,7 @@
     "kind": "enum",
     "path": "crates/worldinterface-foundation/protocol/src/control_plane.rs",
     "name": "CustodyReason",
-    "source_sha256": "b470fd83e46a14bb47963739a0d11173e87cd97fe8bca0347093886a3c4bcba4",
+    "source_sha256": "dc05b21b2a3d96202a1ee300c2e3cb66dbf00fe8843ac9775947d14787a13b62",
     "conditions": [],
     "registration_sites": []
   },
@@ -7038,7 +7038,7 @@
     "kind": "enum",
     "path": "crates/worldinterface-foundation/protocol/src/control_plane.rs",
     "name": "IssuanceStatus",
-    "source_sha256": "b470fd83e46a14bb47963739a0d11173e87cd97fe8bca0347093886a3c4bcba4",
+    "source_sha256": "dc05b21b2a3d96202a1ee300c2e3cb66dbf00fe8843ac9775947d14787a13b62",
     "conditions": [],
     "registration_sites": []
   },
@@ -7047,7 +7047,7 @@
     "kind": "enum",
     "path": "crates/worldinterface-foundation/protocol/src/control_plane.rs",
     "name": "ObjectKind",
-    "source_sha256": "b470fd83e46a14bb47963739a0d11173e87cd97fe8bca0347093886a3c4bcba4",
+    "source_sha256": "dc05b21b2a3d96202a1ee300c2e3cb66dbf00fe8843ac9775947d14787a13b62",
     "conditions": [],
     "registration_sites": []
   },
@@ -7056,7 +7056,7 @@
     "kind": "enum",
     "path": "crates/worldinterface-foundation/protocol/src/control_plane.rs",
     "name": "Profile",
-    "source_sha256": "b470fd83e46a14bb47963739a0d11173e87cd97fe8bca0347093886a3c4bcba4",
+    "source_sha256": "dc05b21b2a3d96202a1ee300c2e3cb66dbf00fe8843ac9775947d14787a13b62",
     "conditions": [],
     "registration_sites": []
   },
@@ -7065,7 +7065,16 @@
     "kind": "source-module",
     "path": "crates/worldinterface-foundation/protocol/src/control_plane.rs",
     "name": "crates/worldinterface-foundation/protocol/src/control_plane.rs",
-    "source_sha256": "b470fd83e46a14bb47963739a0d11173e87cd97fe8bca0347093886a3c4bcba4",
+    "source_sha256": "dc05b21b2a3d96202a1ee300c2e3cb66dbf00fe8843ac9775947d14787a13b62",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/control_plane.rs::::struct:CredentialDeliveryAttempt",
+    "kind": "struct",
+    "path": "crates/worldinterface-foundation/protocol/src/control_plane.rs",
+    "name": "CredentialDeliveryAttempt",
+    "source_sha256": "dc05b21b2a3d96202a1ee300c2e3cb66dbf00fe8843ac9775947d14787a13b62",
     "conditions": [],
     "registration_sites": []
   },
@@ -7074,7 +7083,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/protocol/src/control_plane.rs",
     "name": "CredentialMetadata",
-    "source_sha256": "b470fd83e46a14bb47963739a0d11173e87cd97fe8bca0347093886a3c4bcba4",
+    "source_sha256": "dc05b21b2a3d96202a1ee300c2e3cb66dbf00fe8843ac9775947d14787a13b62",
     "conditions": [],
     "registration_sites": []
   },
@@ -7083,7 +7092,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/protocol/src/control_plane.rs",
     "name": "CredentialRequest",
-    "source_sha256": "b470fd83e46a14bb47963739a0d11173e87cd97fe8bca0347093886a3c4bcba4",
+    "source_sha256": "dc05b21b2a3d96202a1ee300c2e3cb66dbf00fe8843ac9775947d14787a13b62",
     "conditions": [],
     "registration_sites": []
   },
@@ -7092,7 +7101,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/protocol/src/control_plane.rs",
     "name": "CredentialScope",
-    "source_sha256": "b470fd83e46a14bb47963739a0d11173e87cd97fe8bca0347093886a3c4bcba4",
+    "source_sha256": "dc05b21b2a3d96202a1ee300c2e3cb66dbf00fe8843ac9775947d14787a13b62",
     "conditions": [],
     "registration_sites": []
   },
@@ -7101,7 +7110,16 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/protocol/src/control_plane.rs",
     "name": "Cursor",
-    "source_sha256": "b470fd83e46a14bb47963739a0d11173e87cd97fe8bca0347093886a3c4bcba4",
+    "source_sha256": "dc05b21b2a3d96202a1ee300c2e3cb66dbf00fe8843ac9775947d14787a13b62",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/control_plane.rs::::struct:DeliveryReconciliation",
+    "kind": "struct",
+    "path": "crates/worldinterface-foundation/protocol/src/control_plane.rs",
+    "name": "DeliveryReconciliation",
+    "source_sha256": "dc05b21b2a3d96202a1ee300c2e3cb66dbf00fe8843ac9775947d14787a13b62",
     "conditions": [],
     "registration_sites": []
   },
@@ -7110,7 +7128,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/protocol/src/control_plane.rs",
     "name": "ObjectRef",
-    "source_sha256": "b470fd83e46a14bb47963739a0d11173e87cd97fe8bca0347093886a3c4bcba4",
+    "source_sha256": "dc05b21b2a3d96202a1ee300c2e3cb66dbf00fe8843ac9775947d14787a13b62",
     "conditions": [],
     "registration_sites": []
   },
@@ -7119,7 +7137,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/protocol/src/control_plane.rs",
     "name": "ObjectView",
-    "source_sha256": "b470fd83e46a14bb47963739a0d11173e87cd97fe8bca0347093886a3c4bcba4",
+    "source_sha256": "dc05b21b2a3d96202a1ee300c2e3cb66dbf00fe8843ac9775947d14787a13b62",
     "conditions": [],
     "registration_sites": []
   },
@@ -7128,7 +7146,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/protocol/src/control_plane.rs",
     "name": "Page",
-    "source_sha256": "b470fd83e46a14bb47963739a0d11173e87cd97fe8bca0347093886a3c4bcba4",
+    "source_sha256": "dc05b21b2a3d96202a1ee300c2e3cb66dbf00fe8843ac9775947d14787a13b62",
     "conditions": [],
     "registration_sites": []
   },
@@ -7137,7 +7155,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/protocol/src/control_plane.rs",
     "name": "ProfileStatus",
-    "source_sha256": "b470fd83e46a14bb47963739a0d11173e87cd97fe8bca0347093886a3c4bcba4",
+    "source_sha256": "dc05b21b2a3d96202a1ee300c2e3cb66dbf00fe8843ac9775947d14787a13b62",
     "conditions": [],
     "registration_sites": []
   },
@@ -7146,7 +7164,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/protocol/src/control_plane.rs",
     "name": "Query",
-    "source_sha256": "b470fd83e46a14bb47963739a0d11173e87cd97fe8bca0347093886a3c4bcba4",
+    "source_sha256": "dc05b21b2a3d96202a1ee300c2e3cb66dbf00fe8843ac9775947d14787a13b62",
     "conditions": [],
     "registration_sites": []
   },
@@ -7155,7 +7173,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/protocol/src/control_plane.rs",
     "name": "Scope",
-    "source_sha256": "b470fd83e46a14bb47963739a0d11173e87cd97fe8bca0347093886a3c4bcba4",
+    "source_sha256": "dc05b21b2a3d96202a1ee300c2e3cb66dbf00fe8843ac9775947d14787a13b62",
     "conditions": [],
     "registration_sites": []
   },
@@ -8410,8 +8428,19 @@
     "kind": "enum",
     "path": "crates/worldinterface-foundation/storage/src/control_plane.rs",
     "name": "Event",
-    "source_sha256": "29e9cfd661f8c3f747f148ca7c1710ee16ce5e94ec2ecac1de75390b75c4b311",
+    "source_sha256": "fd91c2ff4c3bc0a9b8aa8f83e9e87ac8b263ee38bd5d457cb628cde9fb012631",
     "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/control_plane.rs::::module:control_fixture@10d1b0eff34c",
+    "kind": "module",
+    "path": "crates/worldinterface-foundation/storage/src/control_plane.rs",
+    "name": "control_fixture",
+    "source_sha256": "fd91c2ff4c3bc0a9b8aa8f83e9e87ac8b263ee38bd5d457cb628cde9fb012631",
+    "conditions": [
+      "# [cfg (test)]"
+    ],
     "registration_sites": []
   },
   {
@@ -8419,7 +8448,7 @@
     "kind": "module",
     "path": "crates/worldinterface-foundation/storage/src/control_plane.rs",
     "name": "tests",
-    "source_sha256": "29e9cfd661f8c3f747f148ca7c1710ee16ce5e94ec2ecac1de75390b75c4b311",
+    "source_sha256": "fd91c2ff4c3bc0a9b8aa8f83e9e87ac8b263ee38bd5d457cb628cde9fb012631",
     "conditions": [
       "# [cfg (test)]"
     ],
@@ -8430,7 +8459,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-foundation/storage/src/control_plane.rs",
     "name": "crates/worldinterface-foundation/storage/src/control_plane.rs",
-    "source_sha256": "29e9cfd661f8c3f747f148ca7c1710ee16ce5e94ec2ecac1de75390b75c4b311",
+    "source_sha256": "fd91c2ff4c3bc0a9b8aa8f83e9e87ac8b263ee38bd5d457cb628cde9fb012631",
     "conditions": [],
     "registration_sites": []
   },
@@ -8439,7 +8468,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/storage/src/control_plane.rs",
     "name": "ControlPlaneRepository",
-    "source_sha256": "29e9cfd661f8c3f747f148ca7c1710ee16ce5e94ec2ecac1de75390b75c4b311",
+    "source_sha256": "fd91c2ff4c3bc0a9b8aa8f83e9e87ac8b263ee38bd5d457cb628cde9fb012631",
     "conditions": [],
     "registration_sites": []
   },
@@ -8448,7 +8477,7 @@
     "kind": "type",
     "path": "crates/worldinterface-foundation/storage/src/control_plane.rs",
     "name": "ProjectionEntries",
-    "source_sha256": "29e9cfd661f8c3f747f148ca7c1710ee16ce5e94ec2ecac1de75390b75c4b311",
+    "source_sha256": "fd91c2ff4c3bc0a9b8aa8f83e9e87ac8b263ee38bd5d457cb628cde9fb012631",
     "conditions": [],
     "registration_sites": []
   },
@@ -8466,7 +8495,7 @@
     "kind": "module",
     "path": "crates/worldinterface-foundation/storage/src/effect.rs",
     "name": "tests",
-    "source_sha256": "f76e049b4f57c598c3a1f4b4e08bf2ec9341112b65332ac1e65ed8b24a7ae5b8",
+    "source_sha256": "46d48ba7b1400bcf7e307828d54db45c16bc564b2b37977258c5e8d2091f6075",
     "conditions": [
       "# [cfg (test)]"
     ],
@@ -8477,7 +8506,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-foundation/storage/src/effect.rs",
     "name": "crates/worldinterface-foundation/storage/src/effect.rs",
-    "source_sha256": "f76e049b4f57c598c3a1f4b4e08bf2ec9341112b65332ac1e65ed8b24a7ae5b8",
+    "source_sha256": "46d48ba7b1400bcf7e307828d54db45c16bc564b2b37977258c5e8d2091f6075",
     "conditions": [],
     "registration_sites": []
   },
@@ -8486,7 +8515,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/storage/src/effect.rs",
     "name": "DispatchFault",
-    "source_sha256": "f76e049b4f57c598c3a1f4b4e08bf2ec9341112b65332ac1e65ed8b24a7ae5b8",
+    "source_sha256": "46d48ba7b1400bcf7e307828d54db45c16bc564b2b37977258c5e8d2091f6075",
     "conditions": [],
     "registration_sites": []
   },
@@ -8495,7 +8524,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/storage/src/effect.rs",
     "name": "EffectExecutionTimes",
-    "source_sha256": "f76e049b4f57c598c3a1f4b4e08bf2ec9341112b65332ac1e65ed8b24a7ae5b8",
+    "source_sha256": "46d48ba7b1400bcf7e307828d54db45c16bc564b2b37977258c5e8d2091f6075",
     "conditions": [],
     "registration_sites": []
   },
@@ -8504,7 +8533,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/storage/src/effect.rs",
     "name": "EffectJournalConflict",
-    "source_sha256": "f76e049b4f57c598c3a1f4b4e08bf2ec9341112b65332ac1e65ed8b24a7ae5b8",
+    "source_sha256": "46d48ba7b1400bcf7e307828d54db45c16bc564b2b37977258c5e8d2091f6075",
     "conditions": [],
     "registration_sites": []
   },
@@ -8513,7 +8542,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/storage/src/effect.rs",
     "name": "EffectReceiptCommand",
-    "source_sha256": "f76e049b4f57c598c3a1f4b4e08bf2ec9341112b65332ac1e65ed8b24a7ae5b8",
+    "source_sha256": "46d48ba7b1400bcf7e307828d54db45c16bc564b2b37977258c5e8d2091f6075",
     "conditions": [],
     "registration_sites": []
   },
@@ -8522,7 +8551,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/storage/src/effect.rs",
     "name": "EffectReceiptSource",
-    "source_sha256": "f76e049b4f57c598c3a1f4b4e08bf2ec9341112b65332ac1e65ed8b24a7ae5b8",
+    "source_sha256": "46d48ba7b1400bcf7e307828d54db45c16bc564b2b37977258c5e8d2091f6075",
     "conditions": [],
     "registration_sites": []
   },
@@ -9018,7 +9047,7 @@
     "kind": "enum",
     "path": "crates/worldinterface-foundation/storage/src/root.rs",
     "name": "StoreKind",
-    "source_sha256": "28b6fdfefff38a07bdb29fccf99db509e26f1d58c23b34a0a9069ba85701fd9d",
+    "source_sha256": "dd876aeaabdf3dfee9784b011a4c57de90cd8466182fc04267056269eaabe4ff",
     "conditions": [],
     "registration_sites": []
   },
@@ -9027,7 +9056,7 @@
     "kind": "module",
     "path": "crates/worldinterface-foundation/storage/src/root.rs",
     "name": "tests",
-    "source_sha256": "28b6fdfefff38a07bdb29fccf99db509e26f1d58c23b34a0a9069ba85701fd9d",
+    "source_sha256": "dd876aeaabdf3dfee9784b011a4c57de90cd8466182fc04267056269eaabe4ff",
     "conditions": [
       "# [cfg (test)]"
     ],
@@ -9038,7 +9067,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-foundation/storage/src/root.rs",
     "name": "crates/worldinterface-foundation/storage/src/root.rs",
-    "source_sha256": "28b6fdfefff38a07bdb29fccf99db509e26f1d58c23b34a0a9069ba85701fd9d",
+    "source_sha256": "dd876aeaabdf3dfee9784b011a4c57de90cd8466182fc04267056269eaabe4ff",
     "conditions": [],
     "registration_sites": []
   },
@@ -9047,7 +9076,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/storage/src/root.rs",
     "name": "Manifest",
-    "source_sha256": "28b6fdfefff38a07bdb29fccf99db509e26f1d58c23b34a0a9069ba85701fd9d",
+    "source_sha256": "dd876aeaabdf3dfee9784b011a4c57de90cd8466182fc04267056269eaabe4ff",
     "conditions": [],
     "registration_sites": []
   },
@@ -9056,7 +9085,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/storage/src/root.rs",
     "name": "StoreManifest",
-    "source_sha256": "28b6fdfefff38a07bdb29fccf99db509e26f1d58c23b34a0a9069ba85701fd9d",
+    "source_sha256": "dd876aeaabdf3dfee9784b011a4c57de90cd8466182fc04267056269eaabe4ff",
     "conditions": [],
     "registration_sites": []
   },
@@ -9065,7 +9094,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/storage/src/root.rs",
     "name": "StoreProfile",
-    "source_sha256": "28b6fdfefff38a07bdb29fccf99db509e26f1d58c23b34a0a9069ba85701fd9d",
+    "source_sha256": "dd876aeaabdf3dfee9784b011a4c57de90cd8466182fc04267056269eaabe4ff",
     "conditions": [],
     "registration_sites": []
   },
@@ -9074,7 +9103,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/storage/src/root.rs",
     "name": "StoreRoot",
-    "source_sha256": "28b6fdfefff38a07bdb29fccf99db509e26f1d58c23b34a0a9069ba85701fd9d",
+    "source_sha256": "dd876aeaabdf3dfee9784b011a4c57de90cd8466182fc04267056269eaabe4ff",
     "conditions": [],
     "registration_sites": []
   },
@@ -10840,7 +10869,7 @@
     "kind": "connector",
     "path": "crates/worldinterface-runtime/src/connector.rs",
     "name": "Arc < T >",
-    "source_sha256": "bdeeb03ed3e867cf3d44230b582226315e4022a5565bc2368c4c34d674a96bc2",
+    "source_sha256": "4ead69b4b94de262df1e84a92571394fff0f194b8efe97ecf76b887360ae1c0f",
     "conditions": [],
     "registration_sites": []
   },
@@ -10849,7 +10878,7 @@
     "kind": "enum",
     "path": "crates/worldinterface-runtime/src/connector.rs",
     "name": "CancelObservation",
-    "source_sha256": "bdeeb03ed3e867cf3d44230b582226315e4022a5565bc2368c4c34d674a96bc2",
+    "source_sha256": "4ead69b4b94de262df1e84a92571394fff0f194b8efe97ecf76b887360ae1c0f",
     "conditions": [],
     "registration_sites": []
   },
@@ -10858,7 +10887,7 @@
     "kind": "enum",
     "path": "crates/worldinterface-runtime/src/connector.rs",
     "name": "PrepareOutcome",
-    "source_sha256": "bdeeb03ed3e867cf3d44230b582226315e4022a5565bc2368c4c34d674a96bc2",
+    "source_sha256": "4ead69b4b94de262df1e84a92571394fff0f194b8efe97ecf76b887360ae1c0f",
     "conditions": [],
     "registration_sites": []
   },
@@ -10867,7 +10896,7 @@
     "kind": "enum",
     "path": "crates/worldinterface-runtime/src/connector.rs",
     "name": "ReconcileOutcome",
-    "source_sha256": "bdeeb03ed3e867cf3d44230b582226315e4022a5565bc2368c4c34d674a96bc2",
+    "source_sha256": "4ead69b4b94de262df1e84a92571394fff0f194b8efe97ecf76b887360ae1c0f",
     "conditions": [],
     "registration_sites": []
   },
@@ -10876,7 +10905,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-runtime/src/connector.rs",
     "name": "crates/worldinterface-runtime/src/connector.rs",
-    "source_sha256": "bdeeb03ed3e867cf3d44230b582226315e4022a5565bc2368c4c34d674a96bc2",
+    "source_sha256": "4ead69b4b94de262df1e84a92571394fff0f194b8efe97ecf76b887360ae1c0f",
     "conditions": [],
     "registration_sites": []
   },
@@ -10885,7 +10914,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/src/connector.rs",
     "name": "AuthorizedInvocation",
-    "source_sha256": "bdeeb03ed3e867cf3d44230b582226315e4022a5565bc2368c4c34d674a96bc2",
+    "source_sha256": "4ead69b4b94de262df1e84a92571394fff0f194b8efe97ecf76b887360ae1c0f",
     "conditions": [],
     "registration_sites": []
   },
@@ -10894,7 +10923,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/src/connector.rs",
     "name": "InvocationEnvelopeInvariant",
-    "source_sha256": "bdeeb03ed3e867cf3d44230b582226315e4022a5565bc2368c4c34d674a96bc2",
+    "source_sha256": "4ead69b4b94de262df1e84a92571394fff0f194b8efe97ecf76b887360ae1c0f",
     "conditions": [],
     "registration_sites": []
   },
@@ -10903,7 +10932,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/src/connector.rs",
     "name": "PreparedInvocation",
-    "source_sha256": "bdeeb03ed3e867cf3d44230b582226315e4022a5565bc2368c4c34d674a96bc2",
+    "source_sha256": "4ead69b4b94de262df1e84a92571394fff0f194b8efe97ecf76b887360ae1c0f",
     "conditions": [],
     "registration_sites": []
   },
@@ -10912,7 +10941,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/src/connector.rs",
     "name": "ReconcileRequest",
-    "source_sha256": "bdeeb03ed3e867cf3d44230b582226315e4022a5565bc2368c4c34d674a96bc2",
+    "source_sha256": "4ead69b4b94de262df1e84a92571394fff0f194b8efe97ecf76b887360ae1c0f",
     "conditions": [],
     "registration_sites": []
   },
@@ -10921,7 +10950,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/src/connector.rs",
     "name": "ResolveObservation",
-    "source_sha256": "bdeeb03ed3e867cf3d44230b582226315e4022a5565bc2368c4c34d674a96bc2",
+    "source_sha256": "4ead69b4b94de262df1e84a92571394fff0f194b8efe97ecf76b887360ae1c0f",
     "conditions": [],
     "registration_sites": []
   },
@@ -10930,7 +10959,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/src/connector.rs",
     "name": "ResolveRequest",
-    "source_sha256": "bdeeb03ed3e867cf3d44230b582226315e4022a5565bc2368c4c34d674a96bc2",
+    "source_sha256": "4ead69b4b94de262df1e84a92571394fff0f194b8efe97ecf76b887360ae1c0f",
     "conditions": [],
     "registration_sites": []
   },
@@ -10939,7 +10968,7 @@
     "kind": "trait",
     "path": "crates/worldinterface-runtime/src/connector.rs",
     "name": "Connector",
-    "source_sha256": "bdeeb03ed3e867cf3d44230b582226315e4022a5565bc2368c4c34d674a96bc2",
+    "source_sha256": "4ead69b4b94de262df1e84a92571394fff0f194b8efe97ecf76b887360ae1c0f",
     "conditions": [],
     "registration_sites": []
   },
@@ -11025,6 +11054,213 @@
     "registration_sites": []
   },
   {
+    "id": "crates/worldinterface-runtime/src/embedded/authority.rs::::source-module:crates/worldinterface-runtime/src/embedded/authority.rs",
+    "kind": "source-module",
+    "path": "crates/worldinterface-runtime/src/embedded/authority.rs",
+    "name": "crates/worldinterface-runtime/src/embedded/authority.rs",
+    "source_sha256": "c14c0d379807d62e0fc9b69ea41c1861998aebf02d2ae9182471ad20d368bf3d",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/embedded/authority.rs::::struct:Configuration",
+    "kind": "struct",
+    "path": "crates/worldinterface-runtime/src/embedded/authority.rs",
+    "name": "Configuration",
+    "source_sha256": "c14c0d379807d62e0fc9b69ea41c1861998aebf02d2ae9182471ad20d368bf3d",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/embedded/authority.rs::::struct:ControlAuthentication",
+    "kind": "struct",
+    "path": "crates/worldinterface-runtime/src/embedded/authority.rs",
+    "name": "ControlAuthentication",
+    "source_sha256": "c14c0d379807d62e0fc9b69ea41c1861998aebf02d2ae9182471ad20d368bf3d",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/embedded/authority.rs::::struct:CustodyRef",
+    "kind": "struct",
+    "path": "crates/worldinterface-runtime/src/embedded/authority.rs",
+    "name": "CustodyRef",
+    "source_sha256": "c14c0d379807d62e0fc9b69ea41c1861998aebf02d2ae9182471ad20d368bf3d",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/embedded/authority.rs::::struct:ManagedEvidence",
+    "kind": "struct",
+    "path": "crates/worldinterface-runtime/src/embedded/authority.rs",
+    "name": "ManagedEvidence",
+    "source_sha256": "c14c0d379807d62e0fc9b69ea41c1861998aebf02d2ae9182471ad20d368bf3d",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/embedded/authority.rs::::struct:SharedClock",
+    "kind": "struct",
+    "path": "crates/worldinterface-runtime/src/embedded/authority.rs",
+    "name": "SharedClock",
+    "source_sha256": "c14c0d379807d62e0fc9b69ea41c1861998aebf02d2ae9182471ad20d368bf3d",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/embedded/authority.rs::::trait:EvaluationGate",
+    "kind": "trait",
+    "path": "crates/worldinterface-runtime/src/embedded/authority.rs",
+    "name": "EvaluationGate",
+    "source_sha256": "c14c0d379807d62e0fc9b69ea41c1861998aebf02d2ae9182471ad20d368bf3d",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/embedded/credential.rs::::source-module:crates/worldinterface-runtime/src/embedded/credential.rs",
+    "kind": "source-module",
+    "path": "crates/worldinterface-runtime/src/embedded/credential.rs",
+    "name": "crates/worldinterface-runtime/src/embedded/credential.rs",
+    "source_sha256": "44b67c4bfda17713a7ae8f336652ee26be4600947df2db19f4435b89d777c778",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/embedded/credential.rs::::struct:WorkerCredentialMetadata",
+    "kind": "struct",
+    "path": "crates/worldinterface-runtime/src/embedded/credential.rs",
+    "name": "WorkerCredentialMetadata",
+    "source_sha256": "44b67c4bfda17713a7ae8f336652ee26be4600947df2db19f4435b89d777c778",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/embedded/dispatch.rs::::connector:ProcessDispatcher < S >",
+    "kind": "connector",
+    "path": "crates/worldinterface-runtime/src/embedded/dispatch.rs",
+    "name": "ProcessDispatcher < S >",
+    "source_sha256": "a84bacc29c20a06baf9853bdb2341ff86e7f6565daea6bc15471cf8bee93ce7e",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/embedded/dispatch.rs::::source-module:crates/worldinterface-runtime/src/embedded/dispatch.rs",
+    "kind": "source-module",
+    "path": "crates/worldinterface-runtime/src/embedded/dispatch.rs",
+    "name": "crates/worldinterface-runtime/src/embedded/dispatch.rs",
+    "source_sha256": "a84bacc29c20a06baf9853bdb2341ff86e7f6565daea6bc15471cf8bee93ce7e",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/embedded/dispatch.rs::::struct:Dispatcher",
+    "kind": "struct",
+    "path": "crates/worldinterface-runtime/src/embedded/dispatch.rs",
+    "name": "Dispatcher",
+    "source_sha256": "a84bacc29c20a06baf9853bdb2341ff86e7f6565daea6bc15471cf8bee93ce7e",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/embedded/dispatch.rs::::struct:ProcessDispatcher",
+    "kind": "struct",
+    "path": "crates/worldinterface-runtime/src/embedded/dispatch.rs",
+    "name": "ProcessDispatcher",
+    "source_sha256": "a84bacc29c20a06baf9853bdb2341ff86e7f6565daea6bc15471cf8bee93ce7e",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/embedded/mod.rs::::enum:WorkerInstallation",
+    "kind": "enum",
+    "path": "crates/worldinterface-runtime/src/embedded/mod.rs",
+    "name": "WorkerInstallation",
+    "source_sha256": "8024bf67674cf9288ecdb2dbf64e789c701c60091ed7dfb5bdf2be16acfca372",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/embedded/mod.rs::::module:authority",
+    "kind": "module",
+    "path": "crates/worldinterface-runtime/src/embedded/mod.rs",
+    "name": "authority",
+    "source_sha256": "8024bf67674cf9288ecdb2dbf64e789c701c60091ed7dfb5bdf2be16acfca372",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/embedded/mod.rs::::module:credential",
+    "kind": "module",
+    "path": "crates/worldinterface-runtime/src/embedded/mod.rs",
+    "name": "credential",
+    "source_sha256": "8024bf67674cf9288ecdb2dbf64e789c701c60091ed7dfb5bdf2be16acfca372",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/embedded/mod.rs::::module:dispatch",
+    "kind": "module",
+    "path": "crates/worldinterface-runtime/src/embedded/mod.rs",
+    "name": "dispatch",
+    "source_sha256": "8024bf67674cf9288ecdb2dbf64e789c701c60091ed7dfb5bdf2be16acfca372",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/embedded/mod.rs::::source-module:crates/worldinterface-runtime/src/embedded/mod.rs",
+    "kind": "source-module",
+    "path": "crates/worldinterface-runtime/src/embedded/mod.rs",
+    "name": "crates/worldinterface-runtime/src/embedded/mod.rs",
+    "source_sha256": "8024bf67674cf9288ecdb2dbf64e789c701c60091ed7dfb5bdf2be16acfca372",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/embedded/mod.rs::::struct:ArcObserver",
+    "kind": "struct",
+    "path": "crates/worldinterface-runtime/src/embedded/mod.rs",
+    "name": "ArcObserver",
+    "source_sha256": "8024bf67674cf9288ecdb2dbf64e789c701c60091ed7dfb5bdf2be16acfca372",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/embedded/mod.rs::::struct:EmbeddedApplication",
+    "kind": "struct",
+    "path": "crates/worldinterface-runtime/src/embedded/mod.rs",
+    "name": "EmbeddedApplication",
+    "source_sha256": "8024bf67674cf9288ecdb2dbf64e789c701c60091ed7dfb5bdf2be16acfca372",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/embedded/mod.rs::::struct:EmbeddedHost",
+    "kind": "struct",
+    "path": "crates/worldinterface-runtime/src/embedded/mod.rs",
+    "name": "EmbeddedHost",
+    "source_sha256": "8024bf67674cf9288ecdb2dbf64e789c701c60091ed7dfb5bdf2be16acfca372",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/embedded/mod.rs::::struct:EmbeddedPorts",
+    "kind": "struct",
+    "path": "crates/worldinterface-runtime/src/embedded/mod.rs",
+    "name": "EmbeddedPorts",
+    "source_sha256": "8024bf67674cf9288ecdb2dbf64e789c701c60091ed7dfb5bdf2be16acfca372",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/embedded/mod.rs::::trait:Application",
+    "kind": "trait",
+    "path": "crates/worldinterface-runtime/src/embedded/mod.rs",
+    "name": "Application",
+    "source_sha256": "8024bf67674cf9288ecdb2dbf64e789c701c60091ed7dfb5bdf2be16acfca372",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
     "id": "crates/worldinterface-runtime/src/flow.rs::::source-module:crates/worldinterface-runtime/src/flow.rs",
     "kind": "source-module",
     "path": "crates/worldinterface-runtime/src/flow.rs",
@@ -11092,7 +11328,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-runtime/src/flow_node.rs",
     "name": "crates/worldinterface-runtime/src/flow_node.rs",
-    "source_sha256": "28efa660db8716af6a098599884b953dcc2ed2ea60e77aec221094f6de600134",
+    "source_sha256": "bd869df84d2ac75c7a0e067ee1d26672f44bde16b8d16e3393079e35576bfafd",
     "conditions": [],
     "registration_sites": []
   },
@@ -11101,7 +11337,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/src/flow_node.rs",
     "name": "FlowAttemptHandler",
-    "source_sha256": "28efa660db8716af6a098599884b953dcc2ed2ea60e77aec221094f6de600134",
+    "source_sha256": "bd869df84d2ac75c7a0e067ee1d26672f44bde16b8d16e3393079e35576bfafd",
     "conditions": [],
     "registration_sites": []
   },
@@ -11317,7 +11553,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/src/lib.rs",
     "name": "admission",
-    "source_sha256": "740ae45afe3ea40c3a652977a24000f023873134648489d56f9376f90f77a93c",
+    "source_sha256": "5e34dd2d1813a44d6eccb0944adebd30edc10aa47b09e23f5797ee81521543c8",
     "conditions": [],
     "registration_sites": []
   },
@@ -11326,7 +11562,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/src/lib.rs",
     "name": "aq_adapter",
-    "source_sha256": "740ae45afe3ea40c3a652977a24000f023873134648489d56f9376f90f77a93c",
+    "source_sha256": "5e34dd2d1813a44d6eccb0944adebd30edc10aa47b09e23f5797ee81521543c8",
     "conditions": [],
     "registration_sites": []
   },
@@ -11335,7 +11571,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/src/lib.rs",
     "name": "artifact",
-    "source_sha256": "740ae45afe3ea40c3a652977a24000f023873134648489d56f9376f90f77a93c",
+    "source_sha256": "5e34dd2d1813a44d6eccb0944adebd30edc10aa47b09e23f5797ee81521543c8",
     "conditions": [],
     "registration_sites": []
   },
@@ -11344,7 +11580,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/src/lib.rs",
     "name": "authority",
-    "source_sha256": "740ae45afe3ea40c3a652977a24000f023873134648489d56f9376f90f77a93c",
+    "source_sha256": "5e34dd2d1813a44d6eccb0944adebd30edc10aa47b09e23f5797ee81521543c8",
     "conditions": [],
     "registration_sites": []
   },
@@ -11353,7 +11589,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/src/lib.rs",
     "name": "completion",
-    "source_sha256": "740ae45afe3ea40c3a652977a24000f023873134648489d56f9376f90f77a93c",
+    "source_sha256": "5e34dd2d1813a44d6eccb0944adebd30edc10aa47b09e23f5797ee81521543c8",
     "conditions": [],
     "registration_sites": []
   },
@@ -11362,7 +11598,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/src/lib.rs",
     "name": "connector",
-    "source_sha256": "740ae45afe3ea40c3a652977a24000f023873134648489d56f9376f90f77a93c",
+    "source_sha256": "5e34dd2d1813a44d6eccb0944adebd30edc10aa47b09e23f5797ee81521543c8",
     "conditions": [],
     "registration_sites": []
   },
@@ -11371,7 +11607,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/src/lib.rs",
     "name": "continuation",
-    "source_sha256": "740ae45afe3ea40c3a652977a24000f023873134648489d56f9376f90f77a93c",
+    "source_sha256": "5e34dd2d1813a44d6eccb0944adebd30edc10aa47b09e23f5797ee81521543c8",
     "conditions": [],
     "registration_sites": []
   },
@@ -11380,7 +11616,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/src/lib.rs",
     "name": "crash",
-    "source_sha256": "740ae45afe3ea40c3a652977a24000f023873134648489d56f9376f90f77a93c",
+    "source_sha256": "5e34dd2d1813a44d6eccb0944adebd30edc10aa47b09e23f5797ee81521543c8",
     "conditions": [
       "# [cfg (test)]"
     ],
@@ -11391,8 +11627,19 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/src/lib.rs",
     "name": "egress",
-    "source_sha256": "740ae45afe3ea40c3a652977a24000f023873134648489d56f9376f90f77a93c",
+    "source_sha256": "5e34dd2d1813a44d6eccb0944adebd30edc10aa47b09e23f5797ee81521543c8",
     "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/lib.rs::::module:embedded@9bb98d23c4b1",
+    "kind": "module",
+    "path": "crates/worldinterface-runtime/src/lib.rs",
+    "name": "embedded",
+    "source_sha256": "5e34dd2d1813a44d6eccb0944adebd30edc10aa47b09e23f5797ee81521543c8",
+    "conditions": [
+      "# [cfg (target_os = \"linux\")]"
+    ],
     "registration_sites": []
   },
   {
@@ -11400,7 +11647,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/src/lib.rs",
     "name": "flow",
-    "source_sha256": "740ae45afe3ea40c3a652977a24000f023873134648489d56f9376f90f77a93c",
+    "source_sha256": "5e34dd2d1813a44d6eccb0944adebd30edc10aa47b09e23f5797ee81521543c8",
     "conditions": [],
     "registration_sites": []
   },
@@ -11409,7 +11656,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/src/lib.rs",
     "name": "flow_coordinator",
-    "source_sha256": "740ae45afe3ea40c3a652977a24000f023873134648489d56f9376f90f77a93c",
+    "source_sha256": "5e34dd2d1813a44d6eccb0944adebd30edc10aa47b09e23f5797ee81521543c8",
     "conditions": [],
     "registration_sites": []
   },
@@ -11418,7 +11665,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/src/lib.rs",
     "name": "flow_node",
-    "source_sha256": "740ae45afe3ea40c3a652977a24000f023873134648489d56f9376f90f77a93c",
+    "source_sha256": "5e34dd2d1813a44d6eccb0944adebd30edc10aa47b09e23f5797ee81521543c8",
     "conditions": [],
     "registration_sites": []
   },
@@ -11427,7 +11674,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/src/lib.rs",
     "name": "flow_wait",
-    "source_sha256": "740ae45afe3ea40c3a652977a24000f023873134648489d56f9376f90f77a93c",
+    "source_sha256": "5e34dd2d1813a44d6eccb0944adebd30edc10aa47b09e23f5797ee81521543c8",
     "conditions": [],
     "registration_sites": []
   },
@@ -11436,7 +11683,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/src/lib.rs",
     "name": "ingress",
-    "source_sha256": "740ae45afe3ea40c3a652977a24000f023873134648489d56f9376f90f77a93c",
+    "source_sha256": "5e34dd2d1813a44d6eccb0944adebd30edc10aa47b09e23f5797ee81521543c8",
     "conditions": [],
     "registration_sites": []
   },
@@ -11445,7 +11692,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/src/lib.rs",
     "name": "inspection",
-    "source_sha256": "740ae45afe3ea40c3a652977a24000f023873134648489d56f9376f90f77a93c",
+    "source_sha256": "5e34dd2d1813a44d6eccb0944adebd30edc10aa47b09e23f5797ee81521543c8",
     "conditions": [],
     "registration_sites": []
   },
@@ -11454,7 +11701,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/src/lib.rs",
     "name": "reconciliation",
-    "source_sha256": "740ae45afe3ea40c3a652977a24000f023873134648489d56f9376f90f77a93c",
+    "source_sha256": "5e34dd2d1813a44d6eccb0944adebd30edc10aa47b09e23f5797ee81521543c8",
     "conditions": [],
     "registration_sites": []
   },
@@ -11463,7 +11710,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/src/lib.rs",
     "name": "resolution",
-    "source_sha256": "740ae45afe3ea40c3a652977a24000f023873134648489d56f9376f90f77a93c",
+    "source_sha256": "5e34dd2d1813a44d6eccb0944adebd30edc10aa47b09e23f5797ee81521543c8",
     "conditions": [],
     "registration_sites": []
   },
@@ -11472,7 +11719,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/src/lib.rs",
     "name": "run_discovery",
-    "source_sha256": "740ae45afe3ea40c3a652977a24000f023873134648489d56f9376f90f77a93c",
+    "source_sha256": "5e34dd2d1813a44d6eccb0944adebd30edc10aa47b09e23f5797ee81521543c8",
     "conditions": [],
     "registration_sites": []
   },
@@ -11481,7 +11728,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/src/lib.rs",
     "name": "storage",
-    "source_sha256": "740ae45afe3ea40c3a652977a24000f023873134648489d56f9376f90f77a93c",
+    "source_sha256": "5e34dd2d1813a44d6eccb0944adebd30edc10aa47b09e23f5797ee81521543c8",
     "conditions": [],
     "registration_sites": []
   },
@@ -11490,7 +11737,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/src/lib.rs",
     "name": "worker",
-    "source_sha256": "740ae45afe3ea40c3a652977a24000f023873134648489d56f9376f90f77a93c",
+    "source_sha256": "5e34dd2d1813a44d6eccb0944adebd30edc10aa47b09e23f5797ee81521543c8",
     "conditions": [
       "# [cfg (target_os = \"linux\")]"
     ],
@@ -11501,7 +11748,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/src/lib.rs",
     "name": "worker_process",
-    "source_sha256": "740ae45afe3ea40c3a652977a24000f023873134648489d56f9376f90f77a93c",
+    "source_sha256": "5e34dd2d1813a44d6eccb0944adebd30edc10aa47b09e23f5797ee81521543c8",
     "conditions": [
       "# [cfg (target_os = \"linux\")]"
     ],
@@ -11512,7 +11759,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-runtime/src/lib.rs",
     "name": "crates/worldinterface-runtime/src/lib.rs",
-    "source_sha256": "740ae45afe3ea40c3a652977a24000f023873134648489d56f9376f90f77a93c",
+    "source_sha256": "5e34dd2d1813a44d6eccb0944adebd30edc10aa47b09e23f5797ee81521543c8",
     "conditions": [],
     "registration_sites": []
   },
@@ -11521,7 +11768,7 @@
     "kind": "type",
     "path": "crates/worldinterface-runtime/src/lib.rs",
     "name": "Result",
-    "source_sha256": "740ae45afe3ea40c3a652977a24000f023873134648489d56f9376f90f77a93c",
+    "source_sha256": "5e34dd2d1813a44d6eccb0944adebd30edc10aa47b09e23f5797ee81521543c8",
     "conditions": [],
     "registration_sites": []
   },
@@ -11658,7 +11905,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-runtime/src/worker/admission.rs",
     "name": "crates/worldinterface-runtime/src/worker/admission.rs",
-    "source_sha256": "76a8cd13d126e1a630ad38d2ce509bb976c976f2d72c36fdbe600127a3791209",
+    "source_sha256": "d07eda8b5182d516d918a0062ea247a17067eadee2c7d37a10a76bf2a95919c6",
     "conditions": [],
     "registration_sites": []
   },
@@ -11667,7 +11914,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/src/worker/admission.rs",
     "name": "AdmittedWorker",
-    "source_sha256": "76a8cd13d126e1a630ad38d2ce509bb976c976f2d72c36fdbe600127a3791209",
+    "source_sha256": "d07eda8b5182d516d918a0062ea247a17067eadee2c7d37a10a76bf2a95919c6",
     "conditions": [],
     "registration_sites": []
   },
@@ -11676,7 +11923,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/src/worker/admission.rs",
     "name": "WorkerEffect",
-    "source_sha256": "76a8cd13d126e1a630ad38d2ce509bb976c976f2d72c36fdbe600127a3791209",
+    "source_sha256": "d07eda8b5182d516d918a0062ea247a17067eadee2c7d37a10a76bf2a95919c6",
     "conditions": [],
     "registration_sites": []
   },
@@ -11739,7 +11986,7 @@
     "kind": "connector",
     "path": "crates/worldinterface-runtime/src/worker/connector.rs",
     "name": "WorkerConnector < S >",
-    "source_sha256": "abcd5f816c6987b8a33d90b308db0078e0610b02b4d8fbc9ca9c54e07d20b0ca",
+    "source_sha256": "b922fbebe6b6c936f75396881d8c86e02133838a81a351b68db168b3037d6f0e",
     "conditions": [],
     "registration_sites": []
   },
@@ -11748,7 +11995,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/src/worker/connector.rs",
     "name": "tests",
-    "source_sha256": "abcd5f816c6987b8a33d90b308db0078e0610b02b4d8fbc9ca9c54e07d20b0ca",
+    "source_sha256": "b922fbebe6b6c936f75396881d8c86e02133838a81a351b68db168b3037d6f0e",
     "conditions": [
       "# [cfg (test)]"
     ],
@@ -11759,7 +12006,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-runtime/src/worker/connector.rs",
     "name": "crates/worldinterface-runtime/src/worker/connector.rs",
-    "source_sha256": "abcd5f816c6987b8a33d90b308db0078e0610b02b4d8fbc9ca9c54e07d20b0ca",
+    "source_sha256": "b922fbebe6b6c936f75396881d8c86e02133838a81a351b68db168b3037d6f0e",
     "conditions": [],
     "registration_sites": []
   },
@@ -11768,7 +12015,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/src/worker/connector.rs",
     "name": "RecoveryOnly",
-    "source_sha256": "abcd5f816c6987b8a33d90b308db0078e0610b02b4d8fbc9ca9c54e07d20b0ca",
+    "source_sha256": "b922fbebe6b6c936f75396881d8c86e02133838a81a351b68db168b3037d6f0e",
     "conditions": [],
     "registration_sites": []
   },
@@ -11777,7 +12024,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/src/worker/connector.rs",
     "name": "WorkerAcknowledgement",
-    "source_sha256": "abcd5f816c6987b8a33d90b308db0078e0610b02b4d8fbc9ca9c54e07d20b0ca",
+    "source_sha256": "b922fbebe6b6c936f75396881d8c86e02133838a81a351b68db168b3037d6f0e",
     "conditions": [],
     "registration_sites": []
   },
@@ -11786,7 +12033,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/src/worker/connector.rs",
     "name": "WorkerConnector",
-    "source_sha256": "abcd5f816c6987b8a33d90b308db0078e0610b02b4d8fbc9ca9c54e07d20b0ca",
+    "source_sha256": "b922fbebe6b6c936f75396881d8c86e02133838a81a351b68db168b3037d6f0e",
     "conditions": [],
     "registration_sites": []
   },
@@ -11795,7 +12042,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/src/worker/connector.rs",
     "name": "WorkerRuntime",
-    "source_sha256": "abcd5f816c6987b8a33d90b308db0078e0610b02b4d8fbc9ca9c54e07d20b0ca",
+    "source_sha256": "b922fbebe6b6c936f75396881d8c86e02133838a81a351b68db168b3037d6f0e",
     "conditions": [],
     "registration_sites": []
   },
@@ -11804,7 +12051,7 @@
     "kind": "trait",
     "path": "crates/worldinterface-runtime/src/worker/connector.rs",
     "name": "TrustedWorkerBuild",
-    "source_sha256": "abcd5f816c6987b8a33d90b308db0078e0610b02b4d8fbc9ca9c54e07d20b0ca",
+    "source_sha256": "b922fbebe6b6c936f75396881d8c86e02133838a81a351b68db168b3037d6f0e",
     "conditions": [],
     "registration_sites": []
   },
@@ -11813,7 +12060,7 @@
     "kind": "type",
     "path": "crates/worldinterface-runtime/src/worker/connector.rs",
     "name": "LiveRuns",
-    "source_sha256": "abcd5f816c6987b8a33d90b308db0078e0610b02b4d8fbc9ca9c54e07d20b0ca",
+    "source_sha256": "b922fbebe6b6c936f75396881d8c86e02133838a81a351b68db168b3037d6f0e",
     "conditions": [],
     "registration_sites": []
   },
@@ -11822,7 +12069,7 @@
     "kind": "registration",
     "path": "crates/worldinterface-runtime/src/worker/connector.rs",
     "name": "\"evaluation-fixture\" , fixture , & executable",
-    "source_sha256": "abcd5f816c6987b8a33d90b308db0078e0610b02b4d8fbc9ca9c54e07d20b0ca",
+    "source_sha256": "b922fbebe6b6c936f75396881d8c86e02133838a81a351b68db168b3037d6f0e",
     "conditions": [],
     "registration_sites": [
       "crates/worldinterface-runtime/src/worker/connector.rs::impl WorkerRuntime < S >"
@@ -13192,6 +13439,168 @@
     "registration_sites": []
   },
   {
+    "id": "crates/worldinterface-runtime/tests/embedded_credentials.rs::::module:child",
+    "kind": "module",
+    "path": "crates/worldinterface-runtime/tests/embedded_credentials.rs",
+    "name": "child",
+    "source_sha256": "a946c2e0e857caaae67e43964fa9df0d0e648b27d1707a41d9c3bd79bbd451b5",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/embedded_credentials.rs::::module:setup",
+    "kind": "module",
+    "path": "crates/worldinterface-runtime/tests/embedded_credentials.rs",
+    "name": "setup",
+    "source_sha256": "a946c2e0e857caaae67e43964fa9df0d0e648b27d1707a41d9c3bd79bbd451b5",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/embedded_credentials.rs::::source-module:crates/worldinterface-runtime/tests/embedded_credentials.rs",
+    "kind": "source-module",
+    "path": "crates/worldinterface-runtime/tests/embedded_credentials.rs",
+    "name": "crates/worldinterface-runtime/tests/embedded_credentials.rs",
+    "source_sha256": "a946c2e0e857caaae67e43964fa9df0d0e648b27d1707a41d9c3bd79bbd451b5",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/embedded_credentials.rs::::struct:Clock",
+    "kind": "struct",
+    "path": "crates/worldinterface-runtime/tests/embedded_credentials.rs",
+    "name": "Clock",
+    "source_sha256": "a946c2e0e857caaae67e43964fa9df0d0e648b27d1707a41d9c3bd79bbd451b5",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/embedded_credentials.rs::::struct:Vault",
+    "kind": "struct",
+    "path": "crates/worldinterface-runtime/tests/embedded_credentials.rs",
+    "name": "Vault",
+    "source_sha256": "a946c2e0e857caaae67e43964fa9df0d0e648b27d1707a41d9c3bd79bbd451b5",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/embedded_credentials.rs::f007_live_delivery_excludes_recovery_and_concurrent_retry::struct:Blocking",
+    "kind": "struct",
+    "path": "crates/worldinterface-runtime/tests/embedded_credentials.rs",
+    "name": "Blocking",
+    "source_sha256": "a946c2e0e857caaae67e43964fa9df0d0e648b27d1707a41d9c3bd79bbd451b5",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/embedded_restore.rs::::module:setup",
+    "kind": "module",
+    "path": "crates/worldinterface-runtime/tests/embedded_restore.rs",
+    "name": "setup",
+    "source_sha256": "4a6d3cb6f80ee9d806ad577148ad32e4209fef5ee368107e9da60feeddde029d",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/embedded_restore.rs::::source-module:crates/worldinterface-runtime/tests/embedded_restore.rs",
+    "kind": "source-module",
+    "path": "crates/worldinterface-runtime/tests/embedded_restore.rs",
+    "name": "crates/worldinterface-runtime/tests/embedded_restore.rs",
+    "source_sha256": "4a6d3cb6f80ee9d806ad577148ad32e4209fef5ee368107e9da60feeddde029d",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/embedded_restore.rs::::struct:Complete",
+    "kind": "struct",
+    "path": "crates/worldinterface-runtime/tests/embedded_restore.rs",
+    "name": "Complete",
+    "source_sha256": "4a6d3cb6f80ee9d806ad577148ad32e4209fef5ee368107e9da60feeddde029d",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/embedded_worker.rs::::module:support",
+    "kind": "module",
+    "path": "crates/worldinterface-runtime/tests/embedded_worker.rs",
+    "name": "support",
+    "source_sha256": "5970d8ffacb0e957619a6d8edcf65255e54520288c0e0d20dc1a180580e82214",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/embedded_worker.rs::::source-module:crates/worldinterface-runtime/tests/embedded_worker.rs",
+    "kind": "source-module",
+    "path": "crates/worldinterface-runtime/tests/embedded_worker.rs",
+    "name": "crates/worldinterface-runtime/tests/embedded_worker.rs",
+    "source_sha256": "5970d8ffacb0e957619a6d8edcf65255e54520288c0e0d20dc1a180580e82214",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/embedded_worker.rs::support::module:child",
+    "kind": "module",
+    "path": "crates/worldinterface-runtime/tests/embedded_worker.rs",
+    "name": "child",
+    "source_sha256": "5970d8ffacb0e957619a6d8edcf65255e54520288c0e0d20dc1a180580e82214",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/embedded_worker.rs::support::module:connectors",
+    "kind": "module",
+    "path": "crates/worldinterface-runtime/tests/embedded_worker.rs",
+    "name": "connectors",
+    "source_sha256": "5970d8ffacb0e957619a6d8edcf65255e54520288c0e0d20dc1a180580e82214",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/embedded_worker.rs::support::module:embedded_consumer",
+    "kind": "module",
+    "path": "crates/worldinterface-runtime/tests/embedded_worker.rs",
+    "name": "embedded_consumer",
+    "source_sha256": "5970d8ffacb0e957619a6d8edcf65255e54520288c0e0d20dc1a180580e82214",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/embedded_worker.rs::support::module:embedded_setup",
+    "kind": "module",
+    "path": "crates/worldinterface-runtime/tests/embedded_worker.rs",
+    "name": "embedded_setup",
+    "source_sha256": "5970d8ffacb0e957619a6d8edcf65255e54520288c0e0d20dc1a180580e82214",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/embedded_worker.rs::support::module:flow_fixture",
+    "kind": "module",
+    "path": "crates/worldinterface-runtime/tests/embedded_worker.rs",
+    "name": "flow_fixture",
+    "source_sha256": "5970d8ffacb0e957619a6d8edcf65255e54520288c0e0d20dc1a180580e82214",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/embedded_worker.rs::support::module:spi_harness",
+    "kind": "module",
+    "path": "crates/worldinterface-runtime/tests/embedded_worker.rs",
+    "name": "spi_harness",
+    "source_sha256": "5970d8ffacb0e957619a6d8edcf65255e54520288c0e0d20dc1a180580e82214",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/embedded_worker.rs::support::module:worker_fixture",
+    "kind": "module",
+    "path": "crates/worldinterface-runtime/tests/embedded_worker.rs",
+    "name": "worker_fixture",
+    "source_sha256": "5970d8ffacb0e957619a6d8edcf65255e54520288c0e0d20dc1a180580e82214",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
     "id": "crates/worldinterface-runtime/tests/executor_aq_contract.rs::::module:support",
     "kind": "module",
     "path": "crates/worldinterface-runtime/tests/executor_aq_contract.rs",
@@ -14083,6 +14492,105 @@
     "registration_sites": []
   },
   {
+    "id": "crates/worldinterface-runtime/tests/support/embedded_consumer.rs::::source-module:crates/worldinterface-runtime/tests/support/embedded_consumer.rs",
+    "kind": "source-module",
+    "path": "crates/worldinterface-runtime/tests/support/embedded_consumer.rs",
+    "name": "crates/worldinterface-runtime/tests/support/embedded_consumer.rs",
+    "source_sha256": "cf9c2f23b8e967e843b86776e58420411dc3ea7635d89afd8e19cee4841f35e4",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/embedded_setup.rs::::enum:Session",
+    "kind": "enum",
+    "path": "crates/worldinterface-runtime/tests/support/embedded_setup.rs",
+    "name": "Session",
+    "source_sha256": "263355cdc4d1bfb73c9786d56f6af33fc33263a6ab9975d0f752b6d566d17e56",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/embedded_setup.rs::::module:cp_setup",
+    "kind": "module",
+    "path": "crates/worldinterface-runtime/tests/support/embedded_setup.rs",
+    "name": "cp_setup",
+    "source_sha256": "263355cdc4d1bfb73c9786d56f6af33fc33263a6ab9975d0f752b6d566d17e56",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/embedded_setup.rs::::source-module:crates/worldinterface-runtime/tests/support/embedded_setup.rs",
+    "kind": "source-module",
+    "path": "crates/worldinterface-runtime/tests/support/embedded_setup.rs",
+    "name": "crates/worldinterface-runtime/tests/support/embedded_setup.rs",
+    "source_sha256": "263355cdc4d1bfb73c9786d56f6af33fc33263a6ab9975d0f752b6d566d17e56",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/embedded_setup.rs::::struct:Auth",
+    "kind": "struct",
+    "path": "crates/worldinterface-runtime/tests/support/embedded_setup.rs",
+    "name": "Auth",
+    "source_sha256": "263355cdc4d1bfb73c9786d56f6af33fc33263a6ab9975d0f752b6d566d17e56",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/embedded_setup.rs::::struct:Evidence",
+    "kind": "struct",
+    "path": "crates/worldinterface-runtime/tests/support/embedded_setup.rs",
+    "name": "Evidence",
+    "source_sha256": "263355cdc4d1bfb73c9786d56f6af33fc33263a6ab9975d0f752b6d566d17e56",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/embedded_setup.rs::::struct:RecoverySetup",
+    "kind": "struct",
+    "path": "crates/worldinterface-runtime/tests/support/embedded_setup.rs",
+    "name": "RecoverySetup",
+    "source_sha256": "263355cdc4d1bfb73c9786d56f6af33fc33263a6ab9975d0f752b6d566d17e56",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/embedded_setup.rs::::struct:Resources",
+    "kind": "struct",
+    "path": "crates/worldinterface-runtime/tests/support/embedded_setup.rs",
+    "name": "Resources",
+    "source_sha256": "263355cdc4d1bfb73c9786d56f6af33fc33263a6ab9975d0f752b6d566d17e56",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/embedded_setup.rs::::struct:Setup",
+    "kind": "struct",
+    "path": "crates/worldinterface-runtime/tests/support/embedded_setup.rs",
+    "name": "Setup",
+    "source_sha256": "263355cdc4d1bfb73c9786d56f6af33fc33263a6ab9975d0f752b6d566d17e56",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/embedded_setup.rs::::struct:Vault",
+    "kind": "struct",
+    "path": "crates/worldinterface-runtime/tests/support/embedded_setup.rs",
+    "name": "Vault",
+    "source_sha256": "263355cdc4d1bfb73c9786d56f6af33fc33263a6ab9975d0f752b6d566d17e56",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/embedded_setup.rs::::type:Host",
+    "kind": "type",
+    "path": "crates/worldinterface-runtime/tests/support/embedded_setup.rs",
+    "name": "Host",
+    "source_sha256": "263355cdc4d1bfb73c9786d56f6af33fc33263a6ab9975d0f752b6d566d17e56",
+    "conditions": [],
+    "registration_sites": []
+  },
+  {
     "id": "crates/worldinterface-runtime/tests/support/flow_fixture.rs::::source-module:crates/worldinterface-runtime/tests/support/flow_fixture.rs",
     "kind": "source-module",
     "path": "crates/worldinterface-runtime/tests/support/flow_fixture.rs",
@@ -14222,7 +14730,7 @@
     "kind": "connector",
     "path": "crates/worldinterface-runtime/tests/support/worker_fixture.rs",
     "name": "AmbiguousConnector < C >",
-    "source_sha256": "83ae8c51aa5ca520b3fceeb1877495cc265f1b59a62d99452ee0a6790df4ebd5",
+    "source_sha256": "252fe34f1e6e8c2f4fe14f73d611d13dc37023211cb7eb25eef0ecc4828ac40d",
     "conditions": [],
     "registration_sites": []
   },
@@ -14231,7 +14739,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/tests/support/worker_fixture.rs",
     "name": "anchor",
-    "source_sha256": "83ae8c51aa5ca520b3fceeb1877495cc265f1b59a62d99452ee0a6790df4ebd5",
+    "source_sha256": "252fe34f1e6e8c2f4fe14f73d611d13dc37023211cb7eb25eef0ecc4828ac40d",
     "conditions": [],
     "registration_sites": []
   },
@@ -14240,7 +14748,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/tests/support/worker_fixture.rs",
     "name": "build",
-    "source_sha256": "83ae8c51aa5ca520b3fceeb1877495cc265f1b59a62d99452ee0a6790df4ebd5",
+    "source_sha256": "252fe34f1e6e8c2f4fe14f73d611d13dc37023211cb7eb25eef0ecc4828ac40d",
     "conditions": [],
     "registration_sites": []
   },
@@ -14249,7 +14757,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/tests/support/worker_fixture.rs",
     "name": "seam",
-    "source_sha256": "83ae8c51aa5ca520b3fceeb1877495cc265f1b59a62d99452ee0a6790df4ebd5",
+    "source_sha256": "252fe34f1e6e8c2f4fe14f73d611d13dc37023211cb7eb25eef0ecc4828ac40d",
     "conditions": [],
     "registration_sites": []
   },
@@ -14258,7 +14766,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-runtime/tests/support/worker_fixture.rs",
     "name": "crates/worldinterface-runtime/tests/support/worker_fixture.rs",
-    "source_sha256": "83ae8c51aa5ca520b3fceeb1877495cc265f1b59a62d99452ee0a6790df4ebd5",
+    "source_sha256": "252fe34f1e6e8c2f4fe14f73d611d13dc37023211cb7eb25eef0ecc4828ac40d",
     "conditions": [],
     "registration_sites": []
   },
@@ -14267,7 +14775,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/support/worker_fixture.rs",
     "name": "AmbiguousConnector",
-    "source_sha256": "83ae8c51aa5ca520b3fceeb1877495cc265f1b59a62d99452ee0a6790df4ebd5",
+    "source_sha256": "252fe34f1e6e8c2f4fe14f73d611d13dc37023211cb7eb25eef0ecc4828ac40d",
     "conditions": [],
     "registration_sites": []
   },
@@ -14276,7 +14784,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/support/worker_fixture.rs",
     "name": "Approval",
-    "source_sha256": "83ae8c51aa5ca520b3fceeb1877495cc265f1b59a62d99452ee0a6790df4ebd5",
+    "source_sha256": "252fe34f1e6e8c2f4fe14f73d611d13dc37023211cb7eb25eef0ecc4828ac40d",
     "conditions": [],
     "registration_sites": []
   },
@@ -14285,7 +14793,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/support/worker_fixture.rs",
     "name": "Harness",
-    "source_sha256": "83ae8c51aa5ca520b3fceeb1877495cc265f1b59a62d99452ee0a6790df4ebd5",
+    "source_sha256": "252fe34f1e6e8c2f4fe14f73d611d13dc37023211cb7eb25eef0ecc4828ac40d",
     "conditions": [],
     "registration_sites": []
   },
@@ -14294,7 +14802,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/support/worker_fixture.rs",
     "name": "HostClock",
-    "source_sha256": "83ae8c51aa5ca520b3fceeb1877495cc265f1b59a62d99452ee0a6790df4ebd5",
+    "source_sha256": "252fe34f1e6e8c2f4fe14f73d611d13dc37023211cb7eb25eef0ecc4828ac40d",
     "conditions": [],
     "registration_sites": []
   },
@@ -14303,7 +14811,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/support/worker_fixture.rs",
     "name": "HostEvidence",
-    "source_sha256": "83ae8c51aa5ca520b3fceeb1877495cc265f1b59a62d99452ee0a6790df4ebd5",
+    "source_sha256": "252fe34f1e6e8c2f4fe14f73d611d13dc37023211cb7eb25eef0ecc4828ac40d",
     "conditions": [],
     "registration_sites": []
   },
@@ -14312,7 +14820,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/support/worker_fixture.rs",
     "name": "WorkerAqBoundary",
-    "source_sha256": "83ae8c51aa5ca520b3fceeb1877495cc265f1b59a62d99452ee0a6790df4ebd5",
+    "source_sha256": "252fe34f1e6e8c2f4fe14f73d611d13dc37023211cb7eb25eef0ecc4828ac40d",
     "conditions": [],
     "registration_sites": []
   },
@@ -14321,7 +14829,7 @@
     "kind": "type",
     "path": "crates/worldinterface-runtime/tests/support/worker_fixture.rs",
     "name": "Evidence",
-    "source_sha256": "83ae8c51aa5ca520b3fceeb1877495cc265f1b59a62d99452ee0a6790df4ebd5",
+    "source_sha256": "252fe34f1e6e8c2f4fe14f73d611d13dc37023211cb7eb25eef0ecc4828ac40d",
     "conditions": [],
     "registration_sites": []
   },
