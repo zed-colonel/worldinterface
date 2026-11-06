@@ -257,10 +257,12 @@ where
                 actionqueue_core::bounded::OpaqueRef::new("wi-embedded-host")?,
             ),
         };
-        Ok(EmbeddedApplication {
+        let application = EmbeddedApplication {
             host: self,
             queue: crate::aq_adapter::QueueEngine::bootstrap(&self.bundle, handler, host)?,
-        })
+        };
+        application.project()?;
+        Ok(application)
     }
 }
 impl<A, V, R, C, P, K, S> EmbeddedApplication<'_, A, V, R, C, P, K, S>
@@ -467,6 +469,13 @@ where
         let scope = state
             .caller_scope(&caller, self.host.clock.now()?.epoch_millis()?)
             .map_err(control_error)?;
+        let effects = self.host.bundle.wi().effect_snapshot(caller.tenant())?;
+        let effect = effects.effects.get(id).ok_or("effect unavailable")?;
+        if effect.agency.binding.principal != *caller.principal()
+            || effect.agency.binding.capacity.organization_ref != scope.organization
+        {
+            return Err("effect unavailable".into());
+        }
         let reference = ObjectRef {
             scope,
             kind: ObjectKind::Evidence,
@@ -490,6 +499,12 @@ where
         let caller = self.caller(session)?;
         let state = self.host.bundle.wi().control_plane_snapshot()?;
         let m = state.issuances.get(id).ok_or("credential unavailable")?;
+        let scope = state
+            .caller_scope(&caller, self.host.clock.now()?.epoch_millis()?)
+            .map_err(control_error)?;
+        if scope != m.binding.scope {
+            return Err("credential unavailable".into());
+        }
         state
             .authorize_demand(
                 &caller,

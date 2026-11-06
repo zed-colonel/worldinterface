@@ -55,6 +55,21 @@ async fn wp_029_embedded_coding_and_transform_use_one_engine_and_application_ser
             &s.run,
             &s.expected,
         );
+        // Exercise the sixth supported operation on this same engine after
+        // publication; termination cannot revoke an already committed export.
+        let (submission, selection) = s.demands[3].clone();
+        flows.push(
+            consumer::operation(
+                &mut app,
+                &setup::Session::Valid,
+                submission,
+                selection,
+                &s.worker,
+                &s.provider,
+                &s.run,
+            )
+            .await,
+        );
         let (submission, selection) = s.demands[5].clone();
         flows.push(
             consumer::operation(
@@ -255,4 +270,14 @@ async fn wp_030_catalog_quarantine_and_revocation_fence_queued_execution() {
             .is_err());
         app.shutdown().unwrap();
     }
+}
+
+#[test]
+fn wp_030_recovery_reconstructs_scoped_metadata_before_returning_application() {
+    let setup = setup::RecoverySetup::new();
+    let reference = setup.persist_unprojected_flow();
+    let application = setup.host.application().unwrap();
+    setup.assert_flow_projected(&reference);
+    consumer::denied(&application, &setup::Session::Valid, &reference);
+    application.shutdown().unwrap();
 }

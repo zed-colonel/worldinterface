@@ -93,6 +93,38 @@ async fn ab_wi_019_two_independent_stores_restore_complete_wal_artifacts_and_con
             b"published result survives without process workspace",
         )
         .unwrap();
+    let worker = worldinterface_domain::worker::WorkerBinding {
+        tenant: snapshot.bindings[0].tenant.clone(),
+        principal: snapshot.bindings[0].principal.clone(),
+        provider: o("restore-provider"),
+        run: o("restore-run"),
+        request: o("restore-start"),
+        realization: worldinterface_protocol::ContentHash::of(b"restore-owned-worker"),
+    };
+    b.wi().reserve_start(worker.clone(), 1).unwrap();
+    worldinterface_runtime::worker::observation::commit(
+        b.wi(),
+        &worker,
+        worldinterface_domain::continuation::EventRoute {
+            tenant: worker.tenant.clone(),
+            audience: worker.principal.clone(),
+            kind: worldinterface_domain::continuation::EventKind::WorkerObservation,
+            correlation: worker.event_correlation().unwrap(),
+            generation: None,
+        },
+        worldinterface_worker::ports::Observation {
+            provider: worker.provider.as_str().into(),
+            run: worker.run.as_str().into(),
+            event: "accepted-offline-fixture".into(),
+            sequence: 1,
+            kind: worldinterface_worker::ports::ObservationKind::Accepted,
+        },
+    )
+    .unwrap();
+    let pending =
+        b.wi().signal_obligations(worldinterface_storage::StoreKind::Fabric, None, 64).unwrap();
+    assert_eq!(pending.len(), 1);
+    assert!(pending[0].sequence.is_none());
     let state = b.wi().control_plane_snapshot().unwrap();
     let profile = b.wi().profile().clone();
     drop(b);
@@ -118,6 +150,14 @@ async fn ab_wi_019_two_independent_stores_restore_complete_wal_artifacts_and_con
     let restored = StoreBundle::open(&t.path().join("restored")).unwrap();
     assert_eq!(restored.wi().profile(), &profile);
     assert_eq!(restored.wi().control_plane_snapshot().unwrap(), state);
+    assert_eq!(
+        restored
+            .wi()
+            .signal_obligations(worldinterface_storage::StoreKind::Fabric, None, 64)
+            .unwrap(),
+        pending
+    );
+    restored.wi().read_artifact(pending[0].event.artifact.as_ref().unwrap()).unwrap();
     assert_eq!(
         restored.wi().read_artifact(&artifact).unwrap(),
         b"published result survives without process workspace"

@@ -49,6 +49,11 @@
         "manifest": "crates/worldinterface-runtime/Cargo.toml",
         "package": "worldinterface-runtime",
         "test": "wp_030_catalog_quarantine_and_revocation_fence_queued_execution"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "wp_030_recovery_reconstructs_scoped_metadata_before_returning_application"
       }
     ],
     "AB-WI-019": [
@@ -94,6 +99,11 @@
         "manifest": "crates/worldinterface-runtime/Cargo.toml",
         "package": "worldinterface-runtime",
         "test": "wp_030_catalog_quarantine_and_revocation_fence_queued_execution"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "wp_030_recovery_reconstructs_scoped_metadata_before_returning_application"
       }
     ],
     "shared-use-accounting": [

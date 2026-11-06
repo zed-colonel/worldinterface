@@ -781,3 +781,55 @@ impl Setup {
             .unwrap();
     }
 }
+impl RecoverySetup {
+    pub fn persist_unprojected_flow(&self) -> ObjectRef {
+        let fixture = super::flow_fixture::Fixture::new();
+        let bundle =
+            worldinterface_runtime::storage::StoreBundle::open(&self.temp.path().join("bundle"))
+                .unwrap();
+        for bytes in [b"input".as_slice(), b"resolution", b"grant"] {
+            bundle.wi().publish(self.auth.tenant.clone(), bytes).unwrap();
+        }
+        let mut submission = fixture.submission.clone();
+        let input = fixture.bundle.wi().read_artifact(&submission.input.artifact).unwrap();
+        submission.input.artifact = bundle.wi().publish(self.auth.tenant.clone(), &input).unwrap();
+        let evidence = super::connectors::Evidence(fixture.snapshot.clone());
+        let mut queue = worldinterface_runtime::aq_adapter::QueueEngine::bootstrap(
+            &bundle,
+            super::spi_harness::Noop,
+            super::spi_harness::host(),
+        )
+        .unwrap();
+        let service = worldinterface_runtime::flow::PlanService {
+            root: bundle.wi(),
+            authentication: &fixture.auth,
+            evidence: &evidence,
+            clock: &fixture.clock,
+            configuration: &fixture.config,
+        };
+        let id = service.submit_direct(&(), submission, fixture.selection(), &mut queue).unwrap();
+        queue.shutdown().unwrap();
+        let reference = ObjectRef {
+            scope: Scope { tenant: self.auth.tenant.clone(), organization: None },
+            kind: ObjectKind::Flow,
+            id,
+        };
+        assert!(!bundle
+            .wi()
+            .control_plane_snapshot()
+            .unwrap()
+            .objects
+            .iter()
+            .any(|o| o.reference == reference));
+        reference
+    }
+    pub fn assert_flow_projected(&self, reference: &ObjectRef) {
+        let root = StoreRoot::open_existing(self.temp.path().join("bundle/wi")).unwrap();
+        assert!(root
+            .control_plane_snapshot()
+            .unwrap()
+            .objects
+            .iter()
+            .any(|o| &o.reference == reference));
+    }
+}

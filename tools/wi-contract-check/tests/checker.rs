@@ -80,7 +80,7 @@ fn inventory_is_complete_and_deterministic() {
         ("workspace-crate", 10),
         ("auxiliary-crate", 11),
         ("foundation-crate", 7),
-        ("connector", 29), // WIP-12 adds the trusted test response/registry wrapper.
+        ("connector", 30), // WIP-14 adds the immutable embedded process dispatcher.
         ("wasm-manifest", 15),
         ("generated-id", 4),
     ] {
@@ -97,6 +97,14 @@ fn inventory_is_complete_and_deterministic() {
             .filter(|x| x.kind == "connector"
                 && x.path == "crates/worldinterface-runtime/src/worker/connector.rs"
                 && x.name == "WorkerConnector < S >")
+            .count(),
+        1
+    );
+    assert_eq!(
+        a.iter()
+            .filter(|x| x.kind == "connector"
+                && x.path == "crates/worldinterface-runtime/src/embedded/dispatch.rs"
+                && x.name == "ProcessDispatcher < S >")
             .count(),
         1
     );
