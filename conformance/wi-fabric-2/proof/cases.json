@@ -932,6 +932,11 @@
           "manifest": "crates/worldinterface-runtime/Cargo.toml",
           "package": "worldinterface-runtime",
           "test": "wp_034_embedded_seam_handoff_retains_nonsemantic_completion_and_unknown_controls"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "campaign_unknown_controls_publish_once_with_exact_observation_digest"
         }
       ]
     },
@@ -1123,6 +1128,11 @@
           "manifest": "tools/wi-contract-check/Cargo.toml",
           "package": "wi-contract-check",
           "test": "wp_033_inflated_claims_cannot_convert_worker_success_to_consumer_acceptance"
+        },
+        {
+          "manifest": "tools/wi-contract-check/Cargo.toml",
+          "package": "wi-contract-check",
+          "test": "campaign_parallel_harnesses_retain_failures_and_reject_substituted_binary_pins"
         }
       ]
     },
@@ -1146,6 +1156,11 @@
           "manifest": "tools/wi-contract-check/Cargo.toml",
           "package": "wi-contract-check",
           "test": "wp_034_handoff_rejects_substituted_pins_missing_evidence_and_semantic_completion"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "campaign_unknown_controls_publish_once_with_exact_observation_digest"
         }
       ]
     },

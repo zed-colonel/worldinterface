@@ -998,10 +998,20 @@ pub fn campaign_observation(name: &str, setup: &Setup, evidence: WorkerEvidence)
     let value = serde_json::json!({"schema":1,"evidence":evidence,"build":build,"completed":true,
         "capacity_reserved":false,"receipt_count":setup.receipts().len()});
     let path = std::path::PathBuf::from(base).join(name);
-    let mut file = std::fs::OpenOptions::new().write(true).create_new(true).open(path).unwrap();
+    let digest = publish_campaign_observation(&path, &value).unwrap();
+    println!("WI-WORKER-OBSERVATION {name} {}", digest.as_str());
+}
+
+/// Observation JSON preserves unavailable evidence as null. The domain codec's
+/// null prohibition applies to domain requests, not these measured observations.
+pub fn publish_campaign_observation(
+    path: &std::path::Path,
+    value: &serde_json::Value,
+) -> Result<ContentHash> {
     use std::io::Write;
-    let bytes = canonical_data(&value).unwrap();
-    file.write_all(&bytes).unwrap();
-    file.sync_all().unwrap();
-    println!("WI-WORKER-OBSERVATION {name} {}", ContentHash::of(&bytes).as_str());
+    let bytes = serde_json::to_vec(value)?;
+    let mut file = std::fs::OpenOptions::new().write(true).create_new(true).open(path)?;
+    file.write_all(&bytes)?;
+    file.sync_all()?;
+    Ok(ContentHash::of(&bytes))
 }

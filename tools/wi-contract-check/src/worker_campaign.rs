@@ -8,14 +8,16 @@ use crate::{
 use serde::{Deserialize, Serialize};
 use serde_json::{json, Value};
 use std::{
-    collections::{BTreeMap, BTreeSet},
+    collections::{BTreeMap, BTreeSet, VecDeque},
     fs,
     path::{Path, PathBuf},
     process::Command,
+    sync::Mutex,
 };
 
 pub const COVERAGE: &str = "conformance/wi-fabric-2/worker/campaign-coverage.json";
 pub const ENTRY: &str = "wi_owned_worker_acceptance_campaign";
+pub const PARALLELISM: usize = 2;
 const RUNTIME: &str = "crates/worldinterface-runtime/Cargo.toml";
 const PACKET: &str = "conformance/wi-fabric-2/worker/evaluation-manifest.json";
 const APPROVAL: &str = "conformance/wi-fabric-2/worker/evaluation-approval.json";
@@ -272,16 +274,7 @@ pub fn run(root: &Path, directory: &Path) -> Result<()> {
     }
     validate_coverage(root, &registry, &index)?;
     let selected = select(&registry, &harnesses)?;
-    let mut outcomes = Vec::new();
-    for (reference, executable) in selected {
-        let outcome = execute(root, reference, &executable, &directory)?;
-        eprintln!(
-            "campaign {}: {}",
-            outcome.reference.test,
-            if outcome.passed { "passed" } else { "FAILED" }
-        );
-        outcomes.push(outcome);
-    }
+    let outcomes = execute_selected(root, &selected, &directory)?;
     let mut observations = BTreeMap::new();
     for name in ["coding.json", "transform.json", "seam.json"] {
         observations.insert(name.to_string(), digest_file(&directory, name).ok());
@@ -304,19 +297,99 @@ pub fn run(root: &Path, directory: &Path) -> Result<()> {
         "kernel":output(root,"uname", &["-srv"])? ,"architecture":output(root,"uname", &["-m"])? ,
         "release":fs::read_to_string("/etc/os-release")?},"execution_identity":output(root,"id",&[])? ,
         "evaluation_approval":acceptance,"outcomes":outcomes,"cases":cases,"embedded_observations":observations,
-        "gates":gates,"claims":claims(),"limitations":limitations()});
+        "gates":gates,"claims":claims(),"limitations":limitations(),
+        "campaign_parallelism":PARALLELISM});
     fs::write(directory.join("receipt.json"), serde_json::to_vec_pretty(&receipt)?)?;
-    validate_receipt(root, &receipt, &directory)?;
     let handoff = candidate(root, &receipt, &directory)?;
     fs::write(directory.join("handoff-candidate.json"), serde_json::to_vec_pretty(&handoff)?)?;
-    validate_handoff(root, &handoff, &receipt, &directory)?;
+    // candidate() has already validated the complete execution receipt. Check the
+    // persisted value against that validated candidate without repeating discovery
+    // and every binary measurement. External handoffs still use validate_handoff().
+    validate_contract(&read(&directory.join("handoff-candidate.json"))?, &handoff)?;
     Ok(())
+}
+/// Independent harnesses have private stores and child processes. Bound their
+/// concurrency, retain every individual outcome, and measure each harness before
+/// and after its complete group rather than once per test using identical bytes.
+pub fn execute_selected(
+    root: &Path,
+    selected: &BTreeMap<TestRef, PathBuf>,
+    directory: &Path,
+) -> Result<Vec<Outcome>> {
+    let mut groups = BTreeMap::<PathBuf, Vec<TestRef>>::new();
+    for (reference, executable) in selected {
+        groups.entry(executable.clone()).or_default().push(reference.clone());
+    }
+    let pending = Mutex::new(VecDeque::from_iter(groups));
+    let batches = std::thread::scope(|scope| {
+        let workers = (0..PARALLELISM)
+            .map(|_| {
+                scope.spawn(|| {
+                    let mut batches = Vec::new();
+                    loop {
+                        let Some((executable, references)) = pending.lock().unwrap().pop_front()
+                        else {
+                            break;
+                        };
+                        let batch = (|| -> Result<Vec<Outcome>> {
+                            let digest = hash(fs::read(&executable)?);
+                            let mut outcomes = Vec::new();
+                            for reference in references {
+                                let outcome = execute_bound(
+                                    root,
+                                    reference,
+                                    &executable,
+                                    directory,
+                                    &digest,
+                                )?;
+                                eprintln!(
+                                    "campaign {}: {}",
+                                    outcome.reference.test,
+                                    if outcome.passed { "passed" } else { "FAILED" }
+                                );
+                                outcomes.push(outcome);
+                            }
+                            if digest != hash(fs::read(&executable)?) {
+                                return Err("campaign harness changed during execution".into());
+                            }
+                            Ok(outcomes)
+                        })();
+                        batches.push(batch.map_err(|e| e.to_string()));
+                    }
+                    batches
+                })
+            })
+            .collect::<Vec<_>>();
+        workers.into_iter().map(|w| w.join()).collect::<Vec<_>>()
+    });
+    let mut outcomes = Vec::new();
+    for worker in batches {
+        for batch in worker.map_err(|_| "campaign worker panicked")? {
+            outcomes.extend(batch.map_err(|e| format!("campaign harness failed: {e}"))?);
+        }
+    }
+    outcomes.sort_by(|a, b| a.reference.cmp(&b.reference));
+    Ok(outcomes)
 }
 pub fn execute(
     root: &Path,
     reference: TestRef,
     executable: &Path,
     directory: &Path,
+) -> Result<Outcome> {
+    let digest = hash(fs::read(executable)?);
+    let outcome = execute_bound(root, reference, executable, directory, &digest)?;
+    if digest != hash(fs::read(executable)?) {
+        return Err("campaign harness changed during execution".into());
+    }
+    Ok(outcome)
+}
+fn execute_bound(
+    root: &Path,
+    reference: TestRef,
+    executable: &Path,
+    directory: &Path,
+    executable_sha256: &str,
 ) -> Result<Outcome> {
     let name = format!("{}.log", hash(serde_json::to_vec(&reference)?));
     let out = Command::new("timeout")
@@ -334,7 +407,7 @@ pub fn execute(
     fs::write(directory.join(&name), &log)?;
     Ok(Outcome {
         reference,
-        executable_sha256: hash(fs::read(executable)?),
+        executable_sha256: executable_sha256.to_owned(),
         log: name,
         log_sha256: hash(&log),
         passed,
@@ -379,9 +452,10 @@ pub fn validate_receipt(root: &Path, receipt: &Value, base: &Path) -> Result<()>
             "gates",
             "claims",
             "limitations",
+            "campaign_parallelism",
         ],
     )?;
-    if receipt["version"] != 1 {
+    if receipt["version"] != 1 || receipt["campaign_parallelism"] != PARALLELISM {
         return Err("unsupported campaign receipt".into());
     }
     validate_generation(&receipt["before"], &receipt["after"])?;
@@ -410,11 +484,7 @@ pub fn validate_receipt(root: &Path, receipt: &Value, base: &Path) -> Result<()>
     let outcomes: Vec<Outcome> = serde_json::from_value(receipt["outcomes"].clone())?;
     validate_results(&registry, &outcomes, base)?;
     let selected = select(&registry, &discover(root)?)?;
-    for outcome in &outcomes {
-        if outcome.executable_sha256 != hash(fs::read(&selected[&outcome.reference])?) {
-            return Err("substituted compiled harness identity".into());
-        }
-    }
+    validate_executables(&outcomes, &selected)?;
     let cases = receipt["cases"].as_object().ok_or("missing case outcomes")?;
     if cases.len() != 55
         || registry
@@ -472,6 +542,22 @@ pub fn validate_receipt(root: &Path, receipt: &Value, base: &Path) -> Result<()>
             {
                 return Err("missing build digest".into());
             }
+        }
+    }
+    Ok(())
+}
+pub fn validate_executables(
+    outcomes: &[Outcome],
+    selected: &BTreeMap<TestRef, PathBuf>,
+) -> Result<()> {
+    let mut digests = BTreeMap::new();
+    for outcome in outcomes {
+        let executable = selected.get(&outcome.reference).ok_or("unknown campaign executable")?;
+        if !digests.contains_key(executable) {
+            digests.insert(executable.clone(), hash(fs::read(executable)?));
+        }
+        if outcome.executable_sha256 != digests[executable] {
+            return Err("substituted compiled harness identity".into());
         }
     }
     Ok(())

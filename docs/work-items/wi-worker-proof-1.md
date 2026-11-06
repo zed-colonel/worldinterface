@@ -297,3 +297,13 @@ unchanged and AQ remains the authorized crates.io 0.3.0 runtime. The changed
 packet requires renewed exact acceptance after its non-live build; the prior
 receipt/host anchor remain historical. No positive campaign passage or new gate
 closure is asserted by this candidate's source registration.
+
+WIP-15 packet `47800809…88c549ed83` was accepted in run
+`23917702-7b27-4be4-8317-2ff31d928044` through 2026-11-11T00:00:00Z.
+On `4e9feaa`, its campaign passed 221/222 tests but failed the seam observation's
+null encoding, leaving WP-031/034 failed. Adopted runtime-test timed out during
+the nested campaign. The remediation preserves unknown JSON observations,
+checks immutable publication, bounds independent harness concurrency to two and
+removes duplicate binary hashing/validation. Changed bytes require a fresh
+exact-packet acceptance and live verification; the actual receipt and anchor
+remain historical. See [WIP-15](WIP-15.md). No new gate closure is asserted.

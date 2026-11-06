@@ -134,3 +134,66 @@ fn campaign_coverage_requires_every_embedded_obligation_and_preserves_scope_test
     assert!(campaign::validate_coverage(&root(), &missing, &index).is_err());
     assert!(campaign::validate_coverage(&root(), &registry, &BTreeMap::new()).is_err());
 }
+
+#[test]
+fn campaign_parallel_harnesses_retain_failures_and_reject_substituted_binary_pins() {
+    let temp = tempfile::tempdir().unwrap();
+    let source = temp.path().join("fixture.rs");
+    let left = temp.path().join("left");
+    let right = temp.path().join("right");
+    fs::write(
+        &source,
+        r#"
+#[test] fn bad() { panic!("retain this failure"); }
+#[test] fn replace() {
+    let exe = std::env::current_exe().unwrap();
+    let replacement = exe.with_extension("replacement");
+    std::fs::write(&replacement, b"substituted during execution").unwrap();
+    std::fs::rename(replacement, exe).unwrap();
+}
+#[test] fn peer() {
+    let base = std::path::PathBuf::from(std::env::var_os("WI_WORKER_CAMPAIGN_EVIDENCE").unwrap());
+    let exe = std::env::current_exe().unwrap();
+    let name = exe.file_name().unwrap().to_str().unwrap();
+    std::fs::write(base.join(format!("{name}.ready")), b"ready").unwrap();
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(10);
+    while !(base.join("left.ready").exists() && base.join("right.ready").exists()) {
+        assert!(std::time::Instant::now() < deadline, "harnesses did not overlap");
+        std::thread::sleep(std::time::Duration::from_millis(10));
+    }
+}
+"#,
+    )
+    .unwrap();
+    assert!(Command::new("timeout")
+        .args(["60s", "rustc", "--test"])
+        .arg(&source)
+        .arg("-o")
+        .arg(&left)
+        .status()
+        .unwrap()
+        .success());
+    fs::copy(&left, &right).unwrap();
+    let mut selected = BTreeMap::new();
+    for (package, executable) in [("left", &left), ("right", &right)] {
+        for test in ["bad", "peer"] {
+            let mut t = reference(test);
+            t.package = package.into();
+            selected.insert(t, executable.clone());
+        }
+    }
+    let outcomes = campaign::execute_selected(temp.path(), &selected, temp.path()).unwrap();
+    assert_eq!(outcomes.len(), 4);
+    for outcome in &outcomes {
+        assert_eq!(outcome.passed, outcome.reference.test == "peer");
+        assert!(temp.path().join(&outcome.log).is_file());
+    }
+    campaign::validate_executables(&outcomes, &selected).unwrap();
+    let mut conflicting = outcomes.clone();
+    conflicting[1].executable_sha256 = "0".repeat(64);
+    assert!(campaign::validate_executables(&conflicting, &selected).is_err());
+    fs::write(&right, b"substituted").unwrap();
+    assert!(campaign::validate_executables(&outcomes, &selected).is_err());
+    let replaced = BTreeMap::from([(reference("replace"), left)]);
+    assert!(campaign::execute_selected(temp.path(), &replaced, temp.path()).is_err());
+}

@@ -1,3 +1,37 @@
+# WIP-15 evidence writer and campaign runtime remediation
+
+Packet `4780080955b38a775f724de0970c02531cbe542a145bf15b2ecc8088c549ed83`
+was explicitly accepted in run `23917702-7b27-4be4-8317-2ff31d928044` through
+2026-11-11T00:00:00Z. Its campaign ran all 222 registered tests: 221 passed;
+WP-034 failed writing the seam's unknown controls through the domain codec's
+null prohibition. WP-031/034 aggregates failed. An isolated evidence-enabled
+WP-034 run reproduced it. Adopted runtime-test timed out after 30 minutes.
+
+The remediation preserves unknown controls in observation JSON, with immutable
+create-once files and exact-byte digest binding. It bounds campaign concurrency
+to two harness groups, measures every executable before and after its group and
+once per receipt validation, and avoids redundant validation of a generated
+candidate. Individual test results, timeouts, binary substitution checks and
+source-generation checks remain mandatory. New non-live regressions cover null
+observations, publication tampering, independent harness overlap and child
+failures. See `docs/work-items/WIP-15.md` for scope and actual evaluation history.
+
+Request acceptance only of the exact canonical digest printed by
+`scripts/refresh-wi-worker-evaluation.py`, after the complete source-bound
+non-live build succeeds. Requested expiry remains **2026-11-11T00:00:00Z**.
+The unchanged limits are six operations, reviewed nonsensitive typed fixtures,
+15000 ms wall time and 65536 retained output bytes. AQ remains crates.io 0.3.0;
+fixture tasks, supervisor disposition and its five-file exception are unchanged.
+No ordinary use, production credentials, hostile code, publication, integration
+or gate closure is requested. G4 and target closure remain with WIP-16.
+
+The separate receipt and trusted host anchor preserve the actual acceptance of
+the previous packet. They do not authorize these changed bytes. Acceptance is
+an execution gate; no test may create or retarget it. After acceptance, rerun the
+live campaign and all ten adopted checks on the committed remediation.
+
+## Historical predecessor request
+
 # WIP-15 campaign evaluation request
 
 This candidate adds the campaign orchestrator, embedded evidence inspection and
