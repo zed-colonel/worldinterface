@@ -12696,5 +12696,12 @@
     "target": "embedded-worker-runtime",
     "rationale": "WIP-14 embedded application composition, exact custody recovery and consumer/restore proof; subject to qualifying review and exact-source live evaluation.",
     "source": "docs/work-items/WIP-14.md; accepted WIP-14 design; WI-ADR-018; WI-ADR-003"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/tests/control_plane.rs::control_distinct_fresh_issuances_wait_for_delivery_ownership::struct:PausedVault",
+    "disposition": "test-evidence",
+    "target": "foundation/storage/control-plane",
+    "rationale": "Retain AQ-free paused custody evidence that distinct fresh issuances wait for delivery ownership without losing their sole attempt",
+    "source": "WIP-14 review F-002; docs/work-items/WIP-14.md review remediation"
   }
 ]

@@ -1,3 +1,34 @@
+# WIP-14 review-remediation evaluation request
+
+Packet `b57f32a001ff95ef14ac46d35e22a96c61c0f35896e17e0dc6e9762aebc18b88`
+was accepted through 2026-11-11T00:00:00Z in run
+`e191c2f5-10ab-43ce-993d-b25260c71985`. All 19 focused embedded tests and all
+ten adopted checks passed on `7d93df6`, followed by a mergeable review.
+
+This remediation addresses F-001–F-003: record that acceptance and verification
+history, make fresh credential delivery wait for the delivery lock instead of
+losing its sole attempt on contention, and scan the complete consumer entry file
+excluding only the scanner function. A deterministic two-issuance regression
+checks waiting, exactly-once delivery, identical retries and journal rebuild.
+There is no change to worker/provider source, supervisor disposition, tasks,
+operations or fixture bounds. One test-only custody fixture struct is added
+to the inventory with an explicit test-evidence disposition; existing dispositions stay
+unchanged.
+
+Request acceptance only of the exact canonical digest printed by
+`scripts/refresh-wi-worker-evaluation.py`, after the complete source-bound non-live
+build passes. Requested expiry remains **2026-11-11T00:00:00Z**. The unchanged
+limits are six operations, reviewed nonsensitive typed fixtures, 15000 ms wall
+time and 65536 retained output bytes. No ordinary use, production credentials,
+publication, integration or gate closure is requested.
+
+The separate receipt and trusted host anchor retain the actual historical
+acceptance until the operator accepts these exact changed bytes. Acceptance is
+an execution gate; tests cannot create or retarget it. Run targeted live cases
+and all ten adopted checks on the committed candidate after acceptance.
+
+## Historical predecessor request
+
 # WIP-14 embedded composition evaluation request
 
 The operator accepted the previous final packet

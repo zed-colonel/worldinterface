@@ -138,6 +138,7 @@ async fn wp_030_embedded_forgery_scope_and_unauthorized_controls_fail_closed() {
     }
     app.shutdown().unwrap();
 }
+// boundary scanner start
 #[test]
 fn wp_030_consumer_and_helper_imports_stay_inside_application_boundary() {
     let sources =
@@ -145,10 +146,16 @@ fn wp_030_consumer_and_helper_imports_stay_inside_application_boundary() {
     // The entry point delegates trusted setup. Consumer helpers have no imports or
     // access paths to stores, process adapters, AQ, bootstrap or host internals.
     for (index, source) in sources.iter().enumerate() {
-        let code = source
-            .split("fn wp_030_consumer_and_helper_imports_stay_inside_application_boundary")
-            .next()
-            .unwrap()
+        // Exclude only this scanner, whose forbidden-path literals would match
+        // themselves. Keep every consumer test before and after this function.
+        let consumer = if index == 1 {
+            let (before, scanner) = source.split_once("\n// boundary scanner start\n").unwrap();
+            let (_, after) = scanner.split_once("\n// boundary scanner end\n").unwrap();
+            format!("{before}\n{after}")
+        } else {
+            source.to_string()
+        };
+        let code = consumer
             .lines()
             .filter(|l| !l.trim_start().starts_with("//"))
             .collect::<Vec<_>>()
@@ -172,6 +179,7 @@ fn wp_030_consumer_and_helper_imports_stay_inside_application_boundary() {
         }
     }
 }
+// boundary scanner end
 
 #[test]
 fn wp_030_recovery_only_facade_enforces_disclosure_revocation_and_exclusive_ownership() {

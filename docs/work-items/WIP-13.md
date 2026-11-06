@@ -262,5 +262,7 @@ The F-007 gap above describes this predecessor's delivered boundary. The WIP-14
 candidate implements durable claims, exclusive local delivery ownership, exact
 custody fencing and uncertainty/invalidation reconciliation, with crash and restore
 tests. See [WIP-14](WIP-14.md). Its storage profile is `local-embedded-16`; this
-predecessor's profile remains historical. Positive worker verification of the
-composed runtime still requires acceptance of the revised source packet.
+predecessor's profile remains historical. Packet `b57f32a0…ebc18b88` was accepted
+in run `e191c2f5-10ab-43ce-993d-b25260c71985`; all 19 focused embedded tests and
+all ten adopted checks passed on `7d93df6`. WIP-14's subsequent review remediation
+requires a separate exact-packet acceptance for its changed covered bytes.

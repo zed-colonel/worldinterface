@@ -529,7 +529,12 @@ impl cp::Repository for ControlPlaneRepository<'_> {
         }
         let lock =
             std::fs::File::open(self.root.path.join("control-delivery.lock")).map_err(storage)?;
-        fs2::FileExt::try_lock_exclusive(&lock).map_err(|_| cp::Error::Unresolved)?;
+        // A fresh intent already owns its sole delivery opportunity. Wait for
+        // another issuance or recovery operation instead of stranding it as
+        // Pending: an identical retry may only observe, never deliver it.
+        // No database transaction is held while waiting. Revalidate current
+        // authority and expiry below after acquiring delivery ownership.
+        fs2::FileExt::lock_exclusive(&lock).map_err(storage)?;
         let mut c = self.root.connect(StoreKind::Fabric).map_err(storage)?;
         // Serializes delivery against all administration and revocation. Intent
         // was committed by execute, and a process crash cannot retry custody.

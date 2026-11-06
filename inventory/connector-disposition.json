@@ -4601,32 +4601,32 @@
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/control_plane.rs::::enum:Event",
-          "source_sha256": "f57d3d6c87692f60b02d9aa0465ce5bc5d760239bd5c86864178e2ac537240c2",
+          "source_sha256": "f7b9613b3d26b455cd48657975d6038f829a9b9381b3136147bb506f76ebf0d0",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/control_plane.rs::::module:control_fixture@10d1b0eff34c",
-          "source_sha256": "f57d3d6c87692f60b02d9aa0465ce5bc5d760239bd5c86864178e2ac537240c2",
+          "source_sha256": "f7b9613b3d26b455cd48657975d6038f829a9b9381b3136147bb506f76ebf0d0",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/control_plane.rs::::module:tests@10d1b0eff34c",
-          "source_sha256": "f57d3d6c87692f60b02d9aa0465ce5bc5d760239bd5c86864178e2ac537240c2",
+          "source_sha256": "f7b9613b3d26b455cd48657975d6038f829a9b9381b3136147bb506f76ebf0d0",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/control_plane.rs::::source-module:crates/worldinterface-foundation/storage/src/control_plane.rs",
-          "source_sha256": "f57d3d6c87692f60b02d9aa0465ce5bc5d760239bd5c86864178e2ac537240c2",
+          "source_sha256": "f7b9613b3d26b455cd48657975d6038f829a9b9381b3136147bb506f76ebf0d0",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/control_plane.rs::::struct:ControlPlaneRepository",
-          "source_sha256": "f57d3d6c87692f60b02d9aa0465ce5bc5d760239bd5c86864178e2ac537240c2",
+          "source_sha256": "f7b9613b3d26b455cd48657975d6038f829a9b9381b3136147bb506f76ebf0d0",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/control_plane.rs::::type:ProjectionEntries",
-          "source_sha256": "f57d3d6c87692f60b02d9aa0465ce5bc5d760239bd5c86864178e2ac537240c2",
+          "source_sha256": "f7b9613b3d26b455cd48657975d6038f829a9b9381b3136147bb506f76ebf0d0",
           "registration_sites": []
         },
         {
@@ -4991,42 +4991,47 @@
         },
         {
           "id": "crates/worldinterface-foundation/storage/tests/control_plane.rs::::module:support",
-          "source_sha256": "f3a41a1a40978bbd9df60949c3d8c7d59717be44d0bf5e8973ff8980d697cc5c",
+          "source_sha256": "7fd01add110f20d89ca66a589acfa3fcf64b85cfc76a9deee0c8409639c183f2",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/tests/control_plane.rs::::source-module:crates/worldinterface-foundation/storage/tests/control_plane.rs",
-          "source_sha256": "f3a41a1a40978bbd9df60949c3d8c7d59717be44d0bf5e8973ff8980d697cc5c",
+          "source_sha256": "7fd01add110f20d89ca66a589acfa3fcf64b85cfc76a9deee0c8409639c183f2",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/tests/control_plane.rs::::struct:Auth",
-          "source_sha256": "f3a41a1a40978bbd9df60949c3d8c7d59717be44d0bf5e8973ff8980d697cc5c",
+          "source_sha256": "7fd01add110f20d89ca66a589acfa3fcf64b85cfc76a9deee0c8409639c183f2",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/tests/control_plane.rs::::struct:Clock",
-          "source_sha256": "f3a41a1a40978bbd9df60949c3d8c7d59717be44d0bf5e8973ff8980d697cc5c",
+          "source_sha256": "7fd01add110f20d89ca66a589acfa3fcf64b85cfc76a9deee0c8409639c183f2",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/tests/control_plane.rs::::struct:Vault",
-          "source_sha256": "f3a41a1a40978bbd9df60949c3d8c7d59717be44d0bf5e8973ff8980d697cc5c",
+          "source_sha256": "7fd01add110f20d89ca66a589acfa3fcf64b85cfc76a9deee0c8409639c183f2",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/tests/control_plane.rs::control_custody_secret_and_hostile_errors_never_enter_serialized_or_durable_paths::struct:HostileVault",
-          "source_sha256": "f3a41a1a40978bbd9df60949c3d8c7d59717be44d0bf5e8973ff8980d697cc5c",
+          "source_sha256": "7fd01add110f20d89ca66a589acfa3fcf64b85cfc76a9deee0c8409639c183f2",
+          "registration_sites": []
+        },
+        {
+          "id": "crates/worldinterface-foundation/storage/tests/control_plane.rs::control_distinct_fresh_issuances_wait_for_delivery_ownership::struct:PausedVault",
+          "source_sha256": "7fd01add110f20d89ca66a589acfa3fcf64b85cfc76a9deee0c8409639c183f2",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/tests/control_plane.rs::control_identical_retry_cannot_cancel_an_in_flight_issue::struct:Counting",
-          "source_sha256": "f3a41a1a40978bbd9df60949c3d8c7d59717be44d0bf5e8973ff8980d697cc5c",
+          "source_sha256": "7fd01add110f20d89ca66a589acfa3fcf64b85cfc76a9deee0c8409639c183f2",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/tests/control_plane.rs::control_identical_retry_cannot_cancel_an_in_flight_issue::struct:Paused",
-          "source_sha256": "f3a41a1a40978bbd9df60949c3d8c7d59717be44d0bf5e8973ff8980d697cc5c",
+          "source_sha256": "7fd01add110f20d89ca66a589acfa3fcf64b85cfc76a9deee0c8409639c183f2",
           "registration_sites": []
         },
         {
@@ -6801,47 +6806,47 @@
         },
         {
           "id": "crates/worldinterface-runtime/tests/embedded_worker.rs::::module:support",
-          "source_sha256": "ddb8fa81beab8aa457524d1f226b99944e3b50736ecc4d94dd0beb35472850e1",
+          "source_sha256": "9966014eeb55a50379b8e93215763a0988962ffe28118fb589c0394f509edc27",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/embedded_worker.rs::::source-module:crates/worldinterface-runtime/tests/embedded_worker.rs",
-          "source_sha256": "ddb8fa81beab8aa457524d1f226b99944e3b50736ecc4d94dd0beb35472850e1",
+          "source_sha256": "9966014eeb55a50379b8e93215763a0988962ffe28118fb589c0394f509edc27",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/embedded_worker.rs::support::module:child",
-          "source_sha256": "ddb8fa81beab8aa457524d1f226b99944e3b50736ecc4d94dd0beb35472850e1",
+          "source_sha256": "9966014eeb55a50379b8e93215763a0988962ffe28118fb589c0394f509edc27",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/embedded_worker.rs::support::module:connectors",
-          "source_sha256": "ddb8fa81beab8aa457524d1f226b99944e3b50736ecc4d94dd0beb35472850e1",
+          "source_sha256": "9966014eeb55a50379b8e93215763a0988962ffe28118fb589c0394f509edc27",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/embedded_worker.rs::support::module:embedded_consumer",
-          "source_sha256": "ddb8fa81beab8aa457524d1f226b99944e3b50736ecc4d94dd0beb35472850e1",
+          "source_sha256": "9966014eeb55a50379b8e93215763a0988962ffe28118fb589c0394f509edc27",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/embedded_worker.rs::support::module:embedded_setup",
-          "source_sha256": "ddb8fa81beab8aa457524d1f226b99944e3b50736ecc4d94dd0beb35472850e1",
+          "source_sha256": "9966014eeb55a50379b8e93215763a0988962ffe28118fb589c0394f509edc27",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/embedded_worker.rs::support::module:flow_fixture",
-          "source_sha256": "ddb8fa81beab8aa457524d1f226b99944e3b50736ecc4d94dd0beb35472850e1",
+          "source_sha256": "9966014eeb55a50379b8e93215763a0988962ffe28118fb589c0394f509edc27",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/embedded_worker.rs::support::module:spi_harness",
-          "source_sha256": "ddb8fa81beab8aa457524d1f226b99944e3b50736ecc4d94dd0beb35472850e1",
+          "source_sha256": "9966014eeb55a50379b8e93215763a0988962ffe28118fb589c0394f509edc27",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/embedded_worker.rs::support::module:worker_fixture",
-          "source_sha256": "ddb8fa81beab8aa457524d1f226b99944e3b50736ecc4d94dd0beb35472850e1",
+          "source_sha256": "9966014eeb55a50379b8e93215763a0988962ffe28118fb589c0394f509edc27",
           "registration_sites": []
         },
         {
@@ -8483,7 +8488,7 @@
         },
         {
           "path": "crates/worldinterface-foundation/storage/src/control_plane.rs",
-          "source_sha256": "f57d3d6c87692f60b02d9aa0465ce5bc5d760239bd5c86864178e2ac537240c2",
+          "source_sha256": "f7b9613b3d26b455cd48657975d6038f829a9b9381b3136147bb506f76ebf0d0",
           "treatment": "WIP-13 shared embedded control-plane support/evidence: retain scoped authentication, administration and custody boundaries; review selective legacy removal without deleting these contracts. Disposition proposal in docs/work-items/WIP-13.md."
         },
         {
@@ -8558,7 +8563,7 @@
         },
         {
           "path": "crates/worldinterface-foundation/storage/tests/control_plane.rs",
-          "source_sha256": "f3a41a1a40978bbd9df60949c3d8c7d59717be44d0bf5e8973ff8980d697cc5c",
+          "source_sha256": "7fd01add110f20d89ca66a589acfa3fcf64b85cfc76a9deee0c8409639c183f2",
           "treatment": "WIP-13 shared embedded control-plane support/evidence: retain scoped authentication, administration and custody boundaries; review selective legacy removal without deleting these contracts. Disposition proposal in docs/work-items/WIP-13.md."
         },
         {
@@ -8913,7 +8918,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/tests/embedded_worker.rs",
-          "source_sha256": "ddb8fa81beab8aa457524d1f226b99944e3b50736ecc4d94dd0beb35472850e1",
+          "source_sha256": "9966014eeb55a50379b8e93215763a0988962ffe28118fb589c0394f509edc27",
           "treatment": "Retain WIP-14 embedded runtime, AQ-free control-plane ownership and WI-owned consumer proof; no connector removal or qualification claim."
         },
         {

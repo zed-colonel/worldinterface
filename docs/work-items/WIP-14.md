@@ -2,9 +2,12 @@
 
 Implementation candidate for WI-11/embedded-runtime. WP-029, WP-030 and AB-WI-019
 have exact non-ignored registrations in the [embedded coverage matrix](../../conformance/wi-fabric-2/worker/embedded-coverage.json).
-Positive live verification and the adopted runtime suite require acceptance of
-the revised exact-source evaluation packet. Registration identifies executable
-coverage, not a passing runtime result. G4 remains open for WIP-16.
+Packet `b57f32a001ff95ef14ac46d35e22a96c61c0f35896e17e0dc6e9762aebc18b88`
+was accepted through 2026-11-11T00:00:00Z in run
+`e191c2f5-10ab-43ce-993d-b25260c71985`. All 19 focused embedded tests and all ten
+adopted checks passed on `7d93df6`; review found no blocking or major defect.
+The remediation below changes covered source and needs its own exact-packet
+acceptance before live evaluation. G4 remains open for WIP-16.
 
 ## Composition and consumer boundary
 
@@ -81,7 +84,10 @@ Historical delivery alone is insufficient to validate an active credential.
 A durable attempt claim commits before custody contact. It binds issuance,
 exclusive ownership epoch, the exact metadata digest, scope, expiry and secret
 version/generation. A local delivery lock covers claim, custody interaction and
-completion. Ordinary identical retries observe status; they neither redeliver nor
+completion. Fresh deliveries wait for that lock without holding a database
+transaction, then revalidate current authority and expiry. Contention with another
+issuance or recovery operation cannot discard the fresh delivery opportunity.
+Ordinary identical retries observe status; they neither redeliver nor
 cancel a live attempt. Custody delivery receives the exact durable attempt.
 Delivery and revocation remain serialized against administrative rotation.
 
@@ -141,8 +147,10 @@ Clippy and contract checks are recorded under `scratch/verification` in run
 `a0d79d7f-0d79-4550-a3fc-0043f0fcb16c`. The revised packet recipe compiles all test
 targets and builds/measures the fixture and helper without executing them.
 The exact canonical digest is reported by the refresh script and the source-bound
-build report, avoiding recursive digest text in covered documentation. Receipt and
-trusted anchor retain the earlier operator decision until renewed acceptance.
+build report, avoiding recursive digest text in covered documentation. The separate
+receipt and trusted anchor record actual operator acceptance; covered documentation
+records historical accepted packets and results without claiming acceptance of
+its own changed bytes.
 All ten adopted checks on the committed candidate and qualifying review remain
 required; CraftingTable alone integrates reviewed work.
 
@@ -165,6 +173,37 @@ artifact and rejects a reference registered for conflicting documents. A non-liv
 regression checks all six operation attestations through `verify_snapshot` and
 rejects a substituted reference. This changes no production verifier, provider,
 task, operation or limit. Inventory structure and dispositions are unchanged;
-only source hashes need refresh. The changed source packet requires renewed
-explicit acceptance after the source-bound non-live build. The trust receipt and
-anchor retain the actual acceptance above until that decision arrives.
+only source hashes needed refresh. The operator subsequently accepted replacement
+packet `b57f32a0…ebc18b88`
+in run `e191c2f5-10ab-43ce-993d-b25260c71985`. The complete focused evaluation
+and all ten adopted checks passed on `7d93df6`, including coding/transform
+execution and the cold-build crash case. The acceptance is recorded separately
+in the receipt and host anchor; the prior failed evaluation above is historical.
+
+## Review remediation: F-001, F-002 and F-003
+
+F-001 corrects the packet and verification history in this note, the embedded
+coverage matrix, the active ledger and WIP-13's successor note. The accepted
+`b57f32a0…ebc18b88` packet and passing `7d93df6` checks remain historical evidence;
+they do not authorize this remediation's changed bytes.
+
+F-002 makes fresh delivery wait for exclusive delivery ownership. A deterministic
+storage test commits two distinct issuance intents, holds the first inside
+custody, and verifies that the second waits and then delivers exactly once.
+Identical retries only observe the delivered result, and rebuild preserves both
+attempts. Recovery retains its non-blocking lock so it cannot cancel live delivery.
+
+F-003 scans both complete consumer sources, excluding only the scanner function's
+marked region. Tests following that function are now checked as well. The adopted
+contract check continues to parse both complete files using its syn visitor.
+
+The explicit inventory/disposition proposal adds one test-only `PausedVault`
+struct under the new storage regression, retained with a test-evidence disposition as AQ-free storage test
+support, assigned to the existing `fabric-support` infrastructure family.
+Existing entries and dispositions are preserved. No worker operation,
+task, fixture bound or supervisor source changes. Source hashes and the packet
+manifest are refreshed after this structural update.
+The remediation's non-live build and checks are recorded under
+`scratch/verification` in run `6e4e0635-a0a8-46f9-a988-4a46c09d61c9`; live
+verification requires acceptance of the exact digest in the source-bound build
+report, under the unchanged evaluation limits.
