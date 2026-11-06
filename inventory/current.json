@@ -14712,7 +14712,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-runtime/tests/support/worker_approval_anchor.rs",
     "name": "crates/worldinterface-runtime/tests/support/worker_approval_anchor.rs",
-    "source_sha256": "4fea92c8eee1aa5e30ea4c214b4c9544715894921a07fe4faab5800e571dd331",
+    "source_sha256": "ce5f735a2495508685dc4171cc4ca57afad3dd2fdc050596bc26255e21974876",
     "conditions": [],
     "registration_sites": []
   },
