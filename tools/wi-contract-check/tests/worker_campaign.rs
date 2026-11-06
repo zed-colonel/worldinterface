@@ -304,7 +304,12 @@ fn campaign_shared_runtime_support_tests_retain_each_harness_and_reject_omission
     assert_ne!(first.log, second.log);
     let outcomes = vec![first.clone(), second];
     campaign::validate_runtime_results(&expected, &outcomes, temp.path()).unwrap();
-    assert!(campaign::validate_runtime_results(&expected, &[first.clone()], temp.path()).is_err());
+    assert!(campaign::validate_runtime_results(
+        &expected,
+        std::slice::from_ref(&first),
+        temp.path()
+    )
+    .is_err());
     assert!(campaign::validate_runtime_results(&expected, &[first.clone(), first], temp.path())
         .is_err());
     fs::write(right, b"substituted binary").unwrap();

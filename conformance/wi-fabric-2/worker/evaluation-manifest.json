@@ -317,7 +317,7 @@
     "tools/wi-contract-check/tests/continuations.rs": "d00d51f8ae04809b47c5b2976fb0a860e48cc3d873f832aa2f8f27672070e2a9",
     "tools/wi-contract-check/tests/proof.rs": "d875b6551877a0d5574d7bea881cec629147a294da8c82e116bb0d494cbe170d",
     "tools/wi-contract-check/tests/runtime_evidence.rs": "232c78c728ff6ca2040b1b591b95cc051498bac4ba6acb5a36d803b1387faad9",
-    "tools/wi-contract-check/tests/worker_campaign.rs": "9a0cfe8c489b74478cf187dc857f4581c65eb40bc7ed746d2518c22172216ac3"
+    "tools/wi-contract-check/tests/worker_campaign.rs": "5b8223a28e1aaa68414731acce9ca6a041718a7dcd99472c76c3b04f8e05acbf"
   },
   "tasks": [
     "1c53ab56a9058b4b0000f6e4ff5b10509b6c7f074d070aceff78e1267f3385ba",
