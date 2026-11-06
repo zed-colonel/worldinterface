@@ -15,6 +15,20 @@ CREATE TABLE control_entries(collection TEXT NOT NULL, key TEXT NOT NULL, value 
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
 enum Event {
+    ReconcileUnattempted {
+        id: ContentHash,
+        fenced: ContentHash,
+    },
+    ClaimDelivery {
+        attempt: CredentialDeliveryAttempt,
+    },
+    ReconcileDelivery {
+        evidence: DeliveryReconciliation,
+    },
+    ReserveEffect {
+        operation: ContentHash,
+        limits: Vec<worldinterface_domain::authorization::UseLimit>,
+    },
     Bootstrap {
         command: cp::Bootstrap,
         now: u64,
@@ -105,6 +119,9 @@ const COLLECTIONS: &[(&str, bool)] = &[
     ("objects", true),
     ("permits", true),
     ("issuances", false),
+    ("delivery_attempts", false),
+    ("delivery_reconciliations", false),
+    ("effect_reservations", false),
     ("revocations", false),
     ("uses", false),
     ("requests", false),
@@ -142,6 +159,10 @@ fn entries(s: &cp::State) -> Result<(serde_json::Value, ProjectionEntries)> {
 }
 fn evolve(old: &cp::State, event: &Event) -> cp::Result<cp::State> {
     match event {
+        Event::ReconcileUnattempted { id, fenced } => cp::reconcile_unattempted(old, id, fenced),
+        Event::ClaimDelivery { attempt } => cp::claim_delivery(old, attempt),
+        Event::ReconcileDelivery { evidence } => cp::reconcile_delivery(old, evidence),
+        Event::ReserveEffect { operation, limits } => cp::reserve_effect(old, operation, limits),
         Event::Bootstrap { command, now } => cp::bootstrap(old, command, *now),
         Event::Execute { tenant, principal, request, now } => cp::apply(
             old,
@@ -231,6 +252,57 @@ pub struct ControlPlaneRepository<'a> {
     root: &'a StoreRoot,
 }
 impl StoreRoot {
+    /// Final provider fence, called while the owning worker transaction excludes
+    /// administration. Uses only the logical dispatch's existing reservation.
+    pub fn check_control_execution(
+        &self,
+        tenant: &OpaqueRef,
+        principal: &PrincipalId,
+        intent: &EffectIntentId,
+        dispatch: usize,
+        facts: &worldinterface_domain::authorization::AuthorizationSnapshot,
+        now: u64,
+    ) -> Result<()> {
+        let mut state = self.control_plane_snapshot()?;
+        if state.configuration.is_none() {
+            return Ok(());
+        }
+        let operation = ContentHash::of(
+            &canonical_data(&("wi-effect-use-v1", tenant, intent, dispatch)).map_err(invalid)?,
+        );
+        if let Some(limits) = state.effect_reservations.get(&operation).cloned() {
+            for limit in limits {
+                if let Some(n) = state.uses.get_mut(&limit.key) {
+                    *n = n.saturating_sub(1);
+                }
+            }
+        }
+        let mut current = facts.clone();
+        state
+            .execution_authority(
+                &AuthenticatedCaller::from_trusted_authentication(
+                    tenant.clone(),
+                    principal.clone(),
+                ),
+                now,
+                &mut current,
+            )
+            .map_err(|_| invalid("managed dispatch authority unavailable"))?;
+        if current.bindings != facts.bindings
+            || current.policy != facts.policy
+            || current.grants != facts.grants
+        {
+            return Err(invalid("managed dispatch authority drift"));
+        }
+        Ok(())
+    }
+    /// Exclusive ownership for embedded composition. Retain for the host lifetime.
+    /// This fences local compositions only; custody fences restored copies.
+    pub fn claim_embedded_host(&self) -> Result<std::fs::File> {
+        let lock = std::fs::File::open(self.path.join("embedded-host.lock"))?;
+        fs2::FileExt::try_lock_exclusive(&lock)?;
+        Ok(lock)
+    }
     pub fn control_plane(&self) -> ControlPlaneRepository<'_> {
         ControlPlaneRepository { root: self }
     }
@@ -280,6 +352,130 @@ impl StoreRoot {
     pub fn register_control_permit(&self, permit: cp::Permit) -> Result<()> {
         self.control_host_event(Event::Permit { permit: Box::new(permit) })
     }
+    /// Trusted recovery only. A restored filesystem cannot establish abandonment;
+    /// require custody to fence the exact original owner before changing status.
+    pub fn reconcile_control_delivery(
+        &self,
+        id: &ContentHash,
+        custody: &impl cp::Custody,
+    ) -> cp::Result<CredentialMetadata> {
+        let lock = std::fs::File::open(self.path.join("control-delivery.lock")).map_err(storage)?;
+        fs2::FileExt::try_lock_exclusive(&lock).map_err(|_| cp::Error::Unresolved)?;
+        let mut c = self.connect(StoreKind::Fabric).map_err(storage)?;
+        let tx = c.transaction_with_behavior(TransactionBehavior::Immediate).map_err(storage)?;
+        let old = read(&tx).map_err(storage)?;
+        let m = old.issuances.get(id).cloned().ok_or(cp::Error::Unavailable)?;
+        if !matches!(m.status, IssuanceStatus::Pending | IssuanceStatus::Unresolved) {
+            return Ok(m);
+        }
+        let Some(attempt) = old.delivery_attempts.get(id) else {
+            if m.status == IssuanceStatus::Unresolved {
+                return Ok(m);
+            }
+            // A restored unattempted intent may have progressed in its original
+            // store. Local locks cannot fence that store or a future claim.
+            let fenced = custody.fence_unattempted(&m).map_err(|_| cp::Error::Unresolved)?;
+            if fenced != cp::unattempted_fencing_binding(&m)? {
+                return Err(cp::Error::Unresolved);
+            }
+            let new = record(&tx, &old, &Event::ReconcileUnattempted { id: id.clone(), fenced })
+                .map_err(storage)?;
+            tx.commit().map_err(storage)?;
+            return Ok(new.issuances[id].clone());
+        };
+        if old.delivery_reconciliations.get(id).is_some_and(|r| r.invalidated) {
+            return Ok(m);
+        }
+        let fenced = custody.fence(attempt).map_err(|_| cp::Error::Unresolved)?;
+        if fenced != cp::fencing_binding(attempt)? {
+            return Err(cp::Error::Unresolved);
+        }
+        // Journal uncertainty before the invalidation call. A second crash can
+        // only repeat idempotent invalidation, never delivery or promotion.
+        let mut evidence =
+            DeliveryReconciliation { attempt: attempt.clone(), fenced, invalidated: false };
+        let _uncertain =
+            record(&tx, &old, &Event::ReconcileDelivery { evidence: evidence.clone() })
+                .map_err(storage)?;
+        tx.commit().map_err(storage)?;
+        let tx = c.transaction_with_behavior(TransactionBehavior::Immediate).map_err(storage)?;
+        evidence.invalidated = custody.invalidate(&m, attempt).is_ok();
+        let new = record(&tx, &read(&tx).map_err(storage)?, &Event::ReconcileDelivery { evidence })
+            .map_err(storage)?;
+        tx.commit().map_err(storage)?;
+        Ok(new.issuances[id].clone())
+    }
+}
+
+/// Called inside the effect's Fabric transaction. A separate journal records
+/// shared uses, but there is no second transaction or cross-WAL dependency.
+pub(crate) fn reserve_effect(
+    c: &Connection,
+    tenant: &OpaqueRef,
+    old: &worldinterface_domain::effect::EffectState,
+    new: &worldinterface_domain::effect::EffectState,
+    id: &EffectIntentId,
+    command: &[u8],
+) -> Result<()> {
+    let control = read(c)?;
+    if control.configuration.is_none() {
+        return Ok(());
+    }
+    if control.configuration.as_ref().unwrap().status.tenant != *tenant {
+        return Err(invalid("managed tenant mismatch"));
+    }
+    let effect = &new.effects[id];
+    let action = strict_json(command).map_err(invalid)?;
+    let phase = action["action"]["operation"].as_str().unwrap_or("");
+    if matches!(phase, "prepare_production" | "start_production" | "authorize") {
+        let facts = effect
+            .authorization_inputs
+            .as_ref()
+            .ok_or_else(|| invalid("managed effect authority absent"))?;
+        let caller = AuthenticatedCaller::from_trusted_authentication(
+            tenant.clone(),
+            effect.agency.binding.principal.clone(),
+        );
+        let mut managed = facts.clone();
+        // Do not drop a grant already reserved by this logical dispatch.
+        let mut current = control.clone();
+        let operation = ContentHash::of(
+            &canonical_data(&("wi-effect-use-v1", tenant, id, effect.dispatches.len()))
+                .map_err(invalid)?,
+        );
+        if let Some(limits) = control.effect_reservations.get(&operation) {
+            for limit in limits {
+                if let Some(n) = current.uses.get_mut(&limit.key) {
+                    *n = n.saturating_sub(1);
+                }
+            }
+        }
+        let at: Timestamp = serde_json::from_value(action["at"].clone())?;
+        current
+            .execution_authority(&caller, at.epoch_millis().map_err(invalid)?, &mut managed)
+            .map_err(|_| invalid("managed authority unavailable"))?;
+        if managed.bindings != facts.bindings
+            || managed.policy != facts.policy
+            || managed.grants != facts.grants
+        {
+            return Err(invalid("managed authority drift"));
+        }
+    }
+    if new.uses == old.uses {
+        return Ok(());
+    }
+    let limits = effect
+        .authorization
+        .as_ref()
+        .ok_or_else(|| invalid("missing shared reservation"))?
+        .reservations
+        .clone();
+    let operation = ContentHash::of(
+        &canonical_data(&("wi-effect-use-v1", tenant, id, effect.dispatches.len()))
+            .map_err(invalid)?,
+    );
+    record(c, &control, &Event::ReserveEffect { operation, limits })?;
+    Ok(())
 }
 fn storage(_: impl std::fmt::Display) -> cp::Error {
     cp::Error::Storage
@@ -310,6 +506,10 @@ impl cp::Repository for ControlPlaneRepository<'_> {
             .map_err(storage)?;
         }
         tx.commit().map_err(storage)?;
+        #[cfg(all(feature = "crash-points", not(test)))]
+        if fresh && matches!(outcome, cp::Outcome::Credential(_)) {
+            crate::crashpoint::checkpoint("control-intent-committed");
+        }
         Ok((outcome, fresh))
     }
     fn deliver(
@@ -319,6 +519,22 @@ impl cp::Repository for ControlPlaneRepository<'_> {
         custody: &impl cp::Custody,
         fresh: bool,
     ) -> cp::Result<CredentialMetadata> {
+        if !fresh {
+            return read(&self.root.connect(StoreKind::Fabric).map_err(storage)?)
+                .map_err(storage)?
+                .issuances
+                .get(id)
+                .cloned()
+                .ok_or(cp::Error::Unavailable);
+        }
+        let lock =
+            std::fs::File::open(self.root.path.join("control-delivery.lock")).map_err(storage)?;
+        // A fresh intent already owns its sole delivery opportunity. Wait for
+        // another issuance or recovery operation instead of stranding it as
+        // Pending: an identical retry may only observe, never deliver it.
+        // No database transaction is held while waiting. Revalidate current
+        // authority and expiry below after acquiring delivery ownership.
+        fs2::FileExt::lock_exclusive(&lock).map_err(storage)?;
         let mut c = self.root.connect(StoreKind::Fabric).map_err(storage)?;
         // Serializes delivery against all administration and revocation. Intent
         // was committed by execute, and a process crash cannot retry custody.
@@ -332,16 +548,32 @@ impl cp::Repository for ControlPlaneRepository<'_> {
         // A duplicate may arrive before it; observing Pending cannot cancel it.
         // After interruption Pending requires explicit host reconciliation, never
         // automatic custody replay.
-        if !fresh {
+        if old.delivery_attempts.contains_key(id) {
             return Ok(m);
         }
+        let attempt = CredentialDeliveryAttempt {
+            issuance: id.clone(),
+            owner: InstanceId::generate().as_str().to_string().try_into().map_err(storage)?,
+            metadata: worldinterface_domain::ingress::digest(&m).map_err(storage)?,
+            claimed_at_ms: clock.now_ms(),
+        };
+        record(&tx, &old, &Event::ClaimDelivery { attempt }).map_err(storage)?;
+        tx.commit().map_err(storage)?;
+        #[cfg(all(feature = "crash-points", not(test)))]
+        crate::crashpoint::checkpoint("control-attempt-committed");
+        let tx = c.transaction_with_behavior(TransactionBehavior::Immediate).map_err(storage)?;
+        let old = read(&tx).map_err(storage)?;
         let result = match cp::delivery_reference(&old, id, clock.now_ms()) {
-            Ok(reference) => custody.deliver(&reference, &m),
+            Ok(reference) => custody.deliver_attempt(&reference, &m, &old.delivery_attempts[id]),
             Err(_) => Err(CustodyReason::Stale),
         };
+        #[cfg(all(feature = "crash-points", not(test)))]
+        crate::crashpoint::checkpoint("control-custody-returned");
         let new = record(&tx, &old, &Event::Delivery { id: id.clone(), reason: result.err() })
             .map_err(storage)?;
         tx.commit().map_err(storage)?;
+        #[cfg(all(feature = "crash-points", not(test)))]
+        crate::crashpoint::checkpoint("control-delivery-committed");
         Ok(new.issuances[id].clone())
     }
     fn revoke(
@@ -388,8 +620,79 @@ impl cp::Repository for ControlPlaneRepository<'_> {
 }
 
 #[cfg(test)]
+#[path = "../../domain/tests/support/control_plane.rs"]
+#[allow(dead_code)]
+mod control_fixture;
+
+#[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn shared_effect_and_credential_reservations_have_one_atomic_last_use() {
+        use super::control_fixture::*;
+        use cp::Repository;
+        let t = tempfile::tempdir().unwrap();
+        let root = StoreRoot::create_empty(
+            t.path().join("root"),
+            crate::StoreProfile {
+                instance: InstanceId::generate(),
+                created_at: time(),
+                platform: false,
+            },
+        )
+        .unwrap();
+        let (_, permit, request, snapshot, _) = issue_fixture(false, Profile::Embedded);
+        root.bootstrap_control_plane(bundle(&snapshot, Profile::Embedded), now()).unwrap();
+        root.register_control_permit(permit).unwrap();
+        let grant = &snapshot.grants[0];
+        let key = worldinterface_domain::ingress::digest(&(
+            "grant",
+            &grant.tenant,
+            &grant.issuer,
+            &grant.id,
+        ))
+        .unwrap();
+        let limits = vec![worldinterface_domain::authorization::UseLimit {
+            key: key.clone(),
+            max_uses: grant.max_uses,
+        }];
+        for n in 0..grant.max_uses - 1 {
+            root.control_host_event(Event::ReserveEffect {
+                operation: ContentHash::of(&n.to_be_bytes()),
+                limits: limits.clone(),
+            })
+            .unwrap();
+        }
+        let barrier = std::sync::Barrier::new(2);
+        let (effect, credential) = std::thread::scope(|threads| {
+            let effect = threads.spawn(|| {
+                barrier.wait();
+                root.control_host_event(Event::ReserveEffect {
+                    operation: ContentHash::of(b"last-effect"),
+                    limits: limits.clone(),
+                })
+                .is_ok()
+            });
+            let credential = threads.spawn(|| {
+                barrier.wait();
+                root.control_plane().execute(&caller(&snapshot), &request, now()).is_ok()
+            });
+            (effect.join().unwrap(), credential.join().unwrap())
+        });
+        assert_ne!(effect, credential, "only one logical operation can own the remaining use");
+        let state = root.control_plane_snapshot().unwrap();
+        assert_eq!(state.uses[&key], grant.max_uses);
+        if effect {
+            root.control_host_event(Event::ReserveEffect {
+                operation: ContentHash::of(b"last-effect"),
+                limits,
+            })
+            .unwrap();
+            assert_eq!(root.control_plane_snapshot().unwrap(), state);
+        }
+        root.repository(StoreKind::Fabric).unwrap().rebuild().unwrap();
+        assert_eq!(root.control_plane_snapshot().unwrap(), state);
+    }
     #[test]
     fn control_projection_entries_do_not_share_a_16_mib_ceiling() {
         let fixture: serde_json::Value = serde_json::from_str(include_str!(

@@ -370,22 +370,13 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
             admitted.provider_operation.clone().ok_or("worker provider operation absent")?;
         let mut live = self.live.lock().map_err(|_| "worker registry unavailable")?;
         let fresh = if matches!(op, Operation::Provision | Operation::Start) {
-            let connectors = super::admission::OPERATIONS
-                .iter()
-                .map(|op| {
-                    ConnectorRegistry::new(vec![descriptor(*op)?])?.bindings().map_err(Into::into)
-                })
-                .collect::<Result<Vec<_>>>()?
-                .into_iter()
-                .flatten()
-                .collect();
             root.reserve_catalog_start(
                 WorkerLaunchRecord {
                     version: 1,
                     binding: binding.clone(),
                     catalog: admitted.catalog.clone(),
                     implementation: descriptor(Operation::Start)?.implementation,
-                    connectors,
+                    connectors: admitted.connectors.clone(),
                     operations: canonical_data(&admitted.authorization.operations)?,
                 },
                 self.slots,
@@ -443,6 +434,14 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
             let operations = admitted.authorization.operations.clone();
             root.fence_worker_dispatch(binding, &admitted.catalog, || {
                 self.check_registration(&admitted.registration)?;
+                root.check_control_execution(
+                    &admitted.binding.tenant,
+                    &admitted.binding.principal,
+                    &admitted.intent,
+                    admitted.dispatch,
+                    &admitted.authority,
+                    self.clock.unix_ms(),
+                )?;
                 self.port.admit(admitted.authorization)
             })?;
             live.insert(key.clone(), operations);
@@ -472,11 +471,27 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
                 .clone();
             root.fence_worker_dispatch(binding, &admitted.catalog, || {
                 self.check_registration(&admitted.registration)?;
+                root.check_control_execution(
+                    &admitted.binding.tenant,
+                    &admitted.binding.principal,
+                    &admitted.intent,
+                    admitted.dispatch,
+                    &admitted.authority,
+                    self.clock.unix_ms(),
+                )?;
                 self.port.submit(&provision)
             })?;
         }
         let submit = || {
             self.check_registration(&admitted.registration)?;
+            root.check_control_execution(
+                &admitted.binding.tenant,
+                &admitted.binding.principal,
+                &admitted.intent,
+                admitted.dispatch,
+                &admitted.authority,
+                self.clock.unix_ms(),
+            )?;
             self.port.submit(&request)
         };
         let result = if op == Operation::Terminate {

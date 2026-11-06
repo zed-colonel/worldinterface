@@ -119,8 +119,8 @@ The transitive closure of `WI-EMBEDDED-WORKER-PROOF-1` over the map's checkpoint
 | wi/WI-09/process-provider | — | no | NOT STARTED | WIP-09, WIP-10, WIP-11 |
 | wi/WI-10/domain | verified | yes | DONE | WIP-01 re-registers WP-007 |
 | wi/WI-10/process-catalog | WIP-12 candidate | no | IMPLEMENTED; 34f2d904 evaluation and ten adopted checks passed on d73d56a; review remediation requires renewed packet acceptance/verification | WIP-12 |
-| wi/WI-11/domain | — | no | NOT STARTED | WIP-13 |
-| wi/WI-11/embedded-runtime | — | no | NOT STARTED | WIP-14 |
+| wi/WI-11/domain | — | no | IMPLEMENTED: WIP-13 predecessor | WIP-13 |
+| wi/WI-11/embedded-runtime | — | no | IMPLEMENTED; b57f32a0 evaluation and ten adopted checks passed on 7d93df6; review remediation requires separate exact-packet acceptance | WIP-14 |
 | wi/WI-13/worker-conformance | — | no | NOT STARTED | WIP-15 |
 | wi/WI-14/worker-handoff | — | no | NOT STARTED | WIP-16 |
 
@@ -269,3 +269,19 @@ and crash/retry evidence specified in
 The current fail-closed retries and lifetime bounds do not complete this
 obligation; WIP-14 must preserve the tested guarantee that an identical caller
 retry cannot cancel a live delivery or cause another custody call.
+
+## WIP-14 embedded composition candidate
+
+[WIP-14](WIP-14.md) implements the opaque host/application composition and the
+F-007 durable attempt/fencing obligation. Its shared-use ledger lives in the same
+Fabric transaction as effect preparation. Storage profile is `local-embedded-16`;
+WIP-13's `local-control-plane-15` is historical and is not silently migrated.
+WP-029, WP-030 and AB-WI-019 now have exact non-ignored embedded test references.
+WP-A07 resolves only the embedded Rust scope. Replacement packet
+`b57f32a0…ebc18b88` was accepted in run `e191c2f5-10ab-43ce-993d-b25260c71985`;
+the exact-document and prebuild fixes passed all 19 focused embedded tests and
+all ten adopted checks on `7d93df6`. The later F-001–F-003 review remediation
+changes covered bytes and requires separate exact-packet acceptance and
+verification. See WIP-14's evaluation follow-up and remediation note. G4 and parent
+closure remain with their later owners. The earlier carry-forward above records
+the predecessor state, not an assertion that WIP-14 recovery remains unimplemented.

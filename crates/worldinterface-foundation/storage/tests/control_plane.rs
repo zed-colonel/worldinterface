@@ -612,6 +612,100 @@ fn control_sustained_reads_leave_administration_and_revocation_available() {
 }
 
 #[test]
+fn control_distinct_fresh_issuances_wait_for_delivery_ownership() {
+    use std::sync::{
+        atomic::{AtomicUsize, Ordering},
+        mpsc,
+    };
+    use std::time::Duration;
+
+    struct PausedVault {
+        calls: Arc<AtomicUsize>,
+        entered: mpsc::Sender<()>,
+        resume: mpsc::Receiver<()>,
+    }
+    impl cp::Custody for PausedVault {
+        fn deliver(
+            &self,
+            _: &OpaqueRef,
+            _: &CredentialMetadata,
+        ) -> std::result::Result<(), CustodyReason> {
+            if self.calls.fetch_add(1, Ordering::SeqCst) == 0 {
+                self.entered.send(()).unwrap();
+                self.resume.recv_timeout(Duration::from_secs(10)).unwrap();
+            }
+            Ok(())
+        }
+        fn revoke(&self, _: &ObjectRef, _: u64, _: u64) -> std::result::Result<(), CustodyReason> {
+            Ok(())
+        }
+    }
+
+    let t = tempfile::tempdir().unwrap();
+    let root = create(&t.path().join("root"));
+    let (first, snapshot) = initialize_issue(&root, false);
+    let mut second = first.clone();
+    second.id = id("second-issuance");
+    let cp::Operation::Issue { request } = &mut second.operation else { panic!() };
+    request.request = second.id.clone();
+    let repo = root.control_plane();
+    let ids = [&first, &second].map(|request| {
+        let (cp::Outcome::Credential(m), true) =
+            repo.execute(&caller(&snapshot), request, now()).unwrap()
+        else {
+            panic!("distinct request must commit a fresh intent")
+        };
+        m.issuance
+    });
+    assert_ne!(ids[0], ids[1]);
+    let calls = Arc::new(AtomicUsize::new(0));
+    let (entered_tx, entered_rx) = mpsc::channel();
+    let (resume_tx, resume_rx) = mpsc::channel();
+    let (started_tx, started_rx) = mpsc::channel();
+    let (done_tx, done_rx) = mpsc::channel();
+    std::thread::scope(|threads| {
+        let repo = &repo;
+        let ids = &ids;
+        let vault = PausedVault { calls: calls.clone(), entered: entered_tx, resume: resume_rx };
+        let first_job = threads.spawn(move || repo.deliver(&ids[0], &Clock(now()), &vault, true));
+        entered_rx.recv_timeout(Duration::from_secs(10)).unwrap();
+        let second_job = threads.spawn(|| {
+            let vault = Vault::default();
+            started_tx.send(()).unwrap();
+            let result = repo.deliver(&ids[1], &Clock(now()), &vault, true);
+            done_tx.send(()).unwrap();
+            (result, vault.calls.get())
+        });
+        started_rx.recv_timeout(Duration::from_secs(10)).unwrap();
+        let waiting = done_rx.recv_timeout(Duration::from_secs(1));
+        // Always release the first delivery before asserting, including on the
+        // old try-lock implementation, so a failed regression cannot hang.
+        resume_tx.send(()).unwrap();
+        let first_result = first_job.join().unwrap().unwrap();
+        let (second_result, second_calls) = second_job.join().unwrap();
+        assert_eq!(waiting, Err(mpsc::RecvTimeoutError::Timeout));
+        assert_eq!(first_result.status, IssuanceStatus::Delivered);
+        assert_eq!(second_result.unwrap().status, IssuanceStatus::Delivered);
+        assert_eq!(second_calls, 1);
+    });
+    assert_eq!(calls.load(Ordering::SeqCst), 1);
+    let service = cp::Service::new(
+        root.control_plane(),
+        Auth(caller(&snapshot)),
+        Clock(now()),
+        Vault::default(),
+    );
+    for request in [&first, &second] {
+        let cp::Outcome::Credential(m) = service.execute(&(), request).unwrap() else { panic!() };
+        assert_eq!(m.status, IssuanceStatus::Delivered);
+    }
+    let state = root.control_plane_snapshot().unwrap();
+    assert_eq!(state.delivery_attempts.len(), 2);
+    root.repository(StoreKind::Fabric).unwrap().rebuild().unwrap();
+    assert_eq!(root.control_plane_snapshot().unwrap(), state);
+}
+
+#[test]
 fn control_identical_retry_cannot_cancel_an_in_flight_issue() {
     use std::sync::atomic::{AtomicUsize, Ordering};
     struct Paused<'a> {

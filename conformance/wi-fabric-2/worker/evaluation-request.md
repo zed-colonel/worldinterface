@@ -1,3 +1,71 @@
+# WIP-14 review-remediation evaluation request
+
+Packet `b57f32a001ff95ef14ac46d35e22a96c61c0f35896e17e0dc6e9762aebc18b88`
+was accepted through 2026-11-11T00:00:00Z in run
+`e191c2f5-10ab-43ce-993d-b25260c71985`. All 19 focused embedded tests and all
+ten adopted checks passed on `7d93df6`, followed by a mergeable review.
+
+This remediation addresses F-001–F-003: record that acceptance and verification
+history, make fresh credential delivery wait for the delivery lock instead of
+losing its sole attempt on contention, and scan the complete consumer entry file
+excluding only the scanner function. A deterministic two-issuance regression
+checks waiting, exactly-once delivery, identical retries and journal rebuild.
+There is no change to worker/provider source, supervisor disposition, tasks,
+operations or fixture bounds. One test-only custody fixture struct is added
+to the inventory with an explicit test-evidence disposition; existing dispositions stay
+unchanged.
+
+Request acceptance only of the exact canonical digest printed by
+`scripts/refresh-wi-worker-evaluation.py`, after the complete source-bound non-live
+build passes. Requested expiry remains **2026-11-11T00:00:00Z**. The unchanged
+limits are six operations, reviewed nonsensitive typed fixtures, 15000 ms wall
+time and 65536 retained output bytes. No ordinary use, production credentials,
+publication, integration or gate closure is requested.
+
+The separate receipt and trusted host anchor retain the actual historical
+acceptance until the operator accepts these exact changed bytes. Acceptance is
+an execution gate; tests cannot create or retarget it. Run targeted live cases
+and all ten adopted checks on the committed candidate after acceptance.
+
+## Historical predecessor request
+
+# WIP-14 embedded composition evaluation request
+
+The operator accepted the previous final packet
+`4931dbe1e63e4532a0aed6e25d649a30b9fa67cc4dbfa51fa8806863fe023d6c`.
+Its live embedded evaluation exposed a trusted-fixture evidence collision before
+dispatch. This follow-up binds each of the six operation targets to its own
+immutable resolution document and rejects ambiguous evidence references. The
+non-live regression verifies all six attestations and rejects substitution. No
+production execution source, supervisor exception, task or limit changes. The
+previous acceptance remains historical; it does not authorize these changed bytes.
+The embedded crash test also uses the existing source-only prebuild before its
+crash-cut observation deadline, so cold compilation cannot consume that deadline.
+
+Request acceptance only of the exact new canonical SHA-256 printed by
+`scripts/refresh-wi-worker-evaluation.py`, after the complete source-bound non-live
+build succeeds. The candidate adds WP-029 and WP-030: one embedded AQ engine,
+scoped application services, real coding/transform fixtures, lifecycle receipts,
+quarantine, crash recovery and restored published artifacts. It also includes
+F-007 durable custody ownership/fencing and shared Fabric grant-use accounting.
+AB-WI-019's second independent AQ store is WI-owned substitute evidence, not an
+EXO cognition integration claim. See `docs/work-items/WIP-14.md`.
+
+The storage profile becomes `local-embedded-16`. All changed source, coverage,
+contracts, dispositions, documentation and recipes are bound in the packet.
+Existing fixture limits remain: six supported operations, nonsensitive inputs,
+15000 ms wall time, 65536 retained output bytes, no production credentials and
+no ordinary use. Requested finite expiry remains **2026-11-11T00:00:00Z**.
+The process supervisor source and five-file exception are unchanged.
+
+The prior receipt and host anchor authorize only their historical packet. They
+remain unchanged until actual operator acceptance of this new digest. Acceptance
+is an execution gate; it grants no integration, publication, G4 closure, daemon,
+remote-provider or hostile-code qualification. Run targeted live cases and all
+ten adopted checks on the committed candidate after acceptance.
+
+## Historical predecessor requests
+
 # WIP-13 documentation-remediation evaluation request
 
 This candidate addresses F-007 using the review's explicit alternative: record

@@ -39,7 +39,7 @@ for name in [
     "scripts/check-wi-contract.sh", "scripts/check-wi-domain.sh",
     "scripts/check-wi-domain-isolation.py", "scripts/check-wi-integration.sh",
     "scripts/check-wi-integration.py", "scripts/wi_crash_isolation.py",
-    "docs/work-items/WIP-11.md", "docs/work-items/WIP-12.md", "docs/work-items/WIP-13.md", "docs/work-items/wi-worker-proof-1.md",
+    "docs/work-items/WIP-11.md", "docs/work-items/WIP-12.md", "docs/work-items/WIP-13.md", "docs/work-items/WIP-14.md", "docs/work-items/wi-worker-proof-1.md",
 ]:
     files.add(name)
 # Bind the actual fixture and normative data, not only source references to their paths.
@@ -64,7 +64,7 @@ manifest = {
     "environment": digest((ROOT / "conformance/wi-fabric-2/worker/evaluation-environment.json").read_bytes()),
     "files": {name: digest((ROOT / name).read_bytes()) for name in sorted(files)},
     "tasks": sorted({digest(canonical(task)) for task in tasks}),
-    "cases": sorted(["WP-007", "WP-032", "AB-WI-021", "WIP-09-adapter-regressions"] + [f"WP-{n:03}" for n in range(17, 27)] + [f"WP-{n:03}" for n in [27, 28, 31]]),
+    "cases": sorted(["WP-007", "WP-032", "AB-WI-021", "WIP-09-adapter-regressions"] + [f"WP-{n:03}" for n in range(17, 27)] + [f"WP-{n:03}" for n in [27, 28, 29, 30, 31]]),
     "operations": sorted(["provision", "start", "inspect", "terminate", "collect_artifacts", "release"]),
     "max_wall_ms": 15000, "max_output_bytes": 65536,
     "nonsensitive_only": True, "production_credentials": False, "ordinary_use": False,

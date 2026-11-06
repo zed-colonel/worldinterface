@@ -422,6 +422,13 @@ fn coverage(root: &Path, id: &str) -> Result<(Vec<String>, BTreeSet<TestRef>)> {
     if let Some(names) = v["assigned_cases"].get(id) {
         add(path, RUNTIME, "worldinterface-runtime", serde_json::from_value(names.clone())?);
     }
+    let path = "conformance/wi-fabric-2/worker/embedded-coverage.json";
+    let v = read(&root.join(path))?;
+    if let Some(references) = v["assigned_cases"].get(id) {
+        let references: Vec<TestRef> = serde_json::from_value(references.clone())?;
+        refs.push(path.to_string());
+        tests.extend(references);
+    }
     refs.sort();
     Ok((refs, tests))
 }
@@ -740,6 +747,7 @@ pub fn check(root: &Path) -> Result<Vec<Finding>> {
     findings.extend(validate_continuations(root, &tests)?);
     findings.extend(validate_worker_lifecycle(root, &tests)?);
     findings.extend(validate_worker_catalog(root, &tests)?);
+    findings.extend(validate_embedded(root, &tests)?);
     Ok(findings)
 }
 
@@ -1293,4 +1301,171 @@ pub fn validate_worker_catalog(root: &Path, tests: &TestIndex) -> Result<Vec<Fin
     } else {
         vec![]
     })
+}
+
+/// WIP-14 proof registrations and the complete WI-owned consumer import boundary.
+pub fn validate_embedded(root: &Path, tests: &TestIndex) -> Result<Vec<Finding>> {
+    let path = "conformance/wi-fabric-2/worker/embedded-coverage.json";
+    let value = read(&root.join(path))?;
+    let assigned: BTreeMap<String, Vec<TestRef>> =
+        serde_json::from_value(value["assigned_cases"].clone())?;
+    let obligations: BTreeMap<String, Vec<TestRef>> =
+        serde_json::from_value(value["required_obligations"].clone())?;
+    let expected = BTreeSet::from([
+        "composition",
+        "consumer-boundary",
+        "scoped-disclosure",
+        "shared-use-accounting",
+        "interrupted-delivery",
+        "offline-restore",
+        "restart-quarantine",
+    ]);
+    let mut findings = Vec::new();
+    if value["version"] != 1
+        || value["scope"] != "wi/WI-11/embedded-runtime"
+        || value["runtime_pass_asserted"] != false
+        || value["second_store"]
+            != "WI-owned independent AQ fixture; substitute for EXO cognition only"
+        || assigned.keys().map(String::as_str).collect::<BTreeSet<_>>()
+            != BTreeSet::from(["WP-029", "WP-030", "AB-WI-019"])
+        || obligations.keys().map(String::as_str).collect::<BTreeSet<_>>() != expected
+        || assigned.values().chain(obligations.values()).any(|refs| {
+            refs.is_empty()
+                || refs.iter().any(|t| {
+                    ![FOUNDATION, RUNTIME].contains(&t.manifest.as_str())
+                        || tests.get(t) != Some(&1)
+                })
+        })
+    {
+        findings.push(finding(
+            "PROOF-WI14",
+            path,
+            "coverage",
+            "WIP-14",
+            "exact non-ignored embedded cases and obligations required",
+        ));
+    }
+    let sources: Vec<String> = serde_json::from_value(value["consumer_sources"].clone())?;
+    let expected_sources = [
+        "crates/worldinterface-runtime/tests/embedded_worker.rs",
+        "crates/worldinterface-runtime/tests/support/embedded_consumer.rs",
+    ];
+    if sources.iter().map(String::as_str).collect::<BTreeSet<_>>() != expected_sources.into() {
+        findings.push(finding(
+            "PROOF-WI14",
+            path,
+            "consumer_sources",
+            "WP-030",
+            "entry and complete helper source list required",
+        ));
+    }
+    for source in sources {
+        let code = std::fs::read_to_string(root.join(&source))?;
+        for violation in
+            embedded_consumer_violations(&code, source.ends_with("embedded_consumer.rs"))?
+        {
+            findings.push(finding(
+                "PROOF-WI14",
+                &source,
+                &violation,
+                "WP-030",
+                "consumer must use application services",
+            ));
+        }
+    }
+    Ok(findings)
+}
+fn embedded_consumer_violations(code: &str, helper: bool) -> Result<Vec<String>> {
+    use quote::ToTokens;
+    use syn::visit::{self, Visit};
+    struct Boundary {
+        helper: bool,
+        violations: Vec<String>,
+    }
+    impl<'ast> Visit<'ast> for Boundary {
+        fn visit_path(&mut self, path: &'ast syn::Path) {
+            let names = path.segments.iter().map(|s| s.ident.to_string()).collect::<Vec<_>>();
+            let text = names.join("::");
+            if (text.starts_with("worldinterface_runtime::")
+                && !text.starts_with("worldinterface_runtime::embedded::"))
+                || text.starts_with("worldinterface_storage::")
+                || text.starts_with("actionqueue")
+                || text.starts_with("std::fs")
+                || text.starts_with("std::process")
+                || self.helper && (text.starts_with("setup::") || text.starts_with("super::"))
+                || names.iter().any(|n| {
+                    [
+                        "StoreRoot",
+                        "WorkerRuntime",
+                        "QueueEngine",
+                        "PlanService",
+                        "Repository",
+                        "Service",
+                        "Egress",
+                    ]
+                    .contains(&n.as_str())
+                })
+            {
+                self.violations.push(text);
+            }
+            visit::visit_path(self, path);
+        }
+        fn visit_item_use(&mut self, item: &'ast syn::ItemUse) {
+            // UseTree does not contain syn::Path nodes. Inspect only import
+            // syntax; quoted scanner strings and comments never count as imports.
+            let text = item.tree.to_token_stream().to_string().replace(' ', "");
+            if (text.starts_with("worldinterface_runtime::")
+                && !text.starts_with("worldinterface_runtime::embedded::"))
+                || text.starts_with("worldinterface_storage::")
+                || text.starts_with("actionqueue")
+                || text.starts_with("std::fs")
+                || text.starts_with("std::process")
+                || text.starts_with("std::{") && (text.contains("fs") || text.contains("process"))
+                || self.helper && (text.starts_with("super::") || text.starts_with("support::"))
+            {
+                self.violations.push(text);
+            }
+            visit::visit_item_use(self, item);
+        }
+        fn visit_expr_field(&mut self, field: &'ast syn::ExprField) {
+            if let syn::Member::Named(name) = &field.member {
+                let name = name.to_string();
+                if ["queue", "bundle", "runtime", "port"].contains(&name.as_str())
+                    || self.helper && name == "host"
+                {
+                    self.violations.push(name);
+                }
+            }
+            visit::visit_expr_field(self, field);
+        }
+    }
+    let file = syn::parse_file(code)?;
+    let mut boundary = Boundary { helper, violations: vec![] };
+    boundary.visit_file(&file);
+    Ok(boundary.violations)
+}
+#[cfg(test)]
+mod embedded_boundary_tests {
+    use super::*;
+    #[test]
+    fn embedded_boundary_scans_helper_imports_and_fields_but_not_comment_or_string_mentions() {
+        assert!(
+            embedded_consumer_violations("use std::{fs, time::Instant};", true).unwrap().len() == 1
+        );
+        assert!(
+            embedded_consumer_violations("use worldinterface_runtime::storage::StoreBundle;", true)
+                .unwrap()
+                .len()
+                == 1
+        );
+        assert!(!embedded_consumer_violations("fn bypass(app: A) { let x=app.bundle; }", true)
+            .unwrap()
+            .is_empty());
+        assert!(embedded_consumer_violations(
+            "// std::fs\nfn valid(){let text=\"worldinterface_runtime::storage\";}",
+            true
+        )
+        .unwrap()
+        .is_empty());
+    }
 }

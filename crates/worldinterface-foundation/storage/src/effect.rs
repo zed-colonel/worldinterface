@@ -192,6 +192,7 @@ fn transact(
     let tenant = command.tenant();
     let old = snapshot(&tx, tenant)?;
     let (new, id) = replay_validated(&old, command)?;
+    crate::control_plane::reserve_effect(&tx, tenant, &old, &new, &id, command.bytes())?;
     if !old.effects.contains_key(&id) {
         let exists: bool = tx.query_row(
             "SELECT EXISTS(SELECT 1 FROM projections WHERE entity=?)",
@@ -1098,6 +1099,7 @@ mod tests {
         c.execute_batch(SCHEMA).unwrap();
         c.execute_batch(crate::continuation::SCHEMA).unwrap();
         c.execute_batch(crate::repository::SCHEMA).unwrap();
+        c.execute_batch(crate::control_plane::SCHEMA).unwrap();
         let actions = vec![
             worldinterface_domain::effect::EffectAction::Submit {
                 id: id.clone(),

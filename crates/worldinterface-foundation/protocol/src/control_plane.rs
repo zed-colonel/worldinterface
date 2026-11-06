@@ -162,3 +162,22 @@ pub struct CredentialMetadata {
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub reason: Option<CustodyReason>,
 }
+
+/// Durable exclusive delivery ownership. The complete metadata digest prevents
+/// fencing evidence for another scope, version, generation or expiry being reused.
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct CredentialDeliveryAttempt {
+    pub issuance: ContentHash,
+    pub owner: OpaqueRef,
+    pub metadata: ContentHash,
+    pub claimed_at_ms: u64,
+}
+
+#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct DeliveryReconciliation {
+    pub attempt: CredentialDeliveryAttempt,
+    pub fenced: ContentHash,
+    pub invalidated: bool,
+}

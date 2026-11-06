@@ -162,13 +162,15 @@ impl StoreRoot {
             contract: CONTRACT.into(),
             schema: 1,
             canonical_profile: CANONICAL_PROFILE.into(),
-            feature_profile: "local-control-plane-15".into(),
+            feature_profile: "local-embedded-16".into(),
             stores: kinds(profile.platform),
             profile,
             complete: true,
         };
         write_new(&path.join("lock"), b"")?;
         write_new(&path.join("flow-dispatch.lock"), b"")?;
+        write_new(&path.join("control-delivery.lock"), b"")?;
+        write_new(&path.join("embedded-host.lock"), b"")?;
         fs::create_dir(path.join("artifacts"))?;
         for (i, kind) in manifest.stores.iter().enumerate() {
             let identity = canonical_data(&StoreManifest { root: manifest.clone(), kind: *kind })
@@ -233,7 +235,7 @@ impl StoreRoot {
             || manifest.contract != CONTRACT
             || manifest.schema != 1
             || manifest.canonical_profile != CANONICAL_PROFILE
-            || manifest.feature_profile != "local-control-plane-15"
+            || manifest.feature_profile != "local-embedded-16"
             || !manifest.complete
             || manifest.stores != kinds(manifest.profile.platform)
             || path.join("initializing").exists()
@@ -254,6 +256,8 @@ impl StoreRoot {
             "manifest.json".to_string(),
             "lock".into(),
             "flow-dispatch.lock".into(),
+            "control-delivery.lock".into(),
+            "embedded-host.lock".into(),
             "artifacts".into(),
         ]
         .into_iter()
@@ -274,6 +278,8 @@ impl StoreRoot {
         if !path.join("artifacts").is_dir()
             || !path.join("lock").is_file()
             || !path.join("flow-dispatch.lock").is_file()
+            || !path.join("control-delivery.lock").is_file()
+            || !path.join("embedded-host.lock").is_file()
         {
             return Err(invalid("incomplete artifact or lock store"));
         }
