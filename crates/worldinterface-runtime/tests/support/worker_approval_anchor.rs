@@ -1,4 +1,5 @@
 //! Trusted test-host provisioning, separate from the source packet it approves.
+//! Acceptance and cold-run evidence: docs/work-items/WIP-15-verification.md.
 //! Actual operator guidance supplied at startup of CraftingTable run
 //! e73756a8-8e69-4f9a-acb7-ba3074a3dbba on 2026-11-06 (UTC):
 //! "I accept the evaluation-only packet
