@@ -64,12 +64,26 @@ impl EvidenceAuthority for Evidence {
             .ok_or_else(|| "unregistered embedded effect".into())
     }
     fn verify(&self, t: &OpaqueRef, e: &EvidenceRef, at: &Timestamp) -> Result<ContentHash> {
+        let mut verified = None;
         for (_, s) in self.0.lock().unwrap().iter() {
             if let Ok(v) = worker_fixture::HostEvidence(s.clone()).verify(t, e, at) {
-                return Ok(v);
+                if verified.as_ref().is_some_and(|previous| previous != &v) {
+                    return Err("ambiguous embedded evidence".into());
+                }
+                verified = Some(v);
             }
         }
-        Err("unregistered embedded evidence".into())
+        verified.ok_or_else(|| "unregistered embedded evidence".into())
+    }
+}
+fn attest_resolutions(root: &StoreRoot, snapshot: &mut AuthorizationSnapshot) {
+    for fact in &mut snapshot.facts {
+        // A singleton harness can use a placeholder attestation. A shared host
+        // needs an immutable reference for each exact operation's target.
+        fact.evidence.artifact = root
+            .publish(fact.document.tenant.clone(), &canonical_data(&fact.document).unwrap())
+            .unwrap();
+        fact.attested_document = fact.evidence.artifact.content.clone();
     }
 }
 #[derive(Clone)]
@@ -226,6 +240,7 @@ impl Setup {
             snapshot.registry.entries[0].connector_binding = Some(binding);
             snapshot.facts[0].registry =
                 worldinterface_domain::ingress::digest(&snapshot.registry).unwrap();
+            attest_resolutions(h.bundle.wi(), snapshot);
         }
         let mut boot = cp_setup::bundle(&records[0].1, Profile::Embedded);
         boot.objects.retain(|(_, c)| !matches!(c, cp::Content::Secret(_)));
@@ -860,4 +875,61 @@ fn embedded_trusted_quarantine_setup_records_the_exact_descriptor_snapshot() {
         root.worker_provider_quarantine(&setup.auth.tenant, &provider).unwrap(),
         Some(record)
     );
+}
+
+#[test]
+fn embedded_resolution_evidence_attests_each_operation_independently() {
+    let temp = tempfile::tempdir().unwrap();
+    let root = StoreRoot::create_empty(
+        temp.path().join("wi"),
+        worldinterface_storage::StoreProfile {
+            instance: InstanceId::generate(),
+            created_at: HostClock.now().unwrap(),
+            platform: false,
+        },
+    )
+    .unwrap();
+    let records = worldinterface_runtime::worker::admission::OPERATIONS
+        .iter()
+        .map(|operation| {
+            let (mut submission, mut snapshot) =
+                super::connectors::fixture(&descriptor(*operation).unwrap());
+            submission.input.artifact = root
+                .publish(snapshot.bindings[0].tenant.clone(), operation.name().as_bytes())
+                .unwrap();
+            for bytes in [b"resolution".as_slice(), b"grant"] {
+                root.publish(snapshot.bindings[0].tenant.clone(), bytes).unwrap();
+            }
+            attest_resolutions(&root, &mut snapshot);
+            (submission, snapshot)
+        })
+        .collect::<Vec<_>>();
+    let evidence = Evidence(Arc::new(Mutex::new(records.clone())));
+    let mut references = BTreeSet::new();
+    for (submission, snapshot) in &records {
+        let fact = &snapshot.facts[0];
+        assert!(references.insert(fact.evidence.artifact.content.clone()));
+        assert_eq!(
+            root.read_artifact(&fact.evidence.artifact).unwrap(),
+            canonical_data(&fact.document).unwrap()
+        );
+        verify_snapshot(
+            &root,
+            &evidence,
+            &snapshot.bindings[0].tenant,
+            submission,
+            &HostClock.now().unwrap(),
+        )
+        .unwrap();
+    }
+    // An attestation for another operation must never authorize this target.
+    evidence.0.lock().unwrap()[1].1.facts[0].evidence = records[0].1.facts[0].evidence.clone();
+    let error = evidence
+        .verify(
+            &records[0].1.bindings[0].tenant,
+            &records[0].1.facts[0].evidence,
+            &HostClock.now().unwrap(),
+        )
+        .unwrap_err();
+    assert_eq!(error.to_string(), "ambiguous embedded evidence");
 }

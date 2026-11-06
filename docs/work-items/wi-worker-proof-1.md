@@ -277,7 +277,9 @@ F-007 durable attempt/fencing obligation. Its shared-use ledger lives in the sam
 Fabric transaction as effect preparation. Storage profile is `local-embedded-16`;
 WIP-13's `local-control-plane-15` is historical and is not silently migrated.
 WP-029, WP-030 and AB-WI-019 now have exact non-ignored embedded test references.
-WP-A07 resolves only the embedded Rust scope. Positive fixtures and adopted
-`runtime-test` await acceptance of the revised exact-source packet. G4 and parent
+WP-A07 resolves only the embedded Rust scope. The accepted packet's first live
+evaluation found shared fixture evidence aliasing; the exact-document fix and
+non-live regression require renewed packet acceptance before positive fixtures
+and adopted `runtime-test` can pass. See WIP-14's evaluation follow-up. G4 and parent
 closure remain with their later owners. The earlier carry-forward above records
 the predecessor state, not an assertion that WIP-14 recovery remains unimplemented.

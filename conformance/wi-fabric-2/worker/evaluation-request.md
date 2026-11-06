@@ -1,5 +1,14 @@
 # WIP-14 embedded composition evaluation request
 
+The operator accepted the previous final packet
+`4931dbe1e63e4532a0aed6e25d649a30b9fa67cc4dbfa51fa8806863fe023d6c`.
+Its live embedded evaluation exposed a trusted-fixture evidence collision before
+dispatch. This follow-up binds each of the six operation targets to its own
+immutable resolution document and rejects ambiguous evidence references. The
+non-live regression verifies all six attestations and rejects substitution. No
+production execution source, supervisor exception, task or limit changes. The
+previous acceptance remains historical; it does not authorize these changed bytes.
+
 Request acceptance only of the exact new canonical SHA-256 printed by
 `scripts/refresh-wi-worker-evaluation.py`, after the complete source-bound non-live
 build succeeds. The candidate adds WP-029 and WP-030: one embedded AQ engine,

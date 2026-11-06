@@ -145,3 +145,22 @@ build report, avoiding recursive digest text in covered documentation. Receipt a
 trusted anchor retain the earlier operator decision until renewed acceptance.
 All ten adopted checks on the committed candidate and qualifying review remain
 required; CraftingTable alone integrates reviewed work.
+
+## Accepted-packet evaluation follow-up
+
+The operator accepted packet `4931dbe1e63e4532a0aed6e25d649a30b9fa67cc4dbfa51fa8806863fe023d6c`
+through 2026-11-11T00:00:00Z in run
+`59aa52f7-73cc-435c-ae1a-faca6eebff17`. The focused evaluation passed all six
+credential tests and both offline-restore tests. Four embedded live cases failed
+at admission: the trusted shared evidence adapter reused one placeholder
+resolution reference across six different operation targets, returning the first
+target's attestation for later operations. No successful live result is claimed.
+
+The follow-up publishes each exact target document as its own immutable evidence
+artifact and rejects a reference registered for conflicting documents. A non-live
+regression checks all six operation attestations through `verify_snapshot` and
+rejects a substituted reference. This changes no production verifier, provider,
+task, operation or limit. Inventory structure and dispositions are unchanged;
+only source hashes need refresh. The changed source packet requires renewed
+explicit acceptance after the source-bound non-live build. The trust receipt and
+anchor retain the actual acceptance above until that decision arrives.

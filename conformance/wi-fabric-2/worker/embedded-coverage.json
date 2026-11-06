@@ -2,7 +2,7 @@
   "version": 1,
   "scope": "wi/WI-11/embedded-runtime",
   "runtime_pass_asserted": false,
-  "evaluation": "Implementation candidate; positive live evaluation and adopted runtime-test await operator acceptance of the exact new source packet. Non-live evidence is recorded in WIP-14.md. G4 remains open.",
+  "evaluation": "Packet 4931dbe1e63e4532a0aed6e25d649a30b9fa67cc4dbfa51fa8806863fe023d6c was accepted; focused credential and offline-restore tests passed, but four embedded live cases rejected aliased resolution evidence before dispatch. The exact-document follow-up and non-live regression require renewed source-packet acceptance before live evaluation and adopted runtime-test can pass. See WIP-14.md. G4 remains open.",
   "second_store": "WI-owned independent AQ fixture; substitute for EXO cognition only",
   "assumptions": {
     "WP-A07": "Embedded Rust application composition only; no daemon, EXO cognition binary, Platform or isolation claim."
