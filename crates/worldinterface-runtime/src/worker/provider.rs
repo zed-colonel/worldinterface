@@ -12,6 +12,14 @@ pub trait AdmittedProvider: Send + Sync {
     fn acknowledged(&self, _request: &WorkerRequestV1) -> Result<bool> {
         Ok(false)
     }
+    /// Absent after recovery or when the provider cannot attest applied controls.
+    fn controls(
+        &self,
+        _provider: &str,
+        _run: &str,
+    ) -> Result<Option<worldinterface_worker::controls::ControlEvidenceV1>> {
+        Ok(None)
+    }
     fn admit(&self, run: AuthorizedRun) -> Result<()>;
     fn submit(&self, request: &WorkerRequestV1) -> Result<Acknowledgment>;
     fn observe(&self, provider: &str, run: &str) -> Result<Vec<Observation>>;
@@ -35,6 +43,13 @@ pub struct ProviderProvenance {
     pub seam_simulation: bool,
 }
 impl AdmittedProvider for ProcessWorkerPort {
+    fn controls(
+        &self,
+        provider: &str,
+        run: &str,
+    ) -> Result<Option<worldinterface_worker::controls::ControlEvidenceV1>> {
+        Ok(Some(self.control_evidence(provider, run)?))
+    }
     fn admit(&self, run: AuthorizedRun) -> Result<()> {
         Ok(ProcessWorkerPort::admit(self, run)?)
     }

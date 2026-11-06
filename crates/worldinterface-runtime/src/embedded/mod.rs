@@ -84,11 +84,39 @@ pub enum WorkerInstallation<S> {
         evaluation: Arc<EvaluationVerifier<S>>,
         slots: u32,
     },
+    /// Trusted evaluation-only composition; unqualified external providers are rejected.
+    SeamSimulation {
+        scope: HostScope,
+        provider: Arc<dyn crate::worker::provider::AdmittedProvider>,
+        provenance: crate::worker::provider::ProviderProvenance,
+        evaluation: Arc<EvaluationVerifier<S>>,
+        slots: u32,
+    },
     Recovery {
         scope: HostScope,
         workspace: PathBuf,
         policy: RecoveryPolicy,
     },
+}
+/// Sanitized producer observations. No workspace, process handle, credential or store is disclosed.
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct WorkerEvidence {
+    pub binding: worldinterface_domain::worker::WorkerBinding,
+    pub seam_simulation: bool,
+    pub controls: Option<worldinterface_worker::controls::ControlEvidenceV1>,
+    pub cleanup: Option<WorkerCleanupEvidence>,
+}
+#[derive(Clone, Debug, serde::Serialize, serde::Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct WorkerCleanupEvidence {
+    pub exit_confirmed: bool,
+    pub exit_success: Option<bool>,
+    pub cleanup_confirmed: bool,
+    pub retained_output_bytes: u64,
+    pub term_signals: u32,
+    pub kill_signals: u32,
+    pub descendants_observed: u32,
 }
 /// Owns private stores, provider, adapters and the exclusive local host lease.
 pub struct EmbeddedHost<A, V, R, C, P, K, S> {
@@ -173,11 +201,13 @@ where
             return Err("control plane must be bootstrapped".into());
         }
         let evaluation_gate: Option<Arc<dyn EvaluationGate>> = match &installation {
-            WorkerInstallation::Process { evaluation, .. } => Some(evaluation.clone()),
+            WorkerInstallation::Process { evaluation, .. }
+            | WorkerInstallation::SeamSimulation { evaluation, .. } => Some(evaluation.clone()),
             WorkerInstallation::Recovery { .. } => None,
         };
         let scope = match &installation {
             WorkerInstallation::Process { scope, .. }
+            | WorkerInstallation::SeamSimulation { scope, .. }
             | WorkerInstallation::Recovery { scope, .. } => scope.clone(),
         };
         crate::worker::recovery::recover_quarantines(bundle.wi(), &scope)?;
@@ -195,6 +225,21 @@ where
                 &workspace,
                 &fixture,
                 &helper,
+                evaluation,
+                Arc::new(clock.clone()),
+                slots,
+            )?,
+            WorkerInstallation::SeamSimulation {
+                scope,
+                provider,
+                provenance,
+                evaluation,
+                slots,
+            } => WorkerRuntime::install_provider(
+                bundle.clone(),
+                scope,
+                provider,
+                provenance,
                 evaluation,
                 Arc::new(clock.clone()),
                 slots,
@@ -412,6 +457,16 @@ where
             .wi()
             .worker_snapshot(&reference.scope.tenant, provider, run)?
             .ok_or_else(|| "object unavailable".into())
+    }
+    pub fn inspect_worker_evidence(
+        &self,
+        session: &A::Session,
+        reference: &ObjectRef,
+        provider: &OpaqueRef,
+        run: &OpaqueRef,
+    ) -> Result<WorkerEvidence> {
+        let state = self.inspect_worker(session, reference, provider, run)?;
+        self.host.runtime.inspection_evidence(&state.binding)
     }
     pub fn receipt(
         &self,
@@ -850,6 +905,13 @@ pub trait Application {
         provider: &OpaqueRef,
         run: &OpaqueRef,
     ) -> Result<WorkerState>;
+    fn inspect_worker_evidence(
+        &self,
+        session: &Self::Session,
+        reference: &ObjectRef,
+        provider: &OpaqueRef,
+        run: &OpaqueRef,
+    ) -> Result<WorkerEvidence>;
     fn receipt(
         &self,
         session: &Self::Session,
@@ -897,6 +959,15 @@ where
         w: &OpaqueRef,
     ) -> Result<WorkerState> {
         Self::inspect_worker(self, s, r, p, w)
+    }
+    fn inspect_worker_evidence(
+        &self,
+        s: &A::Session,
+        r: &ObjectRef,
+        p: &OpaqueRef,
+        w: &OpaqueRef,
+    ) -> Result<WorkerEvidence> {
+        Self::inspect_worker_evidence(self, s, r, p, w)
     }
     fn receipt(
         &self,

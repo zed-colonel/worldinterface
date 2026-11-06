@@ -2,7 +2,7 @@ use serde_json::json;
 use std::{env, path::PathBuf};
 use wi_contract_check::{
     catalog, continuations, contracts, evidence, finding, inventory, policy, proof, read, refresh,
-    Finding, Result,
+    worker_campaign, Finding, Result,
 };
 fn run() -> Result<bool> {
     let root = env::var_os("WI_REPO_ROOT").map(PathBuf::from).unwrap_or(env::current_dir()?);
@@ -14,6 +14,23 @@ fn run() -> Result<bool> {
     if args.as_slice() == ["hashes", "refresh"] {
         refresh::refresh(&root)?;
         println!("{}", json!({"scope":"source-hashes","status":"refreshed"}));
+        return Ok(true);
+    }
+    if args.len() == 3 && args[0] == "campaign" {
+        let path = PathBuf::from(&args[2]);
+        match args[1].as_str() {
+            "run" => worker_campaign::run(&root, &path)?,
+            "check" => worker_campaign::validate_receipt(
+                &root,
+                &read(&path)?,
+                path.parent().ok_or("receipt directory missing")?,
+            )?,
+            _ => return Err("usage: campaign {run DIRECTORY|check RECEIPT}".into()),
+        }
+        println!(
+            "{}",
+            json!({"scope":"worker-campaign","status":"passed","claims":worker_campaign::claims()})
+        );
         return Ok(true);
     }
     type Check = fn(&std::path::Path) -> Result<Vec<Finding>>;

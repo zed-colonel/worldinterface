@@ -136,6 +136,7 @@ pub struct WorkerRuntime<S> {
     executable: ContentHash,
     helper_digest: ContentHash,
     slots: u32,
+    seam_simulation: bool,
     scope: HostScope,
     live: Mutex<LiveRuns>,
 }
@@ -175,6 +176,7 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
             executable,
             helper_digest,
             slots,
+            seam_simulation: false,
             scope,
             live: Mutex::new(BTreeMap::new()),
         })
@@ -207,6 +209,7 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
             executable: provenance.implementation,
             helper_digest: provenance.helper,
             adapter: provenance.adapter,
+            seam_simulation: true,
             recovery_policy: default_recovery_policy(scope.clone())?,
             evaluation: Some(evaluation),
             clock,
@@ -645,6 +648,45 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
             serde_json::from_slice(&launch.operations)?;
         self.port.recover_cleanup(binding.provider.as_str(), binding.run.as_str(), &operations)
     }
+    pub(crate) fn inspection_evidence(
+        &self,
+        binding: &WorkerBinding,
+    ) -> Result<crate::embedded::WorkerEvidence> {
+        if binding.tenant.as_str() != self.scope.tenant
+            || binding.principal.as_str() != self.scope.principal
+            || self.state(binding)?.binding != *binding
+        {
+            return Err("worker evidence scope mismatch".into());
+        }
+        let live = self
+            .live
+            .lock()
+            .map_err(|_| "worker registry unavailable")?
+            .contains_key(&(binding.provider.clone(), binding.run.clone()));
+        let cleanup = if live {
+            self.port.evidence(binding.provider.as_str(), binding.run.as_str())?
+        } else {
+            None
+        };
+        Ok(crate::embedded::WorkerEvidence {
+            binding: binding.clone(),
+            seam_simulation: self.seam_simulation,
+            controls: if live {
+                self.port.controls(binding.provider.as_str(), binding.run.as_str())?
+            } else {
+                None
+            },
+            cleanup: cleanup.map(|r| crate::embedded::WorkerCleanupEvidence {
+                exit_confirmed: r.exit_confirmed,
+                exit_success: r.exit_success,
+                cleanup_confirmed: r.cleanup_confirmed,
+                retained_output_bytes: r.retained_output_bytes,
+                term_signals: r.term_signals,
+                kill_signals: r.kill_signals,
+                descendants_observed: r.descendants_observed,
+            }),
+        })
+    }
     pub fn cleanup_report(&self, binding: &WorkerBinding) -> Result<Option<CleanupReport>> {
         self.recovery_authorization(binding, "inspect")?;
         if binding.tenant.as_str() != self.scope.tenant
@@ -1001,6 +1043,7 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
             executable: ContentHash::of(b"no-executable"),
             helper_digest,
             slots: 0,
+            seam_simulation: false,
             scope,
             live: Mutex::new(BTreeMap::new()),
         })

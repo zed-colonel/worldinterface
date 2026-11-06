@@ -1,3 +1,26 @@
+# WIP-15 campaign evaluation request
+
+This candidate adds the campaign orchestrator, embedded evidence inspection and
+trusted seam installation, coding/transform/seam campaign scenarios, embedded
+cancellation/output-bound tests, and the WP-033/034 nonsemantic producer contract.
+See `docs/work-items/WIP-15.md` and `campaign-coverage.json` for exact scope.
+AQ remains crates.io 0.3.0 under the authorized WIP-07 migration. The existing
+supervisor disposition and its five-file exception are unchanged.
+
+Request acceptance only of the canonical SHA-256 printed by
+`scripts/refresh-wi-worker-evaluation.py` after the complete source-bound non-live
+build succeeds. Requested expiry remains **2026-11-11T00:00:00Z**. Limits remain
+six operations, reviewed nonsensitive typed fixtures, 15000 ms wall time and
+65536 retained output bytes. No ordinary use, production credentials, hostile
+code, publication, integration or gate closure is requested.
+
+The separate historical approval receipt and trusted host anchor remain unchanged
+until actual acceptance of this concrete packet. The approved WP-034 scheduling
+split does not authorize future executable bytes. Live campaign and all ten
+adopted checks remain due on the committed candidate after acceptance.
+
+## Historical predecessor request
+
 # WIP-14 review-remediation evaluation request
 
 Packet `b57f32a001ff95ef14ac46d35e22a96c61c0f35896e17e0dc6e9762aebc18b88`

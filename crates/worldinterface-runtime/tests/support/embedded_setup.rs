@@ -139,17 +139,45 @@ impl Setup {
         Self::live_case(coding, "WP-029")
     }
     pub fn live_case(coding: bool, case: &str) -> Self {
+        Self::compose(coding, case, false, None)
+    }
+    pub fn seam() -> Self {
+        Self::compose(false, "WP-031", true, None)
+    }
+    pub fn bounded(cancellation: bool) -> Self {
+        Self::compose(
+            false,
+            if cancellation { "WP-018" } else { "WP-019" },
+            false,
+            Some(if cancellation {
+                Task::Sleep { millis: 5000 }
+            } else {
+                Task::Flood { bytes: 1048576 }
+            }),
+        )
+    }
+    fn compose(coding: bool, case: &str, seam: bool, task: Option<Task>) -> Self {
         let temp = std::env::var_os("WI_EMBEDDED_CRASH_PARENT")
             .map(|p| tempfile::tempdir_in(p).unwrap())
             .unwrap_or_else(|| tempfile::tempdir().unwrap());
+        let bounded = task.is_some();
         let mut h = Harness::at(
             temp,
-            if coding { Task::Coding } else { Task::Transform { xor: 7 } },
+            task.unwrap_or(if coding { Task::Coding } else { Task::Transform { xor: 7 } }),
             case,
             1500,
             65536,
         );
-        let expected: Vec<(&str, &str, Vec<u8>)> = if coding {
+        let seam_provider = if seam {
+            let (replacement, provider) = h.with_seam();
+            h = replacement;
+            Some(provider)
+        } else {
+            None
+        };
+        let expected: Vec<(&str, &str, Vec<u8>)> = if bounded {
+            vec![]
+        } else if coding {
             vec![("patch","change.patch",b"--- a/src/lib.rs\n+++ b/src/lib.rs\n@@ -10,10 +10,10 @@\n     Some((key.trim(), value.trim()))\n }\n \n-/// Calculate the averge of a slice of numbers.\n+/// Calculate the average of a slice of numbers.\n ///\n /// Returns 0.0 for an empty slice.\n-pub fn calculate_averge(numbers: &[f64]) -> f64 {\n+pub fn calculate_average(numbers: &[f64]) -> f64 {\n     if numbers.is_empty() {\n         return 0.0;\n     }\n".to_vec()),("report","report.json",b"{\"changed\":[\"src/lib.rs\"],\"task\":\"rename-average\",\"schema\":1}".to_vec())]
         } else {
             h.inputs = vec![h.bundle.wi().publish(h.auth.0.clone(), b"hello").unwrap()];
@@ -295,16 +323,29 @@ impl Setup {
         }
         let host = Host::install(
             bundle,
-            WorkerInstallation::Process {
-                scope: HostScope {
-                    tenant: auth.tenant.as_str().into(),
-                    principal: auth.principal.as_str().into(),
-                },
-                workspace: root.join("process"),
-                fixture: built.0,
-                helper: built.1,
-                evaluation: evaluation.clone(),
-                slots: 1,
+            if let Some(provider) = seam_provider {
+                WorkerInstallation::SeamSimulation {
+                    scope: HostScope {
+                        tenant: auth.tenant.as_str().into(),
+                        principal: auth.principal.as_str().into(),
+                    },
+                    provider,
+                    provenance: super::worker_fixture::seam::provenance(),
+                    evaluation: evaluation.clone(),
+                    slots: 1,
+                }
+            } else {
+                WorkerInstallation::Process {
+                    scope: HostScope {
+                        tenant: auth.tenant.as_str().into(),
+                        principal: auth.principal.as_str().into(),
+                    },
+                    workspace: root.join("process"),
+                    fixture: built.0,
+                    helper: built.1,
+                    evaluation: evaluation.clone(),
+                    slots: 1,
+                }
             },
             EmbeddedPorts {
                 authentication: auth.clone(),
@@ -348,6 +389,17 @@ impl Setup {
             .iter()
             .map(|o| cp::read_demand(&o.reference).unwrap())
             .collect::<BTreeSet<_>>();
+        let mut permissions = permissions;
+        for intent in root.effect_snapshot(&self.auth.tenant).unwrap().effects.keys() {
+            permissions.insert(
+                reconciliation_demand(&ObjectRef {
+                    scope: self.scope.clone(),
+                    kind: ObjectKind::Evidence,
+                    id: intent.as_str().to_string().try_into().unwrap(),
+                })
+                .unwrap(),
+            );
+        }
         let mut revisions = state
             .history
             .iter()
@@ -935,4 +987,21 @@ fn embedded_resolution_evidence_attests_each_operation_independently() {
         )
         .unwrap_err();
     assert_eq!(error.to_string(), "ambiguous embedded evidence");
+}
+
+/// Trusted evidence sink only. Consumer code cannot inspect build paths or write files.
+pub fn campaign_observation(name: &str, setup: &Setup, evidence: WorkerEvidence) {
+    let Some(base) = std::env::var_os("WI_WORKER_CAMPAIGN_EVIDENCE") else {
+        return;
+    };
+    let build = super::worker_fixture::build_evidence();
+    let value = serde_json::json!({"schema":1,"evidence":evidence,"build":build,"completed":true,
+        "capacity_reserved":false,"receipt_count":setup.receipts().len()});
+    let path = std::path::PathBuf::from(base).join(name);
+    let mut file = std::fs::OpenOptions::new().write(true).create_new(true).open(path).unwrap();
+    use std::io::Write;
+    let bytes = canonical_data(&value).unwrap();
+    file.write_all(&bytes).unwrap();
+    file.sync_all().unwrap();
+    println!("WI-WORKER-OBSERVATION {name} {}", ContentHash::of(&bytes).as_str());
 }

@@ -1021,3 +1021,11 @@ impl<C: worldinterface_runtime::connector::Connector> worldinterface_runtime::co
         self.inner.cancel(r)
     }
 }
+
+/// Public measurements only; immutable paths remain in trusted build support.
+pub fn build_evidence() -> serde_json::Value {
+    let b = build::current();
+    serde_json::json!({"packet":b.packet, "fixture":b.fixture_digest, "helper":b.helper_digest,
+        "profile_definition":worldinterface_worker::profile::DEFINITION_SHA256,
+        "seam_implementation":seam::provenance().implementation})
+}

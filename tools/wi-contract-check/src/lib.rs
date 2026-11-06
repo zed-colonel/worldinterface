@@ -93,3 +93,5 @@ pub fn string<'a>(v: &'a Value, key: &str) -> Result<&'a str> {
 }
 
 pub mod continuations;
+
+pub mod worker_campaign;

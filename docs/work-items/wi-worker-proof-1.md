@@ -285,3 +285,15 @@ changes covered bytes and requires separate exact-packet acceptance and
 verification. See WIP-14's evaluation follow-up and remediation note. G4 and parent
 closure remain with their later owners. The earlier carry-forward above records
 the predecessor state, not an assertion that WIP-14 recovery remains unimplemented.
+
+## WIP-15 campaign candidate
+
+[WIP-15](WIP-15.md) adds one adopted-runtime-test campaign over all 55 cases,
+scoped embedded control/cleanup inspection and the reviewed seam installation.
+WP-033/034 now have executable registrations. The operator approved moving
+WP-034's executable contract to WIP-15; WIP-16 retains consumer documentation,
+final handoff publication and G4/target closure. Imported matrix bytes are
+unchanged and AQ remains the authorized crates.io 0.3.0 runtime. The changed
+packet requires renewed exact acceptance after its non-live build; the prior
+receipt/host anchor remain historical. No positive campaign passage or new gate
+closure is asserted by this candidate's source registration.

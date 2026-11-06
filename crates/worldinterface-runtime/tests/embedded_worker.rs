@@ -141,8 +141,11 @@ async fn wp_030_embedded_forgery_scope_and_unauthorized_controls_fail_closed() {
 // boundary scanner start
 #[test]
 fn wp_030_consumer_and_helper_imports_stay_inside_application_boundary() {
-    let sources =
-        [include_str!("support/embedded_consumer.rs"), include_str!("embedded_worker.rs")];
+    let sources = [
+        include_str!("support/embedded_consumer.rs"),
+        include_str!("embedded_worker.rs"),
+        include_str!("worker_campaign_cases.rs"),
+    ];
     // The entry point delegates trusted setup. Consumer helpers have no imports or
     // access paths to stores, process adapters, AQ, bootstrap or host internals.
     for (index, source) in sources.iter().enumerate() {
@@ -239,6 +242,10 @@ async fn wp_029_restored_publication_is_readable_without_original_workspace_and_
         &s.run,
         &s.expected,
     );
+    let evidence = app
+        .inspect_worker_evidence(&setup::Session::Valid, &s.worker, &s.provider, &s.run)
+        .unwrap();
+    assert!(evidence.controls.is_none() && evidence.cleanup.is_none());
     assert!(worker.quarantined && worker.capacity_reserved && !worker.cleanup_confirmed);
     app.shutdown().unwrap();
 }
