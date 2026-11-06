@@ -673,6 +673,9 @@ pub fn crash_recovery() {
         process::{Command, Stdio},
         time::{Duration, Instant},
     };
+    // Compilation has its own timeout and must precede the crash-cut deadline.
+    // This launches no fixture and grants no evaluation approval.
+    worker_fixture::prebuild();
     let parent = tempfile::tempdir().unwrap();
     let ready = parent.path().join("ready");
     let log = std::fs::File::create(parent.path().join("child.log")).unwrap();

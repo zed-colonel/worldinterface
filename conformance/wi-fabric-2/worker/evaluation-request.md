@@ -8,6 +8,8 @@ immutable resolution document and rejects ambiguous evidence references. The
 non-live regression verifies all six attestations and rejects substitution. No
 production execution source, supervisor exception, task or limit changes. The
 previous acceptance remains historical; it does not authorize these changed bytes.
+The embedded crash test also uses the existing source-only prebuild before its
+crash-cut observation deadline, so cold compilation cannot consume that deadline.
 
 Request acceptance only of the exact new canonical SHA-256 printed by
 `scripts/refresh-wi-worker-evaluation.py`, after the complete source-bound non-live

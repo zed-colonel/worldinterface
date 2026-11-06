@@ -155,6 +155,10 @@ credential tests and both offline-restore tests. Four embedded live cases failed
 at admission: the trusted shared evidence adapter reused one placeholder
 resolution reference across six different operation targets, returning the first
 target's attestation for later operations. No successful live result is claimed.
+The adopted runtime check reproduced the evidence failures and additionally
+timed out its crash child while the private clone compiled the reviewed binaries.
+The crash test now calls the existing source-only `prebuild` helper before
+starting its boundary observation deadline, matching the other worker crash tests.
 
 The follow-up publishes each exact target document as its own immutable evidence
 artifact and rejects a reference registered for conflicting documents. A non-live

@@ -7346,52 +7346,52 @@
         },
         {
           "id": "crates/worldinterface-runtime/tests/support/embedded_setup.rs::::enum:Session",
-          "source_sha256": "06110300a54c28a5fd826dcacae3f39c95ee0538a3007277f1d6fefbc86eb627",
+          "source_sha256": "6002bb46d0244200a417e595339f47fe892294b6a944252e483bff16d3945686",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/support/embedded_setup.rs::::module:cp_setup",
-          "source_sha256": "06110300a54c28a5fd826dcacae3f39c95ee0538a3007277f1d6fefbc86eb627",
+          "source_sha256": "6002bb46d0244200a417e595339f47fe892294b6a944252e483bff16d3945686",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/support/embedded_setup.rs::::source-module:crates/worldinterface-runtime/tests/support/embedded_setup.rs",
-          "source_sha256": "06110300a54c28a5fd826dcacae3f39c95ee0538a3007277f1d6fefbc86eb627",
+          "source_sha256": "6002bb46d0244200a417e595339f47fe892294b6a944252e483bff16d3945686",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/support/embedded_setup.rs::::struct:Auth",
-          "source_sha256": "06110300a54c28a5fd826dcacae3f39c95ee0538a3007277f1d6fefbc86eb627",
+          "source_sha256": "6002bb46d0244200a417e595339f47fe892294b6a944252e483bff16d3945686",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/support/embedded_setup.rs::::struct:Evidence",
-          "source_sha256": "06110300a54c28a5fd826dcacae3f39c95ee0538a3007277f1d6fefbc86eb627",
+          "source_sha256": "6002bb46d0244200a417e595339f47fe892294b6a944252e483bff16d3945686",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/support/embedded_setup.rs::::struct:RecoverySetup",
-          "source_sha256": "06110300a54c28a5fd826dcacae3f39c95ee0538a3007277f1d6fefbc86eb627",
+          "source_sha256": "6002bb46d0244200a417e595339f47fe892294b6a944252e483bff16d3945686",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/support/embedded_setup.rs::::struct:Resources",
-          "source_sha256": "06110300a54c28a5fd826dcacae3f39c95ee0538a3007277f1d6fefbc86eb627",
+          "source_sha256": "6002bb46d0244200a417e595339f47fe892294b6a944252e483bff16d3945686",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/support/embedded_setup.rs::::struct:Setup",
-          "source_sha256": "06110300a54c28a5fd826dcacae3f39c95ee0538a3007277f1d6fefbc86eb627",
+          "source_sha256": "6002bb46d0244200a417e595339f47fe892294b6a944252e483bff16d3945686",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/support/embedded_setup.rs::::struct:Vault",
-          "source_sha256": "06110300a54c28a5fd826dcacae3f39c95ee0538a3007277f1d6fefbc86eb627",
+          "source_sha256": "6002bb46d0244200a417e595339f47fe892294b6a944252e483bff16d3945686",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/support/embedded_setup.rs::::type:Host",
-          "source_sha256": "06110300a54c28a5fd826dcacae3f39c95ee0538a3007277f1d6fefbc86eb627",
+          "source_sha256": "6002bb46d0244200a417e595339f47fe892294b6a944252e483bff16d3945686",
           "registration_sites": []
         },
         {
@@ -8998,7 +8998,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/tests/support/embedded_setup.rs",
-          "source_sha256": "06110300a54c28a5fd826dcacae3f39c95ee0538a3007277f1d6fefbc86eb627",
+          "source_sha256": "6002bb46d0244200a417e595339f47fe892294b6a944252e483bff16d3945686",
           "treatment": "Retain WIP-14 embedded runtime, AQ-free control-plane ownership and WI-owned consumer proof; no connector removal or qualification claim."
         },
         {
