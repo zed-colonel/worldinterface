@@ -729,16 +729,11 @@ impl Setup {
 impl Setup {
     pub fn quarantine(&self) {
         let root = StoreRoot::open_existing(self.root.join("bundle/wi")).unwrap();
-        root.quarantine_worker_provider(worldinterface_domain::worker::WorkerProviderQuarantine {
-            version: 1,
-            tenant: self.auth.tenant.clone(),
-            provider: self.provider.clone(),
-            revision: 1,
-            affected: vec![],
-            reason: "reviewed-incident".to_string().try_into().unwrap(),
-            evidence: ContentHash::of(b"incident"),
-            attributed_to: self.auth.principal.clone(),
-        })
+        root.quarantine_worker_provider(quarantine_record(
+            &self.auth,
+            &self.provider,
+            &self.config.0.descriptors,
+        ))
         .unwrap();
     }
     pub fn revoke(&self) {
@@ -832,4 +827,37 @@ impl RecoverySetup {
             .iter()
             .any(|o| &o.reference == reference));
     }
+}
+
+fn quarantine_record(
+    auth: &Auth,
+    provider: &OpaqueRef,
+    descriptors: &[ConnectorDescriptor],
+) -> worldinterface_domain::worker::WorkerProviderQuarantine {
+    worldinterface_domain::worker::WorkerProviderQuarantine {
+        version: 1,
+        tenant: auth.tenant.clone(),
+        provider: provider.clone(),
+        revision: 1,
+        affected: vec![ContentHash::of(&canonical_data(&descriptors).unwrap())],
+        reason: "reviewed-incident".to_string().try_into().unwrap(),
+        evidence: ContentHash::of(b"incident"),
+        attributed_to: auth.principal.clone(),
+    }
+}
+#[test]
+fn embedded_trusted_quarantine_setup_records_the_exact_descriptor_snapshot() {
+    let setup = RecoverySetup::new();
+    let provider = cp_setup::o("local-proof");
+    let descriptors = worldinterface_runtime::worker::admission::OPERATIONS
+        .iter()
+        .map(|op| descriptor(*op).unwrap())
+        .collect::<Vec<_>>();
+    let record = quarantine_record(&setup.auth, &provider, &descriptors);
+    let root = StoreRoot::open_existing(setup.temp.path().join("bundle/wi")).unwrap();
+    root.quarantine_worker_provider(record.clone()).unwrap();
+    assert_eq!(
+        root.worker_provider_quarantine(&setup.auth.tenant, &provider).unwrap(),
+        Some(record)
+    );
 }

@@ -67,7 +67,7 @@ impl<V: EvidenceAuthority, C: TrustedClock> EvidenceAuthority for ManagedEvidenc
         }
         let scope = managed
             .execution_authority(&caller, self.clock.now()?.epoch_millis()?, &mut snapshot)
-            .map_err(control_error)?;
+            .map_err(|e| crate::flow::rejected(format!("managed authority {e:?}")))?;
         if let Some(worker) = &snapshot.worker {
             if self.bundle.wi().worker_snapshot(tenant, &worker.provider, &worker.run)?.is_some() {
                 let reference = ObjectRef {
@@ -76,7 +76,7 @@ impl<V: EvidenceAuthority, C: TrustedClock> EvidenceAuthority for ManagedEvidenc
                     id: worker_id(&worker.provider, &worker.run)?,
                 };
                 if !managed.objects.iter().any(|o| o.reference == reference) {
-                    return Err("worker scope unavailable".into());
+                    return Err(crate::flow::rejected("worker scope unavailable"));
                 }
             }
         }
