@@ -86,7 +86,10 @@ cancel a live attempt. Custody delivery receives the exact durable attempt.
 Delivery and revocation remain serialized against administrative rotation.
 
 Recovery distinguishes intent without attempt, an in-flight owner and an
-abandoned attempt. An unattempted intent is rejected without contacting custody.
+abandoned attempt. An unattempted intent also needs a global custody fence and invalidation: its
+original store may have progressed after the backup. Without that evidence it
+remains Pending and recovery returns Unresolved. Confirmed evidence journals
+Unresolved/Uncertain; it never proves that no delivery occurred elsewhere.
 An attempted Pending or Unresolved issuance requires exact custody fencing
 attestation before recording abandonment as Unresolved/Uncertain. Invalidation
 then targets that exact possibly issued capability. Uncertainty commits before

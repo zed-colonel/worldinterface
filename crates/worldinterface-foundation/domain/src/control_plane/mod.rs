@@ -1274,6 +1274,16 @@ pub fn register_object(old: &State, object: &ObjectView) -> Result<State> {
 /// It delivers directly; errors contain only bounded reason codes. On uncertainty
 /// the adapter must invalidate any possibly delivered capability before returning.
 pub trait Custody {
+    /// A backup without a claim does not prove that the original store never
+    /// progressed. Atomically fence all future delivery for this issuance and
+    /// invalidate any capability already issued elsewhere. Missing evidence
+    /// leaves the intent Pending and recovery unresolved.
+    fn fence_unattempted(
+        &self,
+        _metadata: &CredentialMetadata,
+    ) -> std::result::Result<ContentHash, CustodyReason> {
+        Err(CustodyReason::Uncertain)
+    }
     fn deliver(
         &self,
         custody: &OpaqueRef,
@@ -1316,6 +1326,19 @@ pub trait Custody {
 
 pub fn fencing_binding(attempt: &CredentialDeliveryAttempt) -> Result<ContentHash> {
     hash(&("wi-delivery-fenced-v1", attempt))
+}
+pub fn unattempted_fencing_binding(metadata: &CredentialMetadata) -> Result<ContentHash> {
+    hash(&("wi-unattempted-issuance-fenced-and-invalidated-v1", metadata))
+}
+pub fn reconcile_unattempted(old: &State, id: &ContentHash, fenced: &ContentHash) -> Result<State> {
+    let metadata = old.issuances.get(id).ok_or(Error::Unavailable)?;
+    if old.delivery_attempts.contains_key(id)
+        || metadata.status != IssuanceStatus::Pending
+        || &unattempted_fencing_binding(metadata)? != fenced
+    {
+        return Err(Error::Unavailable);
+    }
+    finish_delivery(old, id, Err(CustodyReason::Uncertain))
 }
 pub fn claim_delivery(old: &State, attempt: &CredentialDeliveryAttempt) -> Result<State> {
     let m = old.issuances.get(&attempt.issuance).ok_or(Error::Unavailable)?;

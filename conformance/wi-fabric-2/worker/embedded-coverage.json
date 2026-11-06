@@ -133,6 +133,11 @@
         "manifest": "crates/worldinterface-runtime/Cargo.toml",
         "package": "worldinterface-runtime",
         "test": "f007_expiry_rotation_and_recovery_preserve_the_original_credential_generation"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "f007_restored_unattempted_intent_requires_global_fencing_of_late_original_claims"
       }
     ],
     "offline-restore": [

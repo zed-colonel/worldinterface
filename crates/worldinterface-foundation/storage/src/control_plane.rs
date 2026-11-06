@@ -15,6 +15,10 @@ CREATE TABLE control_entries(collection TEXT NOT NULL, key TEXT NOT NULL, value 
 #[derive(Clone, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
 enum Event {
+    ReconcileUnattempted {
+        id: ContentHash,
+        fenced: ContentHash,
+    },
     ClaimDelivery {
         attempt: CredentialDeliveryAttempt,
     },
@@ -155,6 +159,7 @@ fn entries(s: &cp::State) -> Result<(serde_json::Value, ProjectionEntries)> {
 }
 fn evolve(old: &cp::State, event: &Event) -> cp::Result<cp::State> {
     match event {
+        Event::ReconcileUnattempted { id, fenced } => cp::reconcile_unattempted(old, id, fenced),
         Event::ClaimDelivery { attempt } => cp::claim_delivery(old, attempt),
         Event::ReconcileDelivery { evidence } => cp::reconcile_delivery(old, evidence),
         Event::ReserveEffect { operation, limits } => cp::reserve_effect(old, operation, limits),
@@ -364,13 +369,17 @@ impl StoreRoot {
             return Ok(m);
         }
         let Some(attempt) = old.delivery_attempts.get(id) else {
-            // An intent with no durable attempt can never have contacted custody.
-            let new = record(
-                &tx,
-                &old,
-                &Event::Delivery { id: id.clone(), reason: Some(CustodyReason::Stale) },
-            )
-            .map_err(storage)?;
+            if m.status == IssuanceStatus::Unresolved {
+                return Ok(m);
+            }
+            // A restored unattempted intent may have progressed in its original
+            // store. Local locks cannot fence that store or a future claim.
+            let fenced = custody.fence_unattempted(&m).map_err(|_| cp::Error::Unresolved)?;
+            if fenced != cp::unattempted_fencing_binding(&m)? {
+                return Err(cp::Error::Unresolved);
+            }
+            let new = record(&tx, &old, &Event::ReconcileUnattempted { id: id.clone(), fenced })
+                .map_err(storage)?;
             tx.commit().map_err(storage)?;
             return Ok(new.issuances[id].clone());
         };

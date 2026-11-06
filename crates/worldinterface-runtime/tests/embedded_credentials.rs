@@ -43,6 +43,19 @@ impl Vault {
     }
 }
 impl cp::Custody for Vault {
+    fn fence_unattempted(
+        &self,
+        m: &CredentialMetadata,
+    ) -> std::result::Result<ContentHash, CustodyReason> {
+        if !self.fenced.load(Ordering::SeqCst) || self.uncertain {
+            return Err(CustodyReason::Uncertain);
+        }
+        // The backend tombstone also prevents a late claim in the original store.
+        fs::write(self.path.join(m.issuance.as_str()), b"fenced-and-invalidated")
+            .map_err(|_| CustodyReason::Uncertain)?;
+        cp::unattempted_fencing_binding(m).map_err(|_| CustodyReason::Uncertain)
+    }
+
     fn deliver(
         &self,
         _: &OpaqueRef,
@@ -165,7 +178,7 @@ fn f007_crash_cuts_reconcile_exact_ownership_without_redelivery() {
         assert_eq!(before.delivery_attempts.contains_key(&m.issuance), attempted);
         let vault = Vault::new(path);
         vault.fenced.store(false, Ordering::SeqCst);
-        if attempted && m.status == IssuanceStatus::Pending {
+        if m.status == IssuanceStatus::Pending {
             assert_eq!(
                 r.reconcile_control_delivery(&m.issuance, &vault),
                 Err(cp::Error::Unresolved)
@@ -177,7 +190,7 @@ fn f007_crash_cuts_reconcile_exact_ownership_without_redelivery() {
         assert_eq!(
             recovered.status,
             match cut {
-                "control-intent-committed" => IssuanceStatus::Rejected,
+                "control-intent-committed" => IssuanceStatus::Unresolved,
                 "control-delivery-committed" => IssuanceStatus::Delivered,
                 _ => IssuanceStatus::Unresolved,
             }
@@ -343,4 +356,55 @@ fn f007_expiry_rotation_and_recovery_preserve_the_original_credential_generation
     );
     assert_eq!(r.reconcile_control_delivery(&metadata.issuance, &vault).unwrap(), metadata);
     assert_eq!(vault.calls.load(Ordering::SeqCst), 1);
+}
+
+#[test]
+fn f007_restored_unattempted_intent_requires_global_fencing_of_late_original_claims() {
+    let t = tempfile::tempdir().unwrap();
+    let original = t.path().join("original");
+    let restored = t.path().join("restored");
+    let r = root(&original);
+    let request = initialize(&r);
+    let (_, _, _, snapshot, _) = issue_fixture(false, Profile::Embedded);
+    let (cp::Outcome::Credential(metadata), fresh) =
+        r.control_plane().execute(&caller(&snapshot), &request, now()).unwrap()
+    else {
+        panic!()
+    };
+    assert!(fresh);
+    drop(r);
+    StoreRoot::restore_offline(&original, &restored).unwrap();
+    let original = StoreRoot::open_existing(&original).unwrap();
+    let restored = StoreRoot::open_existing(&restored).unwrap();
+    let vault = Vault::new(t.path());
+    vault.fenced.store(false, Ordering::SeqCst);
+    assert_eq!(
+        restored.reconcile_control_delivery(&metadata.issuance, &vault),
+        Err(cp::Error::Unresolved)
+    );
+    assert_eq!(
+        restored.control_plane_snapshot().unwrap().issuances[&metadata.issuance].status,
+        IssuanceStatus::Pending
+    );
+    vault.fenced.store(true, Ordering::SeqCst);
+    let reconciled = restored.reconcile_control_delivery(&metadata.issuance, &vault).unwrap();
+    assert_eq!(reconciled.status, IssuanceStatus::Unresolved);
+    // The original store is independent and can still claim locally. Custody's
+    // issuance tombstone must prevent that claim from delivering a capability.
+    let late = original.control_plane().deliver(&metadata.issuance, &Clock, &vault, true).unwrap();
+    assert_eq!(late.status, IssuanceStatus::Rejected);
+    assert!(cp::active_credential(
+        &original.control_plane_snapshot().unwrap(),
+        &metadata.issuance,
+        now()
+    )
+    .is_err());
+    let state = restored.control_plane_snapshot().unwrap();
+    assert_eq!(
+        restored.reconcile_control_delivery(&metadata.issuance, &vault).unwrap(),
+        reconciled
+    );
+    assert_eq!(restored.control_plane_snapshot().unwrap(), state);
+    restored.repository(worldinterface_storage::StoreKind::Fabric).unwrap().rebuild().unwrap();
+    assert_eq!(restored.control_plane_snapshot().unwrap(), state);
 }
