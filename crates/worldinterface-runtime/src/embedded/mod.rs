@@ -440,7 +440,12 @@ where
         }
         let object = self.get(session, reference.clone())?;
         let artifact = object.artifact.ok_or("artifact unavailable")?;
-        self.host.bundle.wi().read_artifact(&artifact)
+        let caller = self.caller(session)?;
+        crate::artifact::ArtifactResolver::new(
+            self.host.bundle.wi(),
+            self.host.configuration.as_ref(),
+        )
+        .read(&caller, &artifact)
     }
     pub fn import_artifact(&self, session: &A::Session, bytes: &[u8]) -> Result<ArtifactRef> {
         let caller = self.caller(session)?;
