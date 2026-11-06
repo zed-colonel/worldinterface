@@ -11175,7 +11175,7 @@
     "kind": "enum",
     "path": "crates/worldinterface-runtime/src/embedded/mod.rs",
     "name": "WorkerInstallation",
-    "source_sha256": "8024bf67674cf9288ecdb2dbf64e789c701c60091ed7dfb5bdf2be16acfca372",
+    "source_sha256": "3726f15cd65b677349fd028381d24af099d456df82729011fd2027b9eb5d1ae8",
     "conditions": [],
     "registration_sites": []
   },
@@ -11184,7 +11184,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/src/embedded/mod.rs",
     "name": "authority",
-    "source_sha256": "8024bf67674cf9288ecdb2dbf64e789c701c60091ed7dfb5bdf2be16acfca372",
+    "source_sha256": "3726f15cd65b677349fd028381d24af099d456df82729011fd2027b9eb5d1ae8",
     "conditions": [],
     "registration_sites": []
   },
@@ -11193,7 +11193,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/src/embedded/mod.rs",
     "name": "credential",
-    "source_sha256": "8024bf67674cf9288ecdb2dbf64e789c701c60091ed7dfb5bdf2be16acfca372",
+    "source_sha256": "3726f15cd65b677349fd028381d24af099d456df82729011fd2027b9eb5d1ae8",
     "conditions": [],
     "registration_sites": []
   },
@@ -11202,7 +11202,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/src/embedded/mod.rs",
     "name": "dispatch",
-    "source_sha256": "8024bf67674cf9288ecdb2dbf64e789c701c60091ed7dfb5bdf2be16acfca372",
+    "source_sha256": "3726f15cd65b677349fd028381d24af099d456df82729011fd2027b9eb5d1ae8",
     "conditions": [],
     "registration_sites": []
   },
@@ -11211,7 +11211,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-runtime/src/embedded/mod.rs",
     "name": "crates/worldinterface-runtime/src/embedded/mod.rs",
-    "source_sha256": "8024bf67674cf9288ecdb2dbf64e789c701c60091ed7dfb5bdf2be16acfca372",
+    "source_sha256": "3726f15cd65b677349fd028381d24af099d456df82729011fd2027b9eb5d1ae8",
     "conditions": [],
     "registration_sites": []
   },
@@ -11220,7 +11220,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/src/embedded/mod.rs",
     "name": "ArcObserver",
-    "source_sha256": "8024bf67674cf9288ecdb2dbf64e789c701c60091ed7dfb5bdf2be16acfca372",
+    "source_sha256": "3726f15cd65b677349fd028381d24af099d456df82729011fd2027b9eb5d1ae8",
     "conditions": [],
     "registration_sites": []
   },
@@ -11229,7 +11229,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/src/embedded/mod.rs",
     "name": "EmbeddedApplication",
-    "source_sha256": "8024bf67674cf9288ecdb2dbf64e789c701c60091ed7dfb5bdf2be16acfca372",
+    "source_sha256": "3726f15cd65b677349fd028381d24af099d456df82729011fd2027b9eb5d1ae8",
     "conditions": [],
     "registration_sites": []
   },
@@ -11238,7 +11238,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/src/embedded/mod.rs",
     "name": "EmbeddedHost",
-    "source_sha256": "8024bf67674cf9288ecdb2dbf64e789c701c60091ed7dfb5bdf2be16acfca372",
+    "source_sha256": "3726f15cd65b677349fd028381d24af099d456df82729011fd2027b9eb5d1ae8",
     "conditions": [],
     "registration_sites": []
   },
@@ -11247,7 +11247,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/src/embedded/mod.rs",
     "name": "EmbeddedPorts",
-    "source_sha256": "8024bf67674cf9288ecdb2dbf64e789c701c60091ed7dfb5bdf2be16acfca372",
+    "source_sha256": "3726f15cd65b677349fd028381d24af099d456df82729011fd2027b9eb5d1ae8",
     "conditions": [],
     "registration_sites": []
   },
@@ -11256,7 +11256,7 @@
     "kind": "trait",
     "path": "crates/worldinterface-runtime/src/embedded/mod.rs",
     "name": "Application",
-    "source_sha256": "8024bf67674cf9288ecdb2dbf64e789c701c60091ed7dfb5bdf2be16acfca372",
+    "source_sha256": "3726f15cd65b677349fd028381d24af099d456df82729011fd2027b9eb5d1ae8",
     "conditions": [],
     "registration_sites": []
   },

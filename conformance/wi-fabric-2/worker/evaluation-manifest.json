@@ -191,7 +191,7 @@
     "crates/worldinterface-runtime/src/embedded/authority.rs": "c14c0d379807d62e0fc9b69ea41c1861998aebf02d2ae9182471ad20d368bf3d",
     "crates/worldinterface-runtime/src/embedded/credential.rs": "44b67c4bfda17713a7ae8f336652ee26be4600947df2db19f4435b89d777c778",
     "crates/worldinterface-runtime/src/embedded/dispatch.rs": "a84bacc29c20a06baf9853bdb2341ff86e7f6565daea6bc15471cf8bee93ce7e",
-    "crates/worldinterface-runtime/src/embedded/mod.rs": "8024bf67674cf9288ecdb2dbf64e789c701c60091ed7dfb5bdf2be16acfca372",
+    "crates/worldinterface-runtime/src/embedded/mod.rs": "3726f15cd65b677349fd028381d24af099d456df82729011fd2027b9eb5d1ae8",
     "crates/worldinterface-runtime/src/flow.rs": "a2c4d91d3cc8ad4189e5df8d13715c0e9d7c884f10d57100dcbd809dbc748878",
     "crates/worldinterface-runtime/src/flow_coordinator.rs": "22d02908a7dda63f18f8cf9ab8fadf2d4a1c48d601ddf1fe7f40a8d58c6e0e6f",
     "crates/worldinterface-runtime/src/flow_node.rs": "bd869df84d2ac75c7a0e067ee1d26672f44bde16b8d16e3393079e35576bfafd",

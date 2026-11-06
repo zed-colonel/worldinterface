@@ -525,7 +525,7 @@ where
             .wi()
             .worker_snapshot(caller.tenant(), &worker.provider, &worker.run)?
             .ok_or("worker absent")?;
-        if run.quarantined || run.cleanup_confirmed || !run.running {
+        if run.quarantined || run.cleanup_confirmed || run.stop_requested || !run.running {
             return Err("run withdrawn".into());
         }
         let at = self.host.clock.now()?;
@@ -593,15 +593,18 @@ where
         session: &A::Session,
         id: &ContentHash,
     ) -> Result<WorkerCredentialMetadata> {
-        self.withdraw_stale_permits()?;
         let caller = self.caller(session)?;
+        self.withdraw_stale_permits()?;
         let state = self.host.bundle.wi().control_plane_snapshot()?;
-        let metadata = cp::active_credential(&state, id, self.host.clock.now()?.epoch_millis()?)
-            .map_err(control_error)?;
+        let metadata = state.issuances.get(id).ok_or("credential unavailable")?;
         if metadata.binding.principal != *caller.principal() {
             return Err("credential unavailable".into());
         }
         self.get(session, metadata.permit.clone())?;
+        let metadata = cp::active_credential(&state, id, self.host.clock.now()?.epoch_millis()?)
+            .map_err(|_| -> Box<dyn std::error::Error + Send + Sync> {
+                "credential unavailable".into()
+            })?;
         WorkerCredentialMetadata::delivered(metadata)
     }
     fn withdraw_stale_permits(&self) -> Result<()> {
@@ -611,8 +614,9 @@ where
             let b = permit.binding();
             let current =
                 self.host.bundle.wi().worker_snapshot(&b.scope.tenant, &b.provider, &b.run)?;
-            let invalid = current.is_none_or(|s| s.quarantined || s.cleanup_confirmed)
-                || self.host.clock.now()?.epoch_millis()? >= b.expires_at_ms;
+            let invalid = current.is_none_or(|s| {
+                s.quarantined || s.cleanup_confirmed || s.stop_requested || !s.running
+            }) || self.host.clock.now()?.epoch_millis()? >= b.expires_at_ms;
             // Refresh external and managed authority for each immutable owner.
             let effects = self.host.bundle.wi().effect_snapshot(&b.scope.tenant)?;
             let valid = effects
