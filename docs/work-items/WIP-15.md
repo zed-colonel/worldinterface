@@ -73,6 +73,8 @@ The remediation writes observation JSON with its unavailable values intact,
 retains create-once publication and exact-byte digest binding, and adds a
 non-live regression for null controls, digest agreement and overwrite rejection.
 It does not change the domain request codec or invent supported seam controls.
+The observation-file assertions remain in trusted test setup; the consumer
+entry point delegates to them and retains the existing boundary scanner.
 The runner groups independent harnesses across two workers, measures each
 binary before and after execution and once per validation, and avoids repeated
 full validation when publishing an already validated candidate. Per-test

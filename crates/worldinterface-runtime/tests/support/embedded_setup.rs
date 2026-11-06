@@ -1015,3 +1015,17 @@ pub fn publish_campaign_observation(
     file.sync_all()?;
     Ok(ContentHash::of(&bytes))
 }
+
+/// Trusted filesystem assertions, kept outside the consumer entry point.
+pub fn assert_unknown_observation_publication() {
+    let directory = tempfile::tempdir().unwrap();
+    let path = directory.path().join("seam.json");
+    let value = serde_json::json!({"evidence":{"seam_simulation":true,"controls":null}});
+    let digest = publish_campaign_observation(&path, &value).unwrap();
+    let bytes = std::fs::read(&path).unwrap();
+    assert_eq!(serde_json::from_slice::<serde_json::Value>(&bytes).unwrap(), value);
+    assert_eq!(worldinterface_protocol::ContentHash::of(&bytes), digest);
+    let inflated = serde_json::json!({"evidence":{"controls":{"supported":true}}});
+    assert!(publish_campaign_observation(&path, &inflated).is_err());
+    assert_eq!(std::fs::read(path).unwrap(), bytes);
+}

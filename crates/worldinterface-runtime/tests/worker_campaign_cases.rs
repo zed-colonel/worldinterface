@@ -12,16 +12,7 @@ use support::{embedded_consumer as consumer, embedded_setup as setup};
 
 #[test]
 fn campaign_unknown_controls_publish_once_with_exact_observation_digest() {
-    let directory = tempfile::tempdir().unwrap();
-    let path = directory.path().join("seam.json");
-    let value = serde_json::json!({"evidence":{"seam_simulation":true,"controls":null}});
-    let digest = setup::publish_campaign_observation(&path, &value).unwrap();
-    let bytes = std::fs::read(&path).unwrap();
-    assert_eq!(serde_json::from_slice::<serde_json::Value>(&bytes).unwrap(), value);
-    assert_eq!(worldinterface_protocol::ContentHash::of(&bytes), digest);
-    let inflated = serde_json::json!({"evidence":{"controls":{"supported":true}}});
-    assert!(setup::publish_campaign_observation(&path, &inflated).is_err());
-    assert_eq!(std::fs::read(path).unwrap(), bytes);
+    setup::assert_unknown_observation_publication();
 }
 
 #[tokio::test]
