@@ -1,12 +1,24 @@
 use serde_json::json;
 use std::{env, path::PathBuf};
 use wi_contract_check::{
-    catalog, continuations, contracts, evidence, finding, inventory, policy, proof, read, refresh,
-    worker_campaign, Finding, Result,
+    catalog, continuations, contracts, evidence, finding, handoff, inventory, policy, proof, read,
+    refresh, worker_campaign, Finding, Result,
 };
 fn run() -> Result<bool> {
     let root = env::var_os("WI_REPO_ROOT").map(PathBuf::from).unwrap_or(env::current_dir()?);
     let args: Vec<_> = env::args().skip(1).collect();
+    if args.as_slice() == ["handoff", "generate"] {
+        println!("{}", serde_json::to_string_pretty(&handoff::descriptor(&root)?)?);
+        return Ok(true);
+    }
+    if args.len() == 3 && args[0] == "handoff" && args[1] == "verify" {
+        handoff::verify(&root, &PathBuf::from(&args[2]))?;
+        println!(
+            "{}",
+            json!({"scope":"handoff","status":"verified","reviewed_closure_established":false})
+        );
+        return Ok(true);
+    }
     if args.as_slice() == ["inventory", "generate"] {
         println!("{}", serde_json::to_string_pretty(&inventory::generate(&root)?)?);
         return Ok(true);
@@ -34,9 +46,10 @@ fn run() -> Result<bool> {
         return Ok(true);
     }
     type Check = fn(&std::path::Path) -> Result<Vec<Finding>>;
-    let commands: [(&str, Check); 11] = [
+    let commands: [(&str, Check); 12] = [
         ("catalog", catalog::check),
         ("proof", proof::check),
+        ("handoff", handoff::check),
         ("baseline", contracts::baseline),
         ("inventory", inventory::check),
         ("contracts", contracts::contracts),

@@ -82,3 +82,21 @@ Closed gates become effective through reviewed merge with adopted checks passing
 `evidence check` remains historical receipt tooling and does not close these gates.
 The new `contract-test` check executes WP-007 and checker regressions after its
 operator-approved adoption at WIP-01 merge.
+
+
+## Worker handoff publication
+
+`handoff generate` renders a descriptor to stdout; store it at
+`conformance/wi-fabric-2/proof/handoff.json` before refreshing the evaluation
+packet. `handoff check` (also in `all check`) compares complete registry/gate
+records, source/lock/profile/fixture/recipe identities and fixed permitted claims.
+`proof check` independently validates authoritative coverage and compiled test
+eligibility. Neither static check asserts execution or reviewed closure.
+
+The campaign generates an external `handoff.json` alongside its receipt and
+candidate. `handoff verify DIRECTORY` validates that publication, the descriptor
+binding and the complete live campaign pins, binaries, logs and observations.
+It requires the unchanged clean committed source and current accepted packet.
+Worker completion remains nonsemantic; reviewed milestone closure requires
+reviewed merge and all adopted checks. See the evidence document for approval,
+expiry and consumer reproduction instructions.

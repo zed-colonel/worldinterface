@@ -1104,7 +1104,7 @@
         },
         {
           "path": "README.md",
-          "source_sha256": "46ebcc814a4f9d489ed729c21282ac7e6e350971d40447c388b78d34e4fdad3f",
+          "source_sha256": "376f04efc01e584e5edf843b3dffdd86fb839d932c4a6c9943faeea1b1ac99e0",
           "treatment": "Selectively update connector references after verified replacement; retain unrelated documentation and historical guidance."
         },
         {
@@ -1268,6 +1268,11 @@
           "treatment": "Shared WIP-11 artifact/seam support or evidence: retain run scoping, publication and quarantine obligations; review selective legacy removal without deleting these contracts. Candidate disposition in docs/work-items/WIP-11.md."
         },
         {
+          "path": "docs/evidence/WI-EMBEDDED-WORKER-PROOF-1.md",
+          "source_sha256": "b978d5ae87c26dffbdfde331376e617922980d891ffdad63ed9f577f8dc247bf",
+          "treatment": "Preserve WIP-16 producer evidence, exact test mappings and seam timing semantics during selective legacy delay removal; this document composes no legacy connector. WIP-16 adds this explicit candidate documentation disposition for review."
+        },
+        {
           "path": "docs/flowspec-reference.md",
           "source_sha256": "f8ce312502a645373a2a7a4ee17249bb76a8eff4e98f1e0e67f8847887464587",
           "treatment": "Update runtime references after verified replacement; retain clearly marked historical evidence."
@@ -1296,6 +1301,11 @@
           "path": "docs/work-items/WIP-15.md",
           "source_sha256": "da53f667a49aede23c0f15c2dfaf693b7b6d8a3fd33840437bb9a449a4b407e3",
           "treatment": "Preserve WIP-15 seam simulation timing evidence when reviewing legacy delay deletion; no legacy connector is composed or removed here."
+        },
+        {
+          "path": "docs/work-items/WIP-16.md",
+          "source_sha256": "d9325bd9a419af1f68fcfeadb7dfda7baae63df1ab50c6b3b5618daf64d9f50c",
+          "treatment": "Retain the WIP-16 evidence-publication disposition and exact test mapping obligations during selective legacy removal; this is documentation only, without replacement or removal-readiness claims."
         },
         {
           "path": "docs/work-items/wi-03-integration.md",
@@ -9243,7 +9253,7 @@
         },
         {
           "path": "README.md",
-          "source_sha256": "46ebcc814a4f9d489ed729c21282ac7e6e350971d40447c388b78d34e4fdad3f",
+          "source_sha256": "376f04efc01e584e5edf843b3dffdd86fb839d932c4a6c9943faeea1b1ac99e0",
           "treatment": "Selectively update connector references after verified replacement; retain unrelated documentation and historical guidance."
         },
         {
@@ -9368,7 +9378,7 @@
         },
         {
           "path": "README.md",
-          "source_sha256": "46ebcc814a4f9d489ed729c21282ac7e6e350971d40447c388b78d34e4fdad3f",
+          "source_sha256": "376f04efc01e584e5edf843b3dffdd86fb839d932c4a6c9943faeea1b1ac99e0",
           "treatment": "Selectively update connector references after verified replacement; retain unrelated documentation and historical guidance."
         },
         {
@@ -9646,7 +9656,7 @@
         },
         {
           "path": "README.md",
-          "source_sha256": "46ebcc814a4f9d489ed729c21282ac7e6e350971d40447c388b78d34e4fdad3f",
+          "source_sha256": "376f04efc01e584e5edf843b3dffdd86fb839d932c4a6c9943faeea1b1ac99e0",
           "treatment": "Selectively update connector references after verified replacement; retain unrelated documentation and historical guidance."
         },
         {
@@ -10954,7 +10964,7 @@
         },
         {
           "path": "README.md",
-          "source_sha256": "46ebcc814a4f9d489ed729c21282ac7e6e350971d40447c388b78d34e4fdad3f",
+          "source_sha256": "376f04efc01e584e5edf843b3dffdd86fb839d932c4a6c9943faeea1b1ac99e0",
           "treatment": "Selectively update connector references after verified replacement; retain unrelated documentation and historical guidance."
         },
         {
@@ -11197,7 +11207,7 @@
         },
         {
           "path": "README.md",
-          "source_sha256": "46ebcc814a4f9d489ed729c21282ac7e6e350971d40447c388b78d34e4fdad3f",
+          "source_sha256": "376f04efc01e584e5edf843b3dffdd86fb839d932c4a6c9943faeea1b1ac99e0",
           "treatment": "Selectively update connector references after verified replacement; retain unrelated documentation and historical guidance."
         },
         {

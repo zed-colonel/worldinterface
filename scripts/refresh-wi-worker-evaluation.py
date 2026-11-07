@@ -23,7 +23,7 @@ for path in (ROOT / "fixtures/pre-wi-fabric-2/exo/repos/sample-rust").rglob("*")
     if path.is_file():
         files.add(path.relative_to(ROOT).as_posix())
 for name in [
-    "AGENTS.md", ".gitignore", ".cargo/config.toml", ".craftingtable/checks.json",
+    "AGENTS.md", "README.md", ".gitignore", ".cargo/config.toml", ".craftingtable/checks.json",
     "rust-toolchain.toml", "Cargo.toml", "Cargo.lock",
     "fixtures/pre-wi-fabric-2/source/rust-toolchain.toml",
     "contracts/aq-integration-target.json", "contracts/aq-baseline.lock.json",
@@ -40,6 +40,7 @@ for name in [
     "scripts/check-wi-domain-isolation.py", "scripts/check-wi-integration.sh",
     "scripts/check-wi-integration.py", "scripts/wi_crash_isolation.py", "scripts/worker-proof-evidence.sh",
     "docs/work-items/WIP-11.md", "docs/work-items/WIP-12.md", "docs/work-items/WIP-13.md", "docs/work-items/WIP-14.md", "docs/work-items/WIP-15.md", "docs/work-items/wi-worker-proof-1.md",
+    "docs/work-items/WIP-16.md", "docs/evidence/WI-EMBEDDED-WORKER-PROOF-1.md",
 ]:
     files.add(name)
 # Bind the actual fixture and normative data, not only source references to their paths.

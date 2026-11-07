@@ -5,21 +5,30 @@ WorldInterface is a boundary fabric and internal container built on top of
 FlowSpecs into durable, crash-recoverable workflows with idempotent connector
 invocations and pure transforms.
 
-## Quick Start
+## Embedded worker proof
 
-```bash
-# Build
-cargo build --workspace
+The active implementation has two target workspaces: the AQ-free foundation at
+`crates/worldinterface-foundation/Cargo.toml` and the embedded runtime at
+`crates/worldinterface-runtime/Cargo.toml`, using crates.io AQ 0.3.0 and Rust 1.89.0.
+The independent `tools/wi-contract-check` workspace validates contracts and proof
+publication. Start with [the evidence and consumer guide](docs/evidence/WI-EMBEDDED-WORKER-PROOF-1.md)
+and [the machine-readable handoff](conformance/wi-fabric-2/proof/handoff.json).
 
-# Run tests
-cargo test --workspace
-
-# Start the daemon
-cargo run -p worldinterface-cli -- serve
-
-# Submit a flow
-cargo run -p worldinterface-cli -- flow submit examples/golden-path/flow.yaml --wait
+```sh
+scripts/check-wi-domain.sh
+scripts/check-wi-integration.sh
+scripts/check-wi-contract.sh
 ```
+
+Live worker tests require actual exact-packet operator acceptance after non-live
+source-bound validation, within its finite expiry. These local scripts are
+supplemental; all ten adopted checks run on the committed head through
+CraftingTable. The partial proof supplies producer execution evidence; consumer
+acceptance, ordinary use, release, remote execution and isolation remain separate.
+
+The root Cargo workspace, daemon/CLI and architecture below are historical
+maintenance surfaces, outside the supported embedded proof. See the
+[active ledger](docs/work-items/wi-worker-proof-1.md) for retained obligations.
 
 ## Architecture
 
