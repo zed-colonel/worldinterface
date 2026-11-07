@@ -167,3 +167,41 @@ replacement. Positive evaluation and adopted runtime-test must use that
 accepted replacement; non-live checks may run beforehand. WIP-16 retains final
 handoff publication and G4/target closure. Scratch evidence is not committed
 source.
+
+
+## Campaign follow-up: atomic worker observations
+
+The committed-head campaign on `de25ec2` found a failure in
+`campaign_embedded_cancellation_and_output_bounds_keep_capacity_until_cleanup`:
+`worker commit revision conflict`. The exact test reproduced it alone in 6.90
+seconds under a 180-second timeout. Observation intake read the worker revision
+before its Fabric write transaction; concurrent operation acknowledgement could
+advance that revision before the observation committed.
+
+The repair allocates the event revision in the same immediate writer transaction
+as the observation, worker history and signal outbox. Duplicate observations
+return the original event identity after verifying exact content, route and
+stored event integrity. Provider sequence, conflicting-duplicate rejection,
+realization binding and replay checks remain intact. The existing low-level
+explicit-revision API retains its stale-revision rejection.
+
+WP-025 now includes a non-live storage regression that commits eight observations
+concurrently with an operation acknowledgement, checks unique revisions and
+stable duplicates, rejects changed route/content, injects an outbox failure to
+prove rollback, and verifies the rebuilt/reopened state and obligations. The
+embedded cancellation/output-bound case must pass again after acceptance of the
+changed packet. Source-bound compilation and non-live checks precede that request.
+
+F-006 also aligns the supplemental helper and active ledger with the adopted
+1785-second campaign guard plus 15-second kill grace, and records the F-004/F-005
+remediation history. These edits are included in the same replacement packet.
+
+F-007 records the live-verification deadline: the current receipt expires at
+**2026-11-11T00:00:00Z**. The host uses system wall time, so adopted `runtime-test`
+fails closed from that instant on every commit carrying this receipt, including
+`wi-worker-proof-1` after integration. Complete integration and post-merge
+verification before expiry or obtain renewed exact acceptance before later live
+execution. WIP-16 must obtain fresh finite acceptance for its changed packet and
+carry this consequence into its consumer evidence and handoff instructions.
+The [verification addendum](WIP-15-verification.md) records these obligations;
+this remediation does not extend or retarget the operator's existing decision.

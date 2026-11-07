@@ -1294,7 +1294,7 @@
         },
         {
           "path": "docs/work-items/WIP-15.md",
-          "source_sha256": "a09fb51a98021f89e2c6660734f038f8d127d28cce1b1310a709687d2c1aa79c",
+          "source_sha256": "da53f667a49aede23c0f15c2dfaf693b7b6d8a3fd33840437bb9a449a4b407e3",
           "treatment": "Preserve WIP-15 seam simulation timing evidence when reviewing legacy delay deletion; no legacy connector is composed or removed here."
         },
         {
@@ -4976,12 +4976,12 @@
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/worker.rs::::enum:Command",
-          "source_sha256": "7f35dcdf6b4e3de704b7d34797dc635ff883955fc91f5123d09d15d09c6f438c",
+          "source_sha256": "70c8e1e96ee6c4cc251dcd3a47c0c62045f437898588d18397f5ecdf070f87f3",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/worker.rs::::source-module:crates/worldinterface-foundation/storage/src/worker.rs",
-          "source_sha256": "7f35dcdf6b4e3de704b7d34797dc635ff883955fc91f5123d09d15d09c6f438c",
+          "source_sha256": "70c8e1e96ee6c4cc251dcd3a47c0c62045f437898588d18397f5ecdf070f87f3",
           "registration_sites": []
         },
         {
@@ -5061,7 +5061,7 @@
         },
         {
           "id": "crates/worldinterface-foundation/storage/tests/worker.rs::::source-module:crates/worldinterface-foundation/storage/tests/worker.rs",
-          "source_sha256": "0ac1e3e32698450638fb5a9511394fca1d49d9e2cfb86ea58d80e720e1182520",
+          "source_sha256": "414a131fa4dacfe16f1abf0da3d6656291b042de9a56c741e69d37fdf3a50c93",
           "registration_sites": []
         },
         {
@@ -6111,7 +6111,7 @@
         },
         {
           "id": "crates/worldinterface-runtime/src/worker/observation.rs::::source-module:crates/worldinterface-runtime/src/worker/observation.rs",
-          "source_sha256": "14fc86ad3d2e1c6384bf55bca97114bc3ba4b7884022b879f91479d90e19270b",
+          "source_sha256": "c0a884f91f77a6556d3e8c9901bf668d9ab3afe0471d53bcad6ba7f27769f5cc",
           "registration_sites": []
         },
         {
@@ -8613,7 +8613,7 @@
         },
         {
           "path": "crates/worldinterface-foundation/storage/src/worker.rs",
-          "source_sha256": "7f35dcdf6b4e3de704b7d34797dc635ff883955fc91f5123d09d15d09c6f438c",
+          "source_sha256": "70c8e1e96ee6c4cc251dcd3a47c0c62045f437898588d18397f5ecdf070f87f3",
           "treatment": "WIP-10 candidate worker source or associated build/test surface; preserve exact evaluation bindings and review ownership changes before integration."
         },
         {
@@ -8648,7 +8648,7 @@
         },
         {
           "path": "crates/worldinterface-foundation/storage/tests/worker.rs",
-          "source_sha256": "0ac1e3e32698450638fb5a9511394fca1d49d9e2cfb86ea58d80e720e1182520",
+          "source_sha256": "414a131fa4dacfe16f1abf0da3d6656291b042de9a56c741e69d37fdf3a50c93",
           "treatment": "WIP-10 candidate worker source or associated build/test surface; preserve exact evaluation bindings and review ownership changes before integration."
         },
         {
@@ -8873,7 +8873,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/src/worker/observation.rs",
-          "source_sha256": "14fc86ad3d2e1c6384bf55bca97114bc3ba4b7884022b879f91479d90e19270b",
+          "source_sha256": "c0a884f91f77a6556d3e8c9901bf668d9ab3afe0471d53bcad6ba7f27769f5cc",
           "treatment": "WIP-10 candidate worker source or associated build/test surface; preserve exact evaluation bindings and review ownership changes before integration."
         },
         {

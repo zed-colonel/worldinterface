@@ -9,5 +9,5 @@ if [[ $# -eq 0 ]]; then
 else
   campaign_output=$1
 fi
-timeout --kill-after=15s 1500s cargo run --locked --offline \
+timeout --kill-after=15s 1785s cargo run --locked --offline \
   --manifest-path tools/wi-contract-check/Cargo.toml -- campaign run "$campaign_output"

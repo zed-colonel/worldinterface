@@ -310,12 +310,34 @@ about 12 seconds of the unchanged check budget.
 
 F-001's remediation makes the campaign the sole runtime test runner, preserving
 all unregistered tests and exact outcome/log/binary checks, reuses one discovery
-pass, and bounds the campaign to 1500 seconds plus 15 seconds kill grace.
+pass, and bounds the campaign to 1785 seconds plus 15 seconds kill grace after
+F-004's correction in `9396232`. F-006 aligns the supplemental evidence helper
+with that guard. F-005 corrected the cold-evidence run to
+`e73756a8-8e69-4f9a-acb7-ba3074a3dbba`. The operator accepted the resulting
+`b24ac0e0…9cf9a6a7` packet in run `782e12b7-d455-4025-9daa-93c120543783`;
+all ten adopted checks passed on `259d1ef`. The later verification and current
+renewal requirements are recorded in [WIP-15-verification](WIP-15-verification.md).
 F-002 records the actual final packet and passing history here and in the item
 note. F-003 checks a generated fixture handoff with embedded evidence.
 The item note identifies the cold-run timing report (build, campaign, remainder
 suite and headroom) and reproduction procedure. Changed bytes require renewed
 exact-packet acceptance after the non-live build; the receipt and anchor retain
-the historical `4dcbe731…` acceptance. Positive campaign verification and adopted
+the historical `b24ac0e0…` acceptance. Positive campaign verification and adopted
 runtime-test remain due on the replacement until that acceptance. No new gate
 closure is asserted.
+
+
+F-007: the current receipt expires at **2026-11-11T00:00:00Z**. At and after
+that instant the live evaluation verifier rejects it, and adopted `runtime-test`
+fails closed on every commit carrying it, including the integration branch.
+Complete integration and post-merge verification before expiry or obtain renewed
+exact acceptance before later live execution. WIP-16 must obtain fresh finite
+acceptance for its own changed packet and carry this consequence into its handoff.
+
+The campaign on `de25ec2` exposed a worker observation/operation revision race;
+its embedded cancellation/output-bound case reproduced the failure alone.
+WIP-15 now assigns observation revisions within the Fabric writer transaction,
+with a WP-025 concurrent-write, rollback and rebuild regression. This repair and
+F-006's helper/ledger corrections require a replacement packet and fresh operator
+acceptance before live verification. No new passing campaign or gate closure is
+claimed for these changed bytes until those steps complete.

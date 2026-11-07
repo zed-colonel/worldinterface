@@ -1,3 +1,26 @@
+# WIP-15 atomic-observation and F-006/F-007 remediation request
+
+The campaign on `de25ec2` and the isolated embedded cancellation/output-bound
+test failed with `worker commit revision conflict`. This packet repairs the
+worker observation/operation race by allocating the WI event revision inside
+its Fabric writer transaction. WP-025 gains a non-live regression for concurrent
+observations and operation acknowledgement, stable duplicates, conflict rejection,
+atomic outbox rollback and rebuild/reopen. It also aligns the supplemental helper
+and ledger with the 1785-second campaign guard (F-006), and records the existing
+receipt's expiry and fail-closed post-merge verification consequence (F-007).
+
+Accept only the canonical digest printed by `scripts/refresh-wi-worker-evaluation.py`
+after source-bound non-live validation. The requested expiry remains
+**2026-11-11T00:00:00Z**. Scope remains the reviewed nonsensitive typed fixtures,
+six operations, 15000 ms wall time and 65536 retained output bytes, without
+ordinary use or production credentials. Supervisor source, environment and
+containment limitations are unchanged. The receipt and trusted anchor retain
+the actual previous acceptance until the operator accepts these exact changed
+bytes. Live verification and adopted `runtime-test` must then run on the committed
+candidate; no passing result is asserted in advance.
+
+## Historical predecessor requests
+
 # WIP-15 F-004/F-005 campaign deadline and evidence remediation
 
 Packet `289f6efacf3378ba4e955e2164d6ea0f3bc80f8e1b76b07293d3bef6d1cd07d6`

@@ -2,8 +2,11 @@
 use crate::{invalid, Result, StoreKind, StoreRoot};
 use rusqlite::{params, Connection, OptionalExtension, TransactionBehavior};
 use serde::{Deserialize, Serialize};
-use worldinterface_domain::{continuation::DurableEvent, worker::*};
-use worldinterface_protocol::{canonical_data, strict_json, ContentHash, OpaqueRef};
+use worldinterface_domain::{
+    continuation::{DurableEvent, EventRoute},
+    worker::*,
+};
+use worldinterface_protocol::{canonical_data, strict_json, ArtifactRef, ContentHash, OpaqueRef};
 
 pub(crate) const SCHEMA: &str = "
 CREATE TABLE worker_history(seq INTEGER PRIMARY KEY, command BLOB NOT NULL, digest TEXT NOT NULL);
@@ -273,6 +276,9 @@ fn apply(c: &Connection, command: &Command) -> Result<bool> {
 fn transact(root: &StoreRoot, cmd: &Command) -> Result<bool> {
     let mut c = root.connect(StoreKind::Fabric)?;
     let tx = c.transaction_with_behavior(TransactionBehavior::Immediate)?;
+    commit(tx, cmd)
+}
+fn commit(tx: rusqlite::Transaction<'_>, cmd: &Command) -> Result<bool> {
     let changed = apply(&tx, cmd)?;
     if changed {
         let bytes = canonical_data(cmd).map_err(invalid)?;
@@ -435,6 +441,73 @@ impl StoreRoot {
             self,
             &Command::Observe { tenant, provider, run, observation, event: Box::new(event) },
         )
+    }
+    /// Allocate WI's event revision under the same writer transaction as the
+    /// observation and outbox. Provider sequence remains independent of it.
+    pub fn commit_worker_observation(
+        &self,
+        binding: &WorkerBinding,
+        observation: WorkerObservation,
+        route: EventRoute,
+        artifact: ArtifactRef,
+    ) -> Result<OpaqueRef> {
+        let mut c = self.connect(StoreKind::Fabric)?;
+        let tx = c.transaction_with_behavior(TransactionBehavior::Immediate)?;
+        let state = snapshot(&tx, &binding.tenant, &binding.provider, &binding.run)?
+            .ok_or_else(|| invalid("worker absent"))?;
+        if state.binding != *binding {
+            return Err(invalid("worker observation realization mismatch"));
+        }
+        if let Some(old) = state.observations.get(&observation.provider_sequence) {
+            if old != &observation {
+                return Err(invalid("worker observation sequence conflict"));
+            }
+            let (id, bytes, digest): (String, Vec<u8>, String) = tx.query_row(
+                "SELECT id,canonical,digest FROM event_sources WHERE id=(SELECT id FROM worker_event_sequences WHERE tenant=? AND source=?)",
+                params![binding.tenant.as_str(), observation.event.as_str()],
+                |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
+            )?;
+            let old: DurableEvent = decode(&bytes)?;
+            old.validate().map_err(invalid)?;
+            if old.id.as_str() != id
+                || ContentHash::of(&bytes).as_str() != digest
+                || canonical_data(&old).map_err(invalid)? != bytes
+            {
+                return Err(invalid("corrupt authoritative event"));
+            }
+            let expected = DurableEvent::new(
+                route,
+                observation.event,
+                old.revision,
+                observation.digest,
+                Some(artifact),
+            )
+            .map_err(invalid)?;
+            if old != expected {
+                return Err(invalid("worker observation route or content conflict"));
+            }
+            return Ok(old.id);
+        }
+        let event = DurableEvent::new(
+            route,
+            observation.event.clone(),
+            state.revision.checked_add(1).ok_or_else(|| invalid("worker revision overflow"))?,
+            observation.digest.clone(),
+            Some(artifact),
+        )
+        .map_err(invalid)?;
+        let id = event.id.clone();
+        commit(
+            tx,
+            &Command::Observe {
+                tenant: binding.tenant.clone(),
+                provider: binding.provider.clone(),
+                run: binding.run.clone(),
+                observation,
+                event: Box::new(event),
+            },
+        )?;
+        Ok(id)
     }
     pub fn unfinished_workers(
         &self,

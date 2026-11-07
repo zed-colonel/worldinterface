@@ -37,7 +37,8 @@
     ],
     "WP-025": [
       "wp_025_reordered_duplicate_late_and_cancel_racing_events_cannot_revive_work",
-      "wp_025_real_worker_events_preserve_aq_deadline_cancel_and_restart_winners"
+      "wp_025_real_worker_events_preserve_aq_deadline_cancel_and_restart_winners",
+      "concurrent_worker_observations_allocate_revisions_with_operation_acknowledgement"
     ],
     "WP-026": [
       "wp_026_unavailable_operations_are_not_registered_or_decoded_as_available_effects"
@@ -128,6 +129,11 @@
         "manifest": "crates/worldinterface-runtime/Cargo.toml",
         "package": "worldinterface-runtime",
         "test": "wp_025_real_worker_events_preserve_aq_deadline_cancel_and_restart_winners"
+      },
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-storage",
+        "test": "concurrent_worker_observations_allocate_revisions_with_operation_acknowledgement"
       }
     ],
     "WP-026": [

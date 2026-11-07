@@ -19,27 +19,25 @@ check on its committed head. Carry this deadline and fail-closed consequence int
 WIP-16's consumer evidence and handoff instructions. No test-clock substitution
 or extension of the existing acceptance is part of this documentation fix.
 
-This addendum is outside the accepted packet. It records the operational
-consequence for the [WIP-15 note](WIP-15.md) and
-[active ledger](wi-worker-proof-1.md#wip-15-campaign-candidate), whose packet-bound
-bytes remain those accepted by the operator.
+This addendum is outside the packet. It records the operational consequence
+alongside the [WIP-15 note](WIP-15.md) and
+[active ledger](wi-worker-proof-1.md#wip-15-campaign-candidate). Their current
+packet-bound corrections and the campaign repair require renewed acceptance.
 
-## F-006: retained timeout alignment for WIP-16
+## F-006: supplemental timeout alignment
 
 The adopted campaign entry point uses **1785 seconds plus 15 seconds kill grace**
-after F-004's fix in `9396232`. The supplemental
-[`worker-proof-evidence.sh`](../../scripts/worker-proof-evidence.sh) still uses
-**1500 seconds plus 15 seconds kill grace**; the ledger's WIP-15 entry also retains
-the earlier 1500-second bound. Thus the helper can time out before the adopted
-campaign does. Use the adopted `runtime-test` route below to reproduce its budget.
+after F-004's fix in `9396232`. This remediation aligns the supplemental
+[`worker-proof-evidence.sh`](../../scripts/worker-proof-evidence.sh) with that
+same guard and corrects the ledger's earlier 1500-second bound. The ledger also
+records F-004's deadline change, F-005's corrected cold-evidence run and the
+accepted replacement below.
 
-F-006 remains deferred to WIP-16's next packet renewal, as the review recommends.
-Both the helper and ledger are packet-bound. At that renewal, align the helper
-with the 1785-second campaign guard and update the ledger with the F-004 deadline,
-the F-005 cold-evidence correction (run
-`e73756a8-8e69-4f9a-acb7-ba3074a3dbba`), and the accepted replacement recorded
-below. These source edits require fresh exact-packet acceptance before live
-verification, including when made before the present receipt expires.
+These packet-bound edits join the atomic-observation campaign repair described
+in [WIP-15](WIP-15.md#campaign-follow-up-atomic-worker-observations). Fresh
+exact-packet acceptance is required before live verification, including when
+made before the present receipt expires. The source-bound build and non-live
+checks can validate the candidate in advance of that decision.
 
 ## F-004/F-005 replacement acceptance
 
@@ -50,7 +48,8 @@ through **2026-11-11T00:00:00Z** in the startup guidance for run
 [evaluation limits](../../conformance/wi-fabric-2/worker/evaluation-request.md).
 The source-bound non-live build and nine non-live adopted checks had passed on
 `9396232` in run `9bc6c5ba-dd7e-413c-b11b-6f528d8bd96c`. All 315 bound files
-still match the accepted packet. The separate receipt and trusted host anchor
+matched the accepted packet at that acceptance. The current candidate's
+changed source requires renewal. The separate receipt and trusted host anchor
 record this actual replacement acceptance; the earlier results below remain
 historical. The committed-head results for this acceptance are recorded in that
 run's `scratch/verification/adopted-checks.json` and `wip-15-status.json`, with

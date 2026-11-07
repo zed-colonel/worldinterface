@@ -738,6 +738,11 @@
           "manifest": "crates/worldinterface-runtime/Cargo.toml",
           "package": "worldinterface-runtime",
           "test": "wp_025_real_worker_events_preserve_aq_deadline_cancel_and_restart_winners"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-storage",
+          "test": "concurrent_worker_observations_allocate_revisions_with_operation_acknowledgement"
         }
       ]
     },
