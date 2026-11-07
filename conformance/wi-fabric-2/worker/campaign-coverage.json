@@ -136,6 +136,26 @@
         "manifest": "tools/wi-contract-check/Cargo.toml",
         "package": "wi-contract-check",
         "test": "wp_034_handoff_rejects_substituted_pins_missing_evidence_and_semantic_completion"
+      },
+      {
+        "manifest": "tools/wi-contract-check/Cargo.toml",
+        "package": "wi-contract-check",
+        "test": "wp_034_publication_rejects_registry_gate_mapping_and_claim_drift"
+      },
+      {
+        "manifest": "tools/wi-contract-check/Cargo.toml",
+        "package": "wi-contract-check",
+        "test": "wp_034_publication_rejects_stale_profile_fixture_lock_and_recipe_pins"
+      },
+      {
+        "manifest": "tools/wi-contract-check/Cargo.toml",
+        "package": "wi-contract-check",
+        "test": "wp_034_publication_requires_complete_gate_state_and_valid_descriptor"
+      },
+      {
+        "manifest": "tools/wi-contract-check/Cargo.toml",
+        "package": "wi-contract-check",
+        "test": "wp_034_publication_binds_external_evidence_and_never_grants_reviewed_closure"
       }
     ],
     "WP-031": [

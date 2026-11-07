@@ -2,6 +2,7 @@
 pub mod catalog;
 pub mod contracts;
 pub mod evidence;
+pub mod handoff;
 pub mod inventory;
 pub mod policy;
 pub mod proof;

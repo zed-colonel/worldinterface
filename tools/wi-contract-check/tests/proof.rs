@@ -62,9 +62,12 @@ fn baseline_records_have_precise_g1_coverage_and_no_source_result_claims() {
         "WI-EMBEDDED-CORE-1",
     ]);
     assert!(baseline.is_subset(&closed));
-    // WIP-10 may close G3 after approved live checks/review without changing executable bindings.
-    let allowed = baseline.into_iter().chain(["WI-WORKER-G3"]).collect::<BTreeSet<_>>();
-    assert!(closed.is_subset(&allowed));
+    // WIP-16 publishes all ten gates, effective only on reviewed merge with adopted checks.
+    let allowed = baseline
+        .into_iter()
+        .chain(["WI-WORKER-G3", "WI-WORKER-G4", "WI-EMBEDDED-WORKER-PROOF-1"])
+        .collect::<BTreeSet<_>>();
+    assert_eq!(closed, allowed);
     assert_eq!(r.cases.iter().find(|c| c.id == "WP-002").unwrap().tests.len(), 3);
     assert_eq!(
         r.cases

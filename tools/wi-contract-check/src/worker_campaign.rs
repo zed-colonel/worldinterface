@@ -66,6 +66,11 @@ fn pins(root: &Path) -> Result<Value> {
         let path = format!("conformance/wi-fabric-2/proof/gates/{}.json", gate.id);
         sources.insert(path.clone(), digest_file(root, &path)?);
     }
+    for path in [crate::handoff::DESCRIPTOR, crate::handoff::DOCUMENT] {
+        if root.join(path).exists() {
+            sources.insert(path.to_string(), digest_file(root, path)?);
+        }
+    }
     let lock = read(&root.join(LOCKS[1]))?;
     let target = read(&root.join("contracts/aq-integration-target.json"))?;
     let mut aq = BTreeMap::new();
@@ -147,19 +152,41 @@ pub fn exact_pass(success: bool, log: &str) -> bool {
 fn gate_states(root: &Path) -> Result<Value> {
     Ok(proof::load(root)?.1.iter().map(|g| (g.id.clone(), json!(g.status))).collect())
 }
-fn validate_gates(gates: &Value) -> Result<()> {
+pub fn validate_gates(root: &Path, gates: &Value) -> Result<()> {
     let object = gates.as_object().ok_or("missing gate states")?;
-    if object.len() != 10
+    let final_state =
+        gates["WI-WORKER-G4"] == "closed" && gates["WI-EMBEDDED-WORKER-PROOF-1"] == "closed";
+    let expected = [
+        "WI-AQ-G1",
+        "WI-AQ-G2",
+        "WI-AQ-G3",
+        "WI-AQ-G4",
+        "WI-WORKER-G1",
+        "WI-WORKER-G2",
+        "WI-WORKER-G3",
+        "WI-WORKER-G4",
+        "WI-EMBEDDED-CORE-1",
+        "WI-EMBEDDED-WORKER-PROOF-1",
+    ];
+    if object.keys().map(String::as_str).collect::<BTreeSet<_>>() != expected.into()
         || object.iter().any(|(id, status)| {
             *status
-                != if ["WI-WORKER-G4", "WI-EMBEDDED-WORKER-PROOF-1"].contains(&id.as_str()) {
+                != if !final_state
+                    && ["WI-WORKER-G4", "WI-EMBEDDED-WORKER-PROOF-1"].contains(&id.as_str())
+                {
                     "open"
                 } else {
                     "closed"
                 }
         })
     {
-        return Err("WIP-15 requires eight closed gates with G4 and target open".into());
+        return Err(
+            "campaign requires eight closed/two open or ten closed gates; mixed states rejected"
+                .into(),
+        );
+    }
+    if final_state {
+        crate::handoff::validate(root, &read(&root.join(crate::handoff::DESCRIPTOR))?)?;
     }
     Ok(())
 }
@@ -215,10 +242,18 @@ fn approval(root: &Path) -> Result<Value> {
         }
     }
     let receipt = read(&root.join(APPROVAL))?;
+    let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH)?.as_millis();
+    validate_approval(&receipt, &packet, now)?;
+    Ok(receipt)
+}
+pub fn validate_approval(receipt: &Value, packet: &Value, now: u128) -> Result<()> {
     if receipt["manifest"] != hash(serde_json::to_vec(&packet)?) {
         return Err("renewed operator acceptance of the concrete evaluation packet required".into());
     }
-    Ok(receipt)
+    if receipt["expires_unix_ms"].as_u64().is_none_or(|expiry| u128::from(expiry) <= now) {
+        return Err("evaluation approval expired; renewed exact-packet acceptance required".into());
+    }
+    Ok(())
 }
 fn outside(root: &Path, directory: &Path) -> Result<PathBuf> {
     let path = directory.canonicalize()?;
@@ -267,7 +302,7 @@ pub fn run(root: &Path, directory: &Path) -> Result<()> {
     validate_generation(&before, &before)?;
     let acceptance = approval(root)?;
     let gates = gate_states(root)?;
-    validate_gates(&gates)?;
+    validate_gates(root, &gates)?;
     let (registry, gate_records) = proof::load(root)?;
     let discovery_started = Instant::now();
     let harnesses = discover(root)?;
@@ -327,6 +362,16 @@ pub fn run(root: &Path, directory: &Path) -> Result<()> {
     // The complete receipt is validated above; compare persisted candidate bytes
     // without redoing discovery or executable measurement.
     validate_contract(&read(&directory.join("handoff-candidate.json"))?, &handoff)?;
+    if root.join(crate::handoff::DESCRIPTOR).exists() {
+        let publication = crate::handoff::publication(root, &receipt, &directory)?;
+        fs::write(directory.join("handoff.json"), serde_json::to_vec_pretty(&publication)?)?;
+        crate::handoff::validate_publication(
+            root,
+            &read(&directory.join("handoff.json"))?,
+            &receipt,
+            &directory,
+        )?;
+    }
     let timing = json!({"discovery_build_and_listing_seconds":discovery_seconds,
         "registered_campaign_seconds":execution_seconds,"rest_of_runtime_suite_seconds":remainder_seconds,
         "receipt_validation_seconds":validation_started.elapsed().as_secs_f64(),
@@ -478,7 +523,7 @@ pub fn limitations() -> Value {
         "no independent VM or hostile-code qualification",
         "seam simulation only; no remote provider qualification",
         "worker exit and WI receipt do not establish consumer task acceptance",
-        "G4 and target closure retained by WIP-16"
+        "reviewed milestone closure is effective only on reviewed merge with adopted checks; execution grants no closure"
     ])
 }
 fn keys(value: &Value, expected: &[&str]) -> Result<()> {
@@ -530,7 +575,7 @@ fn validate_receipt_with_harnesses(
         return Err("stale campaign source/build pins".into());
     }
     validate_claims(&receipt["claims"])?;
-    validate_gates(&receipt["gates"])?;
+    validate_gates(root, &receipt["gates"])?;
     if receipt["gates"] != gate_states(root)?
         || receipt["limitations"] != limitations()
         || receipt["evaluation_approval"] != approval(root)?

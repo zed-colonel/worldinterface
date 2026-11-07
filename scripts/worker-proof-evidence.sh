@@ -11,3 +11,6 @@ else
 fi
 timeout --kill-after=15s 1785s cargo run --locked --offline \
   --manifest-path tools/wi-contract-check/Cargo.toml -- campaign run "$campaign_output"
+timeout --kill-after=15s 600s cargo run --locked --offline \
+  --manifest-path tools/wi-contract-check/Cargo.toml -- handoff verify "$campaign_output"
+printf 'Verified execution handoff: %s/handoff.json\n' "$campaign_output"

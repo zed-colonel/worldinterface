@@ -6,7 +6,20 @@ WorldInterface is the tool and workflow boundary fabric built on ActionQueue. It
 compiles FlowSpecs into durable workflows and exposes connectors, daemon APIs,
 and embedded host surfaces.
 
-## Repository Structure
+## Active implementation
+
+- `crates/worldinterface-foundation/Cargo.toml`: independent AQ-free workspace.
+- `crates/worldinterface-runtime/Cargo.toml`: embedded runtime on crates.io AQ 0.3.0.
+- `tools/wi-contract-check/Cargo.toml`: independent contract/publication tooling.
+- Evidence and consumer entry point: [WI-EMBEDDED-WORKER-PROOF-1](docs/evidence/WI-EMBEDDED-WORKER-PROOF-1.md).
+  `handoff check` validates the committed descriptor; `handoff verify DIRECTORY`
+  validates fresh external campaign evidence on the unchanged committed head.
+  Reviewed closure is effective only on reviewed merge with adopted checks.
+- After packet-bound changes, prepare and non-live validate exact bytes, then
+  obtain actual operator acceptance with expiry at most seven days later before
+  live tests. Expired or changed approval fails closed, including after merge.
+
+## Historical repository structure
 
 - `crates/worldinterface-core`: FlowSpec model, receipts, identity types
 - `crates/worldinterface-flowspec`: parsing, validation, compilation to AQ DAGs

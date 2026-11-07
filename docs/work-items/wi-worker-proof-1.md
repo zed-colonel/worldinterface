@@ -341,3 +341,22 @@ with a WP-025 concurrent-write, rollback and rebuild regression. This repair and
 F-006's helper/ledger corrections require a replacement packet and fresh operator
 acceptance before live verification. No new passing campaign or gate closure is
 claimed for these changed bytes until those steps complete.
+
+## WIP-16 publication candidate
+
+WIP-16 publishes the [embedded proof evidence and consumer guide](../evidence/WI-EMBEDDED-WORKER-PROOF-1.md)
+and `proof/handoff.json`, with all gate/case/exact-test mappings and source,
+lockfile, AQ, profile and fixture/recipe identities. G4 and the target are prepared
+as closed, effective only on reviewed merge with adopted checks. The campaign
+retains nonsemantic producer completion and explicitly grants no reviewed closure.
+WP-034 remains owned by WIP-15 and adds publication consistency regressions.
+See [WIP-16](WIP-16.md) for interfaces and retained acceptance/verification work.
+
+The runtime remains crates.io AQ 0.3.0; historical 0.2.0 baseline identities remain
+separate. This proof supplies no ordinary-use, consumer/parent acceptance, G5,
+release, remote or isolation claim. The two supported target workspaces are
+foundation and runtime; legacy root surfaces remain historical. WIP-15 results
+are historical evidence only. Changed WIP-16 packet bytes require fresh finite
+operator acceptance after source-bound non-live validation, then all ten adopted
+committed-head checks and fresh external campaign evidence. After the accepted
+expiry live verification fails closed on both candidate and merged heads.

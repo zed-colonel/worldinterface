@@ -75,7 +75,7 @@
     "WP-034"
   ],
   "closing_item": "WIP-16",
-  "status": "open",
+  "status": "closed",
   "effective_on": "reviewed-merge-with-adopted-checks",
   "historical_evidence": [],
   "requirement_bindings": [

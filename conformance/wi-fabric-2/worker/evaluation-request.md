@@ -1,3 +1,29 @@
+# WIP-16 publication exact-packet evaluation request
+
+This candidate adds the evidence/consumer guide, pinned handoff descriptor,
+registry/gate consistency checks, external execution handoff verification and
+four WP-034 publication regressions. G4 and the target records are prepared for
+reviewed closure, effective only on reviewed merge with adopted checks. Campaign
+completion grants no milestone closure or consumer acceptance. Runtime AQ remains
+crates.io 0.3.0; historical 0.2.0 identities are published separately.
+
+Accept only the canonical digest printed by `scripts/refresh-wi-worker-evaluation.py`
+after the source-bound non-live build and applicable non-live checks pass. Proposed
+finite expiry is **2026-11-11T00:00:00Z**, subject to the actual operator decision
+and the seven-day maximum from acceptance. Scope is unchanged: reviewed typed
+nonsensitive fixtures, the same cases and six operations, at most 15000 ms wall
+time and 65536 retained output bytes; no ordinary use, production credentials,
+hostile code, publication, integration or gate acceptance is authorized by this
+request. Supervisor source and environment limits are unchanged.
+
+The separate approval receipt and trusted host anchor retain the actual WIP-15
+decision until explicit acceptance of these changed bytes. Live verification and
+the adopted runtime test must await that decision and run on its committed head.
+Changed packet bytes or an expired receipt fail closed, including after merge.
+Historical candidates and their execution evidence do not establish WIP-16 passage.
+
+## Historical predecessor requests
+
 # WIP-15 atomic-observation and F-006/F-007 remediation request
 
 The campaign on `de25ec2` and the isolated embedded cancellation/output-bound
