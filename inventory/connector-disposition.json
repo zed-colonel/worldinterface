@@ -1294,7 +1294,7 @@
         },
         {
           "path": "docs/work-items/WIP-15.md",
-          "source_sha256": "a7949687136476d5fe9f0038b4f3e63ea582571a5eaf4f126eb43d2c0eceaaec",
+          "source_sha256": "a09fb51a98021f89e2c6660734f038f8d127d28cce1b1310a709687d2c1aa79c",
           "treatment": "Preserve WIP-15 seam simulation timing evidence when reviewing legacy delay deletion; no legacy connector is composed or removed here."
         },
         {
@@ -7671,7 +7671,7 @@
         },
         {
           "id": "crates/worldinterface-runtime/tests/worker_campaign.rs::::source-module:crates/worldinterface-runtime/tests/worker_campaign.rs",
-          "source_sha256": "f0c60b22645cf878320b0b079893c29f731496b4f6069bea675eaead08058797",
+          "source_sha256": "2ce9697f01ac3d32ad75ed7df622fb97404fa8282d76715a01d3e1c3041b46de",
           "registration_sites": []
         },
         {
@@ -9138,7 +9138,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/tests/worker_campaign.rs",
-          "source_sha256": "f0c60b22645cf878320b0b079893c29f731496b4f6069bea675eaead08058797",
+          "source_sha256": "2ce9697f01ac3d32ad75ed7df622fb97404fa8282d76715a01d3e1c3041b46de",
           "treatment": "Retain WIP-15 campaign infrastructure and executable producer evidence; no legacy removal or replacement qualification is asserted."
         },
         {

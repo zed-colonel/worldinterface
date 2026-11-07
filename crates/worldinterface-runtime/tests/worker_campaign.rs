@@ -18,10 +18,13 @@ fn wi_owned_worker_acceptance_campaign() {
     // Persist evidence for review even on failure.
     let path = directory.keep();
     let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    // Match the adopted check's 1800s ceiling, including our 15s kill grace.
+    // Its outer deadline also includes the initial Cargo build and therefore
+    // normally binds first. Do not impose the former extra 300s reservation.
     let status = std::process::Command::new("timeout")
         .args([
             "--kill-after=15s",
-            "1500s",
+            "1785s",
             "cargo",
             "run",
             "--locked",

@@ -3,7 +3,9 @@
 This is the execution addendum to [WIP-15](WIP-15.md). The packet-bound item
 note and ledger preserve the request and earlier evaluation history. This
 addendum records the subsequent operator acceptance and measured cold result
-without changing the accepted packet's source bytes.
+without changing that accepted packet's source bytes at the time. The later
+F-004/F-005 remediation in the item note replaces the packet-bound timeout and
+corrects its evidence pointer; the measurements below remain historical.
 
 On 2026-11-06 the operator accepted evaluation-only packet
 `289f6efacf3378ba4e955e2164d6ea0f3bc80f8e1b76b07293d3bef6d1cd07d6`
@@ -11,7 +13,7 @@ through **2026-11-11T00:00:00Z**, under the unchanged limits in
 [evaluation-request.md](../../conformance/wi-fabric-2/worker/evaluation-request.md).
 Run `e73756a8-8e69-4f9a-acb7-ba3074a3dbba` supplied that actual decision.
 Commit `555a8b09478ed96c0d16c1d8c2ed971c8ee48e44` records it in the separate
-approval receipt and trusted anchor. All 315 packet-bound files still match.
+approval receipt and trusted anchor. All 315 packet-bound files matched then.
 No ordinary use, publication, integration or gate closure is authorized.
 
 ## Cold timing and F-001
@@ -42,7 +44,7 @@ The campaign discovered once, passed **224/224 registered tests**, retained and
 passed **146/146 additional runtime tests**, and passed **55/55 cases**. Cargo's
 four compile-fail doctests also passed. Receipt generation validated the unchanged
 clean generation, exact logs and executable pins without another discovery.
-The 1500-second campaign timeout plus 15-second kill grace fits within the
+The then-1500-second campaign timeout plus 15-second kill grace fit within the
 adopted check's unchanged 1800-second limit. This provides cold evidence for
 F-001's cost remediation; it does not replace the declared adopted checks.
 
@@ -80,11 +82,13 @@ timeout --kill-after=20s 1800s env PROPTEST_DISABLE_FAILURE_PERSISTENCE=1 \
   cargo test --locked --offline --manifest-path crates/worldinterface-runtime/Cargo.toml
 ```
 
-The durable external evidence is under this run's `scratch/verification/`:
+The external evidence is under run
+`e73756a8-8e69-4f9a-acb7-ba3074a3dbba`'s `scratch/verification/`:
 `cold-runtime-timing.json`, `cold-runtime-test.log`, and
 `wi-worker-campaign-5RtFqj/{timing.json,receipt.json,handoff-candidate.json}` plus
 individual logs and observations. `run-cold-runtime.py` records the invocation
 and timing. The final committed-head declared checks are recorded separately in
 `adopted-checks.json` and the ten named check logs. Each declared check is invoked
 with `ct-check --declared ID`; supplemental execution is not counted as adoption.
-Scratch execution artifacts are not committed source.
+Scratch execution artifacts may expire and are not committed source. The phase
+timings and receipt digest above preserve the measured result in the repository.

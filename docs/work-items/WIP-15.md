@@ -18,8 +18,9 @@ Two harness groups run concurrently. Harness bytes are measured before and after
 each group and once in receipt validation. The same compiled listings serve
 execution and validation; independent receipt checks perform fresh discovery.
 Zero-test, ignored, missing, ambiguous and unsuccessful results fail. Discovery
-never asserts passage. The campaign subprocess has a 1500-second timeout plus a
-15-second kill grace within the unchanged 1800-second adopted check budget.
+never asserts passage. The campaign subprocess has a 1785-second timeout plus a
+15-second kill grace. The unchanged 1800-second adopted check budget covers the
+complete command, including the initial Cargo build; it normally binds first.
 Authoritative scope coverage and definition-review evidence remain separate.
 
 The embedded composition now accepts a trusted, evaluation-only seam installation
@@ -134,16 +135,35 @@ Cold verification uses this worktree's supplied `CARGO_TARGET_DIR` after
 `cargo clean`, without a competing campaign. A run records discovery/build/listing,
 registered campaign, remainder suite and validation wall times in the external
 campaign directory's `timing.json`; the enclosing log records Cargo's initial
-build time and the unchanged 1800-second limit. The durable record for this
-remediation is run `24df84b8-18b0-4165-81d4-f67f66bbd251`,
+build time and the unchanged 1800-second limit. The external cold record for this
+remediation is run `e73756a8-8e69-4f9a-acb7-ba3074a3dbba`,
 `scratch/verification/cold-runtime-timing.json`, with the full log at
-`scratch/verification/cold-runtime-test.log`. This record must show measured
-build, campaign and rest-of-suite durations and headroom before F-001 is claimed
-verified. No cold live result is asserted by the source changes alone.
+`scratch/verification/cold-runtime-test.log`. The measured command passed in
+1349.90 seconds on `555a8b0`, leaving 450.10 seconds under the adopted limit.
+[WIP-15-verification.md](WIP-15-verification.md) preserves the phase timings and
+receipt digest in source; external scratch artifacts may expire.
 
-The replaced packet needs renewed exact acceptance after its source-bound
-non-live build. The actual receipt and trusted anchor retain the historical
-`4dcbe731…` acceptance until an operator accepts the concrete replacement.
-Positive evaluation and adopted runtime-test must use that accepted replacement;
-non-live checks may run beforehand. WIP-16 retains final handoff publication
-and G4/target closure. Scratch evidence is not committed source.
+The operator subsequently accepted replacement packet `289f6efa…1cd07d6` in
+run `e73756a8-8e69-4f9a-acb7-ba3074a3dbba`; the verification addendum records
+that decision, the cold campaign and the committed-head adopted checks.
+
+## Review remediation F-004 and F-005
+
+F-004 raises only the campaign subprocess timeout from 1500 to 1785 seconds,
+retaining its 15-second kill grace. The full command remains subject to the
+unchanged 1800-second adopted check limit. This removes 285 seconds of earlier
+inner cutoff: the reviewed 1348-second inner run would have 437 seconds of
+inner headroom instead of 152, while its full-command headroom stays unchanged.
+This is deadline alignment, not a reduction in test cost or a larger check
+budget. WIP-16 must remeasure the adopted check when it adds tests.
+
+F-005 corrects the cold-run pointer above and names the producing run explicitly
+in the verification addendum. The recorded cold measurements are unchanged.
+
+These packet-bound changes require renewed exact acceptance after the
+source-bound non-live build. The actual receipt and trusted anchor retain only
+the historical `289f6efa…` acceptance until the operator accepts the concrete
+replacement. Positive evaluation and adopted runtime-test must use that
+accepted replacement; non-live checks may run beforehand. WIP-16 retains final
+handoff publication and G4/target closure. Scratch evidence is not committed
+source.

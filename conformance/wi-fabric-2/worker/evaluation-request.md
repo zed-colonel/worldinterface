@@ -1,3 +1,32 @@
+# WIP-15 F-004/F-005 campaign deadline and evidence remediation
+
+Packet `289f6efacf3378ba4e955e2164d6ea0f3bc80f8e1b76b07293d3bef6d1cd07d6`
+was accepted in run `e73756a8-8e69-4f9a-acb7-ba3074a3dbba` through
+2026-11-11T00:00:00Z. Its cold runtime command passed in 1349.90 seconds; all
+adopted checks passed on `6f7e73d`. Review found the inner 1500-second guard
+could still expire before the unchanged 1800-second adopted check budget.
+
+This remediation raises only that guard to 1785 seconds plus the existing
+15-second kill grace. The adopted check retains its 1800-second ceiling for
+the complete command, including its initial build. This removes the earlier
+inner cutoff without changing test ownership, discovery, parallelism, per-test
+limits, provider or supervisor source, fixture tasks, operations or evaluation
+limits. The item note and verification addendum also correct the cold-evidence
+run identifier. Historical measured results are retained, not asserted for
+these changed bytes.
+
+Request acceptance only of the exact canonical digest printed by
+`scripts/refresh-wi-worker-evaluation.py`, after the complete source-bound
+non-live build succeeds. Requested expiry remains **2026-11-11T00:00:00Z**.
+Limits remain six operations, reviewed nonsensitive fixtures, 15000 ms wall time
+and 65536 retained output bytes. No ordinary use, production credentials,
+hostile code, publication, integration or gate closure is requested. G4 and
+target closure remain with WIP-16. The separate receipt and trusted anchor
+retain only the actual historical acceptance. They do not authorize changed
+packet bytes; tests cannot create or retarget that acceptance.
+
+## Historical campaign cost remediation request
+
 # WIP-15 F-001/F-002/F-003 campaign cost remediation
 
 Packet `4dcbe731183fb3f5e461ecaf52101f0b40a12187e136e019891c4423d7f973ae`
