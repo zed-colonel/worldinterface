@@ -62,7 +62,7 @@
     "conformance/wi-fabric-2/worker/evaluation-environment.json": "fbfff149065d63a819755e602a4fa692cd8be91f7ae97a578bd04aaefd6268b3",
     "conformance/wi-fabric-2/worker/evaluation-request.md": "d700ec1ec5dc988cb28ddcb445e877a08f9e139b31f8d825dce31bcd88dc6001",
     "conformance/wi-fabric-2/worker/handoff-contract.json": "ee7367a45a4533f1d726af2dec88c7e467b1590f64dece76e34e999d8704f52b",
-    "conformance/wi-fabric-2/worker/lifecycle-coverage.json": "cd53dbdfd500e959bb4a2cf7effae271bcc2fbd526995fa2c0e4561bf9044e44",
+    "conformance/wi-fabric-2/worker/lifecycle-coverage.json": "797881ec5ac665398c0fe03d64622449e5a65eb32aab13fa892927cade6b6524",
     "conformance/wi-fabric-2/worker/process-adapter-coverage.json": "53a856223259a7952f96d42f20cb15a36985be03917bdef59ab9bd65b27d9ddb",
     "conformance/wi-fabric-2/worker/supervisor-disposition.json": "e0e66f2e0381294e8eb8c6cb8d74708bd31eb55b6ad359b9cff5c4159dab09e1",
     "conformance/wi-fabric-2/worker/vectors.json": "ee8482035f116d7f1ac59bb90d2406efd94e7820a019808e4170a0266a32a774",
