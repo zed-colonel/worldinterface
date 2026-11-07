@@ -1,5 +1,25 @@
 # WIP-15 accepted remediation verification
 
+## F-004/F-005 replacement acceptance
+
+The operator accepted evaluation-only packet
+`b24ac0e082751f2f0711bf5a07c6ef69f0b8c2cf5115d9c4241a3c389cf9a6a7`
+through **2026-11-11T00:00:00Z** in the startup guidance for run
+`782e12b7-d455-4025-9daa-93c120543783` (2026-11-07 UTC), under the unchanged
+[evaluation limits](../../conformance/wi-fabric-2/worker/evaluation-request.md).
+The source-bound non-live build and nine non-live adopted checks had passed on
+`9396232` in run `9bc6c5ba-dd7e-413c-b11b-6f528d8bd96c`. All 315 bound files
+still match the accepted packet. The separate receipt and trusted host anchor
+record this actual replacement acceptance; the earlier results below remain
+historical. The committed-head results for this acceptance are recorded in that
+run's `scratch/verification/adopted-checks.json` and `wip-15-status.json`, with
+per-check logs and the runtime campaign's receipt, handoff candidate and timing
+breakdown. Those execution records must identify the same unchanged generation
+and report passage before the replacement's exit gate is met. G4 and target
+closure remain with WIP-16.
+
+## Historical cost-remediation acceptance
+
 This is the execution addendum to [WIP-15](WIP-15.md). The packet-bound item
 note and ledger preserve the request and earlier evaluation history. This
 addendum records the subsequent operator acceptance and measured cold result

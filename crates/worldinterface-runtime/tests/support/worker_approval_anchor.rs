@@ -1,9 +1,9 @@
 //! Trusted test-host provisioning, separate from the source packet it approves.
 //! Acceptance and cold-run evidence: docs/work-items/WIP-15-verification.md.
 //! Actual operator guidance supplied at startup of CraftingTable run
-//! e73756a8-8e69-4f9a-acb7-ba3074a3dbba on 2026-11-06 (UTC):
+//! 782e12b7-d455-4025-9daa-93c120543783 on 2026-11-07 (UTC):
 //! "I accept the evaluation-only packet
-//! 289f6efacf3378ba4e955e2164d6ea0f3bc80f8e1b76b07293d3bef6d1cd07d6
+//! b24ac0e082751f2f0711bf5a07c6ef69f0b8c2cf5115d9c4241a3c389cf9a6a7
 //! through 2026-11-11T00:00:00Z, under the unchanged limits in the
 //! evaluation request."
 //! The receipt identifies that supplied guidance, not a controller-issued
@@ -11,7 +11,7 @@
 //! ends at the explicitly accepted 2026-11-11T00:00:00Z.
 //!
 //! Accepted canonical packet:
-//! 289f6efacf3378ba4e955e2164d6ea0f3bc80f8e1b76b07293d3bef6d1cd07d6.
+//! b24ac0e082751f2f0711bf5a07c6ef69f0b8c2cf5115d9c4241a3c389cf9a6a7.
 //! Includes supervisor-disposition.json's exact worker_process/mod.rs pin
 //! f6e7aaa9abc4b98a8f91f9b090920dc7a9e329a33d58c14378f7d9361dcf35af.
 //! The original five-file exception and generic continuation ban are unchanged.
@@ -24,4 +24,4 @@
 //! hostile code, same-user isolation claim, publication, integration or gate
 //! acceptance. These records encode only that supplied acceptance.
 pub const ACCEPTED_RECEIPT_SHA256: Option<&str> =
-    Some("724079959e072d7290db6665601efd7bf621519fd70e3b5de629ae756bee6f35");
+    Some("5d90d7a04cea82bddaa0e19938ac9a94e8a5ef9d605bd1f3fdf3c9ddea3b55a7");
