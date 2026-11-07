@@ -1,5 +1,25 @@
 # WIP-15 accepted remediation verification
 
+## Atomic-observation and F-006/F-007 replacement acceptance
+
+The operator accepted evaluation-only packet
+`87f72bf1a2475d82e5c21955920234fddd77bb51f364abd29ddcad2c8d633ad9`
+on `a659443` through **2026-11-11T00:00Z**, under unchanged evaluation limits,
+in the startup guidance for run `0d74d481-bb67-4da0-9ac8-2494520c0cd5`
+(2026-11-07 UTC). All 315 bound files match that exact packet. The separate
+operator receipt and trusted host anchor now record this actual decision.
+The source-bound build and nine non-live adopted checks passed on `a659443`
+in run `193ac5e8-b8bb-481b-ac68-44f8a7ef58c0`; live verification of the
+atomic-observation repair remains due on the newly committed acceptance.
+
+This acceptance covers the atomic revision repair and supporting WP-025
+regression, F-006's timeout alignment, and F-007's documented expiry consequence.
+It does not extend the expiry or authorize ordinary use, publication, integration
+or gate closure. WIP-16 retains consumer guidance, final handoff publication and
+G4/target closure. The current run's `scratch/verification/` holds the ten
+committed-head declared-check logs, results and campaign artifacts; passage must
+be established by those execution records on the same unchanged generation.
+
 ## F-007: verification deadline and WIP-16 renewal
 
 The current [operator receipt](../../conformance/wi-fabric-2/worker/evaluation-approval.json)
