@@ -1,5 +1,46 @@
 # WIP-15 accepted remediation verification
 
+## F-007: verification deadline and WIP-16 renewal
+
+The current [operator receipt](../../conformance/wi-fabric-2/worker/evaluation-approval.json)
+expires at **2026-11-11T00:00:00Z** (`expires_unix_ms = 1794355200000`).
+The live fixture host uses `SystemClock` wall time. At that instant and afterward,
+the evaluation verifier rejects this receipt: the positive live cases fail and
+the adopted `runtime-test` fails closed on any commit carrying it, including
+`wi-worker-proof-1` after integration. An earlier passing campaign does not
+authorize later execution after expiry.
+
+Complete integration and post-merge `runtime-test` verification before that
+deadline. If verification takes place at or after expiry, obtain renewed operator
+acceptance before live execution. WIP-16 must prepare and non-live validate its
+changed exact-source packet, obtain fresh acceptance with a finite expiry, record
+the actual decision in the receipt and trusted anchor, and rerun every adopted
+check on its committed head. Carry this deadline and fail-closed consequence into
+WIP-16's consumer evidence and handoff instructions. No test-clock substitution
+or extension of the existing acceptance is part of this documentation fix.
+
+This addendum is outside the accepted packet. It records the operational
+consequence for the [WIP-15 note](WIP-15.md) and
+[active ledger](wi-worker-proof-1.md#wip-15-campaign-candidate), whose packet-bound
+bytes remain those accepted by the operator.
+
+## F-006: retained timeout alignment for WIP-16
+
+The adopted campaign entry point uses **1785 seconds plus 15 seconds kill grace**
+after F-004's fix in `9396232`. The supplemental
+[`worker-proof-evidence.sh`](../../scripts/worker-proof-evidence.sh) still uses
+**1500 seconds plus 15 seconds kill grace**; the ledger's WIP-15 entry also retains
+the earlier 1500-second bound. Thus the helper can time out before the adopted
+campaign does. Use the adopted `runtime-test` route below to reproduce its budget.
+
+F-006 remains deferred to WIP-16's next packet renewal, as the review recommends.
+Both the helper and ledger are packet-bound. At that renewal, align the helper
+with the 1785-second campaign guard and update the ledger with the F-004 deadline,
+the F-005 cold-evidence correction (run
+`e73756a8-8e69-4f9a-acb7-ba3074a3dbba`), and the accepted replacement recorded
+below. These source edits require fresh exact-packet acceptance before live
+verification, including when made before the present receipt expires.
+
 ## F-004/F-005 replacement acceptance
 
 The operator accepted evaluation-only packet
