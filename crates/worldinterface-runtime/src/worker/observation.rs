@@ -71,20 +71,5 @@ pub fn commit(
         return Ok(id);
     }
     let artifact = root.publish(binding.tenant.clone(), &bytes)?;
-    let event = DurableEvent::new(
-        route,
-        source,
-        current.revision + 1,
-        observation.digest.clone(),
-        Some(artifact),
-    )?;
-    let id = event.id.clone();
-    root.record_worker_observation(
-        binding.tenant.clone(),
-        binding.provider.clone(),
-        binding.run.clone(),
-        observation,
-        event,
-    )?;
-    Ok(id)
+    root.commit_worker_observation(binding, observation, route, artifact)
 }

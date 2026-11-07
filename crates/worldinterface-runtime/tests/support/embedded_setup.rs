@@ -139,17 +139,45 @@ impl Setup {
         Self::live_case(coding, "WP-029")
     }
     pub fn live_case(coding: bool, case: &str) -> Self {
+        Self::compose(coding, case, false, None)
+    }
+    pub fn seam() -> Self {
+        Self::compose(false, "WP-031", true, None)
+    }
+    pub fn bounded(cancellation: bool) -> Self {
+        Self::compose(
+            false,
+            if cancellation { "WP-018" } else { "WP-019" },
+            false,
+            Some(if cancellation {
+                Task::Sleep { millis: 5000 }
+            } else {
+                Task::Flood { bytes: 1048576 }
+            }),
+        )
+    }
+    fn compose(coding: bool, case: &str, seam: bool, task: Option<Task>) -> Self {
         let temp = std::env::var_os("WI_EMBEDDED_CRASH_PARENT")
             .map(|p| tempfile::tempdir_in(p).unwrap())
             .unwrap_or_else(|| tempfile::tempdir().unwrap());
+        let bounded = task.is_some();
         let mut h = Harness::at(
             temp,
-            if coding { Task::Coding } else { Task::Transform { xor: 7 } },
+            task.unwrap_or(if coding { Task::Coding } else { Task::Transform { xor: 7 } }),
             case,
             1500,
             65536,
         );
-        let expected: Vec<(&str, &str, Vec<u8>)> = if coding {
+        let seam_provider = if seam {
+            let (replacement, provider) = h.with_seam();
+            h = replacement;
+            Some(provider)
+        } else {
+            None
+        };
+        let expected: Vec<(&str, &str, Vec<u8>)> = if bounded {
+            vec![]
+        } else if coding {
             vec![("patch","change.patch",b"--- a/src/lib.rs\n+++ b/src/lib.rs\n@@ -10,10 +10,10 @@\n     Some((key.trim(), value.trim()))\n }\n \n-/// Calculate the averge of a slice of numbers.\n+/// Calculate the average of a slice of numbers.\n ///\n /// Returns 0.0 for an empty slice.\n-pub fn calculate_averge(numbers: &[f64]) -> f64 {\n+pub fn calculate_average(numbers: &[f64]) -> f64 {\n     if numbers.is_empty() {\n         return 0.0;\n     }\n".to_vec()),("report","report.json",b"{\"changed\":[\"src/lib.rs\"],\"task\":\"rename-average\",\"schema\":1}".to_vec())]
         } else {
             h.inputs = vec![h.bundle.wi().publish(h.auth.0.clone(), b"hello").unwrap()];
@@ -295,16 +323,29 @@ impl Setup {
         }
         let host = Host::install(
             bundle,
-            WorkerInstallation::Process {
-                scope: HostScope {
-                    tenant: auth.tenant.as_str().into(),
-                    principal: auth.principal.as_str().into(),
-                },
-                workspace: root.join("process"),
-                fixture: built.0,
-                helper: built.1,
-                evaluation: evaluation.clone(),
-                slots: 1,
+            if let Some(provider) = seam_provider {
+                WorkerInstallation::SeamSimulation {
+                    scope: HostScope {
+                        tenant: auth.tenant.as_str().into(),
+                        principal: auth.principal.as_str().into(),
+                    },
+                    provider,
+                    provenance: super::worker_fixture::seam::provenance(),
+                    evaluation: evaluation.clone(),
+                    slots: 1,
+                }
+            } else {
+                WorkerInstallation::Process {
+                    scope: HostScope {
+                        tenant: auth.tenant.as_str().into(),
+                        principal: auth.principal.as_str().into(),
+                    },
+                    workspace: root.join("process"),
+                    fixture: built.0,
+                    helper: built.1,
+                    evaluation: evaluation.clone(),
+                    slots: 1,
+                }
             },
             EmbeddedPorts {
                 authentication: auth.clone(),
@@ -348,6 +389,17 @@ impl Setup {
             .iter()
             .map(|o| cp::read_demand(&o.reference).unwrap())
             .collect::<BTreeSet<_>>();
+        let mut permissions = permissions;
+        for intent in root.effect_snapshot(&self.auth.tenant).unwrap().effects.keys() {
+            permissions.insert(
+                reconciliation_demand(&ObjectRef {
+                    scope: self.scope.clone(),
+                    kind: ObjectKind::Evidence,
+                    id: intent.as_str().to_string().try_into().unwrap(),
+                })
+                .unwrap(),
+            );
+        }
         let mut revisions = state
             .history
             .iter()
@@ -935,4 +987,45 @@ fn embedded_resolution_evidence_attests_each_operation_independently() {
         )
         .unwrap_err();
     assert_eq!(error.to_string(), "ambiguous embedded evidence");
+}
+
+/// Trusted evidence sink only. Consumer code cannot inspect build paths or write files.
+pub fn campaign_observation(name: &str, setup: &Setup, evidence: WorkerEvidence) {
+    let Some(base) = std::env::var_os("WI_WORKER_CAMPAIGN_EVIDENCE") else {
+        return;
+    };
+    let build = super::worker_fixture::build_evidence();
+    let value = serde_json::json!({"schema":1,"evidence":evidence,"build":build,"completed":true,
+        "capacity_reserved":false,"receipt_count":setup.receipts().len()});
+    let path = std::path::PathBuf::from(base).join(name);
+    let digest = publish_campaign_observation(&path, &value).unwrap();
+    println!("WI-WORKER-OBSERVATION {name} {}", digest.as_str());
+}
+
+/// Observation JSON preserves unavailable evidence as null. The domain codec's
+/// null prohibition applies to domain requests, not these measured observations.
+pub fn publish_campaign_observation(
+    path: &std::path::Path,
+    value: &serde_json::Value,
+) -> Result<ContentHash> {
+    use std::io::Write;
+    let bytes = serde_json::to_vec(value)?;
+    let mut file = std::fs::OpenOptions::new().write(true).create_new(true).open(path)?;
+    file.write_all(&bytes)?;
+    file.sync_all()?;
+    Ok(ContentHash::of(&bytes))
+}
+
+/// Trusted filesystem assertions, kept outside the consumer entry point.
+pub fn assert_unknown_observation_publication() {
+    let directory = tempfile::tempdir().unwrap();
+    let path = directory.path().join("seam.json");
+    let value = serde_json::json!({"evidence":{"seam_simulation":true,"controls":null}});
+    let digest = publish_campaign_observation(&path, &value).unwrap();
+    let bytes = std::fs::read(&path).unwrap();
+    assert_eq!(serde_json::from_slice::<serde_json::Value>(&bytes).unwrap(), value);
+    assert_eq!(worldinterface_protocol::ContentHash::of(&bytes), digest);
+    let inflated = serde_json::json!({"evidence":{"controls":{"supported":true}}});
+    assert!(publish_campaign_observation(&path, &inflated).is_err());
+    assert_eq!(std::fs::read(path).unwrap(), bytes);
 }

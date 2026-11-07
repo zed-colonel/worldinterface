@@ -698,3 +698,89 @@ fn wi11_control_plane_requires_complete_exact_foundation_evidence_without_case_c
         assert_eq!(registry.cases.iter().find(|c| c.id == id).unwrap().owning_item, "WIP-14");
     }
 }
+
+#[test]
+fn runtime_campaign_owns_each_harness_once_and_requires_the_default_entry_point() {
+    let t = TempDir::new().unwrap();
+    let manifest = "crates/worldinterface-runtime/Cargo.toml";
+    let dir = t.path().join("crates/worldinterface-runtime");
+    fs::create_dir_all(dir.join("src")).unwrap();
+    fs::create_dir_all(dir.join("tests")).unwrap();
+    let config = r#"[workspace]
+[package]
+name="worldinterface-runtime"
+version="0.1.0"
+edition="2021"
+[lib]
+test=false
+[[test]]
+name="owned"
+test=false
+"#;
+    fs::write(dir.join("Cargo.toml"), config).unwrap();
+    fs::write(dir.join("src/lib.rs"), "#[test] fn unit() {}\n").unwrap();
+    fs::write(
+        dir.join("tests/owned.rs"),
+        "#[test] fn registered() {}\n#[test] fn extra() {}\n#[test] #[ignore] fn ignored() {}\n",
+    )
+    .unwrap();
+    fs::write(
+        dir.join("tests/worker_campaign.rs"),
+        "#[test] fn wi_owned_worker_acceptance_campaign() {}\n",
+    )
+    .unwrap();
+    assert!(Command::new("timeout")
+        .args(["60s", "cargo", "generate-lockfile", "--offline"])
+        .current_dir(&dir)
+        .status()
+        .unwrap()
+        .success());
+    let output = Command::new("timeout")
+        .args(["60s", "cargo", "test", "--offline"])
+        .current_dir(&dir)
+        .output()
+        .unwrap();
+    assert!(output.status.success());
+    let log = String::from_utf8(output.stdout).unwrap();
+    assert!(log.contains("test wi_owned_worker_acceptance_campaign ... ok"));
+    for name in ["unit", "registered", "extra"] {
+        assert!(!log.contains(&format!("test {name} ...")), "{log}");
+    }
+    let index = proof::discover_configuration(t.path(), manifest, &[]).unwrap();
+    for name in ["unit", "registered", "extra", "wi_owned_worker_acceptance_campaign"] {
+        assert_eq!(
+            index.get(&TestRef {
+                manifest: manifest.into(),
+                package: "worldinterface-runtime".into(),
+                test: name.into()
+            }),
+            Some(&1),
+            "{name}: {index:?}"
+        );
+    }
+    assert!(!index.keys().any(|t| t.test == "ignored"));
+    fs::write(
+        dir.join("tests/worker_campaign.rs"),
+        "#[test] #[ignore] fn wi_owned_worker_acceptance_campaign() {}\n",
+    )
+    .unwrap();
+    assert!(proof::discover_configuration(t.path(), manifest, &[]).is_err());
+    fs::write(
+        dir.join("tests/worker_campaign.rs"),
+        "#[test] fn wi_owned_worker_acceptance_campaign() {}\n",
+    )
+    .unwrap();
+    // Either a second default owner or a missing campaign must fail closed.
+    fs::write(
+        dir.join("Cargo.toml"),
+        config.replace("name=\"owned\"\ntest=false", "name=\"owned\"\ntest=true"),
+    )
+    .unwrap();
+    assert!(proof::discover_configuration(t.path(), manifest, &[]).is_err());
+    fs::write(
+        dir.join("Cargo.toml"),
+        format!("{config}[[test]]\nname=\"worker_campaign\"\ntest=false\n"),
+    )
+    .unwrap();
+    assert!(proof::discover_configuration(t.path(), manifest, &[]).is_err());
+}

@@ -136,6 +136,106 @@ fn observations_preserve_gaps_conflicts_and_terminal_facts_with_atomic_outbox() 
     assert!(StoreRoot::open_existing(&path).is_err());
 }
 #[test]
+fn concurrent_worker_observations_allocate_revisions_with_operation_acknowledgement() {
+    let t = tempfile::tempdir().unwrap();
+    let path = t.path().join("root");
+    let root = create(&path);
+    let b = binding();
+    root.reserve_start(b.clone(), 1).unwrap();
+    let operation = WorkerOperation {
+        key: "wi-key-1:start".to_string().try_into().unwrap(),
+        intent: EffectIntentId::generate(),
+        operation: "start".to_string().try_into().unwrap(),
+        canonical_request: ContentHash::of(b"start"),
+        acknowledged: false,
+    };
+    root.begin_worker_operation(b.clone(), operation.clone()).unwrap();
+    let route = EventRoute {
+        tenant: b.tenant.clone(),
+        audience: b.principal.clone(),
+        kind: EventKind::WorkerObservation,
+        correlation: b.event_correlation().unwrap(),
+        generation: None,
+    };
+    let observations: Vec<_> = (1..=8)
+        .map(|seq| {
+            let bytes = canonical_data(&("provisioned", seq)).unwrap();
+            let artifact = root.publish(b.tenant.clone(), &bytes).unwrap();
+            (
+                WorkerObservation {
+                    event: format!("event-{seq}").try_into().unwrap(),
+                    provider_sequence: seq,
+                    fact: WorkerFact::Provisioned,
+                    digest: artifact.content.clone(),
+                },
+                artifact,
+            )
+        })
+        .collect();
+    let before_failure = state(&root, &b);
+    let c = rusqlite::Connection::open(path.join("fabric.sqlite")).unwrap();
+    c.execute_batch("CREATE TRIGGER fail_worker_signal BEFORE INSERT ON signal_outbox BEGIN SELECT RAISE(ABORT,'injected'); END;").unwrap();
+    let (observation, artifact) = &observations[0];
+    assert!(root
+        .commit_worker_observation(&b, observation.clone(), route.clone(), artifact.clone())
+        .is_err());
+    assert_eq!(state(&root, &b), before_failure);
+    assert!(root.pending_signals(StoreKind::Fabric, None, 100).unwrap().is_empty());
+    c.execute_batch("DROP TRIGGER fail_worker_signal").unwrap();
+    drop(c);
+    let barrier = std::sync::Barrier::new(9);
+    std::thread::scope(|scope| {
+        for (observation, artifact) in &observations {
+            scope.spawn(|| {
+                barrier.wait();
+                root.commit_worker_observation(
+                    &b,
+                    observation.clone(),
+                    route.clone(),
+                    artifact.clone(),
+                )
+                .unwrap();
+            });
+        }
+        scope.spawn(|| {
+            barrier.wait();
+            root.acknowledge_worker_operation(b.clone(), operation.clone()).unwrap();
+        });
+    });
+    let before = state(&root, &b);
+    assert_eq!(before.provider_sequence, 8);
+    assert_eq!(before.revision, 11);
+    assert!(before.operations[&operation.key].acknowledged);
+    assert!(before.capacity_reserved);
+    let signals = root.pending_signals(StoreKind::Fabric, None, 100).unwrap();
+    assert_eq!(signals.len(), 8);
+    let revisions: std::collections::BTreeSet<_> =
+        signals.iter().map(|s| s.event.revision).collect();
+    assert_eq!(revisions.len(), 8);
+    assert!(revisions.iter().all(|r| *r > 2 && *r <= before.revision));
+    for (observation, artifact) in &observations {
+        let id = root
+            .commit_worker_observation(&b, observation.clone(), route.clone(), artifact.clone())
+            .unwrap();
+        assert_eq!(signals.iter().filter(|s| s.event.id == id).count(), 1);
+    }
+    let (observation, artifact) = &observations[0];
+    let mut wrong_route = route.clone();
+    wrong_route.audience = PrincipalId::generate();
+    assert!(root
+        .commit_worker_observation(&b, observation.clone(), wrong_route, artifact.clone())
+        .is_err());
+    let mut conflict = observation.clone();
+    conflict.fact = WorkerFact::Exited;
+    assert!(root.commit_worker_observation(&b, conflict, route, artifact.clone()).is_err());
+    assert_eq!(state(&root, &b), before);
+    root.repository(StoreKind::Fabric).unwrap().rebuild().unwrap();
+    drop(root);
+    let reopened = StoreRoot::open_existing(&path).unwrap();
+    assert_eq!(state(&reopened, &b), before);
+    assert_eq!(reopened.pending_signals(StoreKind::Fabric, None, 100).unwrap(), signals);
+}
+#[test]
 fn worker_provider_keys_bind_exact_original_operations_and_replay_acknowledgements() {
     let t = tempfile::tempdir().unwrap();
     let path = t.path().join("root");

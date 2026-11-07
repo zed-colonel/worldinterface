@@ -60,13 +60,19 @@ pub struct Gate {
 }
 /// Counts eligible harness occurrences. A duplicate name is ambiguous evidence.
 pub type TestIndex = BTreeMap<TestRef, usize>;
+/// Executable identities retained for the campaign; duplicate references stay ambiguous.
+pub type HarnessIndex = BTreeMap<TestRef, Vec<PathBuf>>;
 
 /// serde_json's default map is key ordered, including recursively nested maps.
 pub fn source_digest(record: &Value) -> Result<String> {
     Ok(hash(serde_json::to_vec(record)?))
 }
 fn cargo(root: &Path, args: &[&str]) -> Result<String> {
-    let out = Command::new("cargo").current_dir(root).args(args).output()?;
+    let out = Command::new("timeout")
+        .args(["--kill-after=10s", "1800s", "cargo", "--offline"])
+        .current_dir(root)
+        .args(args)
+        .output()?;
     if !out.status.success() {
         return Err(
             format!("cargo {}: {}", args.join(" "), String::from_utf8_lossy(&out.stderr)).into()
@@ -185,6 +191,12 @@ pub fn discover(root: &Path) -> Result<TestIndex> {
 }
 /// Public for small executable Cargo fixtures used by discovery regression tests.
 pub fn discover_configuration(root: &Path, manifest: &str, flags: &[&str]) -> Result<TestIndex> {
+    Ok(discover_harnesses(root, manifest, flags)?
+        .into_iter()
+        .map(|(t, paths)| (t, paths.len()))
+        .collect())
+}
+pub fn discover_harnesses(root: &Path, manifest: &str, flags: &[&str]) -> Result<HarnessIndex> {
     let mut args =
         vec!["metadata", "--locked", "--manifest-path", manifest, "--format-version", "1"];
     if flags.contains(&"--all-features") {
@@ -205,8 +217,15 @@ pub fn discover_configuration(root: &Path, manifest: &str, flags: &[&str]) -> Re
     let mut args =
         vec!["test", "--locked", "--manifest-path", manifest, "--no-run", "--message-format=json"];
     args.extend(flags);
+    // runtime-test delegates these harnesses to the campaign. Explicit selection
+    // builds test=false targets without making Cargo execute them a second time.
+    let campaign_owned = manifest == RUNTIME;
+    if campaign_owned {
+        args.extend(["--lib", "--test", "*"]);
+        validate_runtime_ownership(&packages)?;
+    }
     let output = cargo(root, &args)?;
-    let mut index = TestIndex::new();
+    let mut index = HarnessIndex::new();
     let mut executables = BTreeSet::new();
     for line in output.lines() {
         let a: Value = serde_json::from_str(line)?;
@@ -223,7 +242,9 @@ pub fn discover_configuration(root: &Path, manifest: &str, flags: &[&str]) -> Re
             continue;
         }
         let declared = array(package, "targets")?.iter().any(|t| {
-            t["test"] == true
+            (t["test"] == true
+                || (campaign_owned && t["kind"] == json!(["test"]))
+                || (campaign_owned && t["kind"] == json!(["lib"])))
                 && t["name"] == a["target"]["name"]
                 && t["src_path"] == a["target"]["src_path"]
         });
@@ -234,17 +255,53 @@ pub fn discover_configuration(root: &Path, manifest: &str, flags: &[&str]) -> Re
         let ignored = listing(Path::new(executable), true)?;
         for test in listing(Path::new(executable), false)?.difference(&ignored) {
             if syntax.contains(test) {
-                *index
+                index
                     .entry(TestRef {
                         manifest: manifest.into(),
                         package: string(package, "name")?.into(),
                         test: test.clone(),
                     })
-                    .or_default() += 1;
+                    .or_default()
+                    .push(PathBuf::from(executable));
             }
         }
     }
+    if campaign_owned {
+        let entry = TestRef {
+            manifest: RUNTIME.into(),
+            package: "worldinterface-runtime".into(),
+            test: crate::worker_campaign::ENTRY.into(),
+        };
+        if index.get(&entry).map(Vec::len) != Some(1) {
+            return Err("missing, ignored or ambiguous adopted campaign entry point".into());
+        }
+    }
     Ok(index)
+}
+
+/// Prevent a new auto-discovered target from silently executing twice, and keep
+/// the campaign mandatory in the adopted default Cargo invocation.
+fn validate_runtime_ownership(packages: &BTreeMap<String, &Value>) -> Result<()> {
+    let package = packages
+        .values()
+        .find(|p| p["name"] == "worldinterface-runtime")
+        .ok_or("missing runtime package")?;
+    let mut entry = false;
+    for target in array(package, "targets")? {
+        if target["kind"] == json!(["test"]) {
+            let is_entry = target["name"] == "worker_campaign";
+            if target["test"] != is_entry || target.get("required-features").is_some() {
+                return Err("runtime harness must have exactly one campaign owner".into());
+            }
+            entry |= is_entry;
+        } else if target["kind"] == json!(["lib"]) && target["test"] != false {
+            return Err("runtime unit tests must be owned by the campaign".into());
+        }
+    }
+    if !entry {
+        return Err("missing adopted runtime campaign entry point".into());
+    }
+    Ok(())
 }
 
 fn allocation(id: &str, source: &Value) -> Result<(String, String)> {
@@ -258,8 +315,7 @@ fn allocation(id: &str, source: &Value) -> Result<(String, String)> {
             27 | 28 | 31 => 11,
             29 | 30 => 14,
             32 => 12,
-            33 => 15,
-            34 => 16,
+            33 | 34 => 15,
             _ => return Err("out-of-scope WP case".into()),
         };
         (string(source, "checkpoint")?.to_owned(), item)
@@ -429,6 +485,12 @@ fn coverage(root: &Path, id: &str) -> Result<(Vec<String>, BTreeSet<TestRef>)> {
         refs.push(path.to_string());
         tests.extend(references);
     }
+    let path = "conformance/wi-fabric-2/worker/campaign-coverage.json";
+    let v = read(&root.join(path))?;
+    if let Some(references) = v["assigned_cases"].get(id) {
+        refs.push(path.to_string());
+        tests.extend(serde_json::from_value::<Vec<TestRef>>(references.clone())?);
+    }
     refs.sort();
     Ok((refs, tests))
 }
@@ -471,7 +533,7 @@ fn binding(root: &Path, requirement: &Value) -> Result<Value> {
                 "wi/WI-10/process-catalog" => vec!["WIP-12"],
                 "wi/WI-11/embedded-runtime" => vec!["WIP-14"],
                 "wi/WI-13/worker-conformance" => vec!["WIP-15"],
-                "wi/WI-14/worker-handoff" => vec!["WIP-16"],
+                "wi/WI-14/worker-handoff" => vec!["WIP-15", "WIP-16"],
                 _ => return Err(format!("unmapped slice {id}").into()),
             };
             json!({"kind":"reviewed-item-scope","covering_items":items,"effective_on":"reviewed-merge-with-adopted-checks"})
@@ -748,6 +810,15 @@ pub fn check(root: &Path) -> Result<Vec<Finding>> {
     findings.extend(validate_worker_lifecycle(root, &tests)?);
     findings.extend(validate_worker_catalog(root, &tests)?);
     findings.extend(validate_embedded(root, &tests)?);
+    if let Err(e) = crate::worker_campaign::validate_coverage(root, &registry, &tests) {
+        findings.push(finding(
+            "PROOF-CAMPAIGN",
+            crate::worker_campaign::COVERAGE,
+            "coverage",
+            "WIP-15",
+            &e.to_string(),
+        ));
+    }
     Ok(findings)
 }
 
@@ -1349,6 +1420,7 @@ pub fn validate_embedded(root: &Path, tests: &TestIndex) -> Result<Vec<Finding>>
     let expected_sources = [
         "crates/worldinterface-runtime/tests/embedded_worker.rs",
         "crates/worldinterface-runtime/tests/support/embedded_consumer.rs",
+        "crates/worldinterface-runtime/tests/worker_campaign_cases.rs",
     ];
     if sources.iter().map(String::as_str).collect::<BTreeSet<_>>() != expected_sources.into() {
         findings.push(finding(

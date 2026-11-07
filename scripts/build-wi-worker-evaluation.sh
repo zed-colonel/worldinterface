@@ -14,7 +14,7 @@ for name,digest in manifest['files'].items():
 PY
 # Do not prebuild binaries. Cargo must compile all tests from a cold cache without
 # requiring unfinished executable bytes during macro expansion.
-timeout 1800 cargo test --locked --offline --manifest-path crates/worldinterface-runtime/Cargo.toml --no-run --message-format=json > "$TMPDIR/verification/revised-packet/cargo-build.jsonl"
+timeout 1800 cargo test --locked --offline --manifest-path crates/worldinterface-runtime/Cargo.toml --lib --test '*' --no-run --message-format=json > "$TMPDIR/verification/revised-packet/cargo-build.jsonl"
 # These two tests build and publish reviewed artifacts and reject path replacement.
 # They launch no fixture/helper and do not require or create an evaluation approval.
 timeout 1200 cargo test --locked --offline --manifest-path crates/worldinterface-runtime/Cargo.toml --test worker_build

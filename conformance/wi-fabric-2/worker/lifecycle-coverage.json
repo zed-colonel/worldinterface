@@ -191,6 +191,11 @@
         "manifest": "crates/worldinterface-runtime/Cargo.toml",
         "package": "worldinterface-runtime",
         "test": "worker_process::journal::tests::ownership_journal_intent_ownership_and_optional_exit_replay_without_launch"
+      },
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-storage",
+        "test": "concurrent_worker_observations_allocate_revisions_with_operation_acknowledgement"
       }
     ]
   },

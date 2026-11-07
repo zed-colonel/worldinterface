@@ -48,3 +48,4 @@ scripts/*
 
 !scripts/build-wi-worker-evaluation.sh
 !scripts/refresh-wi-worker-evaluation.py
+!scripts/worker-proof-evidence.sh

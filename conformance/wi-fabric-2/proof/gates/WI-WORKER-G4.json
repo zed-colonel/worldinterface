@@ -170,6 +170,7 @@
       "binding": {
         "kind": "reviewed-item-scope",
         "covering_items": [
+          "WIP-15",
           "WIP-16"
         ],
         "effective_on": "reviewed-merge-with-adopted-checks"

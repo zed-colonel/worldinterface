@@ -9,7 +9,8 @@
   },
   "consumer_sources": [
     "crates/worldinterface-runtime/tests/embedded_worker.rs",
-    "crates/worldinterface-runtime/tests/support/embedded_consumer.rs"
+    "crates/worldinterface-runtime/tests/support/embedded_consumer.rs",
+    "crates/worldinterface-runtime/tests/worker_campaign_cases.rs"
   ],
   "assigned_cases": {
     "WP-029": [

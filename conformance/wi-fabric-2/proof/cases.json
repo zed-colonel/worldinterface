@@ -573,9 +573,15 @@
       "owning_item": "WIP-10",
       "status": "implemented",
       "coverage_refs": [
+        "conformance/wi-fabric-2/worker/campaign-coverage.json",
         "conformance/wi-fabric-2/worker/lifecycle-coverage.json"
       ],
       "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "campaign_embedded_cancellation_and_output_bounds_keep_capacity_until_cleanup"
+        },
         {
           "manifest": "crates/worldinterface-runtime/Cargo.toml",
           "package": "worldinterface-runtime",
@@ -591,9 +597,15 @@
       "owning_item": "WIP-10",
       "status": "implemented",
       "coverage_refs": [
+        "conformance/wi-fabric-2/worker/campaign-coverage.json",
         "conformance/wi-fabric-2/worker/lifecycle-coverage.json"
       ],
       "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "campaign_embedded_cancellation_and_output_bounds_keep_capacity_until_cleanup"
+        },
         {
           "manifest": "crates/worldinterface-runtime/Cargo.toml",
           "package": "worldinterface-runtime",
@@ -726,6 +738,11 @@
           "manifest": "crates/worldinterface-runtime/Cargo.toml",
           "package": "worldinterface-runtime",
           "test": "wp_025_real_worker_events_preserve_aq_deadline_cancel_and_restart_winners"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-storage",
+          "test": "concurrent_worker_observations_allocate_revisions_with_operation_acknowledgement"
         }
       ]
     },
@@ -907,13 +924,24 @@
       "owning_item": "WIP-11",
       "status": "implemented",
       "coverage_refs": [
-        "conformance/wi-fabric-2/worker/artifact-seam-coverage.json"
+        "conformance/wi-fabric-2/worker/artifact-seam-coverage.json",
+        "conformance/wi-fabric-2/worker/campaign-coverage.json"
       ],
       "tests": [
         {
           "manifest": "crates/worldinterface-runtime/Cargo.toml",
           "package": "worldinterface-runtime",
           "test": "wp_031_seam_simulation_delayed_reordered_observations_and_uncertain_ack_use_real_wi_aq"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_034_embedded_seam_handoff_retains_nonsemantic_completion_and_unknown_controls"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "campaign_unknown_controls_publish_once_with_exact_observation_digest"
         }
       ]
     },
@@ -986,19 +1014,160 @@
       "source_record_sha256": "3318d3d570bb4d9c57692d9b20f3a87582078628d56f407d9f3bbb36bb420475",
       "gate": "WI-WORKER-G4",
       "owning_item": "WIP-15",
-      "status": "planned",
-      "coverage_refs": [],
-      "tests": []
+      "status": "implemented",
+      "coverage_refs": [
+        "conformance/wi-fabric-2/worker/campaign-coverage.json"
+      ],
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-storage",
+          "test": "control_distinct_fresh_issuances_wait_for_delivery_ownership"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-storage",
+          "test": "control_plane::tests::shared_effect_and_credential_reservations_have_one_atomic_last_use"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_019_invalid_restore_never_publishes_partial_destination"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_019_two_independent_stores_restore_complete_wal_artifacts_and_control_history"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "f007_crash_cuts_reconcile_exact_ownership_without_redelivery"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "f007_expiry_rotation_and_recovery_preserve_the_original_credential_generation"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "f007_live_delivery_excludes_recovery_and_concurrent_retry"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "f007_restored_pending_attempt_requires_custody_fencing_and_uncertainty_stays_unresolved"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "f007_restored_unattempted_intent_requires_global_fencing_of_late_original_claims"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_029_embedded_coding_and_transform_use_one_engine_and_application_services"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_029_embedded_crash_recovery_quarantines_without_replacement"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_029_restored_publication_is_readable_without_original_workspace_and_keeps_capacity"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_030_catalog_quarantine_and_revocation_fence_queued_execution"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_030_consumer_and_helper_imports_stay_inside_application_boundary"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_030_embedded_forgery_scope_and_unauthorized_controls_fail_closed"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_030_recovery_only_facade_enforces_disclosure_revocation_and_exclusive_ownership"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_030_recovery_reconstructs_scoped_metadata_before_returning_application"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_033_embedded_completion_is_producer_evidence_for_partial_milestone_only"
+        },
+        {
+          "manifest": "tools/wi-contract-check/Cargo.toml",
+          "package": "wi-contract-check",
+          "test": "campaign_coverage_requires_every_embedded_obligation_and_preserves_scope_tests"
+        },
+        {
+          "manifest": "tools/wi-contract-check/Cargo.toml",
+          "package": "wi-contract-check",
+          "test": "campaign_dirty_source_changing_or_stale_generation_is_rejected"
+        },
+        {
+          "manifest": "tools/wi-contract-check/Cargo.toml",
+          "package": "wi-contract-check",
+          "test": "campaign_missing_ignored_ambiguous_and_recursive_references_are_rejected"
+        },
+        {
+          "manifest": "tools/wi-contract-check/Cargo.toml",
+          "package": "wi-contract-check",
+          "test": "campaign_real_child_failure_zero_ignored_missing_and_altered_logs_fail_closed"
+        },
+        {
+          "manifest": "tools/wi-contract-check/Cargo.toml",
+          "package": "wi-contract-check",
+          "test": "wp_033_inflated_claims_cannot_convert_worker_success_to_consumer_acceptance"
+        },
+        {
+          "manifest": "tools/wi-contract-check/Cargo.toml",
+          "package": "wi-contract-check",
+          "test": "campaign_parallel_harnesses_retain_failures_and_reject_substituted_binary_pins"
+        }
+      ]
     },
     {
       "id": "WP-034",
       "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
       "source_record_sha256": "6e229792f04742339a8c392f8fea4c73ce18244ef66aa2a7c229c32a2fd6ea43",
       "gate": "WI-WORKER-G4",
-      "owning_item": "WIP-16",
-      "status": "planned",
-      "coverage_refs": [],
-      "tests": []
+      "owning_item": "WIP-15",
+      "status": "implemented",
+      "coverage_refs": [
+        "conformance/wi-fabric-2/worker/campaign-coverage.json"
+      ],
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_034_embedded_seam_handoff_retains_nonsemantic_completion_and_unknown_controls"
+        },
+        {
+          "manifest": "tools/wi-contract-check/Cargo.toml",
+          "package": "wi-contract-check",
+          "test": "wp_034_handoff_rejects_substituted_pins_missing_evidence_and_semantic_completion"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "campaign_unknown_controls_publish_once_with_exact_observation_digest"
+        }
+      ]
     },
     {
       "id": "AB-WI-001",

@@ -1,3 +1,142 @@
+# WIP-15 atomic-observation and F-006/F-007 remediation request
+
+The campaign on `de25ec2` and the isolated embedded cancellation/output-bound
+test failed with `worker commit revision conflict`. This packet repairs the
+worker observation/operation race by allocating the WI event revision inside
+its Fabric writer transaction. WP-025 gains a non-live regression for concurrent
+observations and operation acknowledgement, stable duplicates, conflict rejection,
+atomic outbox rollback and rebuild/reopen. It also aligns the supplemental helper
+and ledger with the 1785-second campaign guard (F-006), and records the existing
+receipt's expiry and fail-closed post-merge verification consequence (F-007).
+
+Accept only the canonical digest printed by `scripts/refresh-wi-worker-evaluation.py`
+after source-bound non-live validation. The requested expiry remains
+**2026-11-11T00:00:00Z**. Scope remains the reviewed nonsensitive typed fixtures,
+six operations, 15000 ms wall time and 65536 retained output bytes, without
+ordinary use or production credentials. Supervisor source, environment and
+containment limitations are unchanged. The receipt and trusted anchor retain
+the actual previous acceptance until the operator accepts these exact changed
+bytes. Live verification and adopted `runtime-test` must then run on the committed
+candidate; no passing result is asserted in advance.
+
+## Historical predecessor requests
+
+# WIP-15 F-004/F-005 campaign deadline and evidence remediation
+
+Packet `289f6efacf3378ba4e955e2164d6ea0f3bc80f8e1b76b07293d3bef6d1cd07d6`
+was accepted in run `e73756a8-8e69-4f9a-acb7-ba3074a3dbba` through
+2026-11-11T00:00:00Z. Its cold runtime command passed in 1349.90 seconds; all
+adopted checks passed on `6f7e73d`. Review found the inner 1500-second guard
+could still expire before the unchanged 1800-second adopted check budget.
+
+This remediation raises only that guard to 1785 seconds plus the existing
+15-second kill grace. The adopted check retains its 1800-second ceiling for
+the complete command, including its initial build. This removes the earlier
+inner cutoff without changing test ownership, discovery, parallelism, per-test
+limits, provider or supervisor source, fixture tasks, operations or evaluation
+limits. The item note and verification addendum also correct the cold-evidence
+run identifier. Historical measured results are retained, not asserted for
+these changed bytes.
+
+Request acceptance only of the exact canonical digest printed by
+`scripts/refresh-wi-worker-evaluation.py`, after the complete source-bound
+non-live build succeeds. Requested expiry remains **2026-11-11T00:00:00Z**.
+Limits remain six operations, reviewed nonsensitive fixtures, 15000 ms wall time
+and 65536 retained output bytes. No ordinary use, production credentials,
+hostile code, publication, integration or gate closure is requested. G4 and
+target closure remain with WIP-16. The separate receipt and trusted anchor
+retain only the actual historical acceptance. They do not authorize changed
+packet bytes; tests cannot create or retarget that acceptance.
+
+## Historical campaign cost remediation request
+
+# WIP-15 F-001/F-002/F-003 campaign cost remediation
+
+Packet `4dcbe731183fb3f5e461ecaf52101f0b40a12187e136e019891c4423d7f973ae`
+was accepted in run `328acdc1-0146-4bed-b13e-b7553acdbd99` through
+2026-11-11T00:00:00Z. Its campaign passed 224/224 tests and all 55 cases on
+`b92a58e`; all adopted checks passed, but runtime-test needed a retry and review
+measured only about 12 seconds of headroom under its unchanged 1800-second limit.
+
+This remediation gives the campaign sole ownership of runtime tests, retaining
+all unregistered tests as checked additional outcomes. Runtime discovery builds
+explicitly selected harnesses once and receipt generation reuses those listings.
+The campaign timeout becomes 1500 seconds plus 15 seconds kill grace. Fixture
+regressions prove default ownership, ignored/ambiguous rejection and generated
+WP-034 handoff substitution checks. The item note and active ledger record the
+final accepted packet, passing receipt and timeout history. Provider source,
+supervisor disposition, operations, fixture tasks and execution limits stay the
+same. See `docs/work-items/WIP-15.md` for the cold-run timing evidence location.
+
+Request acceptance only of the exact canonical digest printed by
+`scripts/refresh-wi-worker-evaluation.py`, after the complete source-bound
+non-live build succeeds. Requested expiry remains **2026-11-11T00:00:00Z**.
+Limits remain six operations, reviewed nonsensitive fixtures, 15000 ms wall time
+and 65536 retained output bytes. No ordinary use, production credentials,
+hostile code, publication, integration or gate closure is requested. G4 and
+target closure remain with WIP-16. The separate receipt and trusted anchor
+retain only the actual historical acceptance. They do not authorize changed
+packet bytes; tests cannot create or retarget that acceptance.
+
+## Historical predecessor request
+
+# WIP-15 evidence writer and campaign runtime remediation
+
+Packet `4780080955b38a775f724de0970c02531cbe542a145bf15b2ecc8088c549ed83`
+was explicitly accepted in run `23917702-7b27-4be4-8317-2ff31d928044` through
+2026-11-11T00:00:00Z. Its campaign ran all 222 registered tests: 221 passed;
+WP-034 failed writing the seam's unknown controls through the domain codec's
+null prohibition. WP-031/034 aggregates failed. An isolated evidence-enabled
+WP-034 run reproduced it. Adopted runtime-test timed out after 30 minutes.
+
+The remediation preserves unknown controls in observation JSON, with immutable
+create-once files and exact-byte digest binding. It bounds campaign concurrency
+to two harness groups, measures every executable before and after its group and
+once per receipt validation, and avoids redundant validation of a generated
+candidate. Individual test results, timeouts, binary substitution checks and
+source-generation checks remain mandatory. New non-live regressions cover null
+observations, publication tampering, independent harness overlap and child
+failures. See `docs/work-items/WIP-15.md` for scope and actual evaluation history.
+
+Request acceptance only of the exact canonical digest printed by
+`scripts/refresh-wi-worker-evaluation.py`, after the complete source-bound
+non-live build succeeds. Requested expiry remains **2026-11-11T00:00:00Z**.
+The unchanged limits are six operations, reviewed nonsensitive typed fixtures,
+15000 ms wall time and 65536 retained output bytes. AQ remains crates.io 0.3.0;
+fixture tasks, supervisor disposition and its five-file exception are unchanged.
+No ordinary use, production credentials, hostile code, publication, integration
+or gate closure is requested. G4 and target closure remain with WIP-16.
+
+The separate receipt and trusted host anchor preserve the actual acceptance of
+the previous packet. They do not authorize these changed bytes. Acceptance is
+an execution gate; no test may create or retarget it. After acceptance, rerun the
+live campaign and all ten adopted checks on the committed remediation.
+
+## Historical predecessor request
+
+# WIP-15 campaign evaluation request
+
+This candidate adds the campaign orchestrator, embedded evidence inspection and
+trusted seam installation, coding/transform/seam campaign scenarios, embedded
+cancellation/output-bound tests, and the WP-033/034 nonsemantic producer contract.
+See `docs/work-items/WIP-15.md` and `campaign-coverage.json` for exact scope.
+AQ remains crates.io 0.3.0 under the authorized WIP-07 migration. The existing
+supervisor disposition and its five-file exception are unchanged.
+
+Request acceptance only of the canonical SHA-256 printed by
+`scripts/refresh-wi-worker-evaluation.py` after the complete source-bound non-live
+build succeeds. Requested expiry remains **2026-11-11T00:00:00Z**. Limits remain
+six operations, reviewed nonsensitive typed fixtures, 15000 ms wall time and
+65536 retained output bytes. No ordinary use, production credentials, hostile
+code, publication, integration or gate closure is requested.
+
+The separate historical approval receipt and trusted host anchor remain unchanged
+until actual acceptance of this concrete packet. The approved WP-034 scheduling
+split does not authorize future executable bytes. Live campaign and all ten
+adopted checks remain due on the committed candidate after acceptance.
+
+## Historical predecessor request
+
 # WIP-14 review-remediation evaluation request
 
 Packet `b57f32a001ff95ef14ac46d35e22a96c61c0f35896e17e0dc6e9762aebc18b88`
