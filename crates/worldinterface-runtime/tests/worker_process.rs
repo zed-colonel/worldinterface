@@ -772,16 +772,14 @@ async fn host_collection_release_and_inspection_survive_worker_credential_expiry
             .cleanup_confirmed
     );
     assert!(AdmittedProvider::controls(&h.port, "local-proof", "run-a").unwrap().is_some());
-    assert_eq!(
-        AdmittedProvider::read(&h.port, &h.locator("artifact-output.bin")).unwrap(),
-        b"hello"
-    );
+    let locator = worldinterface_worker::artifacts::ArtifactLocatorV2 {
+        digest: ContentHash::of(b"hello"),
+        ..h.locator("artifact-output.bin")
+    };
+    assert_eq!(AdmittedProvider::read(&h.port, &locator).unwrap(), b"hello");
     assert!(AdmittedProvider::read(
         &h.port,
-        &worldinterface_worker::artifacts::ArtifactLocatorV2 {
-            run: "other-run".into(),
-            ..h.locator("artifact-output.bin")
-        }
+        &worldinterface_worker::artifacts::ArtifactLocatorV2 { run: "other-run".into(), ..locator }
     )
     .is_err());
     let release = h.requests.iter().find(|r| r.operation == Operation::Release).unwrap();

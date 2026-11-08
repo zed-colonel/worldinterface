@@ -98,20 +98,34 @@ async fn wp_018_duplicate_admission_and_start_preserve_one_immutable_run() {
 }
 #[tokio::test]
 async fn one_host_releases_capacity_for_more_than_64_sequential_runs() {
+    async fn operation(h: &Harness, op: Operation) {
+        let mut snapshot = h.demand(op).1;
+        // The default 100-use grant runs out after 50 provision/release pairs,
+        // before this test can reach the provider's former 64-run lifetime cap.
+        for grant in &mut snapshot.grants {
+            grant.max_uses = 256;
+        }
+        assert_eq!(
+            h.operation_snapshot(op, snapshot).await,
+            worldinterface_storage::flow::FlowOutcome::Succeeded,
+            "run {} operation {op:?}",
+            h.run
+        );
+    }
     let mut h = Harness::new(Task::Probe, "WP-018", 1500, 65536);
     for n in 0..66 {
         h.run = format!("sequential-{n}");
         h.controls.run = h.run.clone();
-        h.operation(Operation::Provision).await;
+        operation(&h, Operation::Provision).await;
         if n == 65 {
-            h.operation(Operation::Start).await;
+            operation(&h, Operation::Start).await;
             assert!(h.finish().await.cleanup_confirmed);
         }
-        h.operation(Operation::Release).await;
+        operation(&h, Operation::Release).await;
         assert!(h.state().cleanup_confirmed);
         assert!(!h.state().capacity_reserved);
         // Durable acknowledgement makes release idempotent even after port retirement.
-        h.operation(Operation::Release).await;
+        operation(&h, Operation::Release).await;
     }
     assert_eq!(h.runtime.spawn_attempts(), Some(1));
 }

@@ -64,3 +64,27 @@ The campaign includes the previously unexecuted F-002/F-003/F-007/F-012/F-013
 worker regressions. Results and log paths are recorded in this run's external
 `scratch/verification` directory and final report. This acceptance does not
 supply test results, independent review, gate acceptance or integration.
+
+### Live regression findings and replacement packet
+
+The accepted packet's live checks exposed two test-data defects:
+
+- F-002's new regression collected plain `hello`, but its shared locator helper
+  supplied the digest for XOR-transformed bytes. The provider correctly rejected
+  that locator. The regression now binds the plain-byte digest explicitly,
+  preserving the cross-run denial and post-expiry release assertions.
+- F-003's 66-run regression exhausted the shared fixture's 100-use grant after
+  50 provision/release pairs. An isolated timed run failed the next Provision
+  after 293.72 seconds, independently of the provider's former 64-run bound.
+  This test now supplies a finite 256-use grant through the same trusted fixture
+  authorization path. All 66 runs, duplicate releases, durable capacity checks
+  and the final real process launch remain in the test.
+
+No runtime behavior, supervisor disposition, operation, task, case or control
+limit changed for these corrections. Replacement packet
+`a8825350c09ea9522fdcc916c13e0d8c5751ffb6dfabf67be8ec92460f757a77`
+changes exactly those two test files among the 321 source bindings. It passed
+non-live compilation and both trusted-build tests in this run. The acceptance
+of `997e4cfd…` does not cover the replacement; its receipt and trust anchor are
+retained without retargeting while a new exact-packet decision is pending.
+Live verification of the replacement remains required after acceptance.
