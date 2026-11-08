@@ -33,3 +33,25 @@ Verification logs and packet measurements belong under this run's external
 `scratch/verification`. Independent review, counted runtime-test timing on an
 accepted committed head and CraftingTable integration remain required. No merge,
 push, publication or ordinary-use qualification is performed here.
+
+## Exact-packet acceptance and live verification continuation
+
+At startup of CraftingTable run `43d777a6-3bca-4ad0-8fe7-26e949772c8a`
+(2026-11-08 UTC), the operator supplied this decision:
+
+> I accept the evaluation-only packet `467f4a1ecc63eb6118a565bc8ad05fb5f4066f11b31fe2bf1a92e784c1d42e53` through **2026-11-14T00:00:00Z**, for the existing evaluation cases and six operations on reviewed nonsensitive fixtures, with eight campaign workers, a 15-second wall limit, 65,536-byte retained-output limit, and unchanged supervisor disposition.
+
+This answers the previous run's pending question. The packet was prepared and
+non-live validated on `30dcc4e` in run `ca515cbf-da88-446a-bda5-54477141bfb1`.
+This continuation independently matches all 321 source bindings and the canonical
+packet digest before recording the separate acceptance receipt and trusted host
+anchor. The receipt identifies the supplied guidance; it invents no controller
+decision ID or operator UUID. Its finite expiry is less than seven days after
+acceptance. Changed bindings or expiry continue to deny live evaluation.
+
+Only trust provisioning, this note and the derived source inventories change;
+the accepted packet bytes and scope stay exact. The continuation revalidates the
+non-live build and runs all ten adopted checks on the committed accepted head,
+including the counted runtime campaign timing needed for F-016. Results and logs
+belong in this run's external `scratch/verification` and final report. Acceptance
+supplies no passing result, independent review, integration or gate closure.
