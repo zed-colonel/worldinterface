@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 use std::{
     collections::BTreeMap,
     path::Path,
-    sync::{Arc, LazyLock, Mutex},
+    sync::{Arc, Mutex},
 };
 use worldinterface_domain::{effect::CommitObservation, worker::*};
 use worldinterface_protocol::*;
@@ -50,23 +50,6 @@ fn succeeded(request: &WorkerRequestV1, state: &WorkerState) -> Result<PortObser
     })
 }
 
-static IMPLEMENTATION: LazyLock<ContentHash> = LazyLock::new(|| {
-    ContentHash::of(
-        [
-            include_str!("connector.rs"),
-            include_str!("admission.rs"),
-            include_str!("evaluation.rs"),
-            include_str!("catalog.rs"),
-            include_str!("recovery.rs"),
-            include_str!("observation.rs"),
-            include_str!("artifacts.rs"),
-            include_str!("provider.rs"),
-        ]
-        .concat()
-        .as_bytes(),
-    )
-});
-
 pub fn descriptor(operation: Operation) -> Result<ConnectorDescriptor> {
     if !super::admission::OPERATIONS.contains(&operation) {
         return Err("unsupported process operation".into());
@@ -74,7 +57,7 @@ pub fn descriptor(operation: Operation) -> Result<ConnectorDescriptor> {
     let d = ConnectorDescriptor {
         version: 1,
         connector: "wi:process-worker".to_string().try_into()?,
-        implementation: IMPLEMENTATION.clone(),
+        implementation: connector_digest(),
         operation: operation.name().to_string().try_into()?,
         effect_class: if operation == Operation::Inspect {
             EffectClass::Read

@@ -65,6 +65,28 @@ static ADAPTER_DIGEST: LazyLock<ContentHash> = LazyLock::new(|| {
     )
 });
 
+// Immutable source identities belong to host provenance, separate from AQ waits.
+#[allow(dead_code)] // Standalone fixture/helper binaries do not instantiate the WI connector.
+pub(crate) fn connector_digest() -> ContentHash {
+    CONNECTOR_DIGEST.clone()
+}
+static CONNECTOR_DIGEST: LazyLock<ContentHash> = LazyLock::new(|| {
+    ContentHash::of(
+        [
+            include_str!("../worker/connector.rs"),
+            include_str!("../worker/admission.rs"),
+            include_str!("../worker/evaluation.rs"),
+            include_str!("../worker/catalog.rs"),
+            include_str!("../worker/recovery.rs"),
+            include_str!("../worker/observation.rs"),
+            include_str!("../worker/artifacts.rs"),
+            include_str!("../worker/provider.rs"),
+        ]
+        .concat()
+        .as_bytes(),
+    )
+});
+
 pub fn dependencies_digest() -> ContentHash {
     ContentHash::of(include_bytes!("../../Cargo.lock"))
 }

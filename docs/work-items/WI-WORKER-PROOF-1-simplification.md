@@ -12,7 +12,7 @@ findings. This note records the implementation claims for independent review.
 | F-019 | `artifacts::bound_state` centralizes snapshot lookup and complete binding equality across worker modules. |
 | F-020 | Recovery evidence, cleanup and polling rely on catalog recovery authorization for the existing scope/binding checks. |
 | F-021 | Remove the three unused process facade methods and fold the two remaining host-only implementations. Other host/read authorization parameters retain their original behavior. |
-| F-022 | Cache source-derived connector and process-adapter identities with `LazyLock`; reuse one descriptor list per admission. Source edits still change implementation identities and require a new packet. |
+| F-022 | Cache source-derived connector and process-adapter identities with `LazyLock` in the source-pinned host provenance module; reuse one descriptor list per admission. The connector retains no process-local wait state, and the continuation ban is unchanged. Source edits still change implementation identities and require a new packet. |
 | F-023 | Minting and verification share process credential issuer/audience constants. |
 | F-024 | Shared outcome evidence and receipt-command constructors retain preview validation, publication, transactional validation and temporal evidence. |
 | F-025 | Remove the consecutive duplicate invocation fence; retain the current-state check and later authorization fence. |
