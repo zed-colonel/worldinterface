@@ -42,3 +42,25 @@ acceptance and independent review remain required.
 
 Verification logs are external under this run's `scratch/verification`. No merge,
 push, publication or ordinary-use qualification is performed by this run.
+
+## Exact-packet acceptance and verification continuation
+
+At startup of CraftingTable run `2ac299ad-eb7e-4bb4-8198-82081edb5e93`
+(2026-11-08 UTC), the operator supplied this decision:
+
+> I accept packet `997e4cfde46b1075f842f9ea31210c0738eb49714ce1deb4edb40ddb7969ef9f` through **2026-11-14T00:00:00Z**, for the existing evaluation cases, six operations, reviewed nonsensitive fixtures, 15-second wall limit and 65,536-byte retained-output limit, including the updated supervisor source disposition.
+
+This answers the previous run's pending acceptance question and F-014's renewal
+request. It supersedes the old packet's evaluation receipt for this candidate.
+The receipt and separate trusted test-host anchor encode only this actual
+operator guidance. All 321 packet files were checked against the accepted
+manifest before recording acceptance; no covered source bytes changed.
+The expiry remains fail-closed, including after merge; evaluation after
+2026-11-14T00:00:00Z needs renewed exact-packet acceptance.
+
+This continuation runs the non-live builder, all ten adopted checks on the
+committed accepted candidate, and verifies the campaign's external handoff.
+The campaign includes the previously unexecuted F-002/F-003/F-007/F-012/F-013
+worker regressions. Results and log paths are recorded in this run's external
+`scratch/verification` directory and final report. This acceptance does not
+supply test results, independent review, gate acceptance or integration.

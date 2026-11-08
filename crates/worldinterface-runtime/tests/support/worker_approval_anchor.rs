@@ -1,21 +1,22 @@
 //! Trusted test-host provisioning, separate from the source packet it approves.
-//! Acceptance provenance: docs/work-items/WIP-16-verification.md.
+//! Acceptance provenance: docs/work-items/WI-WORKER-PROOF-1-correctness.md.
 //! Actual operator guidance supplied at startup of CraftingTable run
-//! c1d9d28c-0d80-4913-bdd3-777f8b5b0ca0 on 2026-11-07 (UTC):
-//! "I accept the evaluation-only packet
-//! 7d09d13451f0f793e2c04f82ff3eafb3e28e42b788c3d4e7dd9fdb8772d744b5
-//! through 2026-11-11T00:00:00Z, for the existing six operations on reviewed
-//! nonsensitive fixtures, with 15-second wall and 65,536-byte retained-output limits"
+//! 2ac299ad-eb7e-4bb4-8198-82081edb5e93 on 2026-11-08 (UTC):
+//! "I accept packet
+//! 997e4cfde46b1075f842f9ea31210c0738eb49714ce1deb4edb40ddb7969ef9f
+//! through 2026-11-14T00:00:00Z, for the existing evaluation cases, six operations,
+//! reviewed nonsensitive fixtures, 15-second wall limit and 65,536-byte
+//! retained-output limit, including the updated supervisor source disposition."
 //! The receipt identifies that supplied guidance, not a controller-issued
 //! decision ID or an independently inferred operator UUID. Its finite expiry
-//! ends at the explicitly accepted 2026-11-11T00:00:00Z.
+//! ends at the explicitly accepted 2026-11-14T00:00:00Z.
 //!
 //! Accepted canonical packet:
-//! 7d09d13451f0f793e2c04f82ff3eafb3e28e42b788c3d4e7dd9fdb8772d744b5.
-//! Prepared and non-live validated on 7577738 in run
-//! 5f81f4d2-2cf6-4cb6-9e0f-8ea8f5dee8ab before acceptance.
+//! 997e4cfde46b1075f842f9ea31210c0738eb49714ce1deb4edb40ddb7969ef9f.
+//! Prepared and non-live validated on 1f39019 in run
+//! e867e801-0e63-4b78-8423-0cb83533a9cb before acceptance.
 //! Includes supervisor-disposition.json's exact worker_process/mod.rs pin
-//! f6e7aaa9abc4b98a8f91f9b090920dc7a9e329a33d58c14378f7d9361dcf35af.
+//! 663c193d9dadbc371509f40456b39c4d7ae3a086064e2daefa62f3cc3f132f8e.
 //! The original five-file exception and generic continuation ban are unchanged.
 //!
 //! Evaluation only for this candidate's verification and CraftingTable review:
@@ -26,4 +27,4 @@
 //! hostile code, same-user isolation claim, publication, integration or gate
 //! acceptance. These records encode only that supplied acceptance.
 pub const ACCEPTED_RECEIPT_SHA256: Option<&str> =
-    Some("20168b1f099ca7d5468fbed0f7160e0f906f3fbdfc03517399014522b50a1b56");
+    Some("510cfe0660d025e72331f78490f82a9c8e8f8797d77d1532f0fa85539a41dca2");
