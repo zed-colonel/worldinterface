@@ -88,3 +88,37 @@ non-live compilation and both trusted-build tests in this run. The acceptance
 of `997e4cfd…` does not cover the replacement; its receipt and trust anchor are
 retained without retargeting while a new exact-packet decision is pending.
 Live verification of the replacement remains required after acceptance.
+
+### Retired-run evidence preservation
+
+The accepted packet's full campaign additionally exposed an interaction in the
+F-003 retirement repair: WP-033 and WP-034 inspect sanitized cleanup/control
+evidence after Release, when the active provider and runtime entries have
+already been retired. Both failed because that evidence had become unavailable.
+The intermediate `a8825350…` request is superseded and must not authorize the
+following source changes.
+
+Before acknowledging Release and retiring the provider, the runtime now commits
+its sanitized `WorkerEvidence` in the WI worker journal. Storage accepts one
+immutable record of at most 16 KiB for the exact binding, only after confirmed
+cleanup. Inspection reloads this record after retirement; active handles,
+credentials and collected artifact buffers are still freed. The field defaults
+to empty and is omitted when empty, preserving historical record replay.
+No local wait registry, new supervisor exception or stronger control claim is
+introduced. The 66-run regression keeps all runs and a final real launch, with
+duplicate-release checks on the first and last runs to bound test duration.
+
+A focused storage regression verifies bounds, exact binding, immutability,
+idempotent retention, rebuild, reopen and offline backup. It and the full
+foundation suite passed. Runtime Clippy, the full non-live contract checker,
+non-live compilation and both trusted-build tests passed. Existing mapped
+WP-033/WP-034 tests assert the post-release cleanup/control evidence through the
+application facade; positive execution of the corrected candidate remains due.
+
+The final prepared replacement packet is
+`bed4d0afcaecf220ae023f92ac8dd65ce4daf926d530e382f8177ca3d1b6415c`.
+It retains the existing evaluation cases, tasks, six operations, reviewed
+nonsensitive fixtures, 15-second wall and 65,536-byte retained-output bounds,
+and the unchanged supervisor disposition. Its 321 exact source bindings were
+non-live validated in this run. Actual acceptance of this replacement is still
+required before live evaluation; neither earlier digest is retargeted.

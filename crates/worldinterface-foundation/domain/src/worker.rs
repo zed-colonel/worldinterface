@@ -79,6 +79,9 @@ pub struct WorkerState {
     pub quarantined: bool,
     pub cleanup_confirmed: bool,
     pub capacity_reserved: bool,
+    /// Bounded, sanitized host observations retained after provider retirement.
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    pub inspection_evidence: Vec<u8>,
     /// Highest contiguous provider sequence applied, distinct from WI revision.
     pub provider_sequence: u64,
     pub observations: BTreeMap<u64, WorkerObservation>,
@@ -100,6 +103,7 @@ impl WorkerState {
             quarantined: false,
             cleanup_confirmed: false,
             capacity_reserved: true,
+            inspection_evidence: Vec::new(),
             provider_sequence: 0,
             observations: BTreeMap::new(),
             operations: BTreeMap::new(),

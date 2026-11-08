@@ -23,6 +23,10 @@ CREATE TABLE worker_limits(tenant TEXT PRIMARY KEY, slots INTEGER NOT NULL);
 #[derive(Serialize, Deserialize)]
 #[serde(tag = "operation", rename_all = "snake_case", deny_unknown_fields)]
 enum Command {
+    Inspection {
+        binding: WorkerBinding,
+        evidence: Vec<u8>,
+    },
     Quarantine {
         record: WorkerProviderQuarantine,
     },
@@ -85,6 +89,28 @@ fn save(c: &Connection, s: &WorkerState) -> Result<()> {
 }
 fn apply(c: &Connection, command: &Command, live: bool) -> Result<bool> {
     match command {
+        Command::Inspection { binding, evidence } => {
+            let mut state = snapshot(c, &binding.tenant, &binding.provider, &binding.run)?
+                .ok_or_else(|| invalid("worker absent"))?;
+            if state.binding != *binding
+                || !state.cleanup_confirmed
+                || evidence.is_empty()
+                || evidence.len() > 16 * 1024
+            {
+                return Err(invalid("worker inspection binding or bound"));
+            }
+            if !state.inspection_evidence.is_empty() {
+                return if state.inspection_evidence == *evidence {
+                    Ok(false)
+                } else {
+                    Err(invalid("worker inspection evidence immutable"))
+                };
+            }
+            state.inspection_evidence = evidence.clone();
+            state.revision =
+                state.revision.checked_add(1).ok_or_else(|| invalid("worker revision overflow"))?;
+            save(c, &state)?;
+        }
         Command::Quarantine { record } => {
             if record.version != 1
                 || record.revision != 1
@@ -326,6 +352,16 @@ fn commit(tx: rusqlite::Transaction<'_>, cmd: &Command) -> Result<bool> {
     Ok(changed)
 }
 impl StoreRoot {
+    /// Trusted host only: sanitized final observations, committed before retiring
+    /// the provider's process handles and artifact buffers. Never store secrets.
+    pub fn retain_worker_inspection(
+        &self,
+        binding: WorkerBinding,
+        evidence: Vec<u8>,
+    ) -> Result<()> {
+        transact(self, &Command::Inspection { binding, evidence })?;
+        Ok(())
+    }
     pub fn bind_worker_artifact_policy(
         &self,
         binding: WorkerBinding,

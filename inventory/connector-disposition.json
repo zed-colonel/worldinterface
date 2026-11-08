@@ -3496,77 +3496,77 @@
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/worker.rs::::enum:WorkerCollection",
-          "source_sha256": "30420d1041a6d585770ed8ae2c7e457727dfebe29b8f0ec9f419f2869f75ed7e",
+          "source_sha256": "47982c9a6fe64e0d9198a17f7ba60772087eb75fb6a6f9742dd4dcb086f5bb6c",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/worker.rs::::enum:WorkerFact",
-          "source_sha256": "30420d1041a6d585770ed8ae2c7e457727dfebe29b8f0ec9f419f2869f75ed7e",
+          "source_sha256": "47982c9a6fe64e0d9198a17f7ba60772087eb75fb6a6f9742dd4dcb086f5bb6c",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/worker.rs::::source-module:crates/worldinterface-foundation/domain/src/worker.rs",
-          "source_sha256": "30420d1041a6d585770ed8ae2c7e457727dfebe29b8f0ec9f419f2869f75ed7e",
+          "source_sha256": "47982c9a6fe64e0d9198a17f7ba60772087eb75fb6a6f9742dd4dcb086f5bb6c",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/worker.rs::::struct:WorkerArtifactPolicy",
-          "source_sha256": "30420d1041a6d585770ed8ae2c7e457727dfebe29b8f0ec9f419f2869f75ed7e",
+          "source_sha256": "47982c9a6fe64e0d9198a17f7ba60772087eb75fb6a6f9742dd4dcb086f5bb6c",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/worker.rs::::struct:WorkerBinding",
-          "source_sha256": "30420d1041a6d585770ed8ae2c7e457727dfebe29b8f0ec9f419f2869f75ed7e",
+          "source_sha256": "47982c9a6fe64e0d9198a17f7ba60772087eb75fb6a6f9742dd4dcb086f5bb6c",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/worker.rs::::struct:WorkerExportPolicy",
-          "source_sha256": "30420d1041a6d585770ed8ae2c7e457727dfebe29b8f0ec9f419f2869f75ed7e",
+          "source_sha256": "47982c9a6fe64e0d9198a17f7ba60772087eb75fb6a6f9742dd4dcb086f5bb6c",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/worker.rs::::struct:WorkerLaunchRecord",
-          "source_sha256": "30420d1041a6d585770ed8ae2c7e457727dfebe29b8f0ec9f419f2869f75ed7e",
+          "source_sha256": "47982c9a6fe64e0d9198a17f7ba60772087eb75fb6a6f9742dd4dcb086f5bb6c",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/worker.rs::::struct:WorkerObservation",
-          "source_sha256": "30420d1041a6d585770ed8ae2c7e457727dfebe29b8f0ec9f419f2869f75ed7e",
+          "source_sha256": "47982c9a6fe64e0d9198a17f7ba60772087eb75fb6a6f9742dd4dcb086f5bb6c",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/worker.rs::::struct:WorkerOperation",
-          "source_sha256": "30420d1041a6d585770ed8ae2c7e457727dfebe29b8f0ec9f419f2869f75ed7e",
+          "source_sha256": "47982c9a6fe64e0d9198a17f7ba60772087eb75fb6a6f9742dd4dcb086f5bb6c",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/worker.rs::::struct:WorkerPreparedCollection",
-          "source_sha256": "30420d1041a6d585770ed8ae2c7e457727dfebe29b8f0ec9f419f2869f75ed7e",
+          "source_sha256": "47982c9a6fe64e0d9198a17f7ba60772087eb75fb6a6f9742dd4dcb086f5bb6c",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/worker.rs::::struct:WorkerProviderQuarantine",
-          "source_sha256": "30420d1041a6d585770ed8ae2c7e457727dfebe29b8f0ec9f419f2869f75ed7e",
+          "source_sha256": "47982c9a6fe64e0d9198a17f7ba60772087eb75fb6a6f9742dd4dcb086f5bb6c",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/worker.rs::::struct:WorkerPublishedCollection",
-          "source_sha256": "30420d1041a6d585770ed8ae2c7e457727dfebe29b8f0ec9f419f2869f75ed7e",
+          "source_sha256": "47982c9a6fe64e0d9198a17f7ba60772087eb75fb6a6f9742dd4dcb086f5bb6c",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/worker.rs::::struct:WorkerQuarantineReport",
-          "source_sha256": "30420d1041a6d585770ed8ae2c7e457727dfebe29b8f0ec9f419f2869f75ed7e",
+          "source_sha256": "47982c9a6fe64e0d9198a17f7ba60772087eb75fb6a6f9742dd4dcb086f5bb6c",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/worker.rs::::struct:WorkerState",
-          "source_sha256": "30420d1041a6d585770ed8ae2c7e457727dfebe29b8f0ec9f419f2869f75ed7e",
+          "source_sha256": "47982c9a6fe64e0d9198a17f7ba60772087eb75fb6a6f9742dd4dcb086f5bb6c",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/domain/src/worker.rs::::struct:WorkerVerifierFinding",
-          "source_sha256": "30420d1041a6d585770ed8ae2c7e457727dfebe29b8f0ec9f419f2869f75ed7e",
+          "source_sha256": "47982c9a6fe64e0d9198a17f7ba60772087eb75fb6a6f9742dd4dcb086f5bb6c",
           "registration_sites": []
         },
         {
@@ -4986,12 +4986,12 @@
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/worker.rs::::enum:Command",
-          "source_sha256": "8c8b5a7b83fc63b47e1185bed222293a57adfa1bf1ba76c369dd27bb3593413a",
+          "source_sha256": "96780ec9d1b5b52151b0a0f0b3454fe0de366e31321fdaeda1f2cd4d3c6c6391",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/worker.rs::::source-module:crates/worldinterface-foundation/storage/src/worker.rs",
-          "source_sha256": "8c8b5a7b83fc63b47e1185bed222293a57adfa1bf1ba76c369dd27bb3593413a",
+          "source_sha256": "96780ec9d1b5b52151b0a0f0b3454fe0de366e31321fdaeda1f2cd4d3c6c6391",
           "registration_sites": []
         },
         {
@@ -5071,7 +5071,7 @@
         },
         {
           "id": "crates/worldinterface-foundation/storage/tests/worker.rs::::source-module:crates/worldinterface-foundation/storage/tests/worker.rs",
-          "source_sha256": "13f5f14d6e5d8c9d0f109a709da20f1f1774c0d97701f88182b98996d6b74d8f",
+          "source_sha256": "426158cecb68bba8cff9ec64c6c1514621d085d58529026755ad46a7a593849e",
           "registration_sites": []
         },
         {
@@ -5996,47 +5996,47 @@
         },
         {
           "id": "crates/worldinterface-runtime/src/worker/connector.rs::::connector:WorkerConnector < S >",
-          "source_sha256": "7078f9d06646a5a87d7b02669d47935e98a7620d07ecee0691f091017ba96254",
+          "source_sha256": "b77ada54dc6876eb32f629ff28f13247361b18168330249e379800f0965c5084",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/worker/connector.rs::::module:tests@10d1b0eff34c",
-          "source_sha256": "7078f9d06646a5a87d7b02669d47935e98a7620d07ecee0691f091017ba96254",
+          "source_sha256": "b77ada54dc6876eb32f629ff28f13247361b18168330249e379800f0965c5084",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/worker/connector.rs::::source-module:crates/worldinterface-runtime/src/worker/connector.rs",
-          "source_sha256": "7078f9d06646a5a87d7b02669d47935e98a7620d07ecee0691f091017ba96254",
+          "source_sha256": "b77ada54dc6876eb32f629ff28f13247361b18168330249e379800f0965c5084",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/worker/connector.rs::::struct:RecoveryOnly",
-          "source_sha256": "7078f9d06646a5a87d7b02669d47935e98a7620d07ecee0691f091017ba96254",
+          "source_sha256": "b77ada54dc6876eb32f629ff28f13247361b18168330249e379800f0965c5084",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/worker/connector.rs::::struct:WorkerAcknowledgement",
-          "source_sha256": "7078f9d06646a5a87d7b02669d47935e98a7620d07ecee0691f091017ba96254",
+          "source_sha256": "b77ada54dc6876eb32f629ff28f13247361b18168330249e379800f0965c5084",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/worker/connector.rs::::struct:WorkerConnector",
-          "source_sha256": "7078f9d06646a5a87d7b02669d47935e98a7620d07ecee0691f091017ba96254",
+          "source_sha256": "b77ada54dc6876eb32f629ff28f13247361b18168330249e379800f0965c5084",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/worker/connector.rs::::struct:WorkerRuntime",
-          "source_sha256": "7078f9d06646a5a87d7b02669d47935e98a7620d07ecee0691f091017ba96254",
+          "source_sha256": "b77ada54dc6876eb32f629ff28f13247361b18168330249e379800f0965c5084",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/worker/connector.rs::::trait:TrustedWorkerBuild",
-          "source_sha256": "7078f9d06646a5a87d7b02669d47935e98a7620d07ecee0691f091017ba96254",
+          "source_sha256": "b77ada54dc6876eb32f629ff28f13247361b18168330249e379800f0965c5084",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/worker/connector.rs::::type:LiveRuns",
-          "source_sha256": "7078f9d06646a5a87d7b02669d47935e98a7620d07ecee0691f091017ba96254",
+          "source_sha256": "b77ada54dc6876eb32f629ff28f13247361b18168330249e379800f0965c5084",
           "registration_sites": []
         },
         {
@@ -7796,37 +7796,37 @@
         },
         {
           "id": "crates/worldinterface-runtime/tests/worker_lifecycle.rs::::module:support",
-          "source_sha256": "8206235b9bc36b0d2b67a5e89e1935d27b6a0f602174ee1c08a803656b42fdb7",
+          "source_sha256": "9172c4d5d83130da1e746b0e8192fe68e5c50ddbc94262d98716a1e7eabed88d",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/worker_lifecycle.rs::::source-module:crates/worldinterface-runtime/tests/worker_lifecycle.rs",
-          "source_sha256": "8206235b9bc36b0d2b67a5e89e1935d27b6a0f602174ee1c08a803656b42fdb7",
+          "source_sha256": "9172c4d5d83130da1e746b0e8192fe68e5c50ddbc94262d98716a1e7eabed88d",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/worker_lifecycle.rs::support::module:connectors",
-          "source_sha256": "8206235b9bc36b0d2b67a5e89e1935d27b6a0f602174ee1c08a803656b42fdb7",
+          "source_sha256": "9172c4d5d83130da1e746b0e8192fe68e5c50ddbc94262d98716a1e7eabed88d",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/worker_lifecycle.rs::support::module:continuation_fixture",
-          "source_sha256": "8206235b9bc36b0d2b67a5e89e1935d27b6a0f602174ee1c08a803656b42fdb7",
+          "source_sha256": "9172c4d5d83130da1e746b0e8192fe68e5c50ddbc94262d98716a1e7eabed88d",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/worker_lifecycle.rs::support::module:flow_fixture",
-          "source_sha256": "8206235b9bc36b0d2b67a5e89e1935d27b6a0f602174ee1c08a803656b42fdb7",
+          "source_sha256": "9172c4d5d83130da1e746b0e8192fe68e5c50ddbc94262d98716a1e7eabed88d",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/worker_lifecycle.rs::support::module:spi_harness",
-          "source_sha256": "8206235b9bc36b0d2b67a5e89e1935d27b6a0f602174ee1c08a803656b42fdb7",
+          "source_sha256": "9172c4d5d83130da1e746b0e8192fe68e5c50ddbc94262d98716a1e7eabed88d",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/worker_lifecycle.rs::support::module:worker_fixture",
-          "source_sha256": "8206235b9bc36b0d2b67a5e89e1935d27b6a0f602174ee1c08a803656b42fdb7",
+          "source_sha256": "9172c4d5d83130da1e746b0e8192fe68e5c50ddbc94262d98716a1e7eabed88d",
           "registration_sites": []
         },
         {
@@ -8408,7 +8408,7 @@
         },
         {
           "path": "crates/worldinterface-foundation/domain/src/worker.rs",
-          "source_sha256": "30420d1041a6d585770ed8ae2c7e457727dfebe29b8f0ec9f419f2869f75ed7e",
+          "source_sha256": "47982c9a6fe64e0d9198a17f7ba60772087eb75fb6a6f9742dd4dcb086f5bb6c",
           "treatment": "WIP-10 candidate worker source or associated build/test surface; preserve exact evaluation bindings and review ownership changes before integration."
         },
         {
@@ -8628,7 +8628,7 @@
         },
         {
           "path": "crates/worldinterface-foundation/storage/src/worker.rs",
-          "source_sha256": "8c8b5a7b83fc63b47e1185bed222293a57adfa1bf1ba76c369dd27bb3593413a",
+          "source_sha256": "96780ec9d1b5b52151b0a0f0b3454fe0de366e31321fdaeda1f2cd4d3c6c6391",
           "treatment": "WIP-10 candidate worker source or associated build/test surface; preserve exact evaluation bindings and review ownership changes before integration."
         },
         {
@@ -8663,7 +8663,7 @@
         },
         {
           "path": "crates/worldinterface-foundation/storage/tests/worker.rs",
-          "source_sha256": "13f5f14d6e5d8c9d0f109a709da20f1f1774c0d97701f88182b98996d6b74d8f",
+          "source_sha256": "426158cecb68bba8cff9ec64c6c1514621d085d58529026755ad46a7a593849e",
           "treatment": "WIP-10 candidate worker source or associated build/test surface; preserve exact evaluation bindings and review ownership changes before integration."
         },
         {
@@ -8873,7 +8873,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/src/worker/connector.rs",
-          "source_sha256": "7078f9d06646a5a87d7b02669d47935e98a7620d07ecee0691f091017ba96254",
+          "source_sha256": "b77ada54dc6876eb32f629ff28f13247361b18168330249e379800f0965c5084",
           "treatment": "WIP-10 candidate worker source or associated build/test surface; preserve exact evaluation bindings and review ownership changes before integration."
         },
         {
@@ -9173,7 +9173,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/tests/worker_lifecycle.rs",
-          "source_sha256": "8206235b9bc36b0d2b67a5e89e1935d27b6a0f602174ee1c08a803656b42fdb7",
+          "source_sha256": "9172c4d5d83130da1e746b0e8192fe68e5c50ddbc94262d98716a1e7eabed88d",
           "treatment": "WIP-10 candidate worker source or associated build/test surface; preserve exact evaluation bindings and review ownership changes before integration."
         },
         {
@@ -10554,7 +10554,7 @@
         },
         {
           "id": "crates/worldinterface-runtime/src/worker/connector.rs::impl WorkerRuntime < S >::registration:fa416ed0d58305fbaee2fdf42993dd38729851f0222aa6c069942d3c5b9b297a#1",
-          "source_sha256": "7078f9d06646a5a87d7b02669d47935e98a7620d07ecee0691f091017ba96254",
+          "source_sha256": "b77ada54dc6876eb32f629ff28f13247361b18168330249e379800f0965c5084",
           "registration_sites": [
             "crates/worldinterface-runtime/src/worker/connector.rs::impl WorkerRuntime < S >"
           ]
@@ -10710,7 +10710,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/src/worker/connector.rs",
-          "source_sha256": "7078f9d06646a5a87d7b02669d47935e98a7620d07ecee0691f091017ba96254",
+          "source_sha256": "b77ada54dc6876eb32f629ff28f13247361b18168330249e379800f0965c5084",
           "treatment": "WIP-10 candidate worker source or associated build/test surface; preserve exact evaluation bindings and review ownership changes before integration."
         },
         {

@@ -611,6 +611,10 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
             super::artifacts::resume(root, binding)?;
             self.finish_collection(binding)?;
         }
+        if op == Operation::Release {
+            let evidence = self.inspection_evidence(binding)?;
+            root.retain_worker_inspection(binding.clone(), serde_json::to_vec(&evidence)?)?;
+        }
         root.acknowledge_worker_operation(binding.clone(), provider_operation)?;
         if op == Operation::Release {
             self.port.retire(binding.provider.as_str(), binding.run.as_str())?;
@@ -676,8 +680,11 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
     ) -> Result<crate::embedded::WorkerEvidence> {
         if binding.tenant.as_str() != self.scope.tenant
             || binding.principal.as_str() != self.scope.principal
-            || self.state(binding)?.binding != *binding
         {
+            return Err("worker evidence scope mismatch".into());
+        }
+        let state = self.state(binding)?;
+        if state.binding != *binding {
             return Err("worker evidence scope mismatch".into());
         }
         let live = self
@@ -685,6 +692,14 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
             .lock()
             .map_err(|_| "worker registry unavailable")?
             .contains_key(&(binding.provider.clone(), binding.run.clone()));
+        if !live && !state.inspection_evidence.is_empty() {
+            let evidence: crate::embedded::WorkerEvidence =
+                serde_json::from_slice(&state.inspection_evidence)?;
+            if !state.cleanup_confirmed || evidence.binding != *binding {
+                return Err("retained worker evidence binding mismatch".into());
+            }
+            return Ok(evidence);
+        }
         let cleanup = if live {
             self.port.evidence(binding.provider.as_str(), binding.run.as_str())?
         } else {

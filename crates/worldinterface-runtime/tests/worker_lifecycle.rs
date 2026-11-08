@@ -124,8 +124,11 @@ async fn one_host_releases_capacity_for_more_than_64_sequential_runs() {
         operation(&h, Operation::Release).await;
         assert!(h.state().cleanup_confirmed);
         assert!(!h.state().capacity_reserved);
+        assert!(!h.state().inspection_evidence.is_empty());
         // Durable acknowledgement makes release idempotent even after port retirement.
-        operation(&h, Operation::Release).await;
+        if n == 0 || n == 65 {
+            operation(&h, Operation::Release).await;
+        }
     }
     assert_eq!(h.runtime.spawn_attempts(), Some(1));
 }

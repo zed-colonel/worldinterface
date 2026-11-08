@@ -64,6 +64,38 @@ fn immutable_start_capacity_stop_and_cleanup_survive_rebuild_backup_and_restart(
     assert!(!root.reserve_start(b.clone(), 1).unwrap());
     assert!(root.record_worker_transition(&state(&root, &b), WorkerFact::Running).is_err());
 }
+#[test]
+fn retired_worker_inspection_is_bounded_immutable_and_survives_restore() {
+    let t = tempfile::tempdir().unwrap();
+    let path = t.path().join("root");
+    let root = create(&path);
+    let b = binding();
+    let evidence = br#"{"cleanup_confirmed":true,"controls":null}"#.to_vec();
+    root.reserve_start(b.clone(), 1).unwrap();
+    assert!(root.retain_worker_inspection(b.clone(), evidence.clone()).is_err());
+    root.record_worker_transition(&state(&root, &b), WorkerFact::NoProcess).unwrap();
+    root.confirm_worker_cleanup(&state(&root, &b)).unwrap();
+    assert!(root.retain_worker_inspection(b.clone(), vec![]).is_err());
+    assert!(root.retain_worker_inspection(b.clone(), vec![0; 16 * 1024 + 1]).is_err());
+    let mut foreign = b.clone();
+    foreign.principal = PrincipalId::generate();
+    assert!(root.retain_worker_inspection(foreign, evidence.clone()).is_err());
+    root.retain_worker_inspection(b.clone(), evidence.clone()).unwrap();
+    let expected = state(&root, &b);
+    root.retain_worker_inspection(b.clone(), evidence.clone()).unwrap();
+    assert_eq!(state(&root, &b), expected);
+    assert!(root.retain_worker_inspection(b.clone(), b"changed".to_vec()).is_err());
+    root.repository(StoreKind::Fabric).unwrap().rebuild().unwrap();
+    assert_eq!(state(&root, &b), expected);
+    drop(root);
+    let root = StoreRoot::open_existing(&path).unwrap();
+    assert_eq!(state(&root, &b).inspection_evidence, evidence);
+    drop(root);
+    let backup = t.path().join("backup");
+    StoreRoot::backup_offline(&path, &backup).unwrap();
+    let root = StoreRoot::open_existing(&backup).unwrap();
+    assert_eq!(state(&root, &b), expected);
+}
 fn observe(
     root: &StoreRoot,
     b: &WorkerBinding,
