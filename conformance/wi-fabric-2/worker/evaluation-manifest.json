@@ -62,7 +62,7 @@
     "conformance/wi-fabric-2/worker/coverage.json": "b648471e4e003dd11a089834f98f1e90c014c9b60799d9a6249eb0408e2421ac",
     "conformance/wi-fabric-2/worker/embedded-coverage.json": "d917429265e2f637b3444cea6dd9555ac2346ec614f9c2f79c370325a7a13bc0",
     "conformance/wi-fabric-2/worker/evaluation-environment.json": "fbfff149065d63a819755e602a4fa692cd8be91f7ae97a578bd04aaefd6268b3",
-    "conformance/wi-fabric-2/worker/evaluation-request.md": "f51ff2b4008d463b2913c50e47337f091fb646063a256bd65318c64c7acb4902",
+    "conformance/wi-fabric-2/worker/evaluation-request.md": "49cf3b5205aa2f08d8e1274dcc19ed874aec1ebbf2025b45bb58c81438dd8937",
     "conformance/wi-fabric-2/worker/handoff-contract.json": "ee7367a45a4533f1d726af2dec88c7e467b1590f64dece76e34e999d8704f52b",
     "conformance/wi-fabric-2/worker/lifecycle-coverage.json": "797881ec5ac665398c0fe03d64622449e5a65eb32aab13fa892927cade6b6524",
     "conformance/wi-fabric-2/worker/process-adapter-coverage.json": "53a856223259a7952f96d42f20cb15a36985be03917bdef59ab9bd65b27d9ddb",
@@ -316,14 +316,14 @@
     "tools/wi-contract-check/src/policy.rs": "4613b4006d13344e48e915be171d93c8a7bbf610db1b21f6c91a627dd74f6698",
     "tools/wi-contract-check/src/proof.rs": "08cf72d56f44c97dc1a0f25df60633b6279a49ffdf2d0bd619440758794b3459",
     "tools/wi-contract-check/src/refresh.rs": "9c5962065a1ad87f70a7ad5dc6ef958062d2026ee8e8b58e7635b858096166ab",
-    "tools/wi-contract-check/src/worker_campaign.rs": "12f74f10416ab70de47322bc8fcbcadd74deb847cd2b227a64832490c4081f53",
+    "tools/wi-contract-check/src/worker_campaign.rs": "b66910d8b2e152aa88bc1e1cd853489d2e7dcb97e644f3ad639ee2efdecd7be7",
     "tools/wi-contract-check/tests/catalog.rs": "edc8741899a5b38e122476d69fb67a533d6bfd14966ef954d21a099ddb18f4e1",
     "tools/wi-contract-check/tests/checker.rs": "11ad0fe5016d123bfb18ed1dd27244063e8dbdc546d58936927b08a255b04016",
     "tools/wi-contract-check/tests/continuations.rs": "d00d51f8ae04809b47c5b2976fb0a860e48cc3d873f832aa2f8f27672070e2a9",
     "tools/wi-contract-check/tests/handoff.rs": "a619128d80a88bc17b7c593e23ece6e2cd18ea88eb894a98a3e286ce0fe03590",
     "tools/wi-contract-check/tests/proof.rs": "a2a9afd4def6fb9ddacd90f28730ddd31ca28bc2cfcfd63873329d839698d2c2",
     "tools/wi-contract-check/tests/runtime_evidence.rs": "232c78c728ff6ca2040b1b591b95cc051498bac4ba6acb5a36d803b1387faad9",
-    "tools/wi-contract-check/tests/worker_campaign.rs": "5b8223a28e1aaa68414731acce9ca6a041718a7dcd99472c76c3b04f8e05acbf"
+    "tools/wi-contract-check/tests/worker_campaign.rs": "28d01a040538d640b393c9e4aea592ac0548c8b26e70d640b5a7894dd15225a4"
   },
   "tasks": [
     "1c53ab56a9058b4b0000f6e4ff5b10509b6c7f074d070aceff78e1267f3385ba",

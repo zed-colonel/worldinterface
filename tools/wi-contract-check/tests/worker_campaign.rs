@@ -255,6 +255,58 @@ fn campaign_parallel_harnesses_retain_failures_and_reject_substituted_binary_pin
 }
 
 #[test]
+fn campaign_tests_in_one_harness_fill_the_bounded_pool_and_run_exactly_once() {
+    let temp = tempfile::tempdir().unwrap();
+    let source = temp.path().join("fixture.rs");
+    let executable = temp.path().join("fixture");
+    // Each exact child must reach the barrier before any child can finish. A
+    // scheduler that assigns whole executables to workers cannot pass this.
+    let mut fixture = format!(
+        r#"
+fn peer(index: usize) {{
+    let base = std::path::PathBuf::from(std::env::var_os("WI_WORKER_CAMPAIGN_EVIDENCE").unwrap());
+    std::fs::OpenOptions::new().write(true).create_new(true)
+        .open(base.join(format!("{{index}}.ready"))).unwrap();
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(15);
+    while !(0..{}).all(|i| base.join(format!("{{i}}.ready")).exists()) {{
+        assert!(std::time::Instant::now() < deadline, "tests in one executable did not overlap");
+        std::thread::sleep(std::time::Duration::from_millis(10));
+    }}
+}}
+"#,
+        campaign::PARALLELISM
+    );
+    let mut selected = BTreeMap::new();
+    for index in 0..campaign::PARALLELISM {
+        let name = format!("peer_{index}");
+        fixture.push_str(&format!("#[test] fn {name}() {{ peer({index}); }}\n"));
+        selected.insert(reference(&name), executable.clone());
+    }
+    fs::write(&source, fixture).unwrap();
+    assert!(Command::new("timeout")
+        .args(["60s", "rustc", "--test"])
+        .arg(&source)
+        .arg("-o")
+        .arg(&executable)
+        .status()
+        .unwrap()
+        .success());
+    let outcomes = campaign::execute_selected(temp.path(), &selected, temp.path()).unwrap();
+    assert_eq!(outcomes.len(), selected.len());
+    assert_eq!(
+        outcomes.iter().map(|o| o.reference.clone()).collect::<Vec<_>>(),
+        selected.keys().cloned().collect::<Vec<_>>()
+    );
+    assert!(outcomes.iter().all(|o| o.passed));
+    campaign::validate_executables(&outcomes, &selected).unwrap();
+    for outcome in outcomes {
+        let log = fs::read(temp.path().join(outcome.log)).unwrap();
+        assert_eq!(wi_contract_check::hash(&log), outcome.log_sha256);
+        assert!(campaign::exact_pass(true, &String::from_utf8(log).unwrap()));
+    }
+}
+
+#[test]
 fn campaign_runtime_remainder_runs_unregistered_tests_without_repeating_registered_or_entry() {
     let reference = |name: &str| TestRef {
         manifest: "crates/worldinterface-runtime/Cargo.toml".into(),

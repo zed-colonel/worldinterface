@@ -1,3 +1,31 @@
+# Finalization F-016 exact-packet evaluation request
+
+The campaign schedules individual exact tests in one pool of at most eight
+workers, including registered cases and the remaining runtime suite. Tests from
+one executable can overlap. Each executable is measured before any test starts
+and after all workers finish; every outcome retains its binary and log digest.
+The receipt still validates the complete registered and remaining test sets
+separately. Timing records one shared execution phase. Per-test timeouts and the
+adopted check's 1800-second ceiling are unchanged.
+
+A non-live regression requires eight exact tests from one binary to reach a
+barrier, with create-once markers detecting duplicate execution. Existing child
+failure, ignored/missing-test, log-tampering and binary-substitution regressions
+remain required. Production runtime, fixture tasks, cases, operations, supervisor
+disposition and per-run control limits are unchanged.
+
+Accept only the canonical digest printed by scripts/refresh-wi-worker-evaluation.py
+after the complete non-live source-bound builder and checks pass. Proposed expiry
+is **2026-11-14T00:00:00Z**, subject to actual operator acceptance and at most
+seven days from acceptance. Scope remains the existing evaluation cases, six
+operations, reviewed nonsensitive fixtures, 15000 ms wall time and 65536 retained
+output bytes. The previous packet's receipt and trusted anchor do not authorize
+these changed bytes. Positive live tests and the adopted runtime-test remain due
+on the committed accepted head. No ordinary use, production credentials,
+integration, publication or gate closure is requested.
+
+## Historical predecessor request
+
 # Finalization F-015 exact-packet evaluation request
 
 F-015 adds WP-028 coverage through real WI admission, the executor on crates.io

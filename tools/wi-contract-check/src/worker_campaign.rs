@@ -18,7 +18,7 @@ use std::{
 
 pub const COVERAGE: &str = "conformance/wi-fabric-2/worker/campaign-coverage.json";
 pub const ENTRY: &str = "wi_owned_worker_acceptance_campaign";
-pub const PARALLELISM: usize = 2;
+pub const PARALLELISM: usize = 8;
 const RUNTIME: &str = "crates/worldinterface-runtime/Cargo.toml";
 const PACKET: &str = "conformance/wi-fabric-2/worker/evaluation-manifest.json";
 const APPROVAL: &str = "conformance/wi-fabric-2/worker/evaluation-approval.json";
@@ -313,21 +313,24 @@ pub fn run(root: &Path, directory: &Path) -> Result<()> {
     }
     validate_coverage(root, &registry, &index)?;
     let selected = select(&registry, &harnesses)?;
-    let execution_started = Instant::now();
-    let outcomes = execute_selected(root, &selected, &directory)?;
-    let execution_seconds = execution_started.elapsed().as_secs_f64();
     // The campaign is also the sole owner of non-registered runtime tests. Do
     // not lose suite coverage when removing Cargo's duplicate default execution.
     let runtime_suite = runtime_remainder(&harnesses, &selected)?;
-    let remainder_started = Instant::now();
-    let runtime_suite_outcomes = execute_harnesses(
+    // Share workers across both sets so a long runtime test can overlap the
+    // registered cases. Receipt validation still checks each set independently.
+    let execution_started = Instant::now();
+    let all_outcomes = execute_harnesses(
         root,
-        runtime_suite
-            .iter()
-            .flat_map(|(r, paths)| paths.iter().map(move |p| (r.clone(), p.clone()))),
+        selected.iter().map(|(r, p)| (r.clone(), p.clone())).chain(
+            runtime_suite
+                .iter()
+                .flat_map(|(r, paths)| paths.iter().map(move |p| (r.clone(), p.clone()))),
+        ),
         &directory,
     )?;
-    let remainder_seconds = remainder_started.elapsed().as_secs_f64();
+    let execution_seconds = execution_started.elapsed().as_secs_f64();
+    let (outcomes, runtime_suite_outcomes): (Vec<_>, Vec<_>) =
+        all_outcomes.into_iter().partition(|o| selected.contains_key(&o.reference));
     let mut observations = BTreeMap::new();
     for name in ["coding.json", "transform.json", "seam.json"] {
         observations.insert(name.to_string(), digest_file(&directory, name).ok());
@@ -373,7 +376,7 @@ pub fn run(root: &Path, directory: &Path) -> Result<()> {
         )?;
     }
     let timing = json!({"discovery_build_and_listing_seconds":discovery_seconds,
-        "registered_campaign_seconds":execution_seconds,"rest_of_runtime_suite_seconds":remainder_seconds,
+        "campaign_execution_seconds":execution_seconds,"execution_phases":1,
         "receipt_validation_seconds":validation_started.elapsed().as_secs_f64(),
         "total_seconds":started.elapsed().as_secs_f64(),"discovery_passes":1,
         "registered_tests":outcomes.len(),"additional_runtime_tests":runtime_suite_outcomes.len()});
@@ -402,8 +405,8 @@ pub fn runtime_remainder(
     Ok(remainder)
 }
 /// Independent harnesses have private stores and child processes. Bound their
-/// concurrency, retain every individual outcome, and measure each harness before
-/// and after its complete group rather than once per test using identical bytes.
+/// concurrency and retain every individual outcome. Tests from the same harness
+/// can overlap; measure each executable once before and after the entire phase.
 pub fn execute_selected(
     root: &Path,
     selected: &BTreeMap<TestRef, PathBuf>,
@@ -416,45 +419,39 @@ fn execute_harnesses(
     selected: impl Iterator<Item = (TestRef, PathBuf)>,
     directory: &Path,
 ) -> Result<Vec<Outcome>> {
-    let mut groups = BTreeMap::<PathBuf, Vec<TestRef>>::new();
-    for (reference, executable) in selected {
-        groups.entry(executable).or_default().push(reference);
+    let selected = selected.collect::<VecDeque<_>>();
+    let mut digests = BTreeMap::new();
+    for (_, executable) in &selected {
+        if !digests.contains_key(executable) {
+            digests.insert(executable.clone(), hash(fs::read(executable)?));
+        }
     }
-    let pending = Mutex::new(VecDeque::from_iter(groups));
+    let pending = Mutex::new(selected);
     let batches = std::thread::scope(|scope| {
         let workers = (0..PARALLELISM)
             .map(|_| {
                 scope.spawn(|| {
                     let mut batches = Vec::new();
                     loop {
-                        let Some((executable, references)) = pending.lock().unwrap().pop_front()
+                        let Some((reference, executable)) = pending.lock().unwrap().pop_front()
                         else {
                             break;
                         };
-                        let batch = (|| -> Result<Vec<Outcome>> {
-                            let digest = hash(fs::read(&executable)?);
-                            let mut outcomes = Vec::new();
-                            for reference in references {
-                                let outcome = execute_bound(
-                                    root,
-                                    reference,
-                                    &executable,
-                                    directory,
-                                    &digest,
-                                )?;
-                                eprintln!(
-                                    "campaign {}: {}",
-                                    outcome.reference.test,
-                                    if outcome.passed { "passed" } else { "FAILED" }
-                                );
-                                outcomes.push(outcome);
-                            }
-                            if digest != hash(fs::read(&executable)?) {
-                                return Err("campaign harness changed during execution".into());
-                            }
-                            Ok(outcomes)
-                        })();
-                        batches.push(batch.map_err(|e| e.to_string()));
+                        let outcome = execute_bound(
+                            root,
+                            reference,
+                            &executable,
+                            directory,
+                            &digests[&executable],
+                        );
+                        if let Ok(outcome) = &outcome {
+                            eprintln!(
+                                "campaign {}: {}",
+                                outcome.reference.test,
+                                if outcome.passed { "passed" } else { "FAILED" }
+                            );
+                        }
+                        batches.push(outcome.map_err(|e| e.to_string()));
                     }
                     batches
                 })
@@ -462,10 +459,15 @@ fn execute_harnesses(
             .collect::<Vec<_>>();
         workers.into_iter().map(|w| w.join()).collect::<Vec<_>>()
     });
+    for (executable, digest) in digests {
+        if digest != hash(fs::read(executable)?) {
+            return Err("campaign harness changed during execution".into());
+        }
+    }
     let mut outcomes = Vec::new();
     for worker in batches {
         for batch in worker.map_err(|_| "campaign worker panicked")? {
-            outcomes.extend(batch.map_err(|e| format!("campaign harness failed: {e}"))?);
+            outcomes.push(batch.map_err(|e| format!("campaign harness failed: {e}"))?);
         }
     }
     outcomes.sort_by(|a, b| (&a.reference, &a.log).cmp(&(&b.reference, &b.log)));
