@@ -847,6 +847,16 @@
           "manifest": "crates/worldinterface-runtime/Cargo.toml",
           "package": "worldinterface-runtime",
           "test": "artifact_integrity_symlink_hardlink_and_special_files_are_quarantined"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_028_unsafe_live_exports_quarantine_and_report_through_real_wi_aq"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_028_unavailable_seam_export_quarantines_after_provider_ack_through_real_wi_aq"
         }
       ]
     },

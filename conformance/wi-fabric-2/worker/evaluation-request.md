@@ -1,3 +1,30 @@
+# Finalization F-015 exact-packet evaluation request
+
+F-015 adds WP-028 coverage through real WI admission, the executor on crates.io
+AQ 0.3.0 and the durable outbox. The live process test replaces a successfully
+produced export with a symlink, hardlink or FIFO before CollectArtifacts and
+asserts a durable provider-collection-rejected quarantine report, stop request,
+retained capacity, no completion, no public artifacts, and identical disposition
+after rebuild and reopen. A separate explicitly labelled seam simulation loses
+export data after execution, exercising provider-collection-unavailable after
+collection acknowledgment with the same durable assertions.
+
+The registry and authoritative WIP-11 coverage register both tests. Runtime
+production code, process supervisor source and disposition, fixture tasks, cases,
+six operations and control limits are unchanged. Only the test seam gains a
+bounded data-loss setup method. This request supersedes the previous packet for
+these changed source bytes; its receipt and trusted anchor remain historical.
+
+Accept only the canonical digest printed by scripts/refresh-wi-worker-evaluation.py
+after the complete non-live source-bound builder and checks pass. Proposed expiry
+is **2026-11-14T00:00:00Z**, subject to actual operator acceptance and at most
+seven days from acceptance. Limits remain reviewed nonsensitive fixtures,
+15000 ms wall time and 65536 retained output bytes. Acceptance grants no ordinary
+use, production credentials, integration, publication or gate closure. Positive
+live tests and adopted runtime-test remain due on the committed accepted head.
+
+## Historical predecessor requests
+
 # WIP-16 publication exact-packet evaluation request
 
 This candidate adds the evidence/consumer guide, pinned handoff descriptor,

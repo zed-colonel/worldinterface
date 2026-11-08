@@ -1269,7 +1269,7 @@
         },
         {
           "path": "docs/evidence/WI-EMBEDDED-WORKER-PROOF-1.md",
-          "source_sha256": "b978d5ae87c26dffbdfde331376e617922980d891ffdad63ed9f577f8dc247bf",
+          "source_sha256": "6005a7d02355493004b1cbe27145403f1244b8e1a5d71838113141a3e159decf",
           "treatment": "Preserve WIP-16 producer evidence, exact test mappings and seam timing semantics during selective legacy delay removal; this document composes no legacy connector. WIP-16 adds this explicit candidate documentation disposition for review."
         },
         {
@@ -7561,22 +7561,22 @@
         },
         {
           "id": "crates/worldinterface-runtime/tests/support/worker_seam.rs::::source-module:crates/worldinterface-runtime/tests/support/worker_seam.rs",
-          "source_sha256": "26edbf856f0f378878d7583fd71c4be70082bb1deb798f4a29390ba09a1dac79",
+          "source_sha256": "0f050f1e154faccc2d1cd1530dff25fc933714da6e22a387cd50a76bdbaa72da",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/support/worker_seam.rs::::struct:Run",
-          "source_sha256": "26edbf856f0f378878d7583fd71c4be70082bb1deb798f4a29390ba09a1dac79",
+          "source_sha256": "0f050f1e154faccc2d1cd1530dff25fc933714da6e22a387cd50a76bdbaa72da",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/support/worker_seam.rs::::struct:Seam",
-          "source_sha256": "26edbf856f0f378878d7583fd71c4be70082bb1deb798f4a29390ba09a1dac79",
+          "source_sha256": "0f050f1e154faccc2d1cd1530dff25fc933714da6e22a387cd50a76bdbaa72da",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/support/worker_seam.rs::::type:Runs",
-          "source_sha256": "26edbf856f0f378878d7583fd71c4be70082bb1deb798f4a29390ba09a1dac79",
+          "source_sha256": "0f050f1e154faccc2d1cd1530dff25fc933714da6e22a387cd50a76bdbaa72da",
           "registration_sites": []
         },
         {
@@ -7641,32 +7641,32 @@
         },
         {
           "id": "crates/worldinterface-runtime/tests/worker_artifacts.rs::::module:support",
-          "source_sha256": "172a3df5550c3f2087390e13ad237a7125b1c3c83bba02f6f275b08a698835de",
+          "source_sha256": "a222c25195532eb99eccd07b5f4b3a144739b371c6404e140a784f5ebd4b1570",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/worker_artifacts.rs::::source-module:crates/worldinterface-runtime/tests/worker_artifacts.rs",
-          "source_sha256": "172a3df5550c3f2087390e13ad237a7125b1c3c83bba02f6f275b08a698835de",
+          "source_sha256": "a222c25195532eb99eccd07b5f4b3a144739b371c6404e140a784f5ebd4b1570",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/worker_artifacts.rs::support::module:connectors",
-          "source_sha256": "172a3df5550c3f2087390e13ad237a7125b1c3c83bba02f6f275b08a698835de",
+          "source_sha256": "a222c25195532eb99eccd07b5f4b3a144739b371c6404e140a784f5ebd4b1570",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/worker_artifacts.rs::support::module:flow_fixture",
-          "source_sha256": "172a3df5550c3f2087390e13ad237a7125b1c3c83bba02f6f275b08a698835de",
+          "source_sha256": "a222c25195532eb99eccd07b5f4b3a144739b371c6404e140a784f5ebd4b1570",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/worker_artifacts.rs::support::module:spi_harness",
-          "source_sha256": "172a3df5550c3f2087390e13ad237a7125b1c3c83bba02f6f275b08a698835de",
+          "source_sha256": "a222c25195532eb99eccd07b5f4b3a144739b371c6404e140a784f5ebd4b1570",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/worker_artifacts.rs::support::module:worker_fixture",
-          "source_sha256": "172a3df5550c3f2087390e13ad237a7125b1c3c83bba02f6f275b08a698835de",
+          "source_sha256": "a222c25195532eb99eccd07b5f4b3a144739b371c6404e140a784f5ebd4b1570",
           "registration_sites": []
         },
         {
@@ -9123,7 +9123,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/tests/support/worker_seam.rs",
-          "source_sha256": "26edbf856f0f378878d7583fd71c4be70082bb1deb798f4a29390ba09a1dac79",
+          "source_sha256": "0f050f1e154faccc2d1cd1530dff25fc933714da6e22a387cd50a76bdbaa72da",
           "treatment": "Shared WIP-11 artifact/seam support or evidence: retain run scoping, publication and quarantine obligations; review selective legacy removal without deleting these contracts. Candidate disposition in docs/work-items/WIP-11.md."
         },
         {
@@ -9143,7 +9143,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/tests/worker_artifacts.rs",
-          "source_sha256": "172a3df5550c3f2087390e13ad237a7125b1c3c83bba02f6f275b08a698835de",
+          "source_sha256": "a222c25195532eb99eccd07b5f4b3a144739b371c6404e140a784f5ebd4b1570",
           "treatment": "Shared WIP-11 artifact/seam support or evidence: retain run scoping, publication and quarantine obligations; review selective legacy removal without deleting these contracts. Candidate disposition in docs/work-items/WIP-11.md."
         },
         {

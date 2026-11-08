@@ -30,7 +30,9 @@
       "wp_028_missing_or_corrupt_prepared_snapshot_quarantines_without_recollection",
       "wp_028_live_collection_ack_receipt_and_aq_crashes_preserve_publication_order",
       "worker_process::artifact::tests::export_links_special_files_and_replacement_races_reject",
-      "artifact_integrity_symlink_hardlink_and_special_files_are_quarantined"
+      "artifact_integrity_symlink_hardlink_and_special_files_are_quarantined",
+      "wp_028_unsafe_live_exports_quarantine_and_report_through_real_wi_aq",
+      "wp_028_unavailable_seam_export_quarantines_after_provider_ack_through_real_wi_aq"
     ],
     "WP-031": [
       "wp_031_seam_simulation_delayed_reordered_observations_and_uncertain_ack_use_real_wi_aq"

@@ -6,10 +6,10 @@ mod support {
     pub mod worker_fixture;
 }
 use support::worker_fixture::*;
-use worldinterface_domain::worker::WorkerCollection;
+use worldinterface_domain::worker::{WorkerBinding, WorkerCollection};
 use worldinterface_protocol::*;
 use worldinterface_runtime::worker_process::*;
-use worldinterface_storage::flow::FlowOutcome;
+use worldinterface_storage::{flow::FlowOutcome, StoreKind, StoreRoot};
 use worldinterface_worker::mapping::Operation;
 #[tokio::test]
 async fn wp_027_scoped_transform_import_and_durable_export_through_real_wi_aq() {
@@ -81,4 +81,154 @@ async fn wp_027_coding_patch_and_schema_report_publish_before_completion() {
     assert_eq!(h.runtime.read_artifact(&h.binding(), "patch").unwrap(), patch);
     assert_eq!(h.runtime.read_artifact(&h.binding(), "report").unwrap(), report);
     h.operation(Operation::Release).await;
+}
+
+fn assert_collection_quarantined(
+    root: &StoreRoot,
+    binding: &WorkerBinding,
+    code: &str,
+) -> WorkerCollection {
+    let state =
+        root.worker_snapshot(&binding.tenant, &binding.provider, &binding.run).unwrap().unwrap();
+    assert!(state.quarantined && state.stop_requested && state.capacity_reserved);
+    assert!(!state.completed && !state.cleanup_confirmed);
+    let WorkerCollection::Quarantined(report) = &state.collection else {
+        panic!("collection was not quarantined: {:?}", state.collection);
+    };
+    let operation =
+        state.operations.values().find(|o| o.operation.as_str() == "collect_artifacts").unwrap();
+    assert!(!operation.acknowledged);
+    assert_eq!(report.binding, *binding);
+    assert_eq!(report.operation, operation.key);
+    assert_eq!(report.codes, vec![code.to_string().try_into().unwrap()]);
+    assert_eq!(report.policy, ContentHash::of(&canonical_data(&state.artifact_policy[0]).unwrap()));
+    for export in &state.artifact_policy[0].exports {
+        assert!(worldinterface_runtime::worker::artifacts::read(
+            root,
+            binding,
+            export.reference.as_str()
+        )
+        .is_err());
+        assert!(
+            root.read_artifact(&ArtifactRef {
+                scope: binding.tenant.clone(),
+                content: export.digest.clone(),
+                size: export.size,
+            })
+            .is_err(),
+            "rejected export reached the public artifact store"
+        );
+    }
+    let signals = root.signal_obligations(StoreKind::Fabric, None, 100).unwrap();
+    assert!(signals.iter().any(|s| s.event.route.kind
+        == worldinterface_domain::continuation::EventKind::WorkerObservation
+        && s.event.route.correlation == binding.event_correlation().unwrap()));
+    for signal in signals {
+        assert_eq!(
+            root.authoritative_event(StoreKind::Fabric, &signal.event.id).unwrap(),
+            signal.event
+        );
+    }
+    state.collection
+}
+
+// F-015: exercise the connector's rejection path through admission, the real
+// executor/AQ and its outbox, rather than calling the adapter or collector alone.
+#[tokio::test]
+async fn wp_028_unsafe_live_exports_quarantine_and_report_through_real_wi_aq() {
+    for attack in ["symlink", "hardlink", "fifo"] {
+        let mut h = Harness::new(Task::Transform { xor: 7 }, "WP-028", 1500, 65536);
+        h.inputs = vec![h.bundle.wi().publish(h.auth.0.clone(), b"hello").unwrap()];
+        let bytes: Vec<_> = b"hello".iter().map(|b| b ^ 7).collect();
+        h.exports = vec![Export {
+            reference: "result".into(),
+            name: "output.bin".into(),
+            digest: ContentHash::of(&bytes),
+            size: bytes.len() as u64,
+        }];
+        h.operation(Operation::Start).await;
+        let cleanup = h.finish().await;
+        assert!(cleanup.exit_confirmed && cleanup.cleanup_confirmed);
+        assert_eq!(cleanup.exit_success, Some(true));
+        assert_eq!(h.runtime.spawn_attempts(), Some(1));
+        assert!(matches!(h.state().collection, WorkerCollection::Absent));
+        let allocations: Vec<_> = std::fs::read_dir(h.root.join("process"))
+            .unwrap()
+            .map(|entry| entry.unwrap().path())
+            .filter(|path| path.is_dir())
+            .collect();
+        assert_eq!(allocations.len(), 1);
+        let file = allocations[0].join("export/output.bin");
+        assert_eq!(std::fs::read(&file).unwrap(), bytes);
+        let source = h.root.join("export-source");
+        std::fs::write(&source, &bytes).unwrap();
+        std::fs::remove_file(&file).unwrap();
+        match attack {
+            "symlink" => std::os::unix::fs::symlink(&source, &file).unwrap(),
+            "hardlink" => std::fs::hard_link(&source, &file).unwrap(),
+            "fifo" => {
+                let name = std::ffi::CString::new(file.as_os_str().as_encoded_bytes()).unwrap();
+                assert_eq!(unsafe { libc::mkfifo(name.as_ptr(), 0o600) }, 0);
+            }
+            _ => unreachable!(),
+        }
+        h.operation_expect(Operation::CollectArtifacts, FlowOutcome::Uncertain).await;
+        let binding = h.binding();
+        let decided =
+            assert_collection_quarantined(h.bundle.wi(), &binding, "provider-collection-rejected");
+        assert_eq!(h.runtime.spawn_attempts(), Some(1));
+        h.bundle.wi().repository(StoreKind::Fabric).unwrap().rebuild().unwrap();
+        assert_eq!(
+            assert_collection_quarantined(h.bundle.wi(), &binding, "provider-collection-rejected"),
+            decided
+        );
+        let h = h.reopen();
+        assert_eq!(
+            assert_collection_quarantined(h.bundle.wi(), &binding, "provider-collection-rejected"),
+            decided
+        );
+        assert_eq!(h.runtime.spawn_attempts(), Some(0), "reopen must not launch a replacement");
+    }
+}
+
+#[tokio::test]
+async fn wp_028_unavailable_seam_export_quarantines_after_provider_ack_through_real_wi_aq() {
+    let mut h = Harness::new(Task::Transform { xor: 7 }, "WP-028", 1500, 65536);
+    h.inputs = vec![h.bundle.wi().publish(h.auth.0.clone(), b"hello").unwrap()];
+    let bytes: Vec<_> = b"hello".iter().map(|b| b ^ 7).collect();
+    h.exports = vec![Export {
+        reference: "result".into(),
+        name: "output.bin".into(),
+        digest: ContentHash::of(&bytes),
+        size: bytes.len() as u64,
+    }];
+    let (h, provider) = h.with_seam();
+    assert_eq!(seam::LABEL, "seam simulation");
+    h.operation(Operation::Start).await;
+    h.reconcile_start().await;
+    assert!(h.finish().await.cleanup_confirmed);
+    assert_eq!(provider.launches(), 1);
+    // A real asynchronous seam implementation acknowledges collection but has
+    // lost its export bytes. WI must retain uncertainty and a quarantine report.
+    provider.discard_artifacts();
+    h.operation_expect(Operation::CollectArtifacts, FlowOutcome::Uncertain).await;
+    let binding = h.binding();
+    let decided =
+        assert_collection_quarantined(h.bundle.wi(), &binding, "provider-collection-unavailable");
+    assert_eq!(provider.launches(), 1);
+    h.bundle.wi().repository(StoreKind::Fabric).unwrap().rebuild().unwrap();
+    assert_eq!(
+        assert_collection_quarantined(h.bundle.wi(), &binding, "provider-collection-unavailable"),
+        decided
+    );
+    let path = h.root.join("bundle");
+    let Harness { temp: _retained_temp, bundle, runtime, .. } = h;
+    drop(runtime);
+    drop(bundle);
+    drop(provider);
+    let bundle = worldinterface_runtime::storage::StoreBundle::open(&path).unwrap();
+    assert_eq!(
+        assert_collection_quarantined(bundle.wi(), &binding, "provider-collection-unavailable"),
+        decided
+    );
 }

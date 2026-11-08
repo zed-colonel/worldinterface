@@ -99,6 +99,13 @@ impl Seam {
     pub fn launches(&self) -> usize {
         self.runs.lock().unwrap().values().map(|r| r.launches).sum()
     }
+    /// Simulate provider data loss after execution but before WI collection.
+    pub fn discard_artifacts(&self) {
+        for run in self.runs.lock().unwrap().values_mut() {
+            assert!(run.finished);
+            run.artifacts.clear();
+        }
+    }
 }
 impl Drop for Seam {
     fn drop(&mut self) {

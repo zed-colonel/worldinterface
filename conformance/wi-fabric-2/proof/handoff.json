@@ -959,6 +959,16 @@
           "manifest": "crates/worldinterface-runtime/Cargo.toml",
           "package": "worldinterface-runtime",
           "test": "artifact_integrity_symlink_hardlink_and_special_files_are_quarantined"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_028_unsafe_live_exports_quarantine_and_report_through_real_wi_aq"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_028_unavailable_seam_export_quarantines_after_provider_ack_through_real_wi_aq"
         }
       ]
     },
@@ -3538,8 +3548,8 @@
     "crates/worldinterface-runtime/src/worker_process/supervision.rs": "7210b73647db0ade87f0cdf489a901fed9151d52ca2950135bf10526590fb259",
     "crates/worldinterface-runtime/tests/support/worker_build.rs": "013aea2eb9c0f0ae7d8cbc6fc329c875d1d5f2362e3cc9bfa13d4c0c730f18f4",
     "crates/worldinterface-runtime/tests/support/worker_fixture.rs": "e05a7a3ed8e47b5ef747d4bc02a48fa34f1181e41a59483359e0a9bd693a6095",
-    "crates/worldinterface-runtime/tests/support/worker_seam.rs": "26edbf856f0f378878d7583fd71c4be70082bb1deb798f4a29390ba09a1dac79",
-    "docs/evidence/WI-EMBEDDED-WORKER-PROOF-1.md": "b978d5ae87c26dffbdfde331376e617922980d891ffdad63ed9f577f8dc247bf",
+    "crates/worldinterface-runtime/tests/support/worker_seam.rs": "0f050f1e154faccc2d1cd1530dff25fc933714da6e22a387cd50a76bdbaa72da",
+    "docs/evidence/WI-EMBEDDED-WORKER-PROOF-1.md": "6005a7d02355493004b1cbe27145403f1244b8e1a5d71838113141a3e159decf",
     "fixtures/pre-wi-fabric-2/exo/repos/sample-rust/.gitignore": "12cc0f91b51fedf41ae1670d1624ee1d78a284bdb101645b60a06a12de16c069",
     "fixtures/pre-wi-fabric-2/exo/repos/sample-rust/Cargo.lock": "05c88a19f6c1a4bd2a4f0d92e280e80827f001080d82c84b8a18426a00a3f1bc",
     "fixtures/pre-wi-fabric-2/exo/repos/sample-rust/Cargo.toml": "f7a6fdad07f316a2c3168b5c0dd9af42cb5bb10c8ba0cd325cd9dc33f067ca21",
