@@ -3,9 +3,7 @@ use crate::{invalid, Result, StoreKind, StoreRoot};
 use rusqlite::{params, Connection, OptionalExtension};
 use worldinterface_domain::receipt::{DisclosureProfile, ReceiptAccess};
 use worldinterface_protocol::receipt::{ProofBundleV1, SigningProofV1};
-use worldinterface_protocol::{
-    canonical_data, strict_json, ContentHash, EvidenceRef, OpaqueRef, ReceiptId,
-};
+use worldinterface_protocol::{canonical_data, ContentHash, EvidenceRef, OpaqueRef, ReceiptId};
 
 fn receipt_digest(
     c: &Connection,
@@ -66,10 +64,7 @@ impl StoreRoot {
         let rows = rows.collect::<rusqlite::Result<Vec<_>>>()?;
         rows.into_iter()
             .map(|(digest, bytes)| {
-                Ok((
-                    digest.try_into().map_err(invalid)?,
-                    serde_json::from_value(strict_json(&bytes).map_err(invalid)?)?,
-                ))
+                Ok((digest.try_into().map_err(invalid)?, crate::decode_record(&bytes)?))
             })
             .collect()
     }
@@ -141,8 +136,7 @@ impl StoreRoot {
             .optional()?;
         bytes
             .map(|b| {
-                let bundle: ProofBundleV1 =
-                    serde_json::from_value(strict_json(&b).map_err(invalid)?)?;
+                let bundle: ProofBundleV1 = crate::decode_record(&b)?;
                 bundle.validate().map_err(invalid)?;
                 for receipt in self.proof_bundle_receipts(access.tenant(), &bundle)? {
                     if self.inspect_receipt(access, &receipt)?.is_none() {
@@ -227,7 +221,7 @@ pub(crate) fn validate(root: &StoreRoot) -> Result<()> {
         let (tenant, receipt, digest, bytes) = row?;
         let tenant: OpaqueRef = tenant.try_into().map_err(invalid)?;
         let receipt: ReceiptId = receipt.try_into().map_err(invalid)?;
-        let proof: SigningProofV1 = serde_json::from_value(strict_json(&bytes).map_err(invalid)?)?;
+        let proof: SigningProofV1 = crate::decode_record(&bytes)?;
         proof.signing_input().map_err(invalid)?;
         if ContentHash::of(&bytes).as_str() != digest
             || canonical_data(&proof).map_err(invalid)? != bytes
@@ -247,7 +241,7 @@ pub(crate) fn validate(root: &StoreRoot) -> Result<()> {
     for row in rows {
         let (tenant, digest, bytes) = row?;
         let tenant: OpaqueRef = tenant.try_into().map_err(invalid)?;
-        let bundle: ProofBundleV1 = serde_json::from_value(strict_json(&bytes).map_err(invalid)?)?;
+        let bundle: ProofBundleV1 = crate::decode_record(&bytes)?;
         bundle.validate().map_err(invalid)?;
         if ContentHash::of(&bytes).as_str() != digest
             || canonical_data(&bundle).map_err(invalid)? != bytes

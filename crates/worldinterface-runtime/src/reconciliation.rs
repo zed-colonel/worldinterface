@@ -89,11 +89,11 @@ impl CaseLocator {
     }
 }
 pub(crate) fn request(case: &ReconciliationCase) -> Result<EnsureTaskRequest> {
-    let hash = ContentHash::of(&canonical_data(&(
+    let hash = worldinterface_protocol::data_digest(&(
         "wi-reconciliation-task:1",
         &case.id,
         &case.queue_store,
-    ))?);
+    ))?;
     let mut uuid = [0u8; 16];
     uuid.copy_from_slice(&hex::decode(hash.as_str())?[..16]);
     let task = TaskId::from_uuid(uuid::Uuid::from_bytes(uuid));

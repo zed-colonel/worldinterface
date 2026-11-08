@@ -82,7 +82,7 @@ fn inventory_is_complete_and_deterministic() {
         ("foundation-crate", 7),
         ("connector", 30), // WIP-14 adds the immutable embedded process dispatcher.
         ("wasm-manifest", 15),
-        ("generated-id", 4),
+        ("generated-id", 22), // Four legacy IDs plus 18 shared protocol declarations.
     ] {
         assert_eq!(a.iter().filter(|x| x.kind == k).count(), n, "{k}")
     }

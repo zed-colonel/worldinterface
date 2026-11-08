@@ -153,9 +153,7 @@ pub enum IngressResult {
     StaleQueueGeneration,
     QueueRecoveryExhausted,
 }
-pub fn digest<T: Serialize>(value: &T) -> Result<ContentHash> {
-    Ok(ContentHash::of(&canonical_data(value)?))
-}
+pub use worldinterface_protocol::data_digest as digest;
 /// Availability namespace is bound to the complete provider/source scope. Knowing a
 /// different provider's artifact hash within the same tenant does not grant access.
 pub fn provider_artifact_scope(scope: &ProviderScope) -> Result<OpaqueRef> {

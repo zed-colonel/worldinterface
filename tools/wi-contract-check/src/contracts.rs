@@ -368,20 +368,26 @@ fn egress_approval_pin(id: &str) -> Option<&'static str> {
         _ => None,
     }
 }
+const ADR_001_SHA256: &str = "ffc652dc4aeb0af4708da435a3836d48e4f34bccd0759cd5df10bb5fcb83e099";
+const ADR_002_SHA256: &str = "90fc2c3a245ecc3e2f007a284aa54b82a24858409e7b8b8353643bd138cfb326";
+const ADR_003_SHA256: &str = "1912ba6bcb31f0c4a32053fb5d6b0156458db1d5496ca92018881afee241de18";
+const ADR_012_SHA256: &str = "2be10eb17b6770127cdb8fb12b655243230d73da8884044a866a633a6d51ef8b";
+const ADR_013_SHA256: &str = "5d6f0c215398cbaa01bce0bfd1639874736a2419a1fc75246a7471e9f8af9bcb";
+const ADR_016_SHA256: &str = "b25fea0d6571e51bfbd60d370a2c5fad7b30b664b05ba80c425ac2616cf7d9cf";
 pub fn adr_coverage(root: &Path, id: &str, scope: &str, phase: &str, full: bool) -> Result<bool> {
     if id == "WI-ADR-016" && full {
         return Ok(hash(fs::read(root.join("docs/adr/approvals.json"))?)
             == "80d06ce11cfdf319d7611c3d8bc093c086e29ab68d482fdff200cc5fa5156c90"
             && hash(fs::read(root.join("docs/adr/approvals/WI-ADR-016-full.json"))?)
-                == "b25fea0d6571e51bfbd60d370a2c5fad7b30b664b05ba80c425ac2616cf7d9cf");
+                == ADR_016_SHA256);
     }
     if let Some(pin) = egress_approval_pin(id) {
         let bytes = fs::read(root.join(format!("docs/adr/approvals/{id}.json")))?;
         return Ok(hash(&bytes) == pin);
     }
     let ingress_pin = match id {
-        "WI-ADR-012" => Some("2be10eb17b6770127cdb8fb12b655243230d73da8884044a866a633a6d51ef8b"),
-        "WI-ADR-013" => Some("5d6f0c215398cbaa01bce0bfd1639874736a2419a1fc75246a7471e9f8af9bcb"),
+        "WI-ADR-012" => Some(ADR_012_SHA256),
+        "WI-ADR-013" => Some(ADR_013_SHA256),
         _ => None,
     };
     if let Some(pin) = ingress_pin {
@@ -446,43 +452,19 @@ pub fn docs(root: &Path) -> Result<Vec<Finding>> {
     for (row, r) in expected.iter().zip(records) {
         let id = row[1].trim_matches('`');
         let approved = match id {
-            id if egress_approval_pin(id).is_some() => {
-                Some(("accepted", "full", egress_approval_pin(id).unwrap()))
-            }
-            "WI-ADR-001" => Some((
-                "accepted",
-                "full",
-                "ffc652dc4aeb0af4708da435a3836d48e4f34bccd0759cd5df10bb5fcb83e099",
-            )),
-            "WI-ADR-002" => Some((
-                "accepted",
-                "full",
-                "90fc2c3a245ecc3e2f007a284aa54b82a24858409e7b8b8353643bd138cfb326",
-            )),
-            "WI-ADR-003" => Some((
-                "accepted",
-                "full",
-                "1912ba6bcb31f0c4a32053fb5d6b0156458db1d5496ca92018881afee241de18",
-            )),
-            "WI-ADR-013" => Some((
-                "accepted",
-                "full",
-                "5d6f0c215398cbaa01bce0bfd1639874736a2419a1fc75246a7471e9f8af9bcb",
-            )),
-            "WI-ADR-012" => Some((
-                "accepted",
-                "full",
-                "2be10eb17b6770127cdb8fb12b655243230d73da8884044a866a633a6d51ef8b",
-            )),
-            "WI-ADR-016" => Some((
-                "accepted",
-                "full",
-                "b25fea0d6571e51bfbd60d370a2c5fad7b30b664b05ba80c425ac2616cf7d9cf",
-            )),
+            id if egress_approval_pin(id).is_some() => egress_approval_pin(id),
+            "WI-ADR-001" => Some(ADR_001_SHA256),
+            "WI-ADR-002" => Some(ADR_002_SHA256),
+            "WI-ADR-003" => Some(ADR_003_SHA256),
+            "WI-ADR-013" => Some(ADR_013_SHA256),
+            "WI-ADR-012" => Some(ADR_012_SHA256),
+            "WI-ADR-016" => Some(ADR_016_SHA256),
             _ => None,
         };
-        let status = approved.map_or("queued", |(status, _, _)| status);
-        if let Some((_, coverage, digest)) = approved {
+        let status = approved.map_or("queued", |_| "accepted");
+        let stub = fs::read_to_string(root.join(format!("docs/adr/{id}.md")))?;
+        if let Some(digest) = approved {
+            let coverage = "full";
             let path = if id == "WI-ADR-016" {
                 "docs/adr/approvals/WI-ADR-016-full.json".to_string()
             } else {
@@ -504,14 +486,10 @@ pub fn docs(root: &Path) -> Result<Vec<Finding>> {
                 || r["approval_id"] != approval["approval"]["id"]
                 || (matches!(id, "WI-ADR-011" | "WI-ADR-014" | "WI-ADR-015" | "WI-ADR-018")
                     && (r["decision_packet_digest"] != approval["artifacts"][0]["digest"]
-                        || !fs::read_to_string(root.join(format!("docs/adr/{id}.md")))?
-                            .contains(string(&approval["decision"], "proposal")?)
-                        || !fs::read_to_string(root.join(format!("docs/adr/{id}.md")))?
-                            .contains(string(&approval["approval"], "rationale")?)
-                        || !fs::read_to_string(root.join(format!("docs/adr/{id}.md")))?
-                            .contains(string(&approval["decision"], "retainedObligations")?)
-                        || !fs::read_to_string(root.join(format!("docs/adr/{id}.md")))?
-                            .contains(string(&approval["artifacts"][0], "digest")?)))
+                        || !stub.contains(string(&approval["decision"], "proposal")?)
+                        || !stub.contains(string(&approval["approval"], "rationale")?)
+                        || !stub.contains(string(&approval["decision"], "retainedObligations")?)
+                        || !stub.contains(string(&approval["artifacts"][0], "digest")?)))
             {
                 f.push(finding("ADR-APPROVAL", &path, id, "supplied operator approvals, binding revision 4", "approval provenance or coverage changed; full and clause acceptance are distinct"));
             }
@@ -520,25 +498,7 @@ pub fn docs(root: &Path) -> Result<Vec<Finding>> {
             || r["decision"] != row[2]
             || r["due"] != row[3]
             || r["owner"] != "operator"
-            || if matches!(
-                id,
-                "WI-ADR-011"
-                    | "WI-ADR-014"
-                    | "WI-ADR-015"
-                    | "WI-ADR-018"
-                    | "WI-ADR-001"
-                    | "WI-ADR-002"
-                    | "WI-ADR-003"
-                    | "WI-ADR-004"
-                    | "WI-ADR-005"
-                    | "WI-ADR-006"
-                    | "WI-ADR-007"
-                    | "WI-ADR-008"
-                    | "WI-ADR-009"
-                    | "WI-ADR-010"
-                    | "WI-ADR-012"
-                    | "WI-ADR-013"
-            ) {
+            || if approved.is_some() && id != "WI-ADR-016" {
                 r["status"] != status
             } else {
                 !adr_status_matches(root, id, r)?
@@ -552,7 +512,6 @@ pub fn docs(root: &Path) -> Result<Vec<Finding>> {
                 "preserve subject, deadline and operator ownership; stub is not acceptance",
             ))
         }
-        let stub = fs::read_to_string(root.join(format!("docs/adr/{id}.md")))?;
         if !stub.contains(row[2])
             || !stub.contains(row[3])
             || !stub.contains("Owner: operator")

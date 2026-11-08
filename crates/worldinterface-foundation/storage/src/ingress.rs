@@ -4,9 +4,7 @@ use crate::{invalid, Result, StoreKind, StoreRoot};
 use rusqlite::{params, Connection, OptionalExtension, TransactionBehavior};
 use serde::{Deserialize, Serialize};
 use worldinterface_domain::ingress::{apply_ingress, IngressCommand, IngressResult, IngressState};
-use worldinterface_protocol::{
-    canonical_collection, canonical_data, strict_collection, ContentHash, OpaqueRef,
-};
+use worldinterface_protocol::{canonical_collection, canonical_data, ContentHash, OpaqueRef};
 
 pub(crate) const SCHEMA: &str = "
 CREATE TABLE ingress_history(seq INTEGER PRIMARY KEY, tenant TEXT NOT NULL, revision INTEGER NOT NULL, entry BLOB NOT NULL, digest TEXT NOT NULL, UNIQUE(tenant,revision));
@@ -23,16 +21,13 @@ struct Entry {
     at_ms: u64,
     command: IngressCommand,
 }
-fn decode<T: serde::de::DeserializeOwned>(bytes: &[u8]) -> Result<T> {
-    Ok(serde_json::from_value(strict_collection(bytes).map_err(invalid)?)?)
-}
 pub(crate) fn snapshot(c: &Connection, tenant: &OpaqueRef) -> Result<IngressState> {
     let bytes: Option<Vec<u8>> = c
         .query_row("SELECT state FROM ingress_state WHERE tenant=?", [tenant.as_str()], |r| {
             r.get(0)
         })
         .optional()?;
-    bytes.map_or_else(|| Ok(IngressState::default()), |b| decode(&b))
+    bytes.map_or_else(|| Ok(IngressState::default()), |b| crate::decode_collection(&b))
 }
 fn apply(c: &Connection, e: &Entry) -> Result<(IngressState, IngressResult)> {
     let old = snapshot(c, &e.tenant)?;
@@ -240,7 +235,7 @@ pub(crate) fn replay(source: &Connection, target: &Connection) -> Result<()> {
     })?;
     for row in rows {
         let (tenant, revision, bytes, hash) = row?;
-        let e: Entry = decode(&bytes)?;
+        let e: Entry = crate::decode_collection(&bytes)?;
         if canonical_data(&e).map_err(invalid)? != bytes
             || ContentHash::of(&bytes).as_str() != hash
             || e.tenant.as_str() != tenant

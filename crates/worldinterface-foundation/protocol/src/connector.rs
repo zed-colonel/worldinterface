@@ -80,7 +80,7 @@ pub struct ConnectorDescriptor {
 }
 impl ConnectorDescriptor {
     pub fn digest(&self) -> Result<ContentHash> {
-        Ok(ContentHash::of(&canonical_data(self)?))
+        crate::data_digest(self)
     }
 }
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -163,5 +163,5 @@ pub fn validate_registry_snapshot(descriptors: &mut [ConnectorDescriptor]) -> Re
     {
         return Err("duplicate connector operation".into());
     }
-    Ok(ContentHash::of(&canonical_data(&("wi-connector-registry:1", descriptors))?))
+    crate::data_digest(&("wi-connector-registry:1", descriptors))
 }

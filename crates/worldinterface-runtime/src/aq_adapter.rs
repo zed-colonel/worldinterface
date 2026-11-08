@@ -2,7 +2,6 @@
 use crate::storage::StoreBundle;
 use crate::Result;
 use actionqueue_core::control::HostControlContext;
-use actionqueue_core::disposition::AttemptDisposition;
 use actionqueue_core::{
     admission::{EnsureTaskOutcome, EnsureTaskRequest},
     bounded::{ContentHash, DataScheme, HashAlgorithm, OpaqueRef},
@@ -11,7 +10,6 @@ use actionqueue_core::{
     ids::{AttemptId, CorrelationId, RunId, TaskId, TraceId},
     task::task_spec::TaskPayload,
 };
-use actionqueue_executor_local::handler::ExecutorContext;
 use actionqueue_executor_local::handler::ExecutorHandler;
 use actionqueue_runtime::{
     config::RuntimeConfig,
@@ -44,21 +42,6 @@ pub struct QueueEngine<'a, H: ExecutorHandler + 'static> {
     flow_scan: crate::flow_coordinator::ReconcileCursor,
     signal_limits: actionqueue_core::limits::SignalLimits,
     pub signal_delivery_status: crate::continuation::SignalDeliveryStatus,
-}
-/// Dispatches by the immutable admitted payload shape. The effect handler still
-/// verifies the persisted AQ admission and observed run before invoking a port.
-pub struct TaskRouter<I, E> {
-    pub ingress: I,
-    pub effect: E,
-}
-impl<I: ExecutorHandler, E: ExecutorHandler> ExecutorHandler for TaskRouter<I, E> {
-    fn execute(&self, ctx: ExecutorContext) -> AttemptDisposition {
-        if TaskInputLocator::decode(&ctx.input.payload).is_ok() {
-            self.effect.execute(ctx)
-        } else {
-            self.ingress.execute(ctx)
-        }
-    }
 }
 impl<'a, H: ExecutorHandler + 'static> QueueEngine<'a, H> {
     pub fn bootstrap(
@@ -234,16 +217,9 @@ impl QueueReferences {
         let task: TaskId = task.parse()?;
         let runs = self.projection.run_ids_for_task(task);
         Ok(!runs.is_empty()
-            && runs.iter().all(|id| {
-                self.projection.get_run_state(id).is_some_and(|s| {
-                    matches!(
-                        s,
-                        actionqueue_core::run::state::RunState::Completed
-                            | actionqueue_core::run::state::RunState::Failed
-                            | actionqueue_core::run::state::RunState::Canceled
-                    )
-                })
-            }))
+            && runs
+                .iter()
+                .all(|id| self.projection.get_run_state(id).is_some_and(|s| s.is_terminal())))
     }
     pub fn run_state(&self, run: &str) -> Result<Option<actionqueue_core::run::state::RunState>> {
         let run: RunId = run.parse()?;
@@ -440,16 +416,7 @@ impl QueueReferences {
                     attempt.output_ref()
                 {
                     if external.scheme.as_str() == "wi-artifact-v1" {
-                        let (scope, content) = external
-                            .locator
-                            .expose()
-                            .rsplit_once('/')
-                            .ok_or("invalid artifact locator")?;
-                        let artifact = ArtifactRef {
-                            scope: scope.to_string().try_into()?,
-                            content: content.to_string().try_into()?,
-                            size: external.size_bytes.ok_or("artifact size required")?,
-                        };
+                        let artifact = data_ref_artifact(external)?;
                         let bytes = wi.read_artifact(&artifact)?;
                         actionqueue_core::data_ref::DataRef::External(external.clone())
                             .verify_bytes(&bytes)?;
@@ -583,19 +550,43 @@ impl TaskInputLocator {
     }
     /// Separate representation for signal/checkpoint/output APIs accepting DataRef.
     pub fn external(&self) -> Result<ExternalDataRef> {
-        Ok(ExternalDataRef {
-            scheme: DataScheme::new("wi-artifact-v1")?,
-            locator: OpaqueRef::new(format!(
-                "{}/{}",
-                self.artifact.scope.as_str(),
-                self.artifact.content.as_str()
-            ))?,
-            hash: ContentHash::new(
-                HashAlgorithm::Sha256,
-                hex::decode(self.artifact.content.as_str())?,
-            )?,
-            size_bytes: Some(self.artifact.size),
-            content_type: None,
+        artifact_data_ref(&self.artifact)
+    }
+}
+
+pub(crate) fn artifact_data_ref(artifact: &ArtifactRef) -> Result<ExternalDataRef> {
+    Ok(ExternalDataRef {
+        scheme: DataScheme::new("wi-artifact-v1")?,
+        locator: OpaqueRef::new(format!(
+            "{}/{}",
+            artifact.scope.as_str(),
+            artifact.content.as_str()
+        ))?,
+        hash: ContentHash::new(HashAlgorithm::Sha256, hex::decode(artifact.content.as_str())?)?,
+        size_bytes: Some(artifact.size),
+        content_type: None,
+    })
+}
+#[derive(Debug)]
+pub(crate) enum ArtifactLocatorError {
+    Malformed,
+    MissingSize,
+}
+impl std::fmt::Display for ArtifactLocatorError {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        f.write_str(match self {
+            Self::Malformed => "invalid artifact locator",
+            Self::MissingSize => "artifact size required",
         })
     }
+}
+impl std::error::Error for ArtifactLocatorError {}
+pub(crate) fn data_ref_artifact(external: &ExternalDataRef) -> Result<ArtifactRef> {
+    let (scope, content) =
+        external.locator.expose().rsplit_once('/').ok_or(ArtifactLocatorError::Malformed)?;
+    Ok(ArtifactRef {
+        scope: scope.to_string().try_into()?,
+        content: content.to_string().try_into()?,
+        size: external.size_bytes.ok_or(ArtifactLocatorError::MissingSize)?,
+    })
 }

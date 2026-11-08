@@ -164,11 +164,9 @@ pub fn authorize_recovery(
     {
         return Err("recovery authority mismatch".into());
     }
-    let state = root
-        .worker_snapshot(&binding.tenant, &binding.provider, &binding.run)?
-        .ok_or("recovery worker absent")?;
+    let _state = super::artifacts::bound_state(root, binding)?;
     let launch = root.worker_launch(binding)?.ok_or("recovery launch absent")?;
-    if state.binding != *binding || !policy.originals.contains(&launch.implementation) {
+    if !policy.originals.contains(&launch.implementation) {
         return Err("recovery execution binding mismatch".into());
     }
     Ok(RecoveryAuthorization {
@@ -181,7 +179,7 @@ pub fn authorize_recovery(
 /// Demand-specific authority sets are checked by the domain on every effect.
 /// Stable governing policy rules are also bound by catalog registration.
 pub fn policy_digest(p: &worldinterface_domain::authorization::Policy) -> Result<ContentHash> {
-    Ok(ContentHash::of(&canonical_data(&(
+    Ok(worldinterface_protocol::data_digest(&(
         &p.revision,
         &p.authorizer,
         &p.grant_issuers,
@@ -189,5 +187,5 @@ pub fn policy_digest(p: &worldinterface_domain::authorization::Policy) -> Result
         p.approval_required,
         p.separation_of_duties,
         p.retry_after_noncommit,
-    ))?))
+    ))?)
 }

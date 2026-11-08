@@ -175,14 +175,7 @@ impl StoreBundle {
                 let Some(run) = phases.run.as_ref() else { continue };
                 if effect.attempt.as_ref() == Some(&phases.attempt)
                     && admission.observed_runs.contains(run)
-                    && matches!(
-                        references.run_state(run.as_str())?,
-                        Some(
-                            actionqueue_core::run::state::RunState::Completed
-                                | actionqueue_core::run::state::RunState::Failed
-                                | actionqueue_core::run::state::RunState::Canceled
-                        )
-                    )
+                    && references.run_state(run.as_str())?.is_some_and(|state| state.is_terminal())
                 {
                     crate::completion::record_uncertain_after_terminal_run(
                         &wi,
@@ -220,52 +213,28 @@ impl StoreBundle {
                     let Some(queue) = references.run_state(run.as_str())? else {
                         continue;
                     };
-                    let expected_code = match outcome.outcome {
-                        worldinterface_protocol::ExecutionOutcome::TerminalFailure if outcome.commit == worldinterface_domain::effect::CommitObservation::ConfirmedCommitted => {
-                            Some("wi.effect.terminal_provider_failure_committed")
+                    let expected_code =
+                        crate::completion::failure_code(&outcome.outcome, &outcome.commit);
+                    if queue.is_terminal()
+                        && match expected_code {
+                            None => queue != actionqueue_core::run::state::RunState::Completed,
+                            Some(code) => {
+                                let actual = references.terminal_failure_code(run.as_str())?;
+                                let expected_uncertainty = outcome.outcome
+                                    == worldinterface_protocol::ExecutionOutcome::Uncertain
+                                    && matches!(
+                                        actual.as_deref(),
+                                        Some(
+                                            "wi.effect.uncertain_recording_error"
+                                                | "wi.effect.phase_unknown"
+                                        )
+                                    );
+                                queue != actionqueue_core::run::state::RunState::Failed
+                                    || (actual.as_deref() != Some(code) && !expected_uncertainty)
+                            }
                         }
-                        worldinterface_protocol::ExecutionOutcome::TerminalFailure => {
-                            Some("wi.effect.terminal_provider_failure")
-                        }
-                        worldinterface_protocol::ExecutionOutcome::FailedBeforeCommit => {
-                            Some("wi.effect.failed_before_commit")
-                        }
-                        worldinterface_protocol::ExecutionOutcome::CanceledBeforeCommit => {
-                            Some("wi.effect.canceled_before_commit")
-                        }
-                        worldinterface_protocol::ExecutionOutcome::Uncertain => {
-                            Some("wi.effect.uncertain")
-                        }
-                        worldinterface_protocol::ExecutionOutcome::Succeeded => None,
-                    };
-                    if matches!(
-                        queue,
-                        actionqueue_core::run::state::RunState::Completed
-                            | actionqueue_core::run::state::RunState::Failed
-                            | actionqueue_core::run::state::RunState::Canceled
-                    ) && match expected_code {
-                        None => queue != actionqueue_core::run::state::RunState::Completed,
-                        Some(code) => {
-                            let actual = references.terminal_failure_code(run.as_str())?;
-                            let expected_uncertainty = outcome.outcome
-                                == worldinterface_protocol::ExecutionOutcome::Uncertain
-                                && matches!(
-                                    actual.as_deref(),
-                                    Some(
-                                        "wi.effect.uncertain_recording_error"
-                                            | "wi.effect.phase_unknown"
-                                    )
-                                );
-                            queue != actionqueue_core::run::state::RunState::Failed
-                                || (actual.as_deref() != Some(code) && !expected_uncertainty)
-                        }
-                    } {
-                        let queue_label = match queue {
-                            actionqueue_core::run::state::RunState::Completed => "completed",
-                            actionqueue_core::run::state::RunState::Failed => "failed",
-                            actionqueue_core::run::state::RunState::Canceled => "canceled",
-                            _ => unreachable!(),
-                        };
+                    {
+                        let queue_label = queue.label();
                         wi.record_convergence_fault(
                             &tenant,
                             id,

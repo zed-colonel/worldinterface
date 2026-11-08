@@ -7,9 +7,7 @@ use crate::{
 use rusqlite::{params, Connection, OptionalExtension, TransactionBehavior};
 use std::fs;
 use worldinterface_domain::publication::{Publication, PublicationState};
-use worldinterface_protocol::{
-    canonical_data, strict_json, ArtifactRef, ContentHash, InstanceId, OpaqueRef,
-};
+use worldinterface_protocol::{canonical_data, ArtifactRef, ContentHash, InstanceId, OpaqueRef};
 
 fn load(c: &Connection, identity: &OpaqueRef) -> Result<Option<Publication>> {
     c.query_row(
@@ -213,8 +211,7 @@ pub(crate) fn replay(source: &Connection, target: &Connection) -> Result<()> {
         if ContentHash::of(&bytes).as_str() != digest {
             return Err(invalid("publication journal digest"));
         }
-        let publication: Publication =
-            serde_json::from_value(strict_json(&bytes).map_err(invalid)?)?;
+        let publication: Publication = crate::decode_record(&bytes)?;
         if canonical_data(&publication).map_err(invalid)? != bytes
             || publication.identity.as_str() != identity
         {

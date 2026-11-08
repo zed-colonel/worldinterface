@@ -6,7 +6,6 @@ pub mod evidence;
 pub mod lifecycle;
 pub mod mapping;
 pub mod ports;
-pub mod process_state;
 pub mod profile;
 
 use serde::{de::DeserializeOwned, Serialize};

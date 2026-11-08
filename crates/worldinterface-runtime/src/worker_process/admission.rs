@@ -234,8 +234,8 @@ impl AuthorizedRun {
     ) -> Result<()> {
         self.credential.permits(
             &CredentialExpectation {
-                issuer: "worldinterface",
-                audience: "process-managed-proof-1",
+                issuer: super::CREDENTIAL_ISSUER,
+                audience: super::CREDENTIAL_AUDIENCE,
                 principal: &self.scope.principal,
                 provider: &self.controls.provider,
                 run: &self.controls.run,

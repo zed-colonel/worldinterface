@@ -602,7 +602,7 @@ pub fn validate_command(
     })
 }
 pub fn state_digest(s: &EffectState) -> Result<ContentHash> {
-    Ok(ContentHash::of(&canonical_collection(s)?))
+    worldinterface_protocol::collection_digest(s)
 }
 /// Persistence replay only. Never reconstructs an executable command or recontacts a provider.
 pub fn replay_command(

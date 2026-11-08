@@ -1,7 +1,6 @@
 use super::*;
 use crate::connector::*;
-use actionqueue_core::disposition::AttemptDisposition;
-use actionqueue_executor_local::handler::{CancellationToken, ExecutorContext, ExecutorHandler};
+use actionqueue_executor_local::handler::CancellationToken;
 
 /// One immutable registry for all supported operations. Selection comes from an
 /// executor-created envelope, never a separate consumer-controlled operation tag.
@@ -73,28 +72,12 @@ impl<S: TrustedWorkerBuild + 'static> Connector for ProcessDispatcher<S> {
     }
 }
 
-pub(super) struct Dispatcher<S, V, R, C> {
-    pub flow: crate::flow_node::FlowAttemptHandler<
+pub(super) type Dispatcher<S, V, R, C> = crate::reconciliation::ReconciliationRouter<
+    crate::reconciliation::ReconciliationHandler<Arc<ProcessDispatcher<S>>, SharedClock<C>>,
+    crate::flow_node::FlowAttemptHandler<
         Arc<ProcessDispatcher<S>>,
         ManagedEvidence<V, C>,
         R,
         SharedClock<C>,
     >,
-    pub reconciliation:
-        crate::reconciliation::ReconciliationHandler<Arc<ProcessDispatcher<S>>, SharedClock<C>>,
-}
-impl<S, V, R, C> ExecutorHandler for Dispatcher<S, V, R, C>
-where
-    S: TrustedWorkerBuild + 'static,
-    V: EvidenceAuthority + Send + Sync + 'static,
-    R: ResourceObserver + Send + Sync + 'static,
-    C: TrustedClock + Send + Sync + 'static,
-{
-    fn execute(&self, ctx: ExecutorContext) -> AttemptDisposition {
-        if crate::reconciliation::CaseLocator::decode(&ctx.input.payload).is_ok() {
-            self.reconciliation.execute(ctx)
-        } else {
-            self.flow.execute(ctx)
-        }
-    }
-}
+>;

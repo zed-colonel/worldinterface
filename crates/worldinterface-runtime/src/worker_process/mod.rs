@@ -23,7 +23,7 @@ use std::{
     path::{Path, PathBuf},
     sync::{
         atomic::{AtomicBool, AtomicU64, Ordering},
-        Arc, Mutex,
+        Arc, LazyLock, Mutex,
     },
     thread::JoinHandle,
     time::{Duration, Instant},
@@ -36,11 +36,16 @@ use worldinterface_worker::{
     ports::{Acknowledgment, Observation, ObservationKind, PortFuture, WorkerPort},
     Result,
 };
+pub(crate) const CREDENTIAL_ISSUER: &str = "worldinterface";
+pub(crate) const CREDENTIAL_AUDIENCE: &str = "process-managed-proof-1";
 fn io<T>(r: std::io::Result<T>) -> Result<T> {
     r.map_err(|_| "private process I/O failed".into())
 }
 /// Recipe identity. WIP-10 binds the reviewed source/build recipe as admission provenance.
 pub fn adapter_digest() -> ContentHash {
+    ADAPTER_DIGEST.clone()
+}
+static ADAPTER_DIGEST: LazyLock<ContentHash> = LazyLock::new(|| {
     ContentHash::of(
         [
             include_str!("mod.rs"),
@@ -58,7 +63,8 @@ pub fn adapter_digest() -> ContentHash {
         .concat()
         .as_bytes(),
     )
-}
+});
+
 pub fn dependencies_digest() -> ContentHash {
     ContentHash::of(include_bytes!("../../Cargo.lock"))
 }
@@ -297,18 +303,6 @@ impl ProcessWorkerPort {
         run.stop.store(true, Ordering::SeqCst);
         Ok(())
     }
-    #[allow(dead_code)] // Standalone binaries do not expose the WI host facade.
-    pub(crate) fn artifact_admitted(
-        &self,
-        provider: &str,
-        run: &str,
-        reference: &str,
-    ) -> Result<Vec<u8>> {
-        let shared = self.run(provider, run)?;
-        let run = shared.lock().map_err(|_| "run unavailable")?;
-        self.authorize_read(&run, Operation::CollectArtifacts, Some(reference), true)?;
-        run.artifacts.get(reference).cloned().ok_or_else(|| "artifact access denied".into())
-    }
     pub fn read_scoped(&self, locator: &ArtifactLocatorV2) -> Result<Vec<u8>> {
         self.read_scoped_bound(locator, false)
     }
@@ -332,17 +326,11 @@ impl ProcessWorkerPort {
         }
         Ok(bytes)
     }
-    pub fn collection_manifest(&self, provider: &str, run: &str) -> Result<Vec<u8>> {
-        self.collection_manifest_bound(provider, run, false)
-    }
     #[allow(dead_code)] // Host boundary is absent from standalone fixture/helper binaries.
     pub(crate) fn manifest_admitted(&self, provider: &str, run: &str) -> Result<Vec<u8>> {
-        self.collection_manifest_bound(provider, run, true)
-    }
-    fn collection_manifest_bound(&self, provider: &str, run: &str, host: bool) -> Result<Vec<u8>> {
         let shared = self.run(provider, run)?;
         let run = shared.lock().map_err(|_| "run unavailable")?;
-        self.authorize_read(&run, Operation::CollectArtifacts, None, host)?;
+        self.authorize_read(&run, Operation::CollectArtifacts, None, true)?;
         if !run.collected || run.quarantined {
             return Err("collection unavailable".into());
         }
@@ -437,30 +425,15 @@ impl ProcessWorkerPort {
             .map(|(_, resolved)| resolved.clone())
             .ok_or_else(|| "request access denied".into())
     }
-    pub fn control_evidence(
-        &self,
-        provider: &str,
-        run: &str,
-    ) -> Result<worldinterface_worker::controls::ControlEvidenceV1> {
-        self.controls_bound(provider, run, false)
-    }
     #[allow(dead_code)] // Host boundary is absent from standalone fixture/helper binaries.
     pub(crate) fn controls_admitted(
         &self,
         provider: &str,
         run: &str,
     ) -> Result<worldinterface_worker::controls::ControlEvidenceV1> {
-        self.controls_bound(provider, run, true)
-    }
-    fn controls_bound(
-        &self,
-        provider: &str,
-        run: &str,
-        host: bool,
-    ) -> Result<worldinterface_worker::controls::ControlEvidenceV1> {
         let shared = self.run(provider, run)?;
         let run = shared.lock().map_err(|_| "run unavailable")?;
-        self.authorize_read(&run, Operation::Inspect, None, host)?;
+        self.authorize_read(&run, Operation::Inspect, None, true)?;
         let mut evidence = run.authorization.controls.clone();
         evidence.advertised = evidence.applied.clone();
         for kind in [

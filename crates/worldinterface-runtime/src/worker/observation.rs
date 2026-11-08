@@ -21,21 +21,16 @@ pub fn commit(
     {
         return Err("worker observation binding mismatch".into());
     }
-    let current = root
-        .worker_snapshot(&binding.tenant, &binding.provider, &binding.run)?
-        .ok_or("worker absent")?;
-    if current.binding != *binding {
-        return Err("worker observation realization mismatch".into());
-    }
+    let current = super::artifacts::bound_state(root, binding)?;
     let bytes = canonical_data(&observed)?;
     let source: OpaqueRef = format!(
         "wi-worker:{}",
-        ContentHash::of(&canonical_data(&(
+        worldinterface_protocol::data_digest(&(
             "wi-worker-observation-1",
             &observed.provider,
             &observed.run,
             &observed.event
-        ))?)
+        ))?
         .as_str()
     )
     .try_into()?;

@@ -3,8 +3,8 @@ use rusqlite::{params, Connection, OptionalExtension, TransactionBehavior};
 use serde::{Deserialize, Serialize};
 use worldinterface_domain::{evolve, Event, Machine, State};
 use worldinterface_protocol::{
-    canonical_data, strict_json, ClientRequestId, ContentHash, EntityId, Envelope, OpaqueRef,
-    PrincipalId, Record,
+    canonical_data, ClientRequestId, ContentHash, EntityId, Envelope, OpaqueRef, PrincipalId,
+    Record,
 };
 
 pub(crate) const SCHEMA: &str = "
@@ -114,9 +114,6 @@ impl StoreRoot {
         Ok(Repository { root: self, kind })
     }
 }
-fn decode<T: serde::de::DeserializeOwned>(bytes: &[u8]) -> Result<T> {
-    Ok(serde_json::from_value(strict_json(bytes).map_err(invalid)?)?)
-}
 fn projection(c: &Connection, entity: &EntityId) -> Result<Option<Projection>> {
     let row: Option<(u64, Vec<u8>)> = c
         .query_row(
@@ -125,7 +122,8 @@ fn projection(c: &Connection, entity: &EntityId) -> Result<Option<Projection>> {
             |r| Ok((r.get(0)?, r.get(1)?)),
         )
         .optional()?;
-    row.map(|(revision, bytes)| Ok(Projection { revision, state: decode(&bytes)? })).transpose()
+    row.map(|(revision, bytes)| Ok(Projection { revision, state: crate::decode_record(&bytes)? }))
+        .transpose()
 }
 fn submission_key(e: &Envelope) -> Result<(&str, &ClientRequestId)> {
     match &e.record {
@@ -311,7 +309,7 @@ impl Repository<'_> {
         })?;
         rows.map(|r| {
             let (cursor, bytes) = r?;
-            Ok(HistoryEntry { cursor, batch: decode(&bytes)? })
+            Ok(HistoryEntry { cursor, batch: crate::decode_record(&bytes)? })
         })
         .collect()
     }
@@ -389,7 +387,7 @@ fn replay_into(source: &Connection, target: &Connection) -> Result<()> {
         if ContentHash::of(&bytes).as_str() != digest {
             return Err(invalid("corrupt history digest"));
         }
-        let b: Batch = decode(&bytes)?;
+        let b: Batch = crate::decode_record(&bytes)?;
         if canonical_data(&b).map_err(invalid)? != bytes
             || b.entity.as_str() != entity
             || b.expected_revision.checked_add(1) != Some(revision)

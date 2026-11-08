@@ -39,7 +39,7 @@ pub(crate) fn validate_policy(p: &WorkerArtifactPolicy) -> Result<()> {
 fn validate_prepared(s: &WorkerState, p: &WorkerPreparedCollection) -> Result<()> {
     let policy = s.artifact_policy.first().ok_or_else(|| invalid("artifact policy absent"))?;
     if p.version != 2
-        || p.policy != ContentHash::of(&canonical_data(policy).map_err(invalid)?)
+        || p.policy != worldinterface_protocol::data_digest(policy).map_err(invalid)?
         || s.operations
             .get(&p.operation)
             .is_none_or(|o| o.operation.as_str() != "collect_artifacts")
@@ -123,7 +123,7 @@ pub(crate) fn advance(
                 || r.codes.len() > 16
                 || r.findings.len() > 16
                 || r.manifests.len() > 1
-                || r.policy != ContentHash::of(&canonical_data(policy).map_err(invalid)?)
+                || r.policy != worldinterface_protocol::data_digest(policy).map_err(invalid)?
                 || !events.is_empty()
             {
                 return Err(invalid("quarantine report binding or bound"));
@@ -136,7 +136,8 @@ pub(crate) fn advance(
     Ok(())
 }
 fn snapshot_id(b: &WorkerBinding, digest: &ContentHash) -> Result<String> {
-    Ok(ContentHash::of(&canonical_data(&("wi-worker-snapshot-2", b, digest)).map_err(invalid)?)
+    Ok(worldinterface_protocol::data_digest(&("wi-worker-snapshot-2", b, digest))
+        .map_err(invalid)?
         .as_str()
         .into())
 }

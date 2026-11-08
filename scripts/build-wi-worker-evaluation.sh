@@ -4,33 +4,24 @@ set -euo pipefail
 : "${CARGO_TARGET_DIR:?use the supplied external build cache}"
 : "${TMPDIR:?use the supplied run scratch}"
 mkdir -p "$TMPDIR/verification/revised-packet"
-python3 - <<'PY'
-import hashlib,json,pathlib
-repo=pathlib.Path.cwd()
-manifest=json.loads((repo/'conformance/wi-fabric-2/worker/evaluation-manifest.json').read_text())
-for name,digest in manifest['files'].items():
-    if hashlib.sha256((repo/name).read_bytes()).hexdigest()!=digest:
-        raise SystemExit('packet source drift: '+name)
-PY
+python3 -B scripts/wi_worker_evaluation.py
 # Do not prebuild binaries. Cargo must compile all tests from a cold cache without
 # requiring unfinished executable bytes during macro expansion.
 timeout 1800 cargo test --locked --offline --manifest-path crates/worldinterface-runtime/Cargo.toml --lib --test '*' --no-run --message-format=json > "$TMPDIR/verification/revised-packet/cargo-build.jsonl"
 # These two tests build and publish reviewed artifacts and reject path replacement.
 # They launch no fixture/helper and do not require or create an evaluation approval.
 timeout 1200 cargo test --locked --offline --manifest-path crates/worldinterface-runtime/Cargo.toml --test worker_build
-python3 - <<'PY'
-import hashlib,json,os,pathlib
-repo=pathlib.Path.cwd()
-manifest=json.loads((repo/'conformance/wi-fabric-2/worker/evaluation-manifest.json').read_text())
-for name,digest in manifest['files'].items():
-    if hashlib.sha256((repo/name).read_bytes()).hexdigest()!=digest:
-        raise SystemExit('packet source drift during validation: '+name)
-digest=hashlib.sha256(json.dumps(manifest,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+python3 -B - <<'PY'
+import json,os,pathlib,sys
+sys.path.insert(0, 'scripts')
+from wi_worker_evaluation import canonical, check_drift, digest
+manifest=check_drift(pathlib.Path.cwd())
+packet_digest=digest(canonical(manifest))
 verification=pathlib.Path(os.environ['TMPDIR'])/'verification/revised-packet'
 records=[]
 for path in verification.glob('trusted-build-*.json'):
     record=json.loads(path.read_text())
-    if record['manifest']==digest:
+    if record['manifest']==packet_digest:
         records.append((path.stat().st_mtime,record))
 if not records:
     raise SystemExit('missing trusted worker build result')

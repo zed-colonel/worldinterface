@@ -25,9 +25,9 @@ pub fn mapping_markdown(root: &Path) -> Result<String> {
         let mut references = vec![];
         for test in case.tests {
             let manifest = match test.manifest.as_str() {
-                "crates/worldinterface-foundation/Cargo.toml" => "F",
-                "crates/worldinterface-runtime/Cargo.toml" => "R",
-                "tools/wi-contract-check/Cargo.toml" => "C",
+                crate::proof::FOUNDATION => "F",
+                crate::proof::RUNTIME => "R",
+                crate::proof::CHECKER => "C",
                 _ => return Err("unknown handoff test manifest".into()),
             };
             references.push(format!("`{manifest} · {} · {}`", test.package, test.test));

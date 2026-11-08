@@ -19,6 +19,13 @@ pub(crate) fn invalid(s: impl Into<String>) -> Box<dyn std::error::Error + Send 
     std::io::Error::new(std::io::ErrorKind::InvalidData, s.into()).into()
 }
 
+pub(crate) fn decode_record<T: serde::de::DeserializeOwned>(bytes: &[u8]) -> Result<T> {
+    Ok(serde_json::from_value(worldinterface_protocol::strict_json(bytes).map_err(invalid)?)?)
+}
+pub(crate) fn decode_collection<T: serde::de::DeserializeOwned>(bytes: &[u8]) -> Result<T> {
+    Ok(serde_json::from_value(worldinterface_protocol::strict_collection(bytes).map_err(invalid)?)?)
+}
+
 mod ingress;
 
 #[cfg(feature = "crash-points")]

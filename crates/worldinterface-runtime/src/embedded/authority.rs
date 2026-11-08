@@ -51,12 +51,12 @@ impl<V: EvidenceAuthority, C: TrustedClock> EvidenceAuthority for ManagedEvidenc
         let mut managed = self.bundle.wi().control_plane_snapshot()?;
         let effects = self.bundle.wi().effect_snapshot(tenant)?;
         for effect in effects.effects.values().filter(|e| &e.intent.submission == submission) {
-            let operation = ContentHash::of(&canonical_data(&(
+            let operation = worldinterface_protocol::data_digest(&(
                 "wi-effect-use-v1",
                 tenant,
                 &effect.intent.id,
                 effect.dispatches.len(),
-            ))?);
+            ))?;
             if let Some(limits) = managed.effect_reservations.get(&operation).cloned() {
                 for limit in limits {
                     if let Some(n) = managed.uses.get_mut(&limit.key) {

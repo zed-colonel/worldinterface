@@ -7,9 +7,7 @@ use std::{
     path::{Component, Path},
 };
 use worldinterface_domain::authorization::AuthorizationSnapshot;
-use worldinterface_protocol::{
-    canonical_data, ContentHash, EffectSubmission, EvidenceRef, OpaqueRef, Timestamp,
-};
+use worldinterface_protocol::{ContentHash, EffectSubmission, EvidenceRef, OpaqueRef, Timestamp};
 
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
@@ -29,7 +27,7 @@ pub struct EvaluationManifest {
 }
 impl EvaluationManifest {
     pub fn digest(&self) -> Result<ContentHash> {
-        Ok(ContentHash::of(&canonical_data(self)?))
+        Ok(worldinterface_protocol::data_digest(self)?)
     }
     pub fn verify_sources(&self, root: &Path) -> Result<()> {
         if self.version != 1
@@ -146,7 +144,7 @@ impl<S: TrustedApprovals> EvaluationVerifier<S> {
         let verified = self.verify(now_ms)?;
         if !self.manifest.cases.contains(case)
             || !self.manifest.operations.contains(operation)
-            || !self.manifest.tasks.contains(&ContentHash::of(&canonical_data(task)?))
+            || !self.manifest.tasks.contains(&worldinterface_protocol::data_digest(task)?)
             || self.manifest.environment != *environment
         {
             return Err("evaluation request outside approved scope".into());

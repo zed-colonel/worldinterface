@@ -17,7 +17,7 @@ const CRASH_BARRIER_HASH: &str = "c8c9d9f983ca833ffdd0d22552379aea3a5976ce39b6a5
 const PROCESS_SUPERVISOR: &[(&str, &str)] = &[
     (
         "crates/worldinterface-runtime/src/worker_process/admission.rs",
-        "d2488547620a933eba15536c07952226647de1e2625c1e528f3e70a0767d0719",
+        "709838fd008366c560ee0ebb8805c11f893170d474124f2b50cf59183622c837",
     ),
     (
         "crates/worldinterface-runtime/src/worker_process/bootstrap.rs",
@@ -29,11 +29,11 @@ const PROCESS_SUPERVISOR: &[(&str, &str)] = &[
     ),
     (
         "crates/worldinterface-runtime/src/worker_process/mod.rs",
-        "663c193d9dadbc371509f40456b39c4d7ae3a086064e2daefa62f3cc3f132f8e",
+        "abb4e8c7ae790347e53586b1bde976108e8a6192133a936392165d59df427674",
     ),
     (
         "crates/worldinterface-runtime/src/worker_process/supervision.rs",
-        "7210b73647db0ade87f0cdf489a901fed9151d52ca2950135bf10526590fb259",
+        "b5af2594163db0a18c1548216ad6e708c51b6d906a2f229f27ab98281739a1b5",
     ),
 ];
 fn process_supervisor_status(path: &str, source: &str) -> Option<bool> {

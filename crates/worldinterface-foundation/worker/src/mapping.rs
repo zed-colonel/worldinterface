@@ -1,6 +1,6 @@
 use crate::{nonempty, profile::ProfileBinding, Result};
 use serde::{Deserialize, Serialize};
-use worldinterface_capability::{CapabilityDescriptor, Idempotency, Reconciliation};
+use worldinterface_capability::{Idempotency, Reconciliation};
 use worldinterface_protocol::ContentHash;
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -45,16 +45,6 @@ impl Operation {
             Self::Resume => "resume",
         }
     }
-}
-pub fn validate_descriptor(op: Operation, descriptor: &CapabilityDescriptor) -> Result<()> {
-    let (idempotency, reconciliation) = op.semantics()?;
-    if descriptor.operation.as_str() != op.name()
-        || descriptor.idempotency != idempotency
-        || descriptor.reconciliation != reconciliation
-    {
-        return Err("worker capability semantics differ".into());
-    }
-    Ok(())
 }
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]

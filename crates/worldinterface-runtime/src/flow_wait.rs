@@ -7,11 +7,11 @@ use crate::{
 use actionqueue_core::{continuation::*, disposition::AttemptDisposition, ids::*};
 use actionqueue_executor_local::handler::ExecutorContext;
 use worldinterface_domain::{continuation::*, flow::*};
-use worldinterface_protocol::{canonical_data, ContentHash, OpaqueRef};
+use worldinterface_protocol::{ContentHash, OpaqueRef};
 use worldinterface_storage::{flow::*, StoreRoot};
 
 pub(crate) fn stable_wait_id(value: &impl serde::Serialize) -> Result<WaitId> {
-    let h = ContentHash::of(&canonical_data(&("wi-wait-1", value))?);
+    let h = worldinterface_protocol::data_digest(&("wi-wait-1", value))?;
     let b = hex::decode(h.as_str())?;
     Ok(uuid::Uuid::from_bytes(b[..16].try_into()?).to_string().parse()?)
 }
@@ -221,7 +221,7 @@ pub(crate) fn execute(
             checkpoint_id: CheckpointId::new(),
             created_by_attempt: ctx.input.attempt_id,
             data: actionqueue_core::data_ref::DataRef::External(
-                crate::aq_adapter::TaskInputLocator::new(artifact.clone()).external()?,
+                crate::aq_adapter::artifact_data_ref(&artifact)?,
             ),
         };
         let w = WaitCheckpoint {
@@ -430,13 +430,13 @@ pub(crate) fn validate(
     let actionqueue_core::data_ref::DataRef::External(external) = &checkpoint.data else {
         return Err(rejected("checkpoint artifact required"));
     };
-    let (scope, content) =
-        external.locator.expose().rsplit_once('/').ok_or_else(|| rejected("checkpoint locator"))?;
-    let artifact = worldinterface_protocol::ArtifactRef {
-        scope: scope.to_string().try_into()?,
-        content: content.to_string().try_into()?,
-        size: external.size_bytes.ok_or_else(|| rejected("checkpoint size"))?,
-    };
+    let artifact = crate::aq_adapter::data_ref_artifact(external).map_err(|error| {
+        if error.is::<crate::aq_adapter::ArtifactLocatorError>() {
+            rejected(error)
+        } else {
+            error
+        }
+    })?;
     if artifact != w.artifact || artifact.scope != r.tenant {
         return Err(rejected("foreign checkpoint artifact"));
     }

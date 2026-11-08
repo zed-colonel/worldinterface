@@ -1,6 +1,6 @@
 //! AQ-free notification identities. A route is a scoped notification, never authority.
 use serde::{Deserialize, Serialize};
-use worldinterface_protocol::{canonical_data, ArtifactRef, ContentHash, OpaqueRef, PrincipalId};
+use worldinterface_protocol::{ArtifactRef, ContentHash, OpaqueRef, PrincipalId};
 
 pub const NAMESPACE: &str = "wi.events.v1";
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -52,7 +52,7 @@ impl EventRoute {
     pub fn correlation_id(&self) -> Result<String, String> {
         Ok(format!(
             "wi:{}",
-            ContentHash::of(&canonical_data(&("wi-event-route-1", self,))?).as_str()
+            worldinterface_protocol::data_digest(&("wi-event-route-1", self,))?.as_str()
         ))
     }
 }
@@ -79,8 +79,13 @@ impl DurableEvent {
         // Identity deliberately excludes content: a conflicting duplicate must reject.
         let id = format!(
             "wi-event:{}",
-            ContentHash::of(&canonical_data(&("wi-event-identity-1", &route, &source, revision,))?)
-                .as_str()
+            worldinterface_protocol::data_digest(&(
+                "wi-event-identity-1",
+                &route,
+                &source,
+                revision,
+            ))?
+            .as_str()
         )
         .try_into()?;
         Ok(Self { version: 1, id, route, source, revision, digest, artifact })
@@ -152,6 +157,9 @@ pub struct ResumeAcceptance {
 }
 
 pub fn flow_child_ref(run: &OpaqueRef, node: &OpaqueRef) -> Result<OpaqueRef, String> {
-    format!("wi-child:{}", ContentHash::of(&canonical_data(&("wi-child-1", run, node))?).as_str())
-        .try_into()
+    format!(
+        "wi-child:{}",
+        worldinterface_protocol::data_digest(&("wi-child-1", run, node))?.as_str()
+    )
+    .try_into()
 }

@@ -248,12 +248,9 @@ pub(crate) fn coordinate(
     let checkpoint = CheckpointRef {
         checkpoint_id: CheckpointId::new(),
         created_by_attempt: ctx.input.attempt_id,
-        data: actionqueue_core::data_ref::DataRef::External(
-            crate::aq_adapter::TaskInputLocator::new(
-                root.publish(r.tenant.clone(), r.plan_hash.as_str().as_bytes())?,
-            )
-            .external()?,
-        ),
+        data: actionqueue_core::data_ref::DataRef::External(crate::aq_adapter::artifact_data_ref(
+            &root.publish(r.tenant.clone(), r.plan_hash.as_str().as_bytes())?,
+        )?),
     };
     Ok(AttemptDisposition::new(
         DispositionOutcome::Awaiting,
@@ -271,7 +268,7 @@ pub(crate) fn coordinate(
     )?)
 }
 
-fn binding_wait(task: &OpaqueRef) -> Result<AttemptDisposition> {
+pub(crate) fn binding_wait(task: &OpaqueRef) -> Result<AttemptDisposition> {
     Ok(AttemptDisposition::awaiting(
         WaitSpec::new(
             WaitId::new(),

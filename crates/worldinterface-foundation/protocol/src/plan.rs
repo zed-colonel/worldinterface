@@ -59,7 +59,7 @@ pub enum Schema {
 }
 impl Schema {
     pub fn digest(&self) -> Result<ContentHash> {
-        Ok(ContentHash::of(&canonical_data(&("wi-schema-1", self))?))
+        crate::data_digest(&("wi-schema-1", self))
     }
 }
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
@@ -137,7 +137,7 @@ impl Program {
         Ok(Self {
             evaluator: EVALUATOR.to_string().try_into()?,
             runtime_hash: ContentHash::of(EVALUATOR.as_bytes()),
-            implementation_hash: ContentHash::of(&canonical_data(&(EVALUATOR, &expression))?),
+            implementation_hash: crate::data_digest(&(EVALUATOR, &expression))?,
             expression,
             requested_access: vec![],
         })
@@ -259,7 +259,7 @@ impl FlowDefinition {
     pub fn digest(&self) -> Result<ContentHash> {
         let mut normalized = self.clone();
         normalize_body(&mut normalized.body)?;
-        Ok(ContentHash::of(&canonical_data(&("wi-flow-definition-1", normalized))?))
+        crate::data_digest(&("wi-flow-definition-1", normalized))
     }
 }
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]

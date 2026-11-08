@@ -4403,32 +4403,32 @@
     "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
   },
   {
-    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:ActorId",
+    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::generated-id:ActorId",
     "disposition": "retain-align",
     "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+    "source": "docs/work-items/WI-WORKER-PROOF-1-simplification.md; operator-selected F-017 through F-041",
+    "rationale": "Shared declaration or conversion for the selected simplification batch; preserves the existing wire contract, authority and runtime behavior."
   },
   {
-    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:AuthorizationId",
+    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::generated-id:AuthorizationId",
     "disposition": "retain-align",
     "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+    "source": "docs/work-items/WI-WORKER-PROOF-1-simplification.md; operator-selected F-017 through F-041",
+    "rationale": "Shared declaration or conversion for the selected simplification batch; preserves the existing wire contract, authority and runtime behavior."
   },
   {
-    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:CandidateId",
+    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::generated-id:CandidateId",
     "disposition": "retain-align",
     "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+    "source": "docs/work-items/WI-WORKER-PROOF-1-simplification.md; operator-selected F-017 through F-041",
+    "rationale": "Shared declaration or conversion for the selected simplification batch; preserves the existing wire contract, authority and runtime behavior."
   },
   {
-    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:ClientRequestId",
+    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::generated-id:ClientRequestId",
     "disposition": "retain-align",
     "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+    "source": "docs/work-items/WI-WORKER-PROOF-1-simplification.md; operator-selected F-017 through F-041",
+    "rationale": "Shared declaration or conversion for the selected simplification batch; preserves the existing wire contract, authority and runtime behavior."
   },
   {
     "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:ContentHash",
@@ -4438,95 +4438,102 @@
     "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
   },
   {
-    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:DeliveryId",
+    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::generated-id:DeliveryId",
     "disposition": "retain-align",
     "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+    "source": "docs/work-items/WI-WORKER-PROOF-1-simplification.md; operator-selected F-017 through F-041",
+    "rationale": "Shared declaration or conversion for the selected simplification batch; preserves the existing wire contract, authority and runtime behavior."
   },
   {
-    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:EffectIntentId",
+    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::generated-id:EffectIntentId",
     "disposition": "retain-align",
     "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+    "source": "docs/work-items/WI-WORKER-PROOF-1-simplification.md; operator-selected F-017 through F-041",
+    "rationale": "Shared declaration or conversion for the selected simplification batch; preserves the existing wire contract, authority and runtime behavior."
   },
   {
-    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:EntityId",
+    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::generated-id:EntityId",
     "disposition": "retain-align",
     "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+    "source": "docs/work-items/WI-WORKER-PROOF-1-simplification.md; operator-selected F-017 through F-041",
+    "rationale": "Shared declaration or conversion for the selected simplification batch; preserves the existing wire contract, authority and runtime behavior."
   },
   {
-    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:IngressBindingId",
+    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::generated-id:IngressBindingId",
     "disposition": "retain-align",
     "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+    "source": "docs/work-items/WI-WORKER-PROOF-1-simplification.md; operator-selected F-017 through F-041",
+    "rationale": "Shared declaration or conversion for the selected simplification batch; preserves the existing wire contract, authority and runtime behavior."
   },
   {
-    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:InstanceId",
+    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::generated-id:InstanceId",
     "disposition": "retain-align",
     "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+    "source": "docs/work-items/WI-WORKER-PROOF-1-simplification.md; operator-selected F-017 through F-041",
+    "rationale": "Shared declaration or conversion for the selected simplification batch; preserves the existing wire contract, authority and runtime behavior."
   },
   {
-    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:ObservationId",
+    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::generated-id:ObservationId",
     "disposition": "retain-align",
     "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+    "source": "docs/work-items/WI-WORKER-PROOF-1-simplification.md; operator-selected F-017 through F-041",
+    "rationale": "Shared declaration or conversion for the selected simplification batch; preserves the existing wire contract, authority and runtime behavior."
   },
   {
-    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:OpaqueRef",
+    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::generated-id:OpaqueRef",
     "disposition": "retain-align",
     "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+    "source": "docs/work-items/WI-WORKER-PROOF-1-simplification.md; operator-selected F-017 through F-041",
+    "rationale": "Shared declaration or conversion for the selected simplification batch; preserves the existing wire contract, authority and runtime behavior."
   },
   {
-    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:PlanId",
+    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::generated-id:PlanId",
     "disposition": "retain-align",
     "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+    "source": "docs/work-items/WI-WORKER-PROOF-1-simplification.md; operator-selected F-017 through F-041",
+    "rationale": "Shared declaration or conversion for the selected simplification batch; preserves the existing wire contract, authority and runtime behavior."
   },
   {
-    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:PrincipalId",
+    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::generated-id:PrincipalId",
     "disposition": "retain-align",
     "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+    "source": "docs/work-items/WI-WORKER-PROOF-1-simplification.md; operator-selected F-017 through F-041",
+    "rationale": "Shared declaration or conversion for the selected simplification batch; preserves the existing wire contract, authority and runtime behavior."
   },
   {
-    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:ProofId",
+    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::macro-definition:define_id",
     "disposition": "retain-align",
     "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+    "source": "docs/work-items/WI-WORKER-PROOF-1-simplification.md; operator-selected F-017 through F-041",
+    "rationale": "Shared declaration or conversion for the selected simplification batch; preserves the existing wire contract, authority and runtime behavior."
   },
   {
-    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:ReceiptId",
+    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::generated-id:ProofId",
     "disposition": "retain-align",
     "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+    "source": "docs/work-items/WI-WORKER-PROOF-1-simplification.md; operator-selected F-017 through F-041",
+    "rationale": "Shared declaration or conversion for the selected simplification batch; preserves the existing wire contract, authority and runtime behavior."
   },
   {
-    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:ReconciliationId",
+    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::generated-id:ReceiptId",
     "disposition": "retain-align",
     "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+    "source": "docs/work-items/WI-WORKER-PROOF-1-simplification.md; operator-selected F-017 through F-041",
+    "rationale": "Shared declaration or conversion for the selected simplification batch; preserves the existing wire contract, authority and runtime behavior."
   },
   {
-    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:SandboxId",
+    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::generated-id:ReconciliationId",
     "disposition": "retain-align",
     "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+    "source": "docs/work-items/WI-WORKER-PROOF-1-simplification.md; operator-selected F-017 through F-041",
+    "rationale": "Shared declaration or conversion for the selected simplification batch; preserves the existing wire contract, authority and runtime behavior."
+  },
+  {
+    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::generated-id:SandboxId",
+    "disposition": "retain-align",
+    "target": "worldinterface-protocol",
+    "source": "docs/work-items/WI-WORKER-PROOF-1-simplification.md; operator-selected F-017 through F-041",
+    "rationale": "Shared declaration or conversion for the selected simplification batch; preserves the existing wire contract, authority and runtime behavior."
   },
   {
     "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:Timestamp",
@@ -4536,11 +4543,11 @@
     "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
   },
   {
-    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::struct:WorkerId",
+    "id": "crates/worldinterface-foundation/protocol/src/identity.rs::::generated-id:WorkerId",
     "disposition": "retain-align",
     "target": "worldinterface-protocol",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Strict typed data and canonical hash inputs; no executable authority or legacy types."
+    "source": "docs/work-items/WI-WORKER-PROOF-1-simplification.md; operator-selected F-017 through F-041",
+    "rationale": "Shared declaration or conversion for the selected simplification batch; preserves the existing wire contract, authority and runtime behavior."
   },
   {
     "id": "crates/worldinterface-foundation/protocol/src/ingress.rs::::enum:AttachmentPolicy",
@@ -5404,13 +5411,6 @@
     "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
   },
   {
-    "id": "crates/worldinterface-foundation/worker/src/lib.rs::::module:process_state",
-    "disposition": "retain-align",
-    "target": "worldinterface-worker",
-    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
-    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
-  },
-  {
     "id": "crates/worldinterface-foundation/worker/src/lib.rs::::module:profile",
     "disposition": "retain-align",
     "target": "worldinterface-worker",
@@ -5545,34 +5545,6 @@
   },
   {
     "id": "crates/worldinterface-foundation/worker/src/ports.rs::::type:PortFuture",
-    "disposition": "retain-align",
-    "target": "worldinterface-worker",
-    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
-    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
-  },
-  {
-    "id": "crates/worldinterface-foundation/worker/src/process_state.rs::::enum:Ownership",
-    "disposition": "retain-align",
-    "target": "worldinterface-worker",
-    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
-    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
-  },
-  {
-    "id": "crates/worldinterface-foundation/worker/src/process_state.rs::::module:tests@10d1b0eff34c",
-    "disposition": "retain-align",
-    "target": "worldinterface-worker",
-    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
-    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
-  },
-  {
-    "id": "crates/worldinterface-foundation/worker/src/process_state.rs::::source-module:crates/worldinterface-foundation/worker/src/process_state.rs",
-    "disposition": "retain-align",
-    "target": "worldinterface-worker",
-    "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
-    "rationale": "Inactive WI-owned worker boundary contract or test consumer; no production adapter or authority path."
-  },
-  {
-    "id": "crates/worldinterface-foundation/worker/src/process_state.rs::::struct:ProcessIdentity",
     "disposition": "retain-align",
     "target": "worldinterface-worker",
     "source": "WI-09/domain; WI-ADR-016 full approval; WI-WORKER-EXECUTION-1",
@@ -6284,6 +6256,13 @@
     "target": "WI-02 G1 runtime boundary and source evidence validation",
     "source": "implementation plan WI-02, \u00a75.3; accepted WI-02 integration design",
     "rationale": "AQ-owned queue authority, authenticated artifact resolution and validated store recovery; independent acceptance remains required."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/aq_adapter.rs::::enum:ArtifactLocatorError",
+    "disposition": "retain-align",
+    "target": "WI-02 G1 runtime boundary and source evidence validation",
+    "source": "docs/work-items/WI-WORKER-PROOF-1-simplification.md; operator-selected F-017 through F-041",
+    "rationale": "Shared declaration or conversion for the selected simplification batch; preserves the existing wire contract, authority and runtime behavior."
   },
   {
     "id": "crates/worldinterface-runtime/src/artifact.rs::::source-module:crates/worldinterface-runtime/src/artifact.rs",
@@ -8239,13 +8218,6 @@
     "source": "docs/work-items/WIP-04.md; accepted WI-05 takeover plan and WI-ADR-007/008/009/010"
   },
   {
-    "id": "crates/worldinterface-runtime/src/aq_adapter.rs::::struct:TaskRouter",
-    "disposition": "retain-align",
-    "target": "runtime/aq-adapter",
-    "rationale": "Route immutable task inputs and validate published completion against Fabric receipts on reopen",
-    "source": "docs/work-items/WIP-04.md; accepted WI-05 takeover plan and WI-ADR-007/008/009/010"
-  },
-  {
     "id": "crates/worldinterface-runtime/src/completion.rs::::source-module:crates/worldinterface-runtime/src/completion.rs",
     "disposition": "retain-align",
     "target": "runtime/effect-completion",
@@ -8258,6 +8230,13 @@
     "target": "runtime/effect-completion",
     "rationale": "Fence invocation with Fabric Start; publish artifacts and bind AQ completion to the immutable authoritative receipt",
     "source": "docs/work-items/WIP-04.md; accepted WI-05 takeover plan and WI-ADR-007/008/009/010"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/completion.rs::::struct:OutcomeArtifacts",
+    "disposition": "retain-align",
+    "target": "runtime/effect-completion",
+    "rationale": "Shared declaration or conversion for the selected simplification batch; preserves the existing wire contract, authority and runtime behavior.",
+    "source": "docs/work-items/WI-WORKER-PROOF-1-simplification.md; operator-selected F-017 through F-041"
   },
   {
     "id": "crates/worldinterface-runtime/src/completion.rs::::struct:CompletionLocator",
@@ -12404,11 +12383,11 @@
     "source": "docs/work-items/WIP-14.md; accepted WIP-14 design; WI-ADR-018; WI-ADR-003"
   },
   {
-    "id": "crates/worldinterface-runtime/src/embedded/dispatch.rs::::struct:Dispatcher",
+    "id": "crates/worldinterface-runtime/src/embedded/dispatch.rs::::type:Dispatcher",
     "disposition": "retain-align",
     "target": "embedded-worker-runtime",
-    "rationale": "WIP-14 embedded application composition, exact custody recovery and consumer/restore proof; subject to qualifying review and exact-source live evaluation.",
-    "source": "docs/work-items/WIP-14.md; accepted WIP-14 design; WI-ADR-018; WI-ADR-003"
+    "rationale": "Shared declaration or conversion for the selected simplification batch; preserves the existing wire contract, authority and runtime behavior.",
+    "source": "docs/work-items/WI-WORKER-PROOF-1-simplification.md; operator-selected F-017 through F-041"
   },
   {
     "id": "crates/worldinterface-runtime/src/embedded/dispatch.rs::::struct:ProcessDispatcher",

@@ -12,9 +12,7 @@ use crate::{
 };
 use actionqueue_core::{
     admission::EnsureTaskRequest,
-    continuation::*,
     disposition::{AttemptDisposition, DispositionOutcome},
-    ids::{CorrelationId, WaitId},
 };
 use actionqueue_executor_local::handler::{ExecutorContext, ExecutorHandler};
 use serde_json::Value;
@@ -122,24 +120,9 @@ pub(crate) fn empty_result(disposition: NodeDisposition) -> NodeResult {
     }
 }
 pub(crate) fn binding_wait(r: &FlowRun, node: &OpaqueRef) -> Result<AttemptDisposition> {
-    let task = &r.node_tasks[node];
-    Ok(AttemptDisposition::awaiting(
-        WaitSpec::new(
-            WaitId::new(),
-            SignalFilter {
-                tenant_id: None,
-                namespace: SignalNamespace::new("wi.flow")?,
-                kind: SignalKind::new("binding-ready")?,
-                correlation_id: Some(CorrelationId::new(format!("wi-ready:{}", task.as_str()))?),
-                source_ref: None,
-            },
-            WaitMatchPolicy::FirstMatch,
-            SignalEligibility::AnyRetained,
-            Some(WaitDeadline { at: 0, policy: WaitTimeoutPolicy::ResumeWithTimeout }),
-        )?,
-        None,
-    ))
+    crate::flow_coordinator::binding_wait(&r.node_tasks[node])
 }
+
 impl<
         P: Connector,
         V: EvidenceAuthority + Send + Sync + 'static,
@@ -597,7 +580,7 @@ impl<
                 result.values.insert(port.clone(), value);
                 result.outputs.insert(port.clone(), artifact);
             }
-            result.output_hash = ContentHash::of(&canonical_data(&result.values)?);
+            result.output_hash = worldinterface_protocol::data_digest(&result.values)?;
         }
         self.record(r, node, result)?;
         Ok(disposition)

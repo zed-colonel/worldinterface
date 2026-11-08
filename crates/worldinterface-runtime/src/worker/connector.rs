@@ -15,7 +15,7 @@ use serde::{Deserialize, Serialize};
 use std::{
     collections::BTreeMap,
     path::Path,
-    sync::{Arc, Mutex},
+    sync::{Arc, LazyLock, Mutex},
 };
 use worldinterface_domain::{effect::CommitObservation, worker::*};
 use worldinterface_protocol::*;
@@ -50,6 +50,23 @@ fn succeeded(request: &WorkerRequestV1, state: &WorkerState) -> Result<PortObser
     })
 }
 
+static IMPLEMENTATION: LazyLock<ContentHash> = LazyLock::new(|| {
+    ContentHash::of(
+        [
+            include_str!("connector.rs"),
+            include_str!("admission.rs"),
+            include_str!("evaluation.rs"),
+            include_str!("catalog.rs"),
+            include_str!("recovery.rs"),
+            include_str!("observation.rs"),
+            include_str!("artifacts.rs"),
+            include_str!("provider.rs"),
+        ]
+        .concat()
+        .as_bytes(),
+    )
+});
+
 pub fn descriptor(operation: Operation) -> Result<ConnectorDescriptor> {
     if !super::admission::OPERATIONS.contains(&operation) {
         return Err("unsupported process operation".into());
@@ -57,20 +74,7 @@ pub fn descriptor(operation: Operation) -> Result<ConnectorDescriptor> {
     let d = ConnectorDescriptor {
         version: 1,
         connector: "wi:process-worker".to_string().try_into()?,
-        implementation: ContentHash::of(
-            [
-                include_str!("connector.rs"),
-                include_str!("admission.rs"),
-                include_str!("evaluation.rs"),
-                include_str!("catalog.rs"),
-                include_str!("recovery.rs"),
-                include_str!("observation.rs"),
-                include_str!("artifacts.rs"),
-                include_str!("provider.rs"),
-            ]
-            .concat()
-            .as_bytes(),
-        ),
+        implementation: IMPLEMENTATION.clone(),
         operation: operation.name().to_string().try_into()?,
         effect_class: if operation == Operation::Inspect {
             EffectClass::Read
@@ -252,7 +256,7 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
         };
         let authorization = effect.authorization.as_ref().ok_or("worker authorization absent")?;
         if authorization.decision != Decision::Allow
-            || ContentHash::of(&canonical_data(authorization)?) != bound.authorization
+            || worldinterface_protocol::data_digest(authorization)? != bound.authorization
         {
             return Err("worker recovery authorization drift".into());
         }
@@ -309,10 +313,7 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
         Ok(WorkerConnector { runtime: self.clone(), descriptor: descriptor(operation)? })
     }
     fn state(&self, b: &WorkerBinding) -> Result<WorkerState> {
-        self.bundle
-            .wi()
-            .worker_snapshot(&b.tenant, &b.provider, &b.run)?
-            .ok_or_else(|| "worker absent".into())
+        super::artifacts::bound_state(self.bundle.wi(), b)
     }
     fn transition(&self, b: &WorkerBinding, fact: WorkerFact) -> Result<()> {
         self.bundle.wi().record_worker_transition(&self.state(b)?, fact)
@@ -341,6 +342,18 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
         admitted: AdmittedWorker,
         cancellation: &CancellationToken,
     ) -> Result<PortObservation> {
+        let preflight = || -> Result<()> {
+            self.check_registration(&admitted.registration)?;
+            self.bundle.wi().check_control_execution(
+                &admitted.binding.tenant,
+                &admitted.binding.principal,
+                &admitted.intent,
+                admitted.dispatch,
+                &admitted.authority,
+                self.clock.unix_ms(),
+            )?;
+            Ok(())
+        };
         let root = self.bundle.wi();
         let binding = &admitted.binding;
         let op = admitted.operation;
@@ -359,9 +372,7 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
         }
         let key = (binding.provider.clone(), binding.run.clone());
         if op == Operation::Inspect {
-            if self.state(binding)?.binding != *binding {
-                return Err("worker inspect binding mismatch".into());
-            }
+            self.state(binding)?;
             let present =
                 self.live.lock().map_err(|_| "worker registry unavailable")?.contains_key(&key);
             if present {
@@ -389,9 +400,7 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
                 self.slots,
             )?
         } else {
-            if self.state(binding)?.binding != *binding {
-                return Err("worker operation binding mismatch".into());
-            }
+            self.state(binding)?;
             false
         };
         root.bind_worker_artifact_policy(binding.clone(), admitted.artifact_policy.clone())?;
@@ -440,15 +449,7 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
         if fresh {
             let operations = admitted.authorization.operations.clone();
             root.fence_worker_dispatch(binding, &admitted.catalog, || {
-                self.check_registration(&admitted.registration)?;
-                root.check_control_execution(
-                    &admitted.binding.tenant,
-                    &admitted.binding.principal,
-                    &admitted.intent,
-                    admitted.dispatch,
-                    &admitted.authority,
-                    self.clock.unix_ms(),
-                )?;
+                preflight()?;
                 self.port.admit(admitted.authorization)
             })?;
             live.insert(key.clone(), operations);
@@ -477,28 +478,12 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
                 .0
                 .clone();
             root.fence_worker_dispatch(binding, &admitted.catalog, || {
-                self.check_registration(&admitted.registration)?;
-                root.check_control_execution(
-                    &admitted.binding.tenant,
-                    &admitted.binding.principal,
-                    &admitted.intent,
-                    admitted.dispatch,
-                    &admitted.authority,
-                    self.clock.unix_ms(),
-                )?;
+                preflight()?;
                 self.port.submit(&provision)
             })?;
         }
         let submit = || {
-            self.check_registration(&admitted.registration)?;
-            root.check_control_execution(
-                &admitted.binding.tenant,
-                &admitted.binding.principal,
-                &admitted.intent,
-                admitted.dispatch,
-                &admitted.authority,
-                self.clock.unix_ms(),
-            )?;
+            preflight()?;
             self.port.submit(&request)
         };
         let result = if op == Operation::Terminate {
@@ -633,7 +618,6 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
             .verify(self.clock.unix_ms())?;
         if binding.tenant.as_str() != self.scope.tenant
             || binding.principal.as_str() != self.scope.principal
-            || self.state(binding)?.binding != *binding
         {
             return Err("worker artifact scope mismatch".into());
         }
@@ -653,12 +637,7 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
 
     pub fn recovery_evidence(&self, binding: &WorkerBinding) -> Result<Option<CleanupReport>> {
         self.recovery_authorization(binding, "inspect")?;
-        if self.state(binding)?.binding != *binding
-            || binding.tenant.as_str() != self.scope.tenant
-            || binding.principal.as_str() != self.scope.principal
-        {
-            return Err("worker recovery scope mismatch".into());
-        }
+
         let launch = self.bundle.wi().worker_launch(binding)?.ok_or("worker launch absent")?;
         let operations: Vec<(WorkerRequestV1, worldinterface_worker::mapping::ResolvedWorkerV1)> =
             serde_json::from_slice(&launch.operations)?;
@@ -684,9 +663,6 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
             return Err("worker evidence scope mismatch".into());
         }
         let state = self.state(binding)?;
-        if state.binding != *binding {
-            return Err("worker evidence scope mismatch".into());
-        }
         let live = self
             .live
             .lock()
@@ -726,12 +702,7 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
     }
     pub fn cleanup_report(&self, binding: &WorkerBinding) -> Result<Option<CleanupReport>> {
         self.recovery_authorization(binding, "inspect")?;
-        if binding.tenant.as_str() != self.scope.tenant
-            || binding.principal.as_str() != self.scope.principal
-            || self.state(binding)?.binding != *binding
-        {
-            return Err("worker read scope mismatch".into());
-        }
+
         self.port.evidence(binding.provider.as_str(), binding.run.as_str())
     }
     /// Host maintenance explicitly polls durable observations; AQ never depends on this process's memory.
@@ -750,14 +721,6 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
         Ok(())
     }
     pub fn poll(&self, binding: &WorkerBinding) -> Result<()> {
-        if binding.tenant.as_str() != self.scope.tenant
-            || binding.principal.as_str() != self.scope.principal
-        {
-            return Err("worker polling scope mismatch".into());
-        }
-        if self.state(binding)?.binding != *binding {
-            return Err("worker polling realization mismatch".into());
-        }
         self.recovery_authorization(binding, "inspect")?;
         if self.state(binding)?.stop_requested {
             let _ = self.port.stop(binding.provider.as_str(), binding.run.as_str());
@@ -808,6 +771,36 @@ pub struct WorkerConnector<S> {
 impl<S> Clone for WorkerConnector<S> {
     fn clone(&self) -> Self {
         Self { runtime: self.runtime.clone(), descriptor: self.descriptor.clone() }
+    }
+}
+impl<S: TrustedWorkerBuild> WorkerConnector<S> {
+    fn recovery_state(&self, r: &ReconcileRequest) -> Result<WorkerState> {
+        let root = self.runtime.bundle.wi();
+        let snapshot = root.effect_snapshot(&r.tenant)?;
+        let effect = snapshot.effects.get(&r.intent).ok_or("recovery effect absent")?;
+        let w = effect
+            .authorization_inputs
+            .as_ref()
+            .and_then(|f| f.worker.as_ref())
+            .ok_or("recovery realization absent")?;
+        let state = root
+            .worker_snapshot(&r.tenant, &w.provider, &w.run)?
+            .ok_or("recovery worker absent")?;
+        if r.tenant.as_str() != self.runtime.scope.tenant
+            || effect.agency.binding.principal.as_str() != self.runtime.scope.principal
+            || effect.resolution.as_ref().map(|x| &x.resolved.resource) != Some(&r.resource)
+            || effect.resolution.as_ref().and_then(|x| x.resolved.connector_execution.as_ref())
+                != Some(&r.execution)
+            || r.execution.binding.descriptor.operation != self.descriptor.operation
+        {
+            return Err("recovery connector identity mismatch".into());
+        }
+        self.runtime.recovery_authorization(&state.binding, "reconcile")?;
+        let launch = root.worker_launch(&state.binding)?.ok_or("recovery launch absent")?;
+        if !launch.connectors.contains(&r.execution.binding) {
+            return Err("original recovery implementation mismatch".into());
+        }
+        Ok(state)
     }
 }
 impl<S: TrustedWorkerBuild + 'static> Connector for WorkerConnector<S> {
@@ -883,38 +876,14 @@ impl<S: TrustedWorkerBuild + 'static> Connector for WorkerConnector<S> {
         self.runtime.invoke(admitted, c)
     }
     fn reconcile(&self, r: ReconcileRequest) -> Result<ReconcileOutcome> {
-        self.check_recovery(&r)?;
+        let mut state = self.recovery_state(&r)?;
         let root = self.runtime.bundle.wi();
-        let effect = root
-            .effect_snapshot(&r.tenant)?
-            .effects
-            .get(&r.intent)
-            .cloned()
-            .ok_or("worker effect absent")?;
-        if r.tenant.as_str() != self.runtime.scope.tenant
-            || effect.agency.binding.principal.as_str() != self.runtime.scope.principal
-        {
-            return Err("worker reconciliation scope mismatch".into());
-        }
-        if effect.resolution.as_ref().map(|x| &x.resolved.resource) != Some(&r.resource)
-            || effect.resolution.as_ref().and_then(|x| x.resolved.connector_execution.as_ref())
-                != Some(&r.execution)
-        {
-            return Err("worker reconciliation identity mismatch".into());
-        }
-        let w = effect
-            .authorization_inputs
-            .as_ref()
-            .and_then(|s| s.worker.as_ref())
-            .ok_or("worker realization absent")?;
-        let mut state =
-            root.worker_snapshot(&r.tenant, &w.provider, &w.run)?.ok_or("worker absent")?;
         if self
             .runtime
             .evaluation
             .as_ref()
             .is_none_or(|e| e.verify(self.runtime.clock.unix_ms()).is_err())
-            || root.worker_provider_quarantine(&r.tenant, &w.provider)?.is_some()
+            || root.worker_provider_quarantine(&r.tenant, &state.binding.provider)?.is_some()
         {
             super::recovery::quarantine(root, &state.binding)?;
             state = self.runtime.state(&state.binding)?;
@@ -970,9 +939,7 @@ impl<S: TrustedWorkerBuild + 'static> Connector for WorkerConnector<S> {
                             }
                         }
                     }
-                    state = root
-                        .worker_snapshot(&r.tenant, &w.provider, &w.run)?
-                        .ok_or("worker absent")?;
+                    state = self.runtime.state(&state.binding)?;
                 }
             }
         }
@@ -991,64 +958,17 @@ impl<S: TrustedWorkerBuild + 'static> Connector for WorkerConnector<S> {
         Ok(ReconcileOutcome::Unknown(evidence))
     }
     fn check_recovery(&self, r: &ReconcileRequest) -> Result<()> {
-        let root = self.runtime.bundle.wi();
-        let snapshot = root.effect_snapshot(&r.tenant)?;
-        let effect = snapshot.effects.get(&r.intent).ok_or("recovery effect absent")?;
-        let w = effect
-            .authorization_inputs
-            .as_ref()
-            .and_then(|f| f.worker.as_ref())
-            .ok_or("recovery realization absent")?;
-        let state = root
-            .worker_snapshot(&r.tenant, &w.provider, &w.run)?
-            .ok_or("recovery worker absent")?;
-        if effect.agency.binding.principal.as_str() != self.runtime.scope.principal
-            || effect.resolution.as_ref().map(|x| &x.resolved.resource) != Some(&r.resource)
-            || effect.resolution.as_ref().and_then(|x| x.resolved.connector_execution.as_ref())
-                != Some(&r.execution)
-            || r.execution.binding.descriptor.operation != self.descriptor.operation
-        {
-            return Err("recovery connector identity mismatch".into());
-        }
-        self.runtime.recovery_authorization(&state.binding, "reconcile")?;
-        let launch = root.worker_launch(&state.binding)?.ok_or("recovery launch absent")?;
-        if !launch.connectors.contains(&r.execution.binding) {
-            return Err("original recovery implementation mismatch".into());
-        }
-        Ok(())
+        self.recovery_state(r).map(|_| ())
     }
     fn cancel(&self, r: ReconcileRequest) -> Result<CancelObservation> {
-        self.check_recovery(&r)?;
+        let state = self.recovery_state(&r)?;
         let root = self.runtime.bundle.wi();
-        let effect = root
-            .effect_snapshot(&r.tenant)?
-            .effects
-            .get(&r.intent)
-            .cloned()
-            .ok_or("worker effect absent")?;
-        if effect.resolution.as_ref().and_then(|x| x.resolved.connector_execution.as_ref())
-            != Some(&r.execution)
-            || effect.resolution.as_ref().map(|x| &x.resolved.resource) != Some(&r.resource)
-        {
-            return Err("worker cancellation identity mismatch".into());
-        }
-        let w = effect
-            .authorization_inputs
-            .as_ref()
-            .and_then(|s| s.worker.as_ref())
-            .ok_or("worker realization absent")?;
-        let state = root.worker_snapshot(&r.tenant, &w.provider, &w.run)?.ok_or("worker absent")?;
-        if state.binding.tenant.as_str() != self.runtime.scope.tenant
-            || state.binding.principal.as_str() != self.runtime.scope.principal
-        {
-            return Err("worker cleanup scope mismatch".into());
-        }
         self.runtime.recovery_authorization(&state.binding, "terminate")?;
         if !state.stop_requested && !state.cleanup_confirmed {
             root.request_worker_stop(&state)?;
         }
         // A stop obligation survives grant/approval expiry; it cannot authorize fresh work.
-        let _ = self.runtime.port.stop(w.provider.as_str(), w.run.as_str());
+        let _ = self.runtime.port.stop(state.binding.provider.as_str(), state.binding.run.as_str());
         Ok(CancelObservation::Requested)
     }
 }

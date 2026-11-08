@@ -78,7 +78,7 @@ pub fn derive<S: TrustedApprovals>(
     let effect = state.effects.get(&bound.intent).ok_or("worker effect absent")?;
     let authorization = effect.authorization.as_ref().ok_or("worker effect unauthorized")?;
     if authorization.decision != Decision::Allow
-        || ContentHash::of(&canonical_data(authorization)?) != bound.authorization
+        || worldinterface_protocol::data_digest(authorization)? != bound.authorization
     {
         return Err("worker authorization drift".into());
     }
@@ -93,7 +93,7 @@ pub fn derive<S: TrustedApprovals>(
         || w.aq_version != dependencies_digest()
         || w.manifest.executable.content != *executable
         || w.manifest.profile_definition.content.as_str() != request.profile.definition_sha256
-        || w.exports != ContentHash::of(&canonical_data(&demand.exports)?)
+        || w.exports != worldinterface_protocol::data_digest(&demand.exports)?
         || w.manifest.configuration.content
             != AuthorizedRun::configuration_digest(&demand.task, &demand.exports)?
         || w.manifest.adapter.content != *adapter
@@ -150,16 +150,15 @@ pub fn derive<S: TrustedApprovals>(
     if request.input_digest != AuthorizedRun::input_digest(&inputs)? {
         return Err("worker input digest drift".into());
     }
+    let descriptors = OPERATIONS
+        .iter()
+        .map(|op| super::connector::descriptor(*op))
+        .collect::<Result<Vec<_>>>()?;
     let current = worldinterface_capability::process_catalog::ProcessCatalogBinding {
         version: 1,
         profile: w.profile.clone(),
         profile_definition: w.manifest.profile_definition.content.clone(),
-        descriptor: ContentHash::of(&canonical_data(
-            &OPERATIONS
-                .iter()
-                .map(|op| super::connector::descriptor(*op))
-                .collect::<Result<Vec<_>>>()?,
-        )?),
+        descriptor: worldinterface_protocol::data_digest(&descriptors)?,
         adapter: adapter.clone(),
         executable: executable.clone(),
         helper: helper.clone(),
@@ -167,7 +166,7 @@ pub fn derive<S: TrustedApprovals>(
         configuration: w.manifest.configuration.content.clone(),
         // Exact-demand sets vary by operation and are reauthorized by the domain.
         // The policy revision and governing rules must remain stable across a run.
-        policy: ContentHash::of(&canonical_data(&facts.policy)?),
+        policy: worldinterface_protocol::data_digest(&facts.policy)?,
         controls: request.controls_digest.clone(),
         aq: w.aq_version.clone(),
         wi: w.wi_version.clone(),
@@ -189,7 +188,7 @@ pub fn derive<S: TrustedApprovals>(
     run_catalog.policy = super::catalog::policy_digest(&facts.policy)?;
     let catalog = run_catalog.digest()?;
     let principal = effect.agency.binding.principal.clone();
-    let run_digest = ContentHash::of(&canonical_data(&(
+    let run_digest = worldinterface_protocol::data_digest(&(
         "wi-worker-run-2",
         &catalog,
         verified.digest(),
@@ -202,7 +201,7 @@ pub fn derive<S: TrustedApprovals>(
         &request.controls_digest,
         &demand.task,
         &demand.exports,
-    ))?);
+    ))?;
     let operations: Vec<_> = OPERATIONS
         .iter()
         .map(|op| {
@@ -241,8 +240,8 @@ pub fn derive<S: TrustedApprovals>(
     let credential = CredentialBindingV1 {
         schema: 1,
         reference: format!("worker-credential:{}", run_digest.as_str()),
-        issuer: "worldinterface".into(),
-        audience: "process-managed-proof-1".into(),
+        issuer: crate::worker_process::CREDENTIAL_ISSUER.into(),
+        audience: crate::worker_process::CREDENTIAL_AUDIENCE.into(),
         principal: principal.as_str().to_string(),
         provider: request.provider.clone(),
         run: request.run.clone(),
@@ -273,18 +272,11 @@ pub fn derive<S: TrustedApprovals>(
     }
     let installed =
         bound.resolved.connector_execution.as_ref().ok_or("worker connector binding absent")?;
-    let combined = crate::connector::ConnectorRegistry::new(
-        OPERATIONS
-            .iter()
-            .map(|op| super::connector::descriptor(*op))
-            .collect::<Result<Vec<_>>>()?,
-    )?
-    .bindings()?;
-    let singleton = OPERATIONS
+    let combined = crate::connector::ConnectorRegistry::new(descriptors.clone())?.bindings()?;
+    let singleton = descriptors
         .iter()
-        .map(|op| {
-            Ok(crate::connector::ConnectorRegistry::new(vec![super::connector::descriptor(*op)?])?
-                .bindings()?)
+        .map(|descriptor| {
+            Ok(crate::connector::ConnectorRegistry::new(vec![descriptor.clone()])?.bindings()?)
         })
         .collect::<Result<Vec<_>>>()?
         .into_iter()

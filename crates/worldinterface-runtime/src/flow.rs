@@ -25,7 +25,7 @@ use worldinterface_domain::{
     flow::*,
 };
 use worldinterface_protocol::{
-    canonical_data, strict_json, ClientRequestId, ContentHash, EffectSubmission, OpaqueRef,
+    canonical_data, strict_json, ClientRequestId, EffectSubmission, OpaqueRef,
 };
 use worldinterface_storage::{flow::*, StoreRoot};
 
@@ -50,7 +50,7 @@ pub(crate) fn is_rejected(error: &(dyn std::error::Error + 'static)) -> bool {
 /// Stable bounded identity for an exact materialized node demand. Hosts can
 /// derive it before admission when issuing exact-demand credentials.
 pub fn node_request_id(request: &ClientRequestId, node: &OpaqueRef) -> Result<ClientRequestId> {
-    let hash = ContentHash::of(&canonical_data(&("wi-flow-node-request-1", request, node))?);
+    let hash = worldinterface_protocol::data_digest(&("wi-flow-node-request-1", request, node))?;
     Ok(format!("wi-flow-node:{}", hash.as_str()).try_into()?)
 }
 

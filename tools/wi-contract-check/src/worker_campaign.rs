@@ -19,7 +19,7 @@ use std::{
 pub const COVERAGE: &str = "conformance/wi-fabric-2/worker/campaign-coverage.json";
 pub const ENTRY: &str = "wi_owned_worker_acceptance_campaign";
 pub const PARALLELISM: usize = 8;
-const RUNTIME: &str = "crates/worldinterface-runtime/Cargo.toml";
+use crate::proof::RUNTIME;
 const PACKET: &str = "conformance/wi-fabric-2/worker/evaluation-manifest.json";
 const APPROVAL: &str = "conformance/wi-fabric-2/worker/evaluation-approval.json";
 const LOCKS: [&str; 3] = [
@@ -279,12 +279,8 @@ fn local(base: &Path, name: &str) -> Result<PathBuf> {
 }
 fn discover(root: &Path) -> Result<HarnessIndex> {
     let mut harnesses = HarnessIndex::new();
-    for (manifest, flags) in [
-        ("crates/worldinterface-foundation/Cargo.toml", vec!["--workspace", "--all-features"]),
-        (RUNTIME, vec![]),
-        ("tools/wi-contract-check/Cargo.toml", vec![]),
-    ] {
-        harnesses.extend(proof::discover_harnesses(root, manifest, &flags)?);
+    for &(manifest, flags) in proof::CONFIGURATIONS {
+        harnesses.extend(proof::discover_harnesses(root, manifest, flags)?);
     }
     Ok(harnesses)
 }
@@ -414,6 +410,13 @@ pub fn execute_selected(
 ) -> Result<Vec<Outcome>> {
     execute_harnesses(root, selected.iter().map(|(r, p)| (r.clone(), p.clone())), directory)
 }
+fn cached_digest<'a>(digests: &'a mut BTreeMap<PathBuf, String>, path: &Path) -> Result<&'a str> {
+    use std::collections::btree_map::Entry;
+    Ok(match digests.entry(path.to_owned()) {
+        Entry::Occupied(entry) => entry.into_mut(),
+        Entry::Vacant(entry) => entry.insert(hash(fs::read(path)?)),
+    })
+}
 fn execute_harnesses(
     root: &Path,
     selected: impl Iterator<Item = (TestRef, PathBuf)>,
@@ -422,9 +425,7 @@ fn execute_harnesses(
     let selected = selected.collect::<VecDeque<_>>();
     let mut digests = BTreeMap::new();
     for (_, executable) in &selected {
-        if !digests.contains_key(executable) {
-            digests.insert(executable.clone(), hash(fs::read(executable)?));
-        }
+        cached_digest(&mut digests, executable)?;
     }
     let pending = Mutex::new(selected);
     let batches = std::thread::scope(|scope| {
@@ -671,9 +672,7 @@ pub fn validate_executables(
     let mut digests = BTreeMap::new();
     for outcome in outcomes {
         let executable = selected.get(&outcome.reference).ok_or("unknown campaign executable")?;
-        if !digests.contains_key(executable) {
-            digests.insert(executable.clone(), hash(fs::read(executable)?));
-        }
+        cached_digest(&mut digests, executable)?;
         if outcome.executable_sha256 != digests[executable] {
             return Err("substituted compiled harness identity".into());
         }
@@ -708,9 +707,7 @@ pub fn validate_runtime_results(
     let mut expected_keys = BTreeSet::new();
     for (reference, paths) in expected {
         for path in paths {
-            if !digests.contains_key(path) {
-                digests.insert(path.clone(), hash(fs::read(path)?));
-            }
+            cached_digest(&mut digests, path)?;
             if !expected_keys.insert((
                 reference.clone(),
                 digests[path].clone(),
@@ -809,12 +806,6 @@ pub fn validate_observation(v: &Value, seam: bool) -> Result<()> {
         }
     }
     Ok(())
-}
-/// Candidate is generated from execution, with the producer commit resolved at run
-/// time. WIP-16 publishes the final handoff; this function grants no gate closure.
-pub fn candidate(root: &Path, receipt: &Value, base: &Path) -> Result<Value> {
-    validate_receipt(root, receipt, base)?;
-    handoff_candidate(receipt, base)
 }
 /// Generate the contract payload from receipt evidence. Callers granting passage
 /// must first validate the receipt; this function also supports non-live fixtures.

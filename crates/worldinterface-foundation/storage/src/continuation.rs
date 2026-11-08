@@ -3,7 +3,7 @@ use crate::{invalid, Result, StoreKind, StoreRoot};
 use rusqlite::{params, Connection, OptionalExtension, TransactionBehavior};
 use serde::{Deserialize, Serialize};
 use worldinterface_domain::continuation::*;
-use worldinterface_protocol::{canonical_data, strict_json, ContentHash, OpaqueRef};
+use worldinterface_protocol::{canonical_data, ContentHash, OpaqueRef};
 
 pub(crate) const SCHEMA: &str = "
 CREATE TABLE continuation_history(seq INTEGER PRIMARY KEY, entry BLOB NOT NULL, digest TEXT NOT NULL);
@@ -24,9 +24,6 @@ enum Command {
     Prepare { id: OpaqueRef, request: Vec<u8> },
     Rejected { id: OpaqueRef, code: String },
     Acknowledge { id: OpaqueRef, digest: ContentHash, sequence: u64 },
-}
-fn decode<T: serde::de::DeserializeOwned>(b: &[u8]) -> Result<T> {
-    Ok(serde_json::from_value(strict_json(b).map_err(invalid)?)?)
 }
 pub(crate) fn insert(c: &Connection, event: &DurableEvent) -> Result<()> {
     insert_ordered(c, event, true)
@@ -131,7 +128,7 @@ fn get(c: &Connection, id: &OpaqueRef) -> Result<SignalObligation> {
         },
     )?;
     Ok(SignalObligation {
-        event: decode(&e)?,
+        event: crate::decode_record(&e)?,
         request: r,
         request_digest: d.map(|d| d.try_into().map_err(invalid)).transpose()?,
         sequence,
@@ -257,7 +254,7 @@ impl StoreRoot {
             [id.as_str()],
             |r| Ok((r.get(0)?, r.get(1)?)),
         )?;
-        let event: DurableEvent = decode(&b)?;
+        let event: DurableEvent = crate::decode_record(&b)?;
         event.validate().map_err(invalid)?;
         if event.id != *id
             || ContentHash::of(&b).as_str() != d
@@ -335,7 +332,7 @@ impl StoreRoot {
             )?;
             let mut q = c.prepare("SELECT event FROM signal_outbox")?;
             for b in q.query_map([], |r| r.get::<_, Vec<u8>>(0))? {
-                let e: DurableEvent = decode(&b?)?;
+                let e: DurableEvent = crate::decode_record(&b?)?;
                 if let Some(a) = e.artifact {
                     self.read_artifact(&a)?;
                 }
@@ -351,7 +348,7 @@ pub(crate) fn validate_source_order(c: &Connection) -> Result<()> {
     let mut streams = std::collections::BTreeMap::new();
     let mut q = c.prepare("SELECT canonical FROM event_sources ORDER BY position")?;
     for row in q.query_map([], |r| r.get::<_, Vec<u8>>(0))? {
-        let event: DurableEvent = decode(&row?)?;
+        let event: DurableEvent = crate::decode_record(&row?)?;
         if event.route.kind == EventKind::WorkerObservation {
             let previous =
                 streams.insert(event.route.correlation_id().map_err(invalid)?, event.revision);
@@ -366,7 +363,7 @@ pub(crate) fn replay(source: &Connection, target: &Connection) -> Result<()> {
     let mut q = source.prepare("SELECT entry,digest FROM continuation_history ORDER BY seq")?;
     for r in q.query_map([], |r| Ok((r.get::<_, Vec<u8>>(0)?, r.get::<_, String>(1)?)))? {
         let (b, d) = r?;
-        let cmd: Command = decode(&b)?;
+        let cmd: Command = crate::decode_record(&b)?;
         if ContentHash::of(&b).as_str() != d
             || canonical_data(&cmd).map_err(invalid)? != b
             || !apply(target, &cmd, false)?
@@ -406,7 +403,7 @@ pub(crate) fn ingress_events(
                     route,
                     source,
                     new.revision,
-                    ContentHash::of(&canonical_data(delivery).map_err(invalid)?),
+                    worldinterface_protocol::data_digest(delivery).map_err(invalid)?,
                     None,
                 )
                 .map_err(invalid)?,
@@ -442,7 +439,7 @@ pub(crate) fn effect_events(
                         route,
                         case.id.clone(),
                         receipt.source_revision,
-                        ContentHash::of(&canonical_data(receipt).map_err(invalid)?),
+                        worldinterface_protocol::data_digest(receipt).map_err(invalid)?,
                         None,
                     )
                     .map_err(invalid)?,
@@ -478,7 +475,7 @@ pub(crate) fn flow_events(
                     route,
                     source,
                     new.revision,
-                    ContentHash::of(&canonical_data(result).map_err(invalid)?),
+                    worldinterface_protocol::data_digest(result).map_err(invalid)?,
                     None,
                 )
                 .map_err(invalid)?,

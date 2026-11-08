@@ -220,8 +220,8 @@ fn validate_launch(l: &Launch) -> Result<()> {
     let c = &l.credential;
     c.permits(
         &worldinterface_worker::credential::CredentialExpectation {
-            issuer: "worldinterface",
-            audience: "process-managed-proof-1",
+            issuer: super::CREDENTIAL_ISSUER,
+            audience: super::CREDENTIAL_AUDIENCE,
             principal: &c.principal,
             provider: &c.provider,
             run: &c.run,
@@ -295,8 +295,8 @@ pub fn helper_main() -> Result<()> {
             &fixture_launch,
             &ready,
             &worldinterface_worker::credential::CredentialExpectation {
-                issuer: "worldinterface",
-                audience: "process-managed-proof-1",
+                issuer: super::CREDENTIAL_ISSUER,
+                audience: super::CREDENTIAL_AUDIENCE,
                 principal: &launch.credential.principal,
                 provider: &tree.context.provider,
                 run: &tree.context.run,

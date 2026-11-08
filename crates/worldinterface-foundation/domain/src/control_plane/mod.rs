@@ -21,7 +21,7 @@ fn hash(v: &impl Serialize) -> Result<ContentHash> {
     digest(v).map_err(|_| Error::Invalid)
 }
 fn collection_hash(v: &impl Serialize) -> Result<ContentHash> {
-    Ok(ContentHash::of(&canonical_collection(v).map_err(|_| Error::Invalid)?))
+    worldinterface_protocol::collection_digest(v).map_err(|_| Error::Invalid)
 }
 fn timestamp(now: u64) -> Result<Timestamp> {
     Timestamp::from_epoch_millis(now).map_err(|_| Error::Invalid)

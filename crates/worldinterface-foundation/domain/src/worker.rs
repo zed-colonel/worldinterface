@@ -19,11 +19,11 @@ impl WorkerBinding {
     pub fn event_correlation(&self) -> Result<OpaqueRef, String> {
         format!(
             "wi-worker-run:{}",
-            ContentHash::of(&worldinterface_protocol::canonical_data(&(
+            worldinterface_protocol::data_digest(&(
                 "wi-worker-stream-1",
                 &self.provider,
                 &self.run
-            ))?)
+            ))?
             .as_str()
         )
         .try_into()
@@ -274,12 +274,12 @@ impl WorkerPreparedCollection {
     ) -> Result<OpaqueRef, String> {
         format!(
             "wi-worker-publication:{}",
-            ContentHash::of(&worldinterface_protocol::canonical_data(&(
+            worldinterface_protocol::data_digest(&(
                 "wi-worker-publication-2",
                 binding,
                 self,
                 reference
-            ))?)
+            ))?
             .as_str()
         )
         .try_into()

@@ -5,6 +5,7 @@ use crate::{
 };
 use std::collections::BTreeMap;
 use worldinterface_domain::authorization::RequiredControl;
+use worldinterface_domain::{agency::AuthenticatedCaller, effect::EffectState};
 use worldinterface_domain::{
     developmental::{self, CampaignArmV1, DevelopmentalComparisonV1, DevelopmentalSnapshotV1},
     receipt::{DisclosureProfile, ReceiptAccess, ReceiptView},
@@ -73,6 +74,43 @@ pub struct WorkerControlInspection {
 }
 
 impl<A: Authentication, D: ReceiptDisclosure<A>> ReceiptInspector<'_, A, D> {
+    fn full_effect_caller(
+        &self,
+        session: &A::Session,
+        id: &EffectIntentId,
+        denied: &'static str,
+    ) -> Result<AuthenticatedCaller> {
+        let principal = caller(self.authentication, session)?;
+        if self.disclosure.effect_profile(session, principal.tenant(), id)?
+            != DisclosureProfile::Full
+        {
+            return Err(denied.into());
+        }
+        Ok(principal)
+    }
+    fn scoped_effect_state(
+        &self,
+        principal: &AuthenticatedCaller,
+        id: &EffectIntentId,
+    ) -> Result<EffectState> {
+        let state = self.root.effect_snapshot(principal.tenant())?;
+        state
+            .effects
+            .get(id)
+            .filter(|e| &e.agency.binding.principal == principal.principal())
+            .ok_or("effect unavailable")?;
+        Ok(state)
+    }
+    fn full_effect_state(
+        &self,
+        session: &A::Session,
+        id: &EffectIntentId,
+        denied: &'static str,
+    ) -> Result<(AuthenticatedCaller, EffectState)> {
+        let principal = self.full_effect_caller(session, id, denied)?;
+        let state = self.scoped_effect_state(&principal, id)?;
+        Ok((principal, state))
+    }
     fn access(&self, session: &A::Session, receipt: &ReceiptId) -> Result<ReceiptAccess> {
         let principal = caller(self.authentication, session)?;
         let profile = self.disclosure.profile(session, principal.tenant(), receipt)?;
@@ -132,12 +170,8 @@ impl<A: Authentication, D: ReceiptDisclosure<A>> ReceiptInspector<'_, A, D> {
     pub fn effect_chain(&self, session: &A::Session, id: &EffectIntentId) -> Result<EffectChain> {
         let principal = caller(self.authentication, session)?;
         let disclosure = self.disclosure.effect_profile(session, principal.tenant(), id)?;
-        let state = self.root.effect_snapshot(principal.tenant())?;
-        let effect = state
-            .effects
-            .get(id)
-            .filter(|e| &e.agency.binding.principal == principal.principal())
-            .ok_or("effect unavailable")?;
+        let state = self.scoped_effect_state(&principal, id)?;
+        let effect = &state.effects[id];
         let admission = effect.dispatches.last().and_then(|d| d.admission.as_ref());
         let receipts = self.root.effect_receipts(principal.tenant(), id)?;
         // Every receipt disclosure is checked independently by the host.
@@ -163,18 +197,9 @@ impl<A: Authentication, D: ReceiptDisclosure<A>> ReceiptInspector<'_, A, D> {
         id: &EffectIntentId,
         campaign: Option<CampaignArmV1>,
     ) -> Result<DevelopmentalSnapshotV1> {
-        let principal = caller(self.authentication, session)?;
-        if self.disclosure.effect_profile(session, principal.tenant(), id)?
-            != DisclosureProfile::Full
-        {
-            return Err("developmental disclosure denied".into());
-        }
-        let state = self.root.effect_snapshot(principal.tenant())?;
-        let effect = state
-            .effects
-            .get(id)
-            .filter(|e| &e.agency.binding.principal == principal.principal())
-            .ok_or("effect unavailable")?;
+        let (_principal, state) =
+            self.full_effect_state(session, id, "developmental disclosure denied")?;
+        let effect = &state.effects[id];
         Ok(developmental::inspect(effect, campaign)?)
     }
     pub fn compare(
@@ -218,18 +243,9 @@ impl<A: Authentication, D: ReceiptDisclosure<A>> ReceiptInspector<'_, A, D> {
         session: &A::Session,
         id: &EffectIntentId,
     ) -> Result<WorkerControlInspection> {
-        let principal = caller(self.authentication, session)?;
-        if self.disclosure.effect_profile(session, principal.tenant(), id)?
-            != DisclosureProfile::Full
-        {
-            return Err("worker evidence disclosure denied".into());
-        }
-        let state = self.root.effect_snapshot(principal.tenant())?;
-        let effect = state
-            .effects
-            .get(id)
-            .filter(|e| &e.agency.binding.principal == principal.principal())
-            .ok_or("effect unavailable")?;
+        let (principal, state) =
+            self.full_effect_state(session, id, "worker evidence disclosure denied")?;
+        let effect = &state.effects[id];
         let worker = effect.authorization_inputs.as_ref().and_then(|a| a.worker.as_ref());
         let controls = worker.map(|w| w.controls.clone()).unwrap_or_default();
         let mut missing = worker
@@ -251,7 +267,7 @@ impl<A: Authentication, D: ReceiptDisclosure<A>> ReceiptInspector<'_, A, D> {
         if worker.is_none() {
             missing.push("worker-profile-missing".to_string().try_into()?);
         }
-        let producer_report = self.worker_evidence(session, id)?;
+        let producer_report = self.worker_evidence_for(session, id, &principal, effect)?;
         if let Some(report) = &producer_report {
             for kind in &report.missing {
                 let name = serde_json::to_value(kind)?;
@@ -282,18 +298,18 @@ impl<A: Authentication, D: ReceiptDisclosure<A>> ReceiptInspector<'_, A, D> {
         session: &A::Session,
         id: &EffectIntentId,
     ) -> Result<Option<worldinterface_worker::evidence::WorkerEvidenceReportV1>> {
-        let principal = caller(self.authentication, session)?;
-        if self.disclosure.effect_profile(session, principal.tenant(), id)?
-            != DisclosureProfile::Full
-        {
-            return Err("worker evidence disclosure denied".into());
-        }
-        let state = self.root.effect_snapshot(principal.tenant())?;
-        let effect = state
-            .effects
-            .get(id)
-            .filter(|e| &e.agency.binding.principal == principal.principal())
-            .ok_or("effect unavailable")?;
+        let (principal, state) =
+            self.full_effect_state(session, id, "worker evidence disclosure denied")?;
+        let effect = &state.effects[id];
+        self.worker_evidence_for(session, id, &principal, effect)
+    }
+    fn worker_evidence_for(
+        &self,
+        session: &A::Session,
+        id: &EffectIntentId,
+        principal: &AuthenticatedCaller,
+        effect: &worldinterface_domain::effect::EffectAggregate,
+    ) -> Result<Option<worldinterface_worker::evidence::WorkerEvidenceReportV1>> {
         let Some((receipt, _, _)) =
             self.root.effect_receipts(principal.tenant(), id)?.last().cloned()
         else {
@@ -370,22 +386,13 @@ impl<A: Authentication, D: ReceiptDisclosure<A>> ReceiptInspector<'_, A, D> {
         id: &EffectIntentId,
         log_policy: EvidenceRef,
     ) -> Result<CompletenessClaimV1> {
-        let principal = caller(self.authentication, session)?;
-        if self.disclosure.effect_profile(session, principal.tenant(), id)?
-            != DisclosureProfile::Full
-        {
-            return Err("evidence disclosure denied".into());
-        }
+        let principal = self.full_effect_caller(session, id, "evidence disclosure denied")?;
         if log_policy.artifact.scope != *principal.tenant() {
             return Err("cross-tenant log policy".into());
         }
         self.root.read_artifact(&log_policy.artifact)?;
-        let state = self.root.effect_snapshot(principal.tenant())?;
-        let effect = state
-            .effects
-            .get(id)
-            .filter(|e| &e.agency.binding.principal == principal.principal())
-            .ok_or("effect unavailable")?;
+        let state = self.scoped_effect_state(&principal, id)?;
+        let effect = &state.effects[id];
         let mut evidence = Vec::new();
         if let Some(inputs) = &effect.authorization_inputs {
             for grant in &inputs.grants {
@@ -457,12 +464,8 @@ impl<A: Authentication, D: ReceiptDisclosure<A>> ReceiptInspector<'_, A, D> {
         session: &A::Session,
         intent: &EffectIntentId,
     ) -> Result<Vec<worldinterface_domain::reconciliation::ReconciliationCase>> {
-        let principal = caller(self.authentication, session)?;
-        if self.disclosure.effect_profile(session, principal.tenant(), intent)?
-            != DisclosureProfile::Full
-        {
-            return Err("reconciliation evidence disclosure denied".into());
-        }
+        let principal =
+            self.full_effect_caller(session, intent, "reconciliation evidence disclosure denied")?;
         self.root.reconciliation_cases(&principal, intent)
     }
 }

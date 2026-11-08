@@ -4,8 +4,8 @@ use rusqlite::{params, Connection, OpenFlags, OptionalExtension};
 use worldinterface_domain::receipt::ValidatedReceipt;
 use worldinterface_domain::receipt::{DisclosureProfile, ReceiptAccess, ReceiptView};
 use worldinterface_protocol::{
-    canonical_data, strict_collection, ContentHash, EffectIntentId, Envelope, ExecutionRecord,
-    OpaqueRef, ReceiptBody, ReceiptId, Record, TemporalProvenance,
+    canonical_data, ContentHash, EffectIntentId, Envelope, ExecutionRecord, OpaqueRef, ReceiptBody,
+    ReceiptId, Record, TemporalProvenance,
 };
 
 type RetryRow = (String, u64, Vec<u8>, String, Vec<u8>, String);
@@ -219,8 +219,7 @@ impl StoreRoot {
             {
                 return Err(invalid("receipt without execution binding"));
             }
-            let execution: ExecutionRecord =
-                serde_json::from_value(strict_collection(&execution_bytes).map_err(invalid)?)?;
+            let execution: ExecutionRecord = crate::decode_collection(&execution_bytes)?;
             if canonical_data(&execution).map_err(invalid)? != execution_bytes {
                 return Err(invalid("noncanonical execution binding"));
             }
@@ -283,9 +282,7 @@ impl StoreRoot {
                     c.prepare("SELECT execution FROM receipt_history WHERE tenant=? AND intent=?")?;
                 let records = query
                     .query_map(params![tenant.as_str(), id.as_str()], |r| r.get::<_, Vec<u8>>(0))?
-                    .map(|bytes| -> Result<ExecutionRecord> {
-                        Ok(serde_json::from_value(strict_collection(&bytes?).map_err(invalid)?)?)
-                    })
+                    .map(|bytes| -> Result<ExecutionRecord> { crate::decode_collection(&bytes?) })
                     .collect::<Result<Vec<_>>>()?;
                 for outcome in &effect.outcomes {
                     if records
@@ -369,8 +366,7 @@ pub(crate) fn replay(source: &Connection, target: &Connection) -> Result<()> {
             return Err(invalid("receipt journal references"));
         }
         let tenant: OpaqueRef = tenant.try_into().map_err(invalid)?;
-        let execution: ExecutionRecord =
-            serde_json::from_value(strict_collection(&execution_bytes).map_err(invalid)?)?;
+        let execution: ExecutionRecord = crate::decode_collection(&execution_bytes)?;
         if canonical_data(&execution).map_err(invalid)? != execution_bytes {
             return Err(invalid("noncanonical receipt execution"));
         }

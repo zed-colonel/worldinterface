@@ -1,16 +1,12 @@
 #!/usr/bin/env python3
 """Prepare the exact candidate packet. This script never writes an acceptance receipt."""
-import hashlib
 import json
+import sys
+sys.dont_write_bytecode = True
 from pathlib import Path
+from wi_worker_evaluation import canonical, digest
 
 ROOT = Path(__file__).resolve().parents[1]
-
-def digest(data):
-    return hashlib.sha256(data).hexdigest()
-
-def canonical(value):
-    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False).encode()
 
 files = set()
 for directory in ["crates/worldinterface-foundation", "crates/worldinterface-runtime", "tools/wi-contract-check"]:
@@ -35,12 +31,12 @@ for name in [
     "conformance/wi-fabric-2/worker/evaluation-environment.json",
     "conformance/wi-fabric-2/worker/lifecycle-coverage.json",
     "conformance/wi-fabric-2/worker/supervisor-disposition.json",
-    "scripts/build-wi-worker-evaluation.sh", "scripts/refresh-wi-worker-evaluation.py",
+    "scripts/build-wi-worker-evaluation.sh", "scripts/refresh-wi-worker-evaluation.py", "scripts/wi_worker_evaluation.py",
     "scripts/check-wi-contract.sh", "scripts/check-wi-domain.sh",
     "scripts/check-wi-domain-isolation.py", "scripts/check-wi-integration.sh",
     "scripts/check-wi-integration.py", "scripts/wi_crash_isolation.py", "scripts/worker-proof-evidence.sh",
     "docs/work-items/WIP-11.md", "docs/work-items/WIP-12.md", "docs/work-items/WIP-13.md", "docs/work-items/WIP-14.md", "docs/work-items/WIP-15.md", "docs/work-items/wi-worker-proof-1.md",
-    "docs/work-items/WIP-16.md", "docs/evidence/WI-EMBEDDED-WORKER-PROOF-1.md",
+    "docs/work-items/WIP-16.md", "docs/work-items/WI-WORKER-PROOF-1-simplification.md", "docs/evidence/WI-EMBEDDED-WORKER-PROOF-1.md",
 ]:
     files.add(name)
 # Bind the actual fixture and normative data, not only source references to their paths.

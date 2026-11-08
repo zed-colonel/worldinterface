@@ -14,10 +14,12 @@ pub const EXPORT: &str = "conformance/wi-fabric-2/proof/wi-retired-map-gates-202
 pub const EXPORT_SHA256: &str = "a092d50054dc125772498cdb268d709cf4a2800d427c7ea07e6ceb7e2c37c3e4";
 const WORKER: &str = "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml";
 const AQ: &str = "contracts/sources/aq-baseline-integration-acceptance-matrix.yaml";
-const FOUNDATION: &str = "crates/worldinterface-foundation/Cargo.toml";
-const RUNTIME: &str = "crates/worldinterface-runtime/Cargo.toml";
-const CHECKER: &str = "tools/wi-contract-check/Cargo.toml";
+pub(crate) const FOUNDATION: &str = "crates/worldinterface-foundation/Cargo.toml";
+pub(crate) const RUNTIME: &str = "crates/worldinterface-runtime/Cargo.toml";
+pub(crate) const CHECKER: &str = "tools/wi-contract-check/Cargo.toml";
 
+pub(crate) const CONFIGURATIONS: &[(&str, &[&str])] =
+    &[(FOUNDATION, &["--workspace", "--all-features"]), (RUNTIME, &[]), (CHECKER, &[])];
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq, PartialOrd, Ord)]
 #[serde(deny_unknown_fields)]
 pub struct TestRef {
@@ -185,10 +187,8 @@ fn source_tests(path: &Path) -> Result<BTreeSet<String>> {
 /// Uses the adopted test configurations. --no-run avoids recursively running this suite.
 pub fn discover(root: &Path) -> Result<TestIndex> {
     let mut index = TestIndex::new();
-    for (manifest, flags) in
-        [(FOUNDATION, vec!["--workspace", "--all-features"]), (RUNTIME, vec![]), (CHECKER, vec![])]
-    {
-        index.extend(discover_configuration(root, manifest, &flags)?);
+    for &(manifest, flags) in CONFIGURATIONS {
+        index.extend(discover_configuration(root, manifest, flags)?);
     }
     Ok(index)
 }
@@ -455,48 +455,28 @@ fn coverage(root: &Path, id: &str) -> Result<(Vec<String>, BTreeSet<TestRef>)> {
             );
         }
     }
-    let path = "conformance/wi-fabric-2/connectors/coverage.json";
-    let v = read(&root.join(path))?;
-    if let Some(names) = v["assigned_cases"].get(id) {
-        add(path, RUNTIME, "worldinterface-runtime", serde_json::from_value(names.clone())?);
+    for path in [
+        "conformance/wi-fabric-2/connectors/coverage.json",
+        "conformance/wi-fabric-2/flow/integration-coverage.json",
+        "conformance/wi-fabric-2/continuations/coverage.json",
+        "conformance/wi-fabric-2/worker/lifecycle-coverage.json",
+        "conformance/wi-fabric-2/worker/artifact-seam-coverage.json",
+        "conformance/wi-fabric-2/worker/catalog-coverage.json",
+    ] {
+        let v = read(&root.join(path))?;
+        if let Some(names) = v["assigned_cases"].get(id) {
+            add(path, RUNTIME, "worldinterface-runtime", serde_json::from_value(names.clone())?);
+        }
     }
-    let path = "conformance/wi-fabric-2/flow/integration-coverage.json";
-    let v = read(&root.join(path))?;
-    if let Some(names) = v["assigned_cases"].get(id) {
-        add(path, RUNTIME, "worldinterface-runtime", serde_json::from_value(names.clone())?);
-    }
-    let path = "conformance/wi-fabric-2/continuations/coverage.json";
-    let v = read(&root.join(path))?;
-    if let Some(names) = v["assigned_cases"].get(id) {
-        add(path, RUNTIME, "worldinterface-runtime", serde_json::from_value(names.clone())?);
-    }
-    let path = "conformance/wi-fabric-2/worker/lifecycle-coverage.json";
-    let v = read(&root.join(path))?;
-    if let Some(names) = v["assigned_cases"].get(id) {
-        add(path, RUNTIME, "worldinterface-runtime", serde_json::from_value(names.clone())?);
-    }
-    let path = "conformance/wi-fabric-2/worker/artifact-seam-coverage.json";
-    let v = read(&root.join(path))?;
-    if let Some(names) = v["assigned_cases"].get(id) {
-        add(path, RUNTIME, "worldinterface-runtime", serde_json::from_value(names.clone())?);
-    }
-    let path = "conformance/wi-fabric-2/worker/catalog-coverage.json";
-    let v = read(&root.join(path))?;
-    if let Some(names) = v["assigned_cases"].get(id) {
-        add(path, RUNTIME, "worldinterface-runtime", serde_json::from_value(names.clone())?);
-    }
-    let path = "conformance/wi-fabric-2/worker/embedded-coverage.json";
-    let v = read(&root.join(path))?;
-    if let Some(references) = v["assigned_cases"].get(id) {
-        let references: Vec<TestRef> = serde_json::from_value(references.clone())?;
-        refs.push(path.to_string());
-        tests.extend(references);
-    }
-    let path = "conformance/wi-fabric-2/worker/campaign-coverage.json";
-    let v = read(&root.join(path))?;
-    if let Some(references) = v["assigned_cases"].get(id) {
-        refs.push(path.to_string());
-        tests.extend(serde_json::from_value::<Vec<TestRef>>(references.clone())?);
+    for path in [
+        "conformance/wi-fabric-2/worker/embedded-coverage.json",
+        "conformance/wi-fabric-2/worker/campaign-coverage.json",
+    ] {
+        let v = read(&root.join(path))?;
+        if let Some(references) = v["assigned_cases"].get(id) {
+            refs.push(path.to_string());
+            tests.extend(serde_json::from_value::<Vec<TestRef>>(references.clone())?);
+        }
     }
     refs.sort();
     Ok((refs, tests))
@@ -619,6 +599,8 @@ pub fn validate(
             }
         }
     }
+    let fixtures = read(&root.join("conformance/wi-fabric-2/integration/fixtures.json"))?;
+    let queue = read(&root.join("docs/adr/queue.json"))?;
     let mut seen = BTreeSet::new();
     for c in &registry.cases {
         if !seen.insert(c.id.clone()) {
@@ -637,7 +619,6 @@ pub fn validate(
         if !["planned", "implemented"].contains(&c.status.as_str()) {
             reject("PROOF-STATUS", &c.id, "invalid case status");
         }
-        let fixtures = read(&root.join("conformance/wi-fabric-2/integration/fixtures.json"))?;
         if let Some(covered_case) = fixtures["cases"].get(&c.id) {
             if covered_case["source_record_sha256"] != source_digest(source)? {
                 reject(
@@ -770,7 +751,6 @@ pub fn validate(
                         "closed gate has an open prerequisite",
                     );
                 }
-                let queue = read(&root.join("docs/adr/queue.json"))?;
                 let accepted = queue.as_array().is_some_and(|q| {
                     q.iter().any(|a| {
                         a["id"] == id && a["status"] == "accepted" && a["coverage"] == "full"
@@ -902,7 +882,7 @@ pub fn validate_completion(root: &Path, tests: &TestIndex) -> Result<Vec<Finding
         ));
     }
     for (obligation, references) in obligations {
-        if references.is_empty() || references.iter().any(|t| tests.get(t) != Some(&1)) {
+        if !exact_refs(&references, tests, false, |_| true) {
             findings.push(finding(
                 "PROOF-WI05",
                 path,
@@ -956,13 +936,9 @@ pub fn validate_connectors(root: &Path, tests: &TestIndex) -> Result<Vec<Finding
         ));
     }
     for (obligation, references) in obligations {
-        if references.is_empty()
-            || references.iter().any(|t| {
-                t.manifest != RUNTIME
-                    || t.package != "worldinterface-runtime"
-                    || tests.get(t) != Some(&1)
-            })
-        {
+        if !exact_refs(&references, tests, false, |t| {
+            t.manifest == RUNTIME && t.package == "worldinterface-runtime"
+        }) {
             findings.push(finding(
                 "PROOF-WI06",
                 path,
@@ -975,8 +951,41 @@ pub fn validate_connectors(root: &Path, tests: &TestIndex) -> Result<Vec<Finding
     Ok(findings)
 }
 
-/// Complete pure WI-07 domain proof. No acceptance cases belong to WIP-06.
-pub fn validate_flow(root: &Path, tests: &TestIndex) -> Result<Vec<Finding>> {
+struct PureDomainSpec<'a> {
+    path: &'a str,
+    scope: &'a str,
+    required: &'a [&'a str],
+    packages: &'a [&'a str],
+    rule: &'a str,
+    source: &'a str,
+    tests_source: &'a str,
+}
+fn exact_refs(
+    refs: &[TestRef],
+    tests: &TestIndex,
+    unique: bool,
+    allowed: impl Fn(&TestRef) -> bool,
+) -> bool {
+    !refs.is_empty()
+        && (!unique || refs.iter().collect::<BTreeSet<_>>().len() == refs.len())
+        && refs.iter().all(|t| allowed(t) && tests.get(t) == Some(&1))
+}
+fn fixture_agreement(
+    names: &[String],
+    fixture: &Value,
+    obligations: &BTreeMap<String, Vec<TestRef>>,
+) -> Result<bool> {
+    Ok(!names.is_empty()
+        && serde_json::to_value(names)? == fixture["required_tests"]
+        && names.iter().all(|name| {
+            obligations.values().flatten().any(|t| t.test == *name && t.manifest == RUNTIME)
+        }))
+}
+fn validate_pure_domain(
+    root: &Path,
+    tests: &TestIndex,
+    spec: PureDomainSpec<'_>,
+) -> Result<Vec<Finding>> {
     #[derive(Deserialize)]
     #[serde(deny_unknown_fields)]
     struct Coverage {
@@ -987,148 +996,117 @@ pub fn validate_flow(root: &Path, tests: &TestIndex) -> Result<Vec<Finding>> {
         assigned_cases: BTreeMap<String, Value>,
         required_obligations: BTreeMap<String, Vec<TestRef>>,
     }
-    let path = "conformance/wi-fabric-2/flow/coverage.json";
-    let coverage: Coverage = serde_json::from_value(read(&root.join(path))?)?;
-    let required = BTreeSet::from([
-        "cycles",
-        "unreachable",
-        "graph-identities",
-        "schema-compatibility",
-        "closed-purity",
-        "authority-ceilings",
-        "ambiguous-resources",
-        "bounded-fan-out",
-        "wait-rejection",
-        "wait-sequencing",
-        "direct-equivalence",
-        "canonical-vector",
-        "hash-normalization",
-        "strict-recovery",
-        "snapshot-drift",
-        "paired-authority",
-        "deterministic-replay",
-        "branch-resource-scope",
-        "branch-value-availability",
-        "profile-bounds",
-        "immutable-revision",
-        "artifact-and-schema-profile",
-        "execution-field-tampering",
-        "registry-compatibility",
-    ]);
+    let coverage: Coverage = serde_json::from_value(read(&root.join(spec.path))?)?;
     let mut findings = Vec::new();
     if coverage.version != 1
-        || coverage.scope != "wi/WI-07/domain"
+        || coverage.scope != spec.scope
         || coverage.upstream_conformance
         || coverage.runtime_conformance
         || !coverage.assigned_cases.is_empty()
         || coverage.required_obligations.keys().map(String::as_str).collect::<BTreeSet<_>>()
-            != required
+            != spec.required.iter().copied().collect()
     {
         findings.push(finding(
-            "PROOF-WI07",
-            path,
+            spec.rule,
+            spec.path,
             "scope",
-            "WIP-06 / WI-ADR-014",
+            spec.source,
             "complete pure-domain obligation matrix required; no runtime or case claim",
         ));
     }
     for (obligation, references) in coverage.required_obligations {
-        if references.is_empty()
-            || references.iter().collect::<BTreeSet<_>>().len() != references.len()
-            || references.iter().any(|t| {
-                t.manifest != FOUNDATION
-                    || ![
-                        "worldinterface-domain",
-                        "worldinterface-protocol",
-                        "worldinterface-capability",
-                    ]
-                    .contains(&t.package.as_str())
-                    || tests.get(t) != Some(&1)
-            })
-        {
+        if !exact_refs(&references, tests, true, |t| {
+            t.manifest == FOUNDATION && spec.packages.contains(&t.package.as_str())
+        }) {
             findings.push(finding(
-                "PROOF-WI07",
-                path,
+                spec.rule,
+                spec.path,
                 &obligation,
-                "WIP-06 required tests",
+                spec.tests_source,
                 "exact non-ignored unambiguous foundation test required",
             ));
         }
     }
     Ok(findings)
 }
-
+pub fn validate_flow(root: &Path, tests: &TestIndex) -> Result<Vec<Finding>> {
+    validate_pure_domain(
+        root,
+        tests,
+        PureDomainSpec {
+            path: "conformance/wi-fabric-2/flow/coverage.json",
+            scope: "wi/WI-07/domain",
+            required: &[
+                "cycles",
+                "unreachable",
+                "graph-identities",
+                "schema-compatibility",
+                "closed-purity",
+                "authority-ceilings",
+                "ambiguous-resources",
+                "bounded-fan-out",
+                "wait-rejection",
+                "wait-sequencing",
+                "direct-equivalence",
+                "canonical-vector",
+                "hash-normalization",
+                "strict-recovery",
+                "snapshot-drift",
+                "paired-authority",
+                "deterministic-replay",
+                "branch-resource-scope",
+                "branch-value-availability",
+                "profile-bounds",
+                "immutable-revision",
+                "artifact-and-schema-profile",
+                "execution-field-tampering",
+                "registry-compatibility",
+            ],
+            packages: &[
+                "worldinterface-domain",
+                "worldinterface-protocol",
+                "worldinterface-capability",
+            ],
+            rule: "PROOF-WI07",
+            source: "WIP-06 / WI-ADR-014",
+            tests_source: "WIP-06 required tests",
+        },
+    )
+}
 pub fn validate_control_plane(root: &Path, tests: &TestIndex) -> Result<Vec<Finding>> {
-    #[derive(Deserialize)]
-    #[serde(deny_unknown_fields)]
-    struct Coverage {
-        version: u32,
-        scope: String,
-        upstream_conformance: bool,
-        runtime_conformance: bool,
-        assigned_cases: BTreeMap<String, Value>,
-        required_obligations: BTreeMap<String, Vec<TestRef>>,
-    }
-    let path = "conformance/wi-fabric-2/control-plane/coverage.json";
-    let coverage: Coverage = serde_json::from_value(read(&root.join(path))?)?;
-    let required = BTreeSet::from([
-        "explicit-profile",
-        "closed-wire",
-        "server-owned-agency",
-        "tenant-organization-scoping",
-        "no-ambient-roles",
-        "attributed-administration",
-        "durable-revisions-use-accounting",
-        "concurrent-administration",
-        "exact-credential-scope",
-        "fresh-authorization-expiry",
-        "durable-issuance",
-        "custody-uncertainty",
-        "rotation-revocation",
-        "replay-integrity",
-        "secret-exclusion",
-    ]);
-    let mut findings = Vec::new();
-    if coverage.version != 1
-        || coverage.scope != "wi/WI-11/domain"
-        || coverage.upstream_conformance
-        || coverage.runtime_conformance
-        || !coverage.assigned_cases.is_empty()
-        || coverage.required_obligations.keys().map(String::as_str).collect::<BTreeSet<_>>()
-            != required
-    {
-        findings.push(finding(
-            "PROOF-WI11",
-            path,
-            "scope",
-            "WIP-13 / WI-ADR-018",
-            "complete pure-domain obligation matrix required; no runtime or case claim",
-        ));
-    }
-    for (obligation, references) in coverage.required_obligations {
-        if references.is_empty()
-            || references.iter().collect::<BTreeSet<_>>().len() != references.len()
-            || references.iter().any(|t| {
-                t.manifest != FOUNDATION
-                    || ![
-                        "worldinterface-domain",
-                        "worldinterface-protocol",
-                        "worldinterface-storage",
-                    ]
-                    .contains(&t.package.as_str())
-                    || tests.get(t) != Some(&1)
-            })
-        {
-            findings.push(finding(
-                "PROOF-WI11",
-                path,
-                &obligation,
-                "WIP-13 required tests",
-                "exact non-ignored unambiguous foundation test required",
-            ));
-        }
-    }
-    Ok(findings)
+    validate_pure_domain(
+        root,
+        tests,
+        PureDomainSpec {
+            path: "conformance/wi-fabric-2/control-plane/coverage.json",
+            scope: "wi/WI-11/domain",
+            required: &[
+                "explicit-profile",
+                "closed-wire",
+                "server-owned-agency",
+                "tenant-organization-scoping",
+                "no-ambient-roles",
+                "attributed-administration",
+                "durable-revisions-use-accounting",
+                "concurrent-administration",
+                "exact-credential-scope",
+                "fresh-authorization-expiry",
+                "durable-issuance",
+                "custody-uncertainty",
+                "rotation-revocation",
+                "replay-integrity",
+                "secret-exclusion",
+            ],
+            packages: &[
+                "worldinterface-domain",
+                "worldinterface-protocol",
+                "worldinterface-storage",
+            ],
+            rule: "PROOF-WI11",
+            source: "WIP-13 / WI-ADR-018",
+            tests_source: "WIP-13 required tests",
+        },
+    )
 }
 
 /// WI-07 runtime evidence is separate from the sealed pure compiler proof.
@@ -1171,14 +1149,10 @@ pub fn validate_flow_integration(root: &Path, tests: &TestIndex) -> Result<Vec<F
         ));
     }
     for (obligation, refs) in &obligations {
-        if refs.is_empty()
-            || refs.iter().collect::<BTreeSet<_>>().len() != refs.len()
-            || refs.iter().any(|t| {
-                !((t.manifest == RUNTIME && t.package == "worldinterface-runtime")
-                    || (t.manifest == FOUNDATION && t.package == "worldinterface-storage"))
-                    || tests.get(t) != Some(&1)
-            })
-        {
+        if !exact_refs(refs, tests, true, |t| {
+            (t.manifest == RUNTIME && t.package == "worldinterface-runtime")
+                || (t.manifest == FOUNDATION && t.package == "worldinterface-storage")
+        }) {
             findings.push(finding(
                 "PROOF-WI07-RUNTIME",
                 path,
@@ -1188,14 +1162,9 @@ pub fn validate_flow_integration(root: &Path, tests: &TestIndex) -> Result<Vec<F
             ));
         }
     }
+    let fixtures = read(&root.join("conformance/wi-fabric-2/integration/fixtures.json"))?;
     for (case, names) in assigned {
-        let fixtures = read(&root.join("conformance/wi-fabric-2/integration/fixtures.json"))?;
-        if names.is_empty()
-            || serde_json::to_value(&names)? != fixtures["cases"][&case]["required_tests"]
-            || names.iter().any(|name| {
-                !obligations.values().flatten().any(|t| t.test == *name && t.manifest == RUNTIME)
-            })
-        {
+        if !fixture_agreement(&names, &fixtures["cases"][&case], &obligations)? {
             findings.push(finding("PROOF-WI07-RUNTIME", path, &case, "WIP-07 case matrix", "case evidence must agree with authoritative integration fixtures and runtime obligations"));
         }
     }
@@ -1240,14 +1209,10 @@ pub fn validate_continuations(root: &Path, tests: &TestIndex) -> Result<Vec<Find
         ));
     }
     for (name, refs) in &obligations {
-        if refs.is_empty()
-            || refs.iter().collect::<BTreeSet<_>>().len() != refs.len()
-            || refs.iter().any(|t| {
-                !((t.manifest == RUNTIME && t.package == "worldinterface-runtime")
-                    || (t.manifest == FOUNDATION && t.package == "worldinterface-storage"))
-                    || tests.get(t) != Some(&1)
-            })
-        {
+        if !exact_refs(refs, tests, true, |t| {
+            (t.manifest == RUNTIME && t.package == "worldinterface-runtime")
+                || (t.manifest == FOUNDATION && t.package == "worldinterface-storage")
+        }) {
             f.push(finding(
                 "PROOF-WI08",
                 path,
@@ -1280,12 +1245,7 @@ pub fn validate_continuations(root: &Path, tests: &TestIndex) -> Result<Vec<Find
     }
     let fixtures = read(&root.join("conformance/wi-fabric-2/integration/fixtures.json"))?;
     for (id, names) in assigned {
-        if names.is_empty()
-            || serde_json::to_value(&names)? != fixtures["cases"][&id]["required_tests"]
-            || names.iter().any(|n| {
-                !obligations.values().flatten().any(|t| t.test == *n && t.manifest == RUNTIME)
-            })
-        {
+        if !fixture_agreement(&names, &fixtures["cases"][&id], &obligations)? {
             f.push(finding(
                 "PROOF-WI08",
                 path,
@@ -1359,7 +1319,7 @@ pub fn validate_worker_lifecycle(root: &Path, tests: &TestIndex) -> Result<Vec<F
         }
     }
     for (obligation, refs) in obligations {
-        if refs.is_empty() || refs.iter().any(|t| tests.get(t) != Some(&1)) {
+        if !exact_refs(&refs, tests, false, |_| true) {
             findings.push(finding(
                 "PROOF-WI10",
                 path,
@@ -1395,12 +1355,9 @@ pub fn validate_worker_catalog(root: &Path, tests: &TestIndex) -> Result<Vec<Fin
             != BTreeSet::from(["WP-007", "WP-032"])
         || obligations.keys().map(String::as_str).collect::<BTreeSet<_>>() != expected
         || obligations.values().any(|refs| {
-            refs.is_empty()
-                || refs.iter().any(|t| {
-                    t.manifest != RUNTIME
-                        || t.package != "worldinterface-runtime"
-                        || tests.get(t) != Some(&1)
-                })
+            !exact_refs(refs, tests, false, |t| {
+                t.manifest == RUNTIME && t.package == "worldinterface-runtime"
+            })
         })
         || assigned.values().any(|names| {
             names.is_empty()
@@ -1451,11 +1408,9 @@ pub fn validate_embedded(root: &Path, tests: &TestIndex) -> Result<Vec<Finding>>
             != BTreeSet::from(["WP-029", "WP-030", "AB-WI-019"])
         || obligations.keys().map(String::as_str).collect::<BTreeSet<_>>() != expected
         || assigned.values().chain(obligations.values()).any(|refs| {
-            refs.is_empty()
-                || refs.iter().any(|t| {
-                    ![FOUNDATION, RUNTIME].contains(&t.manifest.as_str())
-                        || tests.get(t) != Some(&1)
-                })
+            !exact_refs(refs, tests, false, |t| {
+                [FOUNDATION, RUNTIME].contains(&t.manifest.as_str())
+            })
         })
     {
         findings.push(finding(

@@ -6,7 +6,7 @@ use worldinterface_domain::{
     continuation::{DurableEvent, EventRoute},
     worker::*,
 };
-use worldinterface_protocol::{canonical_data, strict_json, ArtifactRef, ContentHash, OpaqueRef};
+use worldinterface_protocol::{canonical_data, ArtifactRef, ContentHash, OpaqueRef};
 
 pub(crate) const SCHEMA: &str = "
 CREATE TABLE worker_history(seq INTEGER PRIMARY KEY, command BLOB NOT NULL, digest TEXT NOT NULL);
@@ -64,9 +64,6 @@ enum Command {
         event: Box<DurableEvent>,
     },
 }
-fn decode<T: serde::de::DeserializeOwned>(bytes: &[u8]) -> Result<T> {
-    Ok(serde_json::from_value(strict_json(bytes).map_err(invalid)?)?)
-}
 fn snapshot(
     c: &Connection,
     tenant: &OpaqueRef,
@@ -80,7 +77,7 @@ fn snapshot(
             |r| r.get(0),
         )
         .optional()?;
-    bytes.map(|b| decode(&b)).transpose()
+    bytes.map(|b| crate::decode_record(&b)).transpose()
 }
 fn save(c: &Connection, s: &WorkerState) -> Result<()> {
     let b = &s.binding;
@@ -503,7 +500,7 @@ impl StoreRoot {
                 params![binding.tenant.as_str(), observation.event.as_str()],
                 |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
             )?;
-            let old: DurableEvent = decode(&bytes)?;
+            let old: DurableEvent = crate::decode_record(&bytes)?;
             old.validate().map_err(invalid)?;
             if old.id.as_str() != id
                 || ContentHash::of(&bytes).as_str() != digest
@@ -558,7 +555,7 @@ impl StoreRoot {
         let (tenant, provider, run) = after.unwrap_or(("", "", ""));
         let rows =
             q.query_map(params![tenant, provider, run, limit], |r| r.get::<_, Vec<u8>>(0))?;
-        rows.map(|r| decode(&r?)).collect()
+        rows.map(|r| crate::decode_record(&r?)).collect()
     }
 }
 pub(crate) fn replay(source: &Connection, target: &Connection) -> Result<()> {
@@ -566,7 +563,7 @@ pub(crate) fn replay(source: &Connection, target: &Connection) -> Result<()> {
     let rows = q.query_map([], |r| Ok((r.get::<_, Vec<u8>>(0)?, r.get::<_, String>(1)?)))?;
     for row in rows {
         let (bytes, hash) = row?;
-        let cmd: Command = decode(&bytes)?;
+        let cmd: Command = crate::decode_record(&bytes)?;
         if ContentHash::of(&bytes).as_str() != hash
             || canonical_data(&cmd).map_err(invalid)? != bytes
             || !apply(target, &cmd, false)?
@@ -597,7 +594,7 @@ fn provider_quarantine(
             |r| r.get(0),
         )
         .optional()?;
-    bytes.map(|b| decode(&b)).transpose()
+    bytes.map(|b| crate::decode_record(&b)).transpose()
 }
 fn launch_record(c: &Connection, b: &WorkerBinding) -> Result<Option<WorkerLaunchRecord>> {
     let bytes: Option<Vec<u8>> = c
@@ -607,7 +604,7 @@ fn launch_record(c: &Connection, b: &WorkerBinding) -> Result<Option<WorkerLaunc
             |r| r.get(0),
         )
         .optional()?;
-    let record: Option<WorkerLaunchRecord> = bytes.map(|b| decode(&b)).transpose()?;
+    let record: Option<WorkerLaunchRecord> = bytes.map(|b| crate::decode_record(&b)).transpose()?;
     if record.as_ref().is_some_and(|r| r.binding != *b) {
         return Err(invalid("recovery realization mismatch"));
     }

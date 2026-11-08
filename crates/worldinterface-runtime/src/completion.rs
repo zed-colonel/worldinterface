@@ -11,11 +11,8 @@ use crate::{
     Result,
 };
 use actionqueue_core::{
-    bounded::{
-        BoundedCode, BoundedError, BoundedMessage, ContentHash as AqHash, DataScheme,
-        HashAlgorithm, OpaqueRef as AqOpaqueRef,
-    },
-    data_ref::{DataRef, ExternalDataRef},
+    bounded::{BoundedCode, BoundedError, BoundedMessage},
+    data_ref::DataRef,
     disposition::AttemptDisposition,
 };
 use actionqueue_executor_local::handler::{ExecutorContext, ExecutorHandler};
@@ -91,6 +88,95 @@ pub(crate) fn retry_storage<T>(mut operation: impl FnMut() -> Result<T>) -> Resu
         }
     }
     unreachable!()
+}
+
+pub(crate) fn failure_code(
+    outcome: &ExecutionOutcome,
+    commit: &CommitObservation,
+) -> Option<&'static str> {
+    Some(match outcome {
+        ExecutionOutcome::TerminalFailure if *commit == CommitObservation::ConfirmedCommitted => {
+            "wi.effect.terminal_provider_failure_committed"
+        }
+        ExecutionOutcome::TerminalFailure => "wi.effect.terminal_provider_failure",
+        ExecutionOutcome::FailedBeforeCommit => "wi.effect.failed_before_commit",
+        ExecutionOutcome::CanceledBeforeCommit => "wi.effect.canceled_before_commit",
+        ExecutionOutcome::Uncertain => "wi.effect.uncertain",
+        ExecutionOutcome::Succeeded => return None,
+    })
+}
+struct OutcomeArtifacts {
+    evidence: Vec<EvidenceRef>,
+    outputs: Vec<ArtifactRef>,
+    boundary: Option<EvidenceRef>,
+}
+fn outcome_evidence(
+    effect: &worldinterface_domain::effect::EffectAggregate,
+    id: &EffectIntentId,
+    attempt: &OpaqueRef,
+    classification: worldinterface_protocol::ExecutorClassification,
+    commit: CommitObservation,
+    outcome: ExecutionOutcome,
+    artifacts: OutcomeArtifacts,
+) -> Result<OutcomeEvidence> {
+    Ok(OutcomeEvidence {
+        classification: Some(classification),
+        reconciliation_admission: None,
+        intent: id.clone(),
+        attempt: attempt.clone(),
+        connector_semantics: effect
+            .resolution
+            .as_ref()
+            .ok_or("missing resolution")?
+            .resolved
+            .idempotency_semantics
+            .clone(),
+        commit,
+        outcome,
+        evidence: artifacts.evidence,
+        required_outputs: effect
+            .authorization_inputs
+            .as_ref()
+            .ok_or("missing authority inputs")?
+            .required_outputs
+            .clone(),
+        durable_outputs: artifacts.outputs,
+        boundary_record: artifacts.boundary,
+    })
+}
+fn receipt_command(
+    state: &worldinterface_domain::effect::EffectState,
+    caller: &AuthenticatedCaller,
+    at: Timestamp,
+    mut outcome: OutcomeEvidence,
+    temporal: TemporalProvenance,
+) -> Result<worldinterface_storage::EffectReceiptCommand> {
+    let effect = state.effects.get(&outcome.intent).ok_or("missing effect")?;
+    outcome.reconciliation_admission =
+        crate::reconciliation::admission_bytes(effect, &outcome, state.revision + 1, &at)?;
+    let execution = ExecutionRecord {
+        classification: outcome.classification,
+        connector_execution: effect
+            .resolution
+            .as_ref()
+            .and_then(|r| r.resolved.connector_execution.clone())
+            .map(Box::new),
+        intent_id: outcome.intent.clone(),
+        attempt: outcome.attempt.clone(),
+        outcome: outcome.outcome.clone(),
+        evidence: outcome.evidence.clone(),
+        recorded_at: at.clone(),
+    };
+    let command = worldinterface_domain::effect::validate_command(
+        state,
+        caller,
+        at,
+        EffectAction::Outcome {
+            id: outcome.intent.clone(),
+            evidence: VerifiedOutcome::from_trusted_verifier(outcome),
+        },
+    )?;
+    Ok(worldinterface_storage::EffectReceiptCommand { command, execution, temporal })
 }
 
 fn publish(
@@ -303,19 +389,7 @@ impl<P: Connector, V: EvidenceAuthority, C: TrustedClock> EffectAttemptHandler<P
         if receipt_view.digest.as_ref() != Some(&receipt_digest) {
             return Err("committed receipt digest mismatch".into());
         }
-        if outcome.outcome != ExecutionOutcome::Succeeded {
-            let code = match outcome.outcome {
-                ExecutionOutcome::TerminalFailure
-                    if outcome.commit == CommitObservation::ConfirmedCommitted =>
-                {
-                    "wi.effect.terminal_provider_failure_committed"
-                }
-                ExecutionOutcome::TerminalFailure => "wi.effect.terminal_provider_failure",
-                ExecutionOutcome::FailedBeforeCommit => "wi.effect.failed_before_commit",
-                ExecutionOutcome::CanceledBeforeCommit => "wi.effect.canceled_before_commit",
-                ExecutionOutcome::Uncertain => "wi.effect.uncertain",
-                ExecutionOutcome::Succeeded => unreachable!(),
-            };
+        if let Some(code) = failure_code(&outcome.outcome, &outcome.commit) {
             return Ok(Some(terminal(code)));
         }
         let locator = CompletionLocator {
@@ -332,17 +406,7 @@ impl<P: Connector, V: EvidenceAuthority, C: TrustedClock> EffectAttemptHandler<P
             format!("completion-locator:{}:{}", id.as_str(), receipt.as_str()),
             &bytes,
         )?;
-        let external = ExternalDataRef {
-            scheme: DataScheme::new("wi-artifact-v1")?,
-            locator: AqOpaqueRef::new(format!(
-                "{}/{}",
-                artifact.scope.as_str(),
-                artifact.content.as_str()
-            ))?,
-            hash: AqHash::new(HashAlgorithm::Sha256, hex::decode(artifact.content.as_str())?)?,
-            size_bytes: Some(artifact.size),
-            content_type: None,
-        };
+        let external = crate::aq_adapter::artifact_data_ref(&artifact)?;
         Ok(Some(AttemptDisposition::complete(Some(DataRef::External(external)))))
     }
 
@@ -416,30 +480,19 @@ impl<P: Connector, V: EvidenceAuthority, C: TrustedClock> EffectAttemptHandler<P
             artifact: reference(&blob.bytes),
             schema: blob.schema.clone(),
         };
-        let preview = OutcomeEvidence {
-            classification: Some(classification),
-            reconciliation_admission: None,
-            intent: id.clone(),
-            attempt: attempt.clone(),
-            connector_semantics: effect
-                .resolution
-                .as_ref()
-                .ok_or("missing resolution")?
-                .resolved
-                .idempotency_semantics
-                .clone(),
-            commit: observation.commit.clone(),
-            outcome: observation.outcome.clone(),
-            evidence: observation.evidence.iter().map(evidence_ref).collect(),
-            required_outputs: effect
-                .authorization_inputs
-                .as_ref()
-                .ok_or("missing authority inputs")?
-                .required_outputs
-                .clone(),
-            durable_outputs: observation.outputs.iter().map(|b| reference(b)).collect(),
-            boundary_record: observation.boundary_record.as_ref().map(evidence_ref),
-        };
+        let preview = outcome_evidence(
+            effect,
+            id,
+            &attempt,
+            classification,
+            observation.commit.clone(),
+            observation.outcome.clone(),
+            OutcomeArtifacts {
+                evidence: observation.evidence.iter().map(evidence_ref).collect(),
+                outputs: observation.outputs.iter().map(|b| reference(b)).collect(),
+                boundary: observation.boundary_record.as_ref().map(evidence_ref),
+            },
+        )?;
         worldinterface_domain::effect::validate_outcome_publication(caller.tenant(), &preview)?;
         drop(state);
         let mut outputs = Vec::new();
@@ -505,64 +558,21 @@ impl<P: Connector, V: EvidenceAuthority, C: TrustedClock> EffectAttemptHandler<P
                         ),
                         _ => return Err("completion clock unavailable or regressed".into()),
                     };
-                    let mut outcome = OutcomeEvidence {
-                        classification: Some(classification),
-                        reconciliation_admission: None,
-                        intent: id.clone(),
-                        attempt: attempt.clone(),
-                        connector_semantics: effect
-                            .resolution
-                            .as_ref()
-                            .ok_or("missing resolution")?
-                            .resolved
-                            .idempotency_semantics
-                            .clone(),
-                        commit: observation.commit.clone(),
-                        outcome: observation.outcome.clone(),
-                        evidence: evidence.clone(),
-                        required_outputs: effect
-                            .authorization_inputs
-                            .as_ref()
-                            .ok_or("missing authority inputs")?
-                            .required_outputs
-                            .clone(),
-                        durable_outputs: outputs.clone(),
-                        boundary_record: boundary_record.clone(),
-                    };
-                    outcome.reconciliation_admission = crate::reconciliation::admission_bytes(
+                    let outcome = outcome_evidence(
                         effect,
-                        &outcome,
-                        state.revision + 1,
-                        &at,
-                    )?;
-                    let command = worldinterface_domain::effect::validate_command(
-                        state,
-                        caller,
-                        at.clone(),
-                        EffectAction::Outcome {
-                            id: id.clone(),
-                            evidence: VerifiedOutcome::from_trusted_verifier(outcome),
+                        id,
+                        &attempt,
+                        classification,
+                        observation.commit.clone(),
+                        observation.outcome.clone(),
+                        OutcomeArtifacts {
+                            evidence: evidence.clone(),
+                            outputs: outputs.clone(),
+                            boundary: boundary_record.clone(),
                         },
                     )?;
-                    let execution = ExecutionRecord {
-                        classification: Some(classification),
-                        connector_execution: effect
-                            .resolution
-                            .as_ref()
-                            .and_then(|r| r.resolved.connector_execution.clone())
-                            .map(Box::new),
-                        intent_id: id.clone(),
-                        attempt: attempt.clone(),
-                        outcome: observation.outcome.clone(),
-                        evidence: evidence.clone(),
-                        recorded_at: at.clone(),
-                    };
-                    let temporal = time(phases, at, &observation.commit, inferred)?;
-                    Ok(Some(worldinterface_storage::EffectReceiptCommand {
-                        command,
-                        execution,
-                        temporal,
-                    }))
+                    let temporal = time(phases, at.clone(), &observation.commit, inferred)?;
+                    Ok(Some(receipt_command(state, caller, at, outcome, temporal)?))
                 },
             )
         });
@@ -693,20 +703,7 @@ impl<P: Connector, V: EvidenceAuthority, C: TrustedClock> EffectAttemptHandler<P
         *started = true;
         let mut provider_commit = CommitObservation::Unknown;
         let result = (|| -> Result<AttemptDisposition> {
-            let state = root.effect_snapshot(caller.tenant())?;
-            let effect = state.effects.get(&id).ok_or("missing effect at invocation fence")?;
-            // A superseding delivery can have completed uncertainty while this
-            // handler was preparing its input. Signal fence loss to the same token.
-            if effect.phase != Phase::Running
-                || effect.attempt.as_ref() != Some(&attempt)
-                || effect.outcomes.last().is_some_and(|o| o.attempt == attempt)
-            {
-                ctx.input.cancellation_context.cancel();
-                return self
-                    .committed_disposition(&caller, &id, &run)?
-                    .ok_or_else(|| "lost invocation fence".into());
-            }
-            // Re-check after constructing the request, immediately before crossing the port.
+            // Recheck the Start fence immediately before crossing the port.
             let current = root.effect_snapshot(caller.tenant())?;
             let current = current.effects.get(&id).ok_or("missing invocation effect")?;
             if current.phase != Phase::Running
@@ -919,60 +916,21 @@ pub(crate) fn record_uncertain_after_terminal_run(
                 effect.agency.binding.principal.clone(),
             );
             let at = state.last_at.clone().ok_or("missing trusted Start timestamp")?;
-            let mut outcome = OutcomeEvidence {
-                classification: Some(
-                    worldinterface_protocol::ExecutorClassification::AmbiguousCommit,
-                ),
-                reconciliation_admission: None,
-                intent: id.clone(),
-                attempt: attempt.clone(),
-                connector_semantics: effect
-                    .resolution
-                    .as_ref()
-                    .ok_or("missing resolution")?
-                    .resolved
-                    .idempotency_semantics
-                    .clone(),
-                commit: CommitObservation::Unknown,
-                outcome: ExecutionOutcome::Uncertain,
-                evidence: vec![reference.clone()],
-                required_outputs: effect
-                    .authorization_inputs
-                    .as_ref()
-                    .ok_or("missing authority inputs")?
-                    .required_outputs
-                    .clone(),
-                durable_outputs: vec![],
-                boundary_record: None,
-            };
-            outcome.reconciliation_admission =
-                crate::reconciliation::admission_bytes(effect, &outcome, state.revision + 1, &at)?;
-            let command = worldinterface_domain::effect::validate_command(
-                state,
-                &caller,
-                at.clone(),
-                EffectAction::Outcome {
-                    id: id.clone(),
-                    evidence: VerifiedOutcome::from_trusted_verifier(outcome),
+            let outcome = outcome_evidence(
+                effect,
+                id,
+                attempt,
+                worldinterface_protocol::ExecutorClassification::AmbiguousCommit,
+                CommitObservation::Unknown,
+                ExecutionOutcome::Uncertain,
+                OutcomeArtifacts {
+                    evidence: vec![reference.clone()],
+                    outputs: vec![],
+                    boundary: None,
                 },
             )?;
-            let execution = ExecutionRecord {
-                classification: Some(
-                    worldinterface_protocol::ExecutorClassification::AmbiguousCommit,
-                ),
-                connector_execution: effect
-                    .resolution
-                    .as_ref()
-                    .and_then(|r| r.resolved.connector_execution.clone())
-                    .map(Box::new),
-                intent_id: id.clone(),
-                attempt: attempt.clone(),
-                outcome: ExecutionOutcome::Uncertain,
-                evidence: vec![reference.clone()],
-                recorded_at: at.clone(),
-            };
-            let temporal = time(phases, at, &CommitObservation::Unknown, true)?;
-            Ok(Some(worldinterface_storage::EffectReceiptCommand { command, execution, temporal }))
+            let temporal = time(phases, at.clone(), &CommitObservation::Unknown, true)?;
+            Ok(Some(receipt_command(state, &caller, at, outcome, temporal)?))
         })
     })?;
     Ok(())

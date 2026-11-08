@@ -3,12 +3,7 @@ use crate::Result;
 use worldinterface_domain::worker::{WorkerBinding, WorkerCollection, WorkerFact};
 use worldinterface_storage::StoreRoot;
 pub fn quarantine(root: &StoreRoot, binding: &WorkerBinding) -> Result<()> {
-    let state = root
-        .worker_snapshot(&binding.tenant, &binding.provider, &binding.run)?
-        .ok_or("worker absent")?;
-    if state.binding != *binding {
-        return Err("worker recovery binding drift".into());
-    }
+    let state = super::artifacts::bound_state(root, binding)?;
     if !state.quarantined && !state.cleanup_confirmed {
         if !state.artifact_policy.is_empty()
             && matches!(state.collection, WorkerCollection::Absent | WorkerCollection::Prepared(_))

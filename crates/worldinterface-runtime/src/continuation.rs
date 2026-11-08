@@ -75,12 +75,12 @@ impl<A: Authentication, P: EventAuthorization> EventIntake<'_, A, P> {
         // Stable per-provider/run/event identity, independent of observation content.
         let source: OpaqueRef = format!(
             "wi-worker:{}",
-            ContentHash::of(&canonical_data(&(
+            worldinterface_protocol::data_digest(&(
                 "wi-worker-observation-1",
                 &observation.provider,
                 &observation.run,
                 &observation.event,
-            ))?)
+            ))?
             .as_str()
         )
         .try_into()?;

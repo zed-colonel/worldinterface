@@ -58,10 +58,7 @@ fn snapshot(c: &Connection, tenant: &OpaqueRef) -> Result<EffectState> {
     let b: Option<Vec<u8>> = c
         .query_row("SELECT state FROM effect_state WHERE tenant=?", [tenant.as_str()], |r| r.get(0))
         .optional()?;
-    b.map_or_else(
-        || Ok(EffectState::default()),
-        |b| Ok(serde_json::from_value(strict_collection(&b).map_err(invalid)?)?),
-    )
+    b.map_or_else(|| Ok(EffectState::default()), |b| crate::decode_collection(&b))
 }
 pub(crate) fn snapshot_for_replay(c: &Connection, tenant: &OpaqueRef) -> Result<EffectState> {
     snapshot(c, tenant)
@@ -82,8 +79,7 @@ fn receipt_binds_convergence_fault(
         Ok((r.get::<_, u64>(0)?, r.get::<_, Vec<u8>>(1)?))
     })? {
         let (revision, bytes) = row?;
-        let execution: ExecutionRecord =
-            serde_json::from_value(strict_collection(&bytes).map_err(invalid)?)?;
+        let execution: ExecutionRecord = crate::decode_collection(&bytes)?;
         if &execution.outcome != outcome {
             continue;
         }
@@ -497,7 +493,8 @@ impl StoreRoot {
         {
             return Err(invalid("dispatch fault source mismatch"));
         }
-        let digest = ContentHash::of(&canonical_data(&(tenant, id, run, code)).map_err(invalid)?);
+        let digest =
+            worldinterface_protocol::data_digest(&(tenant, id, run, code)).map_err(invalid)?;
         tx.execute("INSERT OR IGNORE INTO effect_dispatch_fault_history(tenant,intent,run,code,digest) VALUES(?,?,?,?,?)",
             params![tenant.as_str(), id.as_str(), run.as_str(), code, digest.as_str()])?;
         tx.commit()?;
@@ -777,7 +774,8 @@ impl StoreRoot {
                 "wi.effect.pre_start_canceled",
             ]
             .contains(&code.as_str())
-                || ContentHash::of(&canonical_data(&(&tenant, &id, &run, &code)).map_err(invalid)?)
+                || worldinterface_protocol::data_digest(&(&tenant, &id, &run, &code))
+                    .map_err(invalid)?
                     .as_str()
                     != digest
                 || !effect.dispatches.iter().any(|d| {

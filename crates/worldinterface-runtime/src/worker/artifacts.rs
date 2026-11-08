@@ -37,10 +37,10 @@ pub fn policy(
             .collect::<Result<_>>()?,
     })
 }
-fn state(root: &StoreRoot, b: &WorkerBinding) -> Result<WorkerState> {
+pub(super) fn bound_state(root: &StoreRoot, b: &WorkerBinding) -> Result<WorkerState> {
     let s = root.worker_snapshot(&b.tenant, &b.provider, &b.run)?.ok_or("worker absent")?;
     if s.binding != *b {
-        return Err("collection binding mismatch".into());
+        return Err("worker binding mismatch".into());
     }
     Ok(s)
 }
@@ -51,7 +51,7 @@ pub fn quarantine(
     code: &str,
     findings: Vec<WorkerVerifierFinding>,
 ) -> Result<()> {
-    let manifests = match &state(root, b)?.collection {
+    let manifests = match &bound_state(root, b)?.collection {
         WorkerCollection::Prepared(p) => vec![p.manifest.clone()],
         WorkerCollection::Published(p) => vec![p.prepared.manifest.clone()],
         _ => vec![],
@@ -66,13 +66,13 @@ fn quarantine_manifest(
     findings: Vec<WorkerVerifierFinding>,
     manifests: Vec<ContentHash>,
 ) -> Result<()> {
-    let s = state(root, b)?;
+    let s = bound_state(root, b)?;
     let p = s.artifact_policy.first().ok_or("policy absent")?;
     let report = WorkerQuarantineReport {
         version: 2,
         binding: b.clone(),
         operation: operation.clone(),
-        policy: ContentHash::of(&canonical_data(p)?),
+        policy: worldinterface_protocol::data_digest(p)?,
         codes: vec![code.to_string().try_into()?],
         manifests,
         findings,
@@ -89,7 +89,7 @@ pub fn prepare(
     bytes: &BTreeMap<String, Vec<u8>>,
     exit_success: bool,
 ) -> Result<()> {
-    let s = state(root, b)?;
+    let s = bound_state(root, b)?;
     if !matches!(s.collection, WorkerCollection::Absent) {
         return Err("collection already decided".into());
     }
@@ -178,7 +178,7 @@ pub fn prepare(
     let prepared = WorkerPreparedCollection {
         version: 2,
         operation: operation.clone(),
-        policy: ContentHash::of(&canonical_data(p)?),
+        policy: worldinterface_protocol::data_digest(p)?,
         manifest,
         findings,
         exit_success,
@@ -199,7 +199,7 @@ struct PublishedManifest {
 }
 /// Storage failures leave Prepared intact. Snapshot failures quarantine without recollection.
 pub fn resume(root: &StoreRoot, b: &WorkerBinding) -> Result<()> {
-    let s = state(root, b)?;
+    let s = bound_state(root, b)?;
     let prepared = match &s.collection {
         WorkerCollection::Published(_) => return Ok(()),
         WorkerCollection::Prepared(p) => p.clone(),
@@ -264,7 +264,7 @@ pub fn resume(root: &StoreRoot, b: &WorkerBinding) -> Result<()> {
         worker_boundary("worker-manifest-published");
         Ok((exports, manifest, id))
     })?;
-    let current = state(root, b)?;
+    let current = bound_state(root, b)?;
     let event = DurableEvent::new(
         EventRoute {
             tenant: b.tenant.clone(),
@@ -286,7 +286,7 @@ pub fn resume(root: &StoreRoot, b: &WorkerBinding) -> Result<()> {
     Ok(())
 }
 pub fn read(root: &StoreRoot, b: &WorkerBinding, reference: &str) -> Result<Vec<u8>> {
-    let s = state(root, b)?;
+    let s = bound_state(root, b)?;
     // Export disposition is independent of later allocation/cleanup quarantine.
     if let WorkerCollection::Published(p) = s.collection {
         root.read_artifact(

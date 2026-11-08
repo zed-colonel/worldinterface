@@ -48,7 +48,7 @@ fn control_error(e: cp::Error) -> Box<dyn std::error::Error + Send + Sync> {
     format!("control plane {e:?}").into()
 }
 fn hash<T: serde::Serialize>(v: &T) -> Result<ContentHash> {
-    Ok(ContentHash::of(&canonical_collection(v)?))
+    Ok(worldinterface_protocol::collection_digest(v)?)
 }
 /// Stable exact artifact identity, including the authoritative organization.
 pub fn artifact_reference(scope: Scope, artifact: &ArtifactRef) -> ObjectRef {
@@ -279,7 +279,7 @@ where
     pub fn application(&self) -> Result<EmbeddedApplication<'_, A, V, R, C, P, K, S>> {
         let port = Arc::new(ProcessDispatcher::new(&self.runtime)?);
         let handler = Dispatcher {
-            flow: crate::flow_node::FlowAttemptHandler {
+            other: crate::flow_node::FlowAttemptHandler {
                 effect: crate::completion::EffectAttemptHandler {
                     bundle: self.bundle.clone(),
                     port: port.clone(),

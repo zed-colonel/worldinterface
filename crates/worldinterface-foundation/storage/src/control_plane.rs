@@ -69,15 +69,12 @@ enum Event {
         reason: Option<CustodyReason>,
     },
 }
-fn decode<T: serde::de::DeserializeOwned>(b: &[u8]) -> Result<T> {
-    Ok(serde_json::from_value(strict_collection(b).map_err(invalid)?)?)
-}
 fn read(c: &Connection) -> Result<cp::State> {
     let b: Option<Vec<u8>> = c
         .query_row("SELECT state FROM control_state WHERE singleton=1", [], |r| r.get(0))
         .optional()?;
     let Some(b) = b else { return Ok(cp::State::default()) };
-    let mut value: serde_json::Value = decode(&b)?;
+    let mut value: serde_json::Value = crate::decode_collection(&b)?;
     let header = value.as_object_mut().ok_or_else(|| invalid("control header"))?;
     for (field, array) in COLLECTIONS {
         header.insert(
@@ -92,7 +89,7 @@ fn read(c: &Connection) -> Result<cp::State> {
     })?;
     for row in rows {
         let (field, key, bytes) = row?;
-        let entry = decode(&bytes)?;
+        let entry = crate::decode_collection(&bytes)?;
         let array = COLLECTIONS
             .iter()
             .find(|(f, _)| *f == field)
@@ -230,7 +227,7 @@ pub(crate) fn replay(source: &Connection, target: &Connection) -> Result<()> {
     let mut state = cp::State::default();
     for row in rows {
         let (revision, bytes, digest) = row?;
-        let event: Event = decode(&bytes)?;
+        let event: Event = crate::decode_collection(&bytes)?;
         if ContentHash::of(&bytes).as_str() != digest
             || canonical_collection(&event).map_err(invalid)? != bytes
         {

@@ -76,6 +76,14 @@ pub fn canonical_data<T: Serialize>(value: &T) -> Result<Vec<u8>> {
 pub fn canonical_collection<T: Serialize>(value: &T) -> Result<Vec<u8>> {
     canonical_bounded(value, 16 * 1024 * 1024)
 }
+/// SHA-256 of canonical local data, with the wire record size bound.
+pub fn data_digest<T: Serialize>(value: &T) -> Result<ContentHash> {
+    Ok(ContentHash::of(&canonical_data(value)?))
+}
+/// SHA-256 of canonical internal collections, with the collection size bound.
+pub fn collection_digest<T: Serialize>(value: &T) -> Result<ContentHash> {
+    Ok(ContentHash::of(&canonical_collection(value)?))
+}
 fn canonical_bounded<T: Serialize>(value: &T, limit: usize) -> Result<Vec<u8>> {
     let v = serde_json::to_value(value).map_err(|e| e.to_string())?;
     validate_value(&v)?;

@@ -1,6 +1,6 @@
 //! Bounded catalog declarations. Decoding these records never grants execution authority.
 use serde::{Deserialize, Serialize};
-use worldinterface_protocol::{canonical_data, ContentHash, OpaqueRef};
+use worldinterface_protocol::{ContentHash, OpaqueRef};
 
 pub const PROCESS_OPERATIONS: [&str; 6] =
     ["provision", "start", "inspect", "terminate", "collect_artifacts", "release"];
@@ -35,7 +35,7 @@ impl ProcessCatalogBinding {
     }
     pub fn digest(&self) -> Result<ContentHash, String> {
         self.validate()?;
-        Ok(ContentHash::of(&canonical_data(self)?))
+        worldinterface_protocol::data_digest(self)
     }
 }
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
