@@ -284,8 +284,15 @@ impl<P: Connector, C: TrustedClock> ReconciliationHandler<P, C> {
             || case.queue_store.as_str() != storage(|| self.bundle.aq_store_id())?.to_string()
             || case.admission_request.as_ref() != Some(&serde_json::to_vec(&expected)?)
             || ctx.input.causal_context.as_ref() != Some(expected.causal_context())
-            || case.aq_run.as_ref().is_none_or(|run| run.as_str() != ctx.input.run_id.to_string())
         {
+            return Err("reconciliation task binding".into());
+        }
+        if case.aq_run.is_none() {
+            // AQ admission is durable before WI acknowledges it. A dispatch in
+            // that recoverable gap must release its lease without failing the case.
+            return self.wait(&case);
+        }
+        if case.aq_run.as_ref().is_none_or(|run| run.as_str() != ctx.input.run_id.to_string()) {
             return Err("reconciliation task binding".into());
         }
         if case.status.terminal() {

@@ -136,6 +136,64 @@ fn observations_preserve_gaps_conflicts_and_terminal_facts_with_atomic_outbox() 
     assert!(StoreRoot::open_existing(&path).is_err());
 }
 #[test]
+fn mixed_worker_and_intake_journals_preserve_global_stream_order_on_restore() {
+    let t = tempfile::tempdir().unwrap();
+    let path = t.path().join("root");
+    let root = create(&path);
+    let b = binding();
+    let route = EventRoute {
+        tenant: b.tenant.clone(),
+        audience: b.principal.clone(),
+        kind: EventKind::WorkerObservation,
+        correlation: b.event_correlation().unwrap(),
+        generation: None,
+    };
+    let early = DurableEvent::new(
+        route.clone(),
+        "before-reservation".to_string().try_into().unwrap(),
+        1,
+        ContentHash::of(b"early"),
+        None,
+    )
+    .unwrap();
+    root.record_event(early.clone()).unwrap();
+    root.reserve_start(b.clone(), 1).unwrap();
+    observe(&root, &b, 1, WorkerFact::StartAccepted).unwrap();
+    let late = DurableEvent::new(
+        route,
+        "after-reservation".to_string().try_into().unwrap(),
+        state(&root, &b).revision + 1,
+        ContentHash::of(b"late"),
+        None,
+    )
+    .unwrap();
+    root.record_event(late).unwrap();
+    let expected = root.signal_obligations(StoreKind::Fabric, None, 100).unwrap();
+    let old_state = state(&root, &b);
+    assert!(root
+        .record_event(
+            DurableEvent::new(
+                early.route,
+                "regression".to_string().try_into().unwrap(),
+                1,
+                ContentHash::of(b"regression"),
+                None
+            )
+            .unwrap()
+        )
+        .is_err());
+    root.repository(StoreKind::Fabric).unwrap().rebuild().unwrap();
+    assert_eq!(root.signal_obligations(StoreKind::Fabric, None, 100).unwrap(), expected);
+    drop(root);
+    let root = StoreRoot::open_existing(&path).unwrap();
+    assert_eq!(state(&root, &b), old_state);
+    drop(root);
+    let backup = t.path().join("backup");
+    StoreRoot::backup_offline(&path, &backup).unwrap();
+    let root = StoreRoot::open_existing(&backup).unwrap();
+    assert_eq!(root.signal_obligations(StoreKind::Fabric, None, 100).unwrap(), expected);
+}
+#[test]
 fn concurrent_worker_observations_allocate_revisions_with_operation_acknowledgement() {
     let t = tempfile::tempdir().unwrap();
     let path = t.path().join("root");

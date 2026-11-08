@@ -65,6 +65,7 @@ pub fn dependencies_digest() -> ContentHash {
 type RunRegistry = BTreeMap<(String, String), Arc<Mutex<Run>>>;
 struct Run {
     authorization: Arc<AuthorizedRun>,
+    limits: (u64, u64),
     workspace: Option<Workspace>,
     started: bool,
     collected: bool,
@@ -155,6 +156,7 @@ pub struct ProcessWorkerPort {
     clock: Arc<dyn Clock>,
     generation: AtomicU64,
     runs: Mutex<RunRegistry>,
+    spawn_attempts: AtomicU64,
 }
 impl ProcessWorkerPort {
     pub fn new(
@@ -192,13 +194,44 @@ impl ProcessWorkerPort {
             clock,
             generation: AtomicU64::new(0),
             runs: Mutex::new(BTreeMap::new()),
+            spawn_attempts: AtomicU64::new(0),
         })
+    }
+    /// Counts attempts at the actual helper spawn boundary, including failed attempts.
+    pub fn spawn_attempts(&self) -> u64 {
+        self.spawn_attempts.load(Ordering::SeqCst)
+    }
+    #[allow(dead_code)] // Host boundary is absent from standalone fixture/helper binaries.
+    pub(crate) fn check_capacity(&self) -> Result<()> {
+        let runs = self.runs.lock().map_err(|_| "registry unavailable")?;
+        let mut active = 0;
+        for run in runs.values() {
+            if !run.lock().map_err(|_| "run unavailable")?.released {
+                active += 1;
+            }
+        }
+        if active >= 64 {
+            return Err("concurrent run bound".into());
+        }
+        Ok(())
+    }
+    #[allow(dead_code)] // Host boundary is absent from standalone fixture/helper binaries.
+    pub(crate) fn retire(&self, provider: &str, run: &str) -> Result<()> {
+        let mut runs = self.runs.lock().map_err(|_| "registry unavailable")?;
+        let key = (provider.into(), run.into());
+        if let Some(shared) = runs.get(&key) {
+            if !shared.lock().map_err(|_| "run unavailable")?.released {
+                return Err("run not released".into());
+            }
+        }
+        runs.remove(&key);
+        Ok(())
     }
     /// Supply an already authorized realization, including exact requests for each allowed operation.
     pub fn admit(&self, authorization: AuthorizedRun) -> Result<()> {
         let executable =
             self.registry.entries.get(&authorization.executable).ok_or("unreviewed executable")?;
-        authorization.validate(
+        let limits = authorization.validate(
             &self.scope,
             executable,
             self.clock.unix_ms(),
@@ -206,6 +239,7 @@ impl ProcessWorkerPort {
         )?;
         let key = (authorization.controls.provider.clone(), authorization.controls.run.clone());
         let mut runs = self.runs.lock().map_err(|_| "process registry unavailable")?;
+        runs.retain(|_, run| !run.lock().is_ok_and(|r| r.released));
         if runs.len() >= 64 || runs.contains_key(&key) {
             return Err("run admission conflict or bound".into());
         }
@@ -221,6 +255,7 @@ impl ProcessWorkerPort {
             key,
             Arc::new(Mutex::new(Run {
                 authorization: Arc::new(authorization),
+                limits,
                 workspace: None,
                 started: false,
                 collected: false,
@@ -237,7 +272,7 @@ impl ProcessWorkerPort {
     }
     #[allow(dead_code)] // Also compiled into the standalone fixture/helper without WI composition.
     pub(crate) fn submit_admitted(&self, request: &WorkerRequestV1) -> Result<Acknowledgment> {
-        self.submit_sync(request)
+        self.submit_sync(request, true)
     }
     #[allow(dead_code)] // Also compiled into standalone binaries.
     pub(crate) fn observations_admitted(
@@ -271,10 +306,17 @@ impl ProcessWorkerPort {
     ) -> Result<Vec<u8>> {
         let shared = self.run(provider, run)?;
         let run = shared.lock().map_err(|_| "run unavailable")?;
-        self.authorize_read(&run, Operation::CollectArtifacts, Some(reference))?;
+        self.authorize_read(&run, Operation::CollectArtifacts, Some(reference), true)?;
         run.artifacts.get(reference).cloned().ok_or_else(|| "artifact access denied".into())
     }
     pub fn read_scoped(&self, locator: &ArtifactLocatorV2) -> Result<Vec<u8>> {
+        self.read_scoped_bound(locator, false)
+    }
+    #[allow(dead_code)] // Host boundary is absent from standalone fixture/helper binaries.
+    pub(crate) fn read_admitted(&self, locator: &ArtifactLocatorV2) -> Result<Vec<u8>> {
+        self.read_scoped_bound(locator, true)
+    }
+    fn read_scoped_bound(&self, locator: &ArtifactLocatorV2, host: bool) -> Result<Vec<u8>> {
         let shared = self.run(&locator.provider, &locator.run)?;
         let run = shared.lock().map_err(|_| "run unavailable")?;
         if run.quarantined
@@ -282,7 +324,7 @@ impl ProcessWorkerPort {
         {
             return Err("artifact realization denied".into());
         }
-        self.authorize_read(&run, Operation::CollectArtifacts, Some(&locator.reference))?;
+        self.authorize_read(&run, Operation::CollectArtifacts, Some(&locator.reference), host)?;
         let bytes =
             run.artifacts.get(&locator.reference).cloned().ok_or("artifact access denied")?;
         if bytes.len() as u64 != locator.size || ContentHash::of(&bytes) != locator.digest {
@@ -291,9 +333,16 @@ impl ProcessWorkerPort {
         Ok(bytes)
     }
     pub fn collection_manifest(&self, provider: &str, run: &str) -> Result<Vec<u8>> {
+        self.collection_manifest_bound(provider, run, false)
+    }
+    #[allow(dead_code)] // Host boundary is absent from standalone fixture/helper binaries.
+    pub(crate) fn manifest_admitted(&self, provider: &str, run: &str) -> Result<Vec<u8>> {
+        self.collection_manifest_bound(provider, run, true)
+    }
+    fn collection_manifest_bound(&self, provider: &str, run: &str, host: bool) -> Result<Vec<u8>> {
         let shared = self.run(provider, run)?;
         let run = shared.lock().map_err(|_| "run unavailable")?;
-        self.authorize_read(&run, Operation::CollectArtifacts, None)?;
+        self.authorize_read(&run, Operation::CollectArtifacts, None, host)?;
         if !run.collected || run.quarantined {
             return Err("collection unavailable".into());
         }
@@ -346,9 +395,25 @@ impl ProcessWorkerPort {
     }
     /// Bounded non-secret evidence for host integration. No private launch facts are returned.
     pub fn evidence(&self, provider: &str, run: &str) -> Result<Option<CleanupReport>> {
+        self.evidence_bound(provider, run, false)
+    }
+    #[allow(dead_code)] // Host boundary is absent from standalone fixture/helper binaries.
+    pub(crate) fn evidence_admitted(
+        &self,
+        provider: &str,
+        run: &str,
+    ) -> Result<Option<CleanupReport>> {
+        self.evidence_bound(provider, run, true)
+    }
+    fn evidence_bound(
+        &self,
+        provider: &str,
+        run: &str,
+        host: bool,
+    ) -> Result<Option<CleanupReport>> {
         let shared = self.run(provider, run)?;
         let run = shared.lock().map_err(|_| "run unavailable")?;
-        self.authorize_read(&run, Operation::Inspect, None)?;
+        self.authorize_read(&run, Operation::Inspect, None, host)?;
         Ok(run.report.clone().or_else(|| {
             if run.released && !run.started {
                 Some(CleanupReport {
@@ -364,7 +429,7 @@ impl ProcessWorkerPort {
     pub fn realization(&self, request: &WorkerRequestV1) -> Result<ResolvedWorkerV1> {
         let shared = self.run(&request.provider, &request.run)?;
         let run = shared.lock().map_err(|_| "run unavailable")?;
-        self.authorize_read(&run, Operation::Inspect, None)?;
+        self.authorize_read(&run, Operation::Inspect, None, false)?;
         run.authorization
             .operations
             .iter()
@@ -377,9 +442,25 @@ impl ProcessWorkerPort {
         provider: &str,
         run: &str,
     ) -> Result<worldinterface_worker::controls::ControlEvidenceV1> {
+        self.controls_bound(provider, run, false)
+    }
+    #[allow(dead_code)] // Host boundary is absent from standalone fixture/helper binaries.
+    pub(crate) fn controls_admitted(
+        &self,
+        provider: &str,
+        run: &str,
+    ) -> Result<worldinterface_worker::controls::ControlEvidenceV1> {
+        self.controls_bound(provider, run, true)
+    }
+    fn controls_bound(
+        &self,
+        provider: &str,
+        run: &str,
+        host: bool,
+    ) -> Result<worldinterface_worker::controls::ControlEvidenceV1> {
         let shared = self.run(provider, run)?;
         let run = shared.lock().map_err(|_| "run unavailable")?;
-        self.authorize_read(&run, Operation::Inspect, None)?;
+        self.authorize_read(&run, Operation::Inspect, None, host)?;
         let mut evidence = run.authorization.controls.clone();
         evidence.advertised = evidence.applied.clone();
         for kind in [
@@ -406,9 +487,24 @@ impl ProcessWorkerPort {
         };
         Ok(evidence)
     }
-    fn authorize_read(&self, run: &Run, op: Operation, artifact: Option<&str>) -> Result<()> {
+    fn authorize_read(
+        &self,
+        run: &Run,
+        op: Operation,
+        artifact: Option<&str>,
+        host: bool,
+    ) -> Result<()> {
         if run.authorization.scope != self.scope {
             return Err("scope access denied".into());
+        }
+        if host {
+            if !run.authorization.operations.iter().any(|(r, _)| r.operation == op)
+                || artifact
+                    .is_some_and(|a| !run.authorization.exports.iter().any(|e| e.reference == a))
+            {
+                return Err("host operation scope denied".into());
+            }
+            return Ok(());
         }
         run.authorization.check_credential(
             op,
@@ -417,7 +513,7 @@ impl ProcessWorkerPort {
             self.generation.load(Ordering::SeqCst),
         )
     }
-    fn submit_sync(&self, request: &WorkerRequestV1) -> Result<Acknowledgment> {
+    fn submit_sync(&self, request: &WorkerRequestV1, host: bool) -> Result<Acknowledgment> {
         // This branch precedes validation, locking, lookup, workspace allocation and credential issue.
         if !request.operation.available() {
             return Ok(Acknowledgment::Unavailable);
@@ -428,12 +524,18 @@ impl ProcessWorkerPort {
         let auth = run.authorization.clone();
         let executable =
             self.registry.entries.get(&auth.executable).ok_or("unreviewed executable")?;
-        let (wall, output) = auth.validate(
-            &self.scope,
-            executable,
-            self.clock.unix_ms(),
-            self.generation.load(Ordering::SeqCst),
-        )?;
+        let (wall, output) =
+            if host && !matches!(request.operation, Operation::Provision | Operation::Start) {
+                self.authorize_read(&run, request.operation, None, true)?;
+                run.limits
+            } else {
+                auth.validate(
+                    &self.scope,
+                    executable,
+                    self.clock.unix_ms(),
+                    self.generation.load(Ordering::SeqCst),
+                )?
+            };
         if !auth.operations.iter().any(|(r, _)| r == request) {
             return Err("exact operation not admitted".into());
         }
@@ -482,6 +584,7 @@ impl ProcessWorkerPort {
                 let journal = journal::Journal::create(&self.root, &auth, &nonce)?;
                 let (socket, child_socket) = io(std::os::unix::net::UnixStream::pair())?;
                 worldinterface_storage::worker_boundary("worker-helper-before-spawn");
+                self.spawn_attempts.fetch_add(1, Ordering::SeqCst);
                 let child = launch::helper(
                     self.helper.as_ref().ok_or("recovery-only port cannot launch")?,
                     executable,
@@ -568,7 +671,7 @@ impl ProcessWorkerPort {
                 if run.started && !run.report.as_ref().is_some_and(|r| r.cleanup_confirmed) {
                     return Err("cleanup incomplete; allocation quarantined".into());
                 }
-                if !run.quarantined && !auth.exports.is_empty() && !run.collected {
+                if run.started && !run.quarantined && !auth.exports.is_empty() && !run.collected {
                     return Err("required exports not collected".into());
                 }
                 if let Some(workspace) = run.workspace.take() {
@@ -588,13 +691,13 @@ impl ProcessWorkerPort {
 }
 impl WorkerPort for ProcessWorkerPort {
     fn submit<'a>(&'a self, request: &'a WorkerRequestV1) -> PortFuture<'a, Acknowledgment> {
-        Box::pin(async move { self.submit_sync(request) })
+        Box::pin(async move { self.submit_sync(request, false) })
     }
     fn observe<'a>(&'a self, provider: &'a str, run: &'a str) -> PortFuture<'a, Vec<Observation>> {
         Box::pin(async move {
             let shared = self.run(provider, run)?;
             let run = shared.lock().map_err(|_| "run unavailable")?;
-            self.authorize_read(&run, Operation::Inspect, None)?;
+            self.authorize_read(&run, Operation::Inspect, None, false)?;
             Ok(run.observations.clone())
         })
     }

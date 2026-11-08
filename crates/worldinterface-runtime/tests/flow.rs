@@ -22,6 +22,74 @@ use worldinterface_runtime::{
 };
 use worldinterface_storage::flow::*;
 #[tokio::test]
+async fn coordinator_waits_through_transient_binding_failure() {
+    let f = Fixture::new();
+    let evidence = Evidence(f.snapshot.clone());
+    let mut queue = QueueEngine::bootstrap(&f.bundle, f.handler(), host()).unwrap();
+    let id = f
+        .service(&evidence)
+        .submit_direct(&(), f.submission.clone(), f.selection(), &mut queue)
+        .unwrap();
+    let db = rusqlite::Connection::open(f._temp.path().join("bundle/wi/flow.sqlite")).unwrap();
+    db.execute_batch("CREATE TRIGGER fail_bind BEFORE INSERT ON flow_history WHEN CAST(NEW.entry AS TEXT) LIKE '%bind_coordinator%' BEGIN SELECT RAISE(ABORT,'transient bind fault'); END;").unwrap();
+    for _ in 0..20 {
+        let _ = queue.tick().await.unwrap();
+        tokio::time::sleep(std::time::Duration::from_millis(2)).await;
+    }
+    let task: TaskId = f.run(&id).coordinator_task.as_str().parse().unwrap();
+    assert!(f.run(&id).parent_run.is_none());
+    assert!(f.run(&id).outcome.is_none());
+    assert_eq!(f.connector.commits(), 0);
+    assert!(queue.engine().projection().runs_for_task(task).all(|r| !r.state().is_terminal()));
+    db.execute_batch("DROP TRIGGER fail_bind").unwrap();
+    for _ in 0..1000 {
+        let _ = queue.tick().await.unwrap();
+        if f.run(&id).proposal.is_some() {
+            break;
+        }
+        tokio::time::sleep(std::time::Duration::from_millis(1)).await;
+    }
+    let r = f.run(&id);
+    assert!(r.proposal.is_some());
+    // A crash can retain PrepareChildren but lose its AQ disposition. Replay
+    // of the binding wake must reproduce the same child proposal.
+    use actionqueue_core::{continuation::*, ids::*, task::safety::SafetyLevel};
+    use actionqueue_executor_local::handler::{
+        AttemptMetadata, CancellationContext, ExecutorContext, HandlerInput,
+    };
+    let request: actionqueue_core::admission::EnsureTaskRequest =
+        serde_json::from_slice(&r.coordinator_request).unwrap();
+    let ctx = ExecutorContext {
+        children: None,
+        input: HandlerInput {
+            resume_context: Some(ResumeContext {
+                context_id: ResumeContextId(u64::MAX),
+                checkpoint: None,
+                wake: WakeReason::Deadline { wait_id: WaitId::new(), deadline_at: 0 },
+                resumed_at: 0,
+            }),
+            causal_context: Some(request.causal_context().clone()),
+            run_id: r.parent_run.as_ref().unwrap().as_str().parse().unwrap(),
+            attempt_id: AttemptId::new(),
+            payload: request.task_spec().task_payload().bytes().to_vec(),
+            metadata: AttemptMetadata {
+                failure_attempt_count: 0,
+                max_attempts: 3,
+                attempt_number: 2,
+                timeout_secs: None,
+                safety_level: SafetyLevel::Idempotent,
+            },
+            cancellation_context: CancellationContext::new(),
+        },
+    };
+    let replay = f.handler().execute_bound(&ctx).unwrap();
+    assert_eq!(serde_json::to_vec(replay.child_admissions()).unwrap(), r.proposal.unwrap());
+    f.drive(&mut queue, &id).await;
+    assert_eq!(f.run(&id).outcome, Some(FlowOutcome::Succeeded));
+    assert_eq!(f.connector.commits(), 1);
+    queue.shutdown().unwrap();
+}
+#[tokio::test]
 async fn direct_and_flow_share_transactional_executor_and_receipts() {
     for flow in [false, true] {
         let f = Fixture::new();

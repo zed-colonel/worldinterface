@@ -8,7 +8,7 @@ use worldinterface_protocol::{
 };
 
 pub(crate) const SCHEMA: &str = "
-PRAGMA user_version=1; PRAGMA journal_mode=DELETE; PRAGMA synchronous=FULL;
+PRAGMA user_version=1; PRAGMA journal_mode=DELETE; PRAGMA synchronous=EXTRA;
 CREATE TABLE store_identity(singleton INTEGER PRIMARY KEY CHECK(singleton=1), manifest BLOB NOT NULL);
 CREATE TRIGGER identity_no_insert BEFORE INSERT ON store_identity WHEN EXISTS(SELECT 1 FROM store_identity) BEGIN SELECT RAISE(ABORT,'immutable identity'); END;
 CREATE TRIGGER identity_no_update BEFORE UPDATE ON store_identity BEGIN SELECT RAISE(ABORT,'immutable identity'); END;
@@ -355,6 +355,7 @@ impl Repository<'_> {
     pub fn rebuild(&self) -> Result<()> {
         let mut c = self.root.connect(self.kind)?;
         let tx = c.transaction_with_behavior(TransactionBehavior::Immediate)?;
+        crate::continuation::validate_source_order(&tx)?;
         tx.execute_batch("DELETE FROM control_entries; DELETE FROM control_state; DELETE FROM projections; DELETE FROM records; DELETE FROM admissions; DELETE FROM outbox; DELETE FROM ingress_state; DELETE FROM ingress_receipt_index; DELETE FROM effect_state; DELETE FROM effect_outbox; DELETE FROM publication_index; DELETE FROM receipt_index; DELETE FROM flow_state; DELETE FROM flow_runs; DELETE FROM flow_tasks; DELETE FROM signal_outbox; DELETE FROM worker_event_sequences; DELETE FROM callback_revisions; DELETE FROM worker_runs; DELETE FROM worker_limits; DELETE FROM worker_launches; DELETE FROM worker_providers;")?;
         replay_into(&tx, &tx)?;
         crate::ingress::replay(&tx, &tx)?;
@@ -402,6 +403,7 @@ fn replay_into(source: &Connection, target: &Connection) -> Result<()> {
 pub(crate) fn validate_database(c: &Connection) -> Result<()> {
     // Validate under one SQLite read snapshot. Replay never calls authorization or providers.
     c.execute_batch("BEGIN")?;
+    crate::continuation::validate_source_order(c)?;
     let expected = Connection::open_in_memory()?;
     expected.execute_batch(SCHEMA)?;
     expected.execute_batch(crate::ingress::SCHEMA)?;

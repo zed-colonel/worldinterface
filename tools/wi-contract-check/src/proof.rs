@@ -110,7 +110,7 @@ fn source_tests(path: &Path) -> Result<BTreeSet<String>> {
             return Err("cyclic Rust module route in proof test discovery".into());
         }
         let ast = syn::parse_file(&fs::read_to_string(&path)?)?;
-        items(&ast.items, prefix, dir, seen, out)?;
+        items(&ast.items, prefix, dir, path.parent().ok_or("module parent missing")?, seen, out)?;
         seen.remove(&path);
         Ok(())
     }
@@ -118,6 +118,7 @@ fn source_tests(path: &Path) -> Result<BTreeSet<String>> {
         nodes: &[syn::Item],
         prefix: &str,
         dir: &Path,
+        path_dir: &Path,
         seen: &mut BTreeSet<PathBuf>,
         out: &mut BTreeSet<String>,
     ) -> Result<()> {
@@ -136,7 +137,7 @@ fn source_tests(path: &Path) -> Result<BTreeSet<String>> {
                     let name = m.ident.to_string();
                     let prefix = format!("{prefix}{name}::");
                     if let Some((_, nodes)) = &m.content {
-                        items(nodes, &prefix, &dir.join(&name), seen, out)?;
+                        items(nodes, &prefix, &dir.join(&name), &dir.join(&name), seen, out)?;
                     } else {
                         let explicit = m.attrs.iter().find_map(|a| {
                             if !a.path().is_ident("path") {
@@ -151,7 +152,9 @@ fn source_tests(path: &Path) -> Result<BTreeSet<String>> {
                             }
                             None
                         });
-                        let module = explicit.map(|p| dir.join(p)).unwrap_or_else(|| {
+                        // Outer #[path] is relative to the containing source file,
+                        // while ordinary submodules use its module directory.
+                        let module = explicit.map(|p| path_dir.join(p)).unwrap_or_else(|| {
                             let file = dir.join(format!("{name}.rs"));
                             if file.is_file() {
                                 file
@@ -254,16 +257,20 @@ pub fn discover_harnesses(root: &Path, manifest: &str, flags: &[&str]) -> Result
         let syntax = source_tests(Path::new(string(&a["target"], "src_path")?))?;
         let ignored = listing(Path::new(executable), true)?;
         for test in listing(Path::new(executable), false)?.difference(&ignored) {
-            if syntax.contains(test) {
-                index
-                    .entry(TestRef {
-                        manifest: manifest.into(),
-                        package: string(package, "name")?.into(),
-                        test: test.clone(),
-                    })
-                    .or_default()
-                    .push(PathBuf::from(executable));
+            if !syntax.contains(test) {
+                return Err(format!(
+                    "compiled test absent from syntax index: {test} ({executable})"
+                )
+                .into());
             }
+            index
+                .entry(TestRef {
+                    manifest: manifest.into(),
+                    package: string(package, "name")?.into(),
+                    test: test.clone(),
+                })
+                .or_default()
+                .push(PathBuf::from(executable));
         }
     }
     if campaign_owned {
@@ -801,6 +808,7 @@ pub fn check(root: &Path) -> Result<Vec<Finding>> {
     let (registry, gates) = load(root)?;
     let tests = discover(root)?;
     let mut findings = validate(root, &registry, &gates, &tests)?;
+    findings.extend(validate_foundation_coverage(root, &tests)?);
     findings.extend(validate_completion(root, &tests)?);
     findings.extend(validate_connectors(root, &tests)?);
     findings.extend(validate_flow(root, &tests)?);
@@ -818,6 +826,48 @@ pub fn check(root: &Path) -> Result<Vec<Finding>> {
             "WIP-15",
             &e.to_string(),
         ));
+    }
+    Ok(findings)
+}
+
+/// The isolation script's source hints do not establish executable coverage.
+/// Use the compiled, non-ignored index for every legacy foundation obligation,
+/// including obligations that are not attached to a WP/AB case.
+pub fn validate_foundation_coverage(root: &Path, tests: &TestIndex) -> Result<Vec<Finding>> {
+    let mut findings = Vec::new();
+    for scope in ["ingress", "egress", "receipts", "worker"] {
+        let path = format!("conformance/wi-fabric-2/{scope}/coverage.json");
+        let coverage = read(&root.join(&path))?;
+        let entries = array(&coverage, if scope == "worker" { "cases" } else { "obligations" })?;
+        for entry in entries {
+            let name = string(entry, "test")?;
+            let package = string(entry, "package")?;
+            let package =
+                if package.starts_with("worldinterface-") || package == "wi-contract-check" {
+                    package.to_owned()
+                } else {
+                    format!("worldinterface-{package}")
+                };
+            let manifest = if package == "wi-contract-check" { CHECKER } else { FOUNDATION };
+            let count: usize = tests
+                .iter()
+                .filter(|(t, _)| {
+                    t.manifest == manifest
+                        && t.package == package
+                        && t.test.rsplit("::").next() == Some(name)
+                })
+                .map(|(_, n)| n)
+                .sum();
+            if count != 1 {
+                findings.push(finding(
+                    "PROOF-FOUNDATION-COVERAGE",
+                    &path,
+                    name,
+                    "foundation coverage obligations",
+                    "exactly one compiled non-ignored test required",
+                ));
+            }
+        }
     }
     Ok(findings)
 }

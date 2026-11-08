@@ -14,6 +14,62 @@ use worldinterface_egress::Egress;
 use worldinterface_protocol::*;
 use worldinterface_runtime::{authority::TrustedClock, storage::StoreBundle};
 
+#[test]
+fn connector_bound_effects_reject_nonproduction_preparation() {
+    let h = Harness::new(IdempotencyClass::ExternallyKeyed, Mode::Unknown);
+    let state = h.bundle.wi().effect_snapshot(h.caller().tenant()).unwrap();
+    let error = worldinterface_domain::effect::validate_command(
+        &state,
+        &h.caller(),
+        h.clock.now().unwrap(),
+        EffectAction::Prepare {
+            id: h.id.clone(),
+            snapshot: VerifiedSnapshot::from_trusted_verifier(h.snapshot.clone()).unwrap(),
+        },
+    )
+    .unwrap_err();
+    assert!(error.to_string().contains("require production admission"));
+}
+
+#[tokio::test]
+async fn reconciliation_waits_when_dispatched_before_acknowledgment() {
+    use worldinterface_runtime::{
+        aq_adapter::QueueEngine,
+        reconciliation::{self, ReconciliationHandler},
+    };
+    let h = Harness::new(IdempotencyClass::ExternallyKeyed, Mode::Ambiguous);
+    h.execute().await;
+    let handler = ReconciliationHandler {
+        bundle: h.bundle.clone(),
+        connector: h.connector.clone(),
+        clock: h.clock.clone(),
+    };
+    let mut q = QueueEngine::bootstrap(&h.bundle, handler, host()).unwrap();
+    let request: actionqueue_core::admission::EnsureTaskRequest =
+        serde_json::from_slice(&h.case().admission_request.unwrap()).unwrap();
+    let admission = q.ensure_task(request).unwrap();
+    let run = q.engine().projection().run_ids_for_task(admission.task_id())[0];
+    for _ in 0..20 {
+        let _ = q.tick().await.unwrap();
+        tokio::time::sleep(std::time::Duration::from_millis(2)).await;
+    }
+    assert!(h.case().aq_run.is_none());
+    assert!(!q.engine().projection().get_run_state(&run).unwrap().is_terminal());
+    assert_eq!(h.case().observations, 0);
+    reconciliation::deliver(&mut q, &h.caller(), &h.clock, &h.id).unwrap();
+    h.clock.advance(2000);
+    tokio::time::sleep(std::time::Duration::from_millis(2100)).await;
+    for _ in 0..100 {
+        let _ = q.tick().await.unwrap();
+        if h.case().status.terminal() {
+            break;
+        }
+        tokio::time::sleep(std::time::Duration::from_millis(2)).await;
+    }
+    assert_eq!(h.case().status, CaseStatus::ConfirmedCommitted);
+    q.shutdown().unwrap();
+}
+
 #[tokio::test]
 async fn reconciliation_confirmations_preserve_original_receipt_and_stable_key() {
     for committed in [true, false] {

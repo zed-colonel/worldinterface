@@ -12787,5 +12787,12 @@
     "target": "embedded-worker-campaign",
     "rationale": "WIP-15 scoped producer control/cleanup evidence and executable campaign proof. Evaluation remains exact-packet gated; no semantic task acceptance or containment qualification.",
     "source": "docs/work-items/WIP-15.md; accepted WIP-15 design and operator WP-034 scheduling split; WI-ADR-018"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_process.rs::host_collection_release_and_inspection_survive_worker_credential_expiry::struct:TestClock",
+    "disposition": "test-evidence",
+    "target": "process-managed-proof-1 runtime adapter",
+    "rationale": "F-002: deterministic trusted host clock proves collection, cleanup and inspection survive bootstrap credential expiry while worker-facing access still fails closed. Candidate for correctness review.",
+    "source": "docs/work-items/WI-WORKER-PROOF-1-correctness.md; active F-002 and operator correctness remediation guidance"
   }
 ]

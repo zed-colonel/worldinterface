@@ -373,6 +373,10 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
             admitted.provider_operation.clone().ok_or("worker provider operation absent")?;
         let mut live = self.live.lock().map_err(|_| "worker registry unavailable")?;
         let fresh = if matches!(op, Operation::Provision | Operation::Start) {
+            if root.worker_snapshot(&binding.tenant, &binding.provider, &binding.run)?.is_none() {
+                // The live registry lock serializes this check with reservation/admission.
+                self.port.check_capacity()?;
+            }
             root.reserve_catalog_start(
                 WorkerLaunchRecord {
                     version: 1,
@@ -608,7 +612,15 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
             self.finish_collection(binding)?;
         }
         root.acknowledge_worker_operation(binding.clone(), provider_operation)?;
+        if op == Operation::Release {
+            self.port.retire(binding.provider.as_str(), binding.run.as_str())?;
+            self.live.lock().map_err(|_| "worker registry unavailable")?.remove(&key);
+        }
         succeeded(&request, &self.state(binding)?)
+    }
+    /// Non-secret diagnostic at the provider's consequential spawn boundary.
+    pub fn spawn_attempts(&self) -> Option<u64> {
+        self.port.spawn_attempts()
     }
     pub fn read_artifact(&self, binding: &WorkerBinding, reference: &str) -> Result<Vec<u8>> {
         self.evaluation
@@ -646,7 +658,17 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
         let launch = self.bundle.wi().worker_launch(binding)?.ok_or("worker launch absent")?;
         let operations: Vec<(WorkerRequestV1, worldinterface_worker::mapping::ResolvedWorkerV1)> =
             serde_json::from_slice(&launch.operations)?;
-        self.port.recover_cleanup(binding.provider.as_str(), binding.run.as_str(), &operations)
+        match self.port.recover_cleanup(
+            binding.provider.as_str(),
+            binding.run.as_str(),
+            &operations,
+        ) {
+            Ok(report) => Ok(report),
+            Err(error) => {
+                super::recovery::quarantine(self.bundle.wi(), binding)?;
+                Err(error)
+            }
+        }
     }
     pub(crate) fn inspection_evidence(
         &self,
@@ -698,6 +720,20 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
         self.port.evidence(binding.provider.as_str(), binding.run.as_str())
     }
     /// Host maintenance explicitly polls durable observations; AQ never depends on this process's memory.
+    pub(crate) fn maintain(&self, binding: &WorkerBinding) -> Result<()> {
+        if binding.tenant.as_str() != self.scope.tenant
+            || binding.principal.as_str() != self.scope.principal
+        {
+            return Ok(());
+        }
+        if self.poll(binding).is_err() {
+            // An unknown historical implementation or damaged private evidence
+            // cannot prevent unrelated AQ work from progressing.
+            super::recovery::quarantine(self.bundle.wi(), binding)?;
+            let _ = self.port.stop(binding.provider.as_str(), binding.run.as_str());
+        }
+        Ok(())
+    }
     pub fn poll(&self, binding: &WorkerBinding) -> Result<()> {
         if binding.tenant.as_str() != self.scope.tenant
             || binding.principal.as_str() != self.scope.principal

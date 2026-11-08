@@ -477,6 +477,45 @@ pub struct RecoverySetup {
     pub snapshot: AuthorizationSnapshot,
 }
 impl RecoverySetup {
+    pub fn reserve_unpollable_workers(&self) {
+        let root = StoreRoot::open_existing(self.temp.path().join("bundle/wi")).unwrap();
+        for foreign in [false, true] {
+            let binding = worldinterface_domain::worker::WorkerBinding {
+                tenant: if foreign {
+                    "foreign-tenant".to_string().try_into().unwrap()
+                } else {
+                    self.auth.tenant.clone()
+                },
+                principal: self.auth.principal.clone(),
+                provider: "unpollable".to_string().try_into().unwrap(),
+                run: "old-run".to_string().try_into().unwrap(),
+                request: "old-request".to_string().try_into().unwrap(),
+                realization: ContentHash::of(b"old-implementation"),
+            };
+            root.reserve_start(binding, 1).unwrap();
+        }
+    }
+    pub fn assert_unpollable_quarantines(&self) {
+        let root = StoreRoot::open_existing(self.temp.path().join("bundle/wi")).unwrap();
+        for foreign in [false, true] {
+            let tenant = if foreign {
+                "foreign-tenant".to_string().try_into().unwrap()
+            } else {
+                self.auth.tenant.clone()
+            };
+            let state = root
+                .worker_snapshot(
+                    &tenant,
+                    &"unpollable".to_string().try_into().unwrap(),
+                    &"old-run".to_string().try_into().unwrap(),
+                )
+                .unwrap()
+                .unwrap();
+            assert_eq!(state.quarantined, !foreign);
+            assert_eq!(state.stop_requested, !foreign);
+            assert!(state.capacity_reserved);
+        }
+    }
     pub fn new() -> Self {
         use worldinterface_runtime::storage::StoreBundle;
         let temp = tempfile::tempdir().unwrap();

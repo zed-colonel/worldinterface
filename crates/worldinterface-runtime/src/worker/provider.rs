@@ -9,6 +9,15 @@ use worldinterface_worker::{
 };
 
 pub trait AdmittedProvider: Send + Sync {
+    fn check_capacity(&self) -> Result<()> {
+        Ok(())
+    }
+    fn retire(&self, _provider: &str, _run: &str) -> Result<()> {
+        Ok(())
+    }
+    fn spawn_attempts(&self) -> Option<u64> {
+        None
+    }
     fn acknowledged(&self, _request: &WorkerRequestV1) -> Result<bool> {
         Ok(false)
     }
@@ -43,12 +52,21 @@ pub struct ProviderProvenance {
     pub seam_simulation: bool,
 }
 impl AdmittedProvider for ProcessWorkerPort {
+    fn check_capacity(&self) -> Result<()> {
+        Ok(ProcessWorkerPort::check_capacity(self)?)
+    }
+    fn retire(&self, provider: &str, run: &str) -> Result<()> {
+        Ok(ProcessWorkerPort::retire(self, provider, run)?)
+    }
+    fn spawn_attempts(&self) -> Option<u64> {
+        Some(ProcessWorkerPort::spawn_attempts(self))
+    }
     fn controls(
         &self,
         provider: &str,
         run: &str,
     ) -> Result<Option<worldinterface_worker::controls::ControlEvidenceV1>> {
-        Ok(Some(self.control_evidence(provider, run)?))
+        Ok(Some(self.controls_admitted(provider, run)?))
     }
     fn admit(&self, run: AuthorizedRun) -> Result<()> {
         Ok(ProcessWorkerPort::admit(self, run)?)
@@ -60,13 +78,13 @@ impl AdmittedProvider for ProcessWorkerPort {
         Ok(self.observations_admitted(provider, run)?)
     }
     fn read(&self, locator: &ArtifactLocatorV2) -> Result<Vec<u8>> {
-        Ok(self.read_scoped(locator)?)
+        Ok(self.read_admitted(locator)?)
     }
     fn manifest(&self, provider: &str, run: &str) -> Result<Vec<u8>> {
-        Ok(self.collection_manifest(provider, run)?)
+        Ok(self.manifest_admitted(provider, run)?)
     }
     fn evidence(&self, provider: &str, run: &str) -> Result<Option<CleanupReport>> {
-        Ok(ProcessWorkerPort::evidence(self, provider, run)?)
+        Ok(self.evidence_admitted(provider, run)?)
     }
     fn stop(&self, provider: &str, run: &str) -> Result<()> {
         Ok(self.stop_admitted(provider, run)?)

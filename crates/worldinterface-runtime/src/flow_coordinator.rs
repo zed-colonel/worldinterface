@@ -95,6 +95,9 @@ pub(crate) fn coordinate(
         r.principal.clone(),
     );
     let artifact_reader = crate::artifact::ArtifactResolver::new(root, artifacts);
+    if r.parent_run.is_none() {
+        return binding_wait(&r.coordinator_task);
+    }
     if r.parent_run.as_ref().map(OpaqueRef::as_str) != Some(ctx.input.run_id.to_string().as_str()) {
         return Err(rejected("unbound coordinator run"));
     }
@@ -112,7 +115,13 @@ pub(crate) fn coordinate(
         });
     }
     // A wake only requests a domain evaluation. It never proves business success.
-    if let Some(context) = &ctx.input.resume_context {
+    let binding_wake = ctx.input.resume_context.as_ref().is_some_and(|c| {
+        // The coordinator's only deadline is its private binding wait; its
+        // child wait has none. Replaying after PrepareChildren must recognize
+        // this wake too, even when the proposal is already durable.
+        matches!(&c.wake, WakeReason::Deadline { deadline_at: 0, .. })
+    });
+    if let Some(context) = ctx.input.resume_context.as_ref().filter(|_| !binding_wake) {
         let all_terminal =
             ctx.children.as_ref().is_some_and(|children| children.all_children_terminal());
         let finish = match &context.wake {
@@ -260,6 +269,25 @@ pub(crate) fn coordinate(
             ..Default::default()
         },
     )?)
+}
+
+fn binding_wait(task: &OpaqueRef) -> Result<AttemptDisposition> {
+    Ok(AttemptDisposition::awaiting(
+        WaitSpec::new(
+            WaitId::new(),
+            SignalFilter {
+                tenant_id: None,
+                namespace: SignalNamespace::new("wi.flow")?,
+                kind: SignalKind::new("binding-ready")?,
+                correlation_id: Some(CorrelationId::new(format!("wi-ready:{}", task.as_str()))?),
+                source_ref: None,
+            },
+            WaitMatchPolicy::FirstMatch,
+            SignalEligibility::AnyRetained,
+            Some(WaitDeadline { at: 0, policy: WaitTimeoutPolicy::ResumeWithTimeout }),
+        )?,
+        None,
+    ))
 }
 
 /// Disposable scan watermark, never a wait registry. Losing it only repeats a

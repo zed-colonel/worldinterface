@@ -83,7 +83,7 @@ fn save(c: &Connection, s: &WorkerState) -> Result<()> {
     c.execute("INSERT INTO worker_runs VALUES(?,?,?,?,?,?) ON CONFLICT(tenant,provider,run) DO UPDATE SET reserved=excluded.reserved,state=excluded.state",params![b.tenant.as_str(), b.provider.as_str(), b.run.as_str(), b.request.as_str(), s.capacity_reserved,canonical_data(s).map_err(invalid)?])?;
     Ok(())
 }
-fn apply(c: &Connection, command: &Command) -> Result<bool> {
+fn apply(c: &Connection, command: &Command, live: bool) -> Result<bool> {
     match command {
         Command::Quarantine { record } => {
             if record.version != 1
@@ -143,7 +143,7 @@ fn apply(c: &Connection, command: &Command) -> Result<bool> {
             state.revision += 1;
             save(c, &state)?;
             for event in events {
-                crate::continuation::insert(c, event)?;
+                crate::continuation::insert_ordered(c, event, live)?;
             }
         }
         Command::Operation { binding, entry: operation } => {
@@ -268,7 +268,7 @@ fn apply(c: &Connection, command: &Command) -> Result<bool> {
                 return Err(invalid("worker commit revision conflict"));
             }
             save(c, &state)?;
-            crate::continuation::insert(c, event)?;
+            crate::continuation::insert_ordered(c, event, live)?;
         }
     }
     Ok(true)
@@ -279,7 +279,7 @@ fn transact(root: &StoreRoot, cmd: &Command) -> Result<bool> {
     commit(tx, cmd)
 }
 fn commit(tx: rusqlite::Transaction<'_>, cmd: &Command) -> Result<bool> {
-    let changed = apply(&tx, cmd)?;
+    let changed = apply(&tx, cmd, true)?;
     if changed {
         let bytes = canonical_data(cmd).map_err(invalid)?;
         tx.execute(
@@ -533,7 +533,7 @@ pub(crate) fn replay(source: &Connection, target: &Connection) -> Result<()> {
         let cmd: Command = decode(&bytes)?;
         if ContentHash::of(&bytes).as_str() != hash
             || canonical_data(&cmd).map_err(invalid)? != bytes
-            || !apply(target, &cmd)?
+            || !apply(target, &cmd, false)?
         {
             return Err(invalid("corrupt worker journal"));
         }

@@ -411,7 +411,9 @@ impl StoreRoot {
         let c = Connection::open_with_flags(self.db_path(kind), OpenFlags::SQLITE_OPEN_READ_WRITE)?;
         c.busy_timeout(std::time::Duration::from_secs(5))?;
         self.validate_identity(&c, kind)?;
-        c.execute_batch("PRAGMA synchronous=FULL; PRAGMA foreign_keys=ON;")?;
+        // DELETE-journal commits must sync the directory after unlinking the
+        // journal before AQ or a provider can act on the committed WI record.
+        c.execute_batch("PRAGMA synchronous=EXTRA; PRAGMA foreign_keys=ON;")?;
         #[cfg(test)]
         crate::crash::prepare(&c);
         Ok(c)
@@ -463,6 +465,28 @@ impl StoreRoot {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn every_write_connection_syncs_delete_journal_directory() {
+        let t = tempfile::tempdir().unwrap();
+        let path = t.path().join("root");
+        let profile = StoreProfile {
+            instance: InstanceId::generate(),
+            created_at: "2026-09-19T00:00:00.000000000Z".to_string().try_into().unwrap(),
+            platform: true,
+        };
+        let root = StoreRoot::create_empty(&path, profile).unwrap();
+        for kind in &root.manifest.stores {
+            let c = root.connect(*kind).unwrap();
+            assert_eq!(c.query_row("PRAGMA synchronous", [], |r| r.get::<_, u32>(0)).unwrap(), 3);
+            assert_eq!(
+                c.query_row("PRAGMA journal_mode", [], |r| r.get::<_, String>(0)).unwrap(),
+                "delete"
+            );
+        }
+        let c = Connection::open_in_memory().unwrap();
+        c.execute_batch(crate::repository::SCHEMA).unwrap();
+        assert_eq!(c.query_row("PRAGMA synchronous", [], |r| r.get::<_, u32>(0)).unwrap(), 3);
+    }
     #[test]
     fn publication_never_replaces_any_existing_destination() {
         for kind in ["empty-directory", "directory", "file", "symlink"] {

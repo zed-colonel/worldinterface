@@ -867,6 +867,11 @@ fn apply(state: &EffectState, entry: &Entry) -> Result<(EffectState, EffectInten
         }
         JournalAction::Prepare { snapshot, .. }
         | JournalAction::PrepareProduction { snapshot, .. } => {
+            if matches!(entry.action, JournalAction::Prepare { .. })
+                && e.resolution.as_ref().is_some_and(|r| r.resolved.connector_execution.is_some())
+            {
+                return Err("connector-bound effects require production admission".into());
+            }
             current(e, snapshot, now)?;
             if e.phase == Phase::DispatchPending {
                 if let JournalAction::PrepareProduction { admission, .. } = &entry.action {

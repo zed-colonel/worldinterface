@@ -319,11 +319,18 @@ test=false
 #[test] #[ignore] fn ignored() {}
 #[test] #[cfg_attr(all(),ignore)] fn conditional_ignore() {}
 #[test] #[cfg(feature="hidden")] fn feature_disabled() {}
+// #[test] fn commented_out() {}
+#[cfg(any())] mod disabled { #[test] fn cfg_disabled() {} }
 #[cfg(test)] mod nested;
 #[test] fn ambiguous() {}
 "#,
     );
-    write("src/nested.rs", "#[test] fn reachable() {}\n");
+    write(
+        "src/nested.rs",
+        "#[test] fn reachable() {}\n#[path=\"sibling.rs\"] mod routed;\nmod ordinary;\n",
+    );
+    write("src/sibling.rs", "#[test] fn explicit_path() {}\n");
+    write("src/nested/ordinary.rs", "#[test] fn ordinary_path() {}\n");
     write("src/orphan.rs", "#[test] fn unreachable() {}\n");
     write("tests/second.rs", "#[test] fn ambiguous() {}\n");
     write("not_run.rs", "#[test] fn target_disabled() {}\n");
@@ -346,10 +353,18 @@ test=false
     };
     assert_eq!(index.get(&test("eligible")), Some(&1));
     assert_eq!(index.get(&test("nested::reachable")), Some(&1));
+    assert_eq!(index.get(&test("nested::routed::explicit_path")), Some(&1));
+    assert_eq!(index.get(&test("nested::ordinary::ordinary_path")), Some(&1));
     assert_eq!(index.get(&test("ambiguous")), Some(&2));
-    for name in
-        ["ignored", "conditional_ignore", "feature_disabled", "unreachable", "target_disabled"]
-    {
+    for name in [
+        "ignored",
+        "conditional_ignore",
+        "feature_disabled",
+        "unreachable",
+        "target_disabled",
+        "commented_out",
+        "disabled::cfg_disabled",
+    ] {
         assert!(!index.contains_key(&test(name)), "{name}");
     }
     assert!(!index.keys().any(|t| t.package == "excluded-fixture"));
@@ -358,6 +373,48 @@ test=false
             .unwrap();
     assert!(all.contains_key(&test("feature_disabled")));
     assert!(all.keys().any(|t| t.package == "excluded-fixture"));
+    write("src/lib.rs", "macro_rules! generated { () => { #[test] fn outside_syntax_index() {} }; } generated!();\n");
+    assert!(
+        proof::discover_configuration(t.path(), "Cargo.toml", &[]).is_err(),
+        "a compiled test outside the syntax index must fail discovery, never disappear"
+    );
+}
+#[test]
+fn foundation_obligations_require_compiled_nonignored_tests() {
+    let t = fixture();
+    let mut index = TestIndex::new();
+    for scope in ["ingress", "egress", "receipts", "worker"] {
+        let c =
+            read(&t.path().join(format!("conformance/wi-fabric-2/{scope}/coverage.json"))).unwrap();
+        for entry in c[if scope == "worker" { "cases" } else { "obligations" }].as_array().unwrap()
+        {
+            let p = entry["package"].as_str().unwrap();
+            let package = if p.starts_with("worldinterface-") || p == "wi-contract-check" {
+                p.into()
+            } else {
+                format!("worldinterface-{p}")
+            };
+            index.insert(
+                TestRef {
+                    manifest: if p == "wi-contract-check" {
+                        "tools/wi-contract-check/Cargo.toml"
+                    } else {
+                        "crates/worldinterface-foundation/Cargo.toml"
+                    }
+                    .into(),
+                    package,
+                    test: entry["test"].as_str().unwrap().into(),
+                },
+                1,
+            );
+        }
+    }
+    assert!(proof::validate_foundation_coverage(t.path(), &index).unwrap().is_empty());
+    for reference in index.keys().cloned().collect::<Vec<_>>() {
+        let mut absent = index.clone();
+        absent.remove(&reference); // Commented, cfg-disabled and ignored tests are absent from libtest.
+        assert!(!proof::validate_foundation_coverage(t.path(), &absent).unwrap().is_empty());
+    }
 }
 #[test]
 fn hash_refresh_is_deterministic_and_preserves_every_semantic_field() {

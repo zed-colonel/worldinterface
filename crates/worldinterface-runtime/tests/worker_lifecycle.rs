@@ -91,9 +91,29 @@ async fn wp_018_duplicate_admission_and_start_preserve_one_immutable_run() {
         .filter(|e| e.as_ref().unwrap().file_name().to_string_lossy().starts_with(".wi-owner-"))
         .count();
     assert_eq!(journals, 1);
+    assert_eq!(h.runtime.spawn_attempts(), Some(1));
     let mut changed = binding;
     changed.realization = worldinterface_protocol::ContentHash::of(b"changed canonical content");
     assert!(h.bundle.wi().reserve_start(changed, 1).is_err());
+}
+#[tokio::test]
+async fn one_host_releases_capacity_for_more_than_64_sequential_runs() {
+    let mut h = Harness::new(Task::Probe, "WP-018", 1500, 65536);
+    for n in 0..66 {
+        h.run = format!("sequential-{n}");
+        h.controls.run = h.run.clone();
+        h.operation(Operation::Provision).await;
+        if n == 65 {
+            h.operation(Operation::Start).await;
+            assert!(h.finish().await.cleanup_confirmed);
+        }
+        h.operation(Operation::Release).await;
+        assert!(h.state().cleanup_confirmed);
+        assert!(!h.state().capacity_reserved);
+        // Durable acknowledgement makes release idempotent even after port retirement.
+        h.operation(Operation::Release).await;
+    }
+    assert_eq!(h.runtime.spawn_attempts(), Some(1));
 }
 #[tokio::test]
 async fn wp_021_stop_obligation_precedes_bounded_descendant_cleanup() {
@@ -359,6 +379,9 @@ async fn wp_020_mismatched_and_damaged_private_ownership_never_adopts_an_unrelat
     std::fs::write(&path, &unrelated).unwrap();
     // Per-run launch credentials and immutable realizations make otherwise well-formed evidence foreign.
     assert!(h.runtime.recovery_evidence(&h.binding()).is_err());
+    assert!(h.state().quarantined && h.state().stop_requested && h.state().capacity_reserved);
+    h.bundle.wi().repository(worldinterface_storage::StoreKind::Fabric).unwrap().rebuild().unwrap();
+    assert!(h.state().quarantined && h.state().stop_requested);
     assert!(other.runtime.cleanup_report(&other.binding()).unwrap().is_none());
     std::fs::write(&path, &original[..original.len() / 2]).unwrap();
     assert!(h.runtime.recovery_evidence(&h.binding()).is_err());

@@ -11,6 +11,18 @@ mod support {
 use support::{embedded_consumer as consumer, embedded_setup as setup};
 use worldinterface_protocol::control_plane::*;
 use worldinterface_runtime::embedded::FlowOutcome;
+#[tokio::test]
+async fn unpollable_and_foreign_workers_do_not_abort_embedded_advancement() {
+    let s = setup::RecoverySetup::new();
+    s.reserve_unpollable_workers();
+    let flow = s.persist_unprojected_flow();
+    let mut app = s.host.application().unwrap();
+    for _ in 0..20 {
+        app.advance(&setup::Session::Valid).await.unwrap();
+    }
+    s.assert_flow_projected(&flow);
+    s.assert_unpollable_quarantines();
+}
 
 #[tokio::test]
 async fn wp_029_embedded_coding_and_transform_use_one_engine_and_application_services() {

@@ -392,7 +392,7 @@ where
                 64,
             )?;
             for s in &page {
-                self.host.runtime.poll(&s.binding)?;
+                self.host.runtime.maintain(&s.binding)?;
             }
             if page.len() < 64 {
                 break;

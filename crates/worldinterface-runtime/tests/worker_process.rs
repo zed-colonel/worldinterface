@@ -539,6 +539,7 @@ async fn duplicate_start_is_single_launch_and_revocation_stops_run_and_denies_re
         h.submit(Operation::Start).await.unwrap();
     }
     assert_eq!(allocations(h.root.path()).len(), 1);
+    assert_eq!(h.port.spawn_attempts(), 1);
     h.port.revoke(1).unwrap();
     assert!(h.port.observe("local-proof", "run-a").await.is_err());
     assert!(h.submit(Operation::Start).await.is_err());
@@ -713,12 +714,81 @@ async fn port_drop_joins_supervision_and_reaps_owned_descendants() {
 
 #[tokio::test]
 async fn stop_before_start_prevents_consequential_launch() {
-    let h = harness(Task::Sleep { millis: 1 }, 1000, 65536, vec![]);
+    let h = harness(Task::Sleep { millis: 1 }, 1000, 65536, vec![export("output.bin", b"hello")]);
     h.submit(Operation::Provision).await.unwrap();
     h.submit(Operation::Terminate).await.unwrap();
     assert!(h.submit(Operation::Start).await.is_err());
     assert!(h.port.evidence("local-proof", "run-a").unwrap().is_none());
     h.submit(Operation::Release).await.unwrap();
+    assert_eq!(h.port.spawn_attempts(), 0);
     assert!(allocations(h.root.path()).is_empty());
     retained_journals_are_private_and_bounded(h.root.path());
+}
+#[tokio::test]
+async fn host_collection_release_and_inspection_survive_worker_credential_expiry() {
+    use std::sync::atomic::{AtomicU64, Ordering};
+    use worldinterface_runtime::worker::provider::AdmittedProvider;
+    struct TestClock(AtomicU64);
+    impl Clock for TestClock {
+        fn unix_ms(&self) -> u64 {
+            self.0.load(Ordering::SeqCst)
+        }
+    }
+    let root = private_dir();
+    let clock = Arc::new(TestClock(AtomicU64::new(SystemClock.unix_ms())));
+    let helper = build::current().helper.as_path();
+    let p = ProcessWorkerPort::new(
+        scope(),
+        root.path(),
+        helper,
+        &build::current().helper_digest,
+        registry(),
+        clock.clone(),
+    )
+    .unwrap();
+    let a = authorization(
+        Task::Transform { xor: 0 },
+        1500,
+        65536,
+        vec![export("output.bin", b"hello")],
+        "run-a",
+    );
+    let requests = a.operations.iter().map(|(r, _)| r.clone()).collect();
+    p.admit(a).unwrap();
+    let h = Harness { port: p, root, requests };
+    h.start().await;
+    assert!(h.finished().cleanup_confirmed);
+    clock.0.fetch_add(120_000, Ordering::SeqCst);
+    assert!(h.submit(Operation::CollectArtifacts).await.is_err());
+    assert!(h.port.evidence("local-proof", "run-a").is_err());
+    for op in [Operation::Inspect, Operation::CollectArtifacts, Operation::Terminate] {
+        let r = h.requests.iter().find(|r| r.operation == op).unwrap();
+        AdmittedProvider::submit(&h.port, r).unwrap();
+    }
+    assert!(
+        AdmittedProvider::evidence(&h.port, "local-proof", "run-a")
+            .unwrap()
+            .unwrap()
+            .cleanup_confirmed
+    );
+    assert!(AdmittedProvider::controls(&h.port, "local-proof", "run-a").unwrap().is_some());
+    assert_eq!(
+        AdmittedProvider::read(&h.port, &h.locator("artifact-output.bin")).unwrap(),
+        b"hello"
+    );
+    assert!(AdmittedProvider::read(
+        &h.port,
+        &worldinterface_worker::artifacts::ArtifactLocatorV2 {
+            run: "other-run".into(),
+            ..h.locator("artifact-output.bin")
+        }
+    )
+    .is_err());
+    let release = h.requests.iter().find(|r| r.operation == Operation::Release).unwrap();
+    AdmittedProvider::submit(&h.port, release).unwrap();
+    AdmittedProvider::retire(&h.port, "local-proof", "run-a").unwrap();
+    AdmittedProvider::check_capacity(&h.port).unwrap();
+    assert!(AdmittedProvider::evidence(&h.port, "local-proof", "run-a").is_err());
+    // A stop retains private workspace evidence; released admission state is gone.
+    assert_eq!(allocations(h.root.path()).len(), 1);
 }

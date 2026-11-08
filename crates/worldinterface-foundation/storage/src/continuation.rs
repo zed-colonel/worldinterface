@@ -29,6 +29,9 @@ fn decode<T: serde::de::DeserializeOwned>(b: &[u8]) -> Result<T> {
     Ok(serde_json::from_value(strict_json(b).map_err(invalid)?)?)
 }
 pub(crate) fn insert(c: &Connection, event: &DurableEvent) -> Result<()> {
+    insert_ordered(c, event, true)
+}
+pub(crate) fn insert_ordered(c: &Connection, event: &DurableEvent, live: bool) -> Result<()> {
     event.validate().map_err(invalid)?;
     let bytes = canonical_data(event).map_err(invalid)?;
     let source: Option<(Vec<u8>, String)> = c
@@ -93,7 +96,7 @@ pub(crate) fn insert(c: &Connection, event: &DurableEvent) -> Result<()> {
             [&stream],
             |r| r.get(0),
         )?;
-        if last.is_some_and(|v| event.revision <= v) {
+        if live && last.is_some_and(|v| event.revision <= v) {
             return Err(invalid("worker observation sequence conflicts or regresses"));
         }
         c.execute(
@@ -135,7 +138,7 @@ fn get(c: &Connection, id: &OpaqueRef) -> Result<SignalObligation> {
         rejection,
     })
 }
-fn apply(c: &Connection, cmd: &Command) -> Result<bool> {
+fn apply(c: &Connection, cmd: &Command, live: bool) -> Result<bool> {
     match cmd {
         Command::Record { event } => {
             let existed: bool = c.query_row(
@@ -143,7 +146,7 @@ fn apply(c: &Connection, cmd: &Command) -> Result<bool> {
                 [event.id.as_str()],
                 |r| r.get(0),
             )?;
-            insert(c, event)?;
+            insert_ordered(c, event, live)?;
             Ok(!existed)
         }
         Command::Prepare { id, request } => {
@@ -207,7 +210,7 @@ fn apply(c: &Connection, cmd: &Command) -> Result<bool> {
 fn transact(root: &StoreRoot, kind: StoreKind, cmd: Command) -> Result<()> {
     let mut c = root.connect(kind)?;
     let tx = c.transaction_with_behavior(TransactionBehavior::Immediate)?;
-    if apply(&tx, &cmd)? {
+    if apply(&tx, &cmd, true)? {
         let b = canonical_data(&cmd).map_err(invalid)?;
         tx.execute(
             "INSERT INTO continuation_history(entry,digest) VALUES(?,?)",
@@ -341,6 +344,24 @@ impl StoreRoot {
         Ok(())
     }
 }
+/// The immutable source table records the global commit order across owner
+/// journals. Validate that order before rebuilding their shared stream index;
+/// replay order between independent journals need not be chronological.
+pub(crate) fn validate_source_order(c: &Connection) -> Result<()> {
+    let mut streams = std::collections::BTreeMap::new();
+    let mut q = c.prepare("SELECT canonical FROM event_sources ORDER BY position")?;
+    for row in q.query_map([], |r| r.get::<_, Vec<u8>>(0))? {
+        let event: DurableEvent = decode(&row?)?;
+        if event.route.kind == EventKind::WorkerObservation {
+            let previous =
+                streams.insert(event.route.correlation_id().map_err(invalid)?, event.revision);
+            if previous.is_some_and(|v| event.revision <= v) {
+                return Err(invalid("authoritative worker observation order regresses"));
+            }
+        }
+    }
+    Ok(())
+}
 pub(crate) fn replay(source: &Connection, target: &Connection) -> Result<()> {
     let mut q = source.prepare("SELECT entry,digest FROM continuation_history ORDER BY seq")?;
     for r in q.query_map([], |r| Ok((r.get::<_, Vec<u8>>(0)?, r.get::<_, String>(1)?)))? {
@@ -348,7 +369,7 @@ pub(crate) fn replay(source: &Connection, target: &Connection) -> Result<()> {
         let cmd: Command = decode(&b)?;
         if ContentHash::of(&b).as_str() != d
             || canonical_data(&cmd).map_err(invalid)? != b
-            || !apply(target, &cmd)?
+            || !apply(target, &cmd, false)?
         {
             return Err(invalid("corrupt continuation history"));
         }
