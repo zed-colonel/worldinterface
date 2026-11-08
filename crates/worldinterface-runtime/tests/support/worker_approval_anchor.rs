@@ -1,25 +1,22 @@
 //! Trusted test-host provisioning, separate from the source packet it approves.
-//! Acceptance provenance: docs/work-items/WI-WORKER-PROOF-1-campaign-scheduling.md.
+//! Acceptance provenance:
+//! docs/work-items/WI-WORKER-PROOF-1-simplification-acceptance.md.
 //! Actual operator guidance supplied at startup of CraftingTable run
-//! 43d777a6-3bca-4ad0-8fe7-26e949772c8a on 2026-11-08 (UTC):
-//! "I accept the evaluation-only packet
-//! 467f4a1ecc63eb6118a565bc8ad05fb5f4066f11b31fe2bf1a92e784c1d42e53
-//! through 2026-11-14T00:00:00Z, for the existing evaluation cases and six
-//! operations on reviewed nonsensitive fixtures, with eight campaign workers,
-//! a 15-second wall limit, 65,536-byte retained-output limit, and unchanged
-//! supervisor disposition."
+//! 7364b809-5445-4ebd-826a-a03d0180fe47 on 2026-11-08 (UTC):
+//! "I accept the evaluation-only packet with canonical digest
+//! dd8191f484a42a772e5ade940ec433befa7b1a71ff76cdbcfb2e568fd733a19c,
+//! expiring 2026-11-14T00:00:00Z, for its existing cases, six operations,
+//! reviewed nonsensitive fixtures, eight campaign workers, 15-second wall limit
+//! and 65,536-byte retained-output limit."
 //! The receipt identifies that supplied guidance, not a controller-issued
 //! decision ID or an independently inferred operator UUID. Its finite expiry
 //! ends at the explicitly accepted 2026-11-14T00:00:00Z.
 //!
-//! Accepted canonical packet:
-//! 467f4a1ecc63eb6118a565bc8ad05fb5f4066f11b31fe2bf1a92e784c1d42e53.
-//! Prepared and non-live validated on 30dcc4e in run
-//! ca515cbf-da88-446a-bda5-54477141bfb1 before acceptance.
-//! All 321 source bindings and non-live build tests revalidated in this run.
-//! Includes supervisor-disposition.json's exact worker_process/mod.rs pin
-//! 663c193d9dadbc371509f40456b39c4d7ae3a086064e2daefa62f3cc3f132f8e.
-//! The original five-file exception and generic continuation ban are unchanged.
+//! Prepared and non-live validated on d02eecb in run
+//! 444110b3-eff7-47f7-875f-d703ece6a101 before acceptance.
+//! All 322 source bindings and the canonical packet digest were revalidated
+//! before recording acceptance. The supervisor exception retains its five
+//! source paths and the generic continuation ban remains unchanged.
 //!
 //! Evaluation only for this candidate's verification and CraftingTable review:
 //! the accepted manifest's exact cases, sources and typed tasks, including the
@@ -29,4 +26,4 @@
 //! hostile code, same-user isolation claim, publication, integration or gate
 //! acceptance. These records encode only that supplied acceptance.
 pub const ACCEPTED_RECEIPT_SHA256: Option<&str> =
-    Some("53fea5cfc1557ad719d579466a7a66a40f7796e90b7def1fdcab7993e665824e");
+    Some("7446a9150bf4b4ccf17805064c70ef145c3e4c23101e2551908f22226a26c3c3");
