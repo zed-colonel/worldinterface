@@ -53,3 +53,26 @@ Live WP-028 tests and the complete adopted runtime campaign remain due after
 acceptance, on the committed accepted head. Required checks, independent review
 and reviewed integration remain separate obligations. This run does not merge,
 push, publish or enable ordinary worker use; no optional follow-up is implemented.
+
+## Accepted packet and verification continuation
+
+At startup of CraftingTable run `e86cb98a-7a7c-4b9e-8872-811b30720188`
+(2026-11-08 UTC), the operator supplied this exact decision:
+
+> I accept packet `8ccf59659186e4b40ea311c208801f82ea072bad9a1685ab60eb3a8d12a57b06` through **2026-11-14T00:00:00Z**, for the existing evaluation cases, six operations, reviewed nonsensitive fixtures, 15-second wall limit, 65,536-byte retained-output limit, and unchanged supervisor disposition.
+
+This answers the preceding replacement-packet question. The packet was prepared
+and non-live validated on `372b501` before acceptance. This run independently
+matched all 321 source bindings and the canonical digest, compiled every runtime
+test harness and passed both trusted-build tests without launching a fixture.
+The separate acceptance receipt and trusted test-host anchor now encode this
+supplied guidance, without inventing a controller decision ID or operator UUID.
+The expiry is less than seven days after acceptance; changed packet bindings or
+expiry still deny live evaluation, including after merge.
+
+The continuation verifies both WP-028 regressions and all ten adopted checks on
+the committed accepted head. Actual results and the complete conformance map
+belong in this run's external `scratch/verification`, `scratch/review` and final
+report. Earlier results do not establish passage on this candidate. Acceptance
+changes no fixture, operation, control, limit or supervisor disposition, enables
+no ordinary use, and grants no independent review, integration or gate closure.

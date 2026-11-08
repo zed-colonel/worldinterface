@@ -1,9 +1,9 @@
 //! Trusted test-host provisioning, separate from the source packet it approves.
-//! Acceptance provenance: docs/work-items/WI-WORKER-PROOF-1-correctness.md.
+//! Acceptance provenance: docs/work-items/WI-WORKER-PROOF-1-conformance.md.
 //! Actual operator guidance supplied at startup of CraftingTable run
-//! 18358708-10b5-454d-b383-aec924a4fa59 on 2026-11-08 (UTC):
-//! "I accept final packet
-//! bed4d0afcaecf220ae023f92ac8dd65ce4daf926d530e382f8177ca3d1b6415c
+//! e86cb98a-7a7c-4b9e-8872-811b30720188 on 2026-11-08 (UTC):
+//! "I accept packet
+//! 8ccf59659186e4b40ea311c208801f82ea072bad9a1685ab60eb3a8d12a57b06
 //! through 2026-11-14T00:00:00Z, for the existing evaluation cases, six operations,
 //! reviewed nonsensitive fixtures, 15-second wall limit, 65,536-byte
 //! retained-output limit, and unchanged supervisor disposition."
@@ -12,9 +12,10 @@
 //! ends at the explicitly accepted 2026-11-14T00:00:00Z.
 //!
 //! Accepted canonical packet:
-//! bed4d0afcaecf220ae023f92ac8dd65ce4daf926d530e382f8177ca3d1b6415c.
-//! Prepared and non-live validated on 0b0536e in run
-//! 2ac299ad-eb7e-4bb4-8198-82081edb5e93 before acceptance.
+//! 8ccf59659186e4b40ea311c208801f82ea072bad9a1685ab60eb3a8d12a57b06.
+//! Prepared and non-live validated on 372b501 in run
+//! 34296bb8-a149-4ccb-aa17-9ebc2a3d7438 before acceptance.
+//! All 321 source bindings and non-live build tests revalidated in this run.
 //! Includes supervisor-disposition.json's exact worker_process/mod.rs pin
 //! 663c193d9dadbc371509f40456b39c4d7ae3a086064e2daefa62f3cc3f132f8e.
 //! The original five-file exception and generic continuation ban are unchanged.
@@ -27,4 +28,4 @@
 //! hostile code, same-user isolation claim, publication, integration or gate
 //! acceptance. These records encode only that supplied acceptance.
 pub const ACCEPTED_RECEIPT_SHA256: Option<&str> =
-    Some("f1099f59bbf53b4c428ec71f23d76cd58a7befcf5ce5ad66be8e7e6a72b23038");
+    Some("e66a415bfbe27acd1f5956a9070c6efe533f273be0b544b2d2f03c72c5fe285c");
