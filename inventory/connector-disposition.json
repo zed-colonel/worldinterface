@@ -7476,7 +7476,7 @@
         },
         {
           "id": "crates/worldinterface-runtime/tests/support/worker_approval_anchor.rs::::source-module:crates/worldinterface-runtime/tests/support/worker_approval_anchor.rs",
-          "source_sha256": "5619218dde0b798c60696828325e8341a784c9fa6cf0f065987c715e8bbf93a4",
+          "source_sha256": "58e6a34bab8fb50f93e717b9e326be2431ca345b5436bd62dfb942789c783ffe",
           "registration_sites": []
         },
         {
@@ -9103,7 +9103,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/tests/support/worker_approval_anchor.rs",
-          "source_sha256": "5619218dde0b798c60696828325e8341a784c9fa6cf0f065987c715e8bbf93a4",
+          "source_sha256": "58e6a34bab8fb50f93e717b9e326be2431ca345b5436bd62dfb942789c783ffe",
           "treatment": "WIP-10 candidate worker source or associated build/test surface; preserve exact evaluation bindings and review ownership changes before integration."
         },
         {

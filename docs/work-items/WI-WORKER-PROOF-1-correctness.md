@@ -122,3 +122,28 @@ nonsensitive fixtures, 15-second wall and 65,536-byte retained-output bounds,
 and the unchanged supervisor disposition. Its 321 exact source bindings were
 non-live validated in this run. Actual acceptance of this replacement is still
 required before live evaluation; neither earlier digest is retargeted.
+
+
+## Final replacement acceptance and live revalidation
+
+At startup of CraftingTable run `18358708-10b5-454d-b383-aec924a4fa59`
+(2026-11-08 UTC), the operator supplied this exact decision:
+
+> I accept final packet `bed4d0afcaecf220ae023f92ac8dd65ce4daf926d530e382f8177ca3d1b6415c` through **2026-11-14T00:00:00Z**, for the existing evaluation cases, six operations, reviewed nonsensitive fixtures, 15-second wall limit, 65,536-byte retained-output limit, and unchanged supervisor disposition
+
+This answers the preceding replacement-packet question and F-014's renewal
+request. All 321 source bindings and the canonical packet digest matched the
+prepared candidate before provisioning the separate acceptance receipt and
+trusted test-host anchor. The receipt identifies this supplied guidance; it
+does not invent a controller decision ID or operator UUID. Evaluation remains
+fail-closed at the accepted expiry, including after merge. Further changes to
+covered bytes require separate actual acceptance before live verification.
+
+This continuation revalidates the packet without live execution, then runs all
+ten adopted checks on the committed accepted head, including the complete
+worker campaign and the corrected F-002/F-003 regressions and WP-033/WP-034
+post-release evidence checks. Fresh results and verification logs belong in
+this run's external `scratch/verification` directory and final report. Earlier
+results are historical, not evidence for this head. Acceptance grants no
+ordinary use, stronger isolation, publication, integration or independent
+review, and does not itself establish any test or gate result.
