@@ -4,6 +4,16 @@ use wi_contract_check::{
     catalog, continuations, contracts, evidence, finding, handoff, inventory, policy, proof, read,
     refresh, worker_campaign, Finding, Result,
 };
+const USAGE: &str = "usage: wi-contract-check <command>
+  inventory generate
+  hashes refresh
+  handoff generate
+  handoff verify DIRECTORY
+  campaign run DIRECTORY
+  campaign check RECEIPT
+  <evidence|publication> check FILE
+  <catalog|proof|handoff|baseline|inventory|contracts|fixtures|provenance|conformance|docs|clean-break|continuations|all> check";
+
 fn run() -> Result<bool> {
     let root = env::var_os("WI_REPO_ROOT").map(PathBuf::from).unwrap_or(env::current_dir()?);
     let args: Vec<_> = env::args().skip(1).collect();
@@ -37,7 +47,7 @@ fn run() -> Result<bool> {
                 &read(&path)?,
                 path.parent().ok_or("receipt directory missing")?,
             )?,
-            _ => return Err("usage: campaign {run DIRECTORY|check RECEIPT}".into()),
+            _ => return Err(USAGE.into()),
         }
         println!(
             "{}",
@@ -79,7 +89,7 @@ fn run() -> Result<bool> {
         return Ok(true);
     }
     if args.len() != 2 || args[1] != "check" {
-        return Err("usage: wi-contract-check {inventory generate|hashes refresh|<proof|catalog|inventory|contracts|fixtures|provenance|conformance|docs|clean-break|all> check|<evidence|publication> check FILE}".into());
+        return Err(USAGE.into());
     }
     let mut ok = true;
     let mut matched = false;
@@ -98,7 +108,7 @@ fn run() -> Result<bool> {
         }
     }
     if !matched {
-        return Err("unknown command".into());
+        return Err(USAGE.into());
     }
     Ok(ok)
 }

@@ -11,7 +11,7 @@ foundation 123 tests, runtime 30 tests, contract tooling 64 tests, no failures o
 ignored tests. These are historical baseline results, not candidate or merged-head
 passage. WIP-01 reruns all adopted checks on its committed head. CraftingTable
 must establish them on the reviewed merge. Current run evidence is summarized in
-[wip-01.md](wip-01.md); logs live outside the checkout.
+[WIP-01.md](WIP-01.md); logs live outside the checkout.
 
 Repository policy settings version 1 was observed 2026-10-13. Managed integration
 requires qualifying review and operator approval or recorded integration policy;
@@ -36,7 +36,7 @@ replacing the plan bundle's original false value. Add `contract-test` and retain
 its three Cargo definition paths. Current adoption governs until merge.
 `runtime-aq-graph`'s definition script is also strengthened by WIP-01. The operator
 explicitly approved adopting it together with `contract-test` at WIP-01 merge in
-the 2026-10-13 remediation guidance (see [WIP-01](wip-01.md)). No source matrix or read-only plan
+the 2026-10-13 remediation guidance (see [WIP-01](WIP-01.md)). No source matrix or read-only plan
 bundle is changed.
 
 ### 3.2 Inherited baseline ledger

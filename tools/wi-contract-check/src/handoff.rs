@@ -59,6 +59,7 @@ pub fn descriptor(root: &Path) -> Result<Value> {
         "crates/worldinterface-runtime/tests/support/worker_fixture.rs",
         "crates/worldinterface-runtime/tests/support/worker_seam.rs",
         "scripts/build-wi-worker-evaluation.sh",
+        "scripts/wi_worker_evaluation.py",
         "conformance/wi-fabric-2/worker/evaluation-environment.json",
         "conformance/wi-fabric-2/worker/handoff-contract.json",
         "conformance/wi-fabric-2/worker/campaign-coverage.json",

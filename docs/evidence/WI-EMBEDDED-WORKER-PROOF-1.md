@@ -96,9 +96,10 @@ in `evaluation-approval.json` and its separate trusted host anchor. Those trust
 records cannot widen sources, tasks, cases, operations, limits or environment.
 Changed packet bytes invalidate inherited acceptance even before expiry.
 
-WIP-15's receipt expires **2026-11-11T00:00:00Z** and authorizes its old packet
-only. WIP-16 requires renewed acceptance after non-live validation. Positive
-execution and subsequent adopted `runtime-test` fail closed on missing, drifting,
+The [evaluation approval receipt](../../conformance/wi-fabric-2/worker/evaluation-approval.json)
+records the currently accepted packet digest and expiry. Its trusted host anchor
+must match, and changed packet bytes require renewed acceptance after non-live
+validation. Positive execution and subsequent adopted `runtime-test` fail closed on missing, drifting,
 revoked or expired approval, using system wall time. Complete integration and
 post-merge live verification before the accepted expiry or renew exact acceptance
 first. An earlier passing campaign is no authorization for a later run.

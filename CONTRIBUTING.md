@@ -15,9 +15,10 @@ operator-owned before first publication and final release approval, as described
 in [publication staging](docs/release/publication-staging.md).
 
 The active workspaces are the AQ-free `crates/worldinterface-foundation` and the
-AQ-linked `crates/worldinterface-runtime`. AQ resolves from crates.io at exactly
-0.2.0, with published checksums and source identity pinned in
-`contracts/aq-integration-target.json`. No path, git or patch AQ override is
+AQ-linked `crates/worldinterface-runtime`. The runtime resolves AQ from crates.io
+at exactly 0.3.0, pinned by `runtime_release` in
+`contracts/aq-integration-target.json`; `target` and `published_release` preserve
+the historical 0.2.0 baseline. No path, git or patch AQ override is
 permitted. The legacy root workspace remains historical during this plan.
 
 Every item records maturity, invariants, evidence, decisions and retained work

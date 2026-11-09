@@ -8437,7 +8437,7 @@
     "kind": "enum",
     "path": "crates/worldinterface-foundation/storage/src/control_plane.rs",
     "name": "Event",
-    "source_sha256": "aad46a1de47925f426fadf149acd311e337ffcd474de5f21401db4d1ff0a58d1",
+    "source_sha256": "13e69306d4ec81bade8179f580dc511c051139b1f631972b9f86d8505b28398a",
     "conditions": [],
     "registration_sites": []
   },
@@ -8446,7 +8446,7 @@
     "kind": "module",
     "path": "crates/worldinterface-foundation/storage/src/control_plane.rs",
     "name": "control_fixture",
-    "source_sha256": "aad46a1de47925f426fadf149acd311e337ffcd474de5f21401db4d1ff0a58d1",
+    "source_sha256": "13e69306d4ec81bade8179f580dc511c051139b1f631972b9f86d8505b28398a",
     "conditions": [
       "# [cfg (test)]"
     ],
@@ -8457,7 +8457,7 @@
     "kind": "module",
     "path": "crates/worldinterface-foundation/storage/src/control_plane.rs",
     "name": "tests",
-    "source_sha256": "aad46a1de47925f426fadf149acd311e337ffcd474de5f21401db4d1ff0a58d1",
+    "source_sha256": "13e69306d4ec81bade8179f580dc511c051139b1f631972b9f86d8505b28398a",
     "conditions": [
       "# [cfg (test)]"
     ],
@@ -8468,7 +8468,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-foundation/storage/src/control_plane.rs",
     "name": "crates/worldinterface-foundation/storage/src/control_plane.rs",
-    "source_sha256": "aad46a1de47925f426fadf149acd311e337ffcd474de5f21401db4d1ff0a58d1",
+    "source_sha256": "13e69306d4ec81bade8179f580dc511c051139b1f631972b9f86d8505b28398a",
     "conditions": [],
     "registration_sites": []
   },
@@ -8477,7 +8477,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/storage/src/control_plane.rs",
     "name": "ControlPlaneRepository",
-    "source_sha256": "aad46a1de47925f426fadf149acd311e337ffcd474de5f21401db4d1ff0a58d1",
+    "source_sha256": "13e69306d4ec81bade8179f580dc511c051139b1f631972b9f86d8505b28398a",
     "conditions": [],
     "registration_sites": []
   },
@@ -8486,7 +8486,7 @@
     "kind": "type",
     "path": "crates/worldinterface-foundation/storage/src/control_plane.rs",
     "name": "ProjectionEntries",
-    "source_sha256": "aad46a1de47925f426fadf149acd311e337ffcd474de5f21401db4d1ff0a58d1",
+    "source_sha256": "13e69306d4ec81bade8179f580dc511c051139b1f631972b9f86d8505b28398a",
     "conditions": [],
     "registration_sites": []
   },

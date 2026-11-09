@@ -83,6 +83,7 @@ fn wp_034_publication_rejects_stale_profile_fixture_lock_and_recipe_pins() {
         "crates/worldinterface-runtime/src/bin/wi-process-fixture.rs",
         "crates/worldinterface-runtime/Cargo.lock",
         "scripts/build-wi-worker-evaluation.sh",
+        "scripts/wi_worker_evaluation.py",
     ] {
         let path = temp.path().join(path);
         let original = fs::read(&path).unwrap();

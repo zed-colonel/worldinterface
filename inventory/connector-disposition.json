@@ -1269,7 +1269,7 @@
         },
         {
           "path": "docs/evidence/WI-EMBEDDED-WORKER-PROOF-1.md",
-          "source_sha256": "6005a7d02355493004b1cbe27145403f1244b8e1a5d71838113141a3e159decf",
+          "source_sha256": "986d3af4fce8df0fcb76d4d8fae70105e44c74730137d1759c29aa0bb5b6a3f3",
           "treatment": "Preserve WIP-16 producer evidence, exact test mappings and seam timing semantics during selective legacy delay removal; this document composes no legacy connector. WIP-16 adds this explicit candidate documentation disposition for review."
         },
         {
@@ -4621,32 +4621,32 @@
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/control_plane.rs::::enum:Event",
-          "source_sha256": "aad46a1de47925f426fadf149acd311e337ffcd474de5f21401db4d1ff0a58d1",
+          "source_sha256": "13e69306d4ec81bade8179f580dc511c051139b1f631972b9f86d8505b28398a",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/control_plane.rs::::module:control_fixture@10d1b0eff34c",
-          "source_sha256": "aad46a1de47925f426fadf149acd311e337ffcd474de5f21401db4d1ff0a58d1",
+          "source_sha256": "13e69306d4ec81bade8179f580dc511c051139b1f631972b9f86d8505b28398a",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/control_plane.rs::::module:tests@10d1b0eff34c",
-          "source_sha256": "aad46a1de47925f426fadf149acd311e337ffcd474de5f21401db4d1ff0a58d1",
+          "source_sha256": "13e69306d4ec81bade8179f580dc511c051139b1f631972b9f86d8505b28398a",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/control_plane.rs::::source-module:crates/worldinterface-foundation/storage/src/control_plane.rs",
-          "source_sha256": "aad46a1de47925f426fadf149acd311e337ffcd474de5f21401db4d1ff0a58d1",
+          "source_sha256": "13e69306d4ec81bade8179f580dc511c051139b1f631972b9f86d8505b28398a",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/control_plane.rs::::struct:ControlPlaneRepository",
-          "source_sha256": "aad46a1de47925f426fadf149acd311e337ffcd474de5f21401db4d1ff0a58d1",
+          "source_sha256": "13e69306d4ec81bade8179f580dc511c051139b1f631972b9f86d8505b28398a",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/control_plane.rs::::type:ProjectionEntries",
-          "source_sha256": "aad46a1de47925f426fadf149acd311e337ffcd474de5f21401db4d1ff0a58d1",
+          "source_sha256": "13e69306d4ec81bade8179f580dc511c051139b1f631972b9f86d8505b28398a",
           "registration_sites": []
         },
         {
@@ -8578,7 +8578,7 @@
         },
         {
           "path": "crates/worldinterface-foundation/storage/src/control_plane.rs",
-          "source_sha256": "aad46a1de47925f426fadf149acd311e337ffcd474de5f21401db4d1ff0a58d1",
+          "source_sha256": "13e69306d4ec81bade8179f580dc511c051139b1f631972b9f86d8505b28398a",
           "treatment": "WIP-13 shared embedded control-plane support/evidence: retain scoped authentication, administration and custody boundaries; review selective legacy removal without deleting these contracts. Disposition proposal in docs/work-items/WIP-13.md."
         },
         {

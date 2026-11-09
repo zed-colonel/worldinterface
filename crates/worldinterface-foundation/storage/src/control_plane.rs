@@ -618,7 +618,7 @@ impl cp::Repository for ControlPlaneRepository<'_> {
 
 #[cfg(test)]
 #[path = "../../domain/tests/support/control_plane.rs"]
-#[allow(dead_code)]
+#[allow(dead_code)] // Shared fixture; this test uses a subset.
 mod control_fixture;
 
 #[cfg(test)]
