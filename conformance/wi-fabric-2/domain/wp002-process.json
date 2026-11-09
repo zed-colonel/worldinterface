@@ -1,0 +1,301 @@
+{
+  "case_id": "WP-002",
+  "evidence_class": "definition-review",
+  "runtime_pass_asserted": false,
+  "submission": {
+    "contract": "WI-FABRIC-2",
+    "canonical_profile": "wi-json-1",
+    "schema": 1,
+    "record": {
+      "kind": "effect_submission",
+      "body": {
+        "client_request_id": "request-1",
+        "requested_accountable_principal": "12345678-1234-4234-8234-123456789abc",
+        "submitted_by": "12345678-1234-4234-8234-123456789abc",
+        "purpose": "purpose-ref",
+        "causal_refs": [
+          "causal_refs-ref"
+        ],
+        "acting_capacity": {
+          "principal_ref": "12345678-1234-4234-8234-123456789abc",
+          "assignment_ref": "assignment_ref-ref",
+          "organization_ref": "12345678-1234-4234-8234-123456789abc",
+          "attestation_ref": {
+            "artifact": {
+              "scope": "scope-ref",
+              "content": "ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73",
+              "size": 1
+            },
+            "schema": "schema-ref"
+          }
+        },
+        "information_use": {
+          "purpose_refs": [
+            "purpose_refs-ref"
+          ],
+          "allowed_audiences": [
+            "12345678-1234-4234-8234-123456789abc"
+          ],
+          "retention_policy_ref": "retention_policy_ref-ref",
+          "disclosure_policy_ref": "disclosure_policy_ref-ref",
+          "derivation_policy_ref": "derivation_policy_ref-ref",
+          "redistribution": "named_audiences",
+          "expiration": "2026-09-19T23:00:00.123456789Z",
+          "source_obligation_refs": [
+            "source_obligation_refs-ref"
+          ]
+        },
+        "effect_class": "control",
+        "resource": {
+          "namespace": "worker",
+          "selector": "process-managed-proof-1"
+        },
+        "input": {
+          "artifact": {
+            "scope": "worker-fixture",
+            "content": "9c28ad54a57a1ff84fb0c5d71820ab688832972196dbec0b4670e3eafcd4788f",
+            "size": 57
+          }
+        },
+        "requested_authority_refs": [
+          "requested_authority_refs-ref"
+        ],
+        "approval_attestations": [
+          "approval_attestations-ref"
+        ],
+        "deadline": "2026-09-19T23:00:00.123456789Z",
+        "requested_receipt_profile": "requested_receipt_profile-ref",
+        "budget": {
+          "max_attempts": 1,
+          "timeout_millis": 1
+        },
+        "expected_outcome": "expected_outcome-ref",
+        "delegation_credential": {
+          "artifact": {
+            "scope": "scope-ref",
+            "content": "ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73",
+            "size": 1
+          },
+          "schema": "schema-ref"
+        }
+      }
+    }
+  },
+  "resolved": {
+    "contract": "WI-FABRIC-2",
+    "canonical_profile": "wi-json-1",
+    "schema": 1,
+    "record": {
+      "kind": "resolved_effect",
+      "body": {
+        "intent_id": "12345678-1234-4234-8234-123456789abc",
+        "effect_class": "control",
+        "resource": {
+          "namespace": "worker",
+          "resource": "process-managed-proof-1",
+          "version": "ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73"
+        },
+        "normalized_parameters": {
+          "artifact": {
+            "scope": "worker-fixture",
+            "content": "c5721a9aef606a9cc1403020f36ea3387d35229bccbe7c4acaa04e5ae7c123e7",
+            "size": 743
+          }
+        },
+        "resolver_version": "resolver_version-ref",
+        "registry_snapshot": "2b79ed7d25db33a952fd66dd81a28d21181d19cf856273bcdbc5eb570636a0e1",
+        "connector": "process-adapter-v1",
+        "idempotency_semantics": "idempotency_semantics-ref",
+        "sensitivity": "sensitivity-ref"
+      }
+    }
+  },
+  "manifest": {
+    "contract": "WI-FABRIC-2",
+    "canonical_profile": "wi-json-1",
+    "schema": 1,
+    "record": {
+      "kind": "immutable_artifact_manifest",
+      "body": {
+        "executable": {
+          "scope": "scope-ref",
+          "content": "ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73",
+          "size": 1
+        },
+        "dependencies": [
+          {
+            "scope": "scope-ref",
+            "content": "ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73",
+            "size": 1
+          }
+        ],
+        "configuration": {
+          "scope": "scope-ref",
+          "content": "ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73",
+          "size": 1
+        },
+        "profile_definition": {
+          "scope": "scope-ref",
+          "content": "ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73",
+          "size": 1
+        },
+        "adapter": {
+          "scope": "scope-ref",
+          "content": "ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73",
+          "size": 1
+        }
+      }
+    }
+  },
+  "controls": {
+    "contract": "WI-FABRIC-2",
+    "canonical_profile": "wi-json-1",
+    "schema": 1,
+    "record": {
+      "kind": "control_evidence",
+      "body": {
+        "version": 1,
+        "provider_kind": "process",
+        "provider_ref": "provider_ref-ref",
+        "run_ref": "run_ref-ref",
+        "resource_ref": "resource_ref-ref",
+        "profile": "process-managed-proof-1",
+        "realization": {
+          "scope": "worker-fixture",
+          "content": "c5721a9aef606a9cc1403020f36ea3387d35229bccbe7c4acaa04e5ae7c123e7",
+          "size": 743
+        },
+        "image": "not_applicable",
+        "requested": {
+          "cpu_millis": 1,
+          "memory_bytes": 1,
+          "network": "network-ref"
+        },
+        "advertised": {
+          "cpu_millis": 1,
+          "memory_bytes": 1,
+          "network": "network-ref"
+        },
+        "applied": {
+          "cpu_millis": 1,
+          "memory_bytes": 1,
+          "network": "network-ref"
+        },
+        "observed": {
+          "cpu_millis": 1,
+          "memory_bytes": 1,
+          "network": "network-ref"
+        },
+        "enclosing_instance": {
+          "artifact": {
+            "scope": "scope-ref",
+            "content": "ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73",
+            "size": 1
+          },
+          "schema": "schema-ref"
+        },
+        "enclosing_source": "enclosing_source-ref",
+        "enclosing_trust": "enclosing_trust-ref"
+      }
+    }
+  },
+  "receipt": {
+    "contract": "WI-FABRIC-2",
+    "canonical_profile": "wi-json-1",
+    "schema": 1,
+    "record": {
+      "kind": "boundary_receipt",
+      "body": {
+        "id": "12345678-1234-4234-8234-123456789abc",
+        "profile": "profile-ref",
+        "body": {
+          "direction": "egress",
+          "body": {
+            "intent_id": "12345678-1234-4234-8234-123456789abc",
+            "agency_digest": "cebf4ee292d81143a874cd7b6c0754b4dfb6aca076dfc5a41c578b72a3e49a89",
+            "authorization_digest": "8456ba24cdbb33f531855eefe150bd11287166d52a3ec23f73bb603dc64a7aa8",
+            "resolved_effect_digest": "0da78dd401d8bb68709dd000797682a5d730014388f2b375826d75ab19ca3210",
+            "attempt": "attempt-ref",
+            "executor": "executor-ref",
+            "outcome": "uncertain",
+            "output_refs": [
+              {
+                "scope": "scope-ref",
+                "content": "ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73",
+                "size": 1
+              }
+            ]
+          }
+        },
+        "temporal": {
+          "occurred_at": {
+            "at": "2026-09-19T23:00:00.123456789Z",
+            "source": "source-ref",
+            "assurance": "assurance-ref",
+            "uncertainty_nanos": 1
+          },
+          "observed_at": {
+            "at": "2026-09-19T23:00:00.123456789Z",
+            "source": "source-ref",
+            "assurance": "assurance-ref",
+            "uncertainty_nanos": 1
+          },
+          "received_at": {
+            "at": "2026-09-19T23:00:00.123456789Z",
+            "source": "source-ref",
+            "assurance": "assurance-ref",
+            "uncertainty_nanos": 1
+          },
+          "admitted_at": {
+            "at": "2026-09-19T23:00:00.123456789Z",
+            "source": "source-ref",
+            "assurance": "assurance-ref",
+            "uncertainty_nanos": 1
+          },
+          "dispatched_at": {
+            "at": "2026-09-19T23:00:00.123456789Z",
+            "source": "source-ref",
+            "assurance": "assurance-ref",
+            "uncertainty_nanos": 1
+          },
+          "committed_at": {
+            "at": "2026-09-19T23:00:00.123456789Z",
+            "source": "source-ref",
+            "assurance": "assurance-ref",
+            "uncertainty_nanos": 1
+          },
+          "reconciled_at": {
+            "at": "2026-09-19T23:00:00.123456789Z",
+            "source": "source-ref",
+            "assurance": "assurance-ref",
+            "uncertainty_nanos": 1
+          },
+          "sequence": "sequence-ref"
+        },
+        "evidence": [
+          {
+            "artifact": {
+              "scope": "worker-fixture",
+              "content": "7503d2d339f777d79cd0afd6d81ddd8dc9874bd3d99f39ae7bf43a2ca1c12e14",
+              "size": 959
+            },
+            "schema": "worker-controls-1"
+          }
+        ],
+        "causal_refs": [
+          "causal_refs-ref"
+        ],
+        "versions": {
+          "resolver": "resolver_version-ref",
+          "capability_descriptor": "c9a20cfd19ca18f5409faf833cc02859d1b47d8e94545bf517b9050668cec177",
+          "policy": "policy-ref",
+          "grant_versions": [
+            "cf55c1c0ebea895239c8c198de87beb06e20c1611c9d2aabd5342538aa3aee8c"
+          ],
+          "connector_profile": "f40866a91b5eb53e17dac9892593a2c51511aa016a0c760305ee092c06ae18cc",
+          "provider_profile": "ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73"
+        }
+      }
+    }
+  }
+}

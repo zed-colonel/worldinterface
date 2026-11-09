@@ -1,0 +1,102 @@
+{
+  "target": {
+    "contract": "AQ-CONT-1",
+    "implementation_commit": "29e096c4f06985d1a9bd9d5fe5a3a6a5db8a6860",
+    "git_tree": "1c0c85dd700bd9d0c75de223dada911ffeadbb5b",
+    "archive_sha256": "f91f496f22772e8dda044b0cf2cf05cf2eafa9f86d6f0c7e0061b46e3926ffb1",
+    "source_tree_sha256": "a6a8f87272d76e94e69e10d8bcf0992296d1bf8e28ff3d9222374c3b8cdcc34e",
+    "conformance_revision": 16
+  },
+  "binding_source": "Controller accepted WI-01 design, recovery-summary.json; commit is controller asserted, archive ZIP not independently verified.",
+  "execution_status": "candidate-evidence-external",
+  "actual_checker_aq_dependencies": [],
+  "historical_development_input": "97c9dc26c19c697dbfb204ed503e82c5f053394f",
+  "historical_runtime_aq": "registry crates 0.1.0/0.1.1; see frozen Cargo.lock; not target conformance",
+  "consumer_manifest": "crates/worldinterface-runtime/Cargo.toml",
+  "consumer_reconciliation": "contracts/aq-consumer-reconciliation.json",
+  "published_release": {
+    "registry": "crates.io",
+    "tag": "v0.2.0",
+    "source_commit": "29e096c4f06985d1a9bd9d5fe5a3a6a5db8a6860",
+    "release_manifest_sha256": "8f91415c723bc5ec4d1d9a49f5ecc1e0aad2d24298a79db407d3537c342fe348",
+    "published_at": "2026-10-13",
+    "crates": {
+      "actionqueue-actor": {
+        "version": "0.2.0",
+        "checksum": "f6bec18eb073d6a61c518c75f01355f63a9b5d930fd3443e5a6532d274f052da"
+      },
+      "actionqueue-budget": {
+        "version": "0.2.0",
+        "checksum": "ec032b0be7a6c94e95cf52d91f3cb40e8287e843a44923239830a191cb5a1058"
+      },
+      "actionqueue-cli": {
+        "version": "0.2.0",
+        "checksum": "77328e0cbd6ad8e257c4a17c1c35bea7e25f23fab144c501f4828518e583a4cf"
+      },
+      "actionqueue-core": {
+        "version": "0.2.0",
+        "checksum": "5c859fa85a8b35ad8ee38002764df2ad1fab69883c902673c208fa1c223f6aeb"
+      },
+      "actionqueue-daemon": {
+        "version": "0.2.0",
+        "checksum": "db2604415a1fa77e3fda7673b5a2d80a8870c8e105665c19466777035ddc5927"
+      },
+      "actionqueue-engine": {
+        "version": "0.2.0",
+        "checksum": "4bbd8ace8868ae649c751cdf1bd5f8d60aa45fb3ba1c44e6616a5925ccfa8bae"
+      },
+      "actionqueue-executor-local": {
+        "version": "0.2.0",
+        "checksum": "2da9f041c8af8eae06c87fe3b0e90e7c61c8a34868a5aa8ca65235de073ebe97"
+      },
+      "actionqueue-platform": {
+        "version": "0.2.0",
+        "checksum": "bfbebb165fd11f2017ac6525896750d055fa09c57d1e3de91427dde4a9bad4ff"
+      },
+      "actionqueue-runtime": {
+        "version": "0.2.0",
+        "checksum": "817ce7ac8bf601ab4c486552ec5797d1444f9927ace9e13d3db7531a9269abe4"
+      },
+      "actionqueue-storage": {
+        "version": "0.2.0",
+        "checksum": "2288e807e0b061285c7b8fd8080d00d09ac40f115f2c2dd8b4962ccf7aba539c"
+      },
+      "actionqueue-workflow": {
+        "version": "0.2.0",
+        "checksum": "fe1eccacd2c7f1f9a585ea63fae5bfede22cac7141bc5e05eedc3069d2876bd9"
+      }
+    },
+    "note": "WorldInterface resolves AQ from crates.io outside the cross-project map. The published 0.2.0 source is the implementation_commit above; the checksums are the registry .crate SHA-256 values Cargo.lock records."
+  },
+  "runtime_release": {
+    "registry": "crates.io",
+    "tag": "v0.3.0",
+    "authority": "Operator-authorized WIP-07 migration; cycle 47b9f34c-4ffd-4ef6-8849-55aae36a8999, recorded 2026-10-23. Historical target and published_release remain the imported 0.2.0 baseline, not the source identity of 0.3.0.",
+    "crates": {
+      "actionqueue-core": {
+        "version": "0.3.0",
+        "checksum": "ce1af54ccb97fab6545c358c53c0fa6e11aa9d49a5aff2d7e5f1258b662723af"
+      },
+      "actionqueue-engine": {
+        "version": "0.3.0",
+        "checksum": "45f9f5c71e115f9050186ef064140699dba9b586f671181914a9a21aa46c6b08"
+      },
+      "actionqueue-executor-local": {
+        "version": "0.3.0",
+        "checksum": "b833b8d7b92ec7c3c9dc628ca0d1a8ac711246a7981963e907db9fc7409df9f3"
+      },
+      "actionqueue-runtime": {
+        "version": "0.3.0",
+        "checksum": "534af4a9e4e888a1df37608ea078efa916c9d17b0f55b81092bb5a565e2cd68a"
+      },
+      "actionqueue-storage": {
+        "version": "0.3.0",
+        "checksum": "87e0af46aeb771a452332a63c12cd666856d0fb4468f2ae193736f1edcdde0fd"
+      },
+      "actionqueue-workflow": {
+        "version": "0.3.0",
+        "checksum": "1e598559e7c4e258c337c08639598e14bd35e7aa7da94fed7bce0e113829728a"
+      }
+    }
+  }
+}

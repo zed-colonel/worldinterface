@@ -1,0 +1,414 @@
+{
+  "version": 1,
+  "baseline_commit": "f48df82e98203fa94c86eecae60425205c3e00e9",
+  "baseline_tag": "worldinterface/pre-wi-fabric-2",
+  "runtime_imports_allowed": false,
+  "files": [
+    {
+      "path": "fixtures/pre-wi-fabric-2/exo/README.md",
+      "sha256": "b312b4e152bbac5dd2e7798501e081bd357f26e946bb57ba1904e4a733b71a94",
+      "category": "exo-coding",
+      "classification": "interpretation",
+      "source": "/mnt/workhorse/craftingtable/runs/b71e262f-2ac4-48b7-a761-de036330c4c2/historical-evidence/exo-benchmarks/README.md",
+      "source_revision": null,
+      "execution_revision": null,
+      "fixture_version": 1
+    },
+    {
+      "path": "fixtures/pre-wi-fabric-2/exo/bench-vessel.toml",
+      "sha256": "16c375ae561b6ecc2d2876d6a96b3d1a7b4d745db96f70d2fe222f55126af79e",
+      "category": "exo-coding",
+      "classification": "copied-source",
+      "source": "/home/keith/src/exoskeleton/benchmarks/bench-vessel.toml",
+      "source_revision": "1bcbb757a7885ce1f911ac948bfc2269c9209075",
+      "execution_revision": null,
+      "fixture_version": 1
+    },
+    {
+      "path": "fixtures/pre-wi-fabric-2/exo/full-collection-manifest.json",
+      "sha256": "a33860447a9065ac8f4da44c9a72154b3ba95b939ba6e7a084157828b59505d3",
+      "category": "exo-coding",
+      "classification": "provenance-index",
+      "source": "/mnt/workhorse/craftingtable/runs/b71e262f-2ac4-48b7-a761-de036330c4c2/historical-evidence/exo-benchmarks/manifest.json",
+      "source_revision": null,
+      "execution_revision": null,
+      "fixture_version": 1
+    },
+    {
+      "path": "fixtures/pre-wi-fabric-2/exo/repos/sample-rust/.gitignore",
+      "sha256": "12cc0f91b51fedf41ae1670d1624ee1d78a284bdb101645b60a06a12de16c069",
+      "category": "exo-coding",
+      "classification": "copied-source",
+      "source": "/home/keith/src/exoskeleton/benchmarks/repos/sample-rust/.gitignore",
+      "source_revision": "1bcbb757a7885ce1f911ac948bfc2269c9209075",
+      "execution_revision": null,
+      "fixture_version": 1
+    },
+    {
+      "path": "fixtures/pre-wi-fabric-2/exo/repos/sample-rust/Cargo.lock",
+      "sha256": "05c88a19f6c1a4bd2a4f0d92e280e80827f001080d82c84b8a18426a00a3f1bc",
+      "category": "exo-coding",
+      "classification": "observed-historical",
+      "source": "/home/keith/src/exoskeleton/benchmarks/repos/sample-rust/Cargo.lock",
+      "source_revision": null,
+      "execution_revision": null,
+      "fixture_version": 1
+    },
+    {
+      "path": "fixtures/pre-wi-fabric-2/exo/repos/sample-rust/Cargo.toml",
+      "sha256": "f7a6fdad07f316a2c3168b5c0dd9af42cb5bb10c8ba0cd325cd9dc33f067ca21",
+      "category": "exo-coding",
+      "classification": "copied-source",
+      "source": "/home/keith/src/exoskeleton/benchmarks/repos/sample-rust/Cargo.toml",
+      "source_revision": "1bcbb757a7885ce1f911ac948bfc2269c9209075",
+      "execution_revision": null,
+      "fixture_version": 1
+    },
+    {
+      "path": "fixtures/pre-wi-fabric-2/exo/repos/sample-rust/src/lib.rs",
+      "sha256": "4f6a07ed71fc95baaa7243cb58588a956f3905730ad5201d751ad914a9bb2722",
+      "category": "exo-coding",
+      "classification": "copied-source",
+      "source": "/home/keith/src/exoskeleton/benchmarks/repos/sample-rust/src/lib.rs",
+      "source_revision": "1bcbb757a7885ce1f911ac948bfc2269c9209075",
+      "execution_revision": null,
+      "fixture_version": 1
+    },
+    {
+      "path": "fixtures/pre-wi-fabric-2/exo/results/.gitignore",
+      "sha256": "240a3e0d37d2e86b614063f5347eb02d4f99ca6c254de6b82871ff8d95532a7d",
+      "category": "exo-coding",
+      "classification": "copied-source",
+      "source": "/home/keith/src/exoskeleton/benchmarks/results/.gitignore",
+      "source_revision": "1bcbb757a7885ce1f911ac948bfc2269c9209075",
+      "execution_revision": null,
+      "fixture_version": 1
+    },
+    {
+      "path": "fixtures/pre-wi-fabric-2/exo/results/code-test-policy-easy-suite-20260429.json",
+      "sha256": "81d56326cca17c64524d8452f636b430b6b6346c832c4a6076a04c1285acffa5",
+      "category": "exo-coding",
+      "classification": "observed-historical",
+      "source": "/home/keith/src/exoskeleton/benchmarks/results/code-test-policy-easy-suite-20260429.json",
+      "source_revision": null,
+      "execution_revision": null,
+      "fixture_version": 1
+    },
+    {
+      "path": "fixtures/pre-wi-fabric-2/exo/results/code-test-upgrade-swe-aya-774-16ticks-20260429.json",
+      "sha256": "5bd810fdecfdf20db5992437c5f71085bfbe91fca6fb8e75f1281965a6deb7ff",
+      "category": "exo-coding",
+      "classification": "observed-historical",
+      "source": "/home/keith/src/exoskeleton/benchmarks/results/code-test-upgrade-swe-aya-774-16ticks-20260429.json",
+      "source_revision": null,
+      "execution_revision": null,
+      "fixture_version": 1
+    },
+    {
+      "path": "fixtures/pre-wi-fabric-2/exo/results/phase1-baseline-swe-aya-774-10ticks-20260417.json",
+      "sha256": "f0f7a9622e755be6d08da5d51755039473839afd1db09f14d26c878a890e4473",
+      "category": "exo-coding",
+      "classification": "observed-historical",
+      "source": "/home/keith/src/exoskeleton/benchmarks/results/phase1-baseline-swe-aya-774-10ticks-20260417.json",
+      "source_revision": null,
+      "execution_revision": null,
+      "fixture_version": 1
+    },
+    {
+      "path": "fixtures/pre-wi-fabric-2/exo/results/v0.1.json",
+      "sha256": "dd7d0cdc20da23810ade90cfbc90517c0b831e225e1a17571012c98432136982",
+      "category": "exo-coding",
+      "classification": "observed-historical",
+      "source": "/home/keith/src/exoskeleton/benchmarks/results/v0.1.json",
+      "source_revision": null,
+      "execution_revision": null,
+      "fixture_version": 1
+    },
+    {
+      "path": "fixtures/pre-wi-fabric-2/exo/tasks/easy-01-add-test.toml",
+      "sha256": "cef2cb4db4a37a83ec43c294a9aeac27badd8c50450323c7b8d27e355cb8b568",
+      "category": "exo-coding",
+      "classification": "copied-source",
+      "source": "/home/keith/src/exoskeleton/benchmarks/tasks/easy-01-add-test.toml",
+      "source_revision": "1bcbb757a7885ce1f911ac948bfc2269c9209075",
+      "execution_revision": null,
+      "fixture_version": 1
+    },
+    {
+      "path": "fixtures/pre-wi-fabric-2/exo/tasks/easy-02-fix-typo.toml",
+      "sha256": "ce151330c0e61b5e983de740db575d9640348b0f8d822c920e42c64d4b5a32f3",
+      "category": "exo-coding",
+      "classification": "copied-source",
+      "source": "/home/keith/src/exoskeleton/benchmarks/tasks/easy-02-fix-typo.toml",
+      "source_revision": "1bcbb757a7885ce1f911ac948bfc2269c9209075",
+      "execution_revision": null,
+      "fixture_version": 1
+    },
+    {
+      "path": "fixtures/pre-wi-fabric-2/exo/tasks/easy-03-add-doc-comment.toml",
+      "sha256": "9b3a64e4e0d04e31a7d815e737f93836db05c34407c4f853affbf4d25f47af9d",
+      "category": "exo-coding",
+      "classification": "copied-source",
+      "source": "/home/keith/src/exoskeleton/benchmarks/tasks/easy-03-add-doc-comment.toml",
+      "source_revision": "1bcbb757a7885ce1f911ac948bfc2269c9209075",
+      "execution_revision": null,
+      "fixture_version": 1
+    },
+    {
+      "path": "fixtures/pre-wi-fabric-2/observations/artifact-digests.json",
+      "sha256": "3eb8de9fe176e46c94edb245af0bd76478906c5aa0e98f5db54beba6832af6b7",
+      "category": "historical-measurement",
+      "classification": "observed-historical",
+      "source": "/mnt/workhorse/craftingtable/runs/b41d9796-e3e5-46d4-88f9-c53ef331262a/historical-evidence/artifact-digests.json",
+      "source_revision": "f48df82e98203fa94c86eecae60425205c3e00e9",
+      "execution_revision": "f48df82e98203fa94c86eecae60425205c3e00e9",
+      "fixture_version": 1
+    },
+    {
+      "path": "fixtures/pre-wi-fabric-2/observations/catalog.json",
+      "sha256": "9673f26875e4ef034b9a93804fc349a84deb8f49167374139e5e2e62565ac15b",
+      "category": "descriptors",
+      "classification": "observed-historical",
+      "source": "/mnt/workhorse/craftingtable/runs/b41d9796-e3e5-46d4-88f9-c53ef331262a/historical-evidence/catalog.json",
+      "source_revision": "f48df82e98203fa94c86eecae60425205c3e00e9",
+      "execution_revision": "f48df82e98203fa94c86eecae60425205c3e00e9",
+      "fixture_version": 1
+    },
+    {
+      "path": "fixtures/pre-wi-fabric-2/observations/characterization.json",
+      "sha256": "85d4c171b9c294667e99f8bd8731af6fa1e05e75446687de24cedd6100876446",
+      "category": "historical-measurement",
+      "classification": "observed-historical",
+      "source": "/mnt/workhorse/craftingtable/runs/b41d9796-e3e5-46d4-88f9-c53ef331262a/historical-evidence/characterization.json",
+      "source_revision": "f48df82e98203fa94c86eecae60425205c3e00e9",
+      "execution_revision": "f48df82e98203fa94c86eecae60425205c3e00e9",
+      "fixture_version": 1
+    },
+    {
+      "path": "fixtures/pre-wi-fabric-2/observations/direct-outputs.json",
+      "sha256": "bce6ad58fda614e871075af037aac745d55ce7d275d5a465beb3ad404cddb47a",
+      "category": "historical-measurement",
+      "classification": "observed-historical",
+      "source": "/mnt/workhorse/craftingtable/runs/b41d9796-e3e5-46d4-88f9-c53ef331262a/historical-evidence/direct-outputs.json",
+      "source_revision": "f48df82e98203fa94c86eecae60425205c3e00e9",
+      "execution_revision": "f48df82e98203fa94c86eecae60425205c3e00e9",
+      "fixture_version": 1
+    },
+    {
+      "path": "fixtures/pre-wi-fabric-2/observations/environment.json",
+      "sha256": "7d7a614ee89070d2fb29300a79ca9eec7a9ed1556be7b9cc1b80152a57116980",
+      "category": "historical-measurement",
+      "classification": "observed-historical",
+      "source": "/mnt/workhorse/craftingtable/runs/b41d9796-e3e5-46d4-88f9-c53ef331262a/historical-evidence/environment.json",
+      "source_revision": "f48df82e98203fa94c86eecae60425205c3e00e9",
+      "execution_revision": "f48df82e98203fa94c86eecae60425205c3e00e9",
+      "fixture_version": 1
+    },
+    {
+      "path": "fixtures/pre-wi-fabric-2/observations/flow-outputs-and-receipts.json",
+      "sha256": "ed78d49c6c29e3f5f513ff32036e79a3a0517afb7ad347359ab74e31502ca43c",
+      "category": "contextstore",
+      "classification": "observed-historical",
+      "source": "/mnt/workhorse/craftingtable/runs/b41d9796-e3e5-46d4-88f9-c53ef331262a/historical-evidence/flow-outputs-and-receipts.json",
+      "source_revision": "f48df82e98203fa94c86eecae60425205c3e00e9",
+      "execution_revision": "f48df82e98203fa94c86eecae60425205c3e00e9",
+      "fixture_version": 1
+    },
+    {
+      "path": "fixtures/pre-wi-fabric-2/observations/measurement-flowspec.json",
+      "sha256": "6418dbf843361c7ae5d409e7fada353ed63356b3be7d17a4728523ee3bec9a8e",
+      "category": "historical-measurement",
+      "classification": "observed-historical",
+      "source": "/mnt/workhorse/craftingtable/runs/b41d9796-e3e5-46d4-88f9-c53ef331262a/historical-evidence/measurement-flowspec.json",
+      "source_revision": "f48df82e98203fa94c86eecae60425205c3e00e9",
+      "execution_revision": "f48df82e98203fa94c86eecae60425205c3e00e9",
+      "fixture_version": 1
+    },
+    {
+      "path": "fixtures/pre-wi-fabric-2/observations/recovery-summary.json",
+      "sha256": "cfca105cb0bbc48b31573643d8675e1d87a513ad45e5e550084719a65a29b713",
+      "category": "historical-measurement",
+      "classification": "observed-historical",
+      "source": "/mnt/workhorse/craftingtable/runs/b41d9796-e3e5-46d4-88f9-c53ef331262a/historical-evidence/recovery-summary.json",
+      "source_revision": "f48df82e98203fa94c86eecae60425205c3e00e9",
+      "execution_revision": "f48df82e98203fa94c86eecae60425205c3e00e9",
+      "fixture_version": 1
+    },
+    {
+      "path": "fixtures/pre-wi-fabric-2/source/Cargo.lock",
+      "sha256": "5357485f559259e630e297d3a5e086f3d64757b680ef5b5fafaa7c6d712067ab",
+      "category": "dependency-lock",
+      "classification": "copied-source",
+      "source": "git:f48df82e98203fa94c86eecae60425205c3e00e9:Cargo.lock",
+      "source_revision": "f48df82e98203fa94c86eecae60425205c3e00e9",
+      "execution_revision": "f48df82e98203fa94c86eecae60425205c3e00e9",
+      "fixture_version": 1
+    },
+    {
+      "path": "fixtures/pre-wi-fabric-2/source/crates/worldinterface-connector/src/signal_registry.rs",
+      "sha256": "7f7f140304b10f4b9867b735a6a63930f083d3d83295202cf20f75dd29e39c4f",
+      "category": "signal-ordering",
+      "classification": "copied-source",
+      "source": "git:f48df82e98203fa94c86eecae60425205c3e00e9:crates/worldinterface-connector/src/signal_registry.rs",
+      "source_revision": "f48df82e98203fa94c86eecae60425205c3e00e9",
+      "execution_revision": "f48df82e98203fa94c86eecae60425205c3e00e9",
+      "fixture_version": 1
+    },
+    {
+      "path": "fixtures/pre-wi-fabric-2/source/crates/worldinterface-contextstore/src/sqlite.rs",
+      "sha256": "449612c855915e3ba06f9c92b8397af108c915d5cd212b54f79b772ec3d9982f",
+      "category": "contextstore",
+      "classification": "copied-source",
+      "source": "git:f48df82e98203fa94c86eecae60425205c3e00e9:crates/worldinterface-contextstore/src/sqlite.rs",
+      "source_revision": "f48df82e98203fa94c86eecae60425205c3e00e9",
+      "execution_revision": "f48df82e98203fa94c86eecae60425205c3e00e9",
+      "fixture_version": 1
+    },
+    {
+      "path": "fixtures/pre-wi-fabric-2/source/crates/worldinterface-core/src/receipt.rs",
+      "sha256": "ebe82fc4675c6845c13c1df6b1d2ebc3eab4faf7c55cd3ba649d407387ab2f2d",
+      "category": "receipt",
+      "classification": "copied-source",
+      "source": "git:f48df82e98203fa94c86eecae60425205c3e00e9:crates/worldinterface-core/src/receipt.rs",
+      "source_revision": "f48df82e98203fa94c86eecae60425205c3e00e9",
+      "execution_revision": "f48df82e98203fa94c86eecae60425205c3e00e9",
+      "fixture_version": 1
+    },
+    {
+      "path": "fixtures/pre-wi-fabric-2/source/crates/worldinterface-core/src/streaming.rs",
+      "sha256": "91dd45e0a9dcb202acf63bee9999dd3d4a7c09244387803126208211b423d22a",
+      "category": "stream",
+      "classification": "copied-source",
+      "source": "git:f48df82e98203fa94c86eecae60425205c3e00e9:crates/worldinterface-core/src/streaming.rs",
+      "source_revision": "f48df82e98203fa94c86eecae60425205c3e00e9",
+      "execution_revision": "f48df82e98203fa94c86eecae60425205c3e00e9",
+      "fixture_version": 1
+    },
+    {
+      "path": "fixtures/pre-wi-fabric-2/source/crates/worldinterface-flowspec/src/compile.rs",
+      "sha256": "12db88d19a7e8dc0216118f52aa7c4c7c3d7f2747476d82e0e00d9a789b59614",
+      "category": "compiled-dag",
+      "classification": "copied-source",
+      "source": "git:f48df82e98203fa94c86eecae60425205c3e00e9:crates/worldinterface-flowspec/src/compile.rs",
+      "source_revision": "f48df82e98203fa94c86eecae60425205c3e00e9",
+      "execution_revision": "f48df82e98203fa94c86eecae60425205c3e00e9",
+      "fixture_version": 1
+    },
+    {
+      "path": "fixtures/pre-wi-fabric-2/source/crates/worldinterface-host/tests/integration.rs",
+      "sha256": "15aeef7e939f130ae6d67c36a7c6fef7f39485f2338bc8b27f31863c7682cfdb",
+      "category": "recovery",
+      "classification": "copied-source",
+      "source": "git:f48df82e98203fa94c86eecae60425205c3e00e9:crates/worldinterface-host/tests/integration.rs",
+      "source_revision": "f48df82e98203fa94c86eecae60425205c3e00e9",
+      "execution_revision": "f48df82e98203fa94c86eecae60425205c3e00e9",
+      "fixture_version": 1
+    },
+    {
+      "path": "fixtures/pre-wi-fabric-2/source/crates/worldinterface-http-trigger/src/handler.rs",
+      "sha256": "cfba1d3557d5dbff94a1b40c1b06e2317036105eae653cc468a583938fa733a3",
+      "category": "webhook",
+      "classification": "copied-source",
+      "source": "git:f48df82e98203fa94c86eecae60425205c3e00e9:crates/worldinterface-http-trigger/src/handler.rs",
+      "source_revision": "f48df82e98203fa94c86eecae60425205c3e00e9",
+      "execution_revision": "f48df82e98203fa94c86eecae60425205c3e00e9",
+      "fixture_version": 1
+    },
+    {
+      "path": "fixtures/pre-wi-fabric-2/source/crates/worldinterface-wasm/src/policy.rs",
+      "sha256": "7f2ed9e3e1864430d7223090157c2869f802f5679a6513a9575c92d58a0c542b",
+      "category": "wasm-policy",
+      "classification": "copied-source",
+      "source": "git:f48df82e98203fa94c86eecae60425205c3e00e9:crates/worldinterface-wasm/src/policy.rs",
+      "source_revision": "f48df82e98203fa94c86eecae60425205c3e00e9",
+      "execution_revision": "f48df82e98203fa94c86eecae60425205c3e00e9",
+      "fixture_version": 1
+    },
+    {
+      "path": "fixtures/pre-wi-fabric-2/source/examples/golden-path/flow.yaml",
+      "sha256": "eb2cfcb517bb410db469f218bce3ac5cdfff5b6d176d989ec5d928ae49294494",
+      "category": "flowspec",
+      "classification": "copied-source",
+      "source": "git:f48df82e98203fa94c86eecae60425205c3e00e9:examples/golden-path/flow.yaml",
+      "source_revision": "f48df82e98203fa94c86eecae60425205c3e00e9",
+      "execution_revision": "f48df82e98203fa94c86eecae60425205c3e00e9",
+      "fixture_version": 1
+    },
+    {
+      "path": "fixtures/pre-wi-fabric-2/source/examples/golden-path/webhook-flow.yaml",
+      "sha256": "32bb5f913259d0b691c776e7a6f2ea125b6698718cf02b1f77b0ef9af1137f63",
+      "category": "webhook",
+      "classification": "copied-source",
+      "source": "git:f48df82e98203fa94c86eecae60425205c3e00e9:examples/golden-path/webhook-flow.yaml",
+      "source_revision": "f48df82e98203fa94c86eecae60425205c3e00e9",
+      "execution_revision": "f48df82e98203fa94c86eecae60425205c3e00e9",
+      "fixture_version": 1
+    },
+    {
+      "path": "fixtures/pre-wi-fabric-2/source/examples/wasm-connectors/compiled/discord.connector.toml",
+      "sha256": "1806e51c3b9cf851a53dc1b5413f7885507c88a7a3cf4efbfe384cc4c30b4f9e",
+      "category": "wasm-manifest",
+      "classification": "copied-source",
+      "source": "git:f48df82e98203fa94c86eecae60425205c3e00e9:examples/wasm-connectors/compiled/discord.connector.toml",
+      "source_revision": "f48df82e98203fa94c86eecae60425205c3e00e9",
+      "execution_revision": "f48df82e98203fa94c86eecae60425205c3e00e9",
+      "fixture_version": 1
+    },
+    {
+      "path": "fixtures/pre-wi-fabric-2/source/examples/wasm-connectors/compiled/host-demo.connector.toml",
+      "sha256": "5fa744247e7df3ac42aa1c2cf8d252fb89bbf93cc531c2431b541b4af87246f0",
+      "category": "wasm-manifest",
+      "classification": "copied-source",
+      "source": "git:f48df82e98203fa94c86eecae60425205c3e00e9:examples/wasm-connectors/compiled/host-demo.connector.toml",
+      "source_revision": "f48df82e98203fa94c86eecae60425205c3e00e9",
+      "execution_revision": "f48df82e98203fa94c86eecae60425205c3e00e9",
+      "fixture_version": 1
+    },
+    {
+      "path": "fixtures/pre-wi-fabric-2/source/examples/wasm-connectors/compiled/json-validate.connector.toml",
+      "sha256": "b7131cc55326874a6e54db3e5117e9ead37afa56398774525d3b309b40c7c64b",
+      "category": "wasm-manifest",
+      "classification": "copied-source",
+      "source": "git:f48df82e98203fa94c86eecae60425205c3e00e9:examples/wasm-connectors/compiled/json-validate.connector.toml",
+      "source_revision": "f48df82e98203fa94c86eecae60425205c3e00e9",
+      "execution_revision": "f48df82e98203fa94c86eecae60425205c3e00e9",
+      "fixture_version": 1
+    },
+    {
+      "path": "fixtures/pre-wi-fabric-2/source/examples/wasm-connectors/compiled/web-search.connector.toml",
+      "sha256": "7b948c1fb00f034a2f02f34ea7f741235ebd958d5234e38960e4405a087318a5",
+      "category": "wasm-manifest",
+      "classification": "copied-source",
+      "source": "git:f48df82e98203fa94c86eecae60425205c3e00e9:examples/wasm-connectors/compiled/web-search.connector.toml",
+      "source_revision": "f48df82e98203fa94c86eecae60425205c3e00e9",
+      "execution_revision": "f48df82e98203fa94c86eecae60425205c3e00e9",
+      "fixture_version": 1
+    },
+    {
+      "path": "fixtures/pre-wi-fabric-2/source/examples/wasm-connectors/compiled/webhook-send.connector.toml",
+      "sha256": "69f0d6610ff7c8081df278787e14bfc69c335939a4601a010ea7d776ba4180d6",
+      "category": "wasm-manifest",
+      "classification": "copied-source",
+      "source": "git:f48df82e98203fa94c86eecae60425205c3e00e9:examples/wasm-connectors/compiled/webhook-send.connector.toml",
+      "source_revision": "f48df82e98203fa94c86eecae60425205c3e00e9",
+      "execution_revision": "f48df82e98203fa94c86eecae60425205c3e00e9",
+      "fixture_version": 1
+    },
+    {
+      "path": "fixtures/pre-wi-fabric-2/source/rust-toolchain.toml",
+      "sha256": "bf22a6bd08945cfed9b5bdd0c1990dfeb65cf397983cce0dde1cc33b68e3d625",
+      "category": "toolchain",
+      "classification": "copied-source",
+      "source": "git:f48df82e98203fa94c86eecae60425205c3e00e9:rust-toolchain.toml",
+      "source_revision": "f48df82e98203fa94c86eecae60425205c3e00e9",
+      "execution_revision": "f48df82e98203fa94c86eecae60425205c3e00e9",
+      "fixture_version": 1
+    }
+  ],
+  "gaps": [
+    "No historical EXO execution revision/toolchain identity; no standalone Aya input fixture.",
+    "Default historical WASM integration ran zero feature-gated cases; compiled modules absent.",
+    "Measurements are single debug-run delay(0) observations, not release performance or causal improvement."
+  ],
+  "historical_index_verified_files": 21
+}

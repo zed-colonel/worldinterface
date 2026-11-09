@@ -1,0 +1,203 @@
+{
+  "scope": "wi/WI-04/domain",
+  "binding_revision": 4,
+  "policy_revision": {
+    "version": 1,
+    "branchSettingsVersion": 1,
+    "adoptedAt": "2026-09-18T00:41:03.548Z",
+    "controlMode": "controller-local"
+  },
+  "source_sha256": {
+    "craftingtable-repository-policy.json": "97db2c4880ea7d6fe85bb6b572539ff62f99a03b7f18ef5cfde44f221cf56f2a",
+    "craftingtable-operator-decisions.json": "2cdf89e5501db5ea6d224e6a24f9b2c8d6f1ced4e5df1c1ba5dd57ecfde1538b",
+    "craftingtable-scope-evidence.json": "9ed2e6c4f98886d71009e7554463405f0c8fc6179aefe5dcb586c3eef10867fe",
+    "wi-fabric-2-foundational-implementation-plan.md": "32564920d4cb1fa43fcecf996ef7897aa38b5c70fe4c04ca89adbedde86e608e",
+    "worldinterface-v2-foundational-design.md": "45e8ad3e5cc9618cbb951c0062cbd5daa49e7f57a0955d38e1172f6603e7b4bb",
+    "wi-fabric-2-worker-execution-profile.md": "9f597cffb7117dc679e9f001c25c7d54f2a6157f6ead563b0c7cbd11f45a04f9",
+    "wi-fabric-2-worker-execution-acceptance-matrix.yaml": "9c11d92d056b0411ed4af00a8f076182d95c500acd6e360f42a3a0bdd8aec2eb",
+    "wi-fabric-2-aq-assumption-ledger-foundational.yaml": "943d9f263afeee5c56cc6c65a3c6dfca6fca8c871ff070aed2cd0c77f1437415",
+    "wi-fabric-2-worker-boundary-assumption-ledger.yaml": "65bd7ca0b4fc1c4d116157b9ee05ac575e3da6bba0618dc35284303c5cd92d05",
+    "aq-baseline.lock.json": "1907d0a157628511c2419f84fd6b7820e09c160699505ee986cc46f3bcf78c7a",
+    "AQ-BASELINE-ALIGNMENT.md": "cd013232a0a9cbca2c625d31c3fc75e053f7948d37b8a6de2f08ff5cdc7e4656"
+  },
+  "adr_approval_ids": [
+    "786dc165-698c-4397-90b2-14da7113cd31",
+    "18f9998d-e0fd-4de5-ba37-168906cd5fe6",
+    "18a3a800-fcb5-421a-a717-3f6556cbf0af",
+    "e31d8d22-208c-4ba8-9b7a-fcfa6695fc2e"
+  ],
+  "predecessor_receipts": [
+    {
+      "id": "6c419486-458d-4a8d-98b7-bc9fdeb228e4",
+      "workspaceId": "6bf6915a-6cd0-47cc-b853-fcbc04f02f3d",
+      "workItemId": "e73c34b0-6c48-4256-a44a-55a43b993bb7",
+      "scope": {
+        "kind": "slice",
+        "definitionId": "0ebcb7cf-9686-4bc1-9b9d-bb85a1d0b4c9",
+        "bindingRevision": 4,
+        "sourceId": "wi/WI-02/integration"
+      },
+      "worktreeId": "9a781d2a-3220-4393-bfa6-e4fe31d4cd7e",
+      "reviewRunId": "c0389c14-7b95-427d-9185-0df6d989058a",
+      "reviewerRoles": [
+        "independent-security-reviewer-if-required-by-source",
+        "repository-maintainer",
+        "exo-maintainer",
+        "wi-maintainer",
+        "release-authority",
+        "independent-profile-reviewer",
+        "independent-boundary-reviewer",
+        "instance-operator",
+        "independent-runtime-reviewer",
+        "independent-recovery-reviewer",
+        "independent-integration-reviewer"
+      ],
+      "headSha": "03370fd5977f9ac92326f9b6c0b689cb24e2eca0",
+      "integrationSha": "03370fd5977f9ac92326f9b6c0b689cb24e2eca0",
+      "evidence": {
+        "scope": {
+          "kind": "slice-verification",
+          "definitionId": "0ebcb7cf-9686-4bc1-9b9d-bb85a1d0b4c9",
+          "bindingRevision": 4,
+          "sourceId": "wi/WI-02/integration"
+        },
+        "requirements": [
+          {
+            "requirement": "candidate and merged implementation revision",
+            "evidence": "Fresh git observations bind HEAD/destination 03370fd5977f9ac92326f9b6c0b689cb24e2eca0 and tree 1c47cd391aed58ddd91b688e41ac227194317ce2. Tree equals independently reviewed candidate 746cde52; combined merged revision tested. See git-observations.json and final-observations.json."
+          },
+          {
+            "requirement": "required PR tests, crash/replay/property checks applicable to this slice",
+            "evidence": "Native ct-native/ct-check and all three ct-act jobs passed 10 integration, 57 domain and 61 contract tests each, plus nine checker categories. Covers state properties, canonical vectors, concurrent/idempotent admission, atomic records/outboxes, fresh rejection/replay, killed journal recovery and atomic publication. See verification-summary.json and logs."
+          },
+          {
+            "requirement": "exact upstream implementation and conformance revisions actually used",
+            "evidence": "Current native Cargo receipts and graph check bind AQ commit 29e096c4f06985d1a9bd9d5fe5a3a6a5db8a6860, tree 1c0c85dd700bd9d0c75de223dada911ffeadbb5b, conformance 16, six AQ 0.2.0 packages and features; 571 source files and aggregate source hash verified. Archive identity f91f496f22772e8dda044b0cf2cf05cf2eafa9f86d6f0c7e0061b46e3926ffb1 is accepted-baseline bound; ZIP not rehashed here. See source-identity.json, aq-build.json and integration-cargo-receipts.json."
+          },
+          {
+            "requirement": "fixture, environment/toolchain, test-run and results-artifact digests",
+            "evidence": "Run c0389c14-7b95-427d-9185-0df6d989058a; managed native approval e152470b-9973-4b60-accc-68d1cefaf316. Actual Rust 1.89.0 distinguished from approval discovery defaults. Supplied CI image sha256:4593631d9eb27be51f666a4b8e1e05b779a022bb3c6b5f835ad886ced88c2fb3. Fixture, environment, command, build, result and review digests retained in environment.json, fixture-digests.json, case packets and SHA256SUMS."
+          },
+          {
+            "requirement": "lease/isolation/authority review where applicable; post-rebase verification",
+            "evidence": "Reviewed WI/AQ maintenance locks, private recovery, no-replace publication, artifact authorization/integrity, same-store ancestry and foreign external provenance. Foundation remains AQ-free and target graph excludes legacy readers. Current merged revision reverified; no rebase performed. Applicable reviewer-role assessments and cooperative host trust limits are in review-notes.json; no active verification leases remain."
+          },
+          {
+            "requirement": "Every assigned aq_baseline_case_id has an independently reviewed passing result bound to its source_record_sha256, current AQ archive/build/conformance identity and actual consumer revision; no empty, inherited or planning-only case receipt is accepted.",
+            "evidence": "AB-WI-001/015/016 source rows independently rehashed and every registered test rerun. Fresh merged-revision result/review packets bind exact consumer, source rows, upstream/build/conformance, fixtures, environment and logs; all three wi-contract-check evidence check invocations passed. See case-review.json, AB-WI-*.receipt.json and case-validation-*.log."
+          },
+          {
+            "requirement": "Implement the remaining production integration and all source PR tests; reconcile assumptions, bind exact upstream pins, and verify the complete original exit gate. This is not an alternative runtime.",
+            "evidence": "Integration exit gate met on the combined merged snapshot: target protocol/state machines compile, fresh stores replay, canonical digests are fixed and target graph has no legacy readers. G1 adapters compose foundation with AQ-owned persistence/causality, with WI-AQ-012/015 reconciled. WP-002 representation reviewed as definition evidence. Later G2/G3/G4, full provider/release and WI-02 parent acceptance remain separate. See scope-context.json, review-notes.json and verification-summary.json."
+          }
+        ],
+        "caseIds": [
+          "AB-WI-001",
+          "AB-WI-015",
+          "AB-WI-016"
+        ]
+      },
+      "recordedAt": "2026-09-22T00:41:25.633Z",
+      "recordedByUserId": "0698a39b-dda2-4870-8f3f-97ef94784ae9",
+      "current": true
+    },
+    {
+      "id": "6702aafb-8f4d-4dda-a6f9-00c2221d80f5",
+      "workspaceId": "6bf6915a-6cd0-47cc-b853-fcbc04f02f3d",
+      "workItemId": "e73c34b0-6c48-4256-a44a-55a43b993bb7",
+      "scope": {
+        "kind": "slice",
+        "definitionId": "0ebcb7cf-9686-4bc1-9b9d-bb85a1d0b4c9",
+        "bindingRevision": 4,
+        "sourceId": "wi/WI-02/domain"
+      },
+      "worktreeId": "ce4fff1e-cee7-43c6-afb3-6f60714ba4cb",
+      "reviewRunId": "5701f912-ba84-4744-a64f-503f37243b8e",
+      "reviewerRoles": [
+        "independent-security-reviewer-if-required-by-source",
+        "repository-maintainer",
+        "exo-maintainer",
+        "wi-maintainer",
+        "release-authority",
+        "independent-profile-reviewer",
+        "independent-boundary-reviewer",
+        "instance-operator",
+        "independent-runtime-reviewer",
+        "independent-recovery-reviewer",
+        "independent-integration-reviewer"
+      ],
+      "headSha": "9cbdb13dd769c8a66bf03fca380a1194e484476e",
+      "integrationSha": "9cbdb13dd769c8a66bf03fca380a1194e484476e",
+      "evidence": {
+        "scope": {
+          "kind": "slice-verification",
+          "definitionId": "0ebcb7cf-9686-4bc1-9b9d-bb85a1d0b4c9",
+          "bindingRevision": 4,
+          "sourceId": "wi/WI-02/domain"
+        },
+        "requirements": [
+          {
+            "requirement": "candidate and merged revision or reproducible merged tree digest",
+            "evidence": "HEAD, review base and wi-fabric-2 equal 9cbdb13dd769c8a66bf03fca380a1194e484476e; tree 9e0a1f53ea67b7cee680393f983ead1679359149. Both baseline-to-HEAD and 55cf381-to-HEAD diffs are empty. See inspection.json, baseline.diff, reviewed.diff and exact clean-commit receipts."
+          },
+          {
+            "requirement": "source-required local test results for the declared slice scope",
+            "evidence": "Both ct-check scripts and both ct-act jobs passed: 27 domain tests, 58 contract tests, nine checker categories, formatting, Clippy and locked builds. Commands, results and hash-verified logs are retained in verification-summary.json, controller-receipts.jsonl, domain-configured.log, contract.log, domain-ci-rerun.log and contract-ci.log."
+          },
+          {
+            "requirement": "isolation review: test-only mocks or inactive composition root, no production adapter or authority path",
+            "evidence": "Reviewed four isolated foundation libraries, resolved all-features graph and physical source routes. No AQ or legacy-reader dependency, runtime composition, network/process execution or lifecycle activation. QueueAdmissionPort, QueueInspectionPort and QueueWakePort implementations are test-only. Combined catalog tooling remains offline; removal readiness remains blocked. See foundation-routes.txt, domain-configured.log, contract.log and review-notes.json."
+          },
+          {
+            "requirement": "dependency milestone and ADR evidence digests, applicable assumption register",
+            "evidence": "Supplied scope ledger records no phase blockers. WI-01 parent receipt 648a94bc-0aae-48bb-b7f4-b1cd879f7b94 and slice receipt 36bdd5cb-3638-4300-9be0-9b355b237af3 bind 8f2783963701dc60988f367ed53484a6ec3a7b00. ADR-001/002/003 full approvals and ADR-016 early clauses exactly match committed records; individual approval IDs and SHA256s are in inspection.json. AQ assumption SHA256: 943d9f263afeee5c56cc6c65a3c6dfca6fca8c871ff070aed2cd0c77f1437415; worker assumptions: 65bd7ca0b4fc1c4d116157b9ee05ac575e3da6bba0618dc35284303c5cd92d05. WI-AQ-012/015 and final WP-A01 mapping retain their milestones. Historical AQ remained unused; current AQ conformance is not asserted. Operator guidance was assessed separately from test evidence."
+          },
+          {
+            "requirement": "post-rebase test confirmation on the actual merge target",
+            "evidence": "Fresh native and CI receipts bind the clean actual integration commit 9cbdb13dd769c8a66bf03fca380a1194e484476e after its controller integration merge. Candidate and actual target remained identical throughout review. This run performed no rebase or merge. See verification-summary.json and controller-receipts.jsonl."
+          },
+          {
+            "requirement": "Target protocol, pure state machines, canonicalization, fresh local stores and queryable local test fixtures; AQ wrappers remain behind named internal ports.",
+            "evidence": "Reviewed typed protocol, 22 independently recomputed golden vectors, six reducers with exhaustive/generated transition and replay tests, scoped idempotency/concurrency, atomic history/outboxes, queries/rebuild, fresh manifest/database identity, artifact integrity and offline backup/restore. WP-002 passes definition review covering profile, executable, configuration and control bindings, distinct image applicability and separate enclosing evidence. Named AQ ports remain inactive. See inspection.json, review-notes.json and domain native/CI logs. Integration-slice verification and parent acceptance are not claimed."
+          }
+        ],
+        "caseIds": [
+          "WP-002"
+        ]
+      },
+      "recordedAt": "2026-09-20T00:54:30.289Z",
+      "recordedByUserId": "0698a39b-dda2-4870-8f3f-97ef94784ae9",
+      "current": true
+    }
+  ],
+  "assumptions": {
+    "AQ": "contracts/aq-assumptions.yaml",
+    "WP-A01": "existing record seams retained; producer/mapping evidence remains due",
+    "WP-A02": "WP-009 through WP-014 fixture implementation only; exact live enforcement and qualification remain due"
+  },
+  "retained_phase_readiness": {
+    "start": [],
+    "merge": [
+      {
+        "kind": "evidence",
+        "message": "Checkpoint WI-WORKER-G1 must pass with current independently accepted evidence."
+      }
+    ],
+    "verify": [
+      {
+        "kind": "dependency",
+        "message": "Merge this slice before starting fresh verification."
+      },
+      {
+        "kind": "dependency",
+        "message": "Finish and merge the active owning-slice attempt before verification."
+      },
+      {
+        "kind": "evidence",
+        "message": "Checkpoint WI-WORKER-G1 must pass with current independently accepted evidence."
+      }
+    ]
+  },
+  "runtime_pass_asserted": false,
+  "ordinary_provider_admission": false
+}

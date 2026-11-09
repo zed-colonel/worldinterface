@@ -1,0 +1,605 @@
+{
+  "run_id": "121f54f4",
+  "timestamp": "2026-04-18T00:37:01.173603830Z",
+  "dataset": "rustbench",
+  "results": [
+    {
+      "task_result": {
+        "task_name": "aya-rs__aya-774",
+        "passed": false,
+        "verification_exit_code": 101,
+        "completion_reason": "MaxTicks",
+        "wall_time_secs": 186.155632709,
+        "steps_taken": 12,
+        "ticks_used": 12,
+        "tokens": {
+          "total_in": 108150,
+          "total_out": 4969,
+          "total": 113119,
+          "by_phase": {
+            "decide": {
+              "tokens_in": 99567,
+              "tokens_out": 1758
+            },
+            "reflect": {
+              "tokens_in": 8583,
+              "tokens_out": 3211
+            }
+          }
+        },
+        "model_used": "claude-sonnet-4-20250514",
+        "tool_calls": {
+          "code.read": {
+            "calls": 9,
+            "successes": 8,
+            "failures": 1
+          },
+          "code.glob": {
+            "calls": 1,
+            "successes": 1,
+            "failures": 0
+          },
+          "code.ls": {
+            "calls": 1,
+            "successes": 1,
+            "failures": 0
+          },
+          "code.grep": {
+            "calls": 1,
+            "successes": 1,
+            "failures": 0
+          }
+        },
+        "files_modified": [],
+        "lines_added": 0,
+        "lines_removed": 0,
+        "doom_loop_corrections": 0,
+        "llm_cost_cents": 39.8985,
+        "llm_calls": 24,
+        "step_trace": [
+          {
+            "step": 1,
+            "tick": 1,
+            "tool_name": "code.ls",
+            "tool_params": {
+              "path": "/tmp/.tmptlCYC1"
+            },
+            "outcome": "Success",
+            "output_summary": "/tmp/.tmptlCYC1",
+            "reasoning": "",
+            "tokens_in": 0,
+            "tokens_out": 0,
+            "latency_ms": 0
+          },
+          {
+            "step": 2,
+            "tick": 2,
+            "tool_name": "code.grep",
+            "tool_params": {
+              "path": "/tmp/.tmptlCYC1"
+            },
+            "outcome": "Success",
+            "output_summary": "/tmp/.tmptlCYC1",
+            "reasoning": "",
+            "tokens_in": 0,
+            "tokens_out": 0,
+            "latency_ms": 0
+          },
+          {
+            "step": 3,
+            "tick": 3,
+            "tool_name": "code.read",
+            "tool_params": {
+              "file_path": "/tmp/.tmptlCYC1/aya/src/maps/hash_map/mod.rs"
+            },
+            "outcome": "Success",
+            "output_summary": "/tmp/.tmptlCYC1/aya/src/maps/hash_map/mod.rs",
+            "reasoning": "",
+            "tokens_in": 0,
+            "tokens_out": 0,
+            "latency_ms": 0
+          },
+          {
+            "step": 4,
+            "tick": 4,
+            "tool_name": "code.read",
+            "tool_params": {
+              "file_path": "/tmp/.tmptlCYC1/aya/src/maps/hash_map/hash_map.rs"
+            },
+            "outcome": "Success",
+            "output_summary": "/tmp/.tmptlCYC1/aya/src/maps/hash_map/hash_map.rs",
+            "reasoning": "",
+            "tokens_in": 0,
+            "tokens_out": 0,
+            "latency_ms": 0
+          },
+          {
+            "step": 5,
+            "tick": 5,
+            "tool_name": "code.read",
+            "tool_params": {
+              "file_path": "/tmp/.tmptlCYC1/aya/src/maps/hash_map/hash_map.rs"
+            },
+            "outcome": "Success",
+            "output_summary": "/tmp/.tmptlCYC1/aya/src/maps/hash_map/hash_map.rs",
+            "reasoning": "",
+            "tokens_in": 0,
+            "tokens_out": 0,
+            "latency_ms": 0
+          },
+          {
+            "step": 6,
+            "tick": 6,
+            "tool_name": "code.read",
+            "tool_params": {
+              "file_path": "/tmp/.tmptlCYC1/aya/src/maps/hash_map/hash_map.rs"
+            },
+            "outcome": "Success",
+            "output_summary": "/tmp/.tmptlCYC1/aya/src/maps/hash_map/hash_map.rs",
+            "reasoning": "",
+            "tokens_in": 0,
+            "tokens_out": 0,
+            "latency_ms": 0
+          },
+          {
+            "step": 7,
+            "tick": 7,
+            "tool_name": "code.read",
+            "tool_params": {
+              "file_path": "/tmp/.tmptlCYC1/aya/src/maps/hash_map/hash_map.rs"
+            },
+            "outcome": "Success",
+            "output_summary": "/tmp/.tmptlCYC1/aya/src/maps/hash_map/hash_map.rs",
+            "reasoning": "",
+            "tokens_in": 0,
+            "tokens_out": 0,
+            "latency_ms": 0
+          },
+          {
+            "step": 8,
+            "tick": 8,
+            "tool_name": "code.read",
+            "tool_params": {
+              "file_path": "/tmp/.tmptlCYC1/aya/src/maps/hash_map/hash_map.rs"
+            },
+            "outcome": "Success",
+            "output_summary": "/tmp/.tmptlCYC1/aya/src/maps/hash_map/hash_map.rs",
+            "reasoning": "",
+            "tokens_in": 0,
+            "tokens_out": 0,
+            "latency_ms": 0
+          },
+          {
+            "step": 9,
+            "tick": 9,
+            "tool_name": "code.read",
+            "tool_params": {
+              "file_path": "/tmp/.tmptlCYC1/aya/src/maps/hash_map/hash_map.rs"
+            },
+            "outcome": "Success",
+            "output_summary": "/tmp/.tmptlCYC1/aya/src/maps/hash_map/hash_map.rs",
+            "reasoning": "",
+            "tokens_in": 0,
+            "tokens_out": 0,
+            "latency_ms": 0
+          },
+          {
+            "step": 10,
+            "tick": 10,
+            "tool_name": "code.read",
+            "tool_params": {
+              "file_path": "/tmp/.tmptlCYC1/aya/src/maps/hash_map.rs"
+            },
+            "outcome": "Failure",
+            "output_summary": "/tmp/.tmptlCYC1/aya/src/maps/hash_map.rs",
+            "reasoning": "",
+            "tokens_in": 0,
+            "tokens_out": 0,
+            "latency_ms": 0
+          },
+          {
+            "step": 11,
+            "tick": 11,
+            "tool_name": "code.glob",
+            "tool_params": {
+              "path": "/tmp/.tmptlCYC1"
+            },
+            "outcome": "Success",
+            "output_summary": "/tmp/.tmptlCYC1",
+            "reasoning": "",
+            "tokens_in": 0,
+            "tokens_out": 0,
+            "latency_ms": 0
+          },
+          {
+            "step": 12,
+            "tick": 12,
+            "tool_name": "code.read",
+            "tool_params": {
+              "file_path": "/tmp/.tmptlCYC1/aya/src/maps/hash_map/hash_map.rs"
+            },
+            "outcome": "Success",
+            "output_summary": "/tmp/.tmptlCYC1/aya/src/maps/hash_map/hash_map.rs",
+            "reasoning": "",
+            "tokens_in": 0,
+            "tokens_out": 0,
+            "latency_ms": 0
+          }
+        ],
+        "context_utilization": {
+          "total_budget_tokens": 16384,
+          "total_used_tokens": 943,
+          "utilization_pct": 5.755615234375,
+          "sections": {
+            "git_context": {
+              "budget_tokens": 91,
+              "used_tokens": 91,
+              "truncated": false
+            },
+            "recent_events": {
+              "budget_tokens": 38,
+              "used_tokens": 38,
+              "truncated": false
+            },
+            "episodic_memory": {
+              "budget_tokens": 134,
+              "used_tokens": 134,
+              "truncated": false
+            },
+            "long_term_memory": {
+              "budget_tokens": 0,
+              "used_tokens": 0,
+              "truncated": false
+            },
+            "repo_instructions": {
+              "budget_tokens": 76,
+              "used_tokens": 76,
+              "truncated": false
+            },
+            "relationship_snapshot": {
+              "budget_tokens": 0,
+              "used_tokens": 0,
+              "truncated": false
+            },
+            "system": {
+              "budget_tokens": 99,
+              "used_tokens": 99,
+              "truncated": false
+            },
+            "working_memory": {
+              "budget_tokens": 0,
+              "used_tokens": 0,
+              "truncated": false
+            },
+            "conversations": {
+              "budget_tokens": 388,
+              "used_tokens": 388,
+              "truncated": false
+            },
+            "thread_outputs": {
+              "budget_tokens": 0,
+              "used_tokens": 0,
+              "truncated": false
+            },
+            "exec_thread_outputs": {
+              "budget_tokens": 73,
+              "used_tokens": 73,
+              "truncated": false
+            },
+            "state_snapshot": {
+              "budget_tokens": 44,
+              "used_tokens": 44,
+              "truncated": false
+            },
+            "plan": {
+              "budget_tokens": 0,
+              "used_tokens": 0,
+              "truncated": false
+            }
+          }
+        },
+        "tick_details": [
+          {
+            "tick_number": 1,
+            "duration_secs": 11.17,
+            "tool_steps": 1,
+            "llm_calls": 2,
+            "tokens_in": 7373,
+            "tokens_out": 374,
+            "actions_taken": 1,
+            "actions_succeeded": 1,
+            "completion_reason": "I'll help you investigate the HashMap TryFrom implementations for LruHashMap compatibility. Let me start by exploring the workspace to understand the current state and find the relevant code."
+          },
+          {
+            "tick_number": 2,
+            "duration_secs": 13.62,
+            "tool_steps": 1,
+            "llm_calls": 2,
+            "tokens_in": 7906,
+            "tokens_out": 314,
+            "actions_taken": 1,
+            "actions_succeeded": 1,
+            "completion_reason": "I need to investigate the HashMap TryFrom implementations to understand the issue with LruHashMap support. Let me start by searching for the relevant code."
+          },
+          {
+            "tick_number": 3,
+            "duration_secs": 16.659,
+            "tool_steps": 1,
+            "llm_calls": 2,
+            "tokens_in": 8293,
+            "tokens_out": 473,
+            "actions_taken": 1,
+            "actions_succeeded": 1,
+            "completion_reason": "I need to investigate the HashMap TryFrom implementation issue. The user reports that HashMap can no longer be created from LruHashMap, which worked in previous commits. Let me examine the actual source code to understand the problem."
+          },
+          {
+            "tick_number": 4,
+            "duration_secs": 14.959,
+            "tool_steps": 1,
+            "llm_calls": 2,
+            "tokens_in": 8672,
+            "tokens_out": 407,
+            "actions_taken": 1,
+            "actions_succeeded": 1,
+            "completion_reason": "I need to examine the actual HashMap implementation file to understand the TryFrom implementations and see why LruHashMap support was removed. Let me read the hash_map.rs file that was referenced in the module structure."
+          },
+          {
+            "tick_number": 5,
+            "duration_secs": 16.985,
+            "tool_steps": 1,
+            "llm_calls": 2,
+            "tokens_in": 8971,
+            "tokens_out": 462,
+            "actions_taken": 1,
+            "actions_succeeded": 1,
+            "completion_reason": "I need to investigate the HashMap TryFrom implementation issue where LruHashMap support appears to have been broken in a recent commit. Let me read the full hash_map.rs file to see the current TryFrom implementations."
+          },
+          {
+            "tick_number": 6,
+            "duration_secs": 16.059,
+            "tool_steps": 1,
+            "llm_calls": 2,
+            "tokens_in": 9386,
+            "tokens_out": 573,
+            "actions_taken": 1,
+            "actions_succeeded": 1,
+            "completion_reason": "Looking at the task, I need to investigate the HashMap TryFrom implementation that currently only supports BPF HashMap but should also support LruHashMap. The user mentioned that a recent commit broke this functionality.\n\nLet me continue reading the hash_map.rs file to find the TryFrom implementations:"
+          },
+          {
+            "tick_number": 7,
+            "duration_secs": 14.37,
+            "tool_steps": 1,
+            "llm_calls": 2,
+            "tokens_in": 9767,
+            "tokens_out": 306,
+            "actions_taken": 1,
+            "actions_succeeded": 1,
+            "completion_reason": "I need to investigate the HashMap TryFrom implementations to understand why LruHashMap conversion is broken. Based on the working memory and thread output, I should read the hash_map.rs file from the beginning to find the TryFrom implementations."
+          },
+          {
+            "tick_number": 8,
+            "duration_secs": 14.431,
+            "tool_steps": 1,
+            "llm_calls": 2,
+            "tokens_in": 9669,
+            "tokens_out": 331,
+            "actions_taken": 1,
+            "actions_succeeded": 1,
+            "completion_reason": "I'll continue reading the hash_map.rs file to find the TryFrom implementations that need to be modified to support LruHashMap conversion, as recommended by the coding thread."
+          },
+          {
+            "tick_number": 9,
+            "duration_secs": 13.87,
+            "tool_steps": 1,
+            "llm_calls": 2,
+            "tokens_in": 9640,
+            "tokens_out": 332,
+            "actions_taken": 1,
+            "actions_succeeded": 1,
+            "completion_reason": "I need to continue reading the hash_map.rs file to find the TryFrom implementations that need to be modified to support LruHashMap conversion. Based on the working memory and thread recommendation, I should continue reading from where I left off."
+          },
+          {
+            "tick_number": 10,
+            "duration_secs": 15.876,
+            "tool_steps": 1,
+            "llm_calls": 2,
+            "tokens_in": 9520,
+            "tokens_out": 497,
+            "actions_taken": 1,
+            "actions_succeeded": 0,
+            "completion_reason": "I need to continue reading the hash_map.rs file to find the TryFrom implementations that need to be updated to support LruHashMap. Based on the working memory, I'm currently at line 60 in the get() method implementation, and I need to find the TryFrom implementations mentioned in the task."
+          },
+          {
+            "tick_number": 11,
+            "duration_secs": 15.324,
+            "tool_steps": 1,
+            "llm_calls": 2,
+            "tokens_in": 9375,
+            "tokens_out": 516,
+            "actions_taken": 1,
+            "actions_succeeded": 1,
+            "completion_reason": "I need to find the correct location of the hash_map.rs file since my previous attempts to read it at the expected path failed. Let me search for it in the workspace."
+          },
+          {
+            "tick_number": 12,
+            "duration_secs": 14.681,
+            "tool_steps": 1,
+            "llm_calls": 2,
+            "tokens_in": 9578,
+            "tokens_out": 384,
+            "actions_taken": 1,
+            "actions_succeeded": 1,
+            "completion_reason": "I need to examine the userspace HashMap implementation to understand the TryFrom implementations and see why LruHashMap support might be missing. Based on my working memory, I found two hash_map.rs files - one in the BPF crate and one in the userspace aya crate. Let me read the userspace one first since that's where the TryFrom implementations should be."
+          }
+        ],
+        "behavior_metrics": {
+          "first_search_step": 1,
+          "first_file_read_step": 3,
+          "search_steps_total": 3,
+          "search_steps_before_first_read": 2,
+          "search_steps_after_first_read": 1,
+          "post_edit_search_steps": 0,
+          "distinct_files_read": 3,
+          "distinct_files_modified": 0,
+          "zero_edit_terminal": true,
+          "verification_attempted": false,
+          "verification_after_last_edit": false,
+          "max_repeated_same_tool_same_target": 6,
+          "exec_thread_originated_steps": 10,
+          "master_only_steps": 2
+        },
+        "language": "rust",
+        "source_benchmark": "swe-bench",
+        "source_id": "aya-rs__aya-774",
+        "timestamp": "2026-04-18T00:37:01.172201419Z"
+      },
+      "instance_id": "aya-rs__aya-774",
+      "model_patch": "",
+      "fail_to_pass_resolved": [],
+      "pass_to_pass_maintained": [
+        "maps::bloom_filter::tests::test_contains_not_found",
+        "maps::bloom_filter::tests::test_contains_syscall_error",
+        "maps::bloom_filter::tests::test_insert_ok",
+        "maps::bloom_filter::tests::test_insert_syscall_error",
+        "maps::bloom_filter::tests::test_new_ok",
+        "maps::bloom_filter::tests::test_try_from_ok",
+        "maps::bloom_filter::tests::test_try_from_wrong_map",
+        "maps::bloom_filter::tests::test_wrong_value_size",
+        "maps::hash_map::hash_map::tests::test_get_not_found",
+        "maps::hash_map::hash_map::tests::test_get_syscall_error",
+        "maps::hash_map::hash_map::tests::test_insert_boxed_ok",
+        "maps::hash_map::hash_map::tests::test_insert_ok",
+        "maps::hash_map::hash_map::tests::test_insert_syscall_error",
+        "maps::hash_map::hash_map::tests::test_iter",
+        "maps::hash_map::hash_map::tests::test_iter_key_deleted",
+        "maps::hash_map::hash_map::tests::test_iter_key_error",
+        "maps::hash_map::hash_map::tests::test_iter_value_error",
+        "maps::hash_map::hash_map::tests::test_keys",
+        "maps::hash_map::hash_map::tests::test_keys_empty",
+        "maps::hash_map::hash_map::tests::test_keys_error",
+        "maps::hash_map::hash_map::tests::test_new_ok",
+        "maps::hash_map::hash_map::tests::test_remove_ok",
+        "maps::hash_map::hash_map::tests::test_remove_syscall_error",
+        "maps::hash_map::hash_map::tests::test_try_from_ok",
+        "maps::hash_map::hash_map::tests::test_try_from_wrong_map",
+        "maps::hash_map::hash_map::tests::test_try_from_wrong_map_values",
+        "maps::hash_map::hash_map::tests::test_wrong_key_size",
+        "maps::hash_map::hash_map::tests::test_wrong_value_size",
+        "maps::hash_map::per_cpu_hash_map::tests::test_try_from_ok",
+        "maps::lpm_trie::tests::test_get_not_found",
+        "maps::lpm_trie::tests::test_get_syscall_error",
+        "maps::lpm_trie::tests::test_insert_ok",
+        "maps::lpm_trie::tests::test_insert_syscall_error",
+        "maps::lpm_trie::tests::test_new_ok",
+        "maps::lpm_trie::tests::test_remove_ok",
+        "maps::lpm_trie::tests::test_remove_syscall_error",
+        "maps::lpm_trie::tests::test_try_from_ok",
+        "maps::lpm_trie::tests::test_try_from_wrong_map",
+        "maps::lpm_trie::tests::test_wrong_key_size",
+        "maps::lpm_trie::tests::test_wrong_value_size",
+        "maps::perf::perf_buffer::tests::test_invalid_page_count",
+        "maps::perf::perf_buffer::tests::test_no_events",
+        "maps::perf::perf_buffer::tests::test_no_out_bufs",
+        "maps::perf::perf_buffer::tests::test_read_first_sample",
+        "maps::perf::perf_buffer::tests::test_read_first_lost",
+        "maps::perf::perf_buffer::tests::test_read_many_with_many_reads",
+        "maps::perf::perf_buffer::tests::test_read_last_sample",
+        "maps::perf::perf_buffer::tests::test_read_many_with_one_read",
+        "maps::perf::perf_buffer::tests::test_read_wrapping_sample_size",
+        "maps::perf::perf_buffer::tests::test_read_wrapping_value",
+        "maps::tests::test_create",
+        "maps::tests::test_create_failed",
+        "programs::links::tests::test_already_attached",
+        "programs::links::tests::test_drop_detach",
+        "programs::links::tests::test_link_map",
+        "programs::links::tests::test_not_attached",
+        "programs::links::tests::test_owned_detach",
+        "sys::bpf::tests::test_perf_link_supported",
+        "sys::netlink::tests::test_nlattr_iterator_empty",
+        "sys::netlink::tests::test_nested_attrs",
+        "sys::netlink::tests::test_nlattr_iterator_many",
+        "programs::links::tests::test_pin",
+        "sys::netlink::tests::test_nlattr_iterator_nested",
+        "sys::netlink::tests::test_nlattr_iterator_one",
+        "util::tests::test_parse_kernel_version_string",
+        "util::tests::test_parse_kernel_symbols",
+        "util::tests::test_parse_online_cpus",
+        "programs::uprobe::test_resolve_attach_path",
+        "aya/src/bpf.rs - bpf::Bpf::program_mut (line 879) - compile",
+        "aya/src/bpf.rs - bpf::BpfLoader<'a>::set_global (line 248) - compile",
+        "aya/src/bpf.rs - bpf::BpfLoader (line 116) - compile",
+        "aya/src/programs/mod.rs - programs (line 16) - compile",
+        "aya/src/maps/hash_map/hash_map.rs - maps::hash_map::hash_map::HashMap (line 20) - compile",
+        "aya/src/programs/links.rs - programs::links::FdLink (line 95) - compile",
+        "aya/src/bpf.rs - bpf::Bpf::programs (line 895) - compile",
+        "aya/src/util.rs - util::syscall_prefix (line 239) - compile",
+        "aya/src/programs/xdp.rs - programs::xdp::Xdp (line 71) - compile",
+        "aya/src/bpf.rs - bpf::BpfLoader<'a>::map_pin_path (line 228) - compile",
+        "aya/src/bpf.rs - bpf::Bpf::programs_mut (line 913) - compile",
+        "aya/src/maps/mod.rs - maps::PerCpuValues (line 671) - compile",
+        "aya/src/programs/socket_filter.rs - programs::socket_filter::SocketFilter (line 37) - compile",
+        "aya/src/programs/sk_lookup.rs - programs::sk_lookup::SkLookup (line 25) - compile",
+        "aya/src/maps/array/program_array.rs - maps::array::program_array::ProgramArray (line 25) - compile",
+        "aya/src/programs/cgroup_sysctl.rs - programs::cgroup_sysctl::CgroupSysctl (line 25) - compile",
+        "aya/src/bpf.rs - bpf::BpfLoader<'a>::set_max_entries (line 298) - compile",
+        "aya/src/programs/fexit.rs - programs::fexit::FExit (line 26) - compile",
+        "aya/src/maps/hash_map/per_cpu_hash_map.rs - maps::hash_map::per_cpu_hash_map::PerCpuHashMap (line 27) - compile",
+        "aya/src/maps/stack_trace.rs - maps::stack_trace::StackTraceMap (line 24) - compile",
+        "aya/src/bpf.rs - bpf::Bpf::program (line 862) - compile",
+        "aya/src/maps/sock/sock_map.rs - maps::sock::sock_map::SockMap (line 28) - compile",
+        "aya/src/maps/sock/sock_hash.rs - maps::sock::sock_hash::SockHash (line 30) - compile",
+        "aya/src/programs/lsm.rs - programs::lsm::Lsm (line 28) - compile",
+        "aya/src/programs/cgroup_device.rs - programs::cgroup_device::CgroupDevice (line 27) - compile",
+        "aya/src/maps/lpm_trie.rs - maps::lpm_trie::Key (line 59) - compile",
+        "aya/src/maps/lpm_trie.rs - maps::lpm_trie::LpmTrie (line 21) - compile",
+        "aya/src/programs/raw_trace_point.rs - programs::raw_trace_point::RawTracePoint (line 26) - compile",
+        "aya/src/bpf.rs - bpf::BpfLoader<'a>::load_file (line 356) - compile",
+        "aya/src/programs/cgroup_sock.rs - programs::cgroup_sock::CgroupSock (line 30) - compile",
+        "aya/src/bpf.rs - bpf::Bpf::load (line 782) - compile",
+        "aya/src/bpf.rs - bpf::BpfLoader<'a>::allow_unsupported_maps (line 207) - compile",
+        "aya/src/bpf.rs - bpf::BpfLoader<'a>::set_global (line 255) - compile",
+        "aya/src/programs/tc.rs - programs::tc::SchedClassifier (line 48) - compile",
+        "aya/src/bpf.rs - bpf::Bpf::load_file (line 760) - compile",
+        "aya/src/bpf.rs - bpf::BpfLoader<'a>::set_global (line 271) - compile",
+        "aya/src/programs/lirc_mode2.rs - programs::lirc_mode2::LircMode2 (line 23) - compile",
+        "aya/src/maps/lpm_trie.rs - maps::lpm_trie::Key<K>::new (line 82) - compile",
+        "aya/src/programs/cgroup_sock_addr.rs - programs::cgroup_sock_addr::CgroupSockAddr (line 31) - compile",
+        "aya/src/maps/perf/perf_event_array.rs - maps::perf::perf_event_array::PerfEventArray (line 84) - compile",
+        "aya/src/bpf.rs - bpf::BpfLoader<'a>::btf (line 182) - compile",
+        "aya/src/bpf.rs - bpf::Bpf::maps (line 838) - compile",
+        "aya/src/maps/mod.rs - maps (line 20) - compile",
+        "aya/src/programs/extension.rs - programs::extension::Extension (line 37) - compile",
+        "aya/src/maps/stack.rs - maps::stack::Stack (line 20) - compile",
+        "aya/src/programs/cgroup_sockopt.rs - programs::cgroup_sockopt::CgroupSockopt (line 28) - compile",
+        "aya/src/programs/links.rs - programs::links::FdLink::pin (line 127) - compile",
+        "aya/src/programs/cgroup_skb.rs - programs::cgroup_skb::CgroupSkb (line 32) - compile",
+        "aya/src/programs/trace_point.rs - programs::trace_point::TracePoint (line 42) - compile",
+        "aya/src/programs/sock_ops.rs - programs::sock_ops::SockOps (line 24) - compile",
+        "aya/src/programs/tp_btf.rs - programs::tp_btf::BtfTracePoint (line 25) - compile",
+        "aya/src/maps/array/array.rs - maps::array::array::Array (line 22) - compile",
+        "aya/src/maps/hash_map/per_cpu_hash_map.rs - maps::hash_map::per_cpu_hash_map::PerCpuHashMap<T,K,V>::insert (line 91) - compile",
+        "aya/src/bpf.rs - bpf::BpfLoader<'a>::load (line 374) - compile",
+        "aya/src/programs/sk_msg.rs - programs::sk_msg::SkMsg (line 26) - compile",
+        "aya/src/programs/tc.rs - programs::tc::SchedClassifierLink::attached (line 262) - compile",
+        "aya/src/maps/queue.rs - maps::queue::Queue (line 20) - compile",
+        "aya/src/programs/sk_skb.rs - programs::sk_skb::SkSkb (line 39) - compile",
+        "aya/src/programs/fentry.rs - programs::fentry::FEntry (line 26) - compile",
+        "aya/src/maps/array/per_cpu_array.rs - maps::array::per_cpu_array::PerCpuArray (line 22) - compile",
+        "aya/src/maps/perf/async_perf_event_array.rs - maps::perf::async_perf_event_array::AsyncPerfEventArray (line 38) - compile",
+        "aya/src/programs/perf_event.rs - programs::perf_event::PerfEvent (line 92) - compile",
+        "aya/src/maps/bloom_filter.rs - maps::bloom_filter::BloomFilter (line 21) - compile",
+        "aya/src/bpf.rs - bpf::BpfLoader<'a>::verifier_log_level (line 338) - compile",
+        "aya/src/bpf.rs - bpf::BpfLoader<'a>::extension (line 320) - compile",
+        "aya/src/programs/kprobe.rs - programs::kprobe::KProbe (line 36) - compile",
+        "aya/src/programs/mod.rs - programs::loaded_programs (line 1100)"
+      ],
+      "grading": {
+        "resolved": false,
+        "f2p_passed": 0,
+        "f2p_total": 2,
+        "p2p_passed": 135,
+        "p2p_total": 135
+      }
+    }
+  ]
+}

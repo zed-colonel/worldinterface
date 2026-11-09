@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "scope": "wi/WI-10/process-catalog",
+  "operations": [
+    "provision",
+    "start",
+    "inspect",
+    "terminate",
+    "collect_artifacts",
+    "release"
+  ],
+  "records": [
+    "evaluation",
+    "ordinary"
+  ],
+  "binding_fields": [
+    "profile",
+    "profile_definition",
+    "descriptor",
+    "adapter",
+    "executable",
+    "helper",
+    "dependencies",
+    "configuration",
+    "policy",
+    "controls",
+    "aq",
+    "wi",
+    "environment",
+    "fixture",
+    "inputs",
+    "exports"
+  ],
+  "recovery_operations": [
+    "inspect",
+    "terminate",
+    "reconcile"
+  ],
+  "quarantine_scope": "tenant-provider",
+  "store_profile": "local-embedded-16",
+  "ordinary_use": false,
+  "self_promotion": false,
+  "runtime_pass_asserted": false
+}

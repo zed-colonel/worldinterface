@@ -1,0 +1,6 @@
+# Frozen evidence and normative imports retain exact source bytes.
+fixtures/pre-wi-fabric-2/** -text
+contracts/sources/** -text whitespace=-blank-at-eol
+contracts/stack.yaml -text
+contracts/aq-baseline.lock.json -text
+contracts/aq-assumptions.yaml -text

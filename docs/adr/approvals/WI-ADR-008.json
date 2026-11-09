@@ -1,0 +1,36 @@
+{
+  "submissionId": "8560d4ab-66bf-45f0-a6f5-dbdb48b6221c",
+  "checkpoint": "WI-ADR-008",
+  "definitionId": "0ebcb7cf-9686-4bc1-9b9d-bb85a1d0b4c9",
+  "bindingRevision": 4,
+  "decision": {
+    "coverage": "full",
+    "proposal": "Adopt one immutable, direction-aware BoundaryReceipt encoded in the accepted WI-FABRIC-2 wi-json-1 typed, versioned canonical envelope. Its stable ID, receipt profile and versions, ingress or egress body, temporal provenance, evidence and causal references are covered by a domain-separated SHA-256 digest of canonical receipt bytes; derived digests and signatures are excluded from that input. Hash referenced artifact contents separately over exact bytes. Reject unknown fields, unsupported versions and noncanonical representations, and retain golden byte and digest fixtures. Keep signatures as separate immutable proofs linked to the receipt digest, so a receipt remains stable before and after signing. A signed profile binds the receipt digest, explicit signature suite/version, purpose, key-state snapshot reference and signing time in a domain-separated signing input; Ed25519 is the initial suite. Permit unsigned receipts only where the selected deployment profile allows them. Rotation creates a new key-state snapshot for new signatures without rewriting earlier receipts or proofs. Verify historical signatures against the applicable signing-time key state and effective revocation evidence, and display later revocation or compromise without silently changing recorded evidence. Signing is requested through an optional provider that keeps private key material outside connectors, workers and general Fabric memory. Signature validity establishes provenance only; it does not establish authorization, provider delivery, semantic truth or acceptance.",
+    "sourceReferences": "Imported map EXO-STACK-CONCURRENCY-DRAFT-1 0.3.0; exact plan binding 4; checkpoint WI-ADR-008.\n{\"source_id\":\"wi-plan\",\"section\":\"§4 ADR queue\",\"start_line\":361,\"end_line\":361}\ndecision-preparation/context.json, checkpoint WI-ADR-008 and consumers\ndocs/adr/WI-ADR-001.md, accepted decision\nworldinterface-v2-foundational-design.md, §§6.15–6.17 and 13.1–13.3\nwi-fabric-2-foundational-implementation-plan.md, §4, WI-05 and WI-12\ncrates/worldinterface-foundation/protocol/src/records.rs, BoundaryReceipt\nAttached source run 81b39a78-8a32-4e6c-9493-4186d4441671; SHA-256 85ba6ddfa78c2d382aa238fed4d78312a3766e3c4967d4853f452d24ded5770e.",
+    "retainedObligations": "Implement and independently verify WI-05 receipt/publication behavior, WI-12 optional signing-provider and key-lifecycle behavior, applicable AQ and slice gates, parent acceptance, and release obligations under the adopted repository policy.",
+    "consumers": [],
+    "kind": "architecture-decision-v1",
+    "bindingDigest": "8cae5ff3253d493fce0527aa42381a551c40014440ab3d05270ae8d822d11295"
+  },
+  "approval": {
+    "submissionId": "8560d4ab-66bf-45f0-a6f5-dbdb48b6221c",
+    "outcome": "accepted",
+    "rationale": "I approve of the recommended approach.",
+    "id": "6702bed5-5dbb-4943-989d-24bef2c865b6",
+    "workspaceId": "6bf6915a-6cd0-47cc-b853-fcbc04f02f3d",
+    "decidedAt": "2026-09-24T01:31:46.594Z",
+    "decidedByUserId": "0698a39b-dda2-4870-8f3f-97ef94784ae9"
+  },
+  "sourceRunId": "81b39a78-8a32-4e6c-9493-4186d4441671",
+  "sourceRunDigest": "85ba6ddfa78c2d382aa238fed4d78312a3766e3c4967d4853f452d24ded5770e",
+  "artifacts": [
+    {
+      "name": "decision-review-packet",
+      "digest": "6818c0718b7a9bd3207bd27f5c454f0e8736ea61afe202e8cb1224e93a82ab55"
+    },
+    {
+      "name": "source-design-proposal-not-approval",
+      "digest": "85ba6ddfa78c2d382aa238fed4d78312a3766e3c4967d4853f452d24ded5770e"
+    }
+  ]
+}

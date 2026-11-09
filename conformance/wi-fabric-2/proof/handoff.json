@@ -1,0 +1,3622 @@
+{
+  "aq": {
+    "historical_release": {
+      "crates": {
+        "actionqueue-actor": {
+          "checksum": "f6bec18eb073d6a61c518c75f01355f63a9b5d930fd3443e5a6532d274f052da",
+          "version": "0.2.0"
+        },
+        "actionqueue-budget": {
+          "checksum": "ec032b0be7a6c94e95cf52d91f3cb40e8287e843a44923239830a191cb5a1058",
+          "version": "0.2.0"
+        },
+        "actionqueue-cli": {
+          "checksum": "77328e0cbd6ad8e257c4a17c1c35bea7e25f23fab144c501f4828518e583a4cf",
+          "version": "0.2.0"
+        },
+        "actionqueue-core": {
+          "checksum": "5c859fa85a8b35ad8ee38002764df2ad1fab69883c902673c208fa1c223f6aeb",
+          "version": "0.2.0"
+        },
+        "actionqueue-daemon": {
+          "checksum": "db2604415a1fa77e3fda7673b5a2d80a8870c8e105665c19466777035ddc5927",
+          "version": "0.2.0"
+        },
+        "actionqueue-engine": {
+          "checksum": "4bbd8ace8868ae649c751cdf1bd5f8d60aa45fb3ba1c44e6616a5925ccfa8bae",
+          "version": "0.2.0"
+        },
+        "actionqueue-executor-local": {
+          "checksum": "2da9f041c8af8eae06c87fe3b0e90e7c61c8a34868a5aa8ca65235de073ebe97",
+          "version": "0.2.0"
+        },
+        "actionqueue-platform": {
+          "checksum": "bfbebb165fd11f2017ac6525896750d055fa09c57d1e3de91427dde4a9bad4ff",
+          "version": "0.2.0"
+        },
+        "actionqueue-runtime": {
+          "checksum": "817ce7ac8bf601ab4c486552ec5797d1444f9927ace9e13d3db7531a9269abe4",
+          "version": "0.2.0"
+        },
+        "actionqueue-storage": {
+          "checksum": "2288e807e0b061285c7b8fd8080d00d09ac40f115f2c2dd8b4962ccf7aba539c",
+          "version": "0.2.0"
+        },
+        "actionqueue-workflow": {
+          "checksum": "fe1eccacd2c7f1f9a585ea63fae5bfede22cac7141bc5e05eedc3069d2876bd9",
+          "version": "0.2.0"
+        }
+      },
+      "note": "WorldInterface resolves AQ from crates.io outside the cross-project map. The published 0.2.0 source is the implementation_commit above; the checksums are the registry .crate SHA-256 values Cargo.lock records.",
+      "published_at": "2026-10-13",
+      "registry": "crates.io",
+      "release_manifest_sha256": "8f91415c723bc5ec4d1d9a49f5ecc1e0aad2d24298a79db407d3537c342fe348",
+      "source_commit": "29e096c4f06985d1a9bd9d5fe5a3a6a5db8a6860",
+      "tag": "v0.2.0"
+    },
+    "historical_target": {
+      "archive_sha256": "f91f496f22772e8dda044b0cf2cf05cf2eafa9f86d6f0c7e0061b46e3926ffb1",
+      "conformance_revision": 16,
+      "contract": "AQ-CONT-1",
+      "git_tree": "1c0c85dd700bd9d0c75de223dada911ffeadbb5b",
+      "implementation_commit": "29e096c4f06985d1a9bd9d5fe5a3a6a5db8a6860",
+      "source_tree_sha256": "a6a8f87272d76e94e69e10d8bcf0992296d1bf8e28ff3d9222374c3b8cdcc34e"
+    },
+    "interpretation": "execution uses crates.io 0.3.0; 0.2.0 is historical baseline identity only",
+    "runtime_release": {
+      "authority": "Operator-authorized WIP-07 migration; cycle 47b9f34c-4ffd-4ef6-8849-55aae36a8999, recorded 2026-10-23. Historical target and published_release remain the imported 0.2.0 baseline, not the source identity of 0.3.0.",
+      "crates": {
+        "actionqueue-core": {
+          "checksum": "ce1af54ccb97fab6545c358c53c0fa6e11aa9d49a5aff2d7e5f1258b662723af",
+          "version": "0.3.0"
+        },
+        "actionqueue-engine": {
+          "checksum": "45f9f5c71e115f9050186ef064140699dba9b586f671181914a9a21aa46c6b08",
+          "version": "0.3.0"
+        },
+        "actionqueue-executor-local": {
+          "checksum": "b833b8d7b92ec7c3c9dc628ca0d1a8ac711246a7981963e907db9fc7409df9f3",
+          "version": "0.3.0"
+        },
+        "actionqueue-runtime": {
+          "checksum": "534af4a9e4e888a1df37608ea078efa916c9d17b0f55b81092bb5a565e2cd68a",
+          "version": "0.3.0"
+        },
+        "actionqueue-storage": {
+          "checksum": "87e0af46aeb771a452332a63c12cd666856d0fb4468f2ae193736f1edcdde0fd",
+          "version": "0.3.0"
+        },
+        "actionqueue-workflow": {
+          "checksum": "1e598559e7c4e258c337c08639598e14bd35e7aa7da94fed7bce0e113829728a",
+          "version": "0.3.0"
+        }
+      },
+      "registry": "crates.io",
+      "tag": "v0.3.0"
+    }
+  },
+  "bounds": {
+    "aq_children": 64,
+    "aq_dependencies": 64,
+    "aq_emitted_signals": 32,
+    "aq_hierarchy_depth": 8,
+    "aq_initial_runs": 64,
+    "aq_payload_bytes": 65536,
+    "evaluation_output_bytes": 65536,
+    "evaluation_wall_ms": 15000,
+    "export_bytes": 4194304,
+    "exports": 4,
+    "flow_nodes": 64,
+    "flow_ports": 32,
+    "input_bytes": 1048576,
+    "inputs": 1,
+    "waits_per_run": 1
+  },
+  "cases": [
+    {
+      "coverage_refs": [
+        "conformance/wi-fabric-2/worker/coverage.json"
+      ],
+      "gate": "WI-WORKER-G1",
+      "id": "WP-001",
+      "owning_item": "WIP-01",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "a5502c52a1bf369cc46fb94a7b1ff186874c229544a968a25ffde32536b35281",
+      "status": "implemented",
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-worker",
+          "test": "wp_001_profile_and_binding_drift"
+        }
+      ]
+    },
+    {
+      "coverage_refs": [
+        "conformance/wi-fabric-2/domain/coverage.json"
+      ],
+      "gate": "WI-WORKER-G1",
+      "id": "WP-002",
+      "owning_item": "WIP-01",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "fc386359d28da8dc3d08c6e8d003f085a6777679bc58a3ff9fea616335887a9b",
+      "status": "implemented",
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-protocol",
+          "test": "wp002_process_image_and_enclosing_evidence_are_distinct"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-protocol",
+          "test": "wp002_existing_seams_bind_process_configuration_and_control_artifacts"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-protocol",
+          "test": "wp002_rejects_mismatched_profile_and_resolver_bindings"
+        }
+      ]
+    },
+    {
+      "coverage_refs": [
+        "conformance/wi-fabric-2/worker/coverage.json"
+      ],
+      "gate": "WI-WORKER-G1",
+      "id": "WP-003",
+      "owning_item": "WIP-01",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "e505cd67c93cdcd24c24d14702316b22f0c358cf05526dd1f2e5f3ff38bd9132",
+      "status": "implemented",
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-worker",
+          "test": "wp_003_independent_vm_cannot_inherit_enclosing_kata"
+        }
+      ]
+    },
+    {
+      "coverage_refs": [
+        "conformance/wi-fabric-2/worker/coverage.json"
+      ],
+      "gate": "WI-WORKER-G1",
+      "id": "WP-004",
+      "owning_item": "WIP-01",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "4b2e8c8f89297e933a156d302ddfbbcf952ec1c26ee9c9fb329f56536e9778c8",
+      "status": "implemented",
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-worker",
+          "test": "wp_004_opaque_consumer_artifacts_and_controls"
+        }
+      ]
+    },
+    {
+      "coverage_refs": [
+        "conformance/wi-fabric-2/worker/coverage.json"
+      ],
+      "gate": "WI-WORKER-G1",
+      "id": "WP-005",
+      "owning_item": "WIP-01",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "76389a29de21f72cd34a1d3ef9d52feb937a1a84d05617d7f99adf9c1e8fb59d",
+      "status": "implemented",
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-worker",
+          "test": "wp_005_lifecycle_and_unavailable_operations"
+        }
+      ]
+    },
+    {
+      "coverage_refs": [
+        "conformance/wi-fabric-2/worker/coverage.json"
+      ],
+      "gate": "WI-WORKER-G1",
+      "id": "WP-006",
+      "owning_item": "WIP-01",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "4355a6d757cd2ac2dcbd3e754d9615bff4b52a131208f71a3d5eb946a6864c70",
+      "status": "implemented",
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-worker",
+          "test": "wp_006_aq_free_portable_contract_and_strict_codec"
+        }
+      ]
+    },
+    {
+      "coverage_refs": [
+        "conformance/wi-fabric-2/worker/catalog-coverage.json",
+        "contracts/wi10-obligations.json"
+      ],
+      "gate": "WI-WORKER-G1",
+      "id": "WP-007",
+      "owning_item": "WIP-01",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "1aef05085fc4a465b1af16a7a817bc361dfca80832ca0467d8bd17e423279636",
+      "status": "implemented",
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "catalog_ordinary_records_require_provenance_and_never_enable_or_self_promote"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "catalog_registration_is_exact_bounded_and_inspection_grants_no_authority"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_007_exact_operator_packet_runs_only_supported_bounded_evaluation_through_wi_aq"
+        },
+        {
+          "manifest": "tools/wi-contract-check/Cargo.toml",
+          "package": "wi-contract-check",
+          "test": "qualification_drift_and_revocation"
+        },
+        {
+          "manifest": "tools/wi-contract-check/Cargo.toml",
+          "package": "wi-contract-check",
+          "test": "quarantine_and_discovery"
+        },
+        {
+          "manifest": "tools/wi-contract-check/Cargo.toml",
+          "package": "wi-contract-check",
+          "test": "wp007_unqualified_and_evaluation_table"
+        }
+      ]
+    },
+    {
+      "coverage_refs": [
+        "conformance/wi-fabric-2/worker/coverage.json"
+      ],
+      "gate": "WI-WORKER-G1",
+      "id": "WP-008",
+      "owning_item": "WIP-01",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "88c9915230c72acf6c3ff91014fe6f1474ed84b60aeb3f1d30f02120c77dd905",
+      "status": "implemented",
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-worker",
+          "test": "wp_008_mediation_does_not_elevate_containment"
+        }
+      ]
+    },
+    {
+      "coverage_refs": [
+        "conformance/wi-fabric-2/egress/coverage.json"
+      ],
+      "gate": "WI-WORKER-G2",
+      "id": "WP-009",
+      "owning_item": "WIP-02",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "dc6946ef4ea28eb03d95eb92ae830f9c2b2f19f491d2e177cf27aceb927a967c",
+      "status": "implemented",
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "wp009_exact_fixture_durable_intent_and_admission"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "ordinary_provider_cannot_reuse_fixture_proof"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "resolution_failures_are_durable_without_running"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "canonical_resource_grammar_and_namespace_specific_bounds"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "identical_request_recovery_conflicts_and_scoped_inspection"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "lost_ack_reopens_identical_request_without_extra_use"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "forged_acknowledgments_cannot_complete_outbox"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "concurrent_submissions_and_logical_use_races"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "commit_evidence_rejects_false_success_failure_and_missing_publication"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "successful_boundary_requires_durable_output_evidence"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "uncertainty_reconciliation_and_retry_require_noncommit_policy_and_authority"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "reconciliation_cannot_change_confirmed_commit_or_skip_evidence"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "cancellation_before_dispatch_and_after_handoff_are_distinct"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "compensation_is_a_separate_intent_without_inherited_authority"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "backup_rebuild_replay_and_generic_bypass_integrity"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "unsupported_store_profile_is_rejected_without_upgrade"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "removing_authority_never_increases_allowed_demands"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "deterministic_command_replay_preserves_state_and_rejects_stale_commands"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "resolution_attests_symlinks_dns_redirects_and_exact_audience"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "unpublished_output_cannot_be_marked_successful_or_survive_reopen"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "concurrent_conflicting_requests_commit_only_one_intent"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-storage",
+          "test": "effect::tests::effect_journal_faults_roll_back_every_projection"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "ordinary_qualification_is_exact_and_revocable"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp009_runtime_exact_qualification_admits_once_without_execution_success"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "self_initiated_and_external_requests_follow_the_same_authorization_path"
+        }
+      ]
+    },
+    {
+      "coverage_refs": [
+        "conformance/wi-fabric-2/egress/coverage.json"
+      ],
+      "gate": "WI-WORKER-G2",
+      "id": "WP-010",
+      "owning_item": "WIP-02",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "a89213f864e8b98160a3904a9c55e8d115c3868e2f09d90212a29216d90b280e",
+      "status": "implemented",
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "wp010_unreviewed_executable_cannot_be_waived"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "approval_and_separation_of_duties_are_bound_to_exact_inputs"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "purpose_candidate_and_lifecycle_labels_never_supply_authority"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp010_runtime_generated_executable_denied_despite_exact_approval_and_purpose"
+        }
+      ]
+    },
+    {
+      "coverage_refs": [
+        "conformance/wi-fabric-2/egress/coverage.json"
+      ],
+      "gate": "WI-WORKER-G2",
+      "id": "WP-011",
+      "owning_item": "WIP-02",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "ce7ba45b617d0a87e4fef1d4cdfeda0307556935fc475fd38529386a58bbdc27",
+      "status": "implemented",
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "wp011_protected_credentials_and_cross_run_denied"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "wp011_test_credential_is_exact_and_short_lived"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "agency_forgery_ambiguity_expiry_revocation_and_attenuation"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "delegation_endpoints_cycles_and_widening_fail_closed"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "inspection_rejects_missing_and_contradictory_evidence"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp011_runtime_protected_input_and_credentials_cannot_admit"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp011_runtime_test_credential_is_exact_short_lived_and_inspection_is_scoped"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "caller_claims_cannot_override_authenticated_agency_or_grants"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "production_facade_authenticates_verifies_and_rechecks_live_target"
+        }
+      ]
+    },
+    {
+      "coverage_refs": [
+        "conformance/wi-fabric-2/egress/coverage.json"
+      ],
+      "gate": "WI-WORKER-G2",
+      "id": "WP-012",
+      "owning_item": "WIP-02",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "3ffa62097b75745831489791bae6a9e5be3355f0d9312c663943c662fa7e0bca",
+      "status": "implemented",
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "wp012_each_unmet_control_names_requirement_and_never_dispatches"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "unknown_control_and_revoked_qualification_fail_closed"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp012_runtime_each_mandatory_control_denies_without_downgrade"
+        }
+      ]
+    },
+    {
+      "coverage_refs": [
+        "conformance/wi-fabric-2/egress/coverage.json"
+      ],
+      "gate": "WI-WORKER-G2",
+      "id": "WP-013",
+      "owning_item": "WIP-02",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "c25988cfdfd4be855b6948e6ea32c78ffcfc5584482c376841d556e67a404972",
+      "status": "implemented",
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "wp013_unsupported_operation_is_unavailable"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "ordinary_unsupported_operations_are_unavailable_without_substitution"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp013_runtime_ordinary_unsupported_operations_are_unavailable"
+        }
+      ]
+    },
+    {
+      "coverage_refs": [
+        "conformance/wi-fabric-2/egress/coverage.json"
+      ],
+      "gate": "WI-WORKER-G2",
+      "id": "WP-014",
+      "owning_item": "WIP-02",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "ada06f6fd970d259617415866247bbc59c8fa3cd22e6360e986531138e0eb6ba",
+      "status": "implemented",
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "wp014_every_snapshot_binding_drift_requires_reevaluation"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-egress",
+          "test": "profile_change_requires_explicit_exact_reevaluation"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp014_runtime_drift_blocks_initial_and_prepared_delivery"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp014_runtime_explicit_reevaluation_cannot_rebind_persisted_request"
+        }
+      ]
+    },
+    {
+      "coverage_refs": [
+        "conformance/wi-fabric-2/completion/coverage.json",
+        "conformance/wi-fabric-2/receipts/coverage.json"
+      ],
+      "gate": "WI-WORKER-G2",
+      "id": "WP-015",
+      "owning_item": "WIP-04",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "0663a1b0a5b3870f494e33beddf35e7f309c0730a24f6907d28ed9aa64848915",
+      "status": "implemented",
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-worker",
+          "test": "wp015_host_provenance_cannot_certify_worker_enforcement"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp015_runtime_receipt_separates_enclosing_provenance_from_worker_enforcement"
+        }
+      ]
+    },
+    {
+      "coverage_refs": [
+        "conformance/wi-fabric-2/completion/coverage.json",
+        "conformance/wi-fabric-2/receipts/coverage.json"
+      ],
+      "gate": "WI-WORKER-G2",
+      "id": "WP-016",
+      "owning_item": "WIP-04",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "e39ebc3e9e146db662558acad2ee886a89746dbfc51df003e9c786e2349d19d1",
+      "status": "implemented",
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-worker",
+          "test": "wp016_missing_control_is_recorded_and_never_promoted"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp016_runtime_receipt_retains_requested_advertised_applied_observed_missing_unknown"
+        }
+      ]
+    },
+    {
+      "coverage_refs": [
+        "conformance/wi-fabric-2/worker/lifecycle-coverage.json"
+      ],
+      "gate": "WI-WORKER-G3",
+      "id": "WP-017",
+      "owning_item": "WIP-10",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "f5e3d2b0a22ba6fbdbdef3f149f571ec4b862857ead6f336aebaf416e46008ff",
+      "status": "implemented",
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_017_admitted_worker_intent_precedes_bounded_process_and_wakes_are_durable"
+        }
+      ]
+    },
+    {
+      "coverage_refs": [
+        "conformance/wi-fabric-2/worker/campaign-coverage.json",
+        "conformance/wi-fabric-2/worker/lifecycle-coverage.json"
+      ],
+      "gate": "WI-WORKER-G3",
+      "id": "WP-018",
+      "owning_item": "WIP-10",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "7faf6c9da47441e1211fcdaebb83fe81d76ab9155a7e6794b4b0fdc112b33aeb",
+      "status": "implemented",
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "campaign_embedded_cancellation_and_output_bounds_keep_capacity_until_cleanup"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_018_duplicate_admission_and_start_preserve_one_immutable_run"
+        }
+      ]
+    },
+    {
+      "coverage_refs": [
+        "conformance/wi-fabric-2/worker/campaign-coverage.json",
+        "conformance/wi-fabric-2/worker/lifecycle-coverage.json"
+      ],
+      "gate": "WI-WORKER-G3",
+      "id": "WP-019",
+      "owning_item": "WIP-10",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "2baae44ed79670da424fbc41f46c9465f9cefb098ba026aa7bbcd98c4cfd5804",
+      "status": "implemented",
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "campaign_embedded_cancellation_and_output_bounds_keep_capacity_until_cleanup"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_019_and_wp_024_killed_lifecycle_boundaries_quarantine_without_replacement"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_019_helper_death_retains_capacity_without_a_cleanup_or_success_claim"
+        }
+      ]
+    },
+    {
+      "coverage_refs": [
+        "conformance/wi-fabric-2/worker/lifecycle-coverage.json"
+      ],
+      "gate": "WI-WORKER-G3",
+      "id": "WP-020",
+      "owning_item": "WIP-10",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "9a925af9711bc0450be0d8a1edb76a6200897958d677b1fcd8db141075bd9a41",
+      "status": "implemented",
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_020_mismatched_and_damaged_private_ownership_never_adopts_an_unrelated_run"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "worker_process::ownership::tests::recycled_pid_simulation_never_adopts_or_signals_unrelated_child"
+        }
+      ]
+    },
+    {
+      "coverage_refs": [
+        "conformance/wi-fabric-2/worker/lifecycle-coverage.json"
+      ],
+      "gate": "WI-WORKER-G3",
+      "id": "WP-021",
+      "owning_item": "WIP-10",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "baae375081e818cbcb764c97f320568d4e5dbff284f584979a72aa6d95dea383",
+      "status": "implemented",
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_021_stop_obligation_precedes_bounded_descendant_cleanup"
+        }
+      ]
+    },
+    {
+      "coverage_refs": [
+        "conformance/wi-fabric-2/worker/lifecycle-coverage.json"
+      ],
+      "gate": "WI-WORKER-G3",
+      "id": "WP-022",
+      "owning_item": "WIP-10",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "0e491a88143a1102b2a8d203438fe065dcc3bbefa442339a450da18ab04464fd",
+      "status": "implemented",
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_022_wall_and_output_limits_are_enforced_after_real_admission"
+        }
+      ]
+    },
+    {
+      "coverage_refs": [
+        "conformance/wi-fabric-2/worker/lifecycle-coverage.json"
+      ],
+      "gate": "WI-WORKER-G3",
+      "id": "WP-023",
+      "owning_item": "WIP-10",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "bf027fd7988d1af1e1c5311fb6986423b88e0e7dafa5456b47d0481f85f2503a",
+      "status": "implemented",
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_023_helper_and_fixture_exclude_deliberate_host_descriptors_and_environment"
+        }
+      ]
+    },
+    {
+      "coverage_refs": [
+        "conformance/wi-fabric-2/worker/lifecycle-coverage.json"
+      ],
+      "gate": "WI-WORKER-G3",
+      "id": "WP-024",
+      "owning_item": "WIP-10",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "2a2af25f5ce1f3b4546ca58f2e567056b74c09bcb9f7993eb5ac8729896be71f",
+      "status": "implemented",
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_024_worker_state_and_event_are_authoritative_before_aq_wake"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_019_and_wp_024_killed_lifecycle_boundaries_quarantine_without_replacement"
+        }
+      ]
+    },
+    {
+      "coverage_refs": [
+        "conformance/wi-fabric-2/worker/lifecycle-coverage.json"
+      ],
+      "gate": "WI-WORKER-G3",
+      "id": "WP-025",
+      "owning_item": "WIP-10",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "60632b4198b4a4bfff7475d6cbc367cae13cac4a75afaaf2aeb09fe190816242",
+      "status": "implemented",
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_025_reordered_duplicate_late_and_cancel_racing_events_cannot_revive_work"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_025_real_worker_events_preserve_aq_deadline_cancel_and_restart_winners"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-storage",
+          "test": "concurrent_worker_observations_allocate_revisions_with_operation_acknowledgement"
+        }
+      ]
+    },
+    {
+      "coverage_refs": [
+        "conformance/wi-fabric-2/worker/lifecycle-coverage.json"
+      ],
+      "gate": "WI-WORKER-G3",
+      "id": "WP-026",
+      "owning_item": "WIP-10",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "c7c4ea1fa0030c728588af2bbc472f93a2e030994b6b991bce7102190dfa6e67",
+      "status": "implemented",
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_026_unavailable_operations_are_not_registered_or_decoded_as_available_effects"
+        }
+      ]
+    },
+    {
+      "coverage_refs": [
+        "conformance/wi-fabric-2/worker/artifact-seam-coverage.json"
+      ],
+      "gate": "WI-WORKER-G4",
+      "id": "WP-027",
+      "owning_item": "WIP-11",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "282c3307e90881d1239051729f4136043d7e5951625ef2d6954e18bec63ffd80",
+      "status": "implemented",
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_027_scoped_transform_import_and_durable_export_through_real_wi_aq"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_027_coding_patch_and_schema_report_publish_before_completion"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_027_publication_requires_exact_binding_and_precedes_completion_across_reopen"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_027_empty_exports_still_require_a_validated_published_collection"
+        }
+      ]
+    },
+    {
+      "coverage_refs": [
+        "conformance/wi-fabric-2/worker/artifact-seam-coverage.json"
+      ],
+      "gate": "WI-WORKER-G4",
+      "id": "WP-028",
+      "owning_item": "WIP-11",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "4772d4d417ae8be47787253d1bf019ccdf6fbe2b2f9241e34c5b1b386402bee3",
+      "status": "implemented",
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_028_invalid_batches_quarantine_before_any_publication_and_survive_reopen"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_028_unknown_and_failed_trusted_verifiers_ignore_provider_pass_claims"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_028_cancelled_prepared_collection_cannot_publish_and_cleanup_keeps_report"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_028_snapshot_and_publication_crash_cuts_recover_exactly_or_quarantine"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_028_missing_or_corrupt_prepared_snapshot_quarantines_without_recollection"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_028_live_collection_ack_receipt_and_aq_crashes_preserve_publication_order"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "worker_process::artifact::tests::export_links_special_files_and_replacement_races_reject"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "artifact_integrity_symlink_hardlink_and_special_files_are_quarantined"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_028_unsafe_live_exports_quarantine_and_report_through_real_wi_aq"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_028_unavailable_seam_export_quarantines_after_provider_ack_through_real_wi_aq"
+        }
+      ]
+    },
+    {
+      "coverage_refs": [
+        "conformance/wi-fabric-2/worker/embedded-coverage.json"
+      ],
+      "gate": "WI-WORKER-G4",
+      "id": "WP-029",
+      "owning_item": "WIP-14",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "b9e4b2903e329810e399c1624d661e8223802ad6d482f45bf0e9d3c65a515994",
+      "status": "implemented",
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_029_embedded_coding_and_transform_use_one_engine_and_application_services"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_029_restored_publication_is_readable_without_original_workspace_and_keeps_capacity"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_029_embedded_crash_recovery_quarantines_without_replacement"
+        }
+      ]
+    },
+    {
+      "coverage_refs": [
+        "conformance/wi-fabric-2/worker/embedded-coverage.json"
+      ],
+      "gate": "WI-WORKER-G4",
+      "id": "WP-030",
+      "owning_item": "WIP-14",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "4bcf5c2a44cff6d7caed288b627dee36e1f462a71cf6e6453d243b23e6fe23f7",
+      "status": "implemented",
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_030_consumer_and_helper_imports_stay_inside_application_boundary"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_030_embedded_forgery_scope_and_unauthorized_controls_fail_closed"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_030_recovery_only_facade_enforces_disclosure_revocation_and_exclusive_ownership"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_030_catalog_quarantine_and_revocation_fence_queued_execution"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_030_recovery_reconstructs_scoped_metadata_before_returning_application"
+        }
+      ]
+    },
+    {
+      "coverage_refs": [
+        "conformance/wi-fabric-2/worker/artifact-seam-coverage.json",
+        "conformance/wi-fabric-2/worker/campaign-coverage.json"
+      ],
+      "gate": "WI-WORKER-G4",
+      "id": "WP-031",
+      "owning_item": "WIP-11",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "4d26d23e95bd09fb87e99b4ac03e02e0ac750b8363a04a6ae38ad8a24782e647",
+      "status": "implemented",
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_031_seam_simulation_delayed_reordered_observations_and_uncertain_ack_use_real_wi_aq"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_034_embedded_seam_handoff_retains_nonsemantic_completion_and_unknown_controls"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "campaign_unknown_controls_publish_once_with_exact_observation_digest"
+        }
+      ]
+    },
+    {
+      "coverage_refs": [
+        "conformance/wi-fabric-2/worker/catalog-coverage.json"
+      ],
+      "gate": "WI-WORKER-G4",
+      "id": "WP-032",
+      "owning_item": "WIP-12",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "5e5293135a46bb7be0b4779d57602659d8130c3d0ec4e9b01fba9e11b81e3869",
+      "status": "implemented",
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "catalog_invalid_recovery_policy_denies_before_any_provider_read_or_stop"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "catalog_quarantine_fences_stale_admission_and_survives_cleanup_replacement_rebuild_and_reopen"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "catalog_quarantine_serializes_with_dispatch_and_fences_every_later_dispatch"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "catalog_recovery_is_exact_to_caller_binding_operation_and_current_policy"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "catalog_recovery_only_construction_requires_no_approval_or_executable_files"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "catalog_registration_is_exact_bounded_and_inspection_grants_no_authority"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_032_drift_denies_new_admissions_before_allocation_through_real_wi_aq"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_032_quarantine_revocation_and_recovery_only_reopen_keep_inspect_terminate_and_aq_reconcile"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "catalog_poll_invalid_approval_quarantines_only_the_run_and_preserves_provider_admission"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_032_ordinary_terminate_under_provider_quarantine_acknowledges_and_reconciles"
+        }
+      ]
+    },
+    {
+      "coverage_refs": [
+        "conformance/wi-fabric-2/worker/campaign-coverage.json"
+      ],
+      "gate": "WI-WORKER-G4",
+      "id": "WP-033",
+      "owning_item": "WIP-15",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "3318d3d570bb4d9c57692d9b20f3a87582078628d56f407d9f3bbb36bb420475",
+      "status": "implemented",
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-storage",
+          "test": "control_distinct_fresh_issuances_wait_for_delivery_ownership"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-storage",
+          "test": "control_plane::tests::shared_effect_and_credential_reservations_have_one_atomic_last_use"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_019_invalid_restore_never_publishes_partial_destination"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_019_two_independent_stores_restore_complete_wal_artifacts_and_control_history"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "f007_crash_cuts_reconcile_exact_ownership_without_redelivery"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "f007_expiry_rotation_and_recovery_preserve_the_original_credential_generation"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "f007_live_delivery_excludes_recovery_and_concurrent_retry"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "f007_restored_pending_attempt_requires_custody_fencing_and_uncertainty_stays_unresolved"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "f007_restored_unattempted_intent_requires_global_fencing_of_late_original_claims"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_029_embedded_coding_and_transform_use_one_engine_and_application_services"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_029_embedded_crash_recovery_quarantines_without_replacement"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_029_restored_publication_is_readable_without_original_workspace_and_keeps_capacity"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_030_catalog_quarantine_and_revocation_fence_queued_execution"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_030_consumer_and_helper_imports_stay_inside_application_boundary"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_030_embedded_forgery_scope_and_unauthorized_controls_fail_closed"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_030_recovery_only_facade_enforces_disclosure_revocation_and_exclusive_ownership"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_030_recovery_reconstructs_scoped_metadata_before_returning_application"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_033_embedded_completion_is_producer_evidence_for_partial_milestone_only"
+        },
+        {
+          "manifest": "tools/wi-contract-check/Cargo.toml",
+          "package": "wi-contract-check",
+          "test": "campaign_coverage_requires_every_embedded_obligation_and_preserves_scope_tests"
+        },
+        {
+          "manifest": "tools/wi-contract-check/Cargo.toml",
+          "package": "wi-contract-check",
+          "test": "campaign_dirty_source_changing_or_stale_generation_is_rejected"
+        },
+        {
+          "manifest": "tools/wi-contract-check/Cargo.toml",
+          "package": "wi-contract-check",
+          "test": "campaign_missing_ignored_ambiguous_and_recursive_references_are_rejected"
+        },
+        {
+          "manifest": "tools/wi-contract-check/Cargo.toml",
+          "package": "wi-contract-check",
+          "test": "campaign_real_child_failure_zero_ignored_missing_and_altered_logs_fail_closed"
+        },
+        {
+          "manifest": "tools/wi-contract-check/Cargo.toml",
+          "package": "wi-contract-check",
+          "test": "wp_033_inflated_claims_cannot_convert_worker_success_to_consumer_acceptance"
+        },
+        {
+          "manifest": "tools/wi-contract-check/Cargo.toml",
+          "package": "wi-contract-check",
+          "test": "campaign_parallel_harnesses_retain_failures_and_reject_substituted_binary_pins"
+        }
+      ]
+    },
+    {
+      "coverage_refs": [
+        "conformance/wi-fabric-2/worker/campaign-coverage.json"
+      ],
+      "gate": "WI-WORKER-G4",
+      "id": "WP-034",
+      "owning_item": "WIP-15",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "6e229792f04742339a8c392f8fea4c73ce18244ef66aa2a7c229c32a2fd6ea43",
+      "status": "implemented",
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_034_embedded_seam_handoff_retains_nonsemantic_completion_and_unknown_controls"
+        },
+        {
+          "manifest": "tools/wi-contract-check/Cargo.toml",
+          "package": "wi-contract-check",
+          "test": "wp_034_handoff_rejects_substituted_pins_missing_evidence_and_semantic_completion"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "campaign_unknown_controls_publish_once_with_exact_observation_digest"
+        },
+        {
+          "manifest": "tools/wi-contract-check/Cargo.toml",
+          "package": "wi-contract-check",
+          "test": "wp_034_publication_rejects_registry_gate_mapping_and_claim_drift"
+        },
+        {
+          "manifest": "tools/wi-contract-check/Cargo.toml",
+          "package": "wi-contract-check",
+          "test": "wp_034_publication_rejects_stale_profile_fixture_lock_and_recipe_pins"
+        },
+        {
+          "manifest": "tools/wi-contract-check/Cargo.toml",
+          "package": "wi-contract-check",
+          "test": "wp_034_publication_requires_complete_gate_state_and_valid_descriptor"
+        },
+        {
+          "manifest": "tools/wi-contract-check/Cargo.toml",
+          "package": "wi-contract-check",
+          "test": "wp_034_publication_binds_external_evidence_and_never_grants_reviewed_closure"
+        }
+      ]
+    },
+    {
+      "coverage_refs": [
+        "conformance/wi-fabric-2/integration/fixtures.json"
+      ],
+      "gate": "WI-AQ-G1",
+      "id": "AB-WI-001",
+      "owning_item": "WIP-01",
+      "source_matrix": "contracts/sources/aq-baseline-integration-acceptance-matrix.yaml",
+      "source_record_sha256": "abeefc555e395a4dc1242d30e3537bd89541f271410a91e9589bef3267ac4ebf",
+      "status": "implemented",
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_001_store_formats_fresh_lineage_and_profile_rejection"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_001_published_identity_rejects_substitutions"
+        }
+      ]
+    },
+    {
+      "coverage_refs": [
+        "conformance/wi-fabric-2/integration/fixtures.json"
+      ],
+      "gate": "WI-AQ-G2",
+      "id": "AB-WI-002",
+      "owning_item": "WIP-02",
+      "source_matrix": "contracts/sources/aq-baseline-integration-acceptance-matrix.yaml",
+      "source_record_sha256": "0a25734a2d94cee7d2ad8d51dfcc1ce679a0f85b384b0d5a43a582906b25bd0b",
+      "status": "implemented",
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_002_003_004_persist_retry_ack_and_discover"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_002_subprocess_crash_cuts"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "production_facade_authenticates_verifies_and_rechecks_live_target"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "expiry_during_refresh_blocks_initial_duplicate_and_later_batch_admission"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "live_ambiguity_after_intent_never_reaches_aq"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "production_facade_rejects_resource_boundaries_before_admission"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "caller_claims_cannot_override_authenticated_agency_or_grants"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "self_initiated_and_external_requests_follow_the_same_authorization_path"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "persisted_old_policy_request_is_retried_without_rewriting"
+        }
+      ]
+    },
+    {
+      "coverage_refs": [
+        "conformance/wi-fabric-2/integration/fixtures.json"
+      ],
+      "gate": "WI-AQ-G2",
+      "id": "AB-WI-003",
+      "owning_item": "WIP-02",
+      "source_matrix": "contracts/sources/aq-baseline-integration-acceptance-matrix.yaml",
+      "source_record_sha256": "40a722ec7d187a8c3aeccfd9f595ae97353a6d58cd4b1ebb93b7ebb4162c120d",
+      "status": "implemented",
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_002_003_004_persist_retry_ack_and_discover"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_003_public_v2_vectors_and_digest_field_boundaries"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_003_required_and_detached_same_key_conflict"
+        }
+      ]
+    },
+    {
+      "coverage_refs": [
+        "conformance/wi-fabric-2/integration/fixtures.json"
+      ],
+      "gate": "WI-AQ-G2",
+      "id": "AB-WI-004",
+      "owning_item": "WIP-02",
+      "source_matrix": "contracts/sources/aq-baseline-integration-acceptance-matrix.yaml",
+      "source_record_sha256": "9e878d392ef66cfd0567dced1c21d308e6eb6ea021569b3fa2f26312a98d9690",
+      "status": "implemented",
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_002_003_004_persist_retry_ack_and_discover"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "run_discovery::tests::stale_cursor_restarts_and_partial_page_is_not_complete"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wrong_queue_store_cannot_acknowledge_or_discover"
+        }
+      ]
+    },
+    {
+      "coverage_refs": [
+        "conformance/wi-fabric-2/flow/integration-coverage.json",
+        "conformance/wi-fabric-2/integration/fixtures.json"
+      ],
+      "gate": "WI-AQ-G4",
+      "id": "AB-WI-005",
+      "owning_item": "WIP-07",
+      "source_matrix": "contracts/sources/aq-baseline-integration-acceptance-matrix.yaml",
+      "source_record_sha256": "c5ed591d6024a6ef7080edc36848ef60d0aca374f4c219030678b063c6533789",
+      "status": "implemented",
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_005_bounds_are_enforced_by_aq_admission_and_disposition"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_005_compound_commit_replay_is_all_or_none_with_stable_children"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "child_transaction_native_wal_process_death_cuts_replay_all_or_none"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "bounded_64_node_plan_commits_flat_children_and_rejects_65_before_admission"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "maximum_length_flow_identities_have_bounded_aq_and_effect_keys"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wi_proposal_aq_commit_and_binding_process_death_recover_stable_children"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "sixty_four_boundary_nodes_reject_at_wi_plan_byte_bound_before_aq_admission"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "checkpoint_tail_and_wal_only_recovery_preserve_pending_flow_and_branch_receipts"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "flow_retained_count_rollback_replay_and_tampering"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "concurrent_flow_admissions_serialize_at_retained_capacity"
+        }
+      ]
+    },
+    {
+      "coverage_refs": [
+        "conformance/wi-fabric-2/integration/fixtures.json"
+      ],
+      "gate": "WI-AQ-G3",
+      "id": "AB-WI-006",
+      "owning_item": "WIP-03",
+      "source_matrix": "contracts/sources/aq-baseline-integration-acceptance-matrix.yaml",
+      "source_record_sha256": "2eae5f9661b6c3a24b34cb44fb18fe41647f1c134542db129ba4acedab196f18",
+      "status": "implemented",
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_006_009_one_wait_and_strict_signal_cursor_across_restart"
+        }
+      ]
+    },
+    {
+      "coverage_refs": [
+        "conformance/wi-fabric-2/integration/fixtures.json"
+      ],
+      "gate": "WI-AQ-G3",
+      "id": "AB-WI-007",
+      "owning_item": "WIP-03",
+      "source_matrix": "contracts/sources/aq-baseline-integration-acceptance-matrix.yaml",
+      "source_record_sha256": "5e28dbfd281d310109931bdc6c6ab98a97b75b9c6bcc57a0f70433bad783a3b6",
+      "status": "implemented",
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_007_commit_replay_identity_and_subscriber_ack"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "captured_fanout_routes_each_delivery_to_its_trusted_subscriber"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "process_death_after_wi_commit_recovers_aq_obligation"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "partial_audience_http_isolates_subscribers"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "partial_audience_stream_isolates_subscribers"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "process_death_after_subscriber_storage_redelivers_same_id"
+        }
+      ]
+    },
+    {
+      "coverage_refs": [
+        "conformance/wi-fabric-2/continuations/coverage.json",
+        "conformance/wi-fabric-2/integration/fixtures.json"
+      ],
+      "gate": "WI-AQ-G3",
+      "id": "AB-WI-008",
+      "owning_item": "WIP-08",
+      "source_matrix": "contracts/sources/aq-baseline-integration-acceptance-matrix.yaml",
+      "source_record_sha256": "c6adcefbd069d8ded5a47f64e563429cdb677de0a4082c122a0f38b71d3beed7",
+      "status": "implemented",
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_008_early_late_duplicate_and_fanout_use_durable_records"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "continuation_process_death_replays_source_signal_wait_and_resume_commits"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "outbox_backpressure_retains_identity_and_pending_obligations"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "provider_callback_commits_an_authoritative_record_and_outbox_without_waiter"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "worker_intake_conflicts_scope_and_sequence_are_durable"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ingress_ready_and_acknowledged_commit_source_outbox_atomically_and_wake_flows"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "reconciliation_commits_source_outbox_atomically_and_wakes_flow"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "flow_child_commits_source_outbox_atomically_and_wakes_flow"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "signal_capacity_alarm_uses_resident_statistics_across_restart"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "provider_callback_before_and_after_wait_resumes_flow_exactly_once"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "one_signal_resumes_two_live_flow_waiters_exactly_once_each"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "resequenced_worker_event_rejects_after_handled_across_rebuild_and_reopen"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "scope_rejected_signal_is_journaled_without_blocking_scheduling"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "stale_callback_revision_rejects_after_handled_across_rebuild_and_reopen"
+        }
+      ]
+    },
+    {
+      "coverage_refs": [
+        "conformance/wi-fabric-2/integration/fixtures.json"
+      ],
+      "gate": "WI-AQ-G3",
+      "id": "AB-WI-009",
+      "owning_item": "WIP-03",
+      "source_matrix": "contracts/sources/aq-baseline-integration-acceptance-matrix.yaml",
+      "source_record_sha256": "4b1907c6eb598efc348ba0390ac93da7626fa45deb5e3805ebd5d544e950f1ee",
+      "status": "implemented",
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_006_009_one_wait_and_strict_signal_cursor_across_restart"
+        }
+      ]
+    },
+    {
+      "coverage_refs": [
+        "conformance/wi-fabric-2/flow/integration-coverage.json",
+        "conformance/wi-fabric-2/integration/fixtures.json"
+      ],
+      "gate": "WI-AQ-G3",
+      "id": "AB-WI-010",
+      "owning_item": "WIP-07",
+      "source_matrix": "contracts/sources/aq-baseline-integration-acceptance-matrix.yaml",
+      "source_record_sha256": "4aef27823939c49b59856111146c1345c2a246a44a8c41c681ba573b294f0958",
+      "status": "implemented",
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_010_deadline_signal_orders_and_timeout_policies_survive_replay"
+        }
+      ]
+    },
+    {
+      "coverage_refs": [
+        "conformance/wi-fabric-2/continuations/coverage.json",
+        "conformance/wi-fabric-2/integration/fixtures.json"
+      ],
+      "gate": "WI-AQ-G3",
+      "id": "AB-WI-011",
+      "owning_item": "WIP-08",
+      "source_matrix": "contracts/sources/aq-baseline-integration-acceptance-matrix.yaml",
+      "source_record_sha256": "03f81152fcde241dbab356e1ec9051dae6acbe9db194892ca6c3c7c0c01f0d65",
+      "status": "implemented",
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_011_awaiting_releases_attempt_and_unrelated_work_progresses"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "administrative_resume_reestablishes_wait_and_all_wake_forms_redeliver_idempotently"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "altered_checkpoint_cannot_authorize_wait_progress"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "continuation_process_death_replays_source_signal_wait_and_resume_commits"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "current_authority_and_scoped_routes_are_required_at_every_wake"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "early_control_wakes_reestablish_child_and_parent_waits"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "eligibility_uses_signal_high_water_and_after_handled_advances_actual_sequence"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "fresh_generation_is_scoped_and_inherited_through_after_handled"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "resume_redelivery_reproduces_result_and_conflicting_context_rejects"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "signal_deadline_cancel_and_late_event_orders_preserve_committed_outcomes"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "non_early_wait_rejects_preexisting_outbox_events_after_backpressure_and_rebuild"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "admitted_unacknowledged_wake_with_backlog_recovers_independently_of_scan"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "accepted_child_and_coordinator_replay_after_authority_revocation"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "signal_cancel_acceptance_and_deadline_winners_replay_across_paired_reopen"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "continuation_inspection_authorizes_and_reports_pending_and_accepted_chain"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "accept_resume_validates_exports_even_with_other_artifacts"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "unaccepted_coordinator_finish_requires_authority_after_child_acceptance"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "idle_ticks_skip_unchanged_waiting_flows_and_reconcile_changes_after_restart"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "journal_only_admission_failure_retries_on_an_otherwise_idle_live_engine"
+        }
+      ]
+    },
+    {
+      "coverage_refs": [
+        "conformance/wi-fabric-2/connectors/coverage.json"
+      ],
+      "gate": "WI-AQ-G4",
+      "id": "AB-WI-012",
+      "owning_item": "WIP-05",
+      "source_matrix": "contracts/sources/aq-baseline-integration-acceptance-matrix.yaml",
+      "source_record_sha256": "5a379dcd8220d0ee324563e8903472e79bb2e4e4ac9a8bbf618258d2e4e927c6",
+      "status": "implemented",
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_012_disposition_algebra_and_minimal_invalid_failure"
+        }
+      ]
+    },
+    {
+      "coverage_refs": [
+        "conformance/wi-fabric-2/flow/integration-coverage.json",
+        "conformance/wi-fabric-2/integration/fixtures.json"
+      ],
+      "gate": "WI-AQ-G4",
+      "id": "AB-WI-013",
+      "owning_item": "WIP-07",
+      "source_matrix": "contracts/sources/aq-baseline-integration-acceptance-matrix.yaml",
+      "source_record_sha256": "735b29144504e56f502c4c80366cba10b5c36ee82871491362a241fb78d4285c",
+      "status": "implemented",
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_013_required_detached_closure_cancel_and_mixed_runs"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "aq_success_without_wi_acceptance_cannot_complete_flow"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "flow_cancellation_after_start_preserves_external_uncertainty"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "cancellation_before_start_and_failed_node_redelivery_cannot_invoke"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "publication_failure_retries_durable_success_without_reinvocation"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "rejected_aq_cancel_does_not_mutate_flow_and_authorized_execution_continues"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "temporary_binding_artifact_io_failure_retries_without_quarantine"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "quarantine_control_failure_surfaces_and_retries_after_host_repair"
+        }
+      ]
+    },
+    {
+      "coverage_refs": [
+        "conformance/wi-fabric-2/connectors/coverage.json"
+      ],
+      "gate": "WI-AQ-G4",
+      "id": "AB-WI-014",
+      "owning_item": "WIP-05",
+      "source_matrix": "contracts/sources/aq-baseline-integration-acceptance-matrix.yaml",
+      "source_record_sha256": "66853e83d481ec4755d888e2459413c3cfa7ca2932f8cc4702e47bb00b81ea04",
+      "status": "implemented",
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_014_capacity_remote_fence_stale_and_uncertain"
+        }
+      ]
+    },
+    {
+      "coverage_refs": [
+        "conformance/wi-fabric-2/integration/fixtures.json"
+      ],
+      "gate": "WI-AQ-G1",
+      "id": "AB-WI-015",
+      "owning_item": "WIP-01",
+      "source_matrix": "contracts/sources/aq-baseline-integration-acceptance-matrix.yaml",
+      "source_record_sha256": "468730e76d4f44c133ceb65ff48b4efda113d03b1be3026ac4c58727e5dee6d1",
+      "status": "implemented",
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_015_bounds_and_unsupported_overrides_reject_without_truncation"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_015_016_real_child_execution_replay_and_foreign_provenance"
+        }
+      ]
+    },
+    {
+      "coverage_refs": [
+        "conformance/wi-fabric-2/integration/fixtures.json"
+      ],
+      "gate": "WI-AQ-G1",
+      "id": "AB-WI-016",
+      "owning_item": "WIP-01",
+      "source_matrix": "contracts/sources/aq-baseline-integration-acceptance-matrix.yaml",
+      "source_record_sha256": "e9aae8a4df1330cd2ed265aef210847f82adf0bb7444a69cb689a9aeb8843a01",
+      "status": "implemented",
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_016_authorization_and_integrity"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_015_016_real_child_execution_replay_and_foreign_provenance"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "backup_retains_both_store_locks_and_rejects_missing_references"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_016_nested_destinations_leave_source_unchanged"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_016_single_component_relative_destinations"
+        }
+      ]
+    },
+    {
+      "coverage_refs": [
+        "conformance/wi-fabric-2/worker/embedded-coverage.json"
+      ],
+      "gate": "WI-WORKER-G4",
+      "id": "AB-WI-019",
+      "owning_item": "WIP-14",
+      "source_matrix": "contracts/sources/aq-baseline-integration-acceptance-matrix.yaml",
+      "source_record_sha256": "f70c3b2ce740051245605dc5792bab0d24629dd97e19568ca160fe8ea1b211a0",
+      "status": "implemented",
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_019_two_independent_stores_restore_complete_wal_artifacts_and_control_history"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_019_invalid_restore_never_publishes_partial_destination"
+        }
+      ]
+    },
+    {
+      "coverage_refs": [
+        "conformance/wi-fabric-2/connectors/coverage.json"
+      ],
+      "gate": "WI-AQ-G4",
+      "id": "AB-WI-020",
+      "owning_item": "WIP-05",
+      "source_matrix": "contracts/sources/aq-baseline-integration-acceptance-matrix.yaml",
+      "source_record_sha256": "0e3eae4a4ce475fcb8cd1799f0790093b81d57590fc893f2fbdeb81e1cdd545a",
+      "status": "implemented",
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_020_terminal_cancel_is_append_free_and_has_no_late_cascade"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_020_023_provider_ack_loss_is_uncertain_until_reconciled"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_020_queue_cancel_keeps_started_external_effect_uncertain"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "spi_cancel_phase_records_observation_and_preserves_commit_truth"
+        }
+      ]
+    },
+    {
+      "coverage_refs": [
+        "conformance/wi-fabric-2/worker/lifecycle-coverage.json"
+      ],
+      "gate": "WI-WORKER-G3",
+      "id": "AB-WI-021",
+      "owning_item": "WIP-10",
+      "source_matrix": "contracts/sources/aq-baseline-integration-acceptance-matrix.yaml",
+      "source_record_sha256": "85adcb125b508c21508139010c9b3c14ecfb6d2b424b9699b3d91857e8405129",
+      "status": "implemented",
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_021_awaiting_release_hold_and_resume_keep_durable_worker_capacity"
+        }
+      ]
+    },
+    {
+      "coverage_refs": [
+        "conformance/wi-fabric-2/integration/fixtures.json"
+      ],
+      "gate": "WI-AQ-G3",
+      "id": "AB-WI-022",
+      "owning_item": "WIP-03",
+      "source_matrix": "contracts/sources/aq-baseline-integration-acceptance-matrix.yaml",
+      "source_record_sha256": "39053f56f805b7c942cd07602c7c202227e7f00259f1f6897fe19cd71bf67d81",
+      "status": "implemented",
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_022_retirement_keeps_resident_capacity_and_alarm"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wi03p_f001_expired_pending_delivery_stops_recovery"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wi03p_f001_admitted_delivery_completes_after_expiry"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "expiration_during_ack_wait_completes_without_recovery_generation"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "recovery_generation_budget_bounds_mismatch_binding_churn_and_capacity_after_restart"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "owner_churn_reuses_wake_capacity_and_other_owner_can_deliver_and_ack_after_restart"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "terminal_wait_capacity_recovers_from_journaled_generation"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "previously_journaled_generation_wake_is_reused_without_migration_after_restart"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "retired_wake_deadletters_without_replacement_after_restart"
+        }
+      ]
+    },
+    {
+      "coverage_refs": [
+        "conformance/wi-fabric-2/connectors/coverage.json"
+      ],
+      "gate": "WI-AQ-G4",
+      "id": "AB-WI-023",
+      "owning_item": "WIP-05",
+      "source_matrix": "contracts/sources/aq-baseline-integration-acceptance-matrix.yaml",
+      "source_record_sha256": "a501fb9b18d7d222d26b48e37350e907a218dddb215a8f87654a87db7560c23c",
+      "status": "implemented",
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_023_actual_uncertain_aq_mutation_recovers_stable_identity"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "ab_wi_020_023_provider_ack_loss_is_uncertain_until_reconciled"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "spi_provider_and_reconciliation_crash_cuts_never_duplicate_commit"
+        }
+      ]
+    }
+  ],
+  "consumer": {
+    "P1-01": "pin descriptor, producer commit/tree, locks, AQ identities, profile, adapter, fixture/recipe and execution evidence; independently admit reviewed media executable/configuration/inputs",
+    "P1-02": "use authenticated embedded services and scoped artifact import/read; validate one real media work order and its provenance receipts",
+    "P1-03": "validate lost start acknowledgement, duplicate/early callback, interruption, cancellation, failed export, reconciliation and cleanup for the consumer workload",
+    "P1-04": "compile the consumer render graph within Flow bounds and validate AQ durability, outbox ordering and restore",
+    "P1-05": "validate media/task acceptance independently; retain capacity until confirmed cleanup, including cancellation and uncertain start",
+    "interface": "EmbeddedHost::install/application; Application submission, Flow, advance, inspection, receipts, artifacts and reconciliation",
+    "media_gap": "current process adapter accepts typed reviewed fixtures; arbitrary FFmpeg arguments and execution require further consumer integration and approval",
+    "ordinary_use": "separate exact WIP-12 catalog record and trusted operator approval; evaluation never promotes itself",
+    "remote": "no remote or two-host qualification; Mac inference gateway remains consumer work"
+  },
+  "controls": {
+    "advertised": "process wall_time_ms and output_bytes only; other containment unsupported",
+    "applied": "source-bound executable and inputs, cleared environment, descriptor allowlist, wall timer and retained-output bounds",
+    "missing": [
+      "cpu",
+      "memory",
+      "process_count",
+      "filesystem",
+      "network",
+      "independent_vm"
+    ],
+    "observed": "separate per-run control and cleanup evidence; retained bytes, signals, descendant and exit measurements",
+    "requested": "per-run finite limits; declarations do not establish enforcement",
+    "unknown": "seam simulation controls are null; recovery without live observations returns unknown"
+  },
+  "executable_contract_owner": "WIP-15",
+  "execution_claims": {
+    "consumer_task_acceptance": false,
+    "eligible_milestone": "WI-EMBEDDED-WORKER-PROOF-1",
+    "g5": false,
+    "milestone_closed": false,
+    "ordinary_use": false,
+    "parent_acceptance": false,
+    "release": false,
+    "remote_parity": false,
+    "strong_isolation": false,
+    "wi_receipt": "provenance and execution evidence only",
+    "worker_completion": "producer observation only"
+  },
+  "execution_evidence": {
+    "approval": "conformance/wi-fabric-2/worker/evaluation-approval.json",
+    "approval_rule": "actual exact-packet operator acceptance after non-live build; finite expiry at most seven days after acceptance; changed packet or expired receipt fails closed",
+    "external_files": [
+      "receipt.json",
+      "handoff-candidate.json",
+      "handoff.json",
+      "coding.json",
+      "transform.json",
+      "seam.json",
+      "timing.json"
+    ],
+    "historical_evidence": "WIP-15 results are provenance only; never substitute for this revision",
+    "packet": "conformance/wi-fabric-2/worker/evaluation-manifest.json",
+    "required": "fresh complete registered and runtime-remainder passage, exact logs and executable digests, current clean commit/tree, OS/identity, approval, fixture/helper build and observed controls",
+    "trusted_anchor": "crates/worldinterface-runtime/tests/support/worker_approval_anchor.rs"
+  },
+  "gates": [
+    {
+      "closing_item": "WIP-01",
+      "effective_on": "reviewed-merge-with-adopted-checks",
+      "historical_evidence": [
+        "df7bc4a3"
+      ],
+      "id": "WI-AQ-G1",
+      "pass_criteria": [
+        "Target reference, data/artifact and causal mappings reconciled.",
+        "Fresh persistence and rejection/replay checks pass.",
+        "wi reviews its own mappings and applicable assumptions; a similarly named gate for another consumer is not an automatic pass.",
+        "Historical AQ-NN references identify retained capability/evidence obligations of the completed source; they are not runnable work. Review actual consumer candidate-branch fixtures on the exact accepted AQ build; independent gate attestation is still required and is not inferred from source presence."
+      ],
+      "required_cases": [
+        "AB-WI-001",
+        "AB-WI-015",
+        "AB-WI-016"
+      ],
+      "requirement_bindings": [
+        {
+          "binding": {
+            "date": "2026-10-13",
+            "historical_acceptance": "2026-10-01",
+            "kind": "plan-import",
+            "plan_version": "9212604c-4873-4cd5-b492-1ee3141b8b0b"
+          },
+          "requirement": {
+            "id": "STACK-PLAN-ACCEPTED",
+            "kind": "checkpoint",
+            "state": "passed"
+          }
+        },
+        {
+          "binding": {
+            "check": "runtime-aq-graph",
+            "contract": "contracts/aq-integration-target.json",
+            "historical_acceptance": "2026-09-21",
+            "historical_submission": "7b060900",
+            "kind": "published-aq",
+            "record": "published_release"
+          },
+          "requirement": {
+            "id": "AQ-BASELINE-ACCEPTED",
+            "kind": "checkpoint",
+            "state": "passed"
+          }
+        }
+      ],
+      "requires": [
+        {
+          "id": "STACK-PLAN-ACCEPTED",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "AQ-BASELINE-ACCEPTED",
+          "kind": "checkpoint",
+          "state": "passed"
+        }
+      ],
+      "source_record_sha256": "54603d12ef61e995f6abc2c6150e537018e3d35bf733d9db506d229cdac97000",
+      "status": "closed",
+      "version": 1
+    },
+    {
+      "closing_item": "WIP-04",
+      "effective_on": "reviewed-merge-with-adopted-checks",
+      "historical_evidence": [
+        "7cdecc06",
+        "7ed4b60e"
+      ],
+      "id": "WI-AQ-G2",
+      "pass_criteria": [
+        "Created/AlreadyExists preserve durable identities; mismatched digest conflicts.",
+        "Admission and local outbox retry behavior pass race/crash tests.",
+        "wi reviews its own mappings and applicable assumptions; a similarly named gate for another consumer is not an automatic pass.",
+        "Historical AQ-NN references identify retained capability/evidence obligations of the completed source; they are not runnable work. Review actual consumer candidate-branch fixtures on the exact accepted AQ build; independent gate attestation is still required and is not inferred from source presence."
+      ],
+      "required_cases": [
+        "AB-WI-002",
+        "AB-WI-003",
+        "AB-WI-004"
+      ],
+      "requirement_bindings": [
+        {
+          "binding": {
+            "date": "2026-10-13",
+            "historical_acceptance": "2026-10-01",
+            "kind": "plan-import",
+            "plan_version": "9212604c-4873-4cd5-b492-1ee3141b8b0b"
+          },
+          "requirement": {
+            "id": "STACK-PLAN-ACCEPTED",
+            "kind": "checkpoint",
+            "state": "passed"
+          }
+        },
+        {
+          "binding": {
+            "check": "runtime-aq-graph",
+            "contract": "contracts/aq-integration-target.json",
+            "historical_acceptance": "2026-09-21",
+            "historical_submission": "7b060900",
+            "kind": "published-aq",
+            "record": "published_release"
+          },
+          "requirement": {
+            "id": "AQ-BASELINE-ACCEPTED",
+            "kind": "checkpoint",
+            "state": "passed"
+          }
+        }
+      ],
+      "requires": [
+        {
+          "id": "STACK-PLAN-ACCEPTED",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "AQ-BASELINE-ACCEPTED",
+          "kind": "checkpoint",
+          "state": "passed"
+        }
+      ],
+      "source_record_sha256": "bced2dba67f44e9e4cf1088027cc6b3b16ec87eb3a5c54cabd04df5791bc7bc4",
+      "status": "closed",
+      "version": 1
+    },
+    {
+      "closing_item": "WIP-08",
+      "effective_on": "reviewed-merge-with-adopted-checks",
+      "historical_evidence": [
+        "300d033f"
+      ],
+      "id": "WI-AQ-G3",
+      "pass_criteria": [
+        "Early/late/duplicate signals, wait establishment, deadline/cancel races and restart converge.",
+        "Checkpoint and matched-signal references survive; no process-local fallback.",
+        "wi reviews its own mappings and applicable assumptions; a similarly named gate for another consumer is not an automatic pass.",
+        "Historical AQ-NN references identify retained capability/evidence obligations of the completed source; they are not runnable work. Review actual consumer candidate-branch fixtures on the exact accepted AQ build; independent gate attestation is still required and is not inferred from source presence."
+      ],
+      "required_cases": [
+        "AB-WI-006",
+        "AB-WI-007",
+        "AB-WI-008",
+        "AB-WI-009",
+        "AB-WI-010",
+        "AB-WI-011",
+        "AB-WI-022"
+      ],
+      "requirement_bindings": [
+        {
+          "binding": {
+            "date": "2026-10-13",
+            "historical_acceptance": "2026-10-01",
+            "kind": "plan-import",
+            "plan_version": "9212604c-4873-4cd5-b492-1ee3141b8b0b"
+          },
+          "requirement": {
+            "id": "STACK-PLAN-ACCEPTED",
+            "kind": "checkpoint",
+            "state": "passed"
+          }
+        },
+        {
+          "binding": {
+            "check": "runtime-aq-graph",
+            "contract": "contracts/aq-integration-target.json",
+            "historical_acceptance": "2026-09-21",
+            "historical_submission": "7b060900",
+            "kind": "published-aq",
+            "record": "published_release"
+          },
+          "requirement": {
+            "id": "AQ-BASELINE-ACCEPTED",
+            "kind": "checkpoint",
+            "state": "passed"
+          }
+        }
+      ],
+      "requires": [
+        {
+          "id": "STACK-PLAN-ACCEPTED",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "AQ-BASELINE-ACCEPTED",
+          "kind": "checkpoint",
+          "state": "passed"
+        }
+      ],
+      "source_record_sha256": "39ce6dc3b5ebd8dc0ed53911fb291b3ce0a7a3d8fe3749797ce59a5267c5ed97",
+      "status": "closed",
+      "version": 1
+    },
+    {
+      "closing_item": "WIP-07",
+      "effective_on": "reviewed-merge-with-adopted-checks",
+      "historical_evidence": [],
+      "id": "WI-AQ-G4",
+      "pass_criteria": [
+        "Lease-fenced dispositions and atomic child-admission/parent-wait behavior pass.",
+        "Completion, cancellation, and output publication recover without semantic reinterpretation.",
+        "wi reviews its own mappings and applicable assumptions; a similarly named gate for another consumer is not an automatic pass.",
+        "Historical AQ-NN references identify retained capability/evidence obligations of the completed source; they are not runnable work. Review actual consumer candidate-branch fixtures on the exact accepted AQ build; independent gate attestation is still required and is not inferred from source presence."
+      ],
+      "required_cases": [
+        "AB-WI-005",
+        "AB-WI-012",
+        "AB-WI-013",
+        "AB-WI-014",
+        "AB-WI-020",
+        "AB-WI-023"
+      ],
+      "requirement_bindings": [
+        {
+          "binding": {
+            "date": "2026-10-13",
+            "historical_acceptance": "2026-10-01",
+            "kind": "plan-import",
+            "plan_version": "9212604c-4873-4cd5-b492-1ee3141b8b0b"
+          },
+          "requirement": {
+            "id": "STACK-PLAN-ACCEPTED",
+            "kind": "checkpoint",
+            "state": "passed"
+          }
+        },
+        {
+          "binding": {
+            "check": "runtime-aq-graph",
+            "contract": "contracts/aq-integration-target.json",
+            "historical_acceptance": "2026-09-21",
+            "historical_submission": "7b060900",
+            "kind": "published-aq",
+            "record": "published_release"
+          },
+          "requirement": {
+            "id": "AQ-BASELINE-ACCEPTED",
+            "kind": "checkpoint",
+            "state": "passed"
+          }
+        }
+      ],
+      "requires": [
+        {
+          "id": "STACK-PLAN-ACCEPTED",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "AQ-BASELINE-ACCEPTED",
+          "kind": "checkpoint",
+          "state": "passed"
+        }
+      ],
+      "source_record_sha256": "8e03e5f08487346ede8f06f6731dfb6a234c50f5af1bb201a7e475d4532337ab",
+      "status": "closed",
+      "version": 1
+    },
+    {
+      "closing_item": "WIP-08",
+      "effective_on": "reviewed-merge-with-adopted-checks",
+      "historical_evidence": [],
+      "id": "WI-EMBEDDED-CORE-1",
+      "pass_criteria": [
+        "Real embedded protocol/store/ingress/intent/receipt/executor/Flow/continuation conformance on exact AQ/WI implementation and fixture pins; no mock substitutes.",
+        "Consumer assumption reconciliation covers the actual embedded surfaces. This is a newly scoped evidence barrier, never an alias for EXO-WI-G3 or accepted WI-06/07/08 parents.",
+        "Parent-owned worker and supervisor cases remain mandatory at full parent acceptance; production activation needs ordinary authority and qualified profiles."
+      ],
+      "required_cases": [
+        "AB-WI-001",
+        "AB-WI-002",
+        "AB-WI-003",
+        "AB-WI-004",
+        "AB-WI-005",
+        "AB-WI-006",
+        "AB-WI-007",
+        "AB-WI-008",
+        "AB-WI-009",
+        "AB-WI-010",
+        "AB-WI-011",
+        "AB-WI-012",
+        "AB-WI-013",
+        "AB-WI-014",
+        "AB-WI-015",
+        "AB-WI-016",
+        "AB-WI-020",
+        "AB-WI-022",
+        "AB-WI-023"
+      ],
+      "requirement_bindings": [
+        {
+          "binding": {
+            "date": "2026-10-13",
+            "historical_acceptance": "2026-10-01",
+            "kind": "plan-import",
+            "plan_version": "9212604c-4873-4cd5-b492-1ee3141b8b0b"
+          },
+          "requirement": {
+            "id": "STACK-PLAN-ACCEPTED",
+            "kind": "checkpoint",
+            "state": "passed"
+          }
+        },
+        {
+          "binding": {
+            "covering_items": [
+              "WIP-01"
+            ],
+            "effective_on": "reviewed-merge-with-adopted-checks",
+            "kind": "reviewed-item-scope"
+          },
+          "requirement": {
+            "id": "wi/WI-02/integration",
+            "kind": "slice",
+            "state": "verified"
+          }
+        },
+        {
+          "binding": {
+            "covering_items": [
+              "WIP-03"
+            ],
+            "effective_on": "reviewed-merge-with-adopted-checks",
+            "kind": "reviewed-item-scope"
+          },
+          "requirement": {
+            "id": "wi/WI-03/integration",
+            "kind": "slice",
+            "state": "verified"
+          }
+        },
+        {
+          "binding": {
+            "covering_items": [
+              "WIP-02"
+            ],
+            "effective_on": "reviewed-merge-with-adopted-checks",
+            "kind": "reviewed-item-scope"
+          },
+          "requirement": {
+            "id": "wi/WI-04/integration",
+            "kind": "slice",
+            "state": "verified"
+          }
+        },
+        {
+          "binding": {
+            "covering_items": [
+              "WIP-04"
+            ],
+            "effective_on": "reviewed-merge-with-adopted-checks",
+            "kind": "reviewed-item-scope"
+          },
+          "requirement": {
+            "id": "wi/WI-05/integration",
+            "kind": "slice",
+            "state": "verified"
+          }
+        },
+        {
+          "binding": {
+            "covering_items": [
+              "WIP-05"
+            ],
+            "effective_on": "reviewed-merge-with-adopted-checks",
+            "kind": "reviewed-item-scope"
+          },
+          "requirement": {
+            "id": "wi/WI-06/integration",
+            "kind": "slice",
+            "state": "verified"
+          }
+        },
+        {
+          "binding": {
+            "covering_items": [
+              "WIP-07"
+            ],
+            "effective_on": "reviewed-merge-with-adopted-checks",
+            "kind": "reviewed-item-scope"
+          },
+          "requirement": {
+            "id": "wi/WI-07/integration",
+            "kind": "slice",
+            "state": "verified"
+          }
+        },
+        {
+          "binding": {
+            "covering_items": [
+              "WIP-08"
+            ],
+            "effective_on": "reviewed-merge-with-adopted-checks",
+            "kind": "reviewed-item-scope"
+          },
+          "requirement": {
+            "id": "wi/WI-08/integration",
+            "kind": "slice",
+            "state": "verified"
+          }
+        },
+        {
+          "binding": {
+            "kind": "closed-gate",
+            "record": "conformance/wi-fabric-2/proof/gates/WI-AQ-G1.json"
+          },
+          "requirement": {
+            "id": "WI-AQ-G1",
+            "kind": "checkpoint",
+            "state": "passed"
+          }
+        },
+        {
+          "binding": {
+            "kind": "closed-gate",
+            "record": "conformance/wi-fabric-2/proof/gates/WI-AQ-G2.json"
+          },
+          "requirement": {
+            "id": "WI-AQ-G2",
+            "kind": "checkpoint",
+            "state": "passed"
+          }
+        },
+        {
+          "binding": {
+            "kind": "closed-gate",
+            "record": "conformance/wi-fabric-2/proof/gates/WI-AQ-G3.json"
+          },
+          "requirement": {
+            "id": "WI-AQ-G3",
+            "kind": "checkpoint",
+            "state": "passed"
+          }
+        },
+        {
+          "binding": {
+            "kind": "closed-gate",
+            "record": "conformance/wi-fabric-2/proof/gates/WI-AQ-G4.json"
+          },
+          "requirement": {
+            "id": "WI-AQ-G4",
+            "kind": "checkpoint",
+            "state": "passed"
+          }
+        }
+      ],
+      "requires": [
+        {
+          "id": "STACK-PLAN-ACCEPTED",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "wi/WI-02/integration",
+          "kind": "slice",
+          "state": "verified"
+        },
+        {
+          "id": "wi/WI-03/integration",
+          "kind": "slice",
+          "state": "verified"
+        },
+        {
+          "id": "wi/WI-04/integration",
+          "kind": "slice",
+          "state": "verified"
+        },
+        {
+          "id": "wi/WI-05/integration",
+          "kind": "slice",
+          "state": "verified"
+        },
+        {
+          "id": "wi/WI-06/integration",
+          "kind": "slice",
+          "state": "verified"
+        },
+        {
+          "id": "wi/WI-07/integration",
+          "kind": "slice",
+          "state": "verified"
+        },
+        {
+          "id": "wi/WI-08/integration",
+          "kind": "slice",
+          "state": "verified"
+        },
+        {
+          "id": "WI-AQ-G1",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "WI-AQ-G2",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "WI-AQ-G3",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "WI-AQ-G4",
+          "kind": "checkpoint",
+          "state": "passed"
+        }
+      ],
+      "source_record_sha256": "89c703a0cd92062f39e9e649d8cd35309ae656206d7910421e0f79dd723f7f46",
+      "status": "closed",
+      "version": 1
+    },
+    {
+      "closing_item": "WIP-16",
+      "effective_on": "reviewed-merge-with-adopted-checks",
+      "historical_evidence": [],
+      "id": "WI-EMBEDDED-WORKER-PROOF-1",
+      "pass_criteria": [
+        "All named checkpoint evidence is reviewed and valid on one compatible bound generation.",
+        "This partial milestone does not accept parent work items, publish a release, or qualify unimplemented platform/external/hostile-code profiles."
+      ],
+      "required_cases": [
+        "AB-WI-001",
+        "AB-WI-002",
+        "AB-WI-003",
+        "AB-WI-004",
+        "AB-WI-005",
+        "AB-WI-006",
+        "AB-WI-007",
+        "AB-WI-008",
+        "AB-WI-009",
+        "AB-WI-010",
+        "AB-WI-011",
+        "AB-WI-012",
+        "AB-WI-013",
+        "AB-WI-014",
+        "AB-WI-015",
+        "AB-WI-016",
+        "AB-WI-019",
+        "AB-WI-020",
+        "AB-WI-021",
+        "AB-WI-022",
+        "AB-WI-023",
+        "WP-001",
+        "WP-002",
+        "WP-003",
+        "WP-004",
+        "WP-005",
+        "WP-006",
+        "WP-007",
+        "WP-008",
+        "WP-009",
+        "WP-010",
+        "WP-011",
+        "WP-012",
+        "WP-013",
+        "WP-014",
+        "WP-015",
+        "WP-016",
+        "WP-017",
+        "WP-018",
+        "WP-019",
+        "WP-020",
+        "WP-021",
+        "WP-022",
+        "WP-023",
+        "WP-024",
+        "WP-025",
+        "WP-026",
+        "WP-027",
+        "WP-028",
+        "WP-029",
+        "WP-030",
+        "WP-031",
+        "WP-032",
+        "WP-033",
+        "WP-034"
+      ],
+      "requirement_bindings": [
+        {
+          "binding": {
+            "date": "2026-10-13",
+            "historical_acceptance": "2026-10-01",
+            "kind": "plan-import",
+            "plan_version": "9212604c-4873-4cd5-b492-1ee3141b8b0b"
+          },
+          "requirement": {
+            "id": "STACK-PLAN-ACCEPTED",
+            "kind": "checkpoint",
+            "state": "passed"
+          }
+        },
+        {
+          "binding": {
+            "kind": "closed-gate",
+            "record": "conformance/wi-fabric-2/proof/gates/WI-WORKER-G1.json"
+          },
+          "requirement": {
+            "id": "WI-WORKER-G1",
+            "kind": "checkpoint",
+            "state": "passed"
+          }
+        },
+        {
+          "binding": {
+            "kind": "closed-gate",
+            "record": "conformance/wi-fabric-2/proof/gates/WI-WORKER-G2.json"
+          },
+          "requirement": {
+            "id": "WI-WORKER-G2",
+            "kind": "checkpoint",
+            "state": "passed"
+          }
+        },
+        {
+          "binding": {
+            "kind": "closed-gate",
+            "record": "conformance/wi-fabric-2/proof/gates/WI-WORKER-G3.json"
+          },
+          "requirement": {
+            "id": "WI-WORKER-G3",
+            "kind": "checkpoint",
+            "state": "passed"
+          }
+        },
+        {
+          "binding": {
+            "kind": "closed-gate",
+            "record": "conformance/wi-fabric-2/proof/gates/WI-WORKER-G4.json"
+          },
+          "requirement": {
+            "id": "WI-WORKER-G4",
+            "kind": "checkpoint",
+            "state": "passed"
+          }
+        }
+      ],
+      "requires": [
+        {
+          "id": "STACK-PLAN-ACCEPTED",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "WI-WORKER-G1",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "WI-WORKER-G2",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "WI-WORKER-G3",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "WI-WORKER-G4",
+          "kind": "checkpoint",
+          "state": "passed"
+        }
+      ],
+      "source_record_sha256": "12869aa762f74514c21d37affaffdef3572bec02c54f1a60c6c02dc437c150cd",
+      "status": "closed",
+      "version": 1
+    },
+    {
+      "closing_item": "WIP-01",
+      "effective_on": "reviewed-merge-with-adopted-checks",
+      "historical_evidence": [
+        "264d791e",
+        "b0f3e948"
+      ],
+      "id": "WI-WORKER-G1",
+      "pass_criteria": [
+        "WI-ADR-016 and referenced authorization/evidence ADR clauses reviewed; limitations, field mapping and operation capability contract frozen.",
+        "Source-owned evidence cases are bound in acceptance_coverage; owner PR IDs attribute work and are not automatic accepted-parent prerequisites."
+      ],
+      "required_cases": [
+        "WP-001",
+        "WP-002",
+        "WP-003",
+        "WP-004",
+        "WP-005",
+        "WP-006",
+        "WP-007",
+        "WP-008"
+      ],
+      "requirement_bindings": [
+        {
+          "binding": {
+            "date": "2026-10-13",
+            "historical_acceptance": "2026-10-01",
+            "kind": "plan-import",
+            "plan_version": "9212604c-4873-4cd5-b492-1ee3141b8b0b"
+          },
+          "requirement": {
+            "id": "STACK-PLAN-ACCEPTED",
+            "kind": "checkpoint",
+            "state": "passed"
+          }
+        },
+        {
+          "binding": {
+            "kind": "historical-verified-slice",
+            "revisions": [
+              "9cbdb13",
+              "d8e1a49"
+            ]
+          },
+          "requirement": {
+            "id": "wi/WI-02/domain",
+            "kind": "slice",
+            "state": "verified"
+          }
+        },
+        {
+          "binding": {
+            "kind": "historical-verified-slice",
+            "revisions": [
+              "d5c4ad1"
+            ]
+          },
+          "requirement": {
+            "id": "wi/WI-09/domain",
+            "kind": "slice",
+            "state": "verified"
+          }
+        },
+        {
+          "binding": {
+            "kind": "historical-verified-slice",
+            "revisions": [
+              "f364bad"
+            ]
+          },
+          "requirement": {
+            "id": "wi/WI-10/domain",
+            "kind": "slice",
+            "state": "verified"
+          }
+        },
+        {
+          "binding": {
+            "approval_file": "docs/adr/approvals/WI-ADR-016-full.json",
+            "approval_sha256": "b25fea0d6571e51bfbd60d370a2c5fad7b30b664b05ba80c425ac2616cf7d9cf",
+            "kind": "accepted-adr"
+          },
+          "requirement": {
+            "id": "WI-ADR-016",
+            "kind": "checkpoint",
+            "state": "passed"
+          }
+        },
+        {
+          "binding": {
+            "approval_file": "docs/adr/approvals/WI-ADR-005.json",
+            "approval_sha256": "2471be57c19a1540b8caa03164d0e1817c317c19fa24916c7a60afae43f8c659",
+            "kind": "accepted-adr"
+          },
+          "requirement": {
+            "id": "WI-ADR-005",
+            "kind": "checkpoint",
+            "state": "passed"
+          }
+        },
+        {
+          "binding": {
+            "approval_file": "docs/adr/approvals/WI-ADR-006.json",
+            "approval_sha256": "2a826c9234ab0aebf218f95b679f13fbbca6036762e21c9ade1f771586f0b4c0",
+            "kind": "accepted-adr"
+          },
+          "requirement": {
+            "id": "WI-ADR-006",
+            "kind": "checkpoint",
+            "state": "passed"
+          }
+        },
+        {
+          "binding": {
+            "approval_file": "docs/adr/approvals/WI-ADR-008.json",
+            "approval_sha256": "81c1e9d516c944c77988c40c0720c0baf4e7844acd95498b60fb085591d73141",
+            "kind": "accepted-adr"
+          },
+          "requirement": {
+            "id": "WI-ADR-008",
+            "kind": "checkpoint",
+            "state": "passed"
+          }
+        },
+        {
+          "binding": {
+            "approval_file": "docs/adr/approvals/WI-ADR-010.json",
+            "approval_sha256": "858084bb5a3cc73d4b77be4839f507a44a4b9fc2d1f24629bd1be808955339f0",
+            "kind": "accepted-adr"
+          },
+          "requirement": {
+            "id": "WI-ADR-010",
+            "kind": "checkpoint",
+            "state": "passed"
+          }
+        }
+      ],
+      "requires": [
+        {
+          "id": "STACK-PLAN-ACCEPTED",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "wi/WI-02/domain",
+          "kind": "slice",
+          "state": "verified"
+        },
+        {
+          "id": "wi/WI-09/domain",
+          "kind": "slice",
+          "state": "verified"
+        },
+        {
+          "id": "wi/WI-10/domain",
+          "kind": "slice",
+          "state": "verified"
+        },
+        {
+          "id": "WI-ADR-016",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "WI-ADR-005",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "WI-ADR-006",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "WI-ADR-008",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "WI-ADR-010",
+          "kind": "checkpoint",
+          "state": "passed"
+        }
+      ],
+      "source_record_sha256": "2e78294ba954add5571a257ecbbe8678f51382501b0641c72fdba33ca0c1a865",
+      "status": "closed",
+      "version": 1
+    },
+    {
+      "closing_item": "WIP-04",
+      "effective_on": "reviewed-merge-with-adopted-checks",
+      "historical_evidence": [],
+      "id": "WI-WORKER-G2",
+      "pass_criteria": [
+        "Exact-profile admission, unsupported-control denials and worker/instance evidence separation proven in producer fixtures.",
+        "Source-owned evidence cases are bound in acceptance_coverage; owner PR IDs attribute work and are not automatic accepted-parent prerequisites."
+      ],
+      "required_cases": [
+        "WP-009",
+        "WP-010",
+        "WP-011",
+        "WP-012",
+        "WP-013",
+        "WP-014",
+        "WP-015",
+        "WP-016"
+      ],
+      "requirement_bindings": [
+        {
+          "binding": {
+            "date": "2026-10-13",
+            "historical_acceptance": "2026-10-01",
+            "kind": "plan-import",
+            "plan_version": "9212604c-4873-4cd5-b492-1ee3141b8b0b"
+          },
+          "requirement": {
+            "id": "STACK-PLAN-ACCEPTED",
+            "kind": "checkpoint",
+            "state": "passed"
+          }
+        },
+        {
+          "binding": {
+            "kind": "closed-gate",
+            "record": "conformance/wi-fabric-2/proof/gates/WI-WORKER-G1.json"
+          },
+          "requirement": {
+            "id": "WI-WORKER-G1",
+            "kind": "checkpoint",
+            "state": "passed"
+          }
+        },
+        {
+          "binding": {
+            "kind": "historical-verified-slice",
+            "revisions": [
+              "9e92972"
+            ]
+          },
+          "requirement": {
+            "id": "wi/WI-04/domain",
+            "kind": "slice",
+            "state": "verified"
+          }
+        },
+        {
+          "binding": {
+            "kind": "historical-verified-slice",
+            "revisions": [
+              "afa130d"
+            ]
+          },
+          "requirement": {
+            "id": "wi/WI-05/domain",
+            "kind": "slice",
+            "state": "verified"
+          }
+        }
+      ],
+      "requires": [
+        {
+          "id": "STACK-PLAN-ACCEPTED",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "WI-WORKER-G1",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "wi/WI-04/domain",
+          "kind": "slice",
+          "state": "verified"
+        },
+        {
+          "id": "wi/WI-05/domain",
+          "kind": "slice",
+          "state": "verified"
+        }
+      ],
+      "source_record_sha256": "5d2d183b635cd915b3ffa9081f0351393346f6c35ef514afe944d0c4a0f1a3c1",
+      "status": "closed",
+      "version": 1
+    },
+    {
+      "closing_item": "WIP-10",
+      "effective_on": "reviewed-merge-with-adopted-checks",
+      "historical_evidence": [],
+      "id": "WI-WORKER-G3",
+      "pass_criteria": [
+        "Reviewed processes supervised via real WI/AQ; idempotent start, process ownership, event durability and termination/recovery proved.",
+        "Source-owned evidence cases are bound in acceptance_coverage; owner PR IDs attribute work and are not automatic accepted-parent prerequisites."
+      ],
+      "required_cases": [
+        "AB-WI-021",
+        "WP-017",
+        "WP-018",
+        "WP-019",
+        "WP-020",
+        "WP-021",
+        "WP-022",
+        "WP-023",
+        "WP-024",
+        "WP-025",
+        "WP-026"
+      ],
+      "requirement_bindings": [
+        {
+          "binding": {
+            "date": "2026-10-13",
+            "historical_acceptance": "2026-10-01",
+            "kind": "plan-import",
+            "plan_version": "9212604c-4873-4cd5-b492-1ee3141b8b0b"
+          },
+          "requirement": {
+            "id": "STACK-PLAN-ACCEPTED",
+            "kind": "checkpoint",
+            "state": "passed"
+          }
+        },
+        {
+          "binding": {
+            "kind": "closed-gate",
+            "record": "conformance/wi-fabric-2/proof/gates/WI-WORKER-G1.json"
+          },
+          "requirement": {
+            "id": "WI-WORKER-G1",
+            "kind": "checkpoint",
+            "state": "passed"
+          }
+        },
+        {
+          "binding": {
+            "kind": "closed-gate",
+            "record": "conformance/wi-fabric-2/proof/gates/WI-WORKER-G2.json"
+          },
+          "requirement": {
+            "id": "WI-WORKER-G2",
+            "kind": "checkpoint",
+            "state": "passed"
+          }
+        },
+        {
+          "binding": {
+            "covering_items": [
+              "WIP-09",
+              "WIP-10",
+              "WIP-11"
+            ],
+            "effective_on": "reviewed-merge-with-adopted-checks",
+            "kind": "reviewed-item-scope"
+          },
+          "requirement": {
+            "id": "wi/WI-09/process-provider",
+            "kind": "slice",
+            "state": "verified"
+          }
+        },
+        {
+          "binding": {
+            "kind": "closed-gate",
+            "record": "conformance/wi-fabric-2/proof/gates/WI-AQ-G1.json"
+          },
+          "requirement": {
+            "id": "WI-AQ-G1",
+            "kind": "checkpoint",
+            "state": "passed"
+          }
+        },
+        {
+          "binding": {
+            "kind": "closed-gate",
+            "record": "conformance/wi-fabric-2/proof/gates/WI-AQ-G2.json"
+          },
+          "requirement": {
+            "id": "WI-AQ-G2",
+            "kind": "checkpoint",
+            "state": "passed"
+          }
+        },
+        {
+          "binding": {
+            "kind": "closed-gate",
+            "record": "conformance/wi-fabric-2/proof/gates/WI-AQ-G3.json"
+          },
+          "requirement": {
+            "id": "WI-AQ-G3",
+            "kind": "checkpoint",
+            "state": "passed"
+          }
+        },
+        {
+          "binding": {
+            "kind": "closed-gate",
+            "record": "conformance/wi-fabric-2/proof/gates/WI-AQ-G4.json"
+          },
+          "requirement": {
+            "id": "WI-AQ-G4",
+            "kind": "checkpoint",
+            "state": "passed"
+          }
+        }
+      ],
+      "requires": [
+        {
+          "id": "STACK-PLAN-ACCEPTED",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "WI-WORKER-G1",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "WI-WORKER-G2",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "wi/WI-09/process-provider",
+          "kind": "slice",
+          "state": "verified"
+        },
+        {
+          "id": "WI-AQ-G1",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "WI-AQ-G2",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "WI-AQ-G3",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "WI-AQ-G4",
+          "kind": "checkpoint",
+          "state": "passed"
+        }
+      ],
+      "source_record_sha256": "ce40770887e716105c768df4b90c5bc69086204c33e460712cdd596a4a5bd5a1",
+      "status": "closed",
+      "version": 1
+    },
+    {
+      "closing_item": "WIP-16",
+      "effective_on": "reviewed-merge-with-adopted-checks",
+      "historical_evidence": [],
+      "id": "WI-WORKER-G4",
+      "pass_criteria": [
+        "WI-owned embedded harness, artifacts and external-provider seam pass without EXO/platform/Kata dependency or inflated assurance claims.",
+        "Source-owned evidence cases are bound in acceptance_coverage; owner PR IDs attribute work and are not automatic accepted-parent prerequisites."
+      ],
+      "required_cases": [
+        "AB-WI-019",
+        "WP-027",
+        "WP-028",
+        "WP-029",
+        "WP-030",
+        "WP-031",
+        "WP-032",
+        "WP-033",
+        "WP-034"
+      ],
+      "requirement_bindings": [
+        {
+          "binding": {
+            "date": "2026-10-13",
+            "historical_acceptance": "2026-10-01",
+            "kind": "plan-import",
+            "plan_version": "9212604c-4873-4cd5-b492-1ee3141b8b0b"
+          },
+          "requirement": {
+            "id": "STACK-PLAN-ACCEPTED",
+            "kind": "checkpoint",
+            "state": "passed"
+          }
+        },
+        {
+          "binding": {
+            "kind": "closed-gate",
+            "record": "conformance/wi-fabric-2/proof/gates/WI-WORKER-G3.json"
+          },
+          "requirement": {
+            "id": "WI-WORKER-G3",
+            "kind": "checkpoint",
+            "state": "passed"
+          }
+        },
+        {
+          "binding": {
+            "covering_items": [
+              "WIP-09",
+              "WIP-10",
+              "WIP-11"
+            ],
+            "effective_on": "reviewed-merge-with-adopted-checks",
+            "kind": "reviewed-item-scope"
+          },
+          "requirement": {
+            "id": "wi/WI-09/process-provider",
+            "kind": "slice",
+            "state": "verified"
+          }
+        },
+        {
+          "binding": {
+            "covering_items": [
+              "WIP-12"
+            ],
+            "effective_on": "reviewed-merge-with-adopted-checks",
+            "kind": "reviewed-item-scope"
+          },
+          "requirement": {
+            "id": "wi/WI-10/process-catalog",
+            "kind": "slice",
+            "state": "verified"
+          }
+        },
+        {
+          "binding": {
+            "covering_items": [
+              "WIP-14"
+            ],
+            "effective_on": "reviewed-merge-with-adopted-checks",
+            "kind": "reviewed-item-scope"
+          },
+          "requirement": {
+            "id": "wi/WI-11/embedded-runtime",
+            "kind": "slice",
+            "state": "verified"
+          }
+        },
+        {
+          "binding": {
+            "covering_items": [
+              "WIP-15"
+            ],
+            "effective_on": "reviewed-merge-with-adopted-checks",
+            "kind": "reviewed-item-scope"
+          },
+          "requirement": {
+            "id": "wi/WI-13/worker-conformance",
+            "kind": "slice",
+            "state": "verified"
+          }
+        },
+        {
+          "binding": {
+            "covering_items": [
+              "WIP-15",
+              "WIP-16"
+            ],
+            "effective_on": "reviewed-merge-with-adopted-checks",
+            "kind": "reviewed-item-scope"
+          },
+          "requirement": {
+            "id": "wi/WI-14/worker-handoff",
+            "kind": "slice",
+            "state": "verified"
+          }
+        },
+        {
+          "binding": {
+            "kind": "closed-gate",
+            "record": "conformance/wi-fabric-2/proof/gates/WI-AQ-G1.json"
+          },
+          "requirement": {
+            "id": "WI-AQ-G1",
+            "kind": "checkpoint",
+            "state": "passed"
+          }
+        },
+        {
+          "binding": {
+            "kind": "closed-gate",
+            "record": "conformance/wi-fabric-2/proof/gates/WI-AQ-G2.json"
+          },
+          "requirement": {
+            "id": "WI-AQ-G2",
+            "kind": "checkpoint",
+            "state": "passed"
+          }
+        },
+        {
+          "binding": {
+            "kind": "closed-gate",
+            "record": "conformance/wi-fabric-2/proof/gates/WI-AQ-G3.json"
+          },
+          "requirement": {
+            "id": "WI-AQ-G3",
+            "kind": "checkpoint",
+            "state": "passed"
+          }
+        },
+        {
+          "binding": {
+            "kind": "closed-gate",
+            "record": "conformance/wi-fabric-2/proof/gates/WI-AQ-G4.json"
+          },
+          "requirement": {
+            "id": "WI-AQ-G4",
+            "kind": "checkpoint",
+            "state": "passed"
+          }
+        }
+      ],
+      "requires": [
+        {
+          "id": "STACK-PLAN-ACCEPTED",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "WI-WORKER-G3",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "wi/WI-09/process-provider",
+          "kind": "slice",
+          "state": "verified"
+        },
+        {
+          "id": "wi/WI-10/process-catalog",
+          "kind": "slice",
+          "state": "verified"
+        },
+        {
+          "id": "wi/WI-11/embedded-runtime",
+          "kind": "slice",
+          "state": "verified"
+        },
+        {
+          "id": "wi/WI-13/worker-conformance",
+          "kind": "slice",
+          "state": "verified"
+        },
+        {
+          "id": "wi/WI-14/worker-handoff",
+          "kind": "slice",
+          "state": "verified"
+        },
+        {
+          "id": "WI-AQ-G1",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "WI-AQ-G2",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "WI-AQ-G3",
+          "kind": "checkpoint",
+          "state": "passed"
+        },
+        {
+          "id": "WI-AQ-G4",
+          "kind": "checkpoint",
+          "state": "passed"
+        }
+      ],
+      "source_record_sha256": "03dd712e1ea7b70770dcfd1186b7ea55902c8190dd63793d37a336bff9ae120d",
+      "status": "closed",
+      "version": 1
+    }
+  ],
+  "identities": {
+    "conformance/wi-fabric-2/worker/campaign-coverage.json": "5423a4c75cceb3b432c5630ede927ebd11522e2511dcff8501733226c14a69b0",
+    "conformance/wi-fabric-2/worker/evaluation-environment.json": "fbfff149065d63a819755e602a4fa692cd8be91f7ae97a578bd04aaefd6268b3",
+    "conformance/wi-fabric-2/worker/handoff-contract.json": "ee7367a45a4533f1d726af2dec88c7e467b1590f64dece76e34e999d8704f52b",
+    "contracts/aq-integration-target.json": "01ecb2c04b13c7d04a4c5e07adf537e80e77b4dd0a377c2f21f5e802b7c1e7ca",
+    "contracts/sources/aq-baseline-integration-acceptance-matrix.yaml": "3ed55cff70cbc603e6a44591b0f73aabf58b19d81cff28cf95baa08429ad6f4a",
+    "contracts/sources/wi-fabric-2-worker-boundary-assumption-ledger.yaml": "65bd7ca0b4fc1c4d116157b9ee05ac575e3da6bba0618dc35284303c5cd92d05",
+    "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml": "9c11d92d056b0411ed4af00a8f076182d95c500acd6e360f42a3a0bdd8aec2eb",
+    "contracts/sources/wi-fabric-2-worker-execution-profile.md": "9f597cffb7117dc679e9f001c25c7d54f2a6157f6ead563b0c7cbd11f45a04f9",
+    "contracts/sources/wi-fabric-2-worker-execution-profile.yaml": "6523baf56d14dafa4b199c7493dc030461cc061754c180b4c83006308e633986",
+    "crates/worldinterface-foundation/Cargo.lock": "4ddb4904b6a0b70c6e52bb879b804ee3e230f8f6813d9adcf2d2f0b31957a694",
+    "crates/worldinterface-runtime/Cargo.lock": "e666136bafc29291874e08a545082258e961b26a67daef31ed9a8055d9470c0b",
+    "crates/worldinterface-runtime/Cargo.toml": "dcedd59c9dfd8bd67b4f37ac645e97ff4e549a7f55907e859ac9566ffdbc039a",
+    "crates/worldinterface-runtime/src/bin/wi-process-fixture.rs": "27b8137ed69a852190ca0a842aa386da3e9ee76425d817eb315aaaf18f5044fb",
+    "crates/worldinterface-runtime/src/bin/wi-process-reaper.rs": "667a53244fd6e9f71569affc89c6302a2e7b14c3a155cc55eae31d26d3651542",
+    "crates/worldinterface-runtime/src/worker_process/admission.rs": "709838fd008366c560ee0ebb8805c11f893170d474124f2b50cf59183622c837",
+    "crates/worldinterface-runtime/src/worker_process/artifact.rs": "5b6f345413f3c9794aed6c83d607138eaf991f117d3ffc41ee5445ef12dd15a0",
+    "crates/worldinterface-runtime/src/worker_process/assets/sample-rust-Cargo.txt": "f7a6fdad07f316a2c3168b5c0dd9af42cb5bb10c8ba0cd325cd9dc33f067ca21",
+    "crates/worldinterface-runtime/src/worker_process/assets/sample-rust-lib.txt": "4f6a07ed71fc95baaa7243cb58588a956f3905730ad5201d751ad914a9bb2722",
+    "crates/worldinterface-runtime/src/worker_process/bootstrap.rs": "6a9eccf4c9518ff1857f706e69077535afa5ad2de36686f9e7ecb2a71322ff3d",
+    "crates/worldinterface-runtime/src/worker_process/fixture.rs": "1c1a05a1c7308d101134740b84a92d20f6622ff637ed77d41b06599d324e7eb5",
+    "crates/worldinterface-runtime/src/worker_process/journal.rs": "be08dc629329b801f506652dee8178d9285646e4f9297ceb225306dc2639d467",
+    "crates/worldinterface-runtime/src/worker_process/launch.rs": "42bd7c004c2971e70adacc129f47714c7997299d58b5512b83ca5d10792d5003",
+    "crates/worldinterface-runtime/src/worker_process/mod.rs": "a17e61926676c7890d25aba93d90dbaaff50a145e5c240ff1da859c5caf20c61",
+    "crates/worldinterface-runtime/src/worker_process/ownership.rs": "4e35f4f7d6b51ae0ca83b23d4e0cd151295a9096fd337baaad4f5e2de5829d01",
+    "crates/worldinterface-runtime/src/worker_process/supervision.rs": "b5af2594163db0a18c1548216ad6e708c51b6d906a2f229f27ab98281739a1b5",
+    "crates/worldinterface-runtime/tests/support/worker_build.rs": "013aea2eb9c0f0ae7d8cbc6fc329c875d1d5f2362e3cc9bfa13d4c0c730f18f4",
+    "crates/worldinterface-runtime/tests/support/worker_fixture.rs": "e05a7a3ed8e47b5ef747d4bc02a48fa34f1181e41a59483359e0a9bd693a6095",
+    "crates/worldinterface-runtime/tests/support/worker_seam.rs": "0f050f1e154faccc2d1cd1530dff25fc933714da6e22a387cd50a76bdbaa72da",
+    "docs/evidence/WI-EMBEDDED-WORKER-PROOF-1.md": "986d3af4fce8df0fcb76d4d8fae70105e44c74730137d1759c29aa0bb5b6a3f3",
+    "fixtures/pre-wi-fabric-2/exo/repos/sample-rust/.gitignore": "12cc0f91b51fedf41ae1670d1624ee1d78a284bdb101645b60a06a12de16c069",
+    "fixtures/pre-wi-fabric-2/exo/repos/sample-rust/Cargo.lock": "05c88a19f6c1a4bd2a4f0d92e280e80827f001080d82c84b8a18426a00a3f1bc",
+    "fixtures/pre-wi-fabric-2/exo/repos/sample-rust/Cargo.toml": "f7a6fdad07f316a2c3168b5c0dd9af42cb5bb10c8ba0cd325cd9dc33f067ca21",
+    "fixtures/pre-wi-fabric-2/exo/repos/sample-rust/src/lib.rs": "4f6a07ed71fc95baaa7243cb58588a956f3905730ad5201d751ad914a9bb2722",
+    "rust-toolchain.toml": "2a0049652fe5a89222a0fc64fa0e4a403435f134bd6fbdf9556e986a62e59128",
+    "scripts/build-wi-worker-evaluation.sh": "63cd1c01a84f9c83f36be7b4aff56f75c305ebf53e374f62f92d8254567f6714",
+    "scripts/wi_worker_evaluation.py": "30b29dd6e1e4ca9338c2ad9097f78da848bddb073152d6e6891f9c3e0dfd2f4a",
+    "tools/wi-contract-check/Cargo.lock": "e23d73ebc1773d7c638713f63e51cf3e6f0c1982ee3f96a3b46b804185cce057"
+  },
+  "kind": "wi-embedded-worker-handoff-descriptor-v1",
+  "maturity": "integration-only",
+  "milestone": "WI-EMBEDDED-WORKER-PROOF-1",
+  "profile": {
+    "adapter": "worldinterface-runtime 0.2.0 worker_process; source digests in identities",
+    "execution": "WI-WORKER-EXECUTION-1",
+    "provider": "process-managed-proof-1"
+  },
+  "publication_owner": "WIP-16",
+  "reproduction": {
+    "adopted_checks": ".craftingtable/checks.json; ct-check --declared ID for all ten IDs on committed HEAD",
+    "execute": "scripts/worker-proof-evidence.sh EMPTY_EXTERNAL_DIRECTORY",
+    "prepare": [
+      "cargo run --locked --manifest-path tools/wi-contract-check/Cargo.toml -- hashes refresh",
+      "cargo run --locked --manifest-path tools/wi-contract-check/Cargo.toml -- handoff generate",
+      "python3 scripts/refresh-wi-worker-evaluation.py",
+      "scripts/build-wi-worker-evaluation.sh"
+    ],
+    "verify": "cargo run --locked --offline --manifest-path tools/wi-contract-check/Cargo.toml -- handoff verify DIRECTORY"
+  },
+  "reviewed_closure": {
+    "effective_on": "reviewed-merge-with-adopted-checks",
+    "execution_grants_closure": false,
+    "gates": [
+      "WI-WORKER-G4",
+      "WI-EMBEDDED-WORKER-PROOF-1"
+    ]
+  },
+  "reviewer_references": [
+    "docs/work-items/WIP-15-verification.md: predecessor reviews and cold campaign",
+    "CraftingTable design 11e3aabb-001b-4e23-a675-1450f334de68: accepted WIP-16 design",
+    "CraftingTable implementation 5f81f4d2-2cf6-4cb6-9e0f-8ea8f5dee8ab: candidate preparation; independent exact-head review and integration remain external"
+  ],
+  "revision_binding": "containing committed revision; resolve commit and tree externally on unchanged clean HEAD",
+  "risks": [
+    "same OS identity and co-residency",
+    "CPU, memory, process count, network and filesystem containment unavailable",
+    "no independent VM or hostile-code qualification",
+    "seam simulation only; no remote provider qualification",
+    "worker exit and WI receipt do not establish consumer task acceptance",
+    "reviewed milestone closure is effective only on reviewed merge with adopted checks; execution grants no closure"
+  ],
+  "supported_operations": [
+    "provision",
+    "start",
+    "inspect",
+    "terminate",
+    "collect_artifacts",
+    "release"
+  ],
+  "toolchain": "Rust 1.89.0; locked, offline Cargo; Linux x86_64",
+  "unavailable_operations": [
+    "pause",
+    "resume",
+    "checkpoint",
+    "remote-provider",
+    "daemon",
+    "python"
+  ],
+  "version": 1
+}

@@ -1,0 +1,556 @@
+schema_version: 1
+kind: worker_execution_acceptance_plan
+document: WI worker-provider and bounded lifecycle acceptance matrix
+profile_id: WI-WORKER-EXECUTION-1
+provider_profile_id: process-managed-proof-1
+date: '2026-09-12'
+status: planned-not-executed
+case_count: 40
+cases:
+- id: WP-001
+  checkpoint: WI-WORKER-G1
+  group: profile
+  owner_pr: WI-09
+  status: planned
+  title: Reviewed provider definition
+  setup: Review WI-ADR-016 and pin profile/adapter design.
+  expected: Provider definition belongs to WI; EXO can reference or tighten it but cannot create a weaker same-ID
+    variant.
+  requires_real_embedded_aq_wi: false
+  requires_exoskeleton: false
+  requires_kata_host: false
+  evidence_class: definition-review
+  runtime_pass_asserted: false
+- id: WP-002
+  checkpoint: WI-WORKER-G1
+  group: profile
+  owner_pr: WI-02
+  status: planned
+  title: Process identity representation
+  setup: Encode process executable/configuration provenance through reviewed existing seams.
+  expected: No fabricated independent image/VM identity; absent/not-applicable differs from unknown; no unauthorized
+    frozen-wire change.
+  requires_real_embedded_aq_wi: false
+  requires_exoskeleton: false
+  requires_kata_host: false
+  evidence_class: definition-review
+  runtime_pass_asserted: false
+- id: WP-003
+  checkpoint: WI-WORKER-G1
+  group: profile
+  owner_pr: WI-09
+  status: planned
+  title: Independent worker assurance denied
+  setup: Request a worker VM while selecting process-managed-proof-1.
+  expected: Profile selection is ineligible; outer Kata provenance cannot satisfy independent-worker isolation.
+  requires_real_embedded_aq_wi: false
+  requires_exoskeleton: false
+  requires_kata_host: false
+  evidence_class: definition-review
+  runtime_pass_asserted: false
+- id: WP-004
+  checkpoint: WI-WORKER-G1
+  group: profile
+  owner_pr: WI-09
+  status: planned
+  title: No local identifiers in consumer contract
+  setup: Exercise worker controls with opaque run/provider references.
+  expected: Consumer requires neither PID nor host path; provider retains local execution identifiers privately.
+  requires_real_embedded_aq_wi: false
+  requires_exoskeleton: false
+  requires_kata_host: false
+  evidence_class: definition-review
+  runtime_pass_asserted: false
+- id: WP-005
+  checkpoint: WI-WORKER-G1
+  group: profile
+  owner_pr: WI-09
+  status: planned
+  title: Operation support is explicit
+  setup: Inspect qualified required/optional operation capabilities.
+  expected: Required operations have defined semantics; optional command/checkpoint/suspend/resume remain unavailable
+    until qualified.
+  requires_real_embedded_aq_wi: false
+  requires_exoskeleton: false
+  requires_kata_host: false
+  evidence_class: definition-review
+  runtime_pass_asserted: false
+- id: WP-006
+  checkpoint: WI-WORKER-G1
+  group: profile
+  owner_pr: WI-09
+  status: planned
+  title: No platform prerequisite
+  setup: Build the provider contract and WI-owned test-consumer harness.
+  expected: No EXO executable, platform services, DigiCorp, Kata host, or new AQ primitive is required to define
+    the provider profile.
+  requires_real_embedded_aq_wi: false
+  requires_exoskeleton: false
+  requires_kata_host: false
+  evidence_class: definition-review
+  runtime_pass_asserted: false
+- id: WP-007
+  checkpoint: WI-WORKER-G1
+  group: profile
+  owner_pr: WI-10
+  status: planned
+  title: Unqualified provider cannot be enabled
+  setup: Register an adapter with declared controls but no applicable qualification; separately request operator-approved
+    conformance-fixture evaluation.
+  expected: Ordinary use remains blocked. Only explicit evaluation-only registration may run bounded reviewed fixtures
+    under unchanged authorization/exclusions; it cannot self-promote or waive missing required enforcement.
+  requires_real_embedded_aq_wi: false
+  requires_exoskeleton: false
+  requires_kata_host: false
+  evidence_class: definition-review
+  runtime_pass_asserted: false
+- id: WP-008
+  checkpoint: WI-WORKER-G1
+  group: profile
+  owner_pr: WI-09
+  status: planned
+  title: Mediation is not containment
+  setup: Review fully-mediated/hybrid/sandboxed-native labels with a process backend.
+  expected: Labels describe intended interaction policy, not independent OS confinement; full hostile-code claims
+    remain unavailable.
+  requires_real_embedded_aq_wi: false
+  requires_exoskeleton: false
+  requires_kata_host: false
+  evidence_class: definition-review
+  runtime_pass_asserted: false
+- id: WP-009
+  checkpoint: WI-WORKER-G2
+  group: admission
+  owner_pr: WI-04
+  status: planned
+  title: Approve exact reviewed fixture
+  setup: Submit an authorized approved executable and non-sensitive input set to a qualified profile.
+  expected: Only exact bound provider/executable/configuration/input scope is admitted; request reaches ordinary
+    durable intent/admission path.
+  requires_real_embedded_aq_wi: false
+  requires_exoskeleton: false
+  requires_kata_host: false
+  evidence_class: fixture-plus-implementation-evidence
+  runtime_pass_asserted: false
+- id: WP-010
+  checkpoint: WI-WORKER-G2
+  group: admission
+  owner_pr: WI-04
+  status: planned
+  title: Deny arbitrary or generated executable
+  setup: Submit an unreviewed binary or newly generated executable candidate.
+  expected: Denied before process creation; task purpose, model recommendation, or human approval cannot waive this
+    profile restriction.
+  requires_real_embedded_aq_wi: false
+  requires_exoskeleton: false
+  requires_kata_host: false
+  evidence_class: fixture-plus-implementation-evidence
+  runtime_pass_asserted: false
+- id: WP-011
+  checkpoint: WI-WORKER-G2
+  group: admission
+  owner_pr: WI-04
+  status: planned
+  title: Deny protected data and credentials
+  setup: Request production secrets or sensitive production inputs under the process proof.
+  expected: Denied; approved test credentials, when needed, remain short-lived/run-scoped and cannot intentionally
+    expose higher authority. Cross-run or caller-asserted root identities cannot invoke or inspect another run.
+  requires_real_embedded_aq_wi: false
+  requires_exoskeleton: false
+  requires_kata_host: false
+  evidence_class: fixture-plus-implementation-evidence
+  runtime_pass_asserted: false
+- id: WP-012
+  checkpoint: WI-WORKER-G2
+  group: admission
+  owner_pr: WI-04
+  status: planned
+  title: Unsupported mandatory controls fail closed
+  setup: Require an unenforced network/resource/mount constraint.
+  expected: No launch, ignored field, or weaker fallback; denial names the unmet requirement.
+  requires_real_embedded_aq_wi: false
+  requires_exoskeleton: false
+  requires_kata_host: false
+  evidence_class: fixture-plus-implementation-evidence
+  runtime_pass_asserted: false
+- id: WP-013
+  checkpoint: WI-WORKER-G2
+  group: admission
+  owner_pr: WI-04
+  status: planned
+  title: Unsupported operation has no effect
+  setup: Invoke unqualified suspend/checkpoint/resume/command.
+  expected: Unavailable result with no false success or lifecycle side effect; termination is never silently substituted
+    for suspension.
+  requires_real_embedded_aq_wi: false
+  requires_exoskeleton: false
+  requires_kata_host: false
+  evidence_class: fixture-plus-implementation-evidence
+  runtime_pass_asserted: false
+- id: WP-014
+  checkpoint: WI-WORKER-G2
+  group: admission
+  owner_pr: WI-04
+  status: planned
+  title: Change of provider cannot reuse authorization
+  setup: Change adapter/profile/executable after authorization and before invocation.
+  expected: Mismatch detected and reevaluated; digest conflict cannot silently rebind an existing effect to different
+    authority or controls.
+  requires_real_embedded_aq_wi: false
+  requires_exoskeleton: false
+  requires_kata_host: false
+  evidence_class: fixture-plus-implementation-evidence
+  runtime_pass_asserted: false
+- id: WP-015
+  checkpoint: WI-WORKER-G2
+  group: evidence
+  owner_pr: WI-05
+  status: planned
+  title: Evidence distinguishes both environments
+  setup: Combine host-supplied Kata evidence with a process-worker receipt.
+  expected: Instance provenance and worker assurance stay separate; guest/worker assertion cannot certify host qualification.
+  requires_real_embedded_aq_wi: false
+  requires_exoskeleton: false
+  requires_kata_host: false
+  evidence_class: fixture-plus-implementation-evidence
+  runtime_pass_asserted: false
+- id: WP-016
+  checkpoint: WI-WORKER-G2
+  group: evidence
+  owner_pr: WI-05
+  status: planned
+  title: Requested does not equal enforced
+  setup: Record requested, advertised, applied, observed and missing control evidence.
+  expected: Unknown enforcement remains unknown; unsupported controls deny admission; no generic sandboxed=true
+    or task-acceptance conclusion.
+  requires_real_embedded_aq_wi: false
+  requires_exoskeleton: false
+  requires_kata_host: false
+  evidence_class: fixture-plus-implementation-evidence
+  runtime_pass_asserted: false
+- id: WP-017
+  checkpoint: WI-WORKER-G3
+  group: lifecycle
+  owner_pr: WI-09
+  status: planned
+  title: Durable bounded start
+  setup: Launch a reviewed fixture through real embedded WI and AQ.
+  expected: Intent/grant/run identity precede consequential start; sanitized environment, bounded outputs and per-run
+    workspace apply.
+  requires_real_embedded_aq_wi: true
+  requires_exoskeleton: false
+  requires_kata_host: false
+  evidence_class: fixture-plus-implementation-evidence
+  runtime_pass_asserted: false
+- id: WP-018
+  checkpoint: WI-WORKER-G3
+  group: lifecycle
+  owner_pr: WI-06
+  status: planned
+  title: Duplicate start and conflicting digest
+  setup: Repeat one request and then change its canonical content.
+  expected: Duplicate converges on the same run; conflicting content rejects; AQ retry is not a fresh logical work
+    order.
+  requires_real_embedded_aq_wi: true
+  requires_exoskeleton: false
+  requires_kata_host: false
+  evidence_class: fixture-plus-implementation-evidence
+  runtime_pass_asserted: false
+- id: WP-019
+  checkpoint: WI-WORKER-G3
+  group: lifecycle
+  owner_pr: WI-06
+  status: planned
+  title: Crash across creation acknowledgement
+  setup: Crash before and after spawn, run-registry update, and acknowledgement.
+  expected: Owned process is reconciled or safely quarantined/stopped before replacement; no blind duplicate spawn
+    or orphan success claim.
+  requires_real_embedded_aq_wi: true
+  requires_exoskeleton: false
+  requires_kata_host: false
+  evidence_class: fixture-plus-implementation-evidence
+  runtime_pass_asserted: false
+- id: WP-020
+  checkpoint: WI-WORKER-G3
+  group: lifecycle
+  owner_pr: WI-09
+  status: planned
+  title: PID reuse safety
+  setup: Present a recycled PID with a mismatched ownership/birth/boot binding.
+  expected: Unrelated process is neither adopted nor terminated; ambiguity is recorded and escalated.
+  requires_real_embedded_aq_wi: true
+  requires_exoskeleton: false
+  requires_kata_host: false
+  evidence_class: fixture-plus-implementation-evidence
+  runtime_pass_asserted: false
+- id: WP-021
+  checkpoint: WI-WORKER-G3
+  group: lifecycle
+  owner_pr: WI-09
+  status: planned
+  title: Process tree stop and cleanup
+  setup: Reviewed fixture creates descendants and resists graceful cancellation.
+  expected: Bounded escalation stops validated descendants; stop request and confirmed exit differ; unresolved cleanup
+    is visible.
+  requires_real_embedded_aq_wi: true
+  requires_exoskeleton: false
+  requires_kata_host: false
+  evidence_class: fixture-plus-implementation-evidence
+  runtime_pass_asserted: false
+- id: WP-022
+  checkpoint: WI-WORKER-G3
+  group: lifecycle
+  owner_pr: WI-09
+  status: planned
+  title: Wall time and output bounds
+  setup: Reviewed fixtures exceed configured duration and output caps.
+  expected: Bounded enforcement occurs; logs do not grow indefinitely or leak intentionally excluded credentials.
+  requires_real_embedded_aq_wi: true
+  requires_exoskeleton: false
+  requires_kata_host: false
+  evidence_class: fixture-plus-implementation-evidence
+  runtime_pass_asserted: false
+- id: WP-023
+  checkpoint: WI-WORKER-G3
+  group: lifecycle
+  owner_pr: WI-09
+  status: planned
+  title: No deliberate secret/descriptor inheritance
+  setup: Inspect the admitted fixture launch environment and inherited descriptors.
+  expected: Only allowlisted environment/handles supplied; test distinguishes deliberate exclusion from an unproven
+    same-OS-identity isolation guarantee.
+  requires_real_embedded_aq_wi: true
+  requires_exoskeleton: false
+  requires_kata_host: false
+  evidence_class: fixture-plus-implementation-evidence
+  runtime_pass_asserted: false
+- id: WP-024
+  checkpoint: WI-WORKER-G3
+  group: lifecycle
+  owner_pr: WI-08
+  status: planned
+  title: Durable events before wake
+  setup: Inject failure around event commit, wake outbox and AQ delivery.
+  expected: No authoritative wake references uncommitted WI state; retries converge on durable evidence.
+  requires_real_embedded_aq_wi: true
+  requires_exoskeleton: false
+  requires_kata_host: false
+  evidence_class: fixture-plus-implementation-evidence
+  runtime_pass_asserted: false
+- id: WP-025
+  checkpoint: WI-WORKER-G3
+  group: lifecycle
+  owner_pr: WI-08
+  status: planned
+  title: Duplicate late and reordered worker events
+  setup: Reorder completion/cancel/progress and replay events after restart.
+  expected: Stable run-bound records converge without false acceptance or revival of terminal runs; gaps remain
+    inspectable.
+  requires_real_embedded_aq_wi: true
+  requires_exoskeleton: false
+  requires_kata_host: false
+  evidence_class: fixture-plus-implementation-evidence
+  runtime_pass_asserted: false
+- id: WP-026
+  checkpoint: WI-WORKER-G3
+  group: lifecycle
+  owner_pr: WI-09
+  status: planned
+  title: Checkpoint support truthfulness
+  setup: Exercise unavailable memory restore and any advertised application-checkpoint profile.
+  expected: Unavailable operations have no effect; supported artifact resume binds exact artifacts/configuration
+    and does not claim process-memory restoration.
+  requires_real_embedded_aq_wi: true
+  requires_exoskeleton: false
+  requires_kata_host: false
+  evidence_class: fixture-plus-implementation-evidence
+  runtime_pass_asserted: false
+- id: WP-027
+  checkpoint: WI-WORKER-G4
+  group: proof
+  owner_pr: WI-09
+  status: planned
+  title: Scoped artifact collection
+  setup: Collect outputs through the provider API rather than reading a consumer local path.
+  expected: Run ownership, content digests, export policy and publication ordering are validated.
+  requires_real_embedded_aq_wi: true
+  requires_exoskeleton: false
+  requires_kata_host: false
+  evidence_class: fixture-plus-implementation-evidence
+  runtime_pass_asserted: false
+- id: WP-028
+  checkpoint: WI-WORKER-G4
+  group: proof
+  owner_pr: WI-09
+  status: planned
+  title: Unsafe artifact export quarantined
+  setup: Return a fixture export outside scope, unsafe path/link, or malformed manifest.
+  expected: No publication outside approved scope; invalid or ambiguous exports are quarantined and reported.
+  requires_real_embedded_aq_wi: true
+  requires_exoskeleton: false
+  requires_kata_host: false
+  evidence_class: fixture-plus-implementation-evidence
+  runtime_pass_asserted: false
+- id: WP-029
+  checkpoint: WI-WORKER-G4
+  group: proof
+  owner_pr: WI-11
+  status: planned
+  title: WI-owned real embedded proof
+  setup: Run coding and non-coding reviewed fixtures through a WI-owned consumer with real embedded AQ/WI.
+  expected: Admission, lifecycle, artifacts and recovery are proven without EXO executable or platform services;
+    WI does not score work quality.
+  requires_real_embedded_aq_wi: true
+  requires_exoskeleton: false
+  requires_kata_host: false
+  evidence_class: fixture-plus-implementation-evidence
+  runtime_pass_asserted: false
+- id: WP-030
+  checkpoint: WI-WORKER-G4
+  group: proof
+  owner_pr: WI-11
+  status: planned
+  title: No hidden consumer bypass
+  setup: Use only the common application services for embedded controls and inspection.
+  expected: No direct consumer process kill, file collection, database mutation or engine-management bypass.
+  requires_real_embedded_aq_wi: true
+  requires_exoskeleton: false
+  requires_kata_host: false
+  evidence_class: fixture-plus-implementation-evidence
+  runtime_pass_asserted: false
+- id: WP-031
+  checkpoint: WI-WORKER-G4
+  group: proof
+  owner_pr: WI-09
+  status: planned
+  title: External-provider seam fixture
+  setup: Use an asynchronous test provider with no shared filesystem or visible PID.
+  expected: Same worker contract works; result labeled seam simulation, not real remote-provider or isolation qualification.
+  requires_real_embedded_aq_wi: true
+  requires_exoskeleton: false
+  requires_kata_host: false
+  evidence_class: fixture-plus-implementation-evidence
+  runtime_pass_asserted: false
+- id: WP-032
+  checkpoint: WI-WORKER-G4
+  group: proof
+  owner_pr: WI-10
+  status: planned
+  title: Drift and quarantine invalidation
+  setup: Change profile/adapter/control/policy/input versions after qualification or quarantine the provider.
+  expected: Affected evidence requires review/requalification; new admissions blocked; stop/inspect/reconcile remain
+    available under recovery policy.
+  requires_real_embedded_aq_wi: true
+  requires_exoskeleton: false
+  requires_kata_host: false
+  evidence_class: fixture-plus-implementation-evidence
+  runtime_pass_asserted: false
+- id: WP-033
+  checkpoint: WI-WORKER-G4
+  group: proof
+  owner_pr: WI-13
+  status: planned
+  title: Partial proof not full acceptance
+  setup: Record G1-G4 evidence while broader WI-09/WI-11/WI-13 obligations are incomplete.
+  expected: Only WI-EMBEDDED-WORKER-PROOF-1 may pass; parents, full G1-G5 gates, remote parity and strong isolation
+    remain unsatisfied.
+  requires_real_embedded_aq_wi: true
+  requires_exoskeleton: false
+  requires_kata_host: false
+  evidence_class: fixture-plus-implementation-evidence
+  runtime_pass_asserted: false
+- id: WP-034
+  checkpoint: WI-WORKER-G4
+  group: proof
+  owner_pr: WI-14
+  status: planned
+  title: Consumer handoff is pinned and nonsemantic
+  setup: Produce worker definition, implementation/test pins, supported operations and limitations for EXO.
+  expected: EXO can verify exact producer evidence; worker exit and WI receipt never become EXO task acceptance.
+  requires_real_embedded_aq_wi: true
+  requires_exoskeleton: false
+  requires_kata_host: false
+  evidence_class: fixture-plus-implementation-evidence
+  runtime_pass_asserted: false
+- id: WP-035
+  checkpoint: WI-WORKER-G5
+  group: host-lifecycle
+  owner_pr: WI-06
+  status: planned
+  title: Bounded supervisor authorization
+  setup: Request one approved instance lifecycle operation through an authenticated supervisor test endpoint.
+  expected: Exact instance/operation/image bounds enforced outside guest; arbitrary host flags, engine sockets,
+    mounts and deployment credentials denied.
+  requires_real_embedded_aq_wi: false
+  requires_exoskeleton: false
+  requires_kata_host: false
+  evidence_class: fixture-plus-implementation-evidence
+  runtime_pass_asserted: false
+- id: WP-036
+  checkpoint: WI-WORKER-G5
+  group: host-lifecycle
+  owner_pr: WI-06
+  status: planned
+  title: Lifecycle acceptance differs from completion
+  setup: Supervisor accepts a stop/replacement request and later records its outcome.
+  expected: Receipt milestones remain distinct; no successful completion inferred solely from accepted command.
+  requires_real_embedded_aq_wi: false
+  requires_exoskeleton: false
+  requires_kata_host: false
+  evidence_class: fixture-plus-implementation-evidence
+  runtime_pass_asserted: false
+- id: WP-037
+  checkpoint: WI-WORKER-G5
+  group: host-lifecycle
+  owner_pr: WI-06
+  status: planned
+  title: Result survives stopped guest
+  setup: Stop a controlled test guest or equivalent separate process-domain fixture after durable request.
+  expected: Supervisor stores queryable result outside target lifetime; restarted WI can import/reconcile it idempotently.
+  requires_real_embedded_aq_wi: false
+  requires_exoskeleton: false
+  requires_kata_host: false
+  evidence_class: fixture-plus-implementation-evidence
+  runtime_pass_asserted: false
+- id: WP-038
+  checkpoint: WI-WORKER-G5
+  group: host-lifecycle
+  owner_pr: WI-08
+  status: planned
+  title: Lost callback and restart
+  setup: Lose callback to a stopped guest and retry after recovery.
+  expected: External inspect plus durable local reconciliation converges; no blind duplicate activation or wake-only
+    evidence.
+  requires_real_embedded_aq_wi: false
+  requires_exoskeleton: false
+  requires_kata_host: false
+  evidence_class: fixture-plus-implementation-evidence
+  runtime_pass_asserted: false
+- id: WP-039
+  checkpoint: WI-WORKER-G5
+  group: host-lifecycle
+  owner_pr: WI-11
+  status: planned
+  title: Recovery independent of failed guest
+  setup: Disable the guest and initiate operator recovery.
+  expected: Protected supervisor/recovery path remains available; active guest/candidate does not control the sole
+    activation key, test suite or rollback artifact.
+  requires_real_embedded_aq_wi: false
+  requires_exoskeleton: false
+  requires_kata_host: false
+  evidence_class: fixture-plus-implementation-evidence
+  runtime_pass_asserted: false
+- id: WP-040
+  checkpoint: WI-WORKER-G5
+  group: host-lifecycle
+  owner_pr: WI-13
+  status: planned
+  title: Scope of host fixture evidence
+  setup: Run boundary fixtures without real Kata host qualification.
+  expected: WI-G5 records interface/reconciliation evidence only; EXO must separately prove actual Kata lifecycle
+    behavior and deployment controls.
+  requires_real_embedded_aq_wi: false
+  requires_exoskeleton: false
+  requires_kata_host: false
+  evidence_class: fixture-plus-implementation-evidence
+  runtime_pass_asserted: false

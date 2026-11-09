@@ -1,0 +1,36 @@
+{
+  "submissionId": "764f0941-a8f1-4214-81a5-f3b0566eb120",
+  "checkpoint": "WI-ADR-004",
+  "definitionId": "0ebcb7cf-9686-4bc1-9b9d-bb85a1d0b4c9",
+  "bindingRevision": 4,
+  "decision": {
+    "coverage": "full",
+    "proposal": "WorldInterface constructs authoritative agency from an injected trusted authentication interface and versioned server-owned actor/principal/delegation bindings. Caller identity, requested principal, acting capacity and delegation references are claims, never trusted transport context. Require a unique valid tenant-scoped binding, a current acyclic attenuating delegation chain, and evidence that the requester may use the named accountable principal and acting capacity. Reject missing, expired, revoked, ambiguous or incompatible bindings. Preserve requester, accountable principal, submitted-by, sponsor, authorizer and approver as distinct roles; sponsorship and causal references grant no authority. Persist agency and binding provenance with the immutable intent, using existing records and bounded typed evidence artifacts. Preserve ADR-002's authenticated-principal admission namespace. Trusted context types are not caller-deserializable. Embedded hosts may supply trusted handles; centralized hosts must authenticate credentials before constructing these contexts. WI-04/domain supplies pure validation and test-only authentication/evidence ports; production transport and credential mechanisms remain their owning integration and daemon work.",
+    "sourceReferences": "Imported map EXO-STACK-CONCURRENCY-DRAFT-1 0.3.0; exact plan binding 4; checkpoint WI-ADR-004.\n{\"source_id\":\"wi-plan\",\"section\":\"\u00a74 ADR queue\",\"start_line\":357,\"end_line\":357}\nwi-fabric-2-foundational-implementation-plan.md: \u00a74 WI-ADR-004, WI-04, \u00a79.1\nworldinterface-v2-foundational-design.md: \u00a7\u00a76.2\u20136.3, 14.1\u201314.8, 28.2\ndocs/adr/WI-ADR-002.md\ndocs/adr/WI-ADR-004.md\nAttached design run 65af2f75-2ad4-4933-9e77-7e3652243162; SHA-256 03663c1f068047ebc1e8aa189c8bffff2b930c581f71d896f55789796a38d23f.",
+    "retainedObligations": "",
+    "consumers": [],
+    "kind": "architecture-decision-v1",
+    "bindingDigest": "8cae5ff3253d493fce0527aa42381a551c40014440ab3d05270ae8d822d11295"
+  },
+  "approval": {
+    "submissionId": "764f0941-a8f1-4214-81a5-f3b0566eb120",
+    "outcome": "accepted",
+    "rationale": "This decision is approved. It is essential that isolation remain a primary concern of WI, so cementing that into its form now is the way.",
+    "id": "e31d8d22-208c-4ba8-9b7a-fcfa6695fc2e",
+    "workspaceId": "6bf6915a-6cd0-47cc-b853-fcbc04f02f3d",
+    "decidedAt": "2026-09-21T19:32:01.233Z",
+    "decidedByUserId": "0698a39b-dda2-4870-8f3f-97ef94784ae9"
+  },
+  "sourceRunId": "65af2f75-2ad4-4933-9e77-7e3652243162",
+  "sourceRunDigest": "03663c1f068047ebc1e8aa189c8bffff2b930c581f71d896f55789796a38d23f",
+  "artifacts": [
+    {
+      "name": "decision-review-packet",
+      "digest": "aead21a72a9d734095ad29595a42a7bf4aa01d374cbdce50d5676106670f612a"
+    },
+    {
+      "name": "source-design-proposal-not-approval",
+      "digest": "03663c1f068047ebc1e8aa189c8bffff2b930c581f71d896f55789796a38d23f"
+    }
+  ]
+}

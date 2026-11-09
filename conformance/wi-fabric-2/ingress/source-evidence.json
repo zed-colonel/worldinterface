@@ -1,0 +1,82 @@
+{
+  "scope": {
+    "kind": "slice",
+    "definitionId": "0ebcb7cf-9686-4bc1-9b9d-bb85a1d0b4c9",
+    "bindingRevision": 4,
+    "sourceId": "wi/WI-03/domain"
+  },
+  "policy_revision": {
+    "version": 1,
+    "branchSettingsVersion": 1,
+    "adoptedAt": "2026-09-18T00:41:03.548Z",
+    "controlMode": "controller-local"
+  },
+  "source_sha256": {
+    "craftingtable-repository-policy.json": "a01cd5747327f27bb1f63100ac7346cc139f0586f8a7fede318550d782009535",
+    "craftingtable-operator-decisions.json": "bd7086357da0540fd46e17f699559afa7656abbfd518df1e95fa8734dd467b13",
+    "craftingtable-scope-evidence.json": "d2c9e8d8890d08c33ce765e492f0feb03ae4348b997e152e5cb3e1c49a774c34",
+    "wi-fabric-2-foundational-implementation-plan.md": "32564920d4cb1fa43fcecf996ef7897aa38b5c70fe4c04ca89adbedde86e608e",
+    "worldinterface-v2-foundational-design.md": "45e8ad3e5cc9618cbb951c0062cbd5daa49e7f57a0955d38e1172f6603e7b4bb",
+    "AQ-BASELINE-ALIGNMENT.md": "cd013232a0a9cbca2c625d31c3fc75e053f7948d37b8a6de2f08ff5cdc7e4656",
+    "wi-fabric-2-aq-assumption-ledger-foundational.yaml": "943d9f263afeee5c56cc6c65a3c6dfca6fca8c871ff070aed2cd0c77f1437415",
+    "aq-baseline-integration-acceptance-matrix.yaml": "3ed55cff70cbc603e6a44591b0f73aabf58b19d81cff28cf95baa08429ad6f4a",
+    "aq-baseline.lock.json": "1907d0a157628511c2419f84fd6b7820e09c160699505ee986cc46f3bcf78c7a"
+  },
+  "adr_approval_sha256": {
+    "WI-ADR-002.json": "90fc2c3a245ecc3e2f007a284aa54b82a24858409e7b8b8353643bd138cfb326",
+    "WI-ADR-012.json": "2be10eb17b6770127cdb8fb12b655243230d73da8884044a866a633a6d51ef8b",
+    "WI-ADR-001.json": "ffc652dc4aeb0af4708da435a3836d48e4f34bccd0759cd5df10bb5fcb83e099",
+    "WI-ADR-013.json": "5d6f0c215398cbaa01bce0bfd1639874736a2419a1fc75246a7471e9f8af9bcb",
+    "WI-ADR-016.json": "a32ba0a9c38340cfa3be18e9e6fa19b20172fb4d33e42b55d81307c9a84fcca8",
+    "WI-ADR-003.json": "1912ba6bcb31f0c4a32053fb5d6b0156458db1d5496ca92018881afee241de18"
+  },
+  "approved_proposal_sha256": "752a0ef945c6146feb8de94a4474d93d97dc19ba2e3571a2058b10218b077616",
+  "predecessor_receipts": [
+    {
+      "id": "6702aafb-8f4d-4dda-a6f9-00c2221d80f5",
+      "headSha": "9cbdb13dd769c8a66bf03fca380a1194e484476e",
+      "integrationSha": "9cbdb13dd769c8a66bf03fca380a1194e484476e",
+      "scope": {
+        "kind": "slice",
+        "definitionId": "0ebcb7cf-9686-4bc1-9b9d-bb85a1d0b4c9",
+        "bindingRevision": 4,
+        "sourceId": "wi/WI-02/domain"
+      },
+      "current": true
+    }
+  ],
+  "initial_observation": {
+    "head": "9cbdb13dd769c8a66bf03fca380a1194e484476e",
+    "tree": "9e0a1f53ea67b7cee680393f983ead1679359149",
+    "target": "9cbdb13dd769c8a66bf03fca380a1194e484476e",
+    "main": "f48df82e98203fa94c86eecae60425205c3e00e9",
+    "freeze_tag": "f48df82e98203fa94c86eecae60425205c3e00e9",
+    "clean_at_entry": true,
+    "ref_match_proves_enforcement": false
+  },
+  "assumptions": [
+    {
+      "id": "WI-AQ-005",
+      "gate": "WI-AQ-G3",
+      "status": "runtime-consumer-evidence-pending"
+    },
+    {
+      "id": "WI-AQ-006",
+      "gate": "WI-AQ-G3",
+      "status": "runtime-consumer-evidence-pending"
+    }
+  ],
+  "retained": [
+    "WI-02 parent acceptance",
+    "WI-03/integration",
+    "WI-03 parent acceptance",
+    "AB-WI-006",
+    "AB-WI-007",
+    "AB-WI-009",
+    "AB-WI-022",
+    "controller exact-commit review and integration",
+    "actual merged-target and post-rebase verification",
+    "remote protection before publication and final release"
+  ],
+  "test_success_asserted": false
+}

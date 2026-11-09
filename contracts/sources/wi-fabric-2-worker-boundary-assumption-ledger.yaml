@@ -1,0 +1,65 @@
+schema_version: 1
+kind: worker_boundary_assumption_ledger
+document: WI worker-provider assumption and reconciliation ledger
+profile_id: WI-WORKER-EXECUTION-1
+owner: WorldInterface / Agent Host
+consumer_reference: EXO-V3-EXECUTION-1
+status: pending-implementation-evidence
+new_actionqueue_assumptions: []
+assumptions:
+- id: WP-A01
+  decision_ref: WI-ADR-016
+  assumption: Process/image representation can be mapped faithfully through existing typed seams.
+  evidence_owner_pr: WI-02
+  required_resolution: Reviewed field mapping; explicit wire amendment if needed before adapter freeze.
+  status: pending
+  consumer_completion_required: false
+- id: WP-A02
+  decision_ref: WI-ADR-016
+  assumption: Effective profile controls can be bound to exact resource authorization.
+  evidence_owner_pr: WI-04
+  required_resolution: Unsupported mandatory controls fail before launch; drift forces reauthorization.
+  status: pending
+  consumer_completion_required: false
+- id: WP-A03
+  decision_ref: WI-ADR-016
+  assumption: Run identity can safely distinguish owned processes across restart and PID reuse.
+  evidence_owner_pr: WI-09
+  required_resolution: Crash matrix and ownership evidence; ambiguity quarantines before replacement.
+  status: pending
+  consumer_completion_required: false
+- id: WP-A04
+  decision_ref: WI-ADR-016
+  assumption: Descendant cleanup and advertised resource limits are enforceable for approved fixtures.
+  evidence_owner_pr: WI-09
+  required_resolution: Actual provider tests; unimplemented guarantees are unavailable.
+  status: pending
+  consumer_completion_required: false
+- id: WP-A05
+  decision_ref: WI-ADR-016
+  assumption: Required artifact/event interfaces remain portable without shared paths or PIDs.
+  evidence_owner_pr: WI-09
+  required_resolution: WI-owned no-shared-filesystem seam fixture; not remote qualification.
+  status: pending
+  consumer_completion_required: false
+- id: WP-A06
+  decision_ref: WI-ADR-016
+  assumption: Enclosing instance evidence is distinguishable from worker control evidence.
+  evidence_owner_pr: WI-05
+  required_resolution: No outer-Kata-to-child-VM inference; source and missing evidence retained.
+  status: pending
+  consumer_completion_required: false
+- id: WP-A07
+  decision_ref: WI-ADR-018
+  assumption: Embedded composition can be tested separately from platform and remote parity.
+  evidence_owner_pr: WI-11
+  required_resolution: Real embedded harness with exact AQ pins; broad parent remains open.
+  status: pending
+  consumer_completion_required: false
+- id: WP-A08
+  decision_ref: WI-ADR-010
+  assumption: Supervisor outcomes survive target shutdown and can be reconciled.
+  evidence_owner_pr: WI-06
+  required_resolution: External result store plus authenticated inspect; no guest-dependent recovery.
+  status: pending
+  consumer_completion_required: false

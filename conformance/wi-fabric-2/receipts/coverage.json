@@ -1,0 +1,35 @@
+{
+  "scope": "wi/WI-05/domain",
+  "upstream_conformance": false,
+  "assigned_cases": {
+    "WP-015": "wp015_host_provenance_cannot_certify_worker_enforcement",
+    "WP-016": "wp016_missing_control_is_recorded_and_never_promoted"
+  },
+  "obligations": [
+    {
+      "package": "protocol",
+      "test": "receipt_import_requires_exact_canonical_bytes_and_supported_profile"
+    },
+    {
+      "package": "egress",
+      "test": "receipt_outcome_and_outbox_commit_after_scoped_publication"
+    },
+    {
+      "package": "storage",
+      "test": "killed_publication_resumes_from_each_durable_boundary"
+    },
+    {
+      "package": "domain",
+      "test": "campaign_labels_are_attribution_and_material_differences_remain_visible"
+    },
+    {
+      "package": "worker",
+      "test": "wp015_host_provenance_cannot_certify_worker_enforcement"
+    },
+    {
+      "package": "worker",
+      "test": "wp016_missing_control_is_recorded_and_never_promoted"
+    }
+  ],
+  "runtime_coverage_ref": "conformance/wi-fabric-2/completion/coverage.json"
+}

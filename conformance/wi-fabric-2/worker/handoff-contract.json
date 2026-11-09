@@ -1,0 +1,30 @@
+{
+  "version": 1,
+  "kind": "wi-producer-evidence-v1",
+  "producer_commit": "resolved at execution time; never a self-referential committed hash",
+  "publication_owner": "WIP-16",
+  "executable_contract_owner": "WIP-15",
+  "completion_semantics": {
+    "eligible_milestone": "WI-EMBEDDED-WORKER-PROOF-1",
+    "milestone_closed": false,
+    "worker_completion": "producer observation only",
+    "wi_receipt": "provenance and execution evidence only",
+    "consumer_task_acceptance": false,
+    "ordinary_use": false,
+    "parent_acceptance": false,
+    "g5": false,
+    "remote_parity": false,
+    "release": false,
+    "strong_isolation": false
+  },
+  "negative_vectors": [
+    "substituted-commit",
+    "stale-tree",
+    "missing-test",
+    "changed-profile",
+    "changed-fixture",
+    "altered-log",
+    "inflated-worker-completion",
+    "consumer-task-acceptance"
+  ]
+}

@@ -1,0 +1,206 @@
+{
+  "version": 1,
+  "scope": "wi/WI-09/process-provider:lifecycle",
+  "runtime_pass_asserted": false,
+  "work_item": "WIP-10",
+  "evaluation": "current-result-in-docs/work-items/WIP-10.md#remediation-evaluation",
+  "assumptions_addressed": [
+    "WP-A03"
+  ],
+  "assigned_cases": {
+    "WP-017": [
+      "wp_017_admitted_worker_intent_precedes_bounded_process_and_wakes_are_durable"
+    ],
+    "WP-018": [
+      "wp_018_duplicate_admission_and_start_preserve_one_immutable_run"
+    ],
+    "WP-019": [
+      "wp_019_and_wp_024_killed_lifecycle_boundaries_quarantine_without_replacement",
+      "wp_019_helper_death_retains_capacity_without_a_cleanup_or_success_claim"
+    ],
+    "WP-020": [
+      "wp_020_mismatched_and_damaged_private_ownership_never_adopts_an_unrelated_run",
+      "worker_process::ownership::tests::recycled_pid_simulation_never_adopts_or_signals_unrelated_child"
+    ],
+    "WP-021": [
+      "wp_021_stop_obligation_precedes_bounded_descendant_cleanup"
+    ],
+    "WP-022": [
+      "wp_022_wall_and_output_limits_are_enforced_after_real_admission"
+    ],
+    "WP-023": [
+      "wp_023_helper_and_fixture_exclude_deliberate_host_descriptors_and_environment"
+    ],
+    "WP-024": [
+      "wp_024_worker_state_and_event_are_authoritative_before_aq_wake",
+      "wp_019_and_wp_024_killed_lifecycle_boundaries_quarantine_without_replacement"
+    ],
+    "WP-025": [
+      "wp_025_reordered_duplicate_late_and_cancel_racing_events_cannot_revive_work",
+      "wp_025_real_worker_events_preserve_aq_deadline_cancel_and_restart_winners"
+    ],
+    "WP-026": [
+      "wp_026_unavailable_operations_are_not_registered_or_decoded_as_available_effects"
+    ],
+    "AB-WI-021": [
+      "ab_wi_021_awaiting_release_hold_and_resume_keep_durable_worker_capacity"
+    ]
+  },
+  "required_obligations": {
+    "WP-017": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "wp_017_admitted_worker_intent_precedes_bounded_process_and_wakes_are_durable"
+      }
+    ],
+    "WP-018": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "wp_018_duplicate_admission_and_start_preserve_one_immutable_run"
+      }
+    ],
+    "WP-019": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "wp_019_and_wp_024_killed_lifecycle_boundaries_quarantine_without_replacement"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "wp_019_helper_death_retains_capacity_without_a_cleanup_or_success_claim"
+      }
+    ],
+    "WP-020": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "wp_020_mismatched_and_damaged_private_ownership_never_adopts_an_unrelated_run"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "worker_process::ownership::tests::recycled_pid_simulation_never_adopts_or_signals_unrelated_child"
+      }
+    ],
+    "WP-021": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "wp_021_stop_obligation_precedes_bounded_descendant_cleanup"
+      }
+    ],
+    "WP-022": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "wp_022_wall_and_output_limits_are_enforced_after_real_admission"
+      }
+    ],
+    "WP-023": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "wp_023_helper_and_fixture_exclude_deliberate_host_descriptors_and_environment"
+      }
+    ],
+    "WP-024": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "wp_024_worker_state_and_event_are_authoritative_before_aq_wake"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "wp_019_and_wp_024_killed_lifecycle_boundaries_quarantine_without_replacement"
+      }
+    ],
+    "WP-025": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "wp_025_reordered_duplicate_late_and_cancel_racing_events_cannot_revive_work"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "wp_025_real_worker_events_preserve_aq_deadline_cancel_and_restart_winners"
+      }
+    ],
+    "WP-026": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "wp_026_unavailable_operations_are_not_registered_or_decoded_as_available_effects"
+      }
+    ],
+    "AB-WI-021": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "ab_wi_021_awaiting_release_hold_and_resume_keep_durable_worker_capacity"
+      }
+    ],
+    "approval-authenticity": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "approval_rejects_drafts_self_assertions_unknown_decisions_expiry_and_revocation"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "approved_packet_cannot_widen_tasks_operations_cases_environment_or_source_bindings"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "reviewed_build_artifacts_are_bounded_and_publishable_without_launch"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "trusted_build_digests_reject_replaced_paths_without_launch"
+      }
+    ],
+    "storage-recovery": [
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-storage",
+        "test": "immutable_start_capacity_stop_and_cleanup_survive_rebuild_backup_and_restart"
+      },
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-storage",
+        "test": "observations_preserve_gaps_conflicts_and_terminal_facts_with_atomic_outbox"
+      },
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-storage",
+        "test": "worker_provider_keys_bind_exact_original_operations_and_replay_acknowledgements"
+      },
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-storage",
+        "test": "worker_provider_run_streams_do_not_collide_or_cross_wake"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "worker_process::journal::tests::ownership_journal_intent_ownership_and_optional_exit_replay_without_launch"
+      },
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-storage",
+        "test": "concurrent_worker_observations_allocate_revisions_with_operation_acknowledgement"
+      }
+    ]
+  },
+  "previous_evaluation": {
+    "manifest": "abd936f432985aae400a6ae3c3d4c3b3ab66ef3eea0abc311fa6e6805c4d6342",
+    "result": "evaluated-failing-at-7efff7f"
+  }
+}

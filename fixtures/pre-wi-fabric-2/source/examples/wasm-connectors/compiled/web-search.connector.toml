@@ -1,0 +1,14 @@
+[connector]
+name = "web.search"
+version = "0.1.0"
+description = "Searches the web via a configurable search API"
+
+[capabilities]
+http = ["api.search.brave.com"]
+logging = true
+kv = true
+environment = ["BRAVE_API_KEY"]
+
+[resources]
+max_fuel = 500_000_000
+timeout_ms = 15000

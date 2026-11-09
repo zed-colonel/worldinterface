@@ -1,0 +1,14 @@
+[connector]
+name = "demo.host-functions"
+version = "0.1.0"
+description = "Demonstrates logging, crypto, and KV host functions."
+
+[capabilities]
+logging = true
+crypto = true
+kv = true
+
+[resources]
+max_fuel = 100_000_000
+timeout_ms = 5000
+max_memory_bytes = 33_554_432

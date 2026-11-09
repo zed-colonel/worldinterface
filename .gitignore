@@ -36,4 +36,19 @@ plans/
 dev-output/
 
 # ── Local scripts ───────────────────────────────────────────
-scripts/
+scripts/*
+!scripts/check-wi-contract.sh
+!scripts/check-wi-domain.sh
+!scripts/check-wi-domain-isolation.py
+!scripts/check-wi-integration.sh
+!scripts/check-wi-integration.py
+
+!scripts/wi_crash_isolation.py
+!scripts/test_wi_crash_isolation.py
+
+!scripts/build-wi-worker-evaluation.sh
+!scripts/refresh-wi-worker-evaluation.py
+!scripts/worker-proof-evidence.sh
+
+!scripts/wi_worker_evaluation.py
+scripts/__pycache__/

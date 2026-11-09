@@ -1,0 +1,36 @@
+{
+  "submissionId": "954ee9a3-f111-4fd8-9176-df40d18ec2a2",
+  "checkpoint": "WI-ADR-005",
+  "definitionId": "0ebcb7cf-9686-4bc1-9b9d-bb85a1d0b4c9",
+  "bindingRevision": 4,
+  "decision": {
+    "coverage": "full",
+    "proposal": "Use canonical resource URIs of the form wi-resource:sha256:<64 lowercase hexadecimal digits>, referencing immutable bounded versioned canonical target documents. Keep the registered namespace and observed resource version explicit in CanonicalResourceRef. Target documents bind tenant, owner and exact namespace-specific identity, including filesystem roots/components, network destination constraints, communication audience/visibility, or worker/lifecycle resource identity. Hash exact canonical document bytes under a schema that includes its kind and version; references confer no access. Keep existing OpaqueRef and envelope encoding unchanged. Resolve selectors using an immutable registry snapshot that pins namespace grammar, resolver version and connector descriptor. Reject unknown namespaces, ambiguous mappings, tenant or audience widening, and insufficient symlink, redirect, DNS, ownership or version evidence. Resolution must not perform the requested effect. Retain resolver evidence and registry identity separately from stable resource identity and require dispatch-time comparison against the authorized target. WI-04/domain uses deterministic supplied facts and fixtures; live resolution and connector-specific enforcement remain later adapter work.",
+    "sourceReferences": "Imported map EXO-STACK-CONCURRENCY-DRAFT-1 0.3.0; exact plan binding 4; checkpoint WI-ADR-005.\n{\"source_id\":\"wi-plan\",\"section\":\"\u00a74 ADR queue\",\"start_line\":358,\"end_line\":358}\nwi-fabric-2-foundational-implementation-plan.md: \u00a74 WI-ADR-005, WI-04, \u00a79.2\nworldinterface-v2-foundational-design.md: \u00a7\u00a76.5, 11.1\u201311.7\ncrates/worldinterface-foundation/protocol/src/records.rs: ResourceSelector and CanonicalResourceRef\nconformance/wi-fabric-2/domain/README.md: Canonical profile wi-json-1\nAttached design run 65af2f75-2ad4-4933-9e77-7e3652243162; SHA-256 03663c1f068047ebc1e8aa189c8bffff2b930c581f71d896f55789796a38d23f.",
+    "retainedObligations": "",
+    "consumers": [],
+    "kind": "architecture-decision-v1",
+    "bindingDigest": "8cae5ff3253d493fce0527aa42381a551c40014440ab3d05270ae8d822d11295"
+  },
+  "approval": {
+    "submissionId": "954ee9a3-f111-4fd8-9176-df40d18ec2a2",
+    "outcome": "accepted",
+    "rationale": "This matches the long term goals and reduces the complexity at scale.",
+    "id": "18a3a800-fcb5-421a-a717-3f6556cbf0af",
+    "workspaceId": "6bf6915a-6cd0-47cc-b853-fcbc04f02f3d",
+    "decidedAt": "2026-09-21T20:48:33.965Z",
+    "decidedByUserId": "0698a39b-dda2-4870-8f3f-97ef94784ae9"
+  },
+  "sourceRunId": "65af2f75-2ad4-4933-9e77-7e3652243162",
+  "sourceRunDigest": "03663c1f068047ebc1e8aa189c8bffff2b930c581f71d896f55789796a38d23f",
+  "artifacts": [
+    {
+      "name": "decision-review-packet",
+      "digest": "abcfa92b68785f3a8b221b1049576242bd25cc842a482d64291174672609dc8b"
+    },
+    {
+      "name": "source-design-proposal-not-approval",
+      "digest": "03663c1f068047ebc1e8aa189c8bffff2b930c581f71d896f55789796a38d23f"
+    }
+  ]
+}

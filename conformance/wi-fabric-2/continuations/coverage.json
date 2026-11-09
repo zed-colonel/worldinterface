@@ -1,0 +1,242 @@
+{
+  "version": 1,
+  "scope": "wi/WI-08/integration:embedded-proof",
+  "runtime_profile": "aq-0.3.0-durable-continuations-1",
+  "upstream_conformance": false,
+  "assigned_cases": {
+    "AB-WI-008": [
+      "ab_wi_008_early_late_duplicate_and_fanout_use_durable_records",
+      "provider_callback_commits_an_authoritative_record_and_outbox_without_waiter",
+      "worker_intake_conflicts_scope_and_sequence_are_durable",
+      "outbox_backpressure_retains_identity_and_pending_obligations",
+      "continuation_process_death_replays_source_signal_wait_and_resume_commits",
+      "ingress_ready_and_acknowledged_commit_source_outbox_atomically_and_wake_flows",
+      "reconciliation_commits_source_outbox_atomically_and_wakes_flow",
+      "flow_child_commits_source_outbox_atomically_and_wakes_flow",
+      "signal_capacity_alarm_uses_resident_statistics_across_restart",
+      "provider_callback_before_and_after_wait_resumes_flow_exactly_once",
+      "one_signal_resumes_two_live_flow_waiters_exactly_once_each",
+      "resequenced_worker_event_rejects_after_handled_across_rebuild_and_reopen",
+      "scope_rejected_signal_is_journaled_without_blocking_scheduling",
+      "stale_callback_revision_rejects_after_handled_across_rebuild_and_reopen"
+    ],
+    "AB-WI-011": [
+      "ab_wi_011_awaiting_releases_attempt_and_unrelated_work_progresses",
+      "eligibility_uses_signal_high_water_and_after_handled_advances_actual_sequence",
+      "signal_deadline_cancel_and_late_event_orders_preserve_committed_outcomes",
+      "early_control_wakes_reestablish_child_and_parent_waits",
+      "resume_redelivery_reproduces_result_and_conflicting_context_rejects",
+      "administrative_resume_reestablishes_wait_and_all_wake_forms_redeliver_idempotently",
+      "continuation_process_death_replays_source_signal_wait_and_resume_commits",
+      "current_authority_and_scoped_routes_are_required_at_every_wake",
+      "altered_checkpoint_cannot_authorize_wait_progress",
+      "fresh_generation_is_scoped_and_inherited_through_after_handled",
+      "non_early_wait_rejects_preexisting_outbox_events_after_backpressure_and_rebuild",
+      "admitted_unacknowledged_wake_with_backlog_recovers_independently_of_scan",
+      "accepted_child_and_coordinator_replay_after_authority_revocation",
+      "signal_cancel_acceptance_and_deadline_winners_replay_across_paired_reopen",
+      "continuation_inspection_authorizes_and_reports_pending_and_accepted_chain",
+      "accept_resume_validates_exports_even_with_other_artifacts",
+      "unaccepted_coordinator_finish_requires_authority_after_child_acceptance",
+      "idle_ticks_skip_unchanged_waiting_flows_and_reconcile_changes_after_restart",
+      "journal_only_admission_failure_retries_on_an_otherwise_idle_live_engine"
+    ]
+  },
+  "required_obligations": {
+    "source-outbox-atomicity": [
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-storage",
+        "test": "continuation::tests::source_event_and_signal_obligation_roll_back_together"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "provider_callback_commits_an_authoritative_record_and_outbox_without_waiter"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "worker_intake_conflicts_scope_and_sequence_are_durable"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "ingress_ready_and_acknowledged_commit_source_outbox_atomically_and_wake_flows"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "reconciliation_commits_source_outbox_atomically_and_wakes_flow"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "flow_child_commits_source_outbox_atomically_and_wakes_flow"
+      },
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-storage",
+        "test": "callback_revisions_are_scoped_atomic_and_validated_against_history"
+      }
+    ],
+    "early-late-duplicate-fanout": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "ab_wi_008_early_late_duplicate_and_fanout_use_durable_records"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "provider_callback_before_and_after_wait_resumes_flow_exactly_once"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "one_signal_resumes_two_live_flow_waiters_exactly_once_each"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "stale_callback_revision_rejects_after_handled_across_rebuild_and_reopen"
+      }
+    ],
+    "stable-admission-backpressure": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "outbox_backpressure_retains_identity_and_pending_obligations"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "signal_capacity_alarm_uses_resident_statistics_across_restart"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "idle_ticks_skip_unchanged_waiting_flows_and_reconcile_changes_after_restart"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "journal_only_admission_failure_retries_on_an_otherwise_idle_live_engine"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "scope_rejected_signal_is_journaled_without_blocking_scheduling"
+      }
+    ],
+    "cursor-and-generation": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "eligibility_uses_signal_high_water_and_after_handled_advances_actual_sequence"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "fresh_generation_is_scoped_and_inherited_through_after_handled"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "non_early_wait_rejects_preexisting_outbox_events_after_backpressure_and_rebuild"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "resequenced_worker_event_rejects_after_handled_across_rebuild_and_reopen"
+      }
+    ],
+    "physical-attempt-release": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "ab_wi_011_awaiting_releases_attempt_and_unrelated_work_progresses"
+      }
+    ],
+    "resume-idempotency": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "resume_redelivery_reproduces_result_and_conflicting_context_rejects"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "administrative_resume_reestablishes_wait_and_all_wake_forms_redeliver_idempotently"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "early_control_wakes_reestablish_child_and_parent_waits"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "admitted_unacknowledged_wake_with_backlog_recovers_independently_of_scan"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "accepted_child_and_coordinator_replay_after_authority_revocation"
+      }
+    ],
+    "races": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "signal_deadline_cancel_and_late_event_orders_preserve_committed_outcomes"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "signal_cancel_acceptance_and_deadline_winners_replay_across_paired_reopen"
+      }
+    ],
+    "process-death-and-paired-restore": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "continuation_process_death_replays_source_signal_wait_and_resume_commits"
+      }
+    ],
+    "projection-replay": [
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-storage",
+        "test": "signal_outbox_replay_preserves_frozen_requests_acknowledgments_and_rejects_projection_tampering"
+      }
+    ],
+    "current-authorization": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "current_authority_and_scoped_routes_are_required_at_every_wake"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "altered_checkpoint_cannot_authorize_wait_progress"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "continuation_inspection_authorizes_and_reports_pending_and_accepted_chain"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "accept_resume_validates_exports_even_with_other_artifacts"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "unaccepted_coordinator_finish_requires_authority_after_child_acceptance"
+      }
+    ]
+  }
+}

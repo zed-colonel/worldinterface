@@ -1,0 +1,25 @@
+name: WI protocol, store, ingress, egress, receipt and worker domain
+on:
+  push:
+    branches: [main, wi-fabric-2, wi-worker-proof-1]
+  pull_request:
+    branches: [main, wi-fabric-2, wi-worker-proof-1]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  domain:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout reviewed candidate
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Verify independent WI-02 through WI-05 and WI-09 domain obligations
+        shell: bash
+        run: |
+          set -euo pipefail
+          export CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$RUNNER_TEMP/wi-domain-target}"
+          export TMPDIR="${TMPDIR:-$RUNNER_TEMP/wi-domain-scratch}"
+          mkdir -p "$RUNNER_TEMP/evidence" "$TMPDIR"
+          scripts/check-wi-domain.sh 2>&1 | tee "$RUNNER_TEMP/evidence/wi-domain.log"

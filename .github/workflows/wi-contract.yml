@@ -1,0 +1,24 @@
+name: WI development contract
+on:
+  push:
+    branches: [main, wi-fabric-2, wi-worker-proof-1]
+  pull_request:
+    branches: [main, wi-fabric-2, wi-worker-proof-1]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  contract:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout reviewed candidate
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+      - name: Verify WI-01 contracts and WI-10 offline domain obligations
+        shell: bash
+        run: |
+          set -euo pipefail
+          export CARGO_TARGET_DIR="${CARGO_TARGET_DIR:-$RUNNER_TEMP/wi-contract-target}"
+          mkdir -p "$RUNNER_TEMP/evidence"
+          scripts/check-wi-contract.sh 2>&1 | tee "$RUNNER_TEMP/evidence/wi-contract.log"

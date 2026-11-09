@@ -1,0 +1,178 @@
+{
+  "version": 1,
+  "source_record_convention": "SHA-256 of recursively key-sorted compact JSON, arrays in source order (controller canonicalSourceRecord)",
+  "cases": {
+    "AB-WI-001": {
+      "source_record_sha256": "abeefc555e395a4dc1242d30e3537bd89541f271410a91e9589bef3267ac4ebf",
+      "required_tests": [
+        "ab_wi_001_store_formats_fresh_lineage_and_profile_rejection",
+        "ab_wi_001_published_identity_rejects_substitutions"
+      ]
+    },
+    "AB-WI-002": {
+      "source_record_sha256": "0a25734a2d94cee7d2ad8d51dfcc1ce679a0f85b384b0d5a43a582906b25bd0b",
+      "required_tests": [
+        "ab_wi_002_003_004_persist_retry_ack_and_discover",
+        "ab_wi_002_subprocess_crash_cuts",
+        "persisted_old_policy_request_is_retried_without_rewriting"
+      ]
+    },
+    "AB-WI-003": {
+      "source_record_sha256": "40a722ec7d187a8c3aeccfd9f595ae97353a6d58cd4b1ebb93b7ebb4162c120d",
+      "required_tests": [
+        "ab_wi_002_003_004_persist_retry_ack_and_discover",
+        "ab_wi_003_public_v2_vectors_and_digest_field_boundaries",
+        "ab_wi_003_required_and_detached_same_key_conflict"
+      ]
+    },
+    "AB-WI-004": {
+      "source_record_sha256": "9e878d392ef66cfd0567dced1c21d308e6eb6ea021569b3fa2f26312a98d9690",
+      "required_tests": [
+        "ab_wi_002_003_004_persist_retry_ack_and_discover",
+        "run_discovery::tests::stale_cursor_restarts_and_partial_page_is_not_complete",
+        "wrong_queue_store_cannot_acknowledge_or_discover"
+      ]
+    },
+    "AB-WI-005": {
+      "source_record_sha256": "c5ed591d6024a6ef7080edc36848ef60d0aca374f4c219030678b063c6533789",
+      "required_tests": [
+        "ab_wi_005_bounds_are_enforced_by_aq_admission_and_disposition",
+        "ab_wi_005_compound_commit_replay_is_all_or_none_with_stable_children",
+        "child_transaction_native_wal_process_death_cuts_replay_all_or_none",
+        "bounded_64_node_plan_commits_flat_children_and_rejects_65_before_admission",
+        "maximum_length_flow_identities_have_bounded_aq_and_effect_keys",
+        "wi_proposal_aq_commit_and_binding_process_death_recover_stable_children",
+        "sixty_four_boundary_nodes_reject_at_wi_plan_byte_bound_before_aq_admission",
+        "checkpoint_tail_and_wal_only_recovery_preserve_pending_flow_and_branch_receipts",
+        "flow_retained_count_rollback_replay_and_tampering",
+        "concurrent_flow_admissions_serialize_at_retained_capacity"
+      ]
+    },
+    "AB-WI-006": {
+      "source_record_sha256": "2eae5f9661b6c3a24b34cb44fb18fe41647f1c134542db129ba4acedab196f18",
+      "required_tests": [
+        "ab_wi_006_009_one_wait_and_strict_signal_cursor_across_restart"
+      ]
+    },
+    "AB-WI-007": {
+      "source_record_sha256": "5e28dbfd281d310109931bdc6c6ab98a97b75b9c6bcc57a0f70433bad783a3b6",
+      "required_tests": [
+        "ab_wi_007_commit_replay_identity_and_subscriber_ack",
+        "captured_fanout_routes_each_delivery_to_its_trusted_subscriber",
+        "process_death_after_wi_commit_recovers_aq_obligation",
+        "partial_audience_http_isolates_subscribers",
+        "partial_audience_stream_isolates_subscribers",
+        "process_death_after_subscriber_storage_redelivers_same_id"
+      ]
+    },
+    "AB-WI-008": {
+      "source_record_sha256": "c6adcefbd069d8ded5a47f64e563429cdb677de0a4082c122a0f38b71d3beed7",
+      "required_tests": [
+        "ab_wi_008_early_late_duplicate_and_fanout_use_durable_records",
+        "provider_callback_commits_an_authoritative_record_and_outbox_without_waiter",
+        "worker_intake_conflicts_scope_and_sequence_are_durable",
+        "outbox_backpressure_retains_identity_and_pending_obligations",
+        "continuation_process_death_replays_source_signal_wait_and_resume_commits",
+        "ingress_ready_and_acknowledged_commit_source_outbox_atomically_and_wake_flows",
+        "reconciliation_commits_source_outbox_atomically_and_wakes_flow",
+        "flow_child_commits_source_outbox_atomically_and_wakes_flow",
+        "signal_capacity_alarm_uses_resident_statistics_across_restart",
+        "provider_callback_before_and_after_wait_resumes_flow_exactly_once",
+        "one_signal_resumes_two_live_flow_waiters_exactly_once_each",
+        "resequenced_worker_event_rejects_after_handled_across_rebuild_and_reopen",
+        "scope_rejected_signal_is_journaled_without_blocking_scheduling",
+        "stale_callback_revision_rejects_after_handled_across_rebuild_and_reopen"
+      ]
+    },
+    "AB-WI-009": {
+      "source_record_sha256": "4b1907c6eb598efc348ba0390ac93da7626fa45deb5e3805ebd5d544e950f1ee",
+      "required_tests": [
+        "ab_wi_006_009_one_wait_and_strict_signal_cursor_across_restart"
+      ]
+    },
+    "AB-WI-010": {
+      "source_record_sha256": "4aef27823939c49b59856111146c1345c2a246a44a8c41c681ba573b294f0958",
+      "required_tests": [
+        "ab_wi_010_deadline_signal_orders_and_timeout_policies_survive_replay"
+      ]
+    },
+    "AB-WI-011": {
+      "source_record_sha256": "03f81152fcde241dbab356e1ec9051dae6acbe9db194892ca6c3c7c0c01f0d65",
+      "required_tests": [
+        "ab_wi_011_awaiting_releases_attempt_and_unrelated_work_progresses",
+        "eligibility_uses_signal_high_water_and_after_handled_advances_actual_sequence",
+        "signal_deadline_cancel_and_late_event_orders_preserve_committed_outcomes",
+        "early_control_wakes_reestablish_child_and_parent_waits",
+        "resume_redelivery_reproduces_result_and_conflicting_context_rejects",
+        "administrative_resume_reestablishes_wait_and_all_wake_forms_redeliver_idempotently",
+        "continuation_process_death_replays_source_signal_wait_and_resume_commits",
+        "current_authority_and_scoped_routes_are_required_at_every_wake",
+        "altered_checkpoint_cannot_authorize_wait_progress",
+        "fresh_generation_is_scoped_and_inherited_through_after_handled",
+        "non_early_wait_rejects_preexisting_outbox_events_after_backpressure_and_rebuild",
+        "admitted_unacknowledged_wake_with_backlog_recovers_independently_of_scan",
+        "accepted_child_and_coordinator_replay_after_authority_revocation",
+        "signal_cancel_acceptance_and_deadline_winners_replay_across_paired_reopen",
+        "continuation_inspection_authorizes_and_reports_pending_and_accepted_chain",
+        "accept_resume_validates_exports_even_with_other_artifacts",
+        "unaccepted_coordinator_finish_requires_authority_after_child_acceptance",
+        "idle_ticks_skip_unchanged_waiting_flows_and_reconcile_changes_after_restart",
+        "journal_only_admission_failure_retries_on_an_otherwise_idle_live_engine"
+      ]
+    },
+    "AB-WI-013": {
+      "source_record_sha256": "735b29144504e56f502c4c80366cba10b5c36ee82871491362a241fb78d4285c",
+      "required_tests": [
+        "ab_wi_013_required_detached_closure_cancel_and_mixed_runs",
+        "aq_success_without_wi_acceptance_cannot_complete_flow",
+        "flow_cancellation_after_start_preserves_external_uncertainty",
+        "cancellation_before_start_and_failed_node_redelivery_cannot_invoke",
+        "publication_failure_retries_durable_success_without_reinvocation",
+        "rejected_aq_cancel_does_not_mutate_flow_and_authorized_execution_continues"
+      ]
+    },
+    "AB-WI-015": {
+      "source_record_sha256": "468730e76d4f44c133ceb65ff48b4efda113d03b1be3026ac4c58727e5dee6d1",
+      "required_tests": [
+        "ab_wi_015_bounds_and_unsupported_overrides_reject_without_truncation",
+        "ab_wi_015_016_real_child_execution_replay_and_foreign_provenance"
+      ]
+    },
+    "AB-WI-016": {
+      "source_record_sha256": "e9aae8a4df1330cd2ed265aef210847f82adf0bb7444a69cb689a9aeb8843a01",
+      "required_tests": [
+        "ab_wi_016_authorization_and_integrity",
+        "ab_wi_015_016_real_child_execution_replay_and_foreign_provenance",
+        "backup_retains_both_store_locks_and_rejects_missing_references",
+        "ab_wi_016_nested_destinations_leave_source_unchanged",
+        "ab_wi_016_single_component_relative_destinations"
+      ]
+    },
+    "AB-WI-022": {
+      "source_record_sha256": "39053f56f805b7c942cd07602c7c202227e7f00259f1f6897fe19cd71bf67d81",
+      "required_tests": [
+        "ab_wi_022_retirement_keeps_resident_capacity_and_alarm",
+        "wi03p_f001_expired_pending_delivery_stops_recovery",
+        "wi03p_f001_admitted_delivery_completes_after_expiry",
+        "expiration_during_ack_wait_completes_without_recovery_generation",
+        "recovery_generation_budget_bounds_mismatch_binding_churn_and_capacity_after_restart",
+        "owner_churn_reuses_wake_capacity_and_other_owner_can_deliver_and_ack_after_restart",
+        "terminal_wait_capacity_recovers_from_journaled_generation",
+        "previously_journaled_generation_wake_is_reused_without_migration_after_restart",
+        "retired_wake_deadletters_without_replacement_after_restart"
+      ]
+    }
+  },
+  "assets": {
+    "locator.json": "5efacaa74617b8fa2231579a1a0c0711d725f7bb97f86cd219222ac488e9b7d3",
+    "aq-admission-v1-vector.json": "cfc905ca4cb36beafa7d5b0a945afeb002f61acf853913651c0bbc819c293463",
+    "aq-admission-v2-vector.json": "4d8560caa03753a6d991db09944eff806ae505a5c6f254e980c25fbb592f6f86"
+  },
+  "command": [
+    "cargo",
+    "test",
+    "--locked",
+    "--manifest-path",
+    "crates/worldinterface-runtime/Cargo.toml"
+  ]
+}

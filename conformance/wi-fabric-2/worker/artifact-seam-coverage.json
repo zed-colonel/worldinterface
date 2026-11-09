@@ -1,0 +1,83 @@
+{
+  "version": 1,
+  "scope": "wi/WI-09/process-provider:artifacts-and-seam",
+  "work_item": "WIP-11",
+  "runtime_pass_asserted": false,
+  "evaluation": "Packet 1d13a48427d0f745268c7acdf2fcd58d7c0e34a08df25b7bee9b0124422bf298 accepted in 9dbc0c4, expires 2026-11-11T00:00:00Z; full direct evaluation and all ten adopted checks completed. Nine adopted checks passed; direct evaluation and runtime-test failed only the WP-028 crash-continuation success assertion. Collection reconciliation follow-up requires renewed exact-packet acceptance/live verification; see docs/work-items/WIP-11.md. Prior packet 0723acb0 passed its full evaluation and all ten adopted checks.",
+  "assumptions_addressed": [
+    "WP-A05"
+  ],
+  "aq_runtime": "crates.io 0.3.0; WIP-07 migration supersedes imported 0.2.0 wording",
+  "seam_label": "seam simulation",
+  "exclusions": [
+    "remote-provider qualification",
+    "same-user hostile-code containment",
+    "ordinary worker use",
+    "G4 closure"
+  ],
+  "assigned_cases": {
+    "WP-027": [
+      "wp_027_scoped_transform_import_and_durable_export_through_real_wi_aq",
+      "wp_027_coding_patch_and_schema_report_publish_before_completion",
+      "wp_027_publication_requires_exact_binding_and_precedes_completion_across_reopen",
+      "wp_027_empty_exports_still_require_a_validated_published_collection"
+    ],
+    "WP-028": [
+      "wp_028_invalid_batches_quarantine_before_any_publication_and_survive_reopen",
+      "wp_028_unknown_and_failed_trusted_verifiers_ignore_provider_pass_claims",
+      "wp_028_cancelled_prepared_collection_cannot_publish_and_cleanup_keeps_report",
+      "wp_028_snapshot_and_publication_crash_cuts_recover_exactly_or_quarantine",
+      "wp_028_missing_or_corrupt_prepared_snapshot_quarantines_without_recollection",
+      "wp_028_live_collection_ack_receipt_and_aq_crashes_preserve_publication_order",
+      "worker_process::artifact::tests::export_links_special_files_and_replacement_races_reject",
+      "artifact_integrity_symlink_hardlink_and_special_files_are_quarantined",
+      "wp_028_unsafe_live_exports_quarantine_and_report_through_real_wi_aq",
+      "wp_028_unavailable_seam_export_quarantines_after_provider_ack_through_real_wi_aq"
+    ],
+    "WP-031": [
+      "wp_031_seam_simulation_delayed_reordered_observations_and_uncertain_ack_use_real_wi_aq"
+    ]
+  },
+  "non_live_targets": [
+    "worker_artifact_validation",
+    "worker_artifact_crash"
+  ],
+  "positive_evaluation_targets": [
+    "worker_artifacts",
+    "worker_artifact_live_crash",
+    "worker_seam"
+  ],
+  "manifest": "crates/worldinterface-runtime/Cargo.toml",
+  "package": "worldinterface-runtime",
+  "bounds": {
+    "inputs": 1,
+    "exports": 4,
+    "input_bytes": 1048576,
+    "aggregate_output_bytes": 4194304,
+    "collection_manifest_bytes": 65536,
+    "evaluation_output_bytes": 65536
+  },
+  "verifier_registry": [
+    "wi:integrity:1",
+    "wi:json:1 (bounded strict JSON object)",
+    "wi:utf8:1"
+  ],
+  "crash_cuts": [
+    "worker-snapshot-retained",
+    "worker-collection-before-prepare",
+    "worker-collection-prepared",
+    "publication-identified",
+    "publication-durable",
+    "publication-availability",
+    "worker-manifest-published",
+    "worker-collection-before-publish",
+    "worker-collection-published",
+    "worker-operation-before-ack",
+    "worker-operation-acknowledged",
+    "fabric-receipt-history",
+    "fabric-receipt-outbox",
+    "fabric-receipt-committed",
+    "worker-artifact-before-aq-disposition",
+    "worker-artifact-aq-completed"
+  ]
+}

@@ -1,0 +1,193 @@
+{
+  "scope": "wi/WI-03/domain",
+  "upstream_conformance": false,
+  "cargo_manifest": "crates/worldinterface-foundation/Cargo.toml",
+  "obligations": [
+    {
+      "id": "binding_admission_is_scoped_idempotent_and_version_checked",
+      "test": "binding_admission_is_scoped_idempotent_and_version_checked",
+      "package": "worldinterface-ingress"
+    },
+    {
+      "id": "concurrent_http_and_stream_duplicates_capture_one_atomic_fanout",
+      "test": "concurrent_http_and_stream_duplicates_capture_one_atomic_fanout",
+      "package": "worldinterface-ingress"
+    },
+    {
+      "id": "transport_rejects_forgery_substitution_bounds_and_malformed_frames",
+      "test": "transport_rejects_forgery_substitution_bounds_and_malformed_frames",
+      "package": "worldinterface-ingress"
+    },
+    {
+      "id": "restart_commit_before_wake_and_subscriber_commit_before_ack_are_safe",
+      "test": "restart_commit_before_wake_and_subscriber_commit_before_ack_are_safe",
+      "package": "worldinterface-ingress"
+    },
+    {
+      "id": "delayed_ack_after_exhaustion_token_misuse_revocation_and_expiration",
+      "test": "delayed_ack_after_exhaustion_token_misuse_revocation_and_expiration",
+      "package": "worldinterface-ingress"
+    },
+    {
+      "id": "gaps_reconnects_and_out_of_order_preserve_safe_committed_prefix",
+      "test": "gaps_reconnects_and_out_of_order_preserve_safe_committed_prefix",
+      "package": "worldinterface-ingress"
+    },
+    {
+      "id": "quarantine_and_typed_lifecycle_evidence_do_not_create_authority",
+      "test": "quarantine_and_typed_lifecycle_evidence_do_not_create_authority",
+      "package": "worldinterface-ingress"
+    },
+    {
+      "id": "capacity_tombstones_profiles_and_atomic_fanout_failure",
+      "test": "capacity_tombstones_profiles_and_atomic_fanout_failure",
+      "package": "worldinterface-ingress"
+    },
+    {
+      "id": "old_manifest_profile_rejects_without_modification",
+      "test": "old_manifest_profile_rejects_without_modification",
+      "package": "worldinterface-ingress"
+    },
+    {
+      "id": "every_ingress_transaction_write_failure_rolls_back_complete_lifecycle",
+      "test": "every_ingress_transaction_write_failure_rolls_back_complete_lifecycle",
+      "package": "worldinterface-ingress"
+    },
+    {
+      "id": "replay_detects_corrupt_projection_and_repairs_only_from_authoritative_history",
+      "test": "replay_detects_corrupt_projection_and_repairs_only_from_authoritative_history",
+      "package": "worldinterface-ingress"
+    },
+    {
+      "id": "cumulative_ack_never_advances_on_conflicting_offset_or_failed_admission",
+      "test": "cumulative_ack_never_advances_on_conflicting_offset_or_failed_admission",
+      "package": "worldinterface-ingress"
+    },
+    {
+      "id": "acknowledgment_race_has_one_durable_result_and_clock_policy_is_explicit",
+      "test": "acknowledgment_race_has_one_durable_result_and_clock_policy_is_explicit",
+      "package": "worldinterface-ingress"
+    },
+    {
+      "id": "attachment_policy_and_information_expiration_are_validated_before_admission",
+      "test": "attachment_policy_and_information_expiration_are_validated_before_admission",
+      "package": "worldinterface-ingress"
+    },
+    {
+      "id": "exact_byte_http_and_session_signatures_match_independent_vectors",
+      "test": "exact_byte_http_and_session_signatures_match_independent_vectors",
+      "package": "worldinterface-ingress"
+    },
+    {
+      "id": "binding-physical-rollback",
+      "test": "ingress_journal_and_projection_faults_roll_back_together",
+      "package": "worldinterface-storage"
+    },
+    {
+      "id": "protocol-golden-records",
+      "test": "ingress_records_match_independent_golden_hashes_and_strict_envelopes",
+      "package": "worldinterface-protocol"
+    },
+    {
+      "id": "collection-record-isolation",
+      "test": "collection_bound_does_not_weaken_public_record_bound",
+      "package": "worldinterface-protocol"
+    },
+    {
+      "id": "approval-tampering",
+      "test": "ingress_approvals_bind_full_coverage_ids_revision_and_exact_proposal",
+      "package": "wi-contract-check"
+    },
+    {
+      "id": "clause-coverage-preserved",
+      "test": "adr_clause_approval_cannot_be_promoted_or_rewritten",
+      "package": "wi-contract-check"
+    },
+    {
+      "id": "provider_cannot_disclose_another_sources_artifact_within_same_tenant",
+      "test": "provider_cannot_disclose_another_sources_artifact_within_same_tenant",
+      "package": "worldinterface-ingress"
+    },
+    {
+      "id": "nested_attestations_enforce_scope_availability_and_release_on_both_transports",
+      "test": "nested_attestations_enforce_scope_availability_and_release_on_both_transports",
+      "package": "worldinterface-ingress"
+    },
+    {
+      "id": "quarantined_content_alias_is_denied_until_release",
+      "test": "quarantined_content_alias_is_denied_until_release",
+      "package": "worldinterface-ingress"
+    },
+    {
+      "id": "content_window_duplicate_preserves_conflicting_committed_offset",
+      "test": "content_window_duplicate_preserves_conflicting_committed_offset",
+      "package": "worldinterface-ingress"
+    },
+    {
+      "id": "generated_ingress_binding_versions_match_model_and_replay",
+      "test": "generated_ingress_binding_versions_match_model_and_replay",
+      "package": "worldinterface-ingress"
+    },
+    {
+      "id": "generated_ingress_dedup_offsets_match_independent_model_and_replay",
+      "test": "generated_ingress_dedup_offsets_match_independent_model_and_replay",
+      "package": "worldinterface-ingress"
+    },
+    {
+      "id": "generated_ingress_delivery_closure_tokens_expiration_and_replay",
+      "test": "generated_ingress_delivery_closure_tokens_expiration_and_replay",
+      "package": "worldinterface-ingress"
+    },
+    {
+      "id": "expired_outbox_sweep_survives_restart_and_rejects_recovery",
+      "test": "expired_outbox_sweep_survives_restart_and_rejects_recovery",
+      "package": "worldinterface-ingress"
+    },
+    {
+      "id": "audience_matching_and_subscriber_receipt_isolate_principals",
+      "test": "audience_matching_and_subscriber_receipt_isolate_principals",
+      "package": "worldinterface-ingress"
+    },
+    {
+      "id": "exact_byte_replay_does_not_consume_non_deduplicable_capacity",
+      "test": "exact_byte_replay_does_not_consume_non_deduplicable_capacity",
+      "package": "worldinterface-ingress"
+    },
+    {
+      "id": "queue_recovery_exhaustion_uses_pinned_policy_and_preserves_lineage",
+      "test": "queue_recovery_exhaustion_uses_pinned_policy_and_preserves_lineage",
+      "package": "worldinterface-ingress"
+    },
+    {
+      "id": "retired_queue_wake_fences_identity_and_preserves_closure",
+      "test": "retired_queue_wake_fences_identity_and_preserves_closure",
+      "package": "worldinterface-ingress"
+    },
+    {
+      "id": "admitted_ingress_receipt_uses_canonical_receipt_profile",
+      "test": "admitted_ingress_receipt_uses_canonical_receipt_profile",
+      "package": "worldinterface-ingress"
+    },
+    {
+      "id": "nonqueued_dispatch_progress_preserves_cursor_and_replays_atomically",
+      "test": "nonqueued_dispatch_progress_preserves_cursor_and_replays_atomically",
+      "package": "worldinterface-storage"
+    },
+    {
+      "id": "retired_wake_and_cursor_roll_back_and_replay_atomically",
+      "test": "retired_wake_and_cursor_roll_back_and_replay_atomically",
+      "package": "worldinterface-storage"
+    },
+    {
+      "id": "dispatch_progress_and_cursor_roll_back_together_without_idle_writes",
+      "test": "dispatch_progress_and_cursor_roll_back_together_without_idle_writes",
+      "package": "worldinterface-storage"
+    }
+  ],
+  "checks": [
+    "scripts/check-wi-domain.sh",
+    "scripts/check-wi-contract.sh",
+    ".github/workflows/wi-domain.yml:domain",
+    ".github/workflows/wi-contract.yml:contract"
+  ]
+}

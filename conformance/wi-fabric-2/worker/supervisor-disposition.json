@@ -1,0 +1,13 @@
+{
+  "version": 1,
+  "status": "candidate-for-review",
+  "effective_on": "explicit-operator-disposition-for-evaluation-then-qualifying-CraftingTable-review",
+  "scope": "same five supervisor files; correctness remediation candidate exact-source update; generic continuation ban unchanged",
+  "updates": [
+    {
+      "path": "crates/worldinterface-runtime/src/worker_process/mod.rs",
+      "sha256": "663c193d9dadbc371509f40456b39c4d7ae3a086064e2daefa62f3cc3f132f8e",
+      "rationale": "Correctness remediation F-002/F-003/F-007/F-013: exact-scope host cleanup and evidence survive worker credential expiry; released provider state is retired; capacity is concurrent; never-started exports do not block release; the helper spawn boundary is counted. Worker credential checks remain on worker-facing access and fresh launch. No new waiting exception, process identity disclosure or isolation claim. Requires renewed exact-packet acceptance and qualifying source review."
+    }
+  ]
+}

@@ -1,0 +1,83 @@
+{
+  "scope": "wi/WI-05/integration",
+  "status": "candidate-implementation-independent-review-pending",
+  "upstream": {
+    "contract": "AQ-CONT-1",
+    "implementation_commit": "29e096c4f06985d1a9bd9d5fe5a3a6a5db8a6860",
+    "git_tree": "1c0c85dd700bd9d0c75de223dada911ffeadbb5b",
+    "archive_sha256": "f91f496f22772e8dda044b0cf2cf05cf2eafa9f86d6f0c7e0061b46e3926ffb1",
+    "source_tree_sha256": "a6a8f87272d76e94e69e10d8bcf0992296d1bf8e28ff3d9222374c3b8cdcc34e",
+    "conformance_revision": 16
+  },
+  "assumptions": {
+    "WI-AQ-012": "QueueReferences binds ancestry to a recovered same-store session. Foreign claims encode only external_ref. AQ owns child inheritance and permits only CausalOverride fields. References never authorize reads.",
+    "WI-AQ-015": "TaskInputLocator version 1 encodes a scoped artifact in task bytes. ExternalDataRef is used separately at output APIs. Runtime authorizes before ContextStore integrity/read. Bundle backup retains WI/AQ offline locks and validates artifact closure. WI-05 completion publishes a versioned CompletionLocator only after the Fabric outcome and receipt commit; reopen validates AQ Completed against that receipt and the published artifact.",
+    "WI-AQ-001": "Production binding persists the complete EnsureTaskRequest with a preallocated task UUID. High-level ensure_task computes CanonicalAdmissionV2.",
+    "WI-AQ-002": "The same persisted key/request retries after uncertain acknowledgment. Changed in-scope digest-bearing fields conflict; a changed tenant ID is rejected by AQ host scope before conflict lookup, preserving the admitted task and projection (operator-approved AB-WI-003 interpretation).",
+    "WI-AQ-004": "AQ task acknowledgment closes delivery. Authorized paginated inspection discovers run mappings separately."
+  },
+  "additional_consumers": {
+    "wi/WI-03/integration": {
+      "gate": "WI-AQ-G2",
+      "assumptions": [
+        "WI-AQ-001",
+        "WI-AQ-002"
+      ],
+      "adapter": "crates/worldinterface-runtime/src/ingress.rs::BoundAqIngress::ensure_delivery_task",
+      "mapping": "Observation admission atomically journals each delivery's complete EnsureTaskRequest::for_task. RecoverQueue journals a replacement task request before AQ admission. The task/{TaskId} key and all request bytes are immutable within a generation; uncertain acknowledgments retry the saved bytes. Created and AlreadyExists must return the request's task ID, key, canonical version/digest and a nonzero durable sequence before WI records task_admitted. AQ conflicts propagate without local completion.",
+      "tests": [
+        "delivery_admission_rejects_mismatched_acknowledgments",
+        "ingress_task_admission_preserves_identity_and_conflicts_after_restart",
+        "conflicting_ingress_task_key_leaves_journal_pending",
+        "ab_wi_007_commit_replay_identity_and_subscriber_ack",
+        "process_death_after_wi_commit_recovers_aq_obligation"
+      ],
+      "review": "Candidate tests are implementation evidence; independent G2/G3 and assigned-case attestations remain controller-managed. The primary scope and AB-WI-003 interpretation above remain owned by WI-04/integration."
+    },
+    "wi/WI-07/integration": {
+      "gate": "WI-AQ-G4",
+      "assumptions": [
+        "WI-AQ-006",
+        "WI-AQ-011"
+      ],
+      "adapter": "crates/worldinterface-runtime/src/flow_coordinator.rs",
+      "mapping": "One Awaiting disposition atomically admits flat required children, dependencies, checkpoint and parent AllTerminal wait. Prepared WI proposals are not AQ commitment evidence. The live AQ projection verifies the producing disposition and exact accepted request, scoped child key and inherited causation. Bindings are durable before boundary execution. Missing bindings yield to deadline-based AQ waits and recheck without consuming failures or signal identities; there is no per-child signal outbox. Every child reloads its plan and current boundary authority; AQ terminality never proves WI acceptance. Native WAL crash cuts and real AQ deadline/lifecycle fixtures bind the WIP-07 profile.",
+      "tests": [
+        "child_transaction_native_wal_process_death_cuts_replay_all_or_none",
+        "admission_readiness_retained_wake_restart_and_duplicates_converge",
+        "aq_success_without_wi_acceptance_cannot_complete_flow"
+      ],
+      "review": "Candidate implementation evidence; G4 closure is effective only through CraftingTable reviewed merge with adopted checks. G3 remains WIP-08-owned."
+    }
+  },
+  "approved_case_interpretations": {
+    "AB-WI-003": {
+      "scope": "wi/WI-04/integration",
+      "gate": "WI-AQ-G2",
+      "source_record_sha256": "40a722ec7d187a8c3aeccfd9f595ae97353a6d58cd4b1ebb93b7ebb4162c120d",
+      "pass_criterion": "Using the public CanonicalAdmissionV2 vectors, change each valid digest-bearing field. Require a same-key AQ conflict for every in-scope mutation. A changed tenant ID must receive AQ host scope rejection before conflict lookup. Both outcomes preserve the admitted task and projection. Do not supply an independent digest to high-level ensure_task.",
+      "authority": "Operator approval for wi/WI-04/integration on 2026-09-29"
+    }
+  },
+  "later_owners": "G3 wake/signal adapters and G4 executor/continuation integration retain their mapped owners.",
+  "admission_policy_decision": {
+    "cycle": "dd3d1012",
+    "decided_at": "2026-10-01",
+    "closing_item": "WIP-04",
+    "new_requests": {
+      "max_attempts": 3,
+      "safety_level": "Idempotent"
+    },
+    "persisted_requests": "Preserve exact bytes, artifact hash, CanonicalAdmissionV2 digest, key and TaskId. Fabric Start fences provider reinvocation.",
+    "tests": [
+      "persisted_old_policy_request_is_retried_without_rewriting",
+      "ab_wi_002_003_004_persist_retry_ack_and_discover"
+    ]
+  },
+  "runtime_release": {
+    "contract": "contracts/aq-integration-target.json",
+    "record": "runtime_release",
+    "check": "runtime-aq-graph",
+    "note": "The imported upstream/source-record digests stay historical. Current runtime evidence must separately bind the operator-authorized crates.io 0.3.0 release and exact package graph."
+  }
+}
