@@ -6376,32 +6376,32 @@
         },
         {
           "id": "crates/worldinterface-runtime/src/worker_process/ownership.rs::::module:tests@10d1b0eff34c",
-          "source_sha256": "4e35f4f7d6b51ae0ca83b23d4e0cd151295a9096fd337baaad4f5e2de5829d01",
+          "source_sha256": "abf28bfdd7795af9ad9b41302106bc2c9a505014135f567481ca22c6c4625aec",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/worker_process/ownership.rs::::source-module:crates/worldinterface-runtime/src/worker_process/ownership.rs",
-          "source_sha256": "4e35f4f7d6b51ae0ca83b23d4e0cd151295a9096fd337baaad4f5e2de5829d01",
+          "source_sha256": "abf28bfdd7795af9ad9b41302106bc2c9a505014135f567481ca22c6c4625aec",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/worker_process/ownership.rs::::struct:Context",
-          "source_sha256": "4e35f4f7d6b51ae0ca83b23d4e0cd151295a9096fd337baaad4f5e2de5829d01",
+          "source_sha256": "abf28bfdd7795af9ad9b41302106bc2c9a505014135f567481ca22c6c4625aec",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/worker_process/ownership.rs::::struct:Identity",
-          "source_sha256": "4e35f4f7d6b51ae0ca83b23d4e0cd151295a9096fd337baaad4f5e2de5829d01",
+          "source_sha256": "abf28bfdd7795af9ad9b41302106bc2c9a505014135f567481ca22c6c4625aec",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/worker_process/ownership.rs::::struct:Owned",
-          "source_sha256": "4e35f4f7d6b51ae0ca83b23d4e0cd151295a9096fd337baaad4f5e2de5829d01",
+          "source_sha256": "abf28bfdd7795af9ad9b41302106bc2c9a505014135f567481ca22c6c4625aec",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/worker_process/ownership.rs::tests::struct:ChildGuard@10d1b0eff34c",
-          "source_sha256": "4e35f4f7d6b51ae0ca83b23d4e0cd151295a9096fd337baaad4f5e2de5829d01",
+          "source_sha256": "abf28bfdd7795af9ad9b41302106bc2c9a505014135f567481ca22c6c4625aec",
           "registration_sites": []
         },
         {
@@ -8998,7 +8998,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/src/worker_process/ownership.rs",
-          "source_sha256": "4e35f4f7d6b51ae0ca83b23d4e0cd151295a9096fd337baaad4f5e2de5829d01",
+          "source_sha256": "abf28bfdd7795af9ad9b41302106bc2c9a505014135f567481ca22c6c4625aec",
           "treatment": "WIP-09: retain reviewed process adapter mechanics and fixture evidence; selective shared-infrastructure maintenance only, with no legacy removal or new approval claim."
         },
         {

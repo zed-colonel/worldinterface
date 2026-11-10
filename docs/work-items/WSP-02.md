@@ -39,3 +39,13 @@ Verification results and release bundles belong in the run's external
 `scratch/verification/`, with final committed-head check results recorded by
 CraftingTable. Repeat preparation at the actual reviewed merge revision before
 operator publication, as described in `docs/release/publication-staging.md`.
+
+The first preparation retries exposed intermittent rejection of already-reaped
+grandchildren during ownership discovery. A kernel-level diagnostic reproduced
+`ESRCH` reading an open proc-stat descriptor after reaping; the existing path
+handled only `ENOENT`. WSP-02 also handles that equivalent departure result and
+adds a deterministic unit regression using the real proc descriptor. All other
+read failures and live ownership mismatches still fail closed. This narrow
+correctness fix is a deviation from packaging-only scope needed for dependable
+clean-commit verification; it adds no operation, scope, waiting exception or
+authority.

@@ -18,9 +18,19 @@ fn stat(pid: u32) -> Result<(u32, u64)> {
     stat_if_present(pid)?.ok_or_else(|| "process departed".into())
 }
 fn stat_if_present(pid: u32) -> Result<Option<(u32, u64)>> {
-    let s = match fs::read_to_string(format!("/proc/{pid}/stat")) {
+    stat_from_read(fs::read_to_string(format!("/proc/{pid}/stat")))
+}
+fn stat_from_read(read: std::io::Result<String>) -> Result<Option<(u32, u64)>> {
+    let s = match read {
         Ok(s) => s,
-        Err(e) if e.kind() == std::io::ErrorKind::NotFound => return Ok(None),
+        // Reaping between open and read returns ESRCH rather than ENOENT.
+        // Both establish departure; other I/O and live identity failures remain errors.
+        Err(e)
+            if e.kind() == std::io::ErrorKind::NotFound
+                || e.raw_os_error() == Some(libc::ESRCH) =>
+        {
+            return Ok(None);
+        }
         Err(e) => return io(Err(e)),
     };
     let fields: Vec<_> =
@@ -248,6 +258,29 @@ mod tests {
             let _ = self.0.kill();
             let _ = self.0.wait();
         }
+    }
+    #[test]
+    fn reaped_proc_stat_descriptor_is_departure_but_other_read_errors_fail_closed() {
+        let mut child = ChildGuard(
+            Command::new("/bin/cat").stdin(Stdio::piped()).stdout(Stdio::null()).spawn().unwrap(),
+        );
+        let mut descriptor = File::open(format!("/proc/{}/stat", child.0.id())).unwrap();
+        assert_eq!(stat_if_present(child.0.id()).unwrap().unwrap().0, std::process::id());
+        // Hold the proc descriptor across reaping to exercise the real kernel
+        // error, without relying on scheduler timing during read_to_string.
+        drop(child.0.stdin.take());
+        assert!(child.0.wait().unwrap().success());
+        let mut contents = String::new();
+        let read = descriptor.read_to_string(&mut contents).map(|_| contents);
+        assert_eq!(read.as_ref().unwrap_err().raw_os_error(), Some(libc::ESRCH));
+        assert!(stat_from_read(read).unwrap().is_none());
+        assert!(stat_from_read(Err(std::io::Error::from_raw_os_error(libc::ENOENT)))
+            .unwrap()
+            .is_none());
+        for errno in [libc::EACCES, libc::EIO, libc::EMFILE] {
+            assert!(stat_from_read(Err(std::io::Error::from_raw_os_error(errno))).is_err());
+        }
+        assert!(stat_from_read(Ok("malformed identity".into())).is_err());
     }
     #[test]
     fn recycled_pid_simulation_never_adopts_or_signals_unrelated_child() {
