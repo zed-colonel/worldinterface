@@ -86,6 +86,8 @@ def toolchain():
     host = re.search(r'^host: (.+)$', rust, re.M)[1]
     require(host == 'x86_64-unknown-linux-gnu', 'worker proof release requires Linux x86_64 GNU')
     return {'rustc': rust, 'cargo': cargo, 'target': host, 'profile': 'release',
+            'cargo_home': os.environ.get('CARGO_HOME', str(Path.home() / '.cargo')),
+            'target_directory': str(external_target()),
             'cc': subprocess.check_output(['cc', '--version'], text=True, timeout=30),
             'ld': subprocess.check_output(['ld', '--version'], text=True, timeout=30),
             'platform': os.uname()._asdict() if hasattr(os.uname(), '_asdict') else list(os.uname()),
@@ -244,12 +246,13 @@ def validate_archive(path, name, version, checksums):
     return files
 
 
-def check_graph(meta, lock, root_name, version, checksums):
+def check_graph(meta, lock, root_name, version, checksums, inspect_manifests=True):
     roots = [p for p in meta['packages'] if p['name'] == root_name]
     require(len(roots) == 1, 'missing graph root')
     for p in meta['packages']:
         require(p['source'] == CRATES_IO or p['id'] == roots[0]['id'], 'non-registry resolved source: ' + p['name'])
-        dependencies(toml(p['manifest_path']), version, normalized=True)
+        if inspect_manifests:
+            dependencies(toml(p['manifest_path']), version, normalized=True)
         if p['name'] in PACKAGES:
             require(p['version'] == version, 'wrong graph WI version')
     aq = {p['name']: p for p in lock['package'] if p['name'].startswith('actionqueue-')}
@@ -310,3 +313,13 @@ def validate_schema(schema, value, label='manifest'):
         require(len(value) >= schema.get('minLength', 0), label + ': short string')
         if 'pattern' in schema:
             require(re.search(schema['pattern'], value), label + ': pattern mismatch')
+
+
+def worker_recipe(version, target):
+    return ['cargo', '+1.89.0', 'install', '--locked', '--version', '=' + version,
+            '--target', target, '--profile', 'release', '--bin', 'wi-process-fixture',
+            '--bin', 'wi-process-reaper', '--root', '{install-root}', 'worldinterface-runtime']
+
+
+def recipe_digest(recipe):
+    return hashlib.sha256(json.dumps(recipe, separators=(',', ':')).encode()).hexdigest()

@@ -8,7 +8,7 @@ import subprocess
 import sys
 sys.dont_write_bytecode = True
 from wi_release import (ROOT, RUNTIME, PACKAGES, check_graph, read, ref, require, run,
-                        sha, toml, toolchain, write)
+                        sha, toml, toolchain, worker_recipe, recipe_digest, write)
 from wi_release_packages import cargo, environment
 from wi_crash_isolation import check_artifacts
 
@@ -39,9 +39,7 @@ def consumer(output, work, version):
     write(output / 'production/consumer.json', records)
     run(base + ['run', '--offline', '--locked'], folder, output / 'logs/consumer-run.log', env, 300)
     install = work / 'install'
-    recipe = ['cargo', '+1.89.0', 'install', '--locked', '--version', '=' + version,
-              '--target', build['target'], '--profile', 'release', '--bin', 'wi-process-fixture',
-              '--bin', 'wi-process-reaper', '--root', '{install-root}', 'worldinterface-runtime']
+    recipe = worker_recipe(version, build['target'])
     command = recipe.copy(); command[command.index('{install-root}')] = str(install)
     command[2:2] = ['--config', str(work / 'registry.toml')]
     # Offline is a cargo install option, and the environment also forbids network.
@@ -59,7 +57,7 @@ def consumer(output, work, version):
         'archives': checksums, 'repository_lock_sha256': sha(source / 'release/repository-Cargo.lock'),
         'packaged_lock_sha256': sha(work / 'extracted/worldinterface-runtime/Cargo.lock'),
         'consumer_lock_sha256': sha(output / 'consumer-Cargo.lock'), 'build': build,
-        'recipe': recipe, 'executables': binaries,
+        'recipe': recipe, 'recipe_sha256': recipe_digest(recipe), 'install_command': command, 'executables': binaries,
         'digest_scope': 'Exact recorded compiler, target, profile, environment and linker/system; no universal reproducibility claim.',
         'publication_status': 'not-performed'})
 

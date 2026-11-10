@@ -14,7 +14,7 @@ import sys
 import tempfile
 sys.dont_write_bytecode = True
 from wi_release import (ROOT, FOUNDATION, RUNTIME, PACKAGES, ADOPTED, BASELINE, archive_files,
-                        clean, external_target, git, metadata, read, ref, require, run,
+                        clean, check_graph, external_target, git, metadata, read, ref, require, run, worker_recipe, recipe_digest,
                         safe, sha, toolchain, toml, validate_archive, validate_schema, write)
 from wi_crash_isolation import check_artifacts
 
@@ -108,11 +108,20 @@ def validate_packages(manifest, output):
     require(handoff['descriptor_sha256'] == manifest['descriptor_sha256'] and handoff['archives'] == checksums, 'wrong handoff archives/descriptor')
     require(handoff['repository_lock_sha256'] == repository_digest and handoff['packaged_lock_sha256'] == locks['worldinterface-runtime'], 'repository/package lock provenance confusion')
     require(handoff['consumer_lock_sha256'] == sha(safe(output, 'consumer-Cargo.lock')) and handoff['build'] == read(safe(output, 'build-environment.json')), 'handoff build identity disagreement')
+    recipe = worker_recipe(version, handoff['build']['target'])
+    require(handoff['recipe'] == recipe and handoff['recipe_sha256'] == recipe_digest(recipe), 'worker recipe drift')
+    command = recipe.copy(); command[command.index('{install-root}')] = manifest['build_work'] + '/install'
+    command[2:2] = ['--config', manifest['build_work'] + '/registry.toml']; command.append('--offline')
+    require(handoff['install_command'] == command, 'worker install command drift')
+    install = read(safe(output, 'logs/worker-install.result.json'))
+    require(install['argv'] == command and install['exit_code'] == 0 and install['result'] == 'passed', 'missing/failed worker installation')
     require(handoff['publication_status'] == 'not-performed', 'invalid handoff publication claim')
     require(set(handoff['executables']) == {'wi-process-fixture', 'wi-process-reaper'}, 'missing worker executable')
     for name, record in handoff['executables'].items():
         require(record['path'] == 'workers/' + name and record['sha256'] == sha(safe(output, record['path'])) and record['size'] == (output / record['path']).stat().st_size, 'worker executable drift')
-    validate_resolution(read(safe(output, 'consumer-resolution.json')), 'wi-downstream-consumer', version)
+    consumer_meta = read(safe(output, 'consumer-resolution.json'))
+    validate_resolution(consumer_meta, 'wi-downstream-consumer', version)
+    check_graph(consumer_meta, toml(safe(output, 'consumer-Cargo.lock')), 'wi-downstream-consumer', version, checksums, inspect_manifests=False)
     check_artifacts(read(safe(output, 'production/consumer.json')))
 
 

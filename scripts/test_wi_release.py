@@ -110,6 +110,18 @@ class ReleaseTests(unittest.TestCase):
             changed = copy.deepcopy(lock); changed['package'][item][field] = value
             with self.assertRaises(ValueError): shared.validate_lock(changed, repository, 'worldinterface-runtime', VERSION, {'worldinterface-protocol': 'b' * 64})
 
+    def test_existing_evidence_rechecks_consumer_aq_and_wi_lock_checksums(self):
+        checksums = {n: 'b' * 64 for n in shared.PACKAGES}
+        expected = shared.read(shared.ROOT / 'contracts/aq-integration-target.json')['runtime_release']['crates']
+        lock = {'package': [{'name': n, 'version': VERSION, **({'source': shared.CRATES_IO, 'checksum': checksums[n]} if n != 'worldinterface-runtime' else {})} for n in shared.PACKAGES]}
+        lock['package'] += [{'name': n, 'version': p['version'], 'source': shared.CRATES_IO, 'checksum': p['checksum']} for n, p in expected.items()]
+        meta = {'packages': [{'id': p['name'], 'name': p['name'], 'version': p['version'], 'source': p.get('source')} for p in lock['package']]}
+        shared.check_graph(meta, lock, 'worldinterface-runtime', VERSION, checksums, inspect_manifests=False)
+        for name in ['actionqueue-core', 'worldinterface-protocol']:
+            changed = copy.deepcopy(lock)
+            next(p for p in changed['package'] if p['name'] == name)['checksum'] = 'f' * 64
+            with self.assertRaises(ValueError): shared.check_graph(meta, changed, 'worldinterface-runtime', VERSION, checksums, inspect_manifests=False)
+
     def test_archive_paths_duplicates_symlinks_and_tampering(self):
         path = self.base / 'bad.crate'
         prefix = 'worldinterface-protocol-' + VERSION + '/'

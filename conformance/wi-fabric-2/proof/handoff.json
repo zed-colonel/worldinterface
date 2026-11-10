@@ -3594,10 +3594,10 @@
     "fixtures/pre-wi-fabric-2/exo/repos/sample-rust/src/lib.rs": "4f6a07ed71fc95baaa7243cb58588a956f3905730ad5201d751ad914a9bb2722",
     "rust-toolchain.toml": "2a0049652fe5a89222a0fc64fa0e4a403435f134bd6fbdf9556e986a62e59128",
     "scripts/build-wi-worker-evaluation.sh": "2ed4f98edf61c1b03f59130b0ca0f110e0b61c69c3af80274dce053f6a0076a4",
-    "scripts/check-consumer.py": "8a1172be08a0ec99a33ee31fe0259f479b873062e84ee5e91f33f38f59b5df55",
+    "scripts/check-consumer.py": "02176af637e4d38e815d3d12c65e4f8742b7237310d91c6a71bb2ac2f700774d",
     "scripts/check-packages.py": "08e88f56fffdc9be09558078c0e3643d2132a8a3fabed3cc1953c2ef4ee4f384",
-    "scripts/release.py": "0fefda2732721c8c2c3d60516667d4ff0ccdd0135f0b9ee08fc333df55252e7b",
-    "scripts/wi_release.py": "4bd57b956fc4455dba4d7da4a60a9f3cf37b351ab309b4b8cd19ede61e875fd7",
+    "scripts/release.py": "c91264e02792759ac308da29c56826c20e0479a72386810e5b3bdc0d209d9294",
+    "scripts/wi_release.py": "905133fb5b1b64b680a737f06ae2503731c4353cd304a86c6cc753be0f939a7d",
     "scripts/wi_release_packages.py": "f834318c2d4263016e43d3b1f292103a75e88584de3b935c363c3f8b65445d65",
     "scripts/wi_worker_evaluation.py": "f722f2724a5004bf2ee72753e0d9b3a729941b61bc7060cca6bdc207721a4fbf",
     "tools/wi-contract-check/Cargo.lock": "e23d73ebc1773d7c638713f63e51cf3e6f0c1982ee3f96a3b46b804185cce057"
