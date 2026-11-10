@@ -72,7 +72,7 @@ class ReleaseTests(unittest.TestCase):
 
     def test_metadata_rejects_blockers_versions_and_incomplete_inventories(self):
         source = self.base / 'source'; source.mkdir()
-        for directory in ['crates/worldinterface-foundation', 'crates/worldinterface-runtime', 'docs/release', 'conformance/wi-fabric-2/proof', 'conformance/wi-fabric-2/egress', 'conformance/wi-fabric-2/ingress', 'examples/downstream-consumer', 'contracts']:
+        for directory in ['crates/worldinterface-foundation', 'crates/worldinterface-runtime', 'docs/release', 'conformance/wi-fabric-2', 'examples/downstream-consumer', 'contracts']:
             shutil.copytree(shared.ROOT / directory, source / directory, dirs_exist_ok=True, ignore=shutil.ignore_patterns('target', '__pycache__'))
         with patch.object(shared, 'ROOT', source):
             shared.metadata(VERSION)

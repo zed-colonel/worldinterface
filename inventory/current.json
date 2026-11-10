@@ -9265,7 +9265,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-foundation/storage/tests/support/crash.rs",
     "name": "crates/worldinterface-foundation/storage/tests/support/crash.rs",
-    "source_sha256": "713a2239d363fb995047de74ad52aa2f672235c1220cabec05da0a893b04a7ea",
+    "source_sha256": "1046279f7f79d0609d2dd5b09a80b5f7eb529a8fffb0d5c7faebeed002908516",
     "conditions": [],
     "registration_sites": []
   },
@@ -9274,7 +9274,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-foundation/storage/tests/support/crash.rs",
     "name": "KillOnDrop",
-    "source_sha256": "713a2239d363fb995047de74ad52aa2f672235c1220cabec05da0a893b04a7ea",
+    "source_sha256": "1046279f7f79d0609d2dd5b09a80b5f7eb529a8fffb0d5c7faebeed002908516",
     "conditions": [],
     "registration_sites": []
   },

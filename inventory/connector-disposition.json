@@ -1254,7 +1254,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/release/handoff.json",
-          "source_sha256": "9fdfda7bd7529f72b3c516714894854b8b20fe4b1aabf46e764431b8c8df7d5f",
+          "source_sha256": "272721fc808f589e7e2fcfe3f3d59e48f458c1cf694493285e345e73c367e114",
           "treatment": "Retain WSP-02 package evidence/support and registry consumer. Future legacy removal must preserve authoritative byte equality and release consumer coverage."
         },
         {
@@ -5076,12 +5076,12 @@
         },
         {
           "id": "crates/worldinterface-foundation/storage/tests/support/crash.rs::::source-module:crates/worldinterface-foundation/storage/tests/support/crash.rs",
-          "source_sha256": "713a2239d363fb995047de74ad52aa2f672235c1220cabec05da0a893b04a7ea",
+          "source_sha256": "1046279f7f79d0609d2dd5b09a80b5f7eb529a8fffb0d5c7faebeed002908516",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/tests/support/crash.rs::::struct:KillOnDrop",
-          "source_sha256": "713a2239d363fb995047de74ad52aa2f672235c1220cabec05da0a893b04a7ea",
+          "source_sha256": "1046279f7f79d0609d2dd5b09a80b5f7eb529a8fffb0d5c7faebeed002908516",
           "registration_sites": []
         },
         {
@@ -8718,7 +8718,7 @@
         },
         {
           "path": "crates/worldinterface-foundation/storage/tests/support/crash.rs",
-          "source_sha256": "713a2239d363fb995047de74ad52aa2f672235c1220cabec05da0a893b04a7ea",
+          "source_sha256": "1046279f7f79d0609d2dd5b09a80b5f7eb529a8fffb0d5c7faebeed002908516",
           "treatment": "Retain target integration source and tests; audit shared declarations before any later selective removal."
         },
         {

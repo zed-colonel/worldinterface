@@ -79,14 +79,16 @@ def clean(commit):
 
 
 def toolchain():
-    rust = subprocess.check_output(['rustc', '-vV'], text=True, timeout=30)
+    rust = subprocess.check_output([os.environ.get('RUSTC', 'rustc'), '-vV'], text=True, timeout=30)
     cargo = subprocess.check_output(['cargo', '--version'], text=True, timeout=30).strip()
     require('release: 1.89.0\n' in rust and cargo.startswith('cargo 1.89.0 '), 'release requires rustc and Cargo 1.89.0')
     host = re.search(r'^host: (.+)$', rust, re.M)[1]
     require(host == 'x86_64-unknown-linux-gnu', 'worker proof release requires Linux x86_64 GNU')
     return {'rustc': rust, 'cargo': cargo, 'target': host, 'profile': 'release',
+            'cc': subprocess.check_output(['cc', '--version'], text=True, timeout=30),
+            'ld': subprocess.check_output(['ld', '--version'], text=True, timeout=30),
             'platform': os.uname()._asdict() if hasattr(os.uname(), '_asdict') else list(os.uname()),
-            'build_environment': {k: os.environ.get(k, '8' if k == 'CARGO_BUILD_JOBS' else '') for k in ['RUSTFLAGS', 'RUSTDOCFLAGS', 'CC', 'CFLAGS', 'CARGO_BUILD_JOBS', 'SOURCE_DATE_EPOCH']}}
+            'build_environment': {k: os.environ.get(k, '8' if k == 'CARGO_BUILD_JOBS' else '') for k in ['RUSTFLAGS', 'RUSTDOCFLAGS', 'CC', 'CFLAGS', 'CARGO_BUILD_JOBS', 'SOURCE_DATE_EPOCH', 'RUSTC', 'RUSTC_WRAPPER', 'RUSTC_WORKSPACE_WRAPPER', 'CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER', 'CARGO_PROFILE_RELEASE_OPT_LEVEL', 'CARGO_PROFILE_RELEASE_LTO', 'CARGO_PROFILE_RELEASE_CODEGEN_UNITS']}}
 
 
 def external_target():
@@ -129,7 +131,15 @@ def metadata(version):
     inventory = byte_copies()
     require(set(toml(ROOT / FOUNDATION / 'Cargo.toml')['workspace']['members']) == set(ORDER) - {'runtime'}, 'wrong foundation workspace inventory')
     require(set(inventory['packages']) == set(PACKAGES), 'incomplete package test inventory')
+    discovered = {}
+    for workspace in [FOUNDATION, RUNTIME]:
+        resolved = json.loads(subprocess.check_output(['cargo', 'metadata', '--locked', '--offline', '--no-deps', '--format-version', '1', '--manifest-path', str(ROOT / workspace / 'Cargo.toml')], cwd=ROOT, timeout=180))
+        for package in resolved['packages']:
+            if package['name'] in PACKAGES:
+                discovered[package['name']] = package
+    require(set(discovered) == set(PACKAGES), 'incomplete discovered package inventory')
     for name, directory in PACKAGES.items():
+        require(Path(discovered[name]['manifest_path']) == ROOT / directory / 'Cargo.toml', 'substituted checkout package')
         data = toml(ROOT / directory / 'Cargo.toml')
         p = data['package']
         require((p['name'], p['version']) == (name, version), 'wrong package identity')
@@ -141,7 +151,7 @@ def metadata(version):
         require(tests['manifest'] == str(directory / 'Cargo.toml') and tests['library'] is True and tests['doctests'] is True, 'wrong package test contract')
         rows = tests['tests']
         require(len({r['target'] for r in rows}) == len(rows), 'duplicate test target')
-        require({r['target'] for r in rows} == {p.stem for p in (ROOT / directory / 'tests').glob('*.rs')}, 'unclassified test target')
+        require({r['target'] for r in rows} == {t['name'] for t in discovered[name]['targets'] if 'test' in t['kind']}, 'unclassified test target')
         expected_owner = 'runtime-test' if name == 'worldinterface-runtime' else 'foundation-test'
         for row in rows:
             require(row['disposition'] in ['packaged', 'repository-only'] and row['owner'] == expected_owner and row['reason'], 'invalid test disposition')

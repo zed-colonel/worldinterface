@@ -50,7 +50,7 @@ def consumer(output, work, version):
     binaries = {}
     for name in ['wi-process-fixture', 'wi-process-reaper']:
         dest = output / 'workers' / name; dest.parent.mkdir(exist_ok=True)
-        shutil.copyfile(install / 'bin' / name, dest)
+        shutil.copy2(install / 'bin' / name, dest)
         binaries[name] = dict(ref(output, dest), size=dest.stat().st_size)
     write(output / 'consumer-handoff.json', {
         'schema_version': 1, 'kind': 'wi-release-consumer-handoff-v1',

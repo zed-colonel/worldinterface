@@ -387,6 +387,7 @@
     "crates/worldinterface-runtime/release/gates/WI-WORKER-G2.json": "conformance/wi-fabric-2/proof/gates/WI-WORKER-G2.json",
     "crates/worldinterface-runtime/release/gates/WI-EMBEDDED-CORE-1.json": "conformance/wi-fabric-2/proof/gates/WI-EMBEDDED-CORE-1.json",
     "crates/worldinterface-runtime/release/gates/WI-WORKER-G4.json": "conformance/wi-fabric-2/proof/gates/WI-WORKER-G4.json",
-    "crates/worldinterface-foundation/domain/tests/support/egress.json": "conformance/wi-fabric-2/egress/fixture.json"
+    "crates/worldinterface-foundation/domain/tests/support/egress.json": "conformance/wi-fabric-2/egress/fixture.json",
+    "crates/worldinterface-foundation/storage/tests/support/canonical-vectors.json": "conformance/wi-fabric-2/domain/canonical-vectors.json"
   }
 }
