@@ -10920,13 +10920,6 @@
     "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
   },
   {
-    "id": "crates/worldinterface-runtime/src/worker/evaluation.rs::::struct:OperatorApprovalReceipt",
-    "disposition": "retain-align",
-    "target": "worker-lifecycle-runtime",
-    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
-    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
-  },
-  {
     "id": "crates/worldinterface-runtime/src/worker/evaluation.rs::::struct:VerifiedEvaluation",
     "disposition": "retain-align",
     "target": "worker-lifecycle-runtime",
@@ -11061,13 +11054,6 @@
   },
   {
     "id": "crates/worldinterface-runtime/tests/support/worker_approval_anchor.rs::::source-module:crates/worldinterface-runtime/tests/support/worker_approval_anchor.rs",
-    "disposition": "test-evidence",
-    "target": "worker-lifecycle-test-evidence",
-    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
-    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
-  },
-  {
-    "id": "crates/worldinterface-runtime/tests/support/worker_fixture.rs::::module:anchor",
     "disposition": "test-evidence",
     "target": "worker-lifecycle-test-evidence",
     "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
@@ -12773,5 +12759,33 @@
     "target": "process-managed-proof-1 runtime adapter",
     "rationale": "F-002: deterministic trusted host clock proves collection, cleanup and inspection survive bootstrap credential expiry while worker-facing access still fails closed. Candidate for correctness review.",
     "source": "docs/work-items/WI-WORKER-PROOF-1-correctness.md; active F-002 and operator correctness remediation guidance"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/worker_build.rs::::module:packet",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WSP-01: complete committed packet verification in the trusted test host, including pre-setup rejection and current cached-build checks. Reviewed merge establishes acceptance without receipt, anchor or expiry; scope and catalog bindings remain unchanged.",
+    "source": "docs/work-items/WSP-01.md; operator decision 2026-11-09"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/worker_fixture.rs::::module:packet",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WSP-01: complete committed packet verification in the trusted test host, including pre-setup rejection and current cached-build checks. Reviewed merge establishes acceptance without receipt, anchor or expiry; scope and catalog bindings remain unchanged.",
+    "source": "docs/work-items/WSP-01.md; operator decision 2026-11-09"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/worker_packet.rs::::source-module:crates/worldinterface-runtime/tests/support/worker_packet.rs",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WSP-01: complete committed packet verification in the trusted test host, including pre-setup rejection and current cached-build checks. Reviewed merge establishes acceptance without receipt, anchor or expiry; scope and catalog bindings remain unchanged.",
+    "source": "docs/work-items/WSP-01.md; operator decision 2026-11-09"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_evaluation.rs::::module:packet",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WSP-01: complete committed packet verification in the trusted test host, including pre-setup rejection and current cached-build checks. Reviewed merge establishes acceptance without receipt, anchor or expiry; scope and catalog bindings remain unchanged.",
+    "source": "docs/work-items/WSP-01.md; operator decision 2026-11-09"
   }
 ]

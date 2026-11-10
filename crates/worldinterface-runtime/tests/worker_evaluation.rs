@@ -1,4 +1,6 @@
-//! Approval boundary tests deliberately launch no processes.
+//! Packet boundary tests deliberately launch no worker processes.
+#[path = "support/worker_packet.rs"]
+mod packet;
 use std::{
     collections::{BTreeMap, BTreeSet},
     sync::atomic::{AtomicBool, Ordering},
@@ -6,12 +8,12 @@ use std::{
 use worldinterface_protocol::{canonical_data, ContentHash};
 use worldinterface_runtime::{worker::evaluation::*, worker_process::Task, Result};
 struct Trust {
-    receipt: OperatorApprovalReceipt,
+    packet: ContentHash,
     revoked: AtomicBool,
 }
 impl TrustedApprovals for Trust {
-    fn accepted(&self, r: &OperatorApprovalReceipt, now: u64) -> Result<bool> {
-        Ok(r == &self.receipt && now < r.expires_unix_ms && !self.revoked.load(Ordering::SeqCst))
+    fn accepted(&self, m: &EvaluationManifest, _: &std::path::Path) -> Result<bool> {
+        Ok(m.digest()? == self.packet && !self.revoked.load(Ordering::SeqCst))
     }
 }
 fn fixture() -> (tempfile::TempDir, EvaluationVerifier<Trust>) {
@@ -25,53 +27,31 @@ fn fixture() -> (tempfile::TempDir, EvaluationVerifier<Trust>) {
         tasks: BTreeSet::from([ContentHash::of(&canonical_data(&Task::Probe).unwrap())]),
         cases: BTreeSet::from(["WP-017".into()]),
         operations: BTreeSet::from(["start".into()]),
-        max_wall_ms: 1000,
+        max_wall_ms: 15000,
         max_output_bytes: 65536,
         nonsensitive_only: true,
         production_credentials: false,
         ordinary_use: false,
     };
-    let receipt = OperatorApprovalReceipt {
-        decision: "isolated-negative-test-decision".into(),
-        operator: "test-authority".into(),
-        manifest: m.digest().unwrap(),
-        expires_unix_ms: 200,
-    };
+    let packet = m.digest().unwrap();
     let v = EvaluationVerifier {
         manifest: m,
-        receipt: receipt.clone(),
-        trusted: Trust { receipt, revoked: AtomicBool::new(false) },
+        trusted: Trust { packet, revoked: AtomicBool::new(false) },
         source_root: t.path().into(),
     };
     (t, v)
 }
 #[test]
-fn approval_rejects_drafts_self_assertions_unknown_decisions_expiry_and_revocation() {
-    let (_t, mut v) = fixture();
-    v.verify(100).unwrap();
-    let original = v.receipt.clone();
-    for change in ["draft", "unknown", "operator", "digest", "expired"] {
-        v.receipt = original.clone();
-        match change {
-            "draft" => v.receipt.decision.clear(),
-            "unknown" => v.receipt.decision = "invented-acceptance".into(),
-            "operator" => v.receipt.operator = "self-asserted".into(),
-            "digest" => v.receipt.manifest = ContentHash::of(b"other"),
-            _ => v.receipt.expires_unix_ms = 99,
-        };
-        assert!(v.verify(100).is_err(), "{change}");
+fn packet_acceptance_is_independent_of_calendar_and_rejects_revocation() {
+    let (_t, v) = fixture();
+    for now in [0, 100, 200, u64::MAX] {
+        v.verify(now).unwrap();
     }
-    v.receipt = original;
-    assert!(v.verify(200).is_err());
     v.trusted.revoked.store(true, Ordering::SeqCst);
     assert!(v.verify(100).is_err());
-    assert!(serde_json::from_str::<OperatorApprovalReceipt>(
-        r#"{"status":"accepted","decision":"invented"}"#
-    )
-    .is_err());
 }
 #[test]
-fn approved_packet_cannot_widen_tasks_operations_cases_environment_or_source_bindings() {
+fn committed_packet_cannot_widen_tasks_operations_cases_environment_or_source_bindings() {
     let (t, mut v) = fixture();
     let env = v.manifest.environment.clone();
     v.authorize(100, "WP-017", "start", &Task::Probe, &env).unwrap();
@@ -96,12 +76,63 @@ fn approved_packet_cannot_widen_tasks_operations_cases_environment_or_source_bin
                 v.manifest.tasks.insert(ContentHash::of(b"other"));
             }
         };
-        // Updating a repository receipt cannot update the independently accepted host record.
-        v.receipt.manifest = v.manifest.digest().unwrap();
+        // A changed request cannot update the independently bound host packet.
         assert!(v.verify(100).is_err(), "{mode}");
     }
     v.manifest = original;
-    v.receipt = v.trusted.receipt.clone();
     std::fs::write(t.path().join("fixture.rs"), b"changed source").unwrap();
     assert!(v.verify(100).is_err());
+}
+
+#[test]
+fn live_setup_rejects_stale_and_uncommitted_packets_before_fixture_execution() {
+    use std::{path::Path, process::Command, sync::atomic::AtomicUsize};
+    let source = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let root = tempfile::tempdir().unwrap();
+    let packet_path = "conformance/wi-fabric-2/worker/evaluation-manifest.json";
+    let raw = std::fs::read(source.join(packet_path)).unwrap();
+    let manifest: EvaluationManifest = serde_json::from_slice(&raw).unwrap();
+    for name in manifest.files.keys().map(String::as_str).chain([packet_path]) {
+        let dest = root.path().join(name);
+        std::fs::create_dir_all(dest.parent().unwrap()).unwrap();
+        std::fs::copy(source.join(name), dest).unwrap();
+    }
+    let git = |args: &[&str]| {
+        let output = Command::new("git").args(args).current_dir(root.path()).output().unwrap();
+        assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    };
+    git(&["init", "-q"]);
+    git(&["add", "-f", "."]);
+    git(&[
+        "-c",
+        "user.name=Packet Test",
+        "-c",
+        "user.email=packet@example.invalid",
+        "commit",
+        "-qm",
+        "private fixture",
+    ]);
+    let launches = AtomicUsize::new(0);
+    let setup = |_| -> Result<()> {
+        launches.fetch_add(1, Ordering::SeqCst);
+        Ok(())
+    };
+    // This is the same setup boundary used by worker_fixture::evaluation().
+    packet::live_setup(root.path(), setup).unwrap();
+    assert_eq!(launches.swap(0, Ordering::SeqCst), 1);
+    std::fs::write(root.path().join("crates/worldinterface-runtime/src/lib.rs"), b"changed")
+        .unwrap();
+    assert!(packet::live_setup(root.path(), setup).is_err());
+    assert_eq!(launches.load(Ordering::SeqCst), 0);
+    let refresh = Command::new("python3")
+        .args(["-B", "scripts/refresh-wi-worker-evaluation.py"])
+        .current_dir(root.path())
+        .output()
+        .unwrap();
+    assert!(refresh.status.success(), "{}", String::from_utf8_lossy(&refresh.stderr));
+    packet::current(root.path(), false).unwrap();
+    assert!(packet::live_setup(root.path(), setup).is_err());
+    git(&["add", "-f", "."]);
+    assert!(packet::live_setup(root.path(), setup).is_err());
+    assert_eq!(launches.load(Ordering::SeqCst), 0);
 }

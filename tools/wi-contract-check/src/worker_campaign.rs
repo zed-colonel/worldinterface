@@ -21,7 +21,6 @@ pub const ENTRY: &str = "wi_owned_worker_acceptance_campaign";
 pub const PARALLELISM: usize = 8;
 use crate::proof::RUNTIME;
 const PACKET: &str = "conformance/wi-fabric-2/worker/evaluation-manifest.json";
-const APPROVAL: &str = "conformance/wi-fabric-2/worker/evaluation-approval.json";
 const LOCKS: [&str; 3] = [
     "crates/worldinterface-foundation/Cargo.lock",
     "crates/worldinterface-runtime/Cargo.lock",
@@ -52,7 +51,6 @@ fn pins(root: &Path) -> Result<Value> {
     let mut sources = BTreeMap::new();
     for path in LOCKS.into_iter().chain([
         PACKET,
-        APPROVAL,
         COVERAGE,
         "conformance/wi-fabric-2/proof/cases.json",
         "contracts/aq-integration-target.json",
@@ -234,27 +232,6 @@ pub fn validate_coverage(root: &Path, registry: &Registry, index: &proof::TestIn
     }
     Ok(())
 }
-fn approval(root: &Path) -> Result<Value> {
-    let packet = read(&root.join(PACKET))?;
-    for (path, digest) in packet["files"].as_object().ok_or("packet files missing")? {
-        if json!(digest_file(root, path)?) != *digest {
-            return Err(format!("packet source drift: {path}").into());
-        }
-    }
-    let receipt = read(&root.join(APPROVAL))?;
-    let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH)?.as_millis();
-    validate_approval(&receipt, &packet, now)?;
-    Ok(receipt)
-}
-pub fn validate_approval(receipt: &Value, packet: &Value, now: u128) -> Result<()> {
-    if receipt["manifest"] != hash(serde_json::to_vec(&packet)?) {
-        return Err("renewed operator acceptance of the concrete evaluation packet required".into());
-    }
-    if receipt["expires_unix_ms"].as_u64().is_none_or(|expiry| u128::from(expiry) <= now) {
-        return Err("evaluation approval expired; renewed exact-packet acceptance required".into());
-    }
-    Ok(())
-}
 fn outside(root: &Path, directory: &Path) -> Result<PathBuf> {
     let path = directory.canonicalize()?;
     if path.starts_with(root.canonicalize()?)
@@ -296,7 +273,7 @@ pub fn run(root: &Path, directory: &Path) -> Result<()> {
     }
     let before = pins(root)?;
     validate_generation(&before, &before)?;
-    let acceptance = approval(root)?;
+    let acceptance = crate::evaluation::packet(root)?;
     let gates = gate_states(root)?;
     validate_gates(root, &gates)?;
     let (registry, gate_records) = proof::load(root)?;
@@ -345,10 +322,10 @@ pub fn run(root: &Path, directory: &Path) -> Result<()> {
             )
         })
         .collect();
-    let receipt = json!({"version":2,"before":before,"after":after,"os":{
+    let receipt = json!({"version":3,"before":before,"after":after,"os":{
         "kernel":output(root,"uname", &["-srv"])? ,"architecture":output(root,"uname", &["-m"])? ,
         "release":fs::read_to_string("/etc/os-release")?},"execution_identity":output(root,"id",&[])? ,
-        "evaluation_approval":acceptance,"outcomes":outcomes,"runtime_suite_outcomes":runtime_suite_outcomes,"cases":cases,"embedded_observations":observations,
+        "evaluation_packet":acceptance,"outcomes":outcomes,"runtime_suite_outcomes":runtime_suite_outcomes,"cases":cases,"embedded_observations":observations,
         "gates":gates,"claims":claims(),"limitations":limitations(),
         "campaign_parallelism":PARALLELISM});
     fs::write(directory.join("receipt.json"), serde_json::to_vec_pretty(&receipt)?)?;
@@ -559,7 +536,7 @@ fn validate_receipt_with_harnesses(
             "after",
             "os",
             "execution_identity",
-            "evaluation_approval",
+            "evaluation_packet",
             "outcomes",
             "runtime_suite_outcomes",
             "cases",
@@ -570,7 +547,7 @@ fn validate_receipt_with_harnesses(
             "campaign_parallelism",
         ],
     )?;
-    if receipt["version"] != 2 || receipt["campaign_parallelism"] != PARALLELISM {
+    if receipt["version"] != 3 || receipt["campaign_parallelism"] != PARALLELISM {
         return Err("unsupported campaign receipt".into());
     }
     validate_generation(&receipt["before"], &receipt["after"])?;
@@ -581,7 +558,7 @@ fn validate_receipt_with_harnesses(
     validate_gates(root, &receipt["gates"])?;
     if receipt["gates"] != gate_states(root)?
         || receipt["limitations"] != limitations()
-        || receipt["evaluation_approval"] != approval(root)?
+        || receipt["evaluation_packet"] != crate::evaluation::packet(root)?
     {
         return Err("campaign scope drift".into());
     }
@@ -641,14 +618,11 @@ fn validate_receipt_with_harnesses(
         }
         let observation: Value = serde_json::from_slice(&bytes)?;
         validate_observation(&observation, name == "seam.json")?;
-        if observation["build"]["packet"] != receipt["evaluation_approval"]["manifest"]
-            || observation["build"]["profile_definition"]
-                != hash(fs::read(
-                    root.join("contracts/sources/wi-fabric-2-worker-execution-profile.yaml"),
-                )?)
-        {
-            return Err("unbound fixture build or profile definition".into());
-        }
+        validate_build_packet(
+            &observation,
+            &receipt["evaluation_packet"],
+            &digest_file(root, "contracts/sources/wi-fabric-2-worker-execution-profile.yaml")?,
+        )?;
         if observation["build"]["seam_implementation"]
             != digest_file(root, "crates/worldinterface-runtime/tests/support/worker_seam.rs")?
         {
@@ -662,6 +636,15 @@ fn validate_receipt_with_harnesses(
                 return Err("missing build digest".into());
             }
         }
+    }
+    Ok(())
+}
+pub fn validate_build_packet(observation: &Value, packet: &Value, profile: &str) -> Result<()> {
+    if packet["acceptance_policy"] != crate::evaluation::POLICY
+        || observation["build"]["packet"] != packet["manifest"]
+        || observation["build"]["profile_definition"] != profile
+    {
+        return Err("unbound fixture build or profile definition".into());
     }
     Ok(())
 }

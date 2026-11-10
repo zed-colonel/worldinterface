@@ -10,7 +10,8 @@ use std::{
     sync::OnceLock,
 };
 use worldinterface_protocol::ContentHash;
-use worldinterface_runtime::worker::evaluation::EvaluationManifest;
+#[path = "worker_packet.rs"]
+mod packet;
 
 pub struct WorkerBuild {
     _private: tempfile::TempDir,
@@ -40,11 +41,7 @@ fn compiler(program: &str, root: &Path) -> Command {
 fn compile() -> WorkerBuild {
     let runtime = Path::new(env!("CARGO_MANIFEST_DIR"));
     let root = runtime.join("../..");
-    let manifest: EvaluationManifest = serde_json::from_slice(
-        &fs::read(root.join("conformance/wi-fabric-2/worker/evaluation-manifest.json")).unwrap(),
-    )
-    .unwrap();
-    manifest.verify_sources(&root).unwrap();
+    let manifest = packet::current(&root, false).unwrap();
     let environment: serde_json::Value = serde_json::from_slice(
         &fs::read(root.join("conformance/wi-fabric-2/worker/evaluation-environment.json")).unwrap(),
     )
@@ -105,7 +102,7 @@ fn compile() -> WorkerBuild {
         }
     }
     assert_eq!(produced.len(), 2, "missing compiler-attested worker outputs");
-    manifest.verify_sources(&root).unwrap();
+    packet::validate(&root, &manifest, false).unwrap();
     let private = tempfile::tempdir().unwrap();
     let mut artifacts = BTreeMap::new();
     let mut report = BTreeMap::new();
@@ -151,5 +148,9 @@ fn compile() -> WorkerBuild {
 
 pub fn current() -> &'static WorkerBuild {
     static BUILD: OnceLock<WorkerBuild> = OnceLock::new();
-    BUILD.get_or_init(compile)
+    let build = BUILD.get_or_init(compile);
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let manifest = packet::current(&root, false).unwrap();
+    assert_eq!(manifest.digest().unwrap(), build.packet, "cached build packet drift");
+    build
 }

@@ -69,17 +69,22 @@ fn baseline_records_have_precise_g1_coverage_and_no_source_result_claims() {
         .collect::<BTreeSet<_>>();
     assert_eq!(closed, allowed);
     assert_eq!(r.cases.iter().find(|c| c.id == "WP-002").unwrap().tests.len(), 3);
-    assert_eq!(
-        r.cases
-            .iter()
-            .find(|c| c.id == "WP-007")
-            .unwrap()
-            .tests
-            .iter()
-            .filter(|t| t.manifest != "crates/worldinterface-runtime/Cargo.toml")
-            .count(),
-        3
-    );
+    let checker_tests = r
+        .cases
+        .iter()
+        .find(|c| c.id == "WP-007")
+        .unwrap()
+        .tests
+        .iter()
+        .filter(|t| t.manifest == "tools/wi-contract-check/Cargo.toml")
+        .map(|t| t.test.as_str())
+        .collect::<BTreeSet<_>>();
+    assert!(BTreeSet::from([
+        "qualification_drift_and_revocation",
+        "quarantine_and_discovery",
+        "wp007_unqualified_and_evaluation_table"
+    ])
+    .is_subset(&checker_tests));
 }
 #[test]
 fn wip02_admission_cases_preserve_scope_evidence_and_wip04_closes_g2() {
@@ -205,7 +210,13 @@ fn coverage_omissions_and_scope_disagreements_reject() {
     rejects("PROOF-COVERAGE", |r, _, _| r.cases[0].coverage_refs.clear());
     for id in ["WP-002", "WP-007", "AB-WI-016"] {
         rejects("PROOF-COVERAGE", |r, _, _| {
-            r.cases.iter_mut().find(|c| c.id == id).unwrap().tests.pop();
+            let case = r.cases.iter_mut().find(|c| c.id == id).unwrap();
+            if id == "WP-007" {
+                // Remove authoritative coverage, regardless of appended policy regressions.
+                case.tests.retain(|t| t.test != "wp007_unqualified_and_evaluation_table");
+            } else {
+                case.tests.pop();
+            }
         });
     }
     let t = fixture();
@@ -643,7 +654,7 @@ fn wi08_source_atomicity_requires_every_producer_even_if_coverage_is_removed() {
 }
 
 #[test]
-fn wi10_lifecycle_requires_all_cases_approval_tests_and_exact_executable_evidence() {
+fn wi10_lifecycle_requires_all_cases_packet_tests_and_exact_executable_evidence() {
     let t = fixture();
     let path = t.path().join("conformance/wi-fabric-2/worker/lifecycle-coverage.json");
     let original = read(&path).unwrap();
@@ -659,7 +670,7 @@ fn wi10_lifecycle_requires_all_cases_approval_tests_and_exact_executable_evidenc
                 v["assigned_cases"].as_object_mut().unwrap().remove("WP-019");
             }
             "approval" => {
-                v["required_obligations"].as_object_mut().unwrap().remove("approval-authenticity");
+                v["required_obligations"].as_object_mut().unwrap().remove("packet-integrity");
             }
             "runtime-claim" => v["runtime_pass_asserted"] = json!(true),
             "missing-test" => {

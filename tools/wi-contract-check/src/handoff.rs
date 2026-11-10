@@ -37,7 +37,7 @@ pub fn mapping_markdown(root: &Path) -> Result<String> {
     Ok(text)
 }
 
-/// No commit, packet or approval digest enters this descriptor. The packet hashes
+/// No commit or packet digest enters this descriptor. The packet hashes
 /// it, and the external execution bundle resolves all concrete generation pins.
 pub fn descriptor(root: &Path) -> Result<Value> {
     let (registry, gates) = proof::load(root)?;
@@ -118,7 +118,8 @@ pub fn descriptor(root: &Path) -> Result<Value> {
             "P1-05":"validate media/task acceptance independently; retain capacity until confirmed cleanup, including cancellation and uncertain start",
             "interface":"EmbeddedHost::install/application; Application submission, Flow, advance, inspection, receipts, artifacts and reconciliation",
             "media_gap":"current process adapter accepts typed reviewed fixtures; arbitrary FFmpeg arguments and execution require further consumer integration and approval",
-            "ordinary_use":"separate exact WIP-12 catalog record and trusted operator approval; evaluation never promotes itself",
+            "reviewed_fixture_registration":"exact host-owned catalog binding in a reviewed commit; same committed packet rule, no separate approval record; evaluation never registers itself",
+            "ordinary_use":"disabled; reviewed fixture registration does not enable general workloads",
             "remote":"no remote or two-host qualification; Mac inference gateway remains consumer work"
         },
         "reproduction":{
@@ -131,11 +132,11 @@ pub fn descriptor(root: &Path) -> Result<Value> {
         },
         "execution_evidence":{
             "packet":"conformance/wi-fabric-2/worker/evaluation-manifest.json",
-            "approval":"conformance/wi-fabric-2/worker/evaluation-approval.json",
-            "trusted_anchor":"crates/worldinterface-runtime/tests/support/worker_approval_anchor.rs",
-            "approval_rule":"actual exact-packet operator acceptance after non-live build; finite expiry at most seven days after acceptance; changed packet or expired receipt fails closed",
+            "acceptance_policy":crate::evaluation::POLICY,
+            "acceptance_rule":"2026-11-09 operator decision: complete manifest must match current source bytes and HEAD before bounded candidate execution; reviewed merge with adopted checks establishes durable acceptance, without receipt, anchor or calendar expiry",
+            "historical_provenance":["conformance/wi-fabric-2/worker/evaluation-approval.json","crates/worldinterface-runtime/tests/support/worker_approval_anchor.rs"],
             "external_files":["receipt.json","handoff-candidate.json","handoff.json","coding.json","transform.json","seam.json","timing.json"],
-            "required":"fresh complete registered and runtime-remainder passage, exact logs and executable digests, current clean commit/tree, OS/identity, approval, fixture/helper build and observed controls",
+            "required":"fresh complete registered and runtime-remainder passage, exact logs and executable digests, current clean commit/tree, OS/identity, exact committed packet, fixture/helper build and observed controls",
             "historical_evidence":"WIP-15 results are provenance only; never substitute for this revision"
         },
         "reviewer_references":[

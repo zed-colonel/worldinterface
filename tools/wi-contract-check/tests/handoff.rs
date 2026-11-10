@@ -95,17 +95,18 @@ fn wp_034_publication_rejects_stale_profile_fixture_lock_and_recipe_pins() {
     changed["aq"]["runtime_release"]["tag"] = json!("v0.2.0");
     assert!(handoff::validate(temp.path(), &changed).is_err());
     let packet = json!({"fixture":"non-live-packet"});
-    let approval = json!({"manifest":wi_contract_check::hash(serde_json::to_vec(&packet).unwrap()),"expires_unix_ms":100});
-    worker_campaign::validate_approval(&approval, &packet, 99).unwrap();
-    assert!(worker_campaign::validate_approval(&approval, &packet, 100).is_err());
-    assert!(worker_campaign::validate_approval(&approval, &packet, 101).is_err());
-    assert!(worker_campaign::validate_approval(&approval, &json!({"changed":true}), 99).is_err());
-    assert!(worker_campaign::validate_approval(
-        &json!({"manifest":approval["manifest"]}),
-        &packet,
-        99
-    )
-    .is_err());
+    let record = wi_contract_check::evaluation::packet_record(&packet).unwrap();
+    wi_contract_check::evaluation::validate_record(&record, &packet).unwrap();
+    for changed in [
+        json!({"manifest":record["manifest"]}),
+        json!({"manifest":"substituted","acceptance_policy":wi_contract_check::evaluation::POLICY}),
+        json!({"manifest":record["manifest"],"acceptance_policy":"receipt-expiry"}),
+    ] {
+        assert!(wi_contract_check::evaluation::validate_record(&changed, &packet).is_err());
+    }
+    assert!(
+        wi_contract_check::evaluation::validate_record(&record, &json!({"changed":true})).is_err()
+    );
     handoff::validate(temp.path(), &value).unwrap();
 }
 

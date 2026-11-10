@@ -1259,7 +1259,7 @@ pub fn validate_continuations(root: &Path, tests: &TestIndex) -> Result<Vec<Find
 }
 
 /// WIP-10 maps every lifecycle criterion to an adopted, non-ignored test.
-/// Runtime passage and approval authenticity remain separate evidence boundaries.
+/// Runtime passage, complete packet integrity and reviewed merge remain separate boundaries.
 pub fn validate_worker_lifecycle(root: &Path, tests: &TestIndex) -> Result<Vec<Finding>> {
     let path = "conformance/wi-fabric-2/worker/lifecycle-coverage.json";
     let v = read(&root.join(path))?;
@@ -1287,7 +1287,7 @@ pub fn validate_worker_lifecycle(root: &Path, tests: &TestIndex) -> Result<Vec<F
     }
     let expected_obligations = required
         .into_iter()
-        .chain(["approval-authenticity".into(), "storage-recovery".into()])
+        .chain(["packet-integrity".into(), "storage-recovery".into()])
         .collect::<BTreeSet<_>>();
     if obligations.keys().cloned().collect::<BTreeSet<_>>() != expected_obligations {
         findings.push(finding(
@@ -1295,7 +1295,7 @@ pub fn validate_worker_lifecycle(root: &Path, tests: &TestIndex) -> Result<Vec<F
             path,
             "obligations",
             "WIP-10",
-            "lifecycle, approval and recovery obligations cannot be omitted",
+            "lifecycle, packet integrity and recovery obligations cannot be omitted",
         ));
     }
     for (case, names) in assigned {

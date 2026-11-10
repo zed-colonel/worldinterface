@@ -4,10 +4,10 @@ use super::{
     flow_fixture::{Auth, Config, Resolver},
     spi_harness::host,
 };
-#[path = "worker_approval_anchor.rs"]
-mod anchor;
 #[path = "worker_build.rs"]
 mod build;
+#[path = "worker_packet.rs"]
+mod packet;
 #[path = "worker_seam.rs"]
 pub mod seam;
 use std::{
@@ -43,7 +43,6 @@ use worldinterface_worker::{
 };
 #[derive(Clone)]
 pub struct Approval {
-    expected: OperatorApprovalReceipt,
     pub revoked: Arc<std::sync::atomic::AtomicBool>,
     approved_policies: Arc<std::sync::Mutex<BTreeSet<ContentHash>>>,
     packet: ContentHash,
@@ -100,10 +99,9 @@ impl TrustedApprovals for Approval {
                     && binding.helper == seam::provenance().helper
                     && binding.adapter == seam::provenance().adapter)))
     }
-    fn accepted(&self, r: &OperatorApprovalReceipt, now: u64) -> Result<bool> {
-        Ok(r == &self.expected
-            && r.manifest == self.packet
-            && now < r.expires_unix_ms
+    fn accepted(&self, manifest: &EvaluationManifest, root: &Path) -> Result<bool> {
+        packet::validate(root, manifest, true)?;
+        Ok(manifest.digest()? == self.packet
             && !self.revoked.load(std::sync::atomic::Ordering::SeqCst))
     }
 }
@@ -126,45 +124,36 @@ impl TrustedWorkerBuild for Approval {
 }
 pub fn evaluation() -> Arc<EvaluationVerifier<Approval>> {
     let source = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
-    let bytes =
-        std::fs::read(source.join("conformance/wi-fabric-2/worker/evaluation-approval.json"))
-            .unwrap();
-    let expected = anchor::ACCEPTED_RECEIPT_SHA256.expect(
-        "operator acceptance of the exact completed worker packet is required before live evaluation",
-    );
-    assert_eq!(ContentHash::of(&bytes).as_str(), expected, "approval provenance drift");
-    let receipt: OperatorApprovalReceipt = serde_json::from_slice(&bytes).unwrap();
-    let manifest: EvaluationManifest = serde_json::from_slice(
-        &std::fs::read(source.join("conformance/wi-fabric-2/worker/evaluation-manifest.json"))
+    // This gate precedes building/launching any fixture, including cached builds.
+    packet::live_setup(&source, |manifest| {
+        let environment: serde_json::Value = serde_json::from_slice(
+            &std::fs::read(
+                source.join("conformance/wi-fabric-2/worker/evaluation-environment.json"),
+            )
             .unwrap(),
-    )
-    .unwrap();
-    let environment: serde_json::Value = serde_json::from_slice(
-        &std::fs::read(source.join("conformance/wi-fabric-2/worker/evaluation-environment.json"))
-            .unwrap(),
-    )
-    .unwrap();
-    for (path, expected) in environment["support_binary_sha256"].as_object().unwrap() {
-        assert_eq!(
-            ContentHash::of(&std::fs::read(path).unwrap()).as_str(),
-            expected.as_str().unwrap(),
-            "test support binary drift"
-        );
-    }
-    let packet = manifest.digest().unwrap();
-    assert_eq!(receipt.manifest, packet);
-    let built = build::current();
-    assert_eq!(built.packet, packet);
-    let (fixture, helper) = (built.fixture_digest.clone(), built.helper_digest.clone());
-    let trusted = Approval {
-        revoked: Arc::new(std::sync::atomic::AtomicBool::new(false)),
-        approved_policies: Arc::new(std::sync::Mutex::new(BTreeSet::new())),
-        expected: receipt.clone(),
-        packet,
-        fixture,
-        helper,
-    };
-    Arc::new(EvaluationVerifier { manifest, receipt, trusted, source_root: source })
+        )
+        .unwrap();
+        for (path, expected) in environment["support_binary_sha256"].as_object().unwrap() {
+            assert_eq!(
+                ContentHash::of(&std::fs::read(path).unwrap()).as_str(),
+                expected.as_str().unwrap(),
+                "test support binary drift"
+            );
+        }
+        let packet = manifest.digest().unwrap();
+        let built = build::current();
+        assert_eq!(built.packet, packet);
+        let (fixture, helper) = (built.fixture_digest.clone(), built.helper_digest.clone());
+        let trusted = Approval {
+            revoked: Arc::new(std::sync::atomic::AtomicBool::new(false)),
+            approved_policies: Arc::new(std::sync::Mutex::new(BTreeSet::new())),
+            packet,
+            fixture,
+            helper,
+        };
+        Ok(Arc::new(EvaluationVerifier { manifest, trusted, source_root: source.clone() }))
+    })
+    .expect("committed evaluation packet")
 }
 #[derive(Clone)]
 pub struct HostEvidence(pub AuthorizationSnapshot);

@@ -51,4 +51,5 @@ scripts/*
 !scripts/worker-proof-evidence.sh
 
 !scripts/wi_worker_evaluation.py
+!scripts/test_wi_worker_evaluation.py
 scripts/__pycache__/

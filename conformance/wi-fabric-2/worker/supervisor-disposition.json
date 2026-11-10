@@ -7,7 +7,7 @@
     {
       "path": "crates/worldinterface-runtime/src/worker_process/mod.rs",
       "sha256": "663c193d9dadbc371509f40456b39c4d7ae3a086064e2daefa62f3cc3f132f8e",
-      "rationale": "Correctness remediation F-002/F-003/F-007/F-013: exact-scope host cleanup and evidence survive worker credential expiry; released provider state is retired; capacity is concurrent; never-started exports do not block release; the helper spawn boundary is counted. Worker credential checks remain on worker-facing access and fresh launch. No new waiting exception, process identity disclosure or isolation claim. Requires renewed exact-packet acceptance and qualifying source review."
+      "rationale": "Correctness remediation F-002/F-003/F-007/F-013: exact-scope host cleanup and evidence survive worker credential expiry; released provider state is retired; capacity is concurrent; never-started exports do not block release; the helper spawn boundary is counted. Worker credential checks remain on worker-facing access and fresh launch. No new waiting exception, process identity disclosure or isolation claim. Requires complete committed packet validation for candidate verification and qualifying source review/merge for durable acceptance under WSP-01 (2026-11-09); no separate receipt, anchor or calendar expiry."
     }
   ]
 }

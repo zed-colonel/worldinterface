@@ -144,7 +144,7 @@
         {
           "manifest": "crates/worldinterface-runtime/Cargo.toml",
           "package": "worldinterface-runtime",
-          "test": "wp_007_exact_operator_packet_runs_only_supported_bounded_evaluation_through_wi_aq"
+          "test": "wp_007_exact_committed_packet_runs_only_supported_bounded_evaluation_through_wi_aq"
         },
         {
           "manifest": "tools/wi-contract-check/Cargo.toml",
@@ -160,6 +160,36 @@
           "manifest": "tools/wi-contract-check/Cargo.toml",
           "package": "wi-contract-check",
           "test": "wp007_unqualified_and_evaluation_table"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "packet_acceptance_is_independent_of_calendar_and_rejects_revocation"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "committed_packet_cannot_widen_tasks_operations_cases_environment_or_source_bindings"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "live_setup_rejects_stale_and_uncommitted_packets_before_fixture_execution"
+        },
+        {
+          "manifest": "tools/wi-contract-check/Cargo.toml",
+          "package": "wi-contract-check",
+          "test": "complete_packet_validator_regressions"
+        },
+        {
+          "manifest": "tools/wi-contract-check/Cargo.toml",
+          "package": "wi-contract-check",
+          "test": "adopted_evaluation_check_rejects_stale_packets_and_uncommitted_refresh"
+        },
+        {
+          "manifest": "tools/wi-contract-check/Cargo.toml",
+          "package": "wi-contract-check",
+          "test": "campaign_packet_and_build_identity_cannot_be_substituted"
         }
       ]
     },
@@ -1009,7 +1039,7 @@
         {
           "manifest": "crates/worldinterface-runtime/Cargo.toml",
           "package": "worldinterface-runtime",
-          "test": "catalog_poll_invalid_approval_quarantines_only_the_run_and_preserves_provider_admission"
+          "test": "catalog_poll_invalid_packet_quarantines_only_the_run_and_preserves_provider_admission"
         },
         {
           "manifest": "crates/worldinterface-runtime/Cargo.toml",

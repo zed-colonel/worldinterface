@@ -20,8 +20,10 @@ scripts/check-wi-integration.sh
 scripts/check-wi-contract.sh
 ```
 
-Live worker tests require actual exact-packet operator acceptance after non-live
-source-bound validation, within its finite expiry. These local scripts are
+Under the 2026-11-09 operator decision, live worker tests require a complete
+committed evaluation manifest matching current source bytes and HEAD exactly.
+Refresh it in the same commit as bound changes after non-live validation.
+Reviewed merge establishes durable acceptance without a receipt, anchor or expiry. These local scripts are
 supplemental; all ten adopted checks run on the committed head through
 CraftingTable. The partial proof supplies producer execution evidence; consumer
 acceptance, ordinary use, release, remote execution and isolation remain separate.

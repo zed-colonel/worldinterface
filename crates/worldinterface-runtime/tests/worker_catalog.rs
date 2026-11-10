@@ -26,7 +26,7 @@ use worldinterface_worker::mapping::Operation;
 
 struct Trust {
     registration: ProcessRegistrationRecord,
-    receipt: OperatorApprovalReceipt,
+    packet: ContentHash,
     revoked: AtomicBool,
     qualified: AtomicBool,
 }
@@ -34,8 +34,8 @@ impl TrustedApprovals for Trust {
     fn registered(&self, record: &ProcessRegistrationRecord, _: u64) -> Result<bool> {
         Ok(record == &self.registration)
     }
-    fn accepted(&self, r: &OperatorApprovalReceipt, now: u64) -> Result<bool> {
-        Ok(r == &self.receipt && now < r.expires_unix_ms && !self.revoked.load(Ordering::SeqCst))
+    fn accepted(&self, manifest: &EvaluationManifest, _: &std::path::Path) -> Result<bool> {
+        Ok(manifest.digest()? == self.packet && !self.revoked.load(Ordering::SeqCst))
     }
     fn qualified(&self, _: &OrdinaryQualificationRecord, _: u64) -> Result<bool> {
         Ok(self.qualified.load(Ordering::SeqCst))
@@ -52,19 +52,13 @@ fn fixture() -> (tempfile::TempDir, EvaluationVerifier<Trust>, ProcessCatalogBin
         tasks: BTreeSet::from([ContentHash::of(&canonical_data(&Task::Probe).unwrap())]),
         cases: BTreeSet::from(["WP-007".into(), "WP-032".into()]),
         operations: PROCESS_OPERATIONS.iter().map(|s| s.to_string()).collect(),
-        max_wall_ms: 1000,
+        max_wall_ms: 15000,
         max_output_bytes: 65536,
         nonsensitive_only: true,
         production_credentials: false,
         ordinary_use: false,
     };
     let packet = manifest.digest().unwrap();
-    let receipt = OperatorApprovalReceipt {
-        decision: "non-live-test-only".into(),
-        operator: "test-authority".into(),
-        manifest: packet.clone(),
-        expires_unix_ms: 200,
-    };
     let hash = ContentHash::of(b"measurement");
     let binding = ProcessCatalogBinding {
         version: 1,
@@ -81,16 +75,15 @@ fn fixture() -> (tempfile::TempDir, EvaluationVerifier<Trust>, ProcessCatalogBin
         aq: hash.clone(),
         wi: hash.clone(),
         environment: manifest.environment.clone(),
-        fixture: packet,
+        fixture: packet.clone(),
         inputs: hash.clone(),
         exports: hash,
     };
     let verifier = EvaluationVerifier {
         manifest,
-        receipt: receipt.clone(),
         trusted: Trust {
             registration: registration(&binding),
-            receipt,
+            packet,
             revoked: AtomicBool::new(false),
             qualified: AtomicBool::new(false),
         },
@@ -238,7 +231,7 @@ fn catalog_registration_is_exact_bounded_and_inspection_grants_no_authority() {
             "{field}"
         );
     }
-    assert!(verify_registration(&registration(&binding), &binding, &v, 200).is_err());
+    verify_registration(&registration(&binding), &binding, &v, u64::MAX).unwrap();
     let mut fabricated = binding.clone();
     fabricated.policy = ContentHash::of(b"fabricated");
     assert!(verify_registration(&registration(&fabricated), &fabricated, &v, 100).is_err());
@@ -319,6 +312,7 @@ fn catalog_quarantine_fences_stale_admission_and_survives_cleanup_replacement_re
             .as_str(),
         "evaluation-only"
     );
+    v.trusted.revoked.store(true, Ordering::SeqCst);
     assert_eq!(
         inspect_registration(&root, &worker, Some(&registration(&binding)), &binding, &v, 200)
             .unwrap()
@@ -326,6 +320,7 @@ fn catalog_quarantine_fences_stale_admission_and_survives_cleanup_replacement_re
             .as_str(),
         "invalidated"
     );
+    v.trusted.revoked.store(false, Ordering::SeqCst);
     let registration = verify_registration(&registration(&binding), &binding, &v, 100).unwrap();
     let digest = authorize_admission(&root, &worker, &registration).unwrap();
     assert!(root.reserve_catalog_start(launch(worker.clone(), digest.clone()), 2).unwrap());
@@ -474,7 +469,7 @@ fn probe_harness(case: &str) -> support::worker_fixture::Harness {
     h
 }
 #[tokio::test]
-async fn wp_007_exact_operator_packet_runs_only_supported_bounded_evaluation_through_wi_aq() {
+async fn wp_007_exact_committed_packet_runs_only_supported_bounded_evaluation_through_wi_aq() {
     let h = probe_harness("WP-007");
     h.operation(Operation::Start).await;
     h.operation(Operation::Inspect).await;
@@ -712,10 +707,7 @@ impl worldinterface_runtime::worker::connector::TrustedWorkerBuild for Trust {
         let ProcessRegistrationRecord::Evaluation { binding, .. } = &self.registration else {
             return Err("negative fixture only".into());
         };
-        if packet != &self.receipt.manifest
-            || fixture != &binding.executable
-            || helper != &binding.helper
-        {
+        if packet != &self.packet || fixture != &binding.executable || helper != &binding.helper {
             return Err("negative fixture provenance mismatch".into());
         }
         Ok(())
@@ -843,13 +835,13 @@ impl worldinterface_runtime::worker_process::Clock for CatalogClock {
 }
 
 #[test]
-fn catalog_poll_invalid_approval_quarantines_only_the_run_and_preserves_provider_admission() {
+fn catalog_poll_invalid_packet_quarantines_only_the_run_and_preserves_provider_admission() {
     use worldinterface_runtime::{
         storage::StoreBundle,
         worker::{connector::WorkerRuntime, provider::ProviderProvenance},
         worker_process::HostScope,
     };
-    for invalidation in ["expired", "revoked", "absent"] {
+    for invalidation in ["source-drift", "revoked", "absent"] {
         let (temp, verifier, binding) = fixture();
         use std::os::unix::fs::PermissionsExt;
         std::fs::set_permissions(temp.path(), std::fs::Permissions::from_mode(0o700)).unwrap();
@@ -909,8 +901,8 @@ fn catalog_poll_invalid_approval_quarantines_only_the_run_and_preserves_provider
             )
             .unwrap()
         };
-        if invalidation == "expired" {
-            clock.0.store(200, Ordering::SeqCst);
+        if invalidation == "source-drift" {
+            std::fs::write(temp.path().join("source.rs"), b"drift").unwrap();
         } else {
             verifier.trusted.revoked.store(true, Ordering::SeqCst);
         }
@@ -936,6 +928,7 @@ fn catalog_poll_invalid_approval_quarantines_only_the_run_and_preserves_provider
         .is_err());
         // Renewed valid host provenance can admit another run. No incident was
         // invented or attributed to the principal while processing invalidation.
+        std::fs::write(temp.path().join("source.rs"), b"non-live catalog test").unwrap();
         clock.0.store(100, Ordering::SeqCst);
         verifier.trusted.revoked.store(false, Ordering::SeqCst);
         let registration =
