@@ -59,3 +59,7 @@ Refresh inventory hashes, generate the authoritative handoff, copy it into the
 runtime package, refresh hashes again (the catalog binds that copy), and refresh
 the evaluation packet last. Contract checks precede the live worker campaign in
 release preparation, with all adopted commands preserved.
+
+Release logs always carry command and working-directory headers, including for
+silent successes: WI's existing receipt validator rejects empty artifacts.
+Machine-readable metadata stdout remains separate from its diagnostic log.

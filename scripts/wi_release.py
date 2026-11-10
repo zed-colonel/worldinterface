@@ -279,6 +279,10 @@ def run(argv, cwd, log, env=None, timeout=1800, stdout_path=None):
     try:
         with ExitStack() as stack:
             stream = stack.enter_context(log.open('wb'))
+            # WI's receipt authority requires nonempty evidence artifacts, even
+            # when a successful command is silent. Keep metadata stdout separate.
+            stream.write(('Command: ' + json.dumps([str(x) for x in argv]) + '\nWorking directory: ' + str(cwd) + '\n').encode())
+            stream.flush()
             if stdout_path is not None:
                 stdout_path = Path(stdout_path)
                 stdout_path.parent.mkdir(parents=True, exist_ok=True)

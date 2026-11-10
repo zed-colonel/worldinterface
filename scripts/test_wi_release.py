@@ -192,6 +192,19 @@ class ReleaseTests(unittest.TestCase):
         shared.write(self.base / 'publication-preparation.json', {'source_revision': 'b' * 40})
         with self.assertRaises(ValueError): release.validate_receipt({'source_commit': 'a' * 40, 'baseline_revision': 'c' * 40}, self.base)
 
+    def test_silent_commands_have_nonempty_receipt_logs_without_polluting_metadata(self):
+        log = self.base / 'silent.log'
+        command = [sys.executable, '-c', 'pass']
+        result = shared.run(command, self.base, log, timeout=30)
+        self.assertEqual(result['exit_code'], 0)
+        self.assertIn('Command: ' + json.dumps(command), log.read_text())
+        self.assertIn('Working directory: ' + str(self.base), log.read_text())
+        output = self.base / 'metadata.json'
+        shared.run([sys.executable, '-c', 'print(\'{"value": 42}\')'], self.base,
+                   self.base / 'metadata.log', timeout=30, stdout_path=output)
+        self.assertEqual(shared.read(output), {'value': 42})
+        self.assertTrue((self.base / 'metadata.log').stat().st_size)
+
     def test_production_artifacts_reject_test_or_crash_feature(self):
         good = {'reason': 'compiler-artifact', 'target': {'name': 'worldinterface_storage'}, 'features': [], 'profile': {'test': False}}
         check_artifacts([good])
