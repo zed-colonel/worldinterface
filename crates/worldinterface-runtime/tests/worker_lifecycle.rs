@@ -380,7 +380,9 @@ async fn wp_020_mismatched_and_damaged_private_ownership_never_adopts_an_unrelat
     let h = Harness::new(Task::Probe, "WP-020", 1500, 65536);
     h.operation(Operation::Start).await;
     h.finish().await;
-    let other = Harness::new(Task::Sleep { millis: 5000 }, "WP-020", 3000, 65536);
+    // Keep the unrelated run live through complete packet checks and journal
+    // mutations; its task must not race the ownership assertions or explicit stop.
+    let other = Harness::new(Task::Sleep { millis: 30000 }, "WP-020", 15000, 65536);
     other.operation(Operation::Start).await;
     fn journal(h: &Harness) -> std::path::PathBuf {
         std::fs::read_dir(h.temp.path().join("process"))
@@ -405,7 +407,8 @@ async fn wp_020_mismatched_and_damaged_private_ownership_never_adopts_an_unrelat
     std::fs::write(&path, &original).unwrap();
     assert!(h.runtime.recovery_evidence(&h.binding()).unwrap().unwrap().cleanup_confirmed);
     other.operation(Operation::Terminate).await;
-    assert!(other.finish().await.cleanup_confirmed);
+    let cleanup = other.finish().await;
+    assert!(cleanup.cleanup_confirmed, "unrelated run cleanup: {cleanup:?}");
 }
 #[tokio::test]
 async fn wp_019_helper_death_retains_capacity_without_a_cleanup_or_success_claim() {

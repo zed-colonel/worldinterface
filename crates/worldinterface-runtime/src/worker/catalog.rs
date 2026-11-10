@@ -69,6 +69,7 @@ pub fn verify_registration<S: TrustedApprovals>(
 ) -> Result<VerifiedRegistration> {
     current.validate()?;
     match record {
+        // `approval` is the exact packet identity, retained for record compatibility.
         ProcessRegistrationRecord::Evaluation { binding, approval } => {
             let verified = evaluation.verify(now)?;
             if !evaluation.trusted.registered(record, now)?

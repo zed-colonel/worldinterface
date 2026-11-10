@@ -144,16 +144,16 @@
         "test": "ab_wi_021_awaiting_release_hold_and_resume_keep_durable_worker_capacity"
       }
     ],
-    "approval-authenticity": [
+    "packet-integrity": [
       {
         "manifest": "crates/worldinterface-runtime/Cargo.toml",
         "package": "worldinterface-runtime",
-        "test": "approval_rejects_drafts_self_assertions_unknown_decisions_expiry_and_revocation"
+        "test": "packet_acceptance_is_independent_of_calendar_and_rejects_revocation"
       },
       {
         "manifest": "crates/worldinterface-runtime/Cargo.toml",
         "package": "worldinterface-runtime",
-        "test": "approved_packet_cannot_widen_tasks_operations_cases_environment_or_source_bindings"
+        "test": "committed_packet_cannot_widen_tasks_operations_cases_environment_or_source_bindings"
       },
       {
         "manifest": "crates/worldinterface-runtime/Cargo.toml",
@@ -164,6 +164,11 @@
         "manifest": "crates/worldinterface-runtime/Cargo.toml",
         "package": "worldinterface-runtime",
         "test": "trusted_build_digests_reject_replaced_paths_without_launch"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "live_setup_rejects_stale_and_uncommitted_packets_before_fixture_execution"
       }
     ],
     "storage-recovery": [

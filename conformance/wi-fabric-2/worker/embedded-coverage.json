@@ -2,7 +2,7 @@
   "version": 1,
   "scope": "wi/WI-11/embedded-runtime",
   "runtime_pass_asserted": false,
-  "evaluation": "Replacement packet b57f32a001ff95ef14ac46d35e22a96c61c0f35896e17e0dc6e9762aebc18b88 was accepted through 2026-11-11T00:00:00Z in run e191c2f5-10ab-43ce-993d-b25260c71985. All 19 focused embedded tests and all ten adopted checks passed on 7d93df6, including coding/transform execution and the cold-build crash case. The later F-001\u2013F-003 remediation changes covered bytes and requires separate exact-packet acceptance and verification. See WIP-14.md. G4 remains open.",
+  "evaluation": "Historical receipt-policy provenance (superseded by the 2026-11-09 WSP-01 decision): Replacement packet b57f32a001ff95ef14ac46d35e22a96c61c0f35896e17e0dc6e9762aebc18b88 was accepted through 2026-11-11T00:00:00Z in run e191c2f5-10ab-43ce-993d-b25260c71985. All 19 focused embedded tests and all ten adopted checks passed on 7d93df6, including coding/transform execution and the cold-build crash case. The later F-001\u2013F-003 remediation changes covered bytes and requires separate exact-packet acceptance and verification. See WIP-14.md. G4 remains open. Current candidate verification uses the complete committed matching packet; no separate receipt, anchor or calendar expiry. Review and integration remain external.",
   "second_store": "WI-owned independent AQ fixture; substitute for EXO cognition only",
   "assumptions": {
     "WP-A07": "Embedded Rust application composition only; no daemon, EXO cognition binary, Platform or isolation claim."

@@ -57,7 +57,7 @@ path/patch overrides are forbidden. The external receipt resolves clean
 commit/tree before and after execution, rustc/Cargo versions, lock/contract
 hashes, compiled test binaries, individual exact-test logs and outcomes, all 55
 case results, additional runtime outcomes, OS/kernel/architecture, execution
-identity, exact approval, fixture/helper build hashes and three observations.
+identity, exact committed packet and acceptance policy, fixture/helper build hashes and three observations.
 The generated external `handoff.json` binds the descriptor digest, receipt and
 producer evidence. `handoff verify DIRECTORY` verifies these against current
 source and compiled binaries. Preserve the source revision, external cache and
@@ -66,8 +66,9 @@ mutation of source, binaries or evidence is outside an adversarial trust model;
 these checks detect inconsistent bytes, not truthful authorship by themselves.
 
 The hash graph is acyclic: the packet hashes this document and descriptor;
-the descriptor names packet/approval/anchor paths without their hashes. Concrete
-packet, approval, executable, environment and commit pins are external. Neither
+the descriptor names the packet path without its digest. Concrete
+packet, executable, environment and commit pins are external. Historical receipts
+and anchors remain provenance and do not participate in acceptance. Neither
 WIP-15's historical candidate nor a descriptor alone substitutes for fresh
 WIP-16 execution.
 
@@ -89,22 +90,35 @@ scripts/build-wi-worker-evaluation.sh
 
 The builder compiles/tests source-bound artifact publication without launching
 worker fixtures. It records canonical packet and compiler-attested fixture/helper
-hashes in `$TMPDIR/verification/revised-packet/worker-build.json`. Present that
-exact packet digest and build evidence to the operator, with a finite expiry no
-more than seven days after actual acceptance. Record only the actual decision
-in `evaluation-approval.json` and its separate trusted host anchor. Those trust
-records cannot widen sources, tasks, cases, operations, limits or environment.
-Changed packet bytes invalidate inherited acceptance even before expiry.
+hashes in `$TMPDIR/verification/revised-packet/worker-build.json`.
 
-The [evaluation approval receipt](../../conformance/wi-fabric-2/worker/evaluation-approval.json)
-records the currently accepted packet digest and expiry. Its trusted host anchor
-must match, and changed packet bytes require renewed acceptance after non-live
-validation. Positive execution and subsequent adopted `runtime-test` fail closed on missing, drifting,
-revoked or expired approval, using system wall time. Complete integration and
-post-merge live verification before the accepted expiry or renew exact acceptance
-first. An earlier passing campaign is no authorization for a later run.
+**Operator decision, 2026-11-09 (WSP-01):** a reviewed, merged packet counts as
+accepted without an operator approval receipt, trusted anchor or calendar expiry.
+This is the scoped successor to the frozen imported profile's explicit evaluation
+approval wording; all scope limits and other enforcement requirements remain.
+The plan baseline is `928b5ef07797762bc002920af05a01aa4a4b0e0c`.
+Historical [approval receipts](../../conformance/wi-fabric-2/worker/evaluation-approval.json),
+anchors and superseded requests stay as provenance and are never read by the gate.
 
-Commit the complete accepted candidate. Run each of the ten adopted checks on
+Candidate live verification requires the complete manifest and bound source bytes
+to match HEAD exactly. Shared reconstruction checks the entire discovered file
+set, tasks, cases, six operations, environment, limits and exclusions. Changed,
+deleted, added or omitted sources and malformed packets fail closed. Adopted
+`contract-check` enforces this rule before review; checking never refreshes it.
+Commit the refreshed manifest with its sources after non-live validation. An
+uncommitted refresh cannot authorize execution. Every live fixture build accessor,
+including the process harness, checks commitment before returning cached artifacts.
+Only non-live build/provenance tests may use a refreshed, uncommitted packet.
+Revocation and quarantine still fence fresh admissions.
+
+These checks permit bounded candidate verification; reviewed merge with adopted
+checks establishes durable acceptance. Tests do not authenticate review or grant
+integration, publication or gate closure. CraftingTable retains those workflow
+boundaries. Scope remains reviewed nonsensitive fixtures, the same tasks/cases and
+operations, **15000 ms wall time**, **65536 retained output bytes**, no ordinary
+use and no production credentials. A previous campaign cannot authorize drift.
+
+Commit the complete candidate. Run each of the ten adopted checks on
 that unchanged committed head through CraftingTable's `ct-check --declared ID`:
 
 ```sh
@@ -144,7 +158,7 @@ provider handles, helper internals or raw queue authority.
    owns bootstrap administration, private workspace, reviewed fixture/helper,
    evaluation verifier and finite slots. Exclusive host ownership and store
    recovery precede `application()`. `WorkerInstallation::Recovery` can inspect
-   and reconcile existing work without launching an executable or minting approval.
+   and reconcile existing work without launching an executable or authorizing fresh work.
 2. The authenticated application calls `submit(session, EffectSubmission,
    DirectOperationSelection)` or `submit_flow(session, definition, submission)`.
    Caller scope comes from the installed authentication port; request tenant or
@@ -183,10 +197,12 @@ is not a media adapter: arbitrary executable arguments, inputs and workload
 support require further consumer integration, exact source/configuration/fixture
 review, appropriate approval and consumer validation. `process-managed-proof-1`
 permits reviewed executables and reviewed nonsensitive inputs, never hostile code.
-Evaluation-only registration/qualification uses trusted operator acceptance;
-ordinary use needs a separate exact WIP-12 catalog registration, qualification
-and approval record from trusted operator/evidence ports. Evaluation cannot
-self-promote or reuse unrelated approval; drift/revocation fences new admissions.
+Evaluation-only registration uses exact WIP-12 catalog bindings
+from trusted host/evidence ports. Reviewed fixture registration in a reviewed
+commit uses the same committed matching packet rule, without a separate approval
+record. The catalog's `approval` digest identifies the packet. Request JSON cannot
+register itself and ordinary admission remains disabled. Evaluation cannot
+self-promote; drift/revocation fences new admissions.
 
 Flow uses at most **64 explicit nodes**, with bounded static expansion, at most
 32 ports per plan element and no unbounded dynamic fan-out. AQ limits are 64
@@ -258,7 +274,7 @@ ownership and effectiveness. The exact test table below uses F =
 `crates/worldinterface-runtime/Cargo.toml`, C =
 `tools/wi-contract-check/Cargo.toml`; each entry is **manifest · package · exact
 harness test name**. The registry is authoritative; edits require regenerating
-both this publication snapshot and the descriptor, then renewed packet acceptance.
+both this publication snapshot and the descriptor, then a refreshed packet in the same commit.
 
 | Gate | Pass criteria | Required cases |
 |---|---|---|
@@ -281,7 +297,7 @@ both this publication snapshot and the descriptor, then renewed packet acceptanc
 | WP-004 | `F · worldinterface-worker · wp_004_opaque_consumer_artifacts_and_controls` |
 | WP-005 | `F · worldinterface-worker · wp_005_lifecycle_and_unavailable_operations` |
 | WP-006 | `F · worldinterface-worker · wp_006_aq_free_portable_contract_and_strict_codec` |
-| WP-007 | `R · worldinterface-runtime · catalog_ordinary_records_require_provenance_and_never_enable_or_self_promote`<br>`R · worldinterface-runtime · catalog_registration_is_exact_bounded_and_inspection_grants_no_authority`<br>`R · worldinterface-runtime · wp_007_exact_operator_packet_runs_only_supported_bounded_evaluation_through_wi_aq`<br>`C · wi-contract-check · qualification_drift_and_revocation`<br>`C · wi-contract-check · quarantine_and_discovery`<br>`C · wi-contract-check · wp007_unqualified_and_evaluation_table` |
+| WP-007 | `R · worldinterface-runtime · catalog_ordinary_records_require_provenance_and_never_enable_or_self_promote`<br>`R · worldinterface-runtime · catalog_registration_is_exact_bounded_and_inspection_grants_no_authority`<br>`R · worldinterface-runtime · wp_007_exact_committed_packet_runs_only_supported_bounded_evaluation_through_wi_aq`<br>`C · wi-contract-check · qualification_drift_and_revocation`<br>`C · wi-contract-check · quarantine_and_discovery`<br>`C · wi-contract-check · wp007_unqualified_and_evaluation_table`<br>`R · worldinterface-runtime · packet_acceptance_is_independent_of_calendar_and_rejects_revocation`<br>`R · worldinterface-runtime · committed_packet_cannot_widen_tasks_operations_cases_environment_or_source_bindings`<br>`R · worldinterface-runtime · live_setup_rejects_stale_and_uncommitted_packets_before_fixture_execution`<br>`C · wi-contract-check · complete_packet_validator_regressions`<br>`C · wi-contract-check · adopted_evaluation_check_rejects_stale_packets_and_uncommitted_refresh`<br>`C · wi-contract-check · campaign_packet_and_build_identity_cannot_be_substituted` |
 | WP-008 | `F · worldinterface-worker · wp_008_mediation_does_not_elevate_containment` |
 | WP-009 | `F · worldinterface-egress · wp009_exact_fixture_durable_intent_and_admission`<br>`F · worldinterface-egress · ordinary_provider_cannot_reuse_fixture_proof`<br>`F · worldinterface-egress · resolution_failures_are_durable_without_running`<br>`F · worldinterface-egress · canonical_resource_grammar_and_namespace_specific_bounds`<br>`F · worldinterface-egress · identical_request_recovery_conflicts_and_scoped_inspection`<br>`F · worldinterface-egress · lost_ack_reopens_identical_request_without_extra_use`<br>`F · worldinterface-egress · forged_acknowledgments_cannot_complete_outbox`<br>`F · worldinterface-egress · concurrent_submissions_and_logical_use_races`<br>`F · worldinterface-egress · commit_evidence_rejects_false_success_failure_and_missing_publication`<br>`F · worldinterface-egress · successful_boundary_requires_durable_output_evidence`<br>`F · worldinterface-egress · uncertainty_reconciliation_and_retry_require_noncommit_policy_and_authority`<br>`F · worldinterface-egress · reconciliation_cannot_change_confirmed_commit_or_skip_evidence`<br>`F · worldinterface-egress · cancellation_before_dispatch_and_after_handoff_are_distinct`<br>`F · worldinterface-egress · compensation_is_a_separate_intent_without_inherited_authority`<br>`F · worldinterface-egress · backup_rebuild_replay_and_generic_bypass_integrity`<br>`F · worldinterface-egress · unsupported_store_profile_is_rejected_without_upgrade`<br>`F · worldinterface-egress · removing_authority_never_increases_allowed_demands`<br>`F · worldinterface-egress · deterministic_command_replay_preserves_state_and_rejects_stale_commands`<br>`F · worldinterface-egress · resolution_attests_symlinks_dns_redirects_and_exact_audience`<br>`F · worldinterface-egress · unpublished_output_cannot_be_marked_successful_or_survive_reopen`<br>`F · worldinterface-egress · concurrent_conflicting_requests_commit_only_one_intent`<br>`F · worldinterface-storage · effect::tests::effect_journal_faults_roll_back_every_projection`<br>`F · worldinterface-egress · ordinary_qualification_is_exact_and_revocable`<br>`R · worldinterface-runtime · wp009_runtime_exact_qualification_admits_once_without_execution_success`<br>`R · worldinterface-runtime · self_initiated_and_external_requests_follow_the_same_authorization_path` |
 | WP-010 | `F · worldinterface-egress · wp010_unreviewed_executable_cannot_be_waived`<br>`F · worldinterface-egress · approval_and_separation_of_duties_are_bound_to_exact_inputs`<br>`F · worldinterface-egress · purpose_candidate_and_lifecycle_labels_never_supply_authority`<br>`R · worldinterface-runtime · wp010_runtime_generated_executable_denied_despite_exact_approval_and_purpose` |
@@ -306,7 +322,7 @@ both this publication snapshot and the descriptor, then renewed packet acceptanc
 | WP-029 | `R · worldinterface-runtime · wp_029_embedded_coding_and_transform_use_one_engine_and_application_services`<br>`R · worldinterface-runtime · wp_029_restored_publication_is_readable_without_original_workspace_and_keeps_capacity`<br>`R · worldinterface-runtime · wp_029_embedded_crash_recovery_quarantines_without_replacement` |
 | WP-030 | `R · worldinterface-runtime · wp_030_consumer_and_helper_imports_stay_inside_application_boundary`<br>`R · worldinterface-runtime · wp_030_embedded_forgery_scope_and_unauthorized_controls_fail_closed`<br>`R · worldinterface-runtime · wp_030_recovery_only_facade_enforces_disclosure_revocation_and_exclusive_ownership`<br>`R · worldinterface-runtime · wp_030_catalog_quarantine_and_revocation_fence_queued_execution`<br>`R · worldinterface-runtime · wp_030_recovery_reconstructs_scoped_metadata_before_returning_application` |
 | WP-031 | `R · worldinterface-runtime · wp_031_seam_simulation_delayed_reordered_observations_and_uncertain_ack_use_real_wi_aq`<br>`R · worldinterface-runtime · wp_034_embedded_seam_handoff_retains_nonsemantic_completion_and_unknown_controls`<br>`R · worldinterface-runtime · campaign_unknown_controls_publish_once_with_exact_observation_digest` |
-| WP-032 | `R · worldinterface-runtime · catalog_invalid_recovery_policy_denies_before_any_provider_read_or_stop`<br>`R · worldinterface-runtime · catalog_quarantine_fences_stale_admission_and_survives_cleanup_replacement_rebuild_and_reopen`<br>`R · worldinterface-runtime · catalog_quarantine_serializes_with_dispatch_and_fences_every_later_dispatch`<br>`R · worldinterface-runtime · catalog_recovery_is_exact_to_caller_binding_operation_and_current_policy`<br>`R · worldinterface-runtime · catalog_recovery_only_construction_requires_no_approval_or_executable_files`<br>`R · worldinterface-runtime · catalog_registration_is_exact_bounded_and_inspection_grants_no_authority`<br>`R · worldinterface-runtime · wp_032_drift_denies_new_admissions_before_allocation_through_real_wi_aq`<br>`R · worldinterface-runtime · wp_032_quarantine_revocation_and_recovery_only_reopen_keep_inspect_terminate_and_aq_reconcile`<br>`R · worldinterface-runtime · catalog_poll_invalid_approval_quarantines_only_the_run_and_preserves_provider_admission`<br>`R · worldinterface-runtime · wp_032_ordinary_terminate_under_provider_quarantine_acknowledges_and_reconciles` |
+| WP-032 | `R · worldinterface-runtime · catalog_invalid_recovery_policy_denies_before_any_provider_read_or_stop`<br>`R · worldinterface-runtime · catalog_quarantine_fences_stale_admission_and_survives_cleanup_replacement_rebuild_and_reopen`<br>`R · worldinterface-runtime · catalog_quarantine_serializes_with_dispatch_and_fences_every_later_dispatch`<br>`R · worldinterface-runtime · catalog_recovery_is_exact_to_caller_binding_operation_and_current_policy`<br>`R · worldinterface-runtime · catalog_recovery_only_construction_requires_no_approval_or_executable_files`<br>`R · worldinterface-runtime · catalog_registration_is_exact_bounded_and_inspection_grants_no_authority`<br>`R · worldinterface-runtime · wp_032_drift_denies_new_admissions_before_allocation_through_real_wi_aq`<br>`R · worldinterface-runtime · wp_032_quarantine_revocation_and_recovery_only_reopen_keep_inspect_terminate_and_aq_reconcile`<br>`R · worldinterface-runtime · catalog_poll_invalid_packet_quarantines_only_the_run_and_preserves_provider_admission`<br>`R · worldinterface-runtime · wp_032_ordinary_terminate_under_provider_quarantine_acknowledges_and_reconciles` |
 | WP-033 | `F · worldinterface-storage · control_distinct_fresh_issuances_wait_for_delivery_ownership`<br>`F · worldinterface-storage · control_plane::tests::shared_effect_and_credential_reservations_have_one_atomic_last_use`<br>`R · worldinterface-runtime · ab_wi_019_invalid_restore_never_publishes_partial_destination`<br>`R · worldinterface-runtime · ab_wi_019_two_independent_stores_restore_complete_wal_artifacts_and_control_history`<br>`R · worldinterface-runtime · f007_crash_cuts_reconcile_exact_ownership_without_redelivery`<br>`R · worldinterface-runtime · f007_expiry_rotation_and_recovery_preserve_the_original_credential_generation`<br>`R · worldinterface-runtime · f007_live_delivery_excludes_recovery_and_concurrent_retry`<br>`R · worldinterface-runtime · f007_restored_pending_attempt_requires_custody_fencing_and_uncertainty_stays_unresolved`<br>`R · worldinterface-runtime · f007_restored_unattempted_intent_requires_global_fencing_of_late_original_claims`<br>`R · worldinterface-runtime · wp_029_embedded_coding_and_transform_use_one_engine_and_application_services`<br>`R · worldinterface-runtime · wp_029_embedded_crash_recovery_quarantines_without_replacement`<br>`R · worldinterface-runtime · wp_029_restored_publication_is_readable_without_original_workspace_and_keeps_capacity`<br>`R · worldinterface-runtime · wp_030_catalog_quarantine_and_revocation_fence_queued_execution`<br>`R · worldinterface-runtime · wp_030_consumer_and_helper_imports_stay_inside_application_boundary`<br>`R · worldinterface-runtime · wp_030_embedded_forgery_scope_and_unauthorized_controls_fail_closed`<br>`R · worldinterface-runtime · wp_030_recovery_only_facade_enforces_disclosure_revocation_and_exclusive_ownership`<br>`R · worldinterface-runtime · wp_030_recovery_reconstructs_scoped_metadata_before_returning_application`<br>`R · worldinterface-runtime · wp_033_embedded_completion_is_producer_evidence_for_partial_milestone_only`<br>`C · wi-contract-check · campaign_coverage_requires_every_embedded_obligation_and_preserves_scope_tests`<br>`C · wi-contract-check · campaign_dirty_source_changing_or_stale_generation_is_rejected`<br>`C · wi-contract-check · campaign_missing_ignored_ambiguous_and_recursive_references_are_rejected`<br>`C · wi-contract-check · campaign_real_child_failure_zero_ignored_missing_and_altered_logs_fail_closed`<br>`C · wi-contract-check · wp_033_inflated_claims_cannot_convert_worker_success_to_consumer_acceptance`<br>`C · wi-contract-check · campaign_parallel_harnesses_retain_failures_and_reject_substituted_binary_pins` |
 | WP-034 | `R · worldinterface-runtime · wp_034_embedded_seam_handoff_retains_nonsemantic_completion_and_unknown_controls`<br>`C · wi-contract-check · wp_034_handoff_rejects_substituted_pins_missing_evidence_and_semantic_completion`<br>`R · worldinterface-runtime · campaign_unknown_controls_publish_once_with_exact_observation_digest`<br>`C · wi-contract-check · wp_034_publication_rejects_registry_gate_mapping_and_claim_drift`<br>`C · wi-contract-check · wp_034_publication_rejects_stale_profile_fixture_lock_and_recipe_pins`<br>`C · wi-contract-check · wp_034_publication_requires_complete_gate_state_and_valid_descriptor`<br>`C · wi-contract-check · wp_034_publication_binds_external_evidence_and_never_grants_reviewed_closure` |
 | AB-WI-001 | `R · worldinterface-runtime · ab_wi_001_store_formats_fresh_lineage_and_profile_rejection`<br>`R · worldinterface-runtime · ab_wi_001_published_identity_rejects_substitutions` |

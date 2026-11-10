@@ -968,7 +968,7 @@ fn default_recovery_policy(scope: HostScope) -> Result<super::catalog::RecoveryP
 /// A recovery-only host has no executable registration or admission approval.
 pub struct RecoveryOnly;
 impl TrustedApprovals for RecoveryOnly {
-    fn accepted(&self, _: &super::evaluation::OperatorApprovalReceipt, _: u64) -> Result<bool> {
+    fn accepted(&self, _: &super::evaluation::EvaluationManifest, _: &Path) -> Result<bool> {
         Ok(false)
     }
 }

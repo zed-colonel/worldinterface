@@ -1,6 +1,7 @@
 //! Repository contract tooling only. Never link this crate into the runtime.
 pub mod catalog;
 pub mod contracts;
+pub mod evaluation;
 pub mod evidence;
 pub mod handoff;
 pub mod inventory;

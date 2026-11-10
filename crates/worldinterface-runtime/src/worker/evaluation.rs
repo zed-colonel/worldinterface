@@ -1,5 +1,5 @@
-//! Evaluation approval is verified against host-owned decision provenance.
-//! A repository receipt, a binary measurement or an accepted flag confers no authority.
+//! Evaluation is limited to an exact committed packet validated by the trusted host.
+//! Review and merge establish durable acceptance; execution grants no integration authority.
 use crate::{authority::EvidenceAuthority, worker_process::Task, Result};
 use serde::{Deserialize, Serialize};
 use std::{
@@ -36,10 +36,8 @@ impl EvaluationManifest {
             || self.tasks.is_empty()
             || self.cases.is_empty()
             || self.operations.is_empty()
-            || self.max_wall_ms == 0
-            || self.max_wall_ms > 60_000
-            || self.max_output_bytes == 0
-            || self.max_output_bytes > 4 * 1024 * 1024
+            || self.max_wall_ms != 15_000
+            || self.max_output_bytes != 65_536
             || !self.nonsensitive_only
             || self.production_credentials
             || self.ordinary_use
@@ -73,18 +71,11 @@ impl EvaluationManifest {
         Ok(())
     }
 }
-#[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
-#[serde(deny_unknown_fields)]
-pub struct OperatorApprovalReceipt {
-    pub decision: String,
-    pub operator: String,
-    pub manifest: ContentHash,
-    pub expires_unix_ms: u64,
-}
-/// Authenticated host composition supplies this store independently of request and repo JSON.
-/// Implementations must check actual acceptance provenance, current revocation and expiry.
+/// Authenticated host composition supplies this store independently of request JSON.
+/// Implementations must validate the complete current packet against committed bytes.
+/// Reviewed merge is a workflow boundary, not an assertion made by runtime tests.
 pub trait TrustedApprovals: Send + Sync {
-    fn accepted(&self, receipt: &OperatorApprovalReceipt, now_ms: u64) -> Result<bool>;
+    fn accepted(&self, manifest: &EvaluationManifest, source_root: &Path) -> Result<bool>;
     /// Authenticate the exact catalog binding from host registration provenance.
     /// A request, record file or successful evaluation cannot install itself.
     fn registered(
@@ -115,21 +106,15 @@ impl VerifiedEvaluation {
 }
 pub struct EvaluationVerifier<S> {
     pub manifest: EvaluationManifest,
-    pub receipt: OperatorApprovalReceipt,
     pub trusted: S,
     pub source_root: std::path::PathBuf,
 }
 impl<S: TrustedApprovals> EvaluationVerifier<S> {
-    pub fn verify(&self, now_ms: u64) -> Result<VerifiedEvaluation> {
+    pub fn verify(&self, _now_ms: u64) -> Result<VerifiedEvaluation> {
         self.manifest.verify_sources(&self.source_root)?;
         let digest = self.manifest.digest()?;
-        if self.receipt.decision.is_empty()
-            || self.receipt.operator.is_empty()
-            || self.receipt.manifest != digest
-            || self.receipt.expires_unix_ms <= now_ms
-            || !self.trusted.accepted(&self.receipt, now_ms)?
-        {
-            return Err("evaluation approval unavailable".into());
+        if !self.trusted.accepted(&self.manifest, &self.source_root)? {
+            return Err("evaluation packet unavailable".into());
         }
         Ok(VerifiedEvaluation { digest })
     }
@@ -147,12 +132,12 @@ impl<S: TrustedApprovals> EvaluationVerifier<S> {
             || !self.manifest.tasks.contains(&worldinterface_protocol::data_digest(task)?)
             || self.manifest.environment != *environment
         {
-            return Err("evaluation request outside approved scope".into());
+            return Err("evaluation request outside committed scope".into());
         }
         Ok(verified)
     }
 }
-/// Wrap the ordinary WI evidence authority so admission and dispatch both reverify approval.
+/// Wrap the ordinary WI evidence authority so admission and dispatch both reverify packet integrity.
 /// Base evidence still authenticates caller, grants, artifacts and exact realization.
 #[derive(Clone)]
 pub struct EvaluationAuthority<A, S, C> {

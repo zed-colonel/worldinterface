@@ -3,7 +3,7 @@
   "scope": "wi/WI-09/process-provider:artifacts-and-seam",
   "work_item": "WIP-11",
   "runtime_pass_asserted": false,
-  "evaluation": "Packet 1d13a48427d0f745268c7acdf2fcd58d7c0e34a08df25b7bee9b0124422bf298 accepted in 9dbc0c4, expires 2026-11-11T00:00:00Z; full direct evaluation and all ten adopted checks completed. Nine adopted checks passed; direct evaluation and runtime-test failed only the WP-028 crash-continuation success assertion. Collection reconciliation follow-up requires renewed exact-packet acceptance/live verification; see docs/work-items/WIP-11.md. Prior packet 0723acb0 passed its full evaluation and all ten adopted checks.",
+  "evaluation": "Historical receipt-policy provenance (superseded by the 2026-11-09 WSP-01 decision): Packet 1d13a48427d0f745268c7acdf2fcd58d7c0e34a08df25b7bee9b0124422bf298 accepted in 9dbc0c4, expires 2026-11-11T00:00:00Z; full direct evaluation and all ten adopted checks completed. Nine adopted checks passed; direct evaluation and runtime-test failed only the WP-028 crash-continuation success assertion. Collection reconciliation follow-up requires renewed exact-packet acceptance/live verification; see docs/work-items/WIP-11.md. Prior packet 0723acb0 passed its full evaluation and all ten adopted checks. Current candidate verification uses the complete committed matching packet; no separate receipt, anchor or calendar expiry. Review and integration remain external.",
   "assumptions_addressed": [
     "WP-A05"
   ],
