@@ -274,6 +274,7 @@ fn wp_029_embedded_crash_recovery_quarantines_without_replacement() {
 async fn wp_030_catalog_quarantine_and_revocation_fence_queued_execution() {
     for revoked in [false, true] {
         let s = setup::Setup::live_case(false, "WP-030");
+        let finished = s.flow_observer();
         let mut app = s.host.application().unwrap();
         if !revoked {
             s.quarantine();
@@ -284,7 +285,7 @@ async fn wp_030_catalog_quarantine_and_revocation_fence_queued_execution() {
             s.revoke();
         }
         let deadline = std::time::Instant::now() + std::time::Duration::from_secs(30);
-        while !s.flow_finished(&id) {
+        while !finished(&id) {
             app.advance(&setup::Session::Valid).await.unwrap();
             assert!(std::time::Instant::now() < deadline, "queued execution did not terminate");
             tokio::time::sleep(std::time::Duration::from_millis(5)).await;

@@ -836,15 +836,18 @@ impl Setup {
     }
 }
 impl Setup {
-    /// Trusted synchronization only; disclosure is installed after terminal denial.
-    pub fn flow_finished(&self, id: &OpaqueRef) -> bool {
-        StoreRoot::open_existing(self.root.join("bundle/wi"))
-            .unwrap()
-            .flow_run_snapshot(&self.auth.tenant, id)
-            .unwrap()
-            .runs
-            .get(id)
-            .is_some_and(|flow| flow.outcome.is_some())
+    /// Open the trusted observer before queue work starts. Reopening while a
+    /// writer's journal exists correctly requires exclusive recovery ownership.
+    pub fn flow_observer(&self) -> impl Fn(&OpaqueRef) -> bool {
+        let root = StoreRoot::open_existing(self.root.join("bundle/wi")).unwrap();
+        let tenant = self.auth.tenant.clone();
+        move |id| {
+            root.flow_run_snapshot(&tenant, id)
+                .unwrap()
+                .runs
+                .get(id)
+                .is_some_and(|flow| flow.outcome.is_some())
+        }
     }
     pub fn quarantine(&self) {
         let root = StoreRoot::open_existing(self.root.join("bundle/wi")).unwrap();
