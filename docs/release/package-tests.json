@@ -52,9 +52,9 @@
       "tests": [
         {
           "target": "control_plane",
-          "disposition": "repository-only",
+          "disposition": "packaged",
           "owner": "foundation-test",
-          "reason": "Repository conformance fixtures, sibling support, or committed worker campaign and its source-bound evidence."
+          "reason": "Self-contained public API integration test using package-local support."
         },
         {
           "target": "developmental",
@@ -291,9 +291,9 @@
         },
         {
           "target": "worker_artifact_crash",
-          "disposition": "repository-only",
+          "disposition": "packaged",
           "owner": "runtime-test",
-          "reason": "Repository conformance fixtures, sibling support, or committed worker campaign and its source-bound evidence."
+          "reason": "Self-contained public API integration test using package-local support."
         },
         {
           "target": "worker_artifact_live_crash",
@@ -303,9 +303,9 @@
         },
         {
           "target": "worker_artifact_validation",
-          "disposition": "repository-only",
+          "disposition": "packaged",
           "owner": "runtime-test",
-          "reason": "Repository conformance fixtures, sibling support, or committed worker campaign and its source-bound evidence."
+          "reason": "Self-contained public API integration test using package-local support."
         },
         {
           "target": "worker_artifacts",

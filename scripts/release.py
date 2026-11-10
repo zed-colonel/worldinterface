@@ -13,7 +13,7 @@ import subprocess
 import sys
 import tempfile
 sys.dont_write_bytecode = True
-from wi_release import (ROOT, FOUNDATION, RUNTIME, PACKAGES, ADOPTED, archive_files,
+from wi_release import (ROOT, FOUNDATION, RUNTIME, PACKAGES, ADOPTED, BASELINE, archive_files,
                         clean, external_target, git, metadata, read, ref, require, run,
                         safe, sha, toolchain, toml, validate_archive, validate_schema, write)
 from wi_crash_isolation import check_artifacts
@@ -143,7 +143,8 @@ def validate_manifest(manifest, output):
     for key, value in expected.items():
         require(manifest.get(key) == value, 'wrong manifest ' + key)
     require(set(manifest) == set(expected) | {'source_commit', 'baseline_revision', 'source_before', 'source_after', 'build_work', 'evidence', 'artifacts', 'packaged_locks'}, 'unknown/missing manifest fields')
-    require(manifest['baseline_revision'] == git('rev-list', '--max-parents=0', 'HEAD').splitlines()[0], 'wrong baseline revision')
+    require(manifest['baseline_revision'] == BASELINE, 'wrong baseline revision')
+    subprocess.run(['git', 'merge-base', '--is-ancestor', BASELINE, manifest['source_commit']], cwd=ROOT, check=True, timeout=60)
     identity = {'commit': manifest['source_commit'], 'tree': git('rev-parse', 'HEAD^{tree}'), 'clean': True}
     require(manifest['source_before'] == manifest['source_after'] == identity, 'source changed during preparation')
     artifacts = manifest['artifacts']
@@ -191,7 +192,7 @@ def prepare(version, commit, output):
     # The evidence directory is persistent; registry/build staging is disposable.
     with tempfile.TemporaryDirectory(prefix='wi-release-') as temporary:
         work = Path(temporary) / 'work'
-        manifest.update(source_commit=commit, baseline_revision=git('rev-list', '--max-parents=0', 'HEAD').splitlines()[0],
+        manifest.update(source_commit=commit, baseline_revision=BASELINE,
                         source_before={'commit': commit, 'tree': git('rev-parse', 'HEAD^{tree}'), 'clean': True}, build_work=str(work))
         write(output / 'build-environment.json', build)
         evidence = []

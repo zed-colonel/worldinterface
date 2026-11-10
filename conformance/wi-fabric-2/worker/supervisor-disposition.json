@@ -2,12 +2,12 @@
   "version": 1,
   "status": "candidate-for-review",
   "effective_on": "explicit-operator-disposition-for-evaluation-then-qualifying-CraftingTable-review",
-  "scope": "same five supervisor files; correctness remediation candidate exact-source update; generic continuation ban unchanged",
+  "scope": "same five supervisor files; WSP-02 package-local repository-lock snapshot update; generic continuation ban unchanged",
   "updates": [
     {
       "path": "crates/worldinterface-runtime/src/worker_process/mod.rs",
-      "sha256": "663c193d9dadbc371509f40456b39c4d7ae3a086064e2daefa62f3cc3f132f8e",
-      "rationale": "Correctness remediation F-002/F-003/F-007/F-013: exact-scope host cleanup and evidence survive worker credential expiry; released provider state is retired; capacity is concurrent; never-started exports do not block release; the helper spawn boundary is counted. Worker credential checks remain on worker-facing access and fresh launch. No new waiting exception, process identity disclosure or isolation claim. Requires complete committed packet validation for candidate verification and qualifying source review/merge for durable acceptance under WSP-01 (2026-11-09); no separate receipt, anchor or calendar expiry."
+      "sha256": "64e04b9003318dbe15d508eaad5e37a85ec081f4969ed6cfe9982f9c1a3048f6",
+      "rationale": "Correctness remediation F-002/F-003/F-007/F-013: exact-scope host cleanup and evidence survive worker credential expiry; released provider state is retired; capacity is concurrent; never-started exports do not block release; the helper spawn boundary is counted. Worker credential checks remain on worker-facing access and fresh launch. No new waiting exception, process identity disclosure or isolation claim. Requires complete committed packet validation for candidate verification and qualifying source review/merge for durable acceptance under WSP-01 (2026-11-09); no separate receipt, anchor or calendar expiry. WSP-02 changes only dependencies_digest() to embed release/repository-Cargo.lock. handoff check proves that snapshot equals the repository runtime Cargo.lock; packaged Cargo.lock normalization is recorded separately. No supervisor logic, waiting exception, operations, bounds or authority changes. This exact source update is submitted for qualifying review with WSP-02."
     }
   ]
 }

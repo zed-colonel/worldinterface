@@ -28,7 +28,9 @@ separately. Worker digests and sizes are measured by the documented install
 recipe and scoped to the recorded build environment. No archive includes its
 own checksum. No preparation receipt claims publication or reviewed closure.
 
-Structural disposition additions cover the package-local shared fixture and
+The exact process-supervisor source pin/disposition is updated solely for the
+lock include route; it preserves repository digest bytes and grants no new wait
+exception or supervisor authority. Structural disposition additions cover the package-local shared fixture and
 standalone consumer; existing source hashes and the complete evaluation packet
 are refreshed together. New release scripts, provenance data, C helper, README
 and consumer inputs are bound by the packet without a self-reference.

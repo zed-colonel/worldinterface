@@ -1254,7 +1254,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/release/handoff.json",
-          "source_sha256": "272721fc808f589e7e2fcfe3f3d59e48f458c1cf694493285e345e73c367e114",
+          "source_sha256": "cf1ddc1869bb26e9c35ccf49e7d795cd468c366a9df71744f5e9daf0d1ec4146",
           "treatment": "Retain WSP-02 package evidence/support and registry consumer. Future legacy removal must preserve authoritative byte equality and release consumer coverage."
         },
         {
@@ -2731,7 +2731,7 @@
         },
         {
           "id": "crates/worldinterface-foundation/domain/Cargo.toml::foundation-crate:worldinterface-domain",
-          "source_sha256": "3e3e7fe25e345e4607965f23e6562b74058931bd920c8d775af9910b0ec5e233",
+          "source_sha256": "2c8cc1b42ce591f275c292de827cb661bded71ff8f28dd934bd82b4192c4ba35",
           "registration_sites": []
         },
         {
@@ -5256,7 +5256,7 @@
         },
         {
           "id": "crates/worldinterface-runtime/Cargo.toml::auxiliary-crate:worldinterface-runtime",
-          "source_sha256": "0ae398ba9e16890e34d9213b4acfeab42d490b41d9661dd7e3241ed9dd52da30",
+          "source_sha256": "4af30cfa319f79b045ec89ba228f0474e87244375da1a8be0131d4dba2c3c8b8",
           "registration_sites": []
         },
         {
@@ -8378,7 +8378,7 @@
         },
         {
           "path": "crates/worldinterface-foundation/domain/Cargo.toml",
-          "source_sha256": "3e3e7fe25e345e4607965f23e6562b74058931bd920c8d775af9910b0ec5e233",
+          "source_sha256": "2c8cc1b42ce591f275c292de827cb661bded71ff8f28dd934bd82b4192c4ba35",
           "treatment": "Retain target protocol, capability, state-machine and store infrastructure; preserve isolation from legacy connector removal."
         },
         {
@@ -8778,7 +8778,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/Cargo.toml",
-          "source_sha256": "0ae398ba9e16890e34d9213b4acfeab42d490b41d9661dd7e3241ed9dd52da30",
+          "source_sha256": "4af30cfa319f79b045ec89ba228f0474e87244375da1a8be0131d4dba2c3c8b8",
           "treatment": "Retain target integration source and tests; audit shared declarations before any later selective removal."
         },
         {
@@ -10780,7 +10780,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/Cargo.toml",
-          "source_sha256": "0ae398ba9e16890e34d9213b4acfeab42d490b41d9661dd7e3241ed9dd52da30",
+          "source_sha256": "4af30cfa319f79b045ec89ba228f0474e87244375da1a8be0131d4dba2c3c8b8",
           "treatment": "WIP-09: retain reviewed process adapter mechanics and fixture evidence; selective shared-infrastructure maintenance only, with no legacy removal or new approval claim."
         },
         {

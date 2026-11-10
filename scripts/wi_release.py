@@ -16,6 +16,7 @@ RUNTIME = Path('crates/worldinterface-runtime')
 ORDER = ['protocol', 'capability', 'domain', 'storage', 'worker', 'ingress', 'egress', 'runtime']
 PACKAGES = {'worldinterface-' + p: (RUNTIME if p == 'runtime' else FOUNDATION / p) for p in ORDER}
 CRATES_IO = 'registry+https://github.com/rust-lang/crates.io-index'
+BASELINE = '928b5ef07797762bc002920af05a01aa4a4b0e0c'
 ADOPTED = ['foundation-fmt', 'foundation-clippy', 'foundation-test', 'foundation-isolation',
            'runtime-fmt', 'runtime-clippy', 'runtime-test', 'runtime-aq-graph', 'contract-check', 'contract-test']
 

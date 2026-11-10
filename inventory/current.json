@@ -5022,7 +5022,7 @@
     "kind": "foundation-crate",
     "path": "crates/worldinterface-foundation/domain/Cargo.toml",
     "name": "worldinterface-domain",
-    "source_sha256": "3e3e7fe25e345e4607965f23e6562b74058931bd920c8d775af9910b0ec5e233",
+    "source_sha256": "2c8cc1b42ce591f275c292de827cb661bded71ff8f28dd934bd82b4192c4ba35",
     "conditions": [],
     "registration_sites": []
   },
@@ -10615,7 +10615,7 @@
     "kind": "auxiliary-crate",
     "path": "crates/worldinterface-runtime/Cargo.toml",
     "name": "worldinterface-runtime",
-    "source_sha256": "0ae398ba9e16890e34d9213b4acfeab42d490b41d9661dd7e3241ed9dd52da30",
+    "source_sha256": "4af30cfa319f79b045ec89ba228f0474e87244375da1a8be0131d4dba2c3c8b8",
     "conditions": [],
     "registration_sites": []
   },
