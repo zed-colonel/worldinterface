@@ -43,6 +43,7 @@ use worldinterface_worker::{
 };
 #[derive(Clone)]
 pub struct Approval {
+    validator: Arc<packet::Validator>,
     pub revoked: Arc<std::sync::atomic::AtomicBool>,
     approved_policies: Arc<std::sync::Mutex<BTreeSet<ContentHash>>>,
     packet: ContentHash,
@@ -100,7 +101,7 @@ impl TrustedApprovals for Approval {
                     && binding.adapter == seam::provenance().adapter)))
     }
     fn accepted(&self, manifest: &EvaluationManifest, root: &Path) -> Result<bool> {
-        packet::validate(root, manifest, true)?;
+        self.validator.validate(root, manifest)?;
         Ok(manifest.digest()? == self.packet
             && !self.revoked.load(std::sync::atomic::Ordering::SeqCst))
     }
@@ -145,6 +146,7 @@ pub fn evaluation() -> Arc<EvaluationVerifier<Approval>> {
         assert_eq!(built.packet, packet);
         let (fixture, helper) = (built.fixture_digest.clone(), built.helper_digest.clone());
         let trusted = Approval {
+            validator: Arc::new(packet::Validator::new(&source)?),
             revoked: Arc::new(std::sync::atomic::AtomicBool::new(false)),
             approved_policies: Arc::new(std::sync::Mutex::new(BTreeSet::new())),
             packet,

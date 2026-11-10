@@ -12787,5 +12787,19 @@
     "target": "worker-lifecycle-test-evidence",
     "rationale": "WSP-01: complete committed packet verification in the trusted test host, including pre-setup rejection and current cached-build checks. Reviewed merge establishes acceptance without receipt, anchor or expiry; scope and catalog bindings remain unchanged.",
     "source": "docs/work-items/WSP-01.md; operator decision 2026-11-09"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/worker_packet.rs::::struct:Validator",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WSP-01: owned resident validator removes interpreter startup while reconstructing and checking the complete committed packet on every request, with no cross-request result cache; fail closed on drift or protocol errors and reap the owned process.",
+    "source": "docs/work-items/WSP-01.md; operator decision 2026-11-09"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/worker_packet.rs::::struct:ValidatorProcess",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WSP-01: owned resident validator removes interpreter startup while reconstructing and checking the complete committed packet on every request, with no cross-request result cache; fail closed on drift or protocol errors and reap the owned process.",
+    "source": "docs/work-items/WSP-01.md; operator decision 2026-11-09"
   }
 ]

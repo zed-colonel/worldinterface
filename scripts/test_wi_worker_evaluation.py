@@ -154,6 +154,31 @@ class PacketTests(unittest.TestCase):
             with self.assertRaises(ValueError): check_packet(self.root)
             path.unlink()
 
+    def test_validator_process_rechecks_sources_and_committed_packet(self):
+        command = ['python3', '-I', '-B', str(self.root / 'scripts/wi_worker_evaluation.py'),
+                   '--root', str(self.root), '--require-committed', '--serve']
+        with subprocess.Popen(command, stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+                              stderr=subprocess.PIPE, text=True) as process:
+            def check(request='check\n'):
+                process.stdin.write(request)
+                process.stdin.flush()
+                return json.loads(process.stdout.readline())
+            expected = {'manifest_digest': digest(canonical(self.manifest)),
+                        'acceptance_policy': 'reviewed-merged-packet-2026-11-09'}
+            self.assertEqual(check(), expected)
+            path = self.root / 'crates/worldinterface-runtime/src/lib.rs'
+            path.write_bytes(path.read_bytes() + b'\n// drift\n')
+            self.assertIn('error', check())
+            self.write(expected_manifest(self.root))
+            self.assertIn('error', check())
+            self.git('add', '.')
+            self.assertIn('error', check())
+            self.git('reset', '--hard', '-q', 'HEAD')
+            self.assertEqual(check(), expected)
+            self.assertIn('error', check('invalid\n'))
+            self.assertEqual(check(), expected)
+        self.assertEqual(process.returncode, 0)
+
     def test_historical_receipts_and_anchor_are_not_active_inputs(self):
         for name in ['conformance/wi-fabric-2/worker/evaluation-approval.json',
                      'crates/worldinterface-runtime/tests/support/worker_approval_anchor.rs']:

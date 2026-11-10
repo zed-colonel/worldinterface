@@ -27,6 +27,11 @@ Verification results and measured runtime-test duration are recorded in the run'
 external `scratch/verification` and implementation handoff.
 
 The explicit inventory disposition removes the active `OperatorApprovalReceipt`
-type and anchor import, and registers the four new packet support module entries
+type and anchor import, and registers the packet support modules and validator types
 in the existing fabric-support family as lifecycle test evidence. Historical
 receipt and anchor files remain unchanged; no connector ownership changes.
+
+The test host retains one owned validator process per fixture to avoid repeated
+interpreter startup. Every request reconstructs the complete packet and compares
+source bytes with HEAD afresh; no result or file metadata is cached across
+requests. Dropping the host verifier kills and reaps its validator process.

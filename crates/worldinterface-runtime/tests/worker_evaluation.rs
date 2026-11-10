@@ -119,10 +119,13 @@ fn live_setup_rejects_stale_and_uncommitted_packets_before_fixture_execution() {
     };
     // This is the same setup boundary used by worker_fixture::evaluation().
     packet::live_setup(root.path(), setup).unwrap();
+    let validator = packet::Validator::new(root.path()).unwrap();
+    validator.validate(root.path(), &manifest).unwrap();
     assert_eq!(launches.swap(0, Ordering::SeqCst), 1);
     std::fs::write(root.path().join("crates/worldinterface-runtime/src/lib.rs"), b"changed")
         .unwrap();
     assert!(packet::live_setup(root.path(), setup).is_err());
+    assert!(validator.validate(root.path(), &manifest).is_err());
     assert_eq!(launches.load(Ordering::SeqCst), 0);
     let refresh = Command::new("python3")
         .args(["-B", "scripts/refresh-wi-worker-evaluation.py"])
@@ -132,7 +135,12 @@ fn live_setup_rejects_stale_and_uncommitted_packets_before_fixture_execution() {
     assert!(refresh.status.success(), "{}", String::from_utf8_lossy(&refresh.stderr));
     packet::current(root.path(), false).unwrap();
     assert!(packet::live_setup(root.path(), setup).is_err());
+    assert!(validator.validate(root.path(), &manifest).is_err());
     git(&["add", "-f", "."]);
     assert!(packet::live_setup(root.path(), setup).is_err());
+    assert!(validator.validate(root.path(), &manifest).is_err());
     assert_eq!(launches.load(Ordering::SeqCst), 0);
+    git(&["reset", "--hard", "-q", "HEAD"]);
+    validator.validate(root.path(), &manifest).unwrap();
+    assert!(validator.validate(source.as_path(), &manifest).is_err());
 }

@@ -6,6 +6,7 @@ import os
 from pathlib import Path
 import stat
 import subprocess
+import sys
 
 PACKET = "conformance/wi-fabric-2/worker/evaluation-manifest.json"
 POLICY = "reviewed-merged-packet-2026-11-09"
@@ -168,9 +169,25 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(__doc__)
     parser.add_argument("--root", type=Path, default=Path.cwd())
     parser.add_argument("--require-committed", action="store_true")
+    parser.add_argument("--serve", action="store_true")
     args = parser.parse_args()
-    try:
+
+    def result():
         manifest = check_packet(args.root, args.require_committed)
-        print(json.dumps({"manifest_digest": digest(canonical(manifest)), "acceptance_policy": POLICY}))
-    except (ValueError, OSError, subprocess.SubprocessError) as error:
-        parser.exit(1, "evaluation packet rejected: " + str(error) + "\n")
+        return {"manifest_digest": digest(canonical(manifest)), "acceptance_policy": POLICY}
+
+    if args.serve:
+        # The host owns this process; every request reconstructs a fresh packet.
+        for request in sys.stdin:
+            try:
+                if request != "check\n":
+                    raise ValueError("invalid validator request")
+                response = result()
+            except (ValueError, OSError, subprocess.SubprocessError) as error:
+                response = {"error": str(error)}
+            print(json.dumps(response), flush=True)
+    else:
+        try:
+            print(json.dumps(result()))
+        except (ValueError, OSError, subprocess.SubprocessError) as error:
+            parser.exit(1, "evaluation packet rejected: " + str(error) + "\n")
