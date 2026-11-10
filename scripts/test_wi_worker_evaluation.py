@@ -1,6 +1,7 @@
 """Non-live regressions for the shared validator, using private committed fixtures."""
 import copy
 import json
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -89,6 +90,20 @@ class PacketTests(unittest.TestCase):
         changed['files'][name] = '0' * 64
         self.write(changed)
         with self.assertRaises(ValueError): check_packet(self.root)
+
+    def test_repeated_checks_detect_same_size_drift_with_preserved_mtime(self):
+        path = self.root / 'crates/worldinterface-runtime/src/lib.rs'
+        original = path.read_bytes()
+        before = path.stat()
+        check_packet(self.root, True)
+        path.write_bytes(bytes([original[0] ^ 1]) + original[1:])
+        os.utime(path, ns=(before.st_atime_ns, before.st_mtime_ns))
+        self.assertEqual(path.stat().st_size, before.st_size)
+        self.assertEqual(path.stat().st_mtime_ns, before.st_mtime_ns)
+        with self.assertRaises(ValueError): check_packet(self.root, True)
+        path.write_bytes(original)
+        os.utime(path, ns=(before.st_atime_ns, before.st_mtime_ns))
+        check_packet(self.root, True)
 
     def test_uncommitted_refresh_never_authorizes_live_setup(self):
         path = self.root / 'crates/worldinterface-runtime/src/lib.rs'

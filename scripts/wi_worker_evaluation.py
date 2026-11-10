@@ -3,7 +3,8 @@ import argparse
 import hashlib
 import json
 import os
-from pathlib import Path, PurePosixPath
+from pathlib import Path
+import stat
 import subprocess
 
 PACKET = "conformance/wi-fabric-2/worker/evaluation-manifest.json"
@@ -19,17 +20,19 @@ def digest(data):
 
 
 def source_bytes(root, name):
-    path = PurePosixPath(name)
-    if not name or path.is_absolute() or str(path) != name or any(p in (".", "..") for p in path.parts) or "\\" in name:
+    parts = name.split("/")
+    if not name or any(p in ("", ".", "..") for p in parts) or "\\" in name:
         raise ValueError("unsafe packet path: " + name)
-    current = root
-    for part in path.parts:
-        current = current / part
-        if current.is_symlink():
+    current = os.fspath(root)
+    for part in parts:
+        current = os.path.join(current, part)
+        mode = os.lstat(current).st_mode
+        if stat.S_ISLNK(mode):
             raise ValueError("packet symlink: " + name)
-    if not current.is_file():
+    if not stat.S_ISREG(mode):
         raise ValueError("missing packet file: " + name)
-    return current.read_bytes()
+    with open(current, "rb") as source:
+        return source.read()
 
 
 def walk_error(error):
@@ -49,7 +52,9 @@ def walk(directory, exclude_build_outputs=False):
             yield path
 
 
-def expected_manifest(root):
+def expected_manifest(root, read_source=None):
+    if read_source is None:
+        read_source = lambda name: source_bytes(root, name)
     files = set()
     for directory in ["crates/worldinterface-foundation", "crates/worldinterface-runtime", "tools/wi-contract-check"]:
         for path in walk(root / directory, exclude_build_outputs=True):
@@ -101,8 +106,8 @@ def expected_manifest(root):
               for a, b, c in [(False, False, False), (False, True, True), (True, True, True)]]
     return {
         "version": 1, "profile": "process-managed-proof-1",
-        "environment": digest(source_bytes(root, "conformance/wi-fabric-2/worker/evaluation-environment.json")),
-        "files": {name: digest(source_bytes(root, name)) for name in sorted(files)},
+        "environment": digest(read_source("conformance/wi-fabric-2/worker/evaluation-environment.json")),
+        "files": {name: digest(read_source(name)) for name in sorted(files)},
         "tasks": sorted({digest(canonical(task)) for task in tasks}),
         "cases": sorted(["WP-007", "WP-032", "AB-WI-021", "WIP-09-adapter-regressions"] + [f"WP-{n:03}" for n in range(17, 27)] + [f"WP-{n:03}" for n in [27, 28, 29, 30, 31, 33, 34]]),
         "operations": sorted(["provision", "start", "inspect", "terminate", "collect_artifacts", "release"]),
@@ -128,7 +133,14 @@ def check_packet(root, require_committed=False):
     root = Path(root).resolve()
     raw = source_bytes(root, PACKET)
     manifest = json.loads(raw, object_pairs_hook=unique_object)
-    expected = expected_manifest(root)
+    # One fresh byte snapshot per invocation feeds both manifest and Git hashes.
+    # Never retain this cache between checks: admission/dispatch must detect drift.
+    sources = {}
+    def read_source(name):
+        if name not in sources:
+            sources[name] = source_bytes(root, name)
+        return sources[name]
+    expected = expected_manifest(root, read_source)
     # Canonical byte comparison also distinguishes JSON booleans from integers.
     if canonical(manifest) != canonical(expected):
         raise ValueError("evaluation packet differs from complete current source/scope; refresh required")
@@ -145,7 +157,7 @@ def check_packet(root, require_committed=False):
                 entries[name.decode()] = (mode, kind, oid.decode())
         algorithm = git(root, "rev-parse", "--show-object-format").decode().strip()
         for name in manifest["files"]:
-            data = source_bytes(root, name)
+            data = read_source(name)
             oid = hashlib.new(algorithm, b"blob " + str(len(data)).encode() + b"\0" + data).hexdigest()
             if name not in entries or entries[name][0] not in (b"100644", b"100755") or entries[name][1:] != (b"blob", oid):
                 raise ValueError("evaluation source is not committed at HEAD: " + name)

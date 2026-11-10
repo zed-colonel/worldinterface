@@ -823,17 +823,18 @@ impl Harness {
             connector: descriptor(op).unwrap().connector,
             operation: op.name().to_string().try_into().unwrap(),
         };
-        let id = match service.submit_direct(&(), submission, selection, &config, &mut queue) {
-            Ok(id) => id,
-            Err(_) => {
-                queue.shutdown().unwrap();
-                return FlowOutcome::Denied;
-            }
-        };
+        let id =
+            match service.submit_direct(&(), submission.clone(), selection, &config, &mut queue) {
+                Ok(id) => id,
+                Err(_) => {
+                    queue.shutdown().unwrap();
+                    return FlowOutcome::Denied;
+                }
+            };
         let duplicate = service
             .submit_direct(
                 &(),
-                self.demand(op).0,
+                submission,
                 DirectOperationSelection {
                     connector: descriptor(op).unwrap().connector,
                     operation: op.name().to_string().try_into().unwrap(),
