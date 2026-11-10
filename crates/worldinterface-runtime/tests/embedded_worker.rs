@@ -283,8 +283,11 @@ async fn wp_030_catalog_quarantine_and_revocation_fence_queued_execution() {
         if revoked {
             s.revoke();
         }
-        for _ in 0..40 {
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(30);
+        while !s.flow_finished(&id) {
             app.advance(&setup::Session::Valid).await.unwrap();
+            assert!(std::time::Instant::now() < deadline, "queued execution did not terminate");
+            tokio::time::sleep(std::time::Duration::from_millis(5)).await;
         }
         // The trusted authorizer installs exact read disclosure after the rejected
         // execution; this does not resubmit its immutable request or wake its task.
