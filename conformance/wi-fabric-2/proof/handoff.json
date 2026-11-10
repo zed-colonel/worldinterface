@@ -3590,7 +3590,7 @@
     "fixtures/pre-wi-fabric-2/exo/repos/sample-rust/src/lib.rs": "4f6a07ed71fc95baaa7243cb58588a956f3905730ad5201d751ad914a9bb2722",
     "rust-toolchain.toml": "2a0049652fe5a89222a0fc64fa0e4a403435f134bd6fbdf9556e986a62e59128",
     "scripts/build-wi-worker-evaluation.sh": "2ed4f98edf61c1b03f59130b0ca0f110e0b61c69c3af80274dce053f6a0076a4",
-    "scripts/wi_worker_evaluation.py": "01cb618ca4d2fde6d841e0746d1a3178bd09672b802ef611412f082a1325e8ee",
+    "scripts/wi_worker_evaluation.py": "000fab325f2a4c39c719eafac5791e71dd3920a0bf0fa27297cfdd0c989d13ad",
     "tools/wi-contract-check/Cargo.lock": "e23d73ebc1773d7c638713f63e51cf3e6f0c1982ee3f96a3b46b804185cce057"
   },
   "kind": "wi-embedded-worker-handoff-descriptor-v1",

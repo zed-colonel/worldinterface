@@ -36,11 +36,12 @@ def walk_error(error):
     raise error
 
 
-def walk(directory):
+def walk(directory, exclude_build_outputs=False):
     if directory.is_symlink():
         raise ValueError("packet directory symlink: " + str(directory))
     for parent, directories, files in os.walk(directory, followlinks=False, onerror=walk_error):
-        directories[:] = [d for d in directories if d not in ("target", "dev-output")]
+        if exclude_build_outputs:
+            directories[:] = [d for d in directories if d not in ("target", "dev-output")]
         for name in directories + files:
             path = Path(parent) / name
             if path.is_symlink():
@@ -51,7 +52,7 @@ def walk(directory):
 def expected_manifest(root):
     files = set()
     for directory in ["crates/worldinterface-foundation", "crates/worldinterface-runtime", "tools/wi-contract-check"]:
-        for path in walk(root / directory):
+        for path in walk(root / directory, exclude_build_outputs=True):
             if path.is_file() and (path.suffix in [".rs", ".txt", ".toml"] or path.name == "Cargo.lock"):
                 if any(part in ["target", "dev-output"] for part in path.parts):
                     continue

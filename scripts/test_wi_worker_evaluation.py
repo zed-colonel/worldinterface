@@ -41,7 +41,7 @@ class PacketTests(unittest.TestCase):
 
     def tearDown(self):
         self.git('reset', '--hard', '-q', 'HEAD')
-        self.git('clean', '-fdq')
+        self.git('clean', '-fdxq')
 
     def write(self, manifest):
         (self.root / PACKET).write_text(json.dumps(manifest, indent=2) + '\n')
@@ -125,6 +125,19 @@ class PacketTests(unittest.TestCase):
         for raw in ['{', '[]', '{"version":1,"version":1}', '{"files":null}']:
             (self.root / PACKET).write_text(raw)
             with self.assertRaises(ValueError): check_packet(self.root)
+
+    def test_discovery_preserves_fixture_data_and_workspace_build_exclusions(self):
+        generated = self.root / 'crates/worldinterface-runtime/target/generated.rs'
+        generated.parent.mkdir(parents=True)
+        generated.write_text('// excluded workspace build output')
+        check_packet(self.root, True)
+        for name in ['fixtures/pre-wi-fabric-2/exo/repos/sample-rust/target/input.txt',
+                     'contracts/target/normative.json']:
+            path = self.root / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text('bound fixture or normative data')
+            with self.assertRaises(ValueError): check_packet(self.root)
+            path.unlink()
 
     def test_historical_receipts_and_anchor_are_not_active_inputs(self):
         for name in ['conformance/wi-fabric-2/worker/evaluation-approval.json',
