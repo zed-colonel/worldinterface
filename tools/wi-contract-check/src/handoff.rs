@@ -150,7 +150,9 @@ pub fn descriptor(root: &Path) -> Result<Value> {
         "reproduction":{
             "adopted_checks":".craftingtable/checks.json; ct-check --declared ID for all ten IDs on committed HEAD",
             "prepare":["cargo run --locked --manifest-path tools/wi-contract-check/Cargo.toml -- hashes refresh",
-                "cargo run --locked --manifest-path tools/wi-contract-check/Cargo.toml -- handoff generate",
+                "cargo run --locked --manifest-path tools/wi-contract-check/Cargo.toml -- handoff generate > conformance/wi-fabric-2/proof/handoff.json",
+                "cp conformance/wi-fabric-2/proof/handoff.json crates/worldinterface-runtime/release/handoff.json",
+                "cargo run --locked --manifest-path tools/wi-contract-check/Cargo.toml -- hashes refresh",
                 "python3 scripts/refresh-wi-worker-evaluation.py","scripts/build-wi-worker-evaluation.sh"],
             "execute":"scripts/worker-proof-evidence.sh EMPTY_EXTERNAL_DIRECTORY",
             "verify":"cargo run --locked --offline --manifest-path tools/wi-contract-check/Cargo.toml -- handoff verify DIRECTORY"

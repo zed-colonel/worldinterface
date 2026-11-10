@@ -179,6 +179,15 @@ class ReleaseTests(unittest.TestCase):
             shared.write(self.base / 'logs/gate.result.json', {'argv': ['fixture'], 'exit_code': 1, 'elapsed_seconds': 1, 'result': 'failed'})
             with self.assertRaises(ValueError): release.validate_evidence(manifest, self.base)
 
+    def test_release_preserves_adopted_commands_and_checks_contracts_before_campaign(self):
+        expected = {gate['id']: gate['argv'] for gate in shared.read(shared.ROOT / '.craftingtable/checks.json')['checks']}
+        gates = release.gates()
+        self.assertEqual({name: argv for name, argv in gates if name in shared.ADOPTED}, expected)
+        names = [name for name, _ in gates]
+        self.assertEqual(len(names), len(set(names)))
+        self.assertLess(names.index('contract-check'), names.index('runtime-test'))
+        self.assertLess(names.index('contract-test'), names.index('runtime-test'))
+
     def test_receipt_manifest_disagreement_fails_before_authority_invocation(self):
         shared.write(self.base / 'publication-preparation.json', {'source_revision': 'b' * 40})
         with self.assertRaises(ValueError): release.validate_receipt({'source_commit': 'a' * 40, 'baseline_revision': 'c' * 40}, self.base)

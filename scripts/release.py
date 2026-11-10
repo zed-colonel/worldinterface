@@ -22,7 +22,9 @@ from wi_crash_isolation import check_artifacts
 def gates():
     adopted = read(ROOT / '.craftingtable/checks.json')['checks']
     require([c['id'] for c in adopted] == ADOPTED, 'adopted gate inventory changed; review release coverage')
-    result = [(c['id'], c['argv']) for c in adopted]
+    # Reject static source/binding failures before the expensive live campaign.
+    # Preserve every adopted argv; this changes only preparation's run order.
+    result = sorted(((c['id'], c['argv']) for c in adopted), key=lambda gate: gate[0] == 'runtime-test')
     common = ['--version', '{version}', '--output', '{output}', '--work', '{work}']
     return result + [
         ('packages', ['python3', '-B', 'scripts/check-packages.py', *common]),

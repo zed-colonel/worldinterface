@@ -54,3 +54,8 @@ The release runner also pins and records `RUSTUP_TOOLCHAIN=1.89.0` for external
 staging. Checking versions in the repository alone would allow rustup's different
 machine default to build archives outside the checkout. A regression invokes both
 compiler and Cargo from an external directory with the effective environment.
+
+Refresh inventory hashes, generate the authoritative handoff, copy it into the
+runtime package, refresh hashes again (the catalog binds that copy), and refresh
+the evaluation packet last. Contract checks precede the live worker campaign in
+release preparation, with all adopted commands preserved.
