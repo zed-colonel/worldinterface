@@ -9,7 +9,7 @@ import tarfile
 import tomllib
 import urllib.request
 
-from wi_release import (ROOT, FOUNDATION, RUNTIME, PACKAGES, CRATES_IO, archive_files,
+from wi_release import (ROOT, FOUNDATION, RUNTIME, PACKAGES, CRATES_IO, TOOLCHAIN, archive_files,
                         check_graph, external_target, metadata, read, require, run, sha,
                         toml, toolchain, validate_archive, write)
 from wi_crash_isolation import check_artifacts
@@ -106,6 +106,7 @@ def cargo(config):
 
 def environment():
     return dict(os.environ, CARGO_TARGET_DIR=str(external_target()), CARGO_NET_OFFLINE='true',
+                RUSTUP_TOOLCHAIN=TOOLCHAIN,
                 CARGO_BUILD_JOBS=os.environ.get('CARGO_BUILD_JOBS', '8'), RUST_TEST_THREADS='4',
                 PROPTEST_DISABLE_FAILURE_PERSISTENCE='1')
 

@@ -49,3 +49,8 @@ read failures and live ownership mismatches still fail closed. This narrow
 correctness fix is a deviation from packaging-only scope needed for dependable
 clean-commit verification; it adds no operation, scope, waiting exception or
 authority.
+
+The release runner also pins and records `RUSTUP_TOOLCHAIN=1.89.0` for external
+staging. Checking versions in the repository alone would allow rustup's different
+machine default to build archives outside the checkout. A regression invokes both
+compiler and Cargo from an external directory with the effective environment.

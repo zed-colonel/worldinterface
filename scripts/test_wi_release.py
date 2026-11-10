@@ -60,6 +60,16 @@ class ReleaseTests(unittest.TestCase):
         for cargo, rustc in [('cargo 1.90.0 (fixture)', 'release: 1.89.0\nhost: x86_64-unknown-linux-gnu\n'), ('cargo 1.89.0 (fixture)', 'release: 1.90.0\nhost: x86_64-unknown-linux-gnu\n')]:
             with patch.object(shared.subprocess, 'check_output', side_effect=[rustc, cargo]), self.assertRaises(ValueError): shared.toolchain()
 
+    def test_external_staging_uses_release_toolchain_instead_of_machine_default(self):
+        with patch.dict(os.environ, {'RUSTUP_TOOLCHAIN': 'stable'}):
+            env = packages.environment()
+        self.assertEqual(env['RUSTUP_TOOLCHAIN'], '1.89.0')
+        for program in ['rustc', 'cargo']:
+            result = subprocess.check_output([program, '--version'], cwd=self.base,
+                                             env=env, text=True, timeout=30)
+            self.assertTrue(result.startswith(program + ' 1.89.0 '), result)
+        self.assertEqual(shared.toolchain()['build_environment']['RUSTUP_TOOLCHAIN'], '1.89.0')
+
     def test_internal_requirements_are_exact_and_substitutions_fail(self):
         data = {'dependencies': {'worldinterface-protocol': {'version': '=' + VERSION, 'path': '../protocol'}}}
         shared.dependencies(data, VERSION)
@@ -196,7 +206,7 @@ class ReleaseTests(unittest.TestCase):
         target = shared.external_target()
         def cargo(args, cwd):
             result = subprocess.run(['cargo', *args], cwd=cwd, capture_output=True, text=True, timeout=120,
-                                    env=dict(os.environ, CARGO_TARGET_DIR=str(target), CARGO_NET_OFFLINE='true'))
+                                    env=packages.environment())
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             return result
         cargo(['package', '--offline', '--no-verify', '--allow-dirty'], source)

@@ -13,7 +13,7 @@ import subprocess
 import sys
 import tempfile
 sys.dont_write_bytecode = True
-from wi_release import (ROOT, FOUNDATION, RUNTIME, PACKAGES, ADOPTED, BASELINE, archive_files,
+from wi_release import (ROOT, FOUNDATION, RUNTIME, PACKAGES, ADOPTED, BASELINE, TOOLCHAIN, archive_files,
                         clean, check_graph, external_target, git, metadata, read, ref, require, run, worker_recipe, recipe_digest,
                         safe, sha, toolchain, toml, validate_archive, validate_schema, write)
 from wi_crash_isolation import check_artifacts
@@ -171,7 +171,7 @@ def validate_manifest(manifest, output):
     for source, dest in [(f'docs/release/{manifest["version"]}.md', 'release-notes.md'), ('docs/release/package-tests.json', 'package-tests.json'), ('docs/release/release-manifest.schema.json', 'release-manifest.schema.json')]:
         require(sha(safe(output, dest)) == sha(ROOT / source), 'stale release document')
     build = read(safe(output, 'build-environment.json'))
-    require('release: 1.89.0\n' in build['rustc'] and build['cargo'].startswith('cargo 1.89.0 ') and build['target'] == 'x86_64-unknown-linux-gnu' and build['profile'] == 'release', 'wrong recorded build environment')
+    require('release: 1.89.0\n' in build['rustc'] and build['cargo'].startswith('cargo 1.89.0 ') and build['target'] == 'x86_64-unknown-linux-gnu' and build['profile'] == 'release' and build['build_environment']['RUSTUP_TOOLCHAIN'] == TOOLCHAIN, 'wrong recorded build environment')
     heads = subprocess.check_output(['git', 'bundle', 'list-heads', str(output / 'source.bundle')], text=True, timeout=60).splitlines()
     require(heads == [manifest['source_commit'] + ' HEAD'], 'wrong source bundle identity')
     subprocess.run(['git', 'bundle', 'verify', str(output / 'source.bundle')], cwd=ROOT, check=True, capture_output=True, timeout=60)
@@ -206,7 +206,7 @@ def prepare(version, commit, output):
                         source_before={'commit': commit, 'tree': git('rev-parse', 'HEAD^{tree}'), 'clean': True}, build_work=str(work), preparation_output=str(output))
         write(output / 'build-environment.json', build)
         evidence = []
-        env = dict(os.environ, CARGO_TARGET_DIR=str(external_target()), PYTHONDONTWRITEBYTECODE='1')
+        env = dict(os.environ, CARGO_TARGET_DIR=str(external_target()), PYTHONDONTWRITEBYTECODE='1', RUSTUP_TOOLCHAIN=TOOLCHAIN)
         # Fetch before all offline gates; these source workspaces remain distinct.
         for scope in [FOUNDATION, RUNTIME, Path('tools/wi-contract-check')]:
             subprocess.run(['cargo', 'fetch', '--locked', '--manifest-path', str(scope / 'Cargo.toml')], cwd=ROOT, check=True, timeout=600)

@@ -16,6 +16,7 @@ RUNTIME = Path('crates/worldinterface-runtime')
 ORDER = ['protocol', 'capability', 'domain', 'storage', 'worker', 'ingress', 'egress', 'runtime']
 PACKAGES = {'worldinterface-' + p: (RUNTIME if p == 'runtime' else FOUNDATION / p) for p in ORDER}
 CRATES_IO = 'registry+https://github.com/rust-lang/crates.io-index'
+TOOLCHAIN = '1.89.0'
 BASELINE = '928b5ef07797762bc002920af05a01aa4a4b0e0c'
 ADOPTED = ['foundation-fmt', 'foundation-clippy', 'foundation-test', 'foundation-isolation',
            'runtime-fmt', 'runtime-clippy', 'runtime-test', 'runtime-aq-graph', 'contract-check', 'contract-test']
@@ -85,13 +86,16 @@ def toolchain():
     require('release: 1.89.0\n' in rust and cargo.startswith('cargo 1.89.0 '), 'release requires rustc and Cargo 1.89.0')
     host = re.search(r'^host: (.+)$', rust, re.M)[1]
     require(host == 'x86_64-unknown-linux-gnu', 'worker proof release requires Linux x86_64 GNU')
+    # External archive/consumer directories have no rust-toolchain.toml. Record
+    # the override applied to every gate, rather than rustup's machine default.
+    effective_env = dict(os.environ, RUSTUP_TOOLCHAIN=TOOLCHAIN)
     return {'rustc': rust, 'cargo': cargo, 'target': host, 'profile': 'release',
             'cargo_home': os.environ.get('CARGO_HOME', str(Path.home() / '.cargo')),
             'target_directory': str(external_target()),
             'cc': subprocess.check_output(['cc', '--version'], text=True, timeout=30),
             'ld': subprocess.check_output(['ld', '--version'], text=True, timeout=30),
             'platform': os.uname()._asdict() if hasattr(os.uname(), '_asdict') else list(os.uname()),
-            'build_environment': {k: os.environ.get(k, '8' if k == 'CARGO_BUILD_JOBS' else '') for k in ['RUSTFLAGS', 'RUSTDOCFLAGS', 'CC', 'CFLAGS', 'CARGO_BUILD_JOBS', 'SOURCE_DATE_EPOCH', 'RUSTC', 'RUSTC_WRAPPER', 'RUSTC_WORKSPACE_WRAPPER', 'CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER', 'CARGO_PROFILE_RELEASE_OPT_LEVEL', 'CARGO_PROFILE_RELEASE_LTO', 'CARGO_PROFILE_RELEASE_CODEGEN_UNITS']}}
+            'build_environment': {k: effective_env.get(k, '8' if k == 'CARGO_BUILD_JOBS' else '') for k in ['RUSTUP_TOOLCHAIN', 'RUSTFLAGS', 'RUSTDOCFLAGS', 'CC', 'CFLAGS', 'CARGO_BUILD_JOBS', 'SOURCE_DATE_EPOCH', 'RUSTC', 'RUSTC_WRAPPER', 'RUSTC_WORKSPACE_WRAPPER', 'CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER', 'CARGO_PROFILE_RELEASE_OPT_LEVEL', 'CARGO_PROFILE_RELEASE_LTO', 'CARGO_PROFILE_RELEASE_CODEGEN_UNITS']}}
 
 
 def external_target():
