@@ -151,9 +151,17 @@ class ReleaseTests(unittest.TestCase):
         shared.write(self.base / 'logs/gate.result.json', {'argv': ['fixture'], 'exit_code': 0, 'elapsed_seconds': 1, 'result': 'passed'})
         (self.base / 'logs/gate.log').write_text('passed')
         entry = {'gate': 'gate', 'command': ['fixture'], 'source_commit': 'a' * 40, 'result': 'passed', 'log': 'logs/gate.log', 'record': 'logs/gate.result.json', 'sha256': shared.sha(self.base / 'logs/gate.log')}
-        manifest = {'source_commit': 'a' * 40, 'version': VERSION, 'build_work': '/external', 'evidence': [entry]}
+        manifest = {'source_commit': 'a' * 40, 'version': VERSION, 'build_work': '/external', 'preparation_output': '/original-output', 'evidence': [entry]}
         with patch.object(release, 'gates', return_value=[('gate', ['fixture'])]):
             release.validate_evidence(manifest, self.base)
+            # Artifact paths stay relative while executed argv retains producer
+            # paths. Verification can read a copied bundle in another directory.
+            portable = copy.deepcopy(manifest)
+            portable['evidence'][0]['command'] = ['fixture', '{output}']
+            shared.write(self.base / 'logs/gate.result.json', {'argv': ['fixture', '/original-output'], 'exit_code': 0, 'elapsed_seconds': 1, 'result': 'passed'})
+            with patch.object(release, 'gates', return_value=[('gate', ['fixture', '{output}'])]):
+                release.validate_evidence(portable, self.base)
+            shared.write(self.base / 'logs/gate.result.json', {'argv': ['fixture'], 'exit_code': 0, 'elapsed_seconds': 1, 'result': 'passed'})
             for field in ['gate', 'command', 'source_commit', 'result', 'sha256']:
                 value = copy.deepcopy(manifest); value['evidence'][0][field] = 'wrong'
                 with self.assertRaises(ValueError): release.validate_evidence(value, self.base)

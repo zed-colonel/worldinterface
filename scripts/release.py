@@ -60,7 +60,7 @@ def validate_evidence(manifest, output):
         require(e['log'] == 'logs/' + name + '.log' and e['record'] == 'logs/' + name + '.result.json', 'wrong gate paths')
         require(sha(safe(output, e['log'])) == e['sha256'], 'gate log drift')
         result = read(safe(output, e['record']))
-        resolved = [x.replace('{output}', str(output)).replace('{work}', manifest['build_work']).replace('{version}', manifest['version']) for x in command]
+        resolved = [x.replace('{output}', manifest['preparation_output']).replace('{work}', manifest['build_work']).replace('{version}', manifest['version']) for x in command]
         require(result['exit_code'] == 0 and result['result'] == 'passed' and result['argv'] == resolved and result['elapsed_seconds'] >= 0, 'wrong gate result/command')
 
 
@@ -78,7 +78,7 @@ def validate_receipt(manifest, output):
     # Reuse the existing schema and artifact authority, with no replacement schema.
     subprocess.run(publication_command(output / 'publication-preparation.json'), cwd=ROOT, check=True, stdout=subprocess.DEVNULL, timeout=120)
     result = read(safe(output, 'logs/publication-validation.result.json'))
-    require(result['exit_code'] == 0 and result['result'] == 'passed' and result['argv'] == publication_command(output / 'publication-preparation.json'), 'missing receipt validation evidence')
+    require(result['exit_code'] == 0 and result['result'] == 'passed' and result['argv'] == publication_command(Path(manifest['preparation_output']) / 'publication-preparation.json'), 'missing receipt validation evidence')
 
 
 def validate_packages(manifest, output):
@@ -151,11 +151,12 @@ def validate_manifest(manifest, output):
     expected = metadata(manifest['version'])
     for key, value in expected.items():
         require(manifest.get(key) == value, 'wrong manifest ' + key)
-    require(set(manifest) == set(expected) | {'source_commit', 'baseline_revision', 'source_before', 'source_after', 'build_work', 'evidence', 'artifacts', 'packaged_locks'}, 'unknown/missing manifest fields')
+    require(set(manifest) == set(expected) | {'source_commit', 'baseline_revision', 'source_before', 'source_after', 'build_work', 'preparation_output', 'evidence', 'artifacts', 'packaged_locks'}, 'unknown/missing manifest fields')
     require(manifest['baseline_revision'] == BASELINE, 'wrong baseline revision')
     subprocess.run(['git', 'merge-base', '--is-ancestor', BASELINE, manifest['source_commit']], cwd=ROOT, check=True, timeout=60)
     identity = {'commit': manifest['source_commit'], 'tree': git('rev-parse', 'HEAD^{tree}'), 'clean': True}
     require(manifest['source_before'] == manifest['source_after'] == identity, 'source changed during preparation')
+    require(isinstance(manifest['preparation_output'], str) and Path(manifest['preparation_output']).is_absolute(), 'invalid preparation output identity')
     artifacts = manifest['artifacts']
     require(len({a['path'] for a in artifacts}) == len(artifacts), 'duplicate artifact')
     for a in artifacts:
@@ -202,7 +203,7 @@ def prepare(version, commit, output):
     with tempfile.TemporaryDirectory(prefix='wi-release-') as temporary:
         work = Path(temporary) / 'work'
         manifest.update(source_commit=commit, baseline_revision=BASELINE,
-                        source_before={'commit': commit, 'tree': git('rev-parse', 'HEAD^{tree}'), 'clean': True}, build_work=str(work))
+                        source_before={'commit': commit, 'tree': git('rev-parse', 'HEAD^{tree}'), 'clean': True}, build_work=str(work), preparation_output=str(output))
         write(output / 'build-environment.json', build)
         evidence = []
         env = dict(os.environ, CARGO_TARGET_DIR=str(external_target()), PYTHONDONTWRITEBYTECODE='1')
