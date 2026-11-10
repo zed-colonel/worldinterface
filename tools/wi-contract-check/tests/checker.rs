@@ -78,7 +78,7 @@ fn inventory_is_complete_and_deterministic() {
     assert_eq!(a, b);
     for (k, n) in [
         ("workspace-crate", 10),
-        ("auxiliary-crate", 11),
+        ("auxiliary-crate", 12), // WSP-02 adds the standalone registry consumer.
         ("foundation-crate", 7),
         ("connector", 30), // WIP-14 adds the immutable embedded process dispatcher.
         ("wasm-manifest", 15),
