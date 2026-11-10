@@ -1254,7 +1254,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/release/handoff.json",
-          "source_sha256": "8f02c509ed9906701971bdea537e66f6d6be1b98a841909bbd208617c75e7c9d",
+          "source_sha256": "30897f819517900ba5fa07efd5e6754ab60d8090c5c32ba243c6d89aa7bde3ac",
           "treatment": "Retain WSP-02 package evidence/support and registry consumer. Future legacy removal must preserve authoritative byte equality and release consumer coverage."
         },
         {
@@ -1266,6 +1266,16 @@
           "path": "crates/worldinterface-runtime/tests/ingress_recovery.rs",
           "source_sha256": "7b75fbf13cae87b3a4c4f8170f5c9a9f32efaa4d620ba88b3ced13a0fac2522e",
           "treatment": "Retain WI-03 delayed acknowledgment and recovery regression tests; review shared references before later selective connector removal."
+        },
+        {
+          "path": "crates/worldinterface-runtime/tests/receipt_inspection.rs",
+          "source_sha256": "8ab30c3b7db15a702df2794131941d3613a02a8c105811e07d1f5b591f6a1ab7",
+          "treatment": "Retain the independent receipt-inspection provider latency regression, shared fixture support and documentation, including exact authorization and the bounded attempt budget. These contain no legacy DelayConnector registration; selective connector removal must preserve this coverage."
+        },
+        {
+          "path": "crates/worldinterface-runtime/tests/support/effect_fixture.rs",
+          "source_sha256": "2e7e9bdf49295553493123e825da04b92831790a846caa2b290f1f55620d5e33",
+          "treatment": "Retain the independent receipt-inspection provider latency regression, shared fixture support and documentation, including exact authorization and the bounded attempt budget. These contain no legacy DelayConnector registration; selective connector removal must preserve this coverage."
         },
         {
           "path": "crates/worldinterface-runtime/tests/worker_seam.rs",
@@ -1281,6 +1291,11 @@
           "path": "docs/flowspec-reference.md",
           "source_sha256": "f8ce312502a645373a2a7a4ee17249bb76a8eff4e98f1e0e67f8847887464587",
           "treatment": "Update runtime references after verified replacement; retain clearly marked historical evidence."
+        },
+        {
+          "path": "docs/release/0.2.0-alpha.1.md",
+          "source_sha256": "9d5409b02150bf2e26e93aace962fbf154451dba9177f398e30ad976b49ccb2e",
+          "treatment": "Retain the independent receipt-inspection provider latency regression, shared fixture support and documentation, including exact authorization and the bounded attempt budget. These contain no legacy DelayConnector registration; selective connector removal must preserve this coverage."
         },
         {
           "path": "docs/work-items/WIP-03.md",
@@ -1311,6 +1326,11 @@
           "path": "docs/work-items/WIP-16.md",
           "source_sha256": "d9325bd9a419af1f68fcfeadb7dfda7baae63df1ab50c6b3b5618daf64d9f50c",
           "treatment": "Retain the WIP-16 evidence-publication disposition and exact test mapping obligations during selective legacy removal; this is documentation only, without replacement or removal-readiness claims."
+        },
+        {
+          "path": "docs/work-items/WSP-02.md",
+          "source_sha256": "d2255c57e47312a97e3b9d92bff9fbd853102b04fc9cf31859b0c7c95d3c3879",
+          "treatment": "Retain the independent receipt-inspection provider latency regression, shared fixture support and documentation, including exact authorization and the bounded attempt budget. These contain no legacy DelayConnector registration; selective connector removal must preserve this coverage."
         },
         {
           "path": "docs/work-items/wi-03-integration.md",
@@ -7201,37 +7221,37 @@
         },
         {
           "id": "crates/worldinterface-runtime/tests/receipt_inspection.rs::::module:support",
-          "source_sha256": "80b3c2ed23518aec7d746adf09ceb4b7abb7773bd9a23bd21bca87f45dcfe213",
+          "source_sha256": "8ab30c3b7db15a702df2794131941d3613a02a8c105811e07d1f5b591f6a1ab7",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/receipt_inspection.rs::::source-module:crates/worldinterface-runtime/tests/receipt_inspection.rs",
-          "source_sha256": "80b3c2ed23518aec7d746adf09ceb4b7abb7773bd9a23bd21bca87f45dcfe213",
+          "source_sha256": "8ab30c3b7db15a702df2794131941d3613a02a8c105811e07d1f5b591f6a1ab7",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/receipt_inspection.rs::::struct:Auth",
-          "source_sha256": "80b3c2ed23518aec7d746adf09ceb4b7abb7773bd9a23bd21bca87f45dcfe213",
+          "source_sha256": "8ab30c3b7db15a702df2794131941d3613a02a8c105811e07d1f5b591f6a1ab7",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/receipt_inspection.rs::::struct:Case",
-          "source_sha256": "80b3c2ed23518aec7d746adf09ceb4b7abb7773bd9a23bd21bca87f45dcfe213",
+          "source_sha256": "8ab30c3b7db15a702df2794131941d3613a02a8c105811e07d1f5b591f6a1ab7",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/receipt_inspection.rs::::struct:Disclosure",
-          "source_sha256": "80b3c2ed23518aec7d746adf09ceb4b7abb7773bd9a23bd21bca87f45dcfe213",
+          "source_sha256": "8ab30c3b7db15a702df2794131941d3613a02a8c105811e07d1f5b591f6a1ab7",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/receipt_inspection.rs::::type:Session",
-          "source_sha256": "80b3c2ed23518aec7d746adf09ceb4b7abb7773bd9a23bd21bca87f45dcfe213",
+          "source_sha256": "8ab30c3b7db15a702df2794131941d3613a02a8c105811e07d1f5b591f6a1ab7",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/receipt_inspection.rs::support::module:effect_fixture",
-          "source_sha256": "80b3c2ed23518aec7d746adf09ceb4b7abb7773bd9a23bd21bca87f45dcfe213",
+          "source_sha256": "8ab30c3b7db15a702df2794131941d3613a02a8c105811e07d1f5b591f6a1ab7",
           "registration_sites": []
         },
         {
@@ -7356,32 +7376,32 @@
         },
         {
           "id": "crates/worldinterface-runtime/tests/support/effect_fixture.rs::::module:spi_fixture",
-          "source_sha256": "e9e4e920ab6692309418d184757ec53b6a0439144ead01feb8f47ed38a62d1af",
+          "source_sha256": "2e7e9bdf49295553493123e825da04b92831790a846caa2b290f1f55620d5e33",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/support/effect_fixture.rs::::source-module:crates/worldinterface-runtime/tests/support/effect_fixture.rs",
-          "source_sha256": "e9e4e920ab6692309418d184757ec53b6a0439144ead01feb8f47ed38a62d1af",
+          "source_sha256": "2e7e9bdf49295553493123e825da04b92831790a846caa2b290f1f55620d5e33",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/support/effect_fixture.rs::::struct:Clock",
-          "source_sha256": "e9e4e920ab6692309418d184757ec53b6a0439144ead01feb8f47ed38a62d1af",
+          "source_sha256": "2e7e9bdf49295553493123e825da04b92831790a846caa2b290f1f55620d5e33",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/support/effect_fixture.rs::::struct:Evidence",
-          "source_sha256": "e9e4e920ab6692309418d184757ec53b6a0439144ead01feb8f47ed38a62d1af",
+          "source_sha256": "2e7e9bdf49295553493123e825da04b92831790a846caa2b290f1f55620d5e33",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/support/effect_fixture.rs::::struct:FixturePort",
-          "source_sha256": "e9e4e920ab6692309418d184757ec53b6a0439144ead01feb8f47ed38a62d1af",
+          "source_sha256": "2e7e9bdf49295553493123e825da04b92831790a846caa2b290f1f55620d5e33",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/support/effect_fixture.rs::::struct:Noop",
-          "source_sha256": "e9e4e920ab6692309418d184757ec53b6a0439144ead01feb8f47ed38a62d1af",
+          "source_sha256": "2e7e9bdf49295553493123e825da04b92831790a846caa2b290f1f55620d5e33",
           "registration_sites": []
         },
         {
@@ -9098,7 +9118,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/tests/receipt_inspection.rs",
-          "source_sha256": "80b3c2ed23518aec7d746adf09ceb4b7abb7773bd9a23bd21bca87f45dcfe213",
+          "source_sha256": "8ab30c3b7db15a702df2794131941d3613a02a8c105811e07d1f5b591f6a1ab7",
           "treatment": "Retain target WI-05 completion, receipt inspection or crash evidence; shared infrastructure is not a legacy connector deletion surface (WIP-04)."
         },
         {
@@ -9133,7 +9153,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/tests/support/effect_fixture.rs",
-          "source_sha256": "e9e4e920ab6692309418d184757ec53b6a0439144ead01feb8f47ed38a62d1af",
+          "source_sha256": "2e7e9bdf49295553493123e825da04b92831790a846caa2b290f1f55620d5e33",
           "treatment": "Retain target WI-05 completion, receipt inspection or crash evidence; shared infrastructure is not a legacy connector deletion surface (WIP-04)."
         },
         {

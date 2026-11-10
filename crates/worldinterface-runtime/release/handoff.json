@@ -3584,7 +3584,7 @@
     "crates/worldinterface-runtime/tests/support/worker_fixture.rs": "2ff4e5f3829e6ac90e3553f3362a3c9aa8dcb3ffcb740276be539e5dc5b6dcab",
     "crates/worldinterface-runtime/tests/support/worker_seam.rs": "0f050f1e154faccc2d1cd1530dff25fc933714da6e22a387cd50a76bdbaa72da",
     "docs/evidence/WI-EMBEDDED-WORKER-PROOF-1.md": "72a9a804d19da342d52aee155fdab250bebfb5d3ac5de8f005da6f00c5d70aec",
-    "docs/release/0.2.0-alpha.1.md": "3b3d853cf8aff8986e6510a5f5f2bde12e3b8b5fbc06598a7df2ffae63f21956",
+    "docs/release/0.2.0-alpha.1.md": "9d5409b02150bf2e26e93aace962fbf154451dba9177f398e30ad976b49ccb2e",
     "docs/release/package-tests.json": "6299455b0e9a945d51263d1dabd73cf525df49089f5686070a46bbbda045c3b1",
     "examples/downstream-consumer/Cargo.toml": "b1d5f106eed5a286460cac00c31465407fd3f13077d8941fcae773688d3a0ccb",
     "examples/downstream-consumer/src/main.rs": "e81457c49983747da1978d4c8e65cd3bde76efee6a8c2dbe3f86a6751f60e949",

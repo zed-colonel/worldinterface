@@ -63,3 +63,14 @@ release preparation, with all adopted commands preserved.
 Release logs always carry command and working-directory headers, including for
 silent successes: WI's existing receipt validator rejects empty artifacts.
 Machine-readable metadata stdout remains separate from its diagnostic log.
+
+Committed-head verification also exposed an incidental timing dependency in the
+receipt-inspection fixture: its one-second effect-attempt budget can expire while
+the concurrent campaign journals data, leaving AQ in RetryWait. A 1.2-second
+fixture invocation deterministically reproduced that result. Receipt inspection
+now uses a bounded 15000 ms attempt budget; the same delayed invocation must
+complete and expose its canonical receipt. This is test support only; production
+budgets, timeout conformance and adopted definitions retain their behavior.
+The delay-family catalog disposition explicitly retains this independent
+receipt regression, its shared test support and documentation; it grants no
+legacy connector replacement or removal claim.
