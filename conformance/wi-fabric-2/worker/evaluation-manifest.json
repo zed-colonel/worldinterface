@@ -273,7 +273,7 @@
     "crates/worldinterface-runtime/tests/worker_campaign_cases.rs": "b712b56415425c6d2173a4ea3fa35d218ae6c64ff398dc8124789a220a1cef67",
     "crates/worldinterface-runtime/tests/worker_catalog.rs": "7fd91de0fc0ede4d15d34362f61f461f73435cd47de35e14360e3685b1125589",
     "crates/worldinterface-runtime/tests/worker_evaluation.rs": "e8133ba5051953b549126cf4f218fd12fe910aa2fa10a68e63a17cbe1e0d1834",
-    "crates/worldinterface-runtime/tests/worker_lifecycle.rs": "9172c4d5d83130da1e746b0e8192fe68e5c50ddbc94262d98716a1e7eabed88d",
+    "crates/worldinterface-runtime/tests/worker_lifecycle.rs": "a4749febe14c895a8990423de3e5933f41aa9a4980d096304d3cde5afd32aa0f",
     "crates/worldinterface-runtime/tests/worker_lifecycle_crash.rs": "b80b17aa40a59daa01aba7cdebbf109215314bc1453aede0e0aefd26a74ad10e",
     "crates/worldinterface-runtime/tests/worker_process.rs": "aae7ea875a217fab1cfc94fc9561930e6abe5fcd180e17ca0b09b3074777fd8b",
     "crates/worldinterface-runtime/tests/worker_seam.rs": "8b3ad24290485f61de1a0d322d9640628f7b42d50bda63039f9394573408f020",

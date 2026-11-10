@@ -15288,7 +15288,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/tests/worker_lifecycle.rs",
     "name": "support",
-    "source_sha256": "9172c4d5d83130da1e746b0e8192fe68e5c50ddbc94262d98716a1e7eabed88d",
+    "source_sha256": "a4749febe14c895a8990423de3e5933f41aa9a4980d096304d3cde5afd32aa0f",
     "conditions": [],
     "registration_sites": []
   },
@@ -15297,7 +15297,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-runtime/tests/worker_lifecycle.rs",
     "name": "crates/worldinterface-runtime/tests/worker_lifecycle.rs",
-    "source_sha256": "9172c4d5d83130da1e746b0e8192fe68e5c50ddbc94262d98716a1e7eabed88d",
+    "source_sha256": "a4749febe14c895a8990423de3e5933f41aa9a4980d096304d3cde5afd32aa0f",
     "conditions": [],
     "registration_sites": []
   },
@@ -15306,7 +15306,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/tests/worker_lifecycle.rs",
     "name": "connectors",
-    "source_sha256": "9172c4d5d83130da1e746b0e8192fe68e5c50ddbc94262d98716a1e7eabed88d",
+    "source_sha256": "a4749febe14c895a8990423de3e5933f41aa9a4980d096304d3cde5afd32aa0f",
     "conditions": [],
     "registration_sites": []
   },
@@ -15315,7 +15315,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/tests/worker_lifecycle.rs",
     "name": "continuation_fixture",
-    "source_sha256": "9172c4d5d83130da1e746b0e8192fe68e5c50ddbc94262d98716a1e7eabed88d",
+    "source_sha256": "a4749febe14c895a8990423de3e5933f41aa9a4980d096304d3cde5afd32aa0f",
     "conditions": [],
     "registration_sites": []
   },
@@ -15324,7 +15324,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/tests/worker_lifecycle.rs",
     "name": "flow_fixture",
-    "source_sha256": "9172c4d5d83130da1e746b0e8192fe68e5c50ddbc94262d98716a1e7eabed88d",
+    "source_sha256": "a4749febe14c895a8990423de3e5933f41aa9a4980d096304d3cde5afd32aa0f",
     "conditions": [],
     "registration_sites": []
   },
@@ -15333,7 +15333,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/tests/worker_lifecycle.rs",
     "name": "spi_harness",
-    "source_sha256": "9172c4d5d83130da1e746b0e8192fe68e5c50ddbc94262d98716a1e7eabed88d",
+    "source_sha256": "a4749febe14c895a8990423de3e5933f41aa9a4980d096304d3cde5afd32aa0f",
     "conditions": [],
     "registration_sites": []
   },
@@ -15342,7 +15342,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/tests/worker_lifecycle.rs",
     "name": "worker_fixture",
-    "source_sha256": "9172c4d5d83130da1e746b0e8192fe68e5c50ddbc94262d98716a1e7eabed88d",
+    "source_sha256": "a4749febe14c895a8990423de3e5933f41aa9a4980d096304d3cde5afd32aa0f",
     "conditions": [],
     "registration_sites": []
   },

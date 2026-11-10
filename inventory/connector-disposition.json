@@ -7816,37 +7816,37 @@
         },
         {
           "id": "crates/worldinterface-runtime/tests/worker_lifecycle.rs::::module:support",
-          "source_sha256": "9172c4d5d83130da1e746b0e8192fe68e5c50ddbc94262d98716a1e7eabed88d",
+          "source_sha256": "a4749febe14c895a8990423de3e5933f41aa9a4980d096304d3cde5afd32aa0f",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/worker_lifecycle.rs::::source-module:crates/worldinterface-runtime/tests/worker_lifecycle.rs",
-          "source_sha256": "9172c4d5d83130da1e746b0e8192fe68e5c50ddbc94262d98716a1e7eabed88d",
+          "source_sha256": "a4749febe14c895a8990423de3e5933f41aa9a4980d096304d3cde5afd32aa0f",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/worker_lifecycle.rs::support::module:connectors",
-          "source_sha256": "9172c4d5d83130da1e746b0e8192fe68e5c50ddbc94262d98716a1e7eabed88d",
+          "source_sha256": "a4749febe14c895a8990423de3e5933f41aa9a4980d096304d3cde5afd32aa0f",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/worker_lifecycle.rs::support::module:continuation_fixture",
-          "source_sha256": "9172c4d5d83130da1e746b0e8192fe68e5c50ddbc94262d98716a1e7eabed88d",
+          "source_sha256": "a4749febe14c895a8990423de3e5933f41aa9a4980d096304d3cde5afd32aa0f",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/worker_lifecycle.rs::support::module:flow_fixture",
-          "source_sha256": "9172c4d5d83130da1e746b0e8192fe68e5c50ddbc94262d98716a1e7eabed88d",
+          "source_sha256": "a4749febe14c895a8990423de3e5933f41aa9a4980d096304d3cde5afd32aa0f",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/worker_lifecycle.rs::support::module:spi_harness",
-          "source_sha256": "9172c4d5d83130da1e746b0e8192fe68e5c50ddbc94262d98716a1e7eabed88d",
+          "source_sha256": "a4749febe14c895a8990423de3e5933f41aa9a4980d096304d3cde5afd32aa0f",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/worker_lifecycle.rs::support::module:worker_fixture",
-          "source_sha256": "9172c4d5d83130da1e746b0e8192fe68e5c50ddbc94262d98716a1e7eabed88d",
+          "source_sha256": "a4749febe14c895a8990423de3e5933f41aa9a4980d096304d3cde5afd32aa0f",
           "registration_sites": []
         },
         {
@@ -9198,7 +9198,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/tests/worker_lifecycle.rs",
-          "source_sha256": "9172c4d5d83130da1e746b0e8192fe68e5c50ddbc94262d98716a1e7eabed88d",
+          "source_sha256": "a4749febe14c895a8990423de3e5933f41aa9a4980d096304d3cde5afd32aa0f",
           "treatment": "WIP-10 candidate worker source or associated build/test surface; preserve exact evaluation bindings and review ownership changes before integration."
         },
         {
