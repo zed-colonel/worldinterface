@@ -106,8 +106,10 @@ set, tasks, cases, six operations, environment, limits and exclusions. Changed,
 deleted, added or omitted sources and malformed packets fail closed. Adopted
 `contract-check` enforces this rule before review; checking never refreshes it.
 Commit the refreshed manifest with its sources after non-live validation. An
-uncommitted refresh cannot authorize execution. Cached builds recheck current
-packet integrity. Revocation and quarantine still fence fresh admissions.
+uncommitted refresh cannot authorize execution. Every live fixture build accessor,
+including the process harness, checks commitment before returning cached artifacts.
+Only non-live build/provenance tests may use a refreshed, uncommitted packet.
+Revocation and quarantine still fence fresh admissions.
 
 These checks permit bounded candidate verification; reviewed merge with adopted
 checks establishes durable acceptance. Tests do not authenticate review or grant

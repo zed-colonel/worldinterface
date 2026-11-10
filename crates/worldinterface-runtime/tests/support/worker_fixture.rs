@@ -56,7 +56,7 @@ impl Approval {
     }
 }
 pub fn embedded_build() -> (std::path::PathBuf, std::path::PathBuf) {
-    let b = build::current();
+    let b = build::live();
     (b.fixture.clone(), b.helper.clone())
 }
 impl TrustedApprovals for Approval {
@@ -142,7 +142,7 @@ pub fn evaluation() -> Arc<EvaluationVerifier<Approval>> {
             );
         }
         let packet = manifest.digest().unwrap();
-        let built = build::current();
+        let built = build::live();
         assert_eq!(built.packet, packet);
         let (fixture, helper) = (built.fixture_digest.clone(), built.helper_digest.clone());
         let trusted = Approval {
@@ -324,8 +324,8 @@ impl Harness {
                 bundle.clone(),
                 HostScope { tenant: auth.0.as_str().into(), principal: auth.1.as_str().into() },
                 &root,
-                &build::current().fixture,
-                &build::current().helper,
+                &build::live().fixture,
+                &build::live().helper,
                 evaluation.clone(),
                 Arc::new(HostClock),
                 1,
@@ -385,8 +385,8 @@ impl Harness {
                     principal: self.auth.1.as_str().into(),
                 },
                 &self.root.join("process"),
-                &build::current().fixture,
-                &build::current().helper,
+                &build::live().fixture,
+                &build::live().helper,
                 self.evaluation.clone(),
                 Arc::new(HostClock),
                 1,
@@ -476,7 +476,7 @@ impl Harness {
         }
     }
     pub fn rejects_helper_drift(&self) {
-        let built = build::current();
+        let built = build::live();
         let mut changed = built.helper_bytes.clone();
         changed.push(0);
         let path = self.temp.path().join("changed-helper");
@@ -587,7 +587,7 @@ impl Harness {
                 if self.seam {
                     include_bytes!("worker_seam.rs").as_slice()
                 } else {
-                    &build::current().fixture_bytes
+                    &build::live().fixture_bytes
                 },
             )
             .unwrap();
@@ -943,7 +943,7 @@ fn adapter_bytes() -> Vec<u8> {
 /// Warm the verified compilation cache before crash-child observation deadlines.
 /// This only builds reviewed source; it does not launch a worker or grant approval.
 pub fn prebuild() {
-    let _ = build::current();
+    let _ = build::live();
 }
 
 /// Model an acknowledged process start whose WI response was lost, without
@@ -1016,7 +1016,7 @@ impl<C: worldinterface_runtime::connector::Connector> worldinterface_runtime::co
 
 /// Public measurements only; immutable paths remain in trusted build support.
 pub fn build_evidence() -> serde_json::Value {
-    let b = build::current();
+    let b = build::live();
     serde_json::json!({"packet":b.packet, "fixture":b.fixture_digest, "helper":b.helper_digest,
         "profile_definition":worldinterface_worker::profile::DEFINITION_SHA256,
         "seam_implementation":seam::provenance().implementation})

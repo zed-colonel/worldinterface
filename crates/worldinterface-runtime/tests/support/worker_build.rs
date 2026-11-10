@@ -146,6 +146,7 @@ fn compile() -> WorkerBuild {
     }
 }
 
+/// Non-live artifact inspection may build a refreshed candidate before commitment.
 pub fn current() -> &'static WorkerBuild {
     static BUILD: OnceLock<WorkerBuild> = OnceLock::new();
     let build = BUILD.get_or_init(compile);
@@ -153,4 +154,20 @@ pub fn current() -> &'static WorkerBuild {
     let manifest = packet::current(&root, false).unwrap();
     assert_eq!(manifest.digest().unwrap(), build.packet, "cached build packet drift");
     build
+}
+
+/// Check commitment on every access, before consulting the cached build.
+pub fn live_from(root: &Path) -> worldinterface_runtime::Result<&'static WorkerBuild> {
+    packet::live_setup(root, |manifest| {
+        let build = current();
+        if manifest.digest()? != build.packet {
+            return Err("live build packet drift".into());
+        }
+        Ok(build)
+    })
+}
+
+pub fn live() -> &'static WorkerBuild {
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    live_from(&root).expect("committed evaluation packet")
 }

@@ -35,3 +35,9 @@ The test host retains one owned validator process per fixture to avoid repeated
 interpreter startup. Every request reconstructs the complete packet and compares
 source bytes with HEAD afresh; no result or file metadata is cached across
 requests. Dropping the host verifier kills and reaps its validator process.
+
+F-001 remediation: all fixture-launching harnesses use a live build accessor that
+checks the committed packet before returning even cached artifacts. The non-live
+accessor is reserved for build/provenance tests. The non-live setup regression
+rejects refreshed and staged packets, including one matching an already cached
+build, before any fixture launch.

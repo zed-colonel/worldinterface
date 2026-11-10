@@ -11277,11 +11277,11 @@
     "source": "docs/work-items/WIP-10.md; 2026-11-03 operator direction to prepare revised packet; WI-ADR-016"
   },
   {
-    "id": "crates/worldinterface-runtime/tests/worker_process.rs::registry::registration:b9bace7bbcd2ccd282cff5143f759c8ec36853698da4726e94352c40052b7604#1",
+    "id": "crates/worldinterface-runtime/tests/worker_process.rs::registry::registration:3a91e2826ba065ec460ba9aac4a2744a0c6bfdd70efa558558035605da299fbe#1",
     "disposition": "test-evidence",
     "target": "worker-lifecycle-test-evidence",
-    "rationale": "WIP-10 revised packet: trusted test-host compilation of verified locked sources, independent executable digests and private artifact copies, and non-launching build/journal regressions. Replaces pathname-only adapter registration binding. No source-generator exception or live evaluation approval.",
-    "source": "docs/work-items/WIP-10.md; 2026-11-03 operator direction to prepare revised packet; WI-ADR-016"
+    "rationale": "WSP-01 F-001: process fixture registration uses the committed-packet live build accessor before returning cached artifacts; exact executable digest binding remains required.",
+    "source": "docs/work-items/WSP-01.md; operator decision 2026-11-09"
   },
   {
     "id": "crates/worldinterface-runtime/src/worker/connector.rs::::module:tests@10d1b0eff34c",
@@ -12800,6 +12800,13 @@
     "disposition": "test-evidence",
     "target": "worker-lifecycle-test-evidence",
     "rationale": "WSP-01: owned resident validator removes interpreter startup while reconstructing and checking the complete committed packet on every request, with no cross-request result cache; fail closed on drift or protocol errors and reap the owned process.",
+    "source": "docs/work-items/WSP-01.md; operator decision 2026-11-09"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_evaluation.rs::::module:build",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WSP-01 F-001: non-live regression exercises the process harness live build accessor with stale, refreshed-uncommitted and staged packets, including a packet matching the cached build.",
     "source": "docs/work-items/WSP-01.md; operator decision 2026-11-09"
   }
 ]

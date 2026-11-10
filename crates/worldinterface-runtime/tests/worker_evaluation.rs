@@ -1,4 +1,6 @@
 //! Packet boundary tests deliberately launch no worker processes.
+#[path = "support/worker_build.rs"]
+mod build;
 #[path = "support/worker_packet.rs"]
 mod packet;
 use std::{
@@ -119,12 +121,15 @@ fn live_setup_rejects_stale_and_uncommitted_packets_before_fixture_execution() {
     };
     // This is the same setup boundary used by worker_fixture::evaluation().
     packet::live_setup(root.path(), setup).unwrap();
+    // Warm the actual process harness accessor's cache without launching anything.
+    let cached = build::live_from(root.path()).unwrap();
     let validator = packet::Validator::new(root.path()).unwrap();
     validator.validate(root.path(), &manifest).unwrap();
     assert_eq!(launches.swap(0, Ordering::SeqCst), 1);
     std::fs::write(root.path().join("crates/worldinterface-runtime/src/lib.rs"), b"changed")
         .unwrap();
     assert!(packet::live_setup(root.path(), setup).is_err());
+    assert!(build::live_from(root.path()).is_err());
     assert!(validator.validate(root.path(), &manifest).is_err());
     assert_eq!(launches.load(Ordering::SeqCst), 0);
     let refresh = Command::new("python3")
@@ -135,12 +140,46 @@ fn live_setup_rejects_stale_and_uncommitted_packets_before_fixture_execution() {
     assert!(refresh.status.success(), "{}", String::from_utf8_lossy(&refresh.stderr));
     packet::current(root.path(), false).unwrap();
     assert!(packet::live_setup(root.path(), setup).is_err());
+    assert!(build::live_from(root.path()).is_err());
     assert!(validator.validate(root.path(), &manifest).is_err());
     git(&["add", "-f", "."]);
     assert!(packet::live_setup(root.path(), setup).is_err());
+    assert!(build::live_from(root.path()).is_err());
     assert!(validator.validate(root.path(), &manifest).is_err());
     assert_eq!(launches.load(Ordering::SeqCst), 0);
     git(&["reset", "--hard", "-q", "HEAD"]);
+    assert!(std::ptr::eq(cached, build::live_from(root.path()).unwrap()));
     validator.validate(root.path(), &manifest).unwrap();
     assert!(validator.validate(source.as_path(), &manifest).is_err());
+
+    // Commit a different private baseline, then refresh back to the cached build's
+    // exact packet. Only commitment can reject this candidate, not build drift.
+    let lib = "crates/worldinterface-runtime/src/lib.rs";
+    std::fs::write(root.path().join(lib), b"previous private source").unwrap();
+    let refresh_packet = || {
+        let output = Command::new("python3")
+            .args(["-B", "scripts/refresh-wi-worker-evaluation.py"])
+            .current_dir(root.path())
+            .output()
+            .unwrap();
+        assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
+    };
+    refresh_packet();
+    git(&["add", "-f", "."]);
+    git(&[
+        "-c",
+        "user.name=Packet Test",
+        "-c",
+        "user.email=packet@example.invalid",
+        "commit",
+        "-qm",
+        "previous private packet",
+    ]);
+    std::fs::copy(source.join(lib), root.path().join(lib)).unwrap();
+    refresh_packet();
+    assert_eq!(packet::current(root.path(), false).unwrap().digest().unwrap(), cached.packet);
+    assert!(build::live_from(root.path()).is_err());
+    git(&["add", "-f", "."]);
+    assert!(build::live_from(root.path()).is_err());
+    assert_eq!(launches.load(Ordering::SeqCst), 0);
 }
