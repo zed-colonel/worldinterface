@@ -80,22 +80,23 @@ def clean(commit):
     require(not git('ls-files', '-v').splitlines() or all(x.startswith('H ') for x in git('ls-files', '-v').splitlines()), 'index flags hide source state')
 
 
-def toolchain():
-    rust = subprocess.check_output([os.environ.get('RUSTC', 'rustc'), '-vV'], text=True, timeout=30)
-    cargo = subprocess.check_output(['cargo', '--version'], text=True, timeout=30).strip()
+def toolchain(env=None):
+    current_env = os.environ if env is None else env
+    rust = subprocess.check_output([current_env.get('RUSTC', 'rustc'), '-vV'], env=env, text=True, timeout=30)
+    cargo = subprocess.check_output(['cargo', '--version'], env=env, text=True, timeout=30).strip()
     require('release: 1.89.0\n' in rust and cargo.startswith('cargo 1.89.0 '), 'release requires rustc and Cargo 1.89.0')
     host = re.search(r'^host: (.+)$', rust, re.M)[1]
     require(host == 'x86_64-unknown-linux-gnu', 'worker proof release requires Linux x86_64 GNU')
     # External archive/consumer directories have no rust-toolchain.toml. Record
     # the override applied to every gate, rather than rustup's machine default.
-    effective_env = dict(os.environ, RUSTUP_TOOLCHAIN=TOOLCHAIN)
+    effective_env = dict(current_env, RUSTUP_TOOLCHAIN=TOOLCHAIN)
     return {'rustc': rust, 'cargo': cargo, 'target': host, 'profile': 'release',
-            'cargo_home': os.environ.get('CARGO_HOME', str(Path.home() / '.cargo')),
-            'target_directory': str(external_target()),
-            'cc': subprocess.check_output(['cc', '--version'], text=True, timeout=30),
-            'ld': subprocess.check_output(['ld', '--version'], text=True, timeout=30),
+            'cargo_home': effective_env.get('CARGO_HOME', str(Path.home() / '.cargo')),
+            'target_directory': effective_env.get('CARGO_TARGET_DIR', str(external_target())),
+            'cc': subprocess.check_output(['cc', '--version'], env=env, text=True, timeout=30),
+            'ld': subprocess.check_output(['ld', '--version'], env=env, text=True, timeout=30),
             'platform': os.uname()._asdict() if hasattr(os.uname(), '_asdict') else list(os.uname()),
-            'build_environment': {k: effective_env.get(k, '8' if k == 'CARGO_BUILD_JOBS' else '') for k in ['RUSTUP_TOOLCHAIN', 'RUSTFLAGS', 'RUSTDOCFLAGS', 'CC', 'CFLAGS', 'CARGO_BUILD_JOBS', 'SOURCE_DATE_EPOCH', 'RUSTC', 'RUSTC_WRAPPER', 'RUSTC_WORKSPACE_WRAPPER', 'CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER', 'CARGO_PROFILE_RELEASE_OPT_LEVEL', 'CARGO_PROFILE_RELEASE_LTO', 'CARGO_PROFILE_RELEASE_CODEGEN_UNITS']}}
+            'build_environment': {k: effective_env.get(k, '8' if k == 'CARGO_BUILD_JOBS' else '') for k in ['RUSTUP_TOOLCHAIN', 'RUSTFLAGS', 'CARGO_ENCODED_RUSTFLAGS', 'RUSTDOCFLAGS', 'CC', 'CFLAGS', 'CARGO_BUILD_JOBS', 'SOURCE_DATE_EPOCH', 'RUSTC', 'RUSTC_WRAPPER', 'RUSTC_WORKSPACE_WRAPPER', 'CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_LINKER', 'CARGO_PROFILE_RELEASE_OPT_LEVEL', 'CARGO_PROFILE_RELEASE_LTO', 'CARGO_PROFILE_RELEASE_CODEGEN_UNITS']}}
 
 
 def external_target():
@@ -324,9 +325,32 @@ def validate_schema(schema, value, label='manifest'):
 
 
 def worker_recipe(version, target):
-    return ['cargo', '+1.89.0', 'install', '--locked', '--version', '=' + version,
+    return {'argv': ['cargo', '+1.89.0', 'install', '--locked', '--version', '=' + version,
             '--target', target, '--profile', 'release', '--bin', 'wi-process-fixture',
-            '--bin', 'wi-process-reaper', '--root', '{install-root}', 'worldinterface-runtime']
+            '--bin', 'wi-process-reaper', '--root', '{install-root}', 'worldinterface-runtime'],
+            'path_remapping': [
+                ['{build-root}', '/wi/build'],
+                ['{target-directory}', '/wi/target'],
+                ['{cargo-home}/registry/src/*', '/wi/registry']],
+            'rustflags': 'replace RUSTFLAGS and CARGO_ENCODED_RUSTFLAGS with the remappings, separated by ASCII 31; expand each registry source root'}
+
+
+def worker_environment(env, work, source_roots):
+    """Normalize each registry bucket, including its variable registry-id suffix.
+
+    Mapping registry/src alone would retain that suffix in file!() and panic
+    locations. Put specific source mappings last, after the staging prefix.
+    """
+    env = dict(env)
+    home = Path(env['CARGO_HOME']).resolve()
+    roots = sorted({Path(p).resolve() for p in source_roots})
+    require(roots and all(p.parent == home / 'registry/src' for p in roots), 'worker registry sources outside staged CARGO_HOME')
+    mappings = [(Path(work).resolve(), '/wi/build'),
+                (Path(env['CARGO_TARGET_DIR']).resolve(), '/wi/target'),
+                *[(p, '/wi/registry') for p in roots]]
+    env.pop('RUSTFLAGS', None)
+    env['CARGO_ENCODED_RUSTFLAGS'] = '\x1f'.join(f'--remap-path-prefix={source}={dest}' for source, dest in mappings)
+    return env
 
 
 def recipe_digest(recipe):

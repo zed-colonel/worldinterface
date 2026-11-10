@@ -74,3 +74,19 @@ budgets, timeout conformance and adopted definitions retain their behavior.
 The delay-family catalog disposition explicitly retains this independent
 receipt regression, its shared test support and documentation; it grants no
 legacy connector replacement or removal claim.
+
+Review remediation preserves finding IDs F-001 through F-005. Worker recipes now
+replace inherited Rust flags with remappings for each complete registry source
+root, staging and target paths. A real Cargo regression installs one archive
+from two registry locations and Cargo homes, checks an embedded dependency
+`file!()` path, and compares executable digests. The worker environment record
+captures the effective disposable Cargo home and encoded flags; verification
+reconstructs the remappings from the recorded resolution (F-001, F-002).
+Local-registry package, documentation, consumer and regression invocations use
+staged Cargo homes; seeding reads the shared archive cache without unpacking
+sources there (F-002). Rustdoc removes old pages before building its archive,
+with a stale-page regression (F-003). The consumer resolves and records its own
+fresh lock rather than claiming to seed runtime versions (F-004). Publication
+staging directs the operator to relay exact handoff bytes and the trusted
+manifest digest as downstream work-item inputs for crates.io-only agents
+(F-005). These are implementation claims for review, not finding closure.

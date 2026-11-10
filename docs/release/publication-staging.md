@@ -41,7 +41,11 @@ schemas and their WI validator remain authoritative.
    builds archive dependencies through an external Cargo local registry of exact
    checksum-verified archives, runs all packaged self-contained tests, builds
    rustdoc with warnings denied, exercises the registry consumer and installs both
-   workers. It produces source.bundle, notes, API docs, archives, resolution and
+   workers. Local-registry Cargo homes live under disposable staging; the shared
+   crates.io archive cache is read only during registry seeding. Rustdoc clears
+   the external target's `doc` directory before generating release documentation.
+   Worker builds replace inherited Rust flags with the path remappings recorded
+   in the recipe and actual build environment. It produces source.bundle, notes, API docs, archives, resolution and
    production-feature evidence, the linked consumer handoff, the WI preparation
    receipt, release-manifest.json and SHA256SUMS. Failures retain logs without a
    successful manifest. Rebase or merge requires fresh preparation. CraftingTable
@@ -72,7 +76,15 @@ schemas and their WI validator remain authoritative.
    patches. Retain resolution, lock, commands, worker measurements and outcome
    under `~/.local/share/worldinterface-releases/<version>/`. Record publication
    for the Exoskeleton map's waiting item only after registry availability and
-   consumer verification.
+   consumer verification. In that published map record, relay the exact prepared
+   `consumer-handoff.json` file and its SHA-256 from `release-manifest.json`, with
+   the version and source commit, to EXV-11 (EXV-27 for alpha.2). Supply the file as
+   an input to the downstream work item so its agents need only crates.io network
+   access. The receiving operator verifies the digest against the trusted release
+   manifest before forwarding it; the consumer verifies the supplied digest and
+   compares the handoff's crate checksums to its crates.io lockfile. Keep the
+   prepared bytes intact, including `publication_status: not-performed`; the map
+   record and separate completion receipt establish subsequent publication.
 
 5. Capture actual remote refs, published artifacts and fresh protection settings,
    including observer/time. Write a separate `publication-completion` receipt per

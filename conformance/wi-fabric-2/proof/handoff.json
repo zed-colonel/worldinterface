@@ -3584,7 +3584,7 @@
     "crates/worldinterface-runtime/tests/support/worker_fixture.rs": "2ff4e5f3829e6ac90e3553f3362a3c9aa8dcb3ffcb740276be539e5dc5b6dcab",
     "crates/worldinterface-runtime/tests/support/worker_seam.rs": "0f050f1e154faccc2d1cd1530dff25fc933714da6e22a387cd50a76bdbaa72da",
     "docs/evidence/WI-EMBEDDED-WORKER-PROOF-1.md": "72a9a804d19da342d52aee155fdab250bebfb5d3ac5de8f005da6f00c5d70aec",
-    "docs/release/0.2.0-alpha.1.md": "9d5409b02150bf2e26e93aace962fbf154451dba9177f398e30ad976b49ccb2e",
+    "docs/release/0.2.0-alpha.1.md": "79eaf9ca958fd5c48d916013b48c71c25413dba03a918ac2fe4dcbe0942c78af",
     "docs/release/package-tests.json": "6299455b0e9a945d51263d1dabd73cf525df49089f5686070a46bbbda045c3b1",
     "examples/downstream-consumer/Cargo.toml": "b1d5f106eed5a286460cac00c31465407fd3f13077d8941fcae773688d3a0ccb",
     "examples/downstream-consumer/src/main.rs": "e81457c49983747da1978d4c8e65cd3bde76efee6a8c2dbe3f86a6751f60e949",
@@ -3594,11 +3594,11 @@
     "fixtures/pre-wi-fabric-2/exo/repos/sample-rust/src/lib.rs": "4f6a07ed71fc95baaa7243cb58588a956f3905730ad5201d751ad914a9bb2722",
     "rust-toolchain.toml": "2a0049652fe5a89222a0fc64fa0e4a403435f134bd6fbdf9556e986a62e59128",
     "scripts/build-wi-worker-evaluation.sh": "2ed4f98edf61c1b03f59130b0ca0f110e0b61c69c3af80274dce053f6a0076a4",
-    "scripts/check-consumer.py": "02176af637e4d38e815d3d12c65e4f8742b7237310d91c6a71bb2ac2f700774d",
+    "scripts/check-consumer.py": "c579177af317385ac2d0b0a66d28b879806f02f668e7c4db40e1795833cf94d2",
     "scripts/check-packages.py": "08e88f56fffdc9be09558078c0e3643d2132a8a3fabed3cc1953c2ef4ee4f384",
-    "scripts/release.py": "baee4c0d7d2e45a125f729462c9541d50f5e288e7fd0a8bf40a41ef3a266a357",
-    "scripts/wi_release.py": "d8e867c4e35e6c3a18877fca8c6bf6556d7d34be13749e7e72e47313453e0fc8",
-    "scripts/wi_release_packages.py": "0bdcc9f161305b8db4a1e53721faff3c812c74d5c18c190bfcdcc45eef67f176",
+    "scripts/release.py": "256e60123b30365354573d3af6d44aae8c23ab5601eb871040f5f86823c63d4c",
+    "scripts/wi_release.py": "f5d42cec6a78ae5a5a6cc53c832d65bea4e3800e20dc6017b8bf110fb97bc421",
+    "scripts/wi_release_packages.py": "09e480af1f17a4f4ba1ad9d2f88af1c49667323e04c566350d41b2f9dcb9e78e",
     "scripts/wi_worker_evaluation.py": "f722f2724a5004bf2ee72753e0d9b3a729941b61bc7060cca6bdc207721a4fbf",
     "tools/wi-contract-check/Cargo.lock": "e23d73ebc1773d7c638713f63e51cf3e6f0c1982ee3f96a3b46b804185cce057"
   },
@@ -3612,15 +3612,15 @@
   },
   "publication_owner": "WIP-16",
   "release": {
-    "consumer_handoff": "external release consumer-handoff.json binds source commit, descriptor, archives, both lock identities, measured worker digests and build environment",
-    "digest_scope": "recorded compiler, target, profile, environment and linker/system only",
+    "consumer_handoff": "external release consumer-handoff.json binds source commit, descriptor, archives, both lock identities, measured worker digests and build environment; operator relays exact bytes and manifest SHA-256 through the published map record to EXV-11/EXV-27 as a downstream input",
+    "digest_scope": "registry and staging paths remapped; recorded compiler, target, profile, environment and linker/system only",
     "package_version": "0.2.0-alpha.1",
     "packaged_descriptor": "release/handoff.json",
     "packaged_gates": "release/gates/*.json; byte-equal authoritative reviewed records",
     "packaged_lock": "Cargo.lock; normalized archive digest recorded separately in external consumer-handoff.json",
     "procedure": "docs/release/publication-staging.md",
     "repository_lock": "release/repository-Cargo.lock; dependencies_digest() preserves repository provenance",
-    "worker_recipe": "cargo +1.89.0 install --locked --version '=0.2.0-alpha.1' --target x86_64-unknown-linux-gnu --profile release --bin wi-process-fixture --bin wi-process-reaper --root INSTALL_ROOT worldinterface-runtime"
+    "worker_recipe": "replace inherited RUSTFLAGS and CARGO_ENCODED_RUSTFLAGS with --remap-path-prefix for build root=/wi/build, target directory=/wi/target, then each CARGO_HOME/registry/src/* root=/wi/registry (ASCII 31 separators); cargo +1.89.0 install --locked --version '=0.2.0-alpha.1' --target x86_64-unknown-linux-gnu --profile release --bin wi-process-fixture --bin wi-process-reaper --root INSTALL_ROOT worldinterface-runtime"
   },
   "reproduction": {
     "adopted_checks": ".craftingtable/checks.json; ct-check --declared ID for all ten IDs on committed HEAD",

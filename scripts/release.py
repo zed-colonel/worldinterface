@@ -14,7 +14,7 @@ import sys
 import tempfile
 sys.dont_write_bytecode = True
 from wi_release import (ROOT, FOUNDATION, RUNTIME, PACKAGES, ADOPTED, BASELINE, TOOLCHAIN, archive_files,
-                        clean, check_graph, external_target, git, metadata, read, ref, require, run, worker_recipe, recipe_digest,
+                        clean, check_graph, external_target, git, metadata, read, ref, require, run, worker_recipe, worker_environment, recipe_digest,
                         safe, sha, toolchain, toml, validate_archive, validate_schema, write)
 from wi_crash_isolation import check_artifacts
 
@@ -112,7 +112,13 @@ def validate_packages(manifest, output):
     require(handoff['consumer_lock_sha256'] == sha(safe(output, 'consumer-Cargo.lock')) and handoff['build'] == read(safe(output, 'build-environment.json')), 'handoff build identity disagreement')
     recipe = worker_recipe(version, handoff['build']['target'])
     require(handoff['recipe'] == recipe and handoff['recipe_sha256'] == recipe_digest(recipe), 'worker recipe drift')
-    command = recipe.copy(); command[command.index('{install-root}')] = manifest['build_work'] + '/install'
+    consumer_meta = read(safe(output, 'consumer-resolution.json'))
+    build = handoff['build']
+    require(build['cargo_home'] == manifest['build_work'] + '/cargo-home', 'worker Cargo home is not disposable staging')
+    roots = {str(Path(p['manifest_path']).parent.parent) for p in consumer_meta['packages'] if p['source']}
+    expected_env = worker_environment({'CARGO_HOME': build['cargo_home'], 'CARGO_TARGET_DIR': build['target_directory']}, manifest['build_work'], roots)
+    require(build['build_environment']['RUSTFLAGS'] == '' and build['build_environment']['CARGO_ENCODED_RUSTFLAGS'] == expected_env['CARGO_ENCODED_RUSTFLAGS'], 'worker path remapping drift')
+    command = recipe['argv'].copy(); command[command.index('{install-root}')] = manifest['build_work'] + '/install'
     command[2:2] = ['--config', manifest['build_work'] + '/registry.toml']; command.append('--offline')
     require(handoff['install_command'] == command, 'worker install command drift')
     install = read(safe(output, 'logs/worker-install.result.json'))
@@ -121,7 +127,6 @@ def validate_packages(manifest, output):
     require(set(handoff['executables']) == {'wi-process-fixture', 'wi-process-reaper'}, 'missing worker executable')
     for name, record in handoff['executables'].items():
         require(record['path'] == 'workers/' + name and record['sha256'] == sha(safe(output, record['path'])) and record['size'] == (output / record['path']).stat().st_size, 'worker executable drift')
-    consumer_meta = read(safe(output, 'consumer-resolution.json'))
     validate_resolution(consumer_meta, 'wi-downstream-consumer', version)
     check_graph(consumer_meta, toml(safe(output, 'consumer-Cargo.lock')), 'wi-downstream-consumer', version, checksums, inspect_manifests=False)
     check_artifacts(read(safe(output, 'production/consumer.json')))

@@ -62,13 +62,26 @@ class ReleaseTests(unittest.TestCase):
 
     def test_external_staging_uses_release_toolchain_instead_of_machine_default(self):
         with patch.dict(os.environ, {'RUSTUP_TOOLCHAIN': 'stable'}):
-            env = packages.environment()
+            env = packages.environment(self.base)
         self.assertEqual(env['RUSTUP_TOOLCHAIN'], '1.89.0')
         for program in ['rustc', 'cargo']:
             result = subprocess.check_output([program, '--version'], cwd=self.base,
                                              env=env, text=True, timeout=30)
             self.assertTrue(result.startswith(program + ' 1.89.0 '), result)
         self.assertEqual(shared.toolchain()['build_environment']['RUSTUP_TOOLCHAIN'], '1.89.0')
+
+    def test_documentation_discards_pages_from_previous_preparations(self):
+        target = self.base / 'target'; docs = target / 'doc'; docs.mkdir(parents=True)
+        (docs / 'removed-api.html').write_text('stale')
+        def document(*args):
+            self.assertFalse((docs / 'removed-api.html').exists())
+            docs.mkdir(exist_ok=True)
+            (docs / 'current-api.html').write_text('current')
+        with patch.object(packages, 'external_target', return_value=target), patch.object(packages, 'run', side_effect=document):
+            packages.rustdoc(self.base, self.base / 'work')
+        with tarfile.open(self.base / 'api-docs.tar.gz') as archive:
+            self.assertIn('doc/current-api.html', archive.getnames())
+            self.assertNotIn('doc/removed-api.html', archive.getnames())
 
     def test_internal_requirements_are_exact_and_substitutions_fail(self):
         data = {'dependencies': {'worldinterface-protocol': {'version': '=' + VERSION, 'path': '../protocol'}}}
@@ -224,11 +237,11 @@ class ReleaseTests(unittest.TestCase):
         registry = self.base / 'registry'; (registry / 'index').mkdir(parents=True)
         source = self.base / 'source'; (source / 'src').mkdir(parents=True)
         (source / 'Cargo.toml').write_text('[workspace]\n[package]\nname="wi-release-test-dependency"\nversion="1.0.0"\nedition="2021"\n')
-        (source / 'src/lib.rs').write_text('pub fn value() -> u32 { 42 }\n#[test] fn unit() { assert_eq!(value(),42); }\n')
+        (source / 'src/lib.rs').write_text('pub fn value() -> u32 { 42 }\npub fn location() -> &\'static str { file!() }\n#[test] fn unit() { assert_eq!(value(),42); }\n')
         target = shared.external_target()
-        def cargo(args, cwd):
+        def cargo(args, cwd, env=None):
             result = subprocess.run(['cargo', *args], cwd=cwd, capture_output=True, text=True, timeout=120,
-                                    env=packages.environment())
+                                    env=packages.environment(self.base) if env is None else env)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             return result
         cargo(['package', '--offline', '--no-verify', '--allow-dirty'], source)
@@ -242,7 +255,7 @@ class ReleaseTests(unittest.TestCase):
         config.write_text('[source.crates-io]\nreplace-with="fixture"\n[source.fixture]\nlocal-registry=' + json.dumps(str(registry)) + '\n')
         consumer = self.base / 'consumer'; (consumer / 'src').mkdir(parents=True)
         (consumer / 'Cargo.toml').write_text('[workspace]\n[package]\nname="wi-release-test-consumer"\nversion="1.0.0"\nedition="2021"\n[dependencies]\nwi-release-test-dependency="=1.0.0"\n')
-        (consumer / 'src/main.rs').write_text('fn main() { assert_eq!(wi_release_test_dependency::value(),42); }')
+        (consumer / 'src/main.rs').write_text('fn main() { assert_eq!(wi_release_test_dependency::value(),42); println!("{}", wi_release_test_dependency::location()); }')
         cargo(['--config', str(config), 'run', '--offline'], consumer)
         result = cargo(['--config', str(config), 'metadata', '--locked', '--offline', '--format-version', '1'], consumer)
         dep = next(p for p in json.loads(result.stdout)['packages'] if p['name'] == 'wi-release-test-dependency')
@@ -252,6 +265,42 @@ class ReleaseTests(unittest.TestCase):
         # Retain exact archive identity; replacing bytes refuses registry admission.
         bad = self.base / archive.name; bad.write_bytes(archive.read_bytes() + b'drift')
         with self.assertRaises(ValueError): packages.add_registry(registry, bad, dep['name'], '1.0.0', shared.sha(archive))
+
+        # Install the same archive from two different registries AND Cargo homes.
+        # The dependency's file!() embeds its absolute registry path without the
+        # remapping. Hash equality checks the executable, beyond mocked argv.
+        cargo(['--config', str(config), 'package', '--offline', '--no-verify', '--allow-dirty'], consumer)
+        worker = target / 'package/wi-release-test-consumer-1.0.0.crate'
+        packages.add_registry(registry, worker, 'wi-release-test-consumer', '1.0.0', shared.sha(worker))
+        digests = []; locations = []
+        shared_home = self.base / 'shared-cargo-home'; shared_home.mkdir()
+        for route in ['first-location', 'different-location']:
+            staging = self.base / route
+            with patch.dict(os.environ, {'CARGO_HOME': str(shared_home), 'RUSTFLAGS': '--cfg unwanted'}):
+                env = packages.environment(staging)
+            self.assertEqual(Path(env['CARGO_HOME']), staging / 'cargo-home')
+            local = staging / 'registry'; shutil.copytree(registry, local)
+            cfg = staging / 'registry.toml'
+            cfg.write_text(config.read_text().replace(str(registry), str(local)))
+            cargo(['--config', str(cfg), 'metadata', '--offline', '--format-version', '1'], consumer, env)
+            roots = list((Path(env['CARGO_HOME']) / 'registry/src').iterdir())
+            locations.extend(roots)
+            env = shared.worker_environment(env, staging, roots)
+            self.assertNotIn('RUSTFLAGS', env)
+            cargo(['--config', str(cfg), 'install', '--offline', '--locked', '--version', '=1.0.0',
+                   '--target', 'x86_64-unknown-linux-gnu', '--root', str(staging / 'install'),
+                   'wi-release-test-consumer'], staging, env)
+            binary = staging / 'install/bin/wi-release-test-consumer'
+            output = subprocess.check_output([binary], text=True, timeout=30)
+            self.assertIn('/wi/registry/wi-release-test-dependency-1.0.0/src/lib.rs', output)
+            self.assertNotIn(str(self.base), output)
+            digests.append(shared.sha(binary))
+            recorded = shared.toolchain(env)
+            self.assertEqual(recorded['cargo_home'], env['CARGO_HOME'])
+            self.assertEqual(recorded['build_environment']['CARGO_ENCODED_RUSTFLAGS'], env['CARGO_ENCODED_RUSTFLAGS'])
+        self.assertNotEqual(locations[0].name, locations[1].name)
+        self.assertEqual(digests[0], digests[1])
+        self.assertEqual(list(shared_home.iterdir()), [])
 
 
 if __name__ == '__main__': unittest.main()

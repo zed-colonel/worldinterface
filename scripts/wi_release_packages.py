@@ -77,7 +77,6 @@ def seed_registry(work):
     write(registry / 'index/config.json', {'dl': 'https://static.crates.io/crates', 'api': 'https://crates.io'})
     locked = {}
     for scope in [FOUNDATION, RUNTIME]:
-        subprocess.run(['cargo', 'fetch', '--locked', '--manifest-path', str(ROOT / scope / 'Cargo.toml')], cwd=ROOT, check=True, timeout=600)
         for p in toml(ROOT / scope / 'Cargo.lock')['package']:
             if p.get('source'):
                 key = (p['name'], p['version'])
@@ -104,8 +103,13 @@ def cargo(config):
     return ['cargo', '--config', str(config)]
 
 
-def environment():
-    return dict(os.environ, CARGO_TARGET_DIR=str(external_target()), CARGO_NET_OFFLINE='true',
+def environment(work):
+    # Source replacement unpacks into CARGO_HOME, even for an offline local
+    # registry. Keep those per-registry sources with the disposable staging.
+    home = work / 'cargo-home'
+    home.mkdir(parents=True, exist_ok=True)
+    return dict(os.environ, CARGO_HOME=str(home),
+                CARGO_TARGET_DIR=str(external_target()), CARGO_NET_OFFLINE='true',
                 RUSTUP_TOOLCHAIN=TOOLCHAIN,
                 CARGO_BUILD_JOBS=os.environ.get('CARGO_BUILD_JOBS', '8'), RUST_TEST_THREADS='4',
                 PROPTEST_DISABLE_FAILURE_PERSISTENCE='1')
@@ -113,9 +117,9 @@ def environment():
 
 def prepare_archives(output, work, version):
     metadata(version)
-    work.mkdir(parents=True)
+    work.mkdir(parents=True, exist_ok=True)
     registry, config = seed_registry(work)
-    base = cargo(config); env = environment()
+    base = cargo(config); env = environment(work)
     archives = output / 'crates'; archives.mkdir()
     checksums = {}
     # No seed WI package is used: each dependency is a real finalized archive
@@ -137,7 +141,7 @@ def prepare_archives(output, work, version):
 
 def build_packages(output, work, version):
     checksums = prepare_archives(output, work, version)
-    base = cargo(work / 'registry.toml'); env = environment()
+    base = cargo(work / 'registry.toml'); env = environment(work)
     archives = output / 'crates'; report = {}
     inventory = read(ROOT / 'docs/release/package-tests.json')
     for name in PACKAGES:
@@ -173,11 +177,14 @@ def build_packages(output, work, version):
 
 
 def rustdoc(output, work):
-    env = environment(); env['RUSTDOCFLAGS'] = '-D warnings'
+    env = environment(work); env['RUSTDOCFLAGS'] = '-D warnings'
     base = cargo(work / 'registry.toml')
+    # Cargo does not remove pages for deleted items from a reused target cache.
+    docs = external_target() / 'doc'
+    if docs.exists(): shutil.rmtree(docs)
     for name in PACKAGES:
         run(base + ['doc', '--no-deps', '--locked', '--offline'], work / 'extracted' / name,
             output / f'logs/rustdoc-{name}.log', env, 600)
     # Capture the completed documentation before any later use of the cache.
     with tarfile.open(output / 'api-docs.tar.gz', 'w:gz') as archive:
-        archive.add(external_target() / 'doc', arcname='doc')
+        archive.add(docs, arcname='doc')

@@ -8,7 +8,7 @@ import subprocess
 import sys
 sys.dont_write_bytecode = True
 from wi_release import (ROOT, RUNTIME, PACKAGES, check_graph, read, ref, require, run,
-                        sha, toml, toolchain, worker_recipe, recipe_digest, write)
+                        sha, toml, toolchain, worker_recipe, worker_environment, recipe_digest, write)
 from wi_release_packages import cargo, environment
 from wi_crash_isolation import check_artifacts
 
@@ -16,10 +16,9 @@ from wi_crash_isolation import check_artifacts
 def consumer(output, work, version):
     folder = work / 'consumer'
     shutil.copytree(ROOT / 'examples/downstream-consumer', folder, ignore=shutil.ignore_patterns('Cargo.lock', 'target'))
-    base = cargo(work / 'registry.toml'); env = environment(); build = toolchain()
-    # Seed the exact runtime external versions, without turning its root into a
-    # path dependency. Cargo adds the registry root and the standalone consumer.
-    shutil.copyfile(work / 'extracted/worldinterface-runtime/Cargo.lock', folder / 'Cargo.lock')
+    base = cargo(work / 'registry.toml'); env = environment(work)
+    # Resolve a fresh consumer lock from the versions available in the candidate
+    # registry; preserve it separately from the packaged runtime lock.
     run(base + ['generate-lockfile', '--offline'], folder, output / 'logs/consumer-lock.log', env, 180)
     run(base + ['metadata', '--offline', '--locked', '--format-version', '1'], folder, output / 'logs/consumer-metadata.log', env, 180, stdout_path=output / 'consumer-resolution.json')
     meta = read(output / 'consumer-resolution.json')
@@ -39,8 +38,12 @@ def consumer(output, work, version):
     write(output / 'production/consumer.json', records)
     run(base + ['run', '--offline', '--locked'], folder, output / 'logs/consumer-run.log', env, 300)
     install = work / 'install'
+    roots = {str(Path(p['manifest_path']).parent.parent) for p in meta['packages'] if p['source']}
+    env = worker_environment(env, work, roots)
+    build = toolchain(env)
+    write(output / 'build-environment.json', build)
     recipe = worker_recipe(version, build['target'])
-    command = recipe.copy(); command[command.index('{install-root}')] = str(install)
+    command = recipe['argv'].copy(); command[command.index('{install-root}')] = str(install)
     command[2:2] = ['--config', str(work / 'registry.toml')]
     # Offline is a cargo install option, and the environment also forbids network.
     command.append('--offline')
