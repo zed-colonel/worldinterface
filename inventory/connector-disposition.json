@@ -1254,7 +1254,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/release/handoff.json",
-          "source_sha256": "7d8ac0c64358578cc5f7e611533be734730b644fec6c9111465e9cc08d7f16f5",
+          "source_sha256": "ea1bf2ea2e1faa76210d624f8590f9acb495fc0d100af34f50e93fcd3f5708ad",
           "treatment": "Retain WSP-02 package evidence/support and registry consumer. Future legacy removal must preserve authoritative byte equality and release consumer coverage."
         },
         {
@@ -1294,7 +1294,7 @@
         },
         {
           "path": "docs/release/0.2.0-alpha.1.md",
-          "source_sha256": "d7fc47283490c91c06ec179318c21bc00c55a4bb868795df76718c8f5ee4c8b8",
+          "source_sha256": "5d154457da88f20895c395c1ac43f358d6be31b6f32ff4f02d5242cda5c28b21",
           "treatment": "Retain the independent receipt-inspection provider latency regression, shared fixture support and documentation, including exact authorization and the bounded attempt budget. These contain no legacy DelayConnector registration; selective connector removal must preserve this coverage."
         },
         {

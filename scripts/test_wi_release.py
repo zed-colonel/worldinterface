@@ -101,6 +101,21 @@ class ReleaseTests(unittest.TestCase):
                 binary.write_bytes(b'ELF\x00' + os.fsencode(source) + b'/src/lib.rs\x00')
                 shared.check_worker_paths(binary, work, build)
 
+    def test_gate_temporary_directories_are_canonical_before_live_fixtures(self):
+        physical = self.base / 'physical'; physical.mkdir()
+        logical = self.base / 'logical temporary directory'
+        logical.symlink_to(physical, target_is_directory=True)
+        with patch.dict(os.environ, {key: str(logical) for key in ['TMPDIR', 'TMP', 'TEMP']}):
+            env = release.gate_environment()
+        for key in ['TMPDIR', 'TMP', 'TEMP']:
+            self.assertEqual(env[key], str(physical.resolve()))
+        # Creation through the gate environment must have no symlink component;
+        # runtime stores enforce this independently for every fixture.
+        result = subprocess.check_output([sys.executable, '-c',
+            'import pathlib,tempfile; p=pathlib.Path(tempfile.mkdtemp()); print(p); print(p.resolve()); p.rmdir()'],
+            env=env, text=True, timeout=30).splitlines()
+        self.assertEqual(result[0], result[1])
+
     def test_documentation_discards_pages_from_previous_preparations(self):
         target = self.base / 'target'; docs = target / 'doc'; docs.mkdir(parents=True)
         (docs / 'removed-api.html').write_text('stale')

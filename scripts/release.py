@@ -32,6 +32,17 @@ def gates():
         ('consumer', ['python3', '-B', 'scripts/check-consumer.py', *common])]
 
 
+def gate_environment():
+    env = dict(os.environ, CARGO_TARGET_DIR=str(external_target()),
+               PYTHONDONTWRITEBYTECODE='1', RUSTUP_TOOLCHAIN=TOOLCHAIN)
+    # Runtime stores deliberately reject symlinked directory components. Give
+    # gates canonical temporary paths too, rather than weakening that boundary
+    # or passing the caller's logical TMPDIR into live fixture creation.
+    for key in ['TMPDIR', 'TMP', 'TEMP']:
+        if env.get(key): env[key] = str(Path(env[key]).resolve())
+    return env
+
+
 def preflight(version, commit, output):
     clean(commit)
     require(not output.is_symlink(), 'symlink output directory')
@@ -214,7 +225,7 @@ def prepare(version, commit, output):
                         source_before={'commit': commit, 'tree': git('rev-parse', 'HEAD^{tree}'), 'clean': True}, build_work=str(work), preparation_output=str(output))
         write(output / 'build-environment.json', build)
         evidence = []
-        env = dict(os.environ, CARGO_TARGET_DIR=str(external_target()), PYTHONDONTWRITEBYTECODE='1', RUSTUP_TOOLCHAIN=TOOLCHAIN)
+        env = gate_environment()
         # Fetch before all offline gates; these source workspaces remain distinct.
         for scope in [FOUNDATION, RUNTIME, Path('tools/wi-contract-check')]:
             subprocess.run(['cargo', 'fetch', '--locked', '--manifest-path', str(scope / 'Cargo.toml')], cwd=ROOT, check=True, timeout=600)
