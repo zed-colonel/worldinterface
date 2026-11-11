@@ -108,7 +108,10 @@ def environment(work):
     # registry. Keep those per-registry sources with the disposable staging.
     home = work / 'cargo-home'
     home.mkdir(parents=True, exist_ok=True)
-    return dict(os.environ, CARGO_HOME=str(home),
+    # Cargo preserves CARGO_HOME's spelling in rustc source paths. Canonicalize
+    # before any resolution/build so remapping and recorded paths agree even
+    # when TMPDIR or the disposable home is reached through a symlink.
+    return dict(os.environ, CARGO_HOME=str(home.resolve()),
                 CARGO_TARGET_DIR=str(external_target()), CARGO_NET_OFFLINE='true',
                 RUSTUP_TOOLCHAIN=TOOLCHAIN,
                 CARGO_BUILD_JOBS=os.environ.get('CARGO_BUILD_JOBS', '8'), RUST_TEST_THREADS='4',

@@ -337,7 +337,7 @@ def worker_recipe(version, target):
                 ['{target-directory}', '/wi/target'],
                 ['{cargo-home}/registry/src/*', '/wi/registry'],
                 ['{sysroot}/lib/rustlib/src/rust', '/rustc/{rustc-commit-hash}']],
-            'rustflags': 'replace RUSTFLAGS and CARGO_ENCODED_RUSTFLAGS with the remappings, separated by ASCII 31; expand each registry source root'}
+            'rustflags': 'canonicalize build root, CARGO_HOME and CARGO_TARGET_DIR before invoking Cargo; replace RUSTFLAGS and CARGO_ENCODED_RUSTFLAGS with the remappings, separated by ASCII 31; expand each registry source root'}
 
 
 def worker_environment(env, work, source_roots, build):
@@ -345,23 +345,33 @@ def worker_environment(env, work, source_roots, build):
 
     Mapping registry/src alone would retain that suffix in file!() and panic
     locations. Map rust-src back to rustc's canonical compiler source prefix,
-    whether or not rust-src is installed. Use the recorded toolchain so verify
-    can reconstruct the producer's flags on a different machine.
+    whether or not rust-src is installed. Cargo is invoked with canonical staging,
+    home and target paths. Use only recorded paths here: verification must not
+    resolve producer symlinks on a different machine (or after staging cleanup).
     """
     env = dict(env)
-    home = Path(env['CARGO_HOME']).resolve()
-    roots = sorted({Path(p).resolve() for p in source_roots})
+    home = Path(env['CARGO_HOME'])
+    roots = sorted({Path(p) for p in source_roots})
     require(roots and all(p.parent == home / 'registry/src' for p in roots), 'worker registry sources outside staged CARGO_HOME')
     sysroot = Path(build['sysroot'])
     commit = re.search(r'^commit-hash: ([a-f0-9]{40})$', build['rustc'], re.M)
     require(sysroot.is_absolute() and commit, 'worker requires an absolute sysroot and rustc commit hash')
-    mappings = [(Path(work).resolve(), '/wi/build'),
-                (Path(env['CARGO_TARGET_DIR']).resolve(), '/wi/target'),
+    mappings = [(Path(work), '/wi/build'),
+                (Path(env['CARGO_TARGET_DIR']), '/wi/target'),
                 *[(p, '/wi/registry') for p in roots],
                 (sysroot / 'lib/rustlib/src/rust', '/rustc/' + commit[1])]
+    require(all(p.is_absolute() for p, _ in mappings), 'worker remapping requires absolute recorded paths')
     env.pop('RUSTFLAGS', None)
     env['CARGO_ENCODED_RUSTFLAGS'] = '\x1f'.join(f'--remap-path-prefix={source}={dest}' for source, dest in mappings)
     return env
+
+
+def check_worker_paths(path, work, build):
+    """Refuse a worker embedding any recorded producer directory."""
+    data = Path(path).read_bytes()
+    for source in [str(work), build['cargo_home'], build['target_directory'], build['sysroot']]:
+        require(Path(source).is_absolute(), 'worker path check requires absolute recorded paths')
+        require(os.fsencode(source) not in data, f'worker {Path(path).name} leaks producer path: {source}')
 
 
 def recipe_digest(recipe):

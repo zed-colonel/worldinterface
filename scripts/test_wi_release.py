@@ -78,7 +78,7 @@ class ReleaseTests(unittest.TestCase):
         # rust-src mapping is required even when the component was not installed.
         build = {'sysroot': str(self.base / 'rustup with spaces/toolchain'),
                  'rustc': f'commit-hash: {commit}\n', 'rust_src_installed': False}
-        with patch.object(shared.subprocess, 'check_output', side_effect=AssertionError('local toolchain probe')):
+        with patch.object(shared.subprocess, 'check_output', side_effect=AssertionError('local toolchain probe')), patch.object(Path, 'resolve', side_effect=AssertionError('local path resolution')):
             result = shared.worker_environment(env, self.base, roots, build)
         flag = f"--remap-path-prefix={build['sysroot']}/lib/rustlib/src/rust=/rustc/{commit}"
         self.assertEqual(result['CARGO_ENCODED_RUSTFLAGS'].split('\x1f')[-1], flag)
@@ -87,6 +87,19 @@ class ReleaseTests(unittest.TestCase):
         for invalid in [dict(build, sysroot='relative'), dict(build, rustc='commit-hash: unknown\n')]:
             with self.assertRaises(ValueError):
                 shared.worker_environment(env, self.base, roots, invalid)
+
+    def test_worker_path_check_rejects_each_recorded_producer_directory(self):
+        work = self.base / 'build'
+        build = {'cargo_home': str(self.base / 'cargo-home'),
+                 'target_directory': str(self.base / 'target'),
+                 'sysroot': str(self.base / 'toolchain')}
+        binary = self.base / 'worker'
+        binary.write_bytes(b'ELF\x00/wi/registry/dependency/src/lib.rs\x00/rustc/commit/library/std')
+        shared.check_worker_paths(binary, work, build)
+        for source in [str(work), *build.values()]:
+            with self.subTest(source=source), self.assertRaisesRegex(ValueError, 'leaks producer path'):
+                binary.write_bytes(b'ELF\x00' + os.fsencode(source) + b'/src/lib.rs\x00')
+                shared.check_worker_paths(binary, work, build)
 
     def test_documentation_discards_pages_from_previous_preparations(self):
         target = self.base / 'target'; docs = target / 'doc'; docs.mkdir(parents=True)
@@ -252,6 +265,15 @@ class ReleaseTests(unittest.TestCase):
             self.assertFalse((output / 'SHA256SUMS').exists())
 
     def test_real_cargo_archive_registry_and_consumer_without_paths(self):
+        # Exercise a symlinked TMPDIR/base, including spaces, on every run.
+        physical = self.base / 'physical'; physical.mkdir()
+        logical = self.base / 'logical base'; logical.symlink_to(physical, target_is_directory=True)
+        self.base = logical
+        # Keep builds in the assigned cache, but reach it through a target alias.
+        target_alias = self.base / 'target alias'
+        target_alias.symlink_to(shared.external_target(), target_is_directory=True)
+        target_env = patch.dict(os.environ, {'CARGO_TARGET_DIR': str(target_alias)})
+        target_env.start(); self.addCleanup(target_env.stop)
         registry = self.base / 'registry'; (registry / 'index').mkdir(parents=True)
         source = self.base / 'source'; (source / 'src').mkdir(parents=True)
         (source / 'Cargo.toml').write_text('[workspace]\n[package]\nname="wi-release-test-dependency"\nversion="1.0.0"\nedition="2021"\n')
@@ -294,9 +316,22 @@ class ReleaseTests(unittest.TestCase):
         shared_home = self.base / 'shared-cargo-home'; shared_home.mkdir()
         for route in ['first-location', 'different-location']:
             staging = self.base / route
+            staging.mkdir()
+            home = self.base / (route + '-home'); home.mkdir()
+            (staging / 'cargo-home').symlink_to(home.resolve(), target_is_directory=True)
+            (staging / 'target').symlink_to(target_alias.resolve(), target_is_directory=True)
             with patch.dict(os.environ, {'CARGO_HOME': str(shared_home), 'RUSTFLAGS': '--cfg unwanted'}):
                 env = packages.environment(staging)
-            self.assertEqual(Path(env['CARGO_HOME']), staging / 'cargo-home')
+            self.assertEqual(Path(env['CARGO_HOME']), home.resolve())
+            self.assertEqual(Path(env['CARGO_TARGET_DIR']), target_alias.resolve())
+            # Execute the documented canonical exports and remapping snippet,
+            # then use its actual flags for one of the real install routes.
+            notes = (shared.ROOT / 'docs/release/0.2.0-alpha.1.md').read_text()
+            exports = notes.split('```sh\n', 1)[1].split('export RUSTUP_TOOLCHAIN', 1)[0]
+            script = exports + "python3 -c 'import json,os; print(json.dumps({k: os.environ[k] for k in [\"WI_WORKER_BUILD_ROOT\", \"CARGO_HOME\", \"CARGO_TARGET_DIR\"]}))'"
+            documented = json.loads(subprocess.check_output(['bash', '-c', script], cwd=staging, text=True, timeout=30))
+            self.assertEqual(documented, {'WI_WORKER_BUILD_ROOT': str(staging.resolve()),
+                                         'CARGO_HOME': env['CARGO_HOME'], 'CARGO_TARGET_DIR': env['CARGO_TARGET_DIR']})
             local = staging / 'registry'; shutil.copytree(registry, local)
             cfg = staging / 'registry.toml'
             cfg.write_text(config.read_text().replace(str(registry), str(local)))
@@ -304,7 +339,11 @@ class ReleaseTests(unittest.TestCase):
             roots = list((Path(env['CARGO_HOME']) / 'registry/src').iterdir())
             locations.extend(roots)
             build = shared.toolchain(env)
-            env = shared.worker_environment(env, staging, roots, build)
+            env = shared.worker_environment(env, staging.resolve(), roots, build)
+            snippet = notes.split("export CARGO_ENCODED_RUSTFLAGS=\"$(python3 - <<'PY'\n", 1)[1].split('\nPY\n', 1)[0]
+            documented_flags = subprocess.check_output([sys.executable, '-c', snippet], env=dict(env, **documented), text=True, timeout=30).rstrip('\n')
+            self.assertEqual(documented_flags, env['CARGO_ENCODED_RUSTFLAGS'])
+            if route == 'different-location': env['CARGO_ENCODED_RUSTFLAGS'] = documented_flags
             self.assertNotIn('RUSTFLAGS', env)
             cargo(['--config', str(cfg), 'install', '--offline', '--locked', '--version', '=1.0.0',
                    '--target', 'x86_64-unknown-linux-gnu', '--root', str(staging / 'install'),
@@ -316,6 +355,9 @@ class ReleaseTests(unittest.TestCase):
             # std panic locations must use rustc's canonical compiler source
             # prefix even when rust-src is installed at a machine-local path.
             binary_bytes = binary.read_bytes()
+            shared.check_worker_paths(binary, staging.resolve(), shared.toolchain(env))
+            for source in [self.base, self.base.resolve(), staging / 'cargo-home', target_alias]:
+                self.assertNotIn(os.fsencode(source), binary_bytes)
             self.assertFalse(build['sysroot'].encode() in binary_bytes, 'worker binary leaks the local sysroot path')
             commit = next(line.split(': ', 1)[1] for line in build['rustc'].splitlines() if line.startswith('commit-hash: '))
             self.assertTrue(f'/rustc/{commit}/library/'.encode() in binary_bytes, 'worker binary lacks the canonical compiler source prefix')

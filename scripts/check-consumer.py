@@ -8,12 +8,13 @@ import subprocess
 import sys
 sys.dont_write_bytecode = True
 from wi_release import (ROOT, RUNTIME, PACKAGES, check_graph, read, ref, require, run,
-                        sha, toml, toolchain, worker_recipe, worker_environment, recipe_digest, write)
+                        sha, toml, toolchain, worker_recipe, worker_environment, recipe_digest, write, check_worker_paths)
 from wi_release_packages import cargo, environment
 from wi_crash_isolation import check_artifacts
 
 
 def consumer(output, work, version):
+    work = work.resolve()
     folder = work / 'consumer'
     shutil.copytree(ROOT / 'examples/downstream-consumer', folder, ignore=shutil.ignore_patterns('Cargo.lock', 'target'))
     base = cargo(work / 'registry.toml'); env = environment(work)
@@ -50,6 +51,7 @@ def consumer(output, work, version):
     run(command, work, output / 'logs/worker-install.log', env, 1200)
     binaries = {}
     for name in ['wi-process-fixture', 'wi-process-reaper']:
+        check_worker_paths(install / 'bin' / name, work, build)
         dest = output / 'workers' / name; dest.parent.mkdir(exist_ok=True)
         shutil.copy2(install / 'bin' / name, dest)
         binaries[name] = dict(ref(output, dest), size=dest.stat().st_size)

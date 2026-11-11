@@ -15,7 +15,7 @@ import tempfile
 sys.dont_write_bytecode = True
 from wi_release import (ROOT, FOUNDATION, RUNTIME, PACKAGES, ADOPTED, BASELINE, TOOLCHAIN, archive_files,
                         clean, check_graph, external_target, git, metadata, read, ref, require, run, worker_recipe, worker_environment, recipe_digest,
-                        safe, sha, toolchain, toml, validate_archive, validate_schema, write)
+                        safe, sha, toolchain, toml, validate_archive, validate_schema, write, check_worker_paths)
 from wi_crash_isolation import check_artifacts
 
 
@@ -127,6 +127,7 @@ def validate_packages(manifest, output):
     require(set(handoff['executables']) == {'wi-process-fixture', 'wi-process-reaper'}, 'missing worker executable')
     for name, record in handoff['executables'].items():
         require(record['path'] == 'workers/' + name and record['sha256'] == sha(safe(output, record['path'])) and record['size'] == (output / record['path']).stat().st_size, 'worker executable drift')
+        check_worker_paths(safe(output, record['path']), manifest['build_work'], build)
     validate_resolution(consumer_meta, 'wi-downstream-consumer', version)
     check_graph(consumer_meta, toml(safe(output, 'consumer-Cargo.lock')), 'wi-downstream-consumer', version, checksums, inspect_manifests=False)
     check_artifacts(read(safe(output, 'production/consumer.json')))
@@ -208,7 +209,7 @@ def prepare(version, commit, output):
     output.mkdir(parents=True, exist_ok=True)
     # The evidence directory is persistent; registry/build staging is disposable.
     with tempfile.TemporaryDirectory(prefix='wi-release-') as temporary:
-        work = Path(temporary) / 'work'
+        work = Path(temporary).resolve() / 'work'
         manifest.update(source_commit=commit, baseline_revision=BASELINE,
                         source_before={'commit': commit, 'tree': git('rev-parse', 'HEAD^{tree}'), 'clean': True}, build_work=str(work), preparation_output=str(output))
         write(output / 'build-environment.json', build)
