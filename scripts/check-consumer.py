@@ -39,7 +39,7 @@ def consumer(output, work, version):
     run(base + ['run', '--offline', '--locked'], folder, output / 'logs/consumer-run.log', env, 300)
     install = work / 'install'
     roots = {str(Path(p['manifest_path']).parent.parent) for p in meta['packages'] if p['source']}
-    env = worker_environment(env, work, roots)
+    env = worker_environment(env, work, roots, toolchain(env))
     build = toolchain(env)
     write(output / 'build-environment.json', build)
     recipe = worker_recipe(version, build['target'])

@@ -85,12 +85,16 @@ def toolchain(env=None):
     rust = subprocess.check_output([current_env.get('RUSTC', 'rustc'), '-vV'], env=env, text=True, timeout=30)
     cargo = subprocess.check_output(['cargo', '--version'], env=env, text=True, timeout=30).strip()
     require('release: 1.89.0\n' in rust and cargo.startswith('cargo 1.89.0 '), 'release requires rustc and Cargo 1.89.0')
+    sysroot = Path(subprocess.check_output([current_env.get('RUSTC', 'rustc'), '--print', 'sysroot'], env=env, text=True, timeout=30).strip()).resolve()
     host = re.search(r'^host: (.+)$', rust, re.M)[1]
     require(host == 'x86_64-unknown-linux-gnu', 'worker proof release requires Linux x86_64 GNU')
     # External archive/consumer directories have no rust-toolchain.toml. Record
     # the override applied to every gate, rather than rustup's machine default.
     effective_env = dict(current_env, RUSTUP_TOOLCHAIN=TOOLCHAIN)
     return {'rustc': rust, 'cargo': cargo, 'target': host, 'profile': 'release',
+            'sysroot': str(sysroot),
+            'rust_src_installed': (sysroot / 'lib/rustlib/src/rust/library').is_dir(),
+            'rustup_home': effective_env.get('RUSTUP_HOME', str(Path.home() / '.rustup')),
             'cargo_home': effective_env.get('CARGO_HOME', str(Path.home() / '.cargo')),
             'target_directory': effective_env.get('CARGO_TARGET_DIR', str(external_target())),
             'cc': subprocess.check_output(['cc', '--version'], env=env, text=True, timeout=30),
@@ -331,23 +335,30 @@ def worker_recipe(version, target):
             'path_remapping': [
                 ['{build-root}', '/wi/build'],
                 ['{target-directory}', '/wi/target'],
-                ['{cargo-home}/registry/src/*', '/wi/registry']],
+                ['{cargo-home}/registry/src/*', '/wi/registry'],
+                ['{sysroot}/lib/rustlib/src/rust', '/rustc/{rustc-commit-hash}']],
             'rustflags': 'replace RUSTFLAGS and CARGO_ENCODED_RUSTFLAGS with the remappings, separated by ASCII 31; expand each registry source root'}
 
 
-def worker_environment(env, work, source_roots):
+def worker_environment(env, work, source_roots, build):
     """Normalize each registry bucket, including its variable registry-id suffix.
 
     Mapping registry/src alone would retain that suffix in file!() and panic
-    locations. Put specific source mappings last, after the staging prefix.
+    locations. Map rust-src back to rustc's canonical compiler source prefix,
+    whether or not rust-src is installed. Use the recorded toolchain so verify
+    can reconstruct the producer's flags on a different machine.
     """
     env = dict(env)
     home = Path(env['CARGO_HOME']).resolve()
     roots = sorted({Path(p).resolve() for p in source_roots})
     require(roots and all(p.parent == home / 'registry/src' for p in roots), 'worker registry sources outside staged CARGO_HOME')
+    sysroot = Path(build['sysroot'])
+    commit = re.search(r'^commit-hash: ([a-f0-9]{40})$', build['rustc'], re.M)
+    require(sysroot.is_absolute() and commit, 'worker requires an absolute sysroot and rustc commit hash')
     mappings = [(Path(work).resolve(), '/wi/build'),
                 (Path(env['CARGO_TARGET_DIR']).resolve(), '/wi/target'),
-                *[(p, '/wi/registry') for p in roots]]
+                *[(p, '/wi/registry') for p in roots],
+                (sysroot / 'lib/rustlib/src/rust', '/rustc/' + commit[1])]
     env.pop('RUSTFLAGS', None)
     env['CARGO_ENCODED_RUSTFLAGS'] = '\x1f'.join(f'--remap-path-prefix={source}={dest}' for source, dest in mappings)
     return env

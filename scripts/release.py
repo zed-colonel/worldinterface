@@ -116,7 +116,7 @@ def validate_packages(manifest, output):
     build = handoff['build']
     require(build['cargo_home'] == manifest['build_work'] + '/cargo-home', 'worker Cargo home is not disposable staging')
     roots = {str(Path(p['manifest_path']).parent.parent) for p in consumer_meta['packages'] if p['source']}
-    expected_env = worker_environment({'CARGO_HOME': build['cargo_home'], 'CARGO_TARGET_DIR': build['target_directory']}, manifest['build_work'], roots)
+    expected_env = worker_environment({'CARGO_HOME': build['cargo_home'], 'CARGO_TARGET_DIR': build['target_directory']}, manifest['build_work'], roots, build)
     require(build['build_environment']['RUSTFLAGS'] == '' and build['build_environment']['CARGO_ENCODED_RUSTFLAGS'] == expected_env['CARGO_ENCODED_RUSTFLAGS'], 'worker path remapping drift')
     command = recipe['argv'].copy(); command[command.index('{install-root}')] = manifest['build_work'] + '/install'
     command[2:2] = ['--config', manifest['build_work'] + '/registry.toml']; command.append('--offline')

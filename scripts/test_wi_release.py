@@ -70,6 +70,24 @@ class ReleaseTests(unittest.TestCase):
             self.assertTrue(result.startswith(program + ' 1.89.0 '), result)
         self.assertEqual(shared.toolchain()['build_environment']['RUSTUP_TOOLCHAIN'], '1.89.0')
 
+    def test_worker_sysroot_remapping_uses_recorded_toolchain_without_local_probes(self):
+        env = packages.environment(self.base)
+        roots = [Path(env['CARGO_HOME']) / 'registry/src/recorded-bucket']
+        commit = 'a' * 40
+        # These producer paths need not exist on the verification machine. The
+        # rust-src mapping is required even when the component was not installed.
+        build = {'sysroot': str(self.base / 'rustup with spaces/toolchain'),
+                 'rustc': f'commit-hash: {commit}\n', 'rust_src_installed': False}
+        with patch.object(shared.subprocess, 'check_output', side_effect=AssertionError('local toolchain probe')):
+            result = shared.worker_environment(env, self.base, roots, build)
+        flag = f"--remap-path-prefix={build['sysroot']}/lib/rustlib/src/rust=/rustc/{commit}"
+        self.assertEqual(result['CARGO_ENCODED_RUSTFLAGS'].split('\x1f')[-1], flag)
+        self.assertEqual(shared.worker_recipe(VERSION, 'x86_64-unknown-linux-gnu')['path_remapping'][-1],
+                         ['{sysroot}/lib/rustlib/src/rust', '/rustc/{rustc-commit-hash}'])
+        for invalid in [dict(build, sysroot='relative'), dict(build, rustc='commit-hash: unknown\n')]:
+            with self.assertRaises(ValueError):
+                shared.worker_environment(env, self.base, roots, invalid)
+
     def test_documentation_discards_pages_from_previous_preparations(self):
         target = self.base / 'target'; docs = target / 'doc'; docs.mkdir(parents=True)
         (docs / 'removed-api.html').write_text('stale')
@@ -255,7 +273,7 @@ class ReleaseTests(unittest.TestCase):
         config.write_text('[source.crates-io]\nreplace-with="fixture"\n[source.fixture]\nlocal-registry=' + json.dumps(str(registry)) + '\n')
         consumer = self.base / 'consumer'; (consumer / 'src').mkdir(parents=True)
         (consumer / 'Cargo.toml').write_text('[workspace]\n[package]\nname="wi-release-test-consumer"\nversion="1.0.0"\nedition="2021"\n[dependencies]\nwi-release-test-dependency="=1.0.0"\n')
-        (consumer / 'src/main.rs').write_text('fn main() { assert_eq!(wi_release_test_dependency::value(),42); println!("{}", wi_release_test_dependency::location()); }')
+        (consumer / 'src/main.rs').write_text('fn main() { assert_eq!(wi_release_test_dependency::value(),42); println!("{}", wi_release_test_dependency::location()); std::thread::scope(|s| { s.spawn(|| 42).join().unwrap(); }); }')
         cargo(['--config', str(config), 'run', '--offline'], consumer)
         result = cargo(['--config', str(config), 'metadata', '--locked', '--offline', '--format-version', '1'], consumer)
         dep = next(p for p in json.loads(result.stdout)['packages'] if p['name'] == 'wi-release-test-dependency')
@@ -285,7 +303,8 @@ class ReleaseTests(unittest.TestCase):
             cargo(['--config', str(cfg), 'metadata', '--offline', '--format-version', '1'], consumer, env)
             roots = list((Path(env['CARGO_HOME']) / 'registry/src').iterdir())
             locations.extend(roots)
-            env = shared.worker_environment(env, staging, roots)
+            build = shared.toolchain(env)
+            env = shared.worker_environment(env, staging, roots, build)
             self.assertNotIn('RUSTFLAGS', env)
             cargo(['--config', str(cfg), 'install', '--offline', '--locked', '--version', '=1.0.0',
                    '--target', 'x86_64-unknown-linux-gnu', '--root', str(staging / 'install'),
@@ -294,8 +313,16 @@ class ReleaseTests(unittest.TestCase):
             output = subprocess.check_output([binary], text=True, timeout=30)
             self.assertIn('/wi/registry/wi-release-test-dependency-1.0.0/src/lib.rs', output)
             self.assertNotIn(str(self.base), output)
+            # std panic locations must use rustc's canonical compiler source
+            # prefix even when rust-src is installed at a machine-local path.
+            binary_bytes = binary.read_bytes()
+            self.assertFalse(build['sysroot'].encode() in binary_bytes, 'worker binary leaks the local sysroot path')
+            commit = next(line.split(': ', 1)[1] for line in build['rustc'].splitlines() if line.startswith('commit-hash: '))
+            self.assertTrue(f'/rustc/{commit}/library/'.encode() in binary_bytes, 'worker binary lacks the canonical compiler source prefix')
             digests.append(shared.sha(binary))
             recorded = shared.toolchain(env)
+            self.assertEqual(recorded['sysroot'], build['sysroot'])
+            self.assertEqual(recorded['rust_src_installed'], (Path(recorded['sysroot']) / 'lib/rustlib/src/rust/library').is_dir())
             self.assertEqual(recorded['cargo_home'], env['CARGO_HOME'])
             self.assertEqual(recorded['build_environment']['CARGO_ENCODED_RUSTFLAGS'], env['CARGO_ENCODED_RUSTFLAGS'])
         self.assertNotEqual(locations[0].name, locations[1].name)

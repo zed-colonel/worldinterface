@@ -90,3 +90,13 @@ fresh lock rather than claiming to seed runtime versions (F-004). Publication
 staging directs the operator to relay exact handoff bytes and the trusted
 manifest digest as downstream work-item inputs for crates.io-only agents
 (F-005). These are implementation claims for review, not finding closure.
+
+F-006 remediation adds the sysroot Rust source mapping to `/rustc/<compiler
+commit hash>` in preparation, verification, the consumer recipe and the packaged
+descriptor. The environment record includes the sysroot, rustup home and rust-src
+availability. Verification reconstructs producer flags from that recorded
+compiler identity without probing the verifier's toolchain. The real Cargo
+regression checks that installed executables contain the canonical compiler
+source prefix and no local sysroot path; a separate regression covers recorded
+paths with spaces and absent rust-src. Fresh preparation measures the worker
+digests under the updated recipe. These are implementation claims for review.

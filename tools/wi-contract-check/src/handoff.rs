@@ -131,8 +131,8 @@ pub fn descriptor(root: &Path) -> Result<Value> {
             "repository_lock":"release/repository-Cargo.lock; dependencies_digest() preserves repository provenance",
             "packaged_lock":"Cargo.lock; normalized archive digest recorded separately in external consumer-handoff.json",
             "consumer_handoff":"external release consumer-handoff.json binds source commit, descriptor, archives, both lock identities, measured worker digests and build environment; operator relays exact bytes and manifest SHA-256 through the published map record to EXV-11/EXV-27 as a downstream input",
-            "worker_recipe":format!("replace inherited RUSTFLAGS and CARGO_ENCODED_RUSTFLAGS with --remap-path-prefix for build root=/wi/build, target directory=/wi/target, then each CARGO_HOME/registry/src/* root=/wi/registry (ASCII 31 separators); cargo +1.89.0 install --locked --version '={adapter_version}' --target x86_64-unknown-linux-gnu --profile release --bin wi-process-fixture --bin wi-process-reaper --root INSTALL_ROOT worldinterface-runtime"),
-            "digest_scope":"registry and staging paths remapped; recorded compiler, target, profile, environment and linker/system only",
+            "worker_recipe":format!("replace inherited RUSTFLAGS and CARGO_ENCODED_RUSTFLAGS with --remap-path-prefix for build root=/wi/build, target directory=/wi/target, each CARGO_HOME/registry/src/* root=/wi/registry, then sysroot/lib/rustlib/src/rust=/rustc/<commit-hash from rustc -vV> (ASCII 31 separators); cargo +1.89.0 install --locked --version '={adapter_version}' --target x86_64-unknown-linux-gnu --profile release --bin wi-process-fixture --bin wi-process-reaper --root INSTALL_ROOT worldinterface-runtime"),
+            "digest_scope":"registry, staging and sysroot source paths remapped; recorded compiler, target, profile, environment and linker/system only",
             "procedure":"docs/release/publication-staging.md"
         },
         "consumer":{

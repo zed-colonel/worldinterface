@@ -1254,7 +1254,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/release/handoff.json",
-          "source_sha256": "790883d25a6050323400efe05d5e21694b9b5b93b933f896fc398f951ba038ee",
+          "source_sha256": "dfa9928b3d4e382835e57fda8251903e984a244c902415e0b1f719096b22508d",
           "treatment": "Retain WSP-02 package evidence/support and registry consumer. Future legacy removal must preserve authoritative byte equality and release consumer coverage."
         },
         {
@@ -1294,7 +1294,7 @@
         },
         {
           "path": "docs/release/0.2.0-alpha.1.md",
-          "source_sha256": "79eaf9ca958fd5c48d916013b48c71c25413dba03a918ac2fe4dcbe0942c78af",
+          "source_sha256": "ac7e476779542291f044dd4641033308892df5f91db8e955955cafb160c51825",
           "treatment": "Retain the independent receipt-inspection provider latency regression, shared fixture support and documentation, including exact authorization and the bounded attempt budget. These contain no legacy DelayConnector registration; selective connector removal must preserve this coverage."
         },
         {
@@ -1329,7 +1329,7 @@
         },
         {
           "path": "docs/work-items/WSP-02.md",
-          "source_sha256": "819f084c8c060befa8ba369f3e1c85955997b8adafae3f024ad5f9fc77ff9613",
+          "source_sha256": "7c865084bdd55bed36847275ffbb436443b33c84b59046a631ea811f6b8eedf1",
           "treatment": "Retain the independent receipt-inspection provider latency regression, shared fixture support and documentation, including exact authorization and the bounded attempt budget. These contain no legacy DelayConnector registration; selective connector removal must preserve this coverage."
         },
         {
