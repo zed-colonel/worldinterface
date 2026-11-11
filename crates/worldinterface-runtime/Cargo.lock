@@ -847,7 +847,7 @@ dependencies = [
 
 [[package]]
 name = "worldinterface-capability"
-version = "0.2.0"
+version = "0.2.0-alpha.1"
 dependencies = [
  "serde",
  "serde_json",
@@ -856,7 +856,7 @@ dependencies = [
 
 [[package]]
 name = "worldinterface-domain"
-version = "0.2.0"
+version = "0.2.0-alpha.1"
 dependencies = [
  "serde",
  "serde_json",
@@ -865,7 +865,7 @@ dependencies = [
 
 [[package]]
 name = "worldinterface-egress"
-version = "0.2.0"
+version = "0.2.0-alpha.1"
 dependencies = [
  "worldinterface-domain",
  "worldinterface-protocol",
@@ -874,7 +874,7 @@ dependencies = [
 
 [[package]]
 name = "worldinterface-ingress"
-version = "0.2.0"
+version = "0.2.0-alpha.1"
 dependencies = [
  "chrono",
  "hmac",
@@ -888,7 +888,7 @@ dependencies = [
 
 [[package]]
 name = "worldinterface-protocol"
-version = "0.2.0"
+version = "0.2.0-alpha.1"
 dependencies = [
  "chrono",
  "serde",
@@ -899,7 +899,7 @@ dependencies = [
 
 [[package]]
 name = "worldinterface-runtime"
-version = "0.2.0"
+version = "0.2.0-alpha.1"
 dependencies = [
  "actionqueue-core",
  "actionqueue-executor-local",
@@ -927,7 +927,7 @@ dependencies = [
 
 [[package]]
 name = "worldinterface-storage"
-version = "0.2.0"
+version = "0.2.0-alpha.1"
 dependencies = [
  "fs2",
  "rusqlite",
@@ -941,7 +941,7 @@ dependencies = [
 
 [[package]]
 name = "worldinterface-worker"
-version = "0.2.0"
+version = "0.2.0-alpha.1"
 dependencies = [
  "serde",
  "serde_json",

@@ -1,0 +1,224 @@
+{
+  "version": 1,
+  "id": "WI-WORKER-G4",
+  "source_record_sha256": "03dd712e1ea7b70770dcfd1186b7ea55902c8190dd63793d37a336bff9ae120d",
+  "pass_criteria": [
+    "WI-owned embedded harness, artifacts and external-provider seam pass without EXO/platform/Kata dependency or inflated assurance claims.",
+    "Source-owned evidence cases are bound in acceptance_coverage; owner PR IDs attribute work and are not automatic accepted-parent prerequisites."
+  ],
+  "requires": [
+    {
+      "id": "STACK-PLAN-ACCEPTED",
+      "kind": "checkpoint",
+      "state": "passed"
+    },
+    {
+      "id": "WI-WORKER-G3",
+      "kind": "checkpoint",
+      "state": "passed"
+    },
+    {
+      "id": "wi/WI-09/process-provider",
+      "kind": "slice",
+      "state": "verified"
+    },
+    {
+      "id": "wi/WI-10/process-catalog",
+      "kind": "slice",
+      "state": "verified"
+    },
+    {
+      "id": "wi/WI-11/embedded-runtime",
+      "kind": "slice",
+      "state": "verified"
+    },
+    {
+      "id": "wi/WI-13/worker-conformance",
+      "kind": "slice",
+      "state": "verified"
+    },
+    {
+      "id": "wi/WI-14/worker-handoff",
+      "kind": "slice",
+      "state": "verified"
+    },
+    {
+      "id": "WI-AQ-G1",
+      "kind": "checkpoint",
+      "state": "passed"
+    },
+    {
+      "id": "WI-AQ-G2",
+      "kind": "checkpoint",
+      "state": "passed"
+    },
+    {
+      "id": "WI-AQ-G3",
+      "kind": "checkpoint",
+      "state": "passed"
+    },
+    {
+      "id": "WI-AQ-G4",
+      "kind": "checkpoint",
+      "state": "passed"
+    }
+  ],
+  "required_cases": [
+    "AB-WI-019",
+    "WP-027",
+    "WP-028",
+    "WP-029",
+    "WP-030",
+    "WP-031",
+    "WP-032",
+    "WP-033",
+    "WP-034"
+  ],
+  "closing_item": "WIP-16",
+  "status": "closed",
+  "effective_on": "reviewed-merge-with-adopted-checks",
+  "historical_evidence": [],
+  "requirement_bindings": [
+    {
+      "requirement": {
+        "id": "STACK-PLAN-ACCEPTED",
+        "kind": "checkpoint",
+        "state": "passed"
+      },
+      "binding": {
+        "kind": "plan-import",
+        "plan_version": "9212604c-4873-4cd5-b492-1ee3141b8b0b",
+        "date": "2026-10-13",
+        "historical_acceptance": "2026-10-01"
+      }
+    },
+    {
+      "requirement": {
+        "id": "WI-WORKER-G3",
+        "kind": "checkpoint",
+        "state": "passed"
+      },
+      "binding": {
+        "kind": "closed-gate",
+        "record": "conformance/wi-fabric-2/proof/gates/WI-WORKER-G3.json"
+      }
+    },
+    {
+      "requirement": {
+        "id": "wi/WI-09/process-provider",
+        "kind": "slice",
+        "state": "verified"
+      },
+      "binding": {
+        "kind": "reviewed-item-scope",
+        "covering_items": [
+          "WIP-09",
+          "WIP-10",
+          "WIP-11"
+        ],
+        "effective_on": "reviewed-merge-with-adopted-checks"
+      }
+    },
+    {
+      "requirement": {
+        "id": "wi/WI-10/process-catalog",
+        "kind": "slice",
+        "state": "verified"
+      },
+      "binding": {
+        "kind": "reviewed-item-scope",
+        "covering_items": [
+          "WIP-12"
+        ],
+        "effective_on": "reviewed-merge-with-adopted-checks"
+      }
+    },
+    {
+      "requirement": {
+        "id": "wi/WI-11/embedded-runtime",
+        "kind": "slice",
+        "state": "verified"
+      },
+      "binding": {
+        "kind": "reviewed-item-scope",
+        "covering_items": [
+          "WIP-14"
+        ],
+        "effective_on": "reviewed-merge-with-adopted-checks"
+      }
+    },
+    {
+      "requirement": {
+        "id": "wi/WI-13/worker-conformance",
+        "kind": "slice",
+        "state": "verified"
+      },
+      "binding": {
+        "kind": "reviewed-item-scope",
+        "covering_items": [
+          "WIP-15"
+        ],
+        "effective_on": "reviewed-merge-with-adopted-checks"
+      }
+    },
+    {
+      "requirement": {
+        "id": "wi/WI-14/worker-handoff",
+        "kind": "slice",
+        "state": "verified"
+      },
+      "binding": {
+        "kind": "reviewed-item-scope",
+        "covering_items": [
+          "WIP-15",
+          "WIP-16"
+        ],
+        "effective_on": "reviewed-merge-with-adopted-checks"
+      }
+    },
+    {
+      "requirement": {
+        "id": "WI-AQ-G1",
+        "kind": "checkpoint",
+        "state": "passed"
+      },
+      "binding": {
+        "kind": "closed-gate",
+        "record": "conformance/wi-fabric-2/proof/gates/WI-AQ-G1.json"
+      }
+    },
+    {
+      "requirement": {
+        "id": "WI-AQ-G2",
+        "kind": "checkpoint",
+        "state": "passed"
+      },
+      "binding": {
+        "kind": "closed-gate",
+        "record": "conformance/wi-fabric-2/proof/gates/WI-AQ-G2.json"
+      }
+    },
+    {
+      "requirement": {
+        "id": "WI-AQ-G3",
+        "kind": "checkpoint",
+        "state": "passed"
+      },
+      "binding": {
+        "kind": "closed-gate",
+        "record": "conformance/wi-fabric-2/proof/gates/WI-AQ-G3.json"
+      }
+    },
+    {
+      "requirement": {
+        "id": "WI-AQ-G4",
+        "kind": "checkpoint",
+        "state": "passed"
+      },
+      "binding": {
+        "kind": "closed-gate",
+        "record": "conformance/wi-fabric-2/proof/gates/WI-AQ-G4.json"
+      }
+    }
+  ]
+}

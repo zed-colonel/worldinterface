@@ -3,10 +3,15 @@ resolver = "2"
 
 [package]
 name = "worldinterface-runtime"
-version = "0.2.0"
+version = "0.2.0-alpha.1"
 edition = "2021"
 rust-version = "1.89"
-publish = false
+description = "Runtime layer for WorldInterface durable embedded workflows"
+license = "Apache-2.0"
+repository = "https://github.com/zed-colonel/worldinterface"
+readme = "README.md"
+keywords = ["workflow", "embedded", "durable"]
+include = ["Cargo.toml", "Cargo.lock", "README.md", "LICENSE", "src/**", "tests/support/**", "release/**", "tests/worker_artifact_crash.rs", "tests/worker_artifact_validation.rs"]
 
 # The adopted runtime-test runs the campaign entry point. It explicitly builds
 # and executes every other runtime harness once, including tests outside the case
@@ -159,17 +164,17 @@ test = false
 bench = false
 
 [dependencies]
-worldinterface-capability = { path = "../worldinterface-foundation/capability" }
+worldinterface-capability = { version = "=0.2.0-alpha.1", path = "../worldinterface-foundation/capability" }
 actionqueue-core = { version = "=0.3.0", default-features = false, features = ["serde"] }
 actionqueue-runtime = { version = "=0.3.0", default-features = false, features = ["serde"] }
 actionqueue-storage = { version = "=0.3.0", default-features = false }
 actionqueue-executor-local = "=0.3.0"
-worldinterface-protocol = { path = "../worldinterface-foundation/protocol" }
-worldinterface-storage = { path = "../worldinterface-foundation/storage" }
-worldinterface-domain = { path = "../worldinterface-foundation/domain" }
-worldinterface-egress = { path = "../worldinterface-foundation/egress" }
-worldinterface-worker = { path = "../worldinterface-foundation/worker" }
-worldinterface-ingress = { path = "../worldinterface-foundation/ingress" }
+worldinterface-protocol = { version = "=0.2.0-alpha.1", path = "../worldinterface-foundation/protocol" }
+worldinterface-storage = { version = "=0.2.0-alpha.1", path = "../worldinterface-foundation/storage" }
+worldinterface-domain = { version = "=0.2.0-alpha.1", path = "../worldinterface-foundation/domain" }
+worldinterface-egress = { version = "=0.2.0-alpha.1", path = "../worldinterface-foundation/egress" }
+worldinterface-worker = { version = "=0.2.0-alpha.1", path = "../worldinterface-foundation/worker" }
+worldinterface-ingress = { version = "=0.2.0-alpha.1", path = "../worldinterface-foundation/ingress" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 fs2 = "0.4"
@@ -180,7 +185,7 @@ sha2 = "0.10"
 libc = "0.2"
 
 [dev-dependencies]
-worldinterface-storage = { path = "../worldinterface-foundation/storage", features = ["crash-points"] }
+worldinterface-storage = { version = "=0.2.0-alpha.1", path = "../worldinterface-foundation/storage", features = ["crash-points"] }
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 rusqlite = { version = "0.32", features = ["bundled"] }
 hmac = "0.12"

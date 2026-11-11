@@ -1,12 +1,17 @@
 [package]
 name = "worldinterface-capability"
-version = "0.2.0"
+version = "0.2.0-alpha.1"
 edition = "2021"
-publish = false
+description = "Capability layer for WorldInterface durable embedded workflows"
+license = "Apache-2.0"
+repository = "https://github.com/zed-colonel/worldinterface"
+readme = "README.md"
+keywords = ["workflow", "embedded", "durable"]
+include = ["Cargo.toml", "Cargo.lock", "README.md", "LICENSE", "src/**", "tests/support/**", "release/**", "tests/scope.rs"]
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-worldinterface-protocol = { path = "../protocol" }
+worldinterface-protocol = { version = "=0.2.0-alpha.1", path = "../protocol" }
 
 [dev-dependencies]

@@ -53,3 +53,11 @@ scripts/*
 !scripts/wi_worker_evaluation.py
 !scripts/test_wi_worker_evaluation.py
 scripts/__pycache__/
+
+# Committed pre-release tooling
+!scripts/release.py
+!scripts/wi_release.py
+!scripts/wi_release_packages.py
+!scripts/check-packages.py
+!scripts/check-consumer.py
+!scripts/test_wi_release.py

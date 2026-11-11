@@ -63,6 +63,19 @@ def expected_manifest(root, read_source=None):
                 if any(part in ["target", "dev-output"] for part in path.parts):
                     continue
                 files.add(path.relative_to(root).as_posix())
+    for directory in ["docs/release", "examples/downstream-consumer"]:
+        for path in walk(root / directory, exclude_build_outputs=True):
+            if path.is_file():
+                files.add(path.relative_to(root).as_posix())
+    for name in ["scripts/release.py", "scripts/wi_release.py", "scripts/wi_release_packages.py",
+                 "scripts/check-packages.py", "scripts/check-consumer.py", "scripts/test_wi_release.py"]:
+        files.add(name)
+    # Package copies include JSON, C helpers and the immutable repository lock
+    # snapshot. Gate copies are compared to authority by handoff check; bind all.
+    for directory in ["crates/worldinterface-foundation", "crates/worldinterface-runtime"]:
+        for path in walk(root / directory, exclude_build_outputs=True):
+            if path.is_file() and (path.suffix in [".json", ".c", ".md", ".lock"] or path.name == "LICENSE"):
+                files.add(path.relative_to(root).as_posix())
     for path in walk(root / "fixtures/pre-wi-fabric-2/exo/repos/sample-rust"):
         if path.is_file():
             files.add(path.relative_to(root).as_posix())
@@ -84,7 +97,7 @@ def expected_manifest(root, read_source=None):
         "scripts/check-wi-contract.sh", "scripts/check-wi-domain.sh",
         "scripts/check-wi-domain-isolation.py", "scripts/check-wi-integration.sh",
         "scripts/check-wi-integration.py", "scripts/wi_crash_isolation.py", "scripts/worker-proof-evidence.sh",
-        "docs/work-items/WSP-01.md", "docs/work-items/WIP-11.md", "docs/work-items/WIP-12.md", "docs/work-items/WIP-13.md", "docs/work-items/WIP-14.md", "docs/work-items/WIP-15.md", "docs/work-items/wi-worker-proof-1.md",
+        "docs/work-items/WSP-01.md", "docs/work-items/WSP-02.md", "LICENSE", "docs/work-items/WIP-11.md", "docs/work-items/WIP-12.md", "docs/work-items/WIP-13.md", "docs/work-items/WIP-14.md", "docs/work-items/WIP-15.md", "docs/work-items/wi-worker-proof-1.md",
         "docs/work-items/WIP-16.md", "docs/work-items/WI-WORKER-PROOF-1-simplification.md", "docs/evidence/WI-EMBEDDED-WORKER-PROOF-1.md",
     ]:
         files.add(name)

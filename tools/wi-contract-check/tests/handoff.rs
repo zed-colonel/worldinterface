@@ -27,6 +27,11 @@ fn fixture() -> TempDir {
             gate["id"].as_str().unwrap()
         ));
     }
+    let copies = read(&source.join("docs/release/package-tests.json")).unwrap();
+    for (dest, source) in copies["byte_copies"].as_object().unwrap() {
+        paths.push(dest.clone());
+        paths.push(source.as_str().unwrap().to_owned());
+    }
     for name in paths {
         let dest = temp.path().join(&name);
         fs::create_dir_all(dest.parent().unwrap()).unwrap();
@@ -175,4 +180,20 @@ fn wp_034_publication_binds_external_evidence_and_never_grants_reviewed_closure(
     fs::remove_file(evidence.path().join("coding.json")).unwrap();
     assert!(handoff::publication(source.path(), &receipt, evidence.path()).is_err());
     assert!(handoff::verify(source.path(), evidence.path()).is_err());
+}
+
+#[test]
+fn packaged_handoff_gates_fixtures_and_repository_lock_reject_drift() {
+    let temp = fixture();
+    handoff::validate_package_data(temp.path()).unwrap();
+    let copies = read(&temp.path().join("docs/release/package-tests.json")).unwrap();
+    for dest in copies["byte_copies"].as_object().unwrap().keys() {
+        let path = temp.path().join(dest);
+        let original = fs::read(&path).unwrap();
+        fs::write(&path, b"substituted").unwrap();
+        assert!(handoff::validate_package_data(temp.path()).is_err(), "{dest}");
+        fs::write(path, original).unwrap();
+    }
+    let value = handoff::descriptor(temp.path()).unwrap();
+    assert_eq!(value["release"]["package_version"], "0.2.0-alpha.1");
 }

@@ -894,10 +894,8 @@ mod tests {
             );
         }
         let mut expected = Vec::new();
-        let fixture: serde_json::Value = serde_json::from_str(include_str!(
-            "../../../../conformance/wi-fabric-2/egress/fixture.json"
-        ))
-        .unwrap();
+        let fixture: serde_json::Value =
+            serde_json::from_str(include_str!("../tests/support/egress.json")).unwrap();
         let snapshot: worldinterface_domain::authorization::AuthorizationSnapshot =
             serde_json::from_value(fixture["snapshot"].clone()).unwrap();
         for dispatch in 0..2 {
@@ -1075,10 +1073,8 @@ mod tests {
 
     #[test]
     fn effect_journal_faults_roll_back_every_projection() {
-        let fixture: serde_json::Value = serde_json::from_str(include_str!(
-            "../../../../conformance/wi-fabric-2/egress/fixture.json"
-        ))
-        .unwrap();
+        let fixture: serde_json::Value =
+            serde_json::from_str(include_str!("../tests/support/egress.json")).unwrap();
         let submission: EffectSubmission =
             serde_json::from_value(fixture["submission"].clone()).unwrap();
         let snapshot: worldinterface_domain::authorization::AuthorizationSnapshot =

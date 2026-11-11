@@ -42,9 +42,23 @@ pub fn mapping_markdown(root: &Path) -> Result<String> {
 pub fn descriptor(root: &Path) -> Result<Value> {
     let (registry, gates) = proof::load(root)?;
     let aq = read(&root.join("contracts/aq-integration-target.json"))?;
+    let manifest: toml::Value = toml::from_str(&fs::read_to_string(
+        root.join("crates/worldinterface-runtime/Cargo.toml"),
+    )?)?;
+    let adapter_version =
+        manifest["package"]["version"].as_str().ok_or("missing adapter version")?;
     let mut identities = BTreeMap::new();
     for path in [
         "rust-toolchain.toml",
+        "docs/release/package-tests.json",
+        "docs/release/0.2.0-alpha.1.md",
+        "scripts/release.py",
+        "scripts/wi_release.py",
+        "scripts/wi_release_packages.py",
+        "scripts/check-packages.py",
+        "scripts/check-consumer.py",
+        "examples/downstream-consumer/Cargo.toml",
+        "examples/downstream-consumer/src/main.rs",
         "crates/worldinterface-foundation/Cargo.lock",
         "crates/worldinterface-runtime/Cargo.lock",
         "tools/wi-contract-check/Cargo.lock",
@@ -92,7 +106,7 @@ pub fn descriptor(root: &Path) -> Result<Value> {
             "runtime_release":aq["runtime_release"],
             "interpretation":"execution uses crates.io 0.3.0; 0.2.0 is historical baseline identity only"},
         "profile":{"provider":"process-managed-proof-1", "execution":"WI-WORKER-EXECUTION-1",
-            "adapter":"worldinterface-runtime 0.2.0 worker_process; source digests in identities"},
+            "adapter":format!("worldinterface-runtime {adapter_version} worker_process; source digests in identities")},
         "identities":identities,
         "cases":registry.cases, "gates":gates,
         "supported_operations":["provision","start","inspect","terminate","collect_artifacts","release"],
@@ -110,6 +124,17 @@ pub fn descriptor(root: &Path) -> Result<Value> {
             "flow_nodes":64,"flow_ports":32,"aq_initial_runs":64,"aq_dependencies":64,"aq_children":64,
             "aq_emitted_signals":32,"aq_hierarchy_depth":8,"waits_per_run":1,"aq_payload_bytes":65536},
         "risks":worker_campaign::limitations(),
+        "release":{
+            "package_version":adapter_version,
+            "packaged_descriptor":"release/handoff.json",
+            "packaged_gates":"release/gates/*.json; byte-equal authoritative reviewed records",
+            "repository_lock":"release/repository-Cargo.lock; dependencies_digest() preserves repository provenance",
+            "packaged_lock":"Cargo.lock; normalized archive digest recorded separately in external consumer-handoff.json",
+            "consumer_handoff":"external release consumer-handoff.json binds source commit, descriptor, archives, both lock identities, measured worker digests and build environment; operator relays exact bytes and manifest SHA-256 through the published map record to EXV-11/EXV-27 as a downstream input",
+            "worker_recipe":format!("canonicalize build root, CARGO_HOME and CARGO_TARGET_DIR before invoking Cargo; replace inherited RUSTFLAGS and CARGO_ENCODED_RUSTFLAGS with --remap-path-prefix for build root=/wi/build, target directory=/wi/target, each CARGO_HOME/registry/src/* root=/wi/registry, then sysroot/lib/rustlib/src/rust=/rustc/<commit-hash from rustc -vV> (ASCII 31 separators); cargo +1.89.0 install --locked --version '={adapter_version}' --target x86_64-unknown-linux-gnu --profile release --bin wi-process-fixture --bin wi-process-reaper --root INSTALL_ROOT worldinterface-runtime"),
+            "digest_scope":"registry, staging and sysroot source paths remapped; recorded compiler, target, profile, environment and linker/system only",
+            "procedure":"docs/release/publication-staging.md"
+        },
         "consumer":{
             "P1-01":"pin descriptor, producer commit/tree, locks, AQ identities, profile, adapter, fixture/recipe and execution evidence; independently admit reviewed media executable/configuration/inputs",
             "P1-02":"use authenticated embedded services and scoped artifact import/read; validate one real media work order and its provenance receipts",
@@ -125,7 +150,9 @@ pub fn descriptor(root: &Path) -> Result<Value> {
         "reproduction":{
             "adopted_checks":".craftingtable/checks.json; ct-check --declared ID for all ten IDs on committed HEAD",
             "prepare":["cargo run --locked --manifest-path tools/wi-contract-check/Cargo.toml -- hashes refresh",
-                "cargo run --locked --manifest-path tools/wi-contract-check/Cargo.toml -- handoff generate",
+                "cargo run --locked --manifest-path tools/wi-contract-check/Cargo.toml -- handoff generate > conformance/wi-fabric-2/proof/handoff.json",
+                "cp conformance/wi-fabric-2/proof/handoff.json crates/worldinterface-runtime/release/handoff.json",
+                "cargo run --locked --manifest-path tools/wi-contract-check/Cargo.toml -- hashes refresh",
                 "python3 scripts/refresh-wi-worker-evaluation.py","scripts/build-wi-worker-evaluation.sh"],
             "execute":"scripts/worker-proof-evidence.sh EMPTY_EXTERNAL_DIRECTORY",
             "verify":"cargo run --locked --offline --manifest-path tools/wi-contract-check/Cargo.toml -- handoff verify DIRECTORY"
@@ -153,6 +180,7 @@ pub fn validate(root: &Path, value: &Value) -> Result<()> {
             "handoff disagrees with registry, gates, source identities or permitted claims".into(),
         );
     }
+    validate_package_data(root)?;
     let (registry, gates) = proof::load(root)?;
     if registry.cases.len() != 55
         || registry.cases.iter().any(|c| c.status != "implemented" || c.tests.is_empty())
@@ -167,6 +195,18 @@ pub fn validate(root: &Path, value: &Value) -> Result<()> {
     }
     if !fs::read_to_string(root.join(DOCUMENT))?.ends_with(&mapping_markdown(root)?) {
         return Err("evidence document gate/case/test mapping disagrees with registry".into());
+    }
+    Ok(())
+}
+
+/// Package-local provenance and test support must retain authoritative bytes.
+pub fn validate_package_data(root: &Path) -> Result<()> {
+    let inventory = read(&root.join("docs/release/package-tests.json"))?;
+    for (dest, source) in inventory["byte_copies"].as_object().ok_or("missing package copies")? {
+        let source = source.as_str().ok_or("invalid package copy source")?;
+        if fs::read(root.join(dest))? != fs::read(root.join(source))? {
+            return Err(format!("stale package data: {dest}").into());
+        }
     }
     Ok(())
 }

@@ -1,0 +1,268 @@
+{
+  "submission": {
+    "client_request_id": "fixture-request",
+    "effect_class": "control",
+    "resource": {
+      "namespace": "worker",
+      "selector": "coding-fixture"
+    },
+    "input": {
+      "artifact": {
+        "scope": "tenant:fixture",
+        "content": "c96c6d5be8d08a12e7b5cdc1b207fa6b2430974c86803d8891675e76fd992c20",
+        "size": 5
+      }
+    },
+    "causal_refs": [],
+    "requested_authority_refs": [
+      "grant:fixture"
+    ],
+    "approval_attestations": [],
+    "requested_receipt_profile": "boundary:1",
+    "budget": {
+      "max_attempts": 3,
+      "timeout_millis": 1000
+    }
+  },
+  "snapshot": {
+    "bindings": [
+      {
+        "id": "binding:fixture",
+        "version": 1,
+        "tenant": "tenant:fixture",
+        "principal": "12345678-1234-4234-8234-123456789abc",
+        "actor": "32345678-1234-4234-8234-123456789abc",
+        "accountable": "12345678-1234-4234-8234-123456789abc",
+        "capacity": {
+          "principal_ref": "12345678-1234-4234-8234-123456789abc",
+          "assignment_ref": "fixture-capacity"
+        },
+        "principal_authority": [
+          "74a6843d0bb49bfc6b461134a6e17cc49417e7f8f289087c83335968e43e383e"
+        ],
+        "capacity_authority": [
+          "74a6843d0bb49bfc6b461134a6e17cc49417e7f8f289087c83335968e43e383e"
+        ],
+        "expires_at": "2026-09-22T00:00:00.000000000Z",
+        "revoked": false,
+        "delegations": []
+      }
+    ],
+    "registry": {
+      "version": 1,
+      "entries": [
+        {
+          "namespace": "worker",
+          "version": "resolver:1",
+          "descriptor": "0080437ba92d759250ba1e7a1db83a5fbf6f748ad79f20f42d4d859403629945",
+          "connector": "fixture:connector",
+          "semantics": "provider-evidence-required"
+        }
+      ]
+    },
+    "facts": [
+      {
+        "selector": {
+          "namespace": "worker",
+          "selector": "coding-fixture"
+        },
+        "registry": "d7da7673288e830aff53e1daffcc372a87ba8344f5dd56155eae7356963f6f40",
+        "document": {
+          "version": 1,
+          "tenant": "tenant:fixture",
+          "owner": "12345678-1234-4234-8234-123456789abc",
+          "target": {
+            "kind": "worker",
+            "provider": "provider:fixture",
+            "run": "run:fixture",
+            "resource": "worker:fixture",
+            "operation": "start"
+          }
+        },
+        "observed_version": "resource:1",
+        "valid_until": "2026-09-22T00:00:00.000000000Z",
+        "evidence": {
+          "artifact": {
+            "scope": "tenant:fixture",
+            "content": "f7fbd5853d11940e045abc7c4d7b8e3253947bcde21b8cd8555d71c6f02fd912",
+            "size": 10
+          },
+          "schema": "fixture-evidence:1"
+        },
+        "attested_document": "31ec0e34353ce0a1a7c26cd80ad5aa62e84358a1de8de1495e54255867c41e3d"
+      }
+    ],
+    "policy": {
+      "version": 1,
+      "revision": "policy:1",
+      "authorizer": "22345678-1234-4234-8234-123456789abc",
+      "grant_issuers": [
+        "22345678-1234-4234-8234-123456789abc"
+      ],
+      "approvers": [
+        "22345678-1234-4234-8234-123456789abc"
+      ],
+      "platform": [
+        "74a6843d0bb49bfc6b461134a6e17cc49417e7f8f289087c83335968e43e383e"
+      ],
+      "resource": [
+        "74a6843d0bb49bfc6b461134a6e17cc49417e7f8f289087c83335968e43e383e"
+      ],
+      "targets": [
+        "31ec0e34353ce0a1a7c26cd80ad5aa62e84358a1de8de1495e54255867c41e3d"
+      ],
+      "information_use": [
+        "74a6843d0bb49bfc6b461134a6e17cc49417e7f8f289087c83335968e43e383e"
+      ],
+      "approval_required": false,
+      "separation_of_duties": true,
+      "retry_after_noncommit": false,
+      "expires_at": "2026-09-22T00:00:00.000000000Z"
+    },
+    "grants": [
+      {
+        "id": "grant:fixture",
+        "version": 1,
+        "tenant": "tenant:fixture",
+        "issuer": "22345678-1234-4234-8234-123456789abc",
+        "subject": "12345678-1234-4234-8234-123456789abc",
+        "authority": [
+          "74a6843d0bb49bfc6b461134a6e17cc49417e7f8f289087c83335968e43e383e"
+        ],
+        "expires_at": "2026-09-22T00:00:00.000000000Z",
+        "revoked": false,
+        "max_uses": 3,
+        "evidence": {
+          "artifact": {
+            "scope": "tenant:fixture",
+            "content": "3492ad65d05a973fef8c825521eeb41ae64625a672a8aeeeabc696e16d62a020",
+            "size": 5
+          },
+          "schema": "fixture-evidence:1"
+        }
+      }
+    ],
+    "approvals": [],
+    "worker": {
+      "profile": "reviewed-process-fixture:1",
+      "provider": "provider:fixture",
+      "run": "run:fixture",
+      "resource": "worker:fixture",
+      "operation": "start",
+      "manifest": {
+        "executable": {
+          "scope": "tenant:fixture",
+          "content": "a29c2123a01df1d0febb9d308a20d8a2fe3d40a91ca8b1294f59f08f9773ebea",
+          "size": 10
+        },
+        "dependencies": [
+          {
+            "scope": "tenant:fixture",
+            "content": "f26350dafe3f19aabfd69ac463fb5daf76015c9a2763e76e2ad32fc0fcfedf31",
+            "size": 10
+          }
+        ],
+        "configuration": {
+          "scope": "tenant:fixture",
+          "content": "b7d64a9221007dfd5390f7df6cd5b8f3ea4f82faa1237141e35ebf161f5511a1",
+          "size": 13
+        },
+        "profile_definition": {
+          "scope": "tenant:fixture",
+          "content": "acf754e733212c8d554e38f7f02775440e52192767bc9d8dea9dc1505f2d36cf",
+          "size": 18
+        },
+        "adapter": {
+          "scope": "tenant:fixture",
+          "content": "ae1eae1d76e5b7c865c4122ce366a08025842566d2d96c75cc13e6353a73db0d",
+          "size": 7
+        }
+      },
+      "image": "not_applicable",
+      "environment": "77c14283c58bbf3de1ec75e1c4d5544522fe0438c0869f4ffd6a7ef091da4838",
+      "evidence": {
+        "artifact": {
+          "scope": "tenant:fixture",
+          "content": "87eba76e7f3164534045ba922e7770fb58bbd14ad732bbf5ba6f11cc56989e6e",
+          "size": 6
+        },
+        "schema": "fixture-evidence:1"
+      },
+      "aq_version": "e1b6c6624ff255ad0a36f80f4c894110447a8bec4da8bc3223a02d9f63d7faee",
+      "wi_version": "59ca0dcb2e7747fd77c16ec179936f7379b18b56699d060a6dcc2e522ea94313",
+      "input": {
+        "scope": "tenant:fixture",
+        "content": "c96c6d5be8d08a12e7b5cdc1b207fa6b2430974c86803d8891675e76fd992c20",
+        "size": 5
+      },
+      "exports": "212a37bac96b65941e169b7881dbf8e86dd1f3c3f5dae151b7763689026e40d0",
+      "controls": {
+        "network": {
+          "requested": "bounded",
+          "advertised": "bounded",
+          "applied": "bounded",
+          "observed": "bounded",
+          "enforcement": "enforced"
+        },
+        "mount": {
+          "requested": "bounded",
+          "advertised": "bounded",
+          "applied": "bounded",
+          "observed": "bounded",
+          "enforcement": "enforced"
+        },
+        "cpu": {
+          "requested": "bounded",
+          "advertised": "bounded",
+          "applied": "bounded",
+          "observed": "bounded",
+          "enforcement": "enforced"
+        },
+        "memory": {
+          "requested": "bounded",
+          "advertised": "bounded",
+          "applied": "bounded",
+          "observed": "bounded",
+          "enforcement": "enforced"
+        }
+      },
+      "mandatory": [
+        "cpu",
+        "memory",
+        "mount",
+        "network"
+      ],
+      "reviewed_executable": true,
+      "input_class": "non_sensitive",
+      "credential": {
+        "kind": "none"
+      }
+    },
+    "fixture": {
+      "realization": "ebeaa6450b22386d255bfde4a806abe183f9bb430656c0d1f9fda813c0b95941",
+      "tenant": "tenant:fixture",
+      "subject": "12345678-1234-4234-8234-123456789abc",
+      "run": "run:fixture",
+      "operations": [
+        "start"
+      ],
+      "expires_at": "2026-09-22T00:00:00.000000000Z",
+      "revoked": false,
+      "evidence": {
+        "artifact": {
+          "scope": "tenant:fixture",
+          "content": "645c107549c386dbd8f9e7e2beb7ce74a2f4277d24a95498a148ed65a3697b6c",
+          "size": 14
+        },
+        "schema": "fixture-evidence:1"
+      }
+    },
+    "required_outputs": [
+      {
+        "scope": "tenant:fixture",
+        "content": "e0ee8bb50685e05fa0f47ed04203ae953fdfd055f5bd2892ea186504254f8c3a",
+        "size": 6
+      }
+    ]
+  }
+}

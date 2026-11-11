@@ -1,0 +1,393 @@
+{
+  "schema_version": 1,
+  "packages": {
+    "worldinterface-protocol": {
+      "manifest": "crates/worldinterface-foundation/protocol/Cargo.toml",
+      "library": true,
+      "doctests": true,
+      "tests": [
+        {
+          "target": "canonical",
+          "disposition": "repository-only",
+          "owner": "foundation-test",
+          "reason": "Repository conformance fixtures, sibling support, or committed worker campaign and its source-bound evidence."
+        },
+        {
+          "target": "control_plane",
+          "disposition": "packaged",
+          "owner": "foundation-test",
+          "reason": "Self-contained public API integration test."
+        },
+        {
+          "target": "ingress",
+          "disposition": "repository-only",
+          "owner": "foundation-test",
+          "reason": "Repository conformance fixtures, sibling support, or committed worker campaign and its source-bound evidence."
+        }
+      ]
+    },
+    "worldinterface-capability": {
+      "manifest": "crates/worldinterface-foundation/capability/Cargo.toml",
+      "library": true,
+      "doctests": true,
+      "tests": [
+        {
+          "target": "flow_registry",
+          "disposition": "repository-only",
+          "owner": "foundation-test",
+          "reason": "Repository conformance fixtures, sibling support, or committed worker campaign and its source-bound evidence."
+        },
+        {
+          "target": "scope",
+          "disposition": "packaged",
+          "owner": "foundation-test",
+          "reason": "Self-contained public API integration test."
+        }
+      ]
+    },
+    "worldinterface-domain": {
+      "manifest": "crates/worldinterface-foundation/domain/Cargo.toml",
+      "library": true,
+      "doctests": true,
+      "tests": [
+        {
+          "target": "control_plane",
+          "disposition": "packaged",
+          "owner": "foundation-test",
+          "reason": "Self-contained public API integration test using package-local support."
+        },
+        {
+          "target": "developmental",
+          "disposition": "repository-only",
+          "owner": "foundation-test",
+          "reason": "Repository conformance fixtures, sibling support, or committed worker campaign and its source-bound evidence."
+        },
+        {
+          "target": "flow",
+          "disposition": "repository-only",
+          "owner": "foundation-test",
+          "reason": "Repository conformance fixtures, sibling support, or committed worker campaign and its source-bound evidence."
+        },
+        {
+          "target": "transitions",
+          "disposition": "repository-only",
+          "owner": "foundation-test",
+          "reason": "Repository conformance fixtures, sibling support, or committed worker campaign and its source-bound evidence."
+        }
+      ]
+    },
+    "worldinterface-storage": {
+      "manifest": "crates/worldinterface-foundation/storage/Cargo.toml",
+      "library": true,
+      "doctests": true,
+      "tests": [
+        {
+          "target": "continuation",
+          "disposition": "packaged",
+          "owner": "foundation-test",
+          "reason": "Self-contained public API integration test."
+        },
+        {
+          "target": "control_plane",
+          "disposition": "repository-only",
+          "owner": "foundation-test",
+          "reason": "Repository conformance fixtures, sibling support, or committed worker campaign and its source-bound evidence."
+        },
+        {
+          "target": "flow",
+          "disposition": "repository-only",
+          "owner": "foundation-test",
+          "reason": "Repository conformance fixtures, sibling support, or committed worker campaign and its source-bound evidence."
+        },
+        {
+          "target": "stores",
+          "disposition": "repository-only",
+          "owner": "foundation-test",
+          "reason": "Repository conformance fixtures, sibling support, or committed worker campaign and its source-bound evidence."
+        },
+        {
+          "target": "worker",
+          "disposition": "packaged",
+          "owner": "foundation-test",
+          "reason": "Self-contained public API integration test."
+        }
+      ]
+    },
+    "worldinterface-worker": {
+      "manifest": "crates/worldinterface-foundation/worker/Cargo.toml",
+      "library": true,
+      "doctests": true,
+      "tests": [
+        {
+          "target": "contract",
+          "disposition": "repository-only",
+          "owner": "foundation-test",
+          "reason": "Repository conformance fixtures, sibling support, or committed worker campaign and its source-bound evidence."
+        },
+        {
+          "target": "evidence",
+          "disposition": "repository-only",
+          "owner": "foundation-test",
+          "reason": "Repository conformance fixtures, sibling support, or committed worker campaign and its source-bound evidence."
+        }
+      ]
+    },
+    "worldinterface-ingress": {
+      "manifest": "crates/worldinterface-foundation/ingress/Cargo.toml",
+      "library": true,
+      "doctests": true,
+      "tests": [
+        {
+          "target": "lifecycle",
+          "disposition": "repository-only",
+          "owner": "foundation-test",
+          "reason": "Repository conformance fixtures, sibling support, or committed worker campaign and its source-bound evidence."
+        }
+      ]
+    },
+    "worldinterface-egress": {
+      "manifest": "crates/worldinterface-foundation/egress/Cargo.toml",
+      "library": true,
+      "doctests": true,
+      "tests": [
+        {
+          "target": "domain",
+          "disposition": "repository-only",
+          "owner": "foundation-test",
+          "reason": "Repository conformance fixtures, sibling support, or committed worker campaign and its source-bound evidence."
+        }
+      ]
+    },
+    "worldinterface-runtime": {
+      "manifest": "crates/worldinterface-runtime/Cargo.toml",
+      "library": true,
+      "doctests": true,
+      "tests": [
+        {
+          "target": "completion_crash",
+          "disposition": "repository-only",
+          "owner": "runtime-test",
+          "reason": "Repository conformance fixtures, sibling support, or committed worker campaign and its source-bound evidence."
+        },
+        {
+          "target": "completion_regressions",
+          "disposition": "repository-only",
+          "owner": "runtime-test",
+          "reason": "Repository conformance fixtures, sibling support, or committed worker campaign and its source-bound evidence."
+        },
+        {
+          "target": "connector_spi",
+          "disposition": "repository-only",
+          "owner": "runtime-test",
+          "reason": "Repository conformance fixtures, sibling support, or committed worker campaign and its source-bound evidence."
+        },
+        {
+          "target": "continuation_crash",
+          "disposition": "repository-only",
+          "owner": "runtime-test",
+          "reason": "Repository conformance fixtures, sibling support, or committed worker campaign and its source-bound evidence."
+        },
+        {
+          "target": "continuation_producers",
+          "disposition": "repository-only",
+          "owner": "runtime-test",
+          "reason": "Repository conformance fixtures, sibling support, or committed worker campaign and its source-bound evidence."
+        },
+        {
+          "target": "continuation_recovery",
+          "disposition": "repository-only",
+          "owner": "runtime-test",
+          "reason": "Repository conformance fixtures, sibling support, or committed worker campaign and its source-bound evidence."
+        },
+        {
+          "target": "continuations",
+          "disposition": "repository-only",
+          "owner": "runtime-test",
+          "reason": "Repository conformance fixtures, sibling support, or committed worker campaign and its source-bound evidence."
+        },
+        {
+          "target": "effect_service",
+          "disposition": "repository-only",
+          "owner": "runtime-test",
+          "reason": "Repository conformance fixtures, sibling support, or committed worker campaign and its source-bound evidence."
+        },
+        {
+          "target": "embedded_credentials",
+          "disposition": "repository-only",
+          "owner": "runtime-test",
+          "reason": "Repository conformance fixtures, sibling support, or committed worker campaign and its source-bound evidence."
+        },
+        {
+          "target": "embedded_restore",
+          "disposition": "repository-only",
+          "owner": "runtime-test",
+          "reason": "Repository conformance fixtures, sibling support, or committed worker campaign and its source-bound evidence."
+        },
+        {
+          "target": "embedded_worker",
+          "disposition": "repository-only",
+          "owner": "runtime-test",
+          "reason": "Repository conformance fixtures, sibling support, or committed worker campaign and its source-bound evidence."
+        },
+        {
+          "target": "executor_aq_contract",
+          "disposition": "repository-only",
+          "owner": "runtime-test",
+          "reason": "Repository conformance fixtures, sibling support, or committed worker campaign and its source-bound evidence."
+        },
+        {
+          "target": "flow",
+          "disposition": "repository-only",
+          "owner": "runtime-test",
+          "reason": "Repository conformance fixtures, sibling support, or committed worker campaign and its source-bound evidence."
+        },
+        {
+          "target": "flow_crash",
+          "disposition": "repository-only",
+          "owner": "runtime-test",
+          "reason": "Repository conformance fixtures, sibling support, or committed worker campaign and its source-bound evidence."
+        },
+        {
+          "target": "g2_admission",
+          "disposition": "repository-only",
+          "owner": "runtime-test",
+          "reason": "Repository conformance fixtures, sibling support, or committed worker campaign and its source-bound evidence."
+        },
+        {
+          "target": "ingress",
+          "disposition": "repository-only",
+          "owner": "runtime-test",
+          "reason": "Repository conformance fixtures, sibling support, or committed worker campaign and its source-bound evidence."
+        },
+        {
+          "target": "ingress_recovery",
+          "disposition": "repository-only",
+          "owner": "runtime-test",
+          "reason": "Repository conformance fixtures, sibling support, or committed worker campaign and its source-bound evidence."
+        },
+        {
+          "target": "integration",
+          "disposition": "repository-only",
+          "owner": "runtime-test",
+          "reason": "Repository conformance fixtures, sibling support, or committed worker campaign and its source-bound evidence."
+        },
+        {
+          "target": "receipt_inspection",
+          "disposition": "repository-only",
+          "owner": "runtime-test",
+          "reason": "Repository conformance fixtures, sibling support, or committed worker campaign and its source-bound evidence."
+        },
+        {
+          "target": "reconciliation",
+          "disposition": "repository-only",
+          "owner": "runtime-test",
+          "reason": "Repository conformance fixtures, sibling support, or committed worker campaign and its source-bound evidence."
+        },
+        {
+          "target": "reconciliation_crash",
+          "disposition": "repository-only",
+          "owner": "runtime-test",
+          "reason": "Repository conformance fixtures, sibling support, or committed worker campaign and its source-bound evidence."
+        },
+        {
+          "target": "worker_artifact_crash",
+          "disposition": "packaged",
+          "owner": "runtime-test",
+          "reason": "Self-contained public API integration test using package-local support."
+        },
+        {
+          "target": "worker_artifact_live_crash",
+          "disposition": "repository-only",
+          "owner": "runtime-test",
+          "reason": "Repository conformance fixtures, sibling support, or committed worker campaign and its source-bound evidence."
+        },
+        {
+          "target": "worker_artifact_validation",
+          "disposition": "packaged",
+          "owner": "runtime-test",
+          "reason": "Self-contained public API integration test using package-local support."
+        },
+        {
+          "target": "worker_artifacts",
+          "disposition": "repository-only",
+          "owner": "runtime-test",
+          "reason": "Repository conformance fixtures, sibling support, or committed worker campaign and its source-bound evidence."
+        },
+        {
+          "target": "worker_build",
+          "disposition": "repository-only",
+          "owner": "runtime-test",
+          "reason": "Repository conformance fixtures, sibling support, or committed worker campaign and its source-bound evidence."
+        },
+        {
+          "target": "worker_campaign",
+          "disposition": "repository-only",
+          "owner": "runtime-test",
+          "reason": "Repository conformance fixtures, sibling support, or committed worker campaign and its source-bound evidence."
+        },
+        {
+          "target": "worker_campaign_cases",
+          "disposition": "repository-only",
+          "owner": "runtime-test",
+          "reason": "Repository conformance fixtures, sibling support, or committed worker campaign and its source-bound evidence."
+        },
+        {
+          "target": "worker_catalog",
+          "disposition": "repository-only",
+          "owner": "runtime-test",
+          "reason": "Repository conformance fixtures, sibling support, or committed worker campaign and its source-bound evidence."
+        },
+        {
+          "target": "worker_evaluation",
+          "disposition": "repository-only",
+          "owner": "runtime-test",
+          "reason": "Repository conformance fixtures, sibling support, or committed worker campaign and its source-bound evidence."
+        },
+        {
+          "target": "worker_lifecycle",
+          "disposition": "repository-only",
+          "owner": "runtime-test",
+          "reason": "Repository conformance fixtures, sibling support, or committed worker campaign and its source-bound evidence."
+        },
+        {
+          "target": "worker_lifecycle_crash",
+          "disposition": "repository-only",
+          "owner": "runtime-test",
+          "reason": "Repository conformance fixtures, sibling support, or committed worker campaign and its source-bound evidence."
+        },
+        {
+          "target": "worker_process",
+          "disposition": "repository-only",
+          "owner": "runtime-test",
+          "reason": "Repository conformance fixtures, sibling support, or committed worker campaign and its source-bound evidence."
+        },
+        {
+          "target": "worker_seam",
+          "disposition": "repository-only",
+          "owner": "runtime-test",
+          "reason": "Repository conformance fixtures, sibling support, or committed worker campaign and its source-bound evidence."
+        }
+      ]
+    }
+  },
+  "byte_copies": {
+    "crates/worldinterface-foundation/storage/tests/support/egress.json": "conformance/wi-fabric-2/egress/fixture.json",
+    "crates/worldinterface-foundation/storage/tests/support/ingress.json": "conformance/wi-fabric-2/ingress/binding.json",
+    "crates/worldinterface-foundation/storage/tests/support/control_plane.rs": "crates/worldinterface-foundation/domain/tests/support/control_plane.rs",
+    "crates/worldinterface-runtime/tests/support/egress.json": "conformance/wi-fabric-2/egress/fixture.json",
+    "crates/worldinterface-runtime/release/repository-Cargo.lock": "crates/worldinterface-runtime/Cargo.lock",
+    "crates/worldinterface-runtime/release/handoff.json": "conformance/wi-fabric-2/proof/handoff.json",
+    "crates/worldinterface-runtime/release/gates/WI-EMBEDDED-WORKER-PROOF-1.json": "conformance/wi-fabric-2/proof/gates/WI-EMBEDDED-WORKER-PROOF-1.json",
+    "crates/worldinterface-runtime/release/gates/WI-AQ-G3.json": "conformance/wi-fabric-2/proof/gates/WI-AQ-G3.json",
+    "crates/worldinterface-runtime/release/gates/WI-WORKER-G3.json": "conformance/wi-fabric-2/proof/gates/WI-WORKER-G3.json",
+    "crates/worldinterface-runtime/release/gates/WI-AQ-G2.json": "conformance/wi-fabric-2/proof/gates/WI-AQ-G2.json",
+    "crates/worldinterface-runtime/release/gates/WI-AQ-G1.json": "conformance/wi-fabric-2/proof/gates/WI-AQ-G1.json",
+    "crates/worldinterface-runtime/release/gates/WI-WORKER-G1.json": "conformance/wi-fabric-2/proof/gates/WI-WORKER-G1.json",
+    "crates/worldinterface-runtime/release/gates/WI-AQ-G4.json": "conformance/wi-fabric-2/proof/gates/WI-AQ-G4.json",
+    "crates/worldinterface-runtime/release/gates/WI-WORKER-G2.json": "conformance/wi-fabric-2/proof/gates/WI-WORKER-G2.json",
+    "crates/worldinterface-runtime/release/gates/WI-EMBEDDED-CORE-1.json": "conformance/wi-fabric-2/proof/gates/WI-EMBEDDED-CORE-1.json",
+    "crates/worldinterface-runtime/release/gates/WI-WORKER-G4.json": "conformance/wi-fabric-2/proof/gates/WI-WORKER-G4.json",
+    "crates/worldinterface-foundation/domain/tests/support/egress.json": "conformance/wi-fabric-2/egress/fixture.json",
+    "crates/worldinterface-foundation/storage/tests/support/canonical-vectors.json": "conformance/wi-fabric-2/domain/canonical-vectors.json"
+  }
+}

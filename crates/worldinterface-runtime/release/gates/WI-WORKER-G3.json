@@ -1,0 +1,165 @@
+{
+  "version": 1,
+  "id": "WI-WORKER-G3",
+  "source_record_sha256": "ce40770887e716105c768df4b90c5bc69086204c33e460712cdd596a4a5bd5a1",
+  "pass_criteria": [
+    "Reviewed processes supervised via real WI/AQ; idempotent start, process ownership, event durability and termination/recovery proved.",
+    "Source-owned evidence cases are bound in acceptance_coverage; owner PR IDs attribute work and are not automatic accepted-parent prerequisites."
+  ],
+  "requires": [
+    {
+      "id": "STACK-PLAN-ACCEPTED",
+      "kind": "checkpoint",
+      "state": "passed"
+    },
+    {
+      "id": "WI-WORKER-G1",
+      "kind": "checkpoint",
+      "state": "passed"
+    },
+    {
+      "id": "WI-WORKER-G2",
+      "kind": "checkpoint",
+      "state": "passed"
+    },
+    {
+      "id": "wi/WI-09/process-provider",
+      "kind": "slice",
+      "state": "verified"
+    },
+    {
+      "id": "WI-AQ-G1",
+      "kind": "checkpoint",
+      "state": "passed"
+    },
+    {
+      "id": "WI-AQ-G2",
+      "kind": "checkpoint",
+      "state": "passed"
+    },
+    {
+      "id": "WI-AQ-G3",
+      "kind": "checkpoint",
+      "state": "passed"
+    },
+    {
+      "id": "WI-AQ-G4",
+      "kind": "checkpoint",
+      "state": "passed"
+    }
+  ],
+  "required_cases": [
+    "AB-WI-021",
+    "WP-017",
+    "WP-018",
+    "WP-019",
+    "WP-020",
+    "WP-021",
+    "WP-022",
+    "WP-023",
+    "WP-024",
+    "WP-025",
+    "WP-026"
+  ],
+  "closing_item": "WIP-10",
+  "status": "closed",
+  "effective_on": "reviewed-merge-with-adopted-checks",
+  "historical_evidence": [],
+  "requirement_bindings": [
+    {
+      "requirement": {
+        "id": "STACK-PLAN-ACCEPTED",
+        "kind": "checkpoint",
+        "state": "passed"
+      },
+      "binding": {
+        "kind": "plan-import",
+        "plan_version": "9212604c-4873-4cd5-b492-1ee3141b8b0b",
+        "date": "2026-10-13",
+        "historical_acceptance": "2026-10-01"
+      }
+    },
+    {
+      "requirement": {
+        "id": "WI-WORKER-G1",
+        "kind": "checkpoint",
+        "state": "passed"
+      },
+      "binding": {
+        "kind": "closed-gate",
+        "record": "conformance/wi-fabric-2/proof/gates/WI-WORKER-G1.json"
+      }
+    },
+    {
+      "requirement": {
+        "id": "WI-WORKER-G2",
+        "kind": "checkpoint",
+        "state": "passed"
+      },
+      "binding": {
+        "kind": "closed-gate",
+        "record": "conformance/wi-fabric-2/proof/gates/WI-WORKER-G2.json"
+      }
+    },
+    {
+      "requirement": {
+        "id": "wi/WI-09/process-provider",
+        "kind": "slice",
+        "state": "verified"
+      },
+      "binding": {
+        "kind": "reviewed-item-scope",
+        "covering_items": [
+          "WIP-09",
+          "WIP-10",
+          "WIP-11"
+        ],
+        "effective_on": "reviewed-merge-with-adopted-checks"
+      }
+    },
+    {
+      "requirement": {
+        "id": "WI-AQ-G1",
+        "kind": "checkpoint",
+        "state": "passed"
+      },
+      "binding": {
+        "kind": "closed-gate",
+        "record": "conformance/wi-fabric-2/proof/gates/WI-AQ-G1.json"
+      }
+    },
+    {
+      "requirement": {
+        "id": "WI-AQ-G2",
+        "kind": "checkpoint",
+        "state": "passed"
+      },
+      "binding": {
+        "kind": "closed-gate",
+        "record": "conformance/wi-fabric-2/proof/gates/WI-AQ-G2.json"
+      }
+    },
+    {
+      "requirement": {
+        "id": "WI-AQ-G3",
+        "kind": "checkpoint",
+        "state": "passed"
+      },
+      "binding": {
+        "kind": "closed-gate",
+        "record": "conformance/wi-fabric-2/proof/gates/WI-AQ-G3.json"
+      }
+    },
+    {
+      "requirement": {
+        "id": "WI-AQ-G4",
+        "kind": "checkpoint",
+        "state": "passed"
+      },
+      "binding": {
+        "kind": "closed-gate",
+        "record": "conformance/wi-fabric-2/proof/gates/WI-AQ-G4.json"
+      }
+    }
+  ]
+}

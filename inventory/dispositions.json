@@ -12808,5 +12808,26 @@
     "target": "worker-lifecycle-test-evidence",
     "rationale": "WSP-01 F-001: non-live regression exercises the process harness live build accessor with stale, refreshed-uncommitted and staged packets, including a packet matching the cached build.",
     "source": "docs/work-items/WSP-01.md; operator decision 2026-11-09"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/tests/support/control_plane.rs::::source-module:crates/worldinterface-foundation/storage/tests/support/control_plane.rs",
+    "disposition": "test-evidence",
+    "target": "release-preparation",
+    "rationale": "WSP-02 package-local test support or standalone registry consumer; no production registration.",
+    "source": "WI-SUPERVISOR-PROOF-1 WSP-02 accepted release-preparation design"
+  },
+  {
+    "id": "examples/downstream-consumer/Cargo.toml::auxiliary-crate:wi-downstream-consumer",
+    "disposition": "test-evidence",
+    "target": "release-preparation",
+    "rationale": "WSP-02 package-local test support or standalone registry consumer; no production registration.",
+    "source": "WI-SUPERVISOR-PROOF-1 WSP-02 accepted release-preparation design"
+  },
+  {
+    "id": "examples/downstream-consumer/src/main.rs::::source-module:examples/downstream-consumer/src/main.rs",
+    "disposition": "test-evidence",
+    "target": "release-preparation",
+    "rationale": "WSP-02 package-local test support or standalone registry consumer; no production registration.",
+    "source": "WI-SUPERVISOR-PROOF-1 WSP-02 accepted release-preparation design"
   }
 ]

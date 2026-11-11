@@ -260,10 +260,8 @@ mod tests {
     use worldinterface_protocol::*;
     #[test]
     fn nonqueued_dispatch_progress_preserves_cursor_and_replays_atomically() {
-        let binding: IngressBinding = serde_json::from_str(include_str!(
-            "../../../../conformance/wi-fabric-2/ingress/binding.json"
-        ))
-        .unwrap();
+        let binding: IngressBinding =
+            serde_json::from_str(include_str!("../tests/support/ingress.json")).unwrap();
         let tenant = binding.profile.scope.tenant.clone();
         let id = DeliveryId::generate();
         let queued = DeliveryId::generate();
@@ -367,10 +365,8 @@ mod tests {
     }
     #[test]
     fn retired_wake_and_cursor_roll_back_and_replay_atomically() {
-        let binding: IngressBinding = serde_json::from_str(include_str!(
-            "../../../../conformance/wi-fabric-2/ingress/binding.json"
-        ))
-        .unwrap();
+        let binding: IngressBinding =
+            serde_json::from_str(include_str!("../tests/support/ingress.json")).unwrap();
         let tenant = binding.profile.scope.tenant.clone();
         let id = DeliveryId::generate();
         let queued = id.clone();
@@ -544,10 +540,8 @@ mod tests {
     #[test]
     fn ingress_journal_and_projection_faults_roll_back_together() {
         // Exercise a real binding transaction through each physical write boundary.
-        let fixture: serde_json::Value = serde_json::from_str(include_str!(
-            "../../../../conformance/wi-fabric-2/ingress/binding.json"
-        ))
-        .unwrap();
+        let fixture: serde_json::Value =
+            serde_json::from_str(include_str!("../tests/support/ingress.json")).unwrap();
         let binding: IngressBinding = serde_json::from_value(fixture).unwrap();
         for fault in ["history", "projection"] {
             let mut c = Connection::open_in_memory().unwrap();

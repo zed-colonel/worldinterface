@@ -1253,6 +1253,11 @@
           "treatment": "Remove or rebuild family-specific source, exports, schemas, tests and examples after verified replacement; preserve unrelated shared code."
         },
         {
+          "path": "crates/worldinterface-runtime/release/handoff.json",
+          "source_sha256": "ea1bf2ea2e1faa76210d624f8590f9acb495fc0d100af34f50e93fcd3f5708ad",
+          "treatment": "Retain WSP-02 package evidence/support and registry consumer. Future legacy removal must preserve authoritative byte equality and release consumer coverage."
+        },
+        {
           "path": "crates/worldinterface-runtime/tests/completion_regressions.rs",
           "source_sha256": "6d5475374535b68a366060b3618b0566918c80b2e7586b27b9d99223ea49eed0",
           "treatment": "Retain bounded completion latency and concurrent-writer test evidence; references to delay are not permission to remove these tests with the legacy delay connector."
@@ -1261,6 +1266,16 @@
           "path": "crates/worldinterface-runtime/tests/ingress_recovery.rs",
           "source_sha256": "7b75fbf13cae87b3a4c4f8170f5c9a9f32efaa4d620ba88b3ced13a0fac2522e",
           "treatment": "Retain WI-03 delayed acknowledgment and recovery regression tests; review shared references before later selective connector removal."
+        },
+        {
+          "path": "crates/worldinterface-runtime/tests/receipt_inspection.rs",
+          "source_sha256": "8ab30c3b7db15a702df2794131941d3613a02a8c105811e07d1f5b591f6a1ab7",
+          "treatment": "Retain the independent receipt-inspection provider latency regression, shared fixture support and documentation, including exact authorization and the bounded attempt budget. These contain no legacy DelayConnector registration; selective connector removal must preserve this coverage."
+        },
+        {
+          "path": "crates/worldinterface-runtime/tests/support/effect_fixture.rs",
+          "source_sha256": "2e7e9bdf49295553493123e825da04b92831790a846caa2b290f1f55620d5e33",
+          "treatment": "Retain the independent receipt-inspection provider latency regression, shared fixture support and documentation, including exact authorization and the bounded attempt budget. These contain no legacy DelayConnector registration; selective connector removal must preserve this coverage."
         },
         {
           "path": "crates/worldinterface-runtime/tests/worker_seam.rs",
@@ -1276,6 +1291,11 @@
           "path": "docs/flowspec-reference.md",
           "source_sha256": "f8ce312502a645373a2a7a4ee17249bb76a8eff4e98f1e0e67f8847887464587",
           "treatment": "Update runtime references after verified replacement; retain clearly marked historical evidence."
+        },
+        {
+          "path": "docs/release/0.2.0-alpha.1.md",
+          "source_sha256": "5d154457da88f20895c395c1ac43f358d6be31b6f32ff4f02d5242cda5c28b21",
+          "treatment": "Retain the independent receipt-inspection provider latency regression, shared fixture support and documentation, including exact authorization and the bounded attempt budget. These contain no legacy DelayConnector registration; selective connector removal must preserve this coverage."
         },
         {
           "path": "docs/work-items/WIP-03.md",
@@ -1306,6 +1326,11 @@
           "path": "docs/work-items/WIP-16.md",
           "source_sha256": "d9325bd9a419af1f68fcfeadb7dfda7baae63df1ab50c6b3b5618daf64d9f50c",
           "treatment": "Retain the WIP-16 evidence-publication disposition and exact test mapping obligations during selective legacy removal; this is documentation only, without replacement or removal-readiness claims."
+        },
+        {
+          "path": "docs/work-items/WSP-02.md",
+          "source_sha256": "7c865084bdd55bed36847275ffbb436443b33c84b59046a631ea811f6b8eedf1",
+          "treatment": "Retain the independent receipt-inspection provider latency regression, shared fixture support and documentation, including exact authorization and the bounded attempt budget. These contain no legacy DelayConnector registration; selective connector removal must preserve this coverage."
         },
         {
           "path": "docs/work-items/wi-03-integration.md",
@@ -2651,7 +2676,7 @@
         },
         {
           "id": "crates/worldinterface-foundation/capability/Cargo.toml::foundation-crate:worldinterface-capability",
-          "source_sha256": "961ce2a923f31722a814f3cbc84c2bc14dca57fa62aef0984aafa5ce44294379",
+          "source_sha256": "c28a3492e7015aa56349afca3e9ed4b0243fa791b4cdde9ded5dcdebb8896cde",
           "registration_sites": []
         },
         {
@@ -2726,7 +2751,7 @@
         },
         {
           "id": "crates/worldinterface-foundation/domain/Cargo.toml::foundation-crate:worldinterface-domain",
-          "source_sha256": "76f6abf2be98919cfde3d44dfc12cbc0b351e3d7873ef60c96ae60698cf7a2a2",
+          "source_sha256": "2c8cc1b42ce591f275c292de827cb661bded71ff8f28dd934bd82b4192c4ba35",
           "registration_sites": []
         },
         {
@@ -3596,7 +3621,7 @@
         },
         {
           "id": "crates/worldinterface-foundation/domain/tests/support/control_plane.rs::::source-module:crates/worldinterface-foundation/domain/tests/support/control_plane.rs",
-          "source_sha256": "a6b98669b2d5ae44791a6e227201d02f859f492b0f3b2def2ac3974b507190cb",
+          "source_sha256": "b4c5ee6d316e7ed61fc3449426d3304b4b83ebbaa5036887980ae677ecf1d4dd",
           "registration_sites": []
         },
         {
@@ -3611,7 +3636,7 @@
         },
         {
           "id": "crates/worldinterface-foundation/egress/Cargo.toml::foundation-crate:worldinterface-egress",
-          "source_sha256": "8be61d392c5241ad0a45694c7782212a82c1c368f2fa51b63349cbc79aa44eff",
+          "source_sha256": "8a30ab4da80ebb513315b32f0e94f6a7b4fef4f67c5b3bae85074f74aa65f6be",
           "registration_sites": []
         },
         {
@@ -3636,7 +3661,7 @@
         },
         {
           "id": "crates/worldinterface-foundation/ingress/Cargo.toml::foundation-crate:worldinterface-ingress",
-          "source_sha256": "d584a614ab0de6c73ce058de7cc8c416bdb71f94c4873fd4e4eb7f9263a89570",
+          "source_sha256": "2d0856447737ada3d200209ecdc9fcfc0599fe14102d475943317fa48d6f7868",
           "registration_sites": []
         },
         {
@@ -3766,7 +3791,7 @@
         },
         {
           "id": "crates/worldinterface-foundation/protocol/Cargo.toml::foundation-crate:worldinterface-protocol",
-          "source_sha256": "04e1a75ffb3ceb264c9938b3445fac4fcdf336bb6bb88f1138ba5513db0c0ef8",
+          "source_sha256": "d8ed3264f6eb763c20d85a75a69b6dd6e7a6a694c17e41b5ea9ed02cc1e6d0dd",
           "registration_sites": []
         },
         {
@@ -4591,7 +4616,7 @@
         },
         {
           "id": "crates/worldinterface-foundation/storage/Cargo.toml::foundation-crate:worldinterface-storage",
-          "source_sha256": "c9b6f6b01abf327ad78be6e7de558993b40128db53fbacb42710ee3b5be7e2a5",
+          "source_sha256": "54f001d000442bcab0c97b8534e91f4a4f6142ce74cf6ead6230e2eda47b4b17",
           "registration_sites": []
         },
         {
@@ -4621,32 +4646,32 @@
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/control_plane.rs::::enum:Event",
-          "source_sha256": "13e69306d4ec81bade8179f580dc511c051139b1f631972b9f86d8505b28398a",
+          "source_sha256": "bcfe727fe5a2c1bbb655336beaabe46d66dbcc689c592a765128a152665aff37",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/control_plane.rs::::module:control_fixture@10d1b0eff34c",
-          "source_sha256": "13e69306d4ec81bade8179f580dc511c051139b1f631972b9f86d8505b28398a",
+          "source_sha256": "bcfe727fe5a2c1bbb655336beaabe46d66dbcc689c592a765128a152665aff37",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/control_plane.rs::::module:tests@10d1b0eff34c",
-          "source_sha256": "13e69306d4ec81bade8179f580dc511c051139b1f631972b9f86d8505b28398a",
+          "source_sha256": "bcfe727fe5a2c1bbb655336beaabe46d66dbcc689c592a765128a152665aff37",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/control_plane.rs::::source-module:crates/worldinterface-foundation/storage/src/control_plane.rs",
-          "source_sha256": "13e69306d4ec81bade8179f580dc511c051139b1f631972b9f86d8505b28398a",
+          "source_sha256": "bcfe727fe5a2c1bbb655336beaabe46d66dbcc689c592a765128a152665aff37",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/control_plane.rs::::struct:ControlPlaneRepository",
-          "source_sha256": "13e69306d4ec81bade8179f580dc511c051139b1f631972b9f86d8505b28398a",
+          "source_sha256": "bcfe727fe5a2c1bbb655336beaabe46d66dbcc689c592a765128a152665aff37",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/control_plane.rs::::type:ProjectionEntries",
-          "source_sha256": "13e69306d4ec81bade8179f580dc511c051139b1f631972b9f86d8505b28398a",
+          "source_sha256": "bcfe727fe5a2c1bbb655336beaabe46d66dbcc689c592a765128a152665aff37",
           "registration_sites": []
         },
         {
@@ -4656,37 +4681,37 @@
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/effect.rs::::module:tests@10d1b0eff34c",
-          "source_sha256": "925bec89804583544ff7f8d5b4d6f482f34814e686a9c2226f53d934362ec239",
+          "source_sha256": "9b5d750a34cbe03b377dfcf8e3ae726a56abb506c9281cace5c75d7a8006ce39",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/effect.rs::::source-module:crates/worldinterface-foundation/storage/src/effect.rs",
-          "source_sha256": "925bec89804583544ff7f8d5b4d6f482f34814e686a9c2226f53d934362ec239",
+          "source_sha256": "9b5d750a34cbe03b377dfcf8e3ae726a56abb506c9281cace5c75d7a8006ce39",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/effect.rs::::struct:DispatchFault",
-          "source_sha256": "925bec89804583544ff7f8d5b4d6f482f34814e686a9c2226f53d934362ec239",
+          "source_sha256": "9b5d750a34cbe03b377dfcf8e3ae726a56abb506c9281cace5c75d7a8006ce39",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/effect.rs::::struct:EffectExecutionTimes",
-          "source_sha256": "925bec89804583544ff7f8d5b4d6f482f34814e686a9c2226f53d934362ec239",
+          "source_sha256": "9b5d750a34cbe03b377dfcf8e3ae726a56abb506c9281cace5c75d7a8006ce39",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/effect.rs::::struct:EffectJournalConflict",
-          "source_sha256": "925bec89804583544ff7f8d5b4d6f482f34814e686a9c2226f53d934362ec239",
+          "source_sha256": "9b5d750a34cbe03b377dfcf8e3ae726a56abb506c9281cace5c75d7a8006ce39",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/effect.rs::::struct:EffectReceiptCommand",
-          "source_sha256": "925bec89804583544ff7f8d5b4d6f482f34814e686a9c2226f53d934362ec239",
+          "source_sha256": "9b5d750a34cbe03b377dfcf8e3ae726a56abb506c9281cace5c75d7a8006ce39",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/effect.rs::::struct:EffectReceiptSource",
-          "source_sha256": "925bec89804583544ff7f8d5b4d6f482f34814e686a9c2226f53d934362ec239",
+          "source_sha256": "9b5d750a34cbe03b377dfcf8e3ae726a56abb506c9281cace5c75d7a8006ce39",
           "registration_sites": []
         },
         {
@@ -4771,17 +4796,17 @@
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/ingress.rs::::module:tests@10d1b0eff34c",
-          "source_sha256": "28be862e6ffe5ec5d223a713c7969bbb7be0235f469cfebe9fe26cdfa373b348",
+          "source_sha256": "1186fe49c4bdf69230e851c45df6a344d27de3a9efde4ae3014151f1a1875fa2",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/ingress.rs::::source-module:crates/worldinterface-foundation/storage/src/ingress.rs",
-          "source_sha256": "28be862e6ffe5ec5d223a713c7969bbb7be0235f469cfebe9fe26cdfa373b348",
+          "source_sha256": "1186fe49c4bdf69230e851c45df6a344d27de3a9efde4ae3014151f1a1875fa2",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/ingress.rs::::struct:Entry",
-          "source_sha256": "28be862e6ffe5ec5d223a713c7969bbb7be0235f469cfebe9fe26cdfa373b348",
+          "source_sha256": "1186fe49c4bdf69230e851c45df6a344d27de3a9efde4ae3014151f1a1875fa2",
           "registration_sites": []
         },
         {
@@ -5065,13 +5090,18 @@
           "registration_sites": []
         },
         {
+          "id": "crates/worldinterface-foundation/storage/tests/support/control_plane.rs::::source-module:crates/worldinterface-foundation/storage/tests/support/control_plane.rs",
+          "source_sha256": "b4c5ee6d316e7ed61fc3449426d3304b4b83ebbaa5036887980ae677ecf1d4dd",
+          "registration_sites": []
+        },
+        {
           "id": "crates/worldinterface-foundation/storage/tests/support/crash.rs::::source-module:crates/worldinterface-foundation/storage/tests/support/crash.rs",
-          "source_sha256": "713a2239d363fb995047de74ad52aa2f672235c1220cabec05da0a893b04a7ea",
+          "source_sha256": "1046279f7f79d0609d2dd5b09a80b5f7eb529a8fffb0d5c7faebeed002908516",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/tests/support/crash.rs::::struct:KillOnDrop",
-          "source_sha256": "713a2239d363fb995047de74ad52aa2f672235c1220cabec05da0a893b04a7ea",
+          "source_sha256": "1046279f7f79d0609d2dd5b09a80b5f7eb529a8fffb0d5c7faebeed002908516",
           "registration_sites": []
         },
         {
@@ -5246,7 +5276,7 @@
         },
         {
           "id": "crates/worldinterface-runtime/Cargo.toml::auxiliary-crate:worldinterface-runtime",
-          "source_sha256": "dcedd59c9dfd8bd67b4f37ac645e97ff4e549a7f55907e859ac9566ffdbc039a",
+          "source_sha256": "4af30cfa319f79b045ec89ba228f0474e87244375da1a8be0131d4dba2c3c8b8",
           "registration_sites": []
         },
         {
@@ -5521,12 +5551,12 @@
         },
         {
           "id": "crates/worldinterface-runtime/src/embedded/credential.rs::::source-module:crates/worldinterface-runtime/src/embedded/credential.rs",
-          "source_sha256": "44b67c4bfda17713a7ae8f336652ee26be4600947df2db19f4435b89d777c778",
+          "source_sha256": "43b4cf75bb17244fcbf0af5dc75fd8d8a936823928b214e8e7af925250bd7845",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/embedded/credential.rs::::struct:WorkerCredentialMetadata",
-          "source_sha256": "44b67c4bfda17713a7ae8f336652ee26be4600947df2db19f4435b89d777c778",
+          "source_sha256": "43b4cf75bb17244fcbf0af5dc75fd8d8a936823928b214e8e7af925250bd7845",
           "registration_sites": []
         },
         {
@@ -6296,102 +6326,102 @@
         },
         {
           "id": "crates/worldinterface-runtime/src/worker_process/mod.rs::::module:admission",
-          "source_sha256": "a17e61926676c7890d25aba93d90dbaaff50a145e5c240ff1da859c5caf20c61",
+          "source_sha256": "64e04b9003318dbe15d508eaad5e37a85ec081f4969ed6cfe9982f9c1a3048f6",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/worker_process/mod.rs::::module:artifact",
-          "source_sha256": "a17e61926676c7890d25aba93d90dbaaff50a145e5c240ff1da859c5caf20c61",
+          "source_sha256": "64e04b9003318dbe15d508eaad5e37a85ec081f4969ed6cfe9982f9c1a3048f6",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/worker_process/mod.rs::::module:bootstrap",
-          "source_sha256": "a17e61926676c7890d25aba93d90dbaaff50a145e5c240ff1da859c5caf20c61",
+          "source_sha256": "64e04b9003318dbe15d508eaad5e37a85ec081f4969ed6cfe9982f9c1a3048f6",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/worker_process/mod.rs::::module:fixture",
-          "source_sha256": "a17e61926676c7890d25aba93d90dbaaff50a145e5c240ff1da859c5caf20c61",
+          "source_sha256": "64e04b9003318dbe15d508eaad5e37a85ec081f4969ed6cfe9982f9c1a3048f6",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/worker_process/mod.rs::::module:journal",
-          "source_sha256": "a17e61926676c7890d25aba93d90dbaaff50a145e5c240ff1da859c5caf20c61",
+          "source_sha256": "64e04b9003318dbe15d508eaad5e37a85ec081f4969ed6cfe9982f9c1a3048f6",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/worker_process/mod.rs::::module:launch",
-          "source_sha256": "a17e61926676c7890d25aba93d90dbaaff50a145e5c240ff1da859c5caf20c61",
+          "source_sha256": "64e04b9003318dbe15d508eaad5e37a85ec081f4969ed6cfe9982f9c1a3048f6",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/worker_process/mod.rs::::module:ownership",
-          "source_sha256": "a17e61926676c7890d25aba93d90dbaaff50a145e5c240ff1da859c5caf20c61",
+          "source_sha256": "64e04b9003318dbe15d508eaad5e37a85ec081f4969ed6cfe9982f9c1a3048f6",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/worker_process/mod.rs::::module:supervision",
-          "source_sha256": "a17e61926676c7890d25aba93d90dbaaff50a145e5c240ff1da859c5caf20c61",
+          "source_sha256": "64e04b9003318dbe15d508eaad5e37a85ec081f4969ed6cfe9982f9c1a3048f6",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/worker_process/mod.rs::::module:tests@10d1b0eff34c",
-          "source_sha256": "a17e61926676c7890d25aba93d90dbaaff50a145e5c240ff1da859c5caf20c61",
+          "source_sha256": "64e04b9003318dbe15d508eaad5e37a85ec081f4969ed6cfe9982f9c1a3048f6",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/worker_process/mod.rs::::source-module:crates/worldinterface-runtime/src/worker_process/mod.rs",
-          "source_sha256": "a17e61926676c7890d25aba93d90dbaaff50a145e5c240ff1da859c5caf20c61",
+          "source_sha256": "64e04b9003318dbe15d508eaad5e37a85ec081f4969ed6cfe9982f9c1a3048f6",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/worker_process/mod.rs::::struct:HelperGuard",
-          "source_sha256": "a17e61926676c7890d25aba93d90dbaaff50a145e5c240ff1da859c5caf20c61",
+          "source_sha256": "64e04b9003318dbe15d508eaad5e37a85ec081f4969ed6cfe9982f9c1a3048f6",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/worker_process/mod.rs::::struct:ProcessWorkerPort",
-          "source_sha256": "a17e61926676c7890d25aba93d90dbaaff50a145e5c240ff1da859c5caf20c61",
+          "source_sha256": "64e04b9003318dbe15d508eaad5e37a85ec081f4969ed6cfe9982f9c1a3048f6",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/worker_process/mod.rs::::struct:Run",
-          "source_sha256": "a17e61926676c7890d25aba93d90dbaaff50a145e5c240ff1da859c5caf20c61",
+          "source_sha256": "64e04b9003318dbe15d508eaad5e37a85ec081f4969ed6cfe9982f9c1a3048f6",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/worker_process/mod.rs::::type:RunRegistry",
-          "source_sha256": "a17e61926676c7890d25aba93d90dbaaff50a145e5c240ff1da859c5caf20c61",
+          "source_sha256": "64e04b9003318dbe15d508eaad5e37a85ec081f4969ed6cfe9982f9c1a3048f6",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/worker_process/ownership.rs::::module:tests@10d1b0eff34c",
-          "source_sha256": "4e35f4f7d6b51ae0ca83b23d4e0cd151295a9096fd337baaad4f5e2de5829d01",
+          "source_sha256": "abf28bfdd7795af9ad9b41302106bc2c9a505014135f567481ca22c6c4625aec",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/worker_process/ownership.rs::::source-module:crates/worldinterface-runtime/src/worker_process/ownership.rs",
-          "source_sha256": "4e35f4f7d6b51ae0ca83b23d4e0cd151295a9096fd337baaad4f5e2de5829d01",
+          "source_sha256": "abf28bfdd7795af9ad9b41302106bc2c9a505014135f567481ca22c6c4625aec",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/worker_process/ownership.rs::::struct:Context",
-          "source_sha256": "4e35f4f7d6b51ae0ca83b23d4e0cd151295a9096fd337baaad4f5e2de5829d01",
+          "source_sha256": "abf28bfdd7795af9ad9b41302106bc2c9a505014135f567481ca22c6c4625aec",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/worker_process/ownership.rs::::struct:Identity",
-          "source_sha256": "4e35f4f7d6b51ae0ca83b23d4e0cd151295a9096fd337baaad4f5e2de5829d01",
+          "source_sha256": "abf28bfdd7795af9ad9b41302106bc2c9a505014135f567481ca22c6c4625aec",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/worker_process/ownership.rs::::struct:Owned",
-          "source_sha256": "4e35f4f7d6b51ae0ca83b23d4e0cd151295a9096fd337baaad4f5e2de5829d01",
+          "source_sha256": "abf28bfdd7795af9ad9b41302106bc2c9a505014135f567481ca22c6c4625aec",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/worker_process/ownership.rs::tests::struct:ChildGuard@10d1b0eff34c",
-          "source_sha256": "4e35f4f7d6b51ae0ca83b23d4e0cd151295a9096fd337baaad4f5e2de5829d01",
+          "source_sha256": "abf28bfdd7795af9ad9b41302106bc2c9a505014135f567481ca22c6c4625aec",
           "registration_sites": []
         },
         {
@@ -7191,37 +7221,37 @@
         },
         {
           "id": "crates/worldinterface-runtime/tests/receipt_inspection.rs::::module:support",
-          "source_sha256": "80b3c2ed23518aec7d746adf09ceb4b7abb7773bd9a23bd21bca87f45dcfe213",
+          "source_sha256": "8ab30c3b7db15a702df2794131941d3613a02a8c105811e07d1f5b591f6a1ab7",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/receipt_inspection.rs::::source-module:crates/worldinterface-runtime/tests/receipt_inspection.rs",
-          "source_sha256": "80b3c2ed23518aec7d746adf09ceb4b7abb7773bd9a23bd21bca87f45dcfe213",
+          "source_sha256": "8ab30c3b7db15a702df2794131941d3613a02a8c105811e07d1f5b591f6a1ab7",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/receipt_inspection.rs::::struct:Auth",
-          "source_sha256": "80b3c2ed23518aec7d746adf09ceb4b7abb7773bd9a23bd21bca87f45dcfe213",
+          "source_sha256": "8ab30c3b7db15a702df2794131941d3613a02a8c105811e07d1f5b591f6a1ab7",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/receipt_inspection.rs::::struct:Case",
-          "source_sha256": "80b3c2ed23518aec7d746adf09ceb4b7abb7773bd9a23bd21bca87f45dcfe213",
+          "source_sha256": "8ab30c3b7db15a702df2794131941d3613a02a8c105811e07d1f5b591f6a1ab7",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/receipt_inspection.rs::::struct:Disclosure",
-          "source_sha256": "80b3c2ed23518aec7d746adf09ceb4b7abb7773bd9a23bd21bca87f45dcfe213",
+          "source_sha256": "8ab30c3b7db15a702df2794131941d3613a02a8c105811e07d1f5b591f6a1ab7",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/receipt_inspection.rs::::type:Session",
-          "source_sha256": "80b3c2ed23518aec7d746adf09ceb4b7abb7773bd9a23bd21bca87f45dcfe213",
+          "source_sha256": "8ab30c3b7db15a702df2794131941d3613a02a8c105811e07d1f5b591f6a1ab7",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/receipt_inspection.rs::support::module:effect_fixture",
-          "source_sha256": "80b3c2ed23518aec7d746adf09ceb4b7abb7773bd9a23bd21bca87f45dcfe213",
+          "source_sha256": "8ab30c3b7db15a702df2794131941d3613a02a8c105811e07d1f5b591f6a1ab7",
           "registration_sites": []
         },
         {
@@ -7346,32 +7376,32 @@
         },
         {
           "id": "crates/worldinterface-runtime/tests/support/effect_fixture.rs::::module:spi_fixture",
-          "source_sha256": "e9e4e920ab6692309418d184757ec53b6a0439144ead01feb8f47ed38a62d1af",
+          "source_sha256": "2e7e9bdf49295553493123e825da04b92831790a846caa2b290f1f55620d5e33",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/support/effect_fixture.rs::::source-module:crates/worldinterface-runtime/tests/support/effect_fixture.rs",
-          "source_sha256": "e9e4e920ab6692309418d184757ec53b6a0439144ead01feb8f47ed38a62d1af",
+          "source_sha256": "2e7e9bdf49295553493123e825da04b92831790a846caa2b290f1f55620d5e33",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/support/effect_fixture.rs::::struct:Clock",
-          "source_sha256": "e9e4e920ab6692309418d184757ec53b6a0439144ead01feb8f47ed38a62d1af",
+          "source_sha256": "2e7e9bdf49295553493123e825da04b92831790a846caa2b290f1f55620d5e33",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/support/effect_fixture.rs::::struct:Evidence",
-          "source_sha256": "e9e4e920ab6692309418d184757ec53b6a0439144ead01feb8f47ed38a62d1af",
+          "source_sha256": "2e7e9bdf49295553493123e825da04b92831790a846caa2b290f1f55620d5e33",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/support/effect_fixture.rs::::struct:FixturePort",
-          "source_sha256": "e9e4e920ab6692309418d184757ec53b6a0439144ead01feb8f47ed38a62d1af",
+          "source_sha256": "2e7e9bdf49295553493123e825da04b92831790a846caa2b290f1f55620d5e33",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/support/effect_fixture.rs::::struct:Noop",
-          "source_sha256": "e9e4e920ab6692309418d184757ec53b6a0439144ead01feb8f47ed38a62d1af",
+          "source_sha256": "2e7e9bdf49295553493123e825da04b92831790a846caa2b290f1f55620d5e33",
           "registration_sites": []
         },
         {
@@ -7963,6 +7993,16 @@
           "id": "examples/agent-embedding/src/main.rs::::source-module:examples/agent-embedding/src/main.rs",
           "source_sha256": "1c72db4e7d31ed0f4aa0f8baf52f23246d136c67bb094b67d9b95400a0ba4040",
           "registration_sites": []
+        },
+        {
+          "id": "examples/downstream-consumer/Cargo.toml::auxiliary-crate:wi-downstream-consumer",
+          "source_sha256": "b1d5f106eed5a286460cac00c31465407fd3f13077d8941fcae773688d3a0ccb",
+          "registration_sites": []
+        },
+        {
+          "id": "examples/downstream-consumer/src/main.rs::::source-module:examples/downstream-consumer/src/main.rs",
+          "source_sha256": "e81457c49983747da1978d4c8e65cd3bde76efee6a8c2dbe3f86a6751f60e949",
+          "registration_sites": []
         }
       ],
       "surfaces": [
@@ -8333,7 +8373,7 @@
         },
         {
           "path": "crates/worldinterface-foundation/capability/Cargo.toml",
-          "source_sha256": "961ce2a923f31722a814f3cbc84c2bc14dca57fa62aef0984aafa5ce44294379",
+          "source_sha256": "c28a3492e7015aa56349afca3e9ed4b0243fa791b4cdde9ded5dcdebb8896cde",
           "treatment": "Retain target protocol, capability, state-machine and store infrastructure; preserve isolation from legacy connector removal."
         },
         {
@@ -8358,7 +8398,7 @@
         },
         {
           "path": "crates/worldinterface-foundation/domain/Cargo.toml",
-          "source_sha256": "76f6abf2be98919cfde3d44dfc12cbc0b351e3d7873ef60c96ae60698cf7a2a2",
+          "source_sha256": "2c8cc1b42ce591f275c292de827cb661bded71ff8f28dd934bd82b4192c4ba35",
           "treatment": "Retain target protocol, capability, state-machine and store infrastructure; preserve isolation from legacy connector removal."
         },
         {
@@ -8463,7 +8503,7 @@
         },
         {
           "path": "crates/worldinterface-foundation/domain/tests/support/control_plane.rs",
-          "source_sha256": "a6b98669b2d5ae44791a6e227201d02f859f492b0f3b2def2ac3974b507190cb",
+          "source_sha256": "b4c5ee6d316e7ed61fc3449426d3304b4b83ebbaa5036887980ae677ecf1d4dd",
           "treatment": "WIP-13 shared embedded control-plane support/evidence: retain scoped authentication, administration and custody boundaries; review selective legacy removal without deleting these contracts. Disposition proposal in docs/work-items/WIP-13.md."
         },
         {
@@ -8473,7 +8513,7 @@
         },
         {
           "path": "crates/worldinterface-foundation/egress/Cargo.toml",
-          "source_sha256": "8be61d392c5241ad0a45694c7782212a82c1c368f2fa51b63349cbc79aa44eff",
+          "source_sha256": "8a30ab4da80ebb513315b32f0e94f6a7b4fef4f67c5b3bae85074f74aa65f6be",
           "treatment": "Retain WI-04 guarded domain and production admission binding; review selective changes without weakening replacement or qualification gates."
         },
         {
@@ -8488,7 +8528,7 @@
         },
         {
           "path": "crates/worldinterface-foundation/ingress/Cargo.toml",
-          "source_sha256": "d584a614ab0de6c73ce058de7cc8c416bdb71f94c4873fd4e4eb7f9263a89570",
+          "source_sha256": "2d0856447737ada3d200209ecdc9fcfc0599fe14102d475943317fa48d6f7868",
           "treatment": "Retain isolated ingress domain implementation and fixtures. Any future selective legacy removal must preserve WI-03 coverage; no runtime removal is claimed."
         },
         {
@@ -8518,7 +8558,7 @@
         },
         {
           "path": "crates/worldinterface-foundation/protocol/Cargo.toml",
-          "source_sha256": "04e1a75ffb3ceb264c9938b3445fac4fcdf336bb6bb88f1138ba5513db0c0ef8",
+          "source_sha256": "d8ed3264f6eb763c20d85a75a69b6dd6e7a6a694c17e41b5ea9ed02cc1e6d0dd",
           "treatment": "Retain target protocol, capability, state-machine and store infrastructure; preserve isolation from legacy connector removal."
         },
         {
@@ -8588,7 +8628,7 @@
         },
         {
           "path": "crates/worldinterface-foundation/storage/Cargo.toml",
-          "source_sha256": "c9b6f6b01abf327ad78be6e7de558993b40128db53fbacb42710ee3b5be7e2a5",
+          "source_sha256": "54f001d000442bcab0c97b8534e91f4a4f6142ce74cf6ead6230e2eda47b4b17",
           "treatment": "Retain target protocol, capability, state-machine and store infrastructure; preserve isolation from legacy connector removal."
         },
         {
@@ -8603,7 +8643,7 @@
         },
         {
           "path": "crates/worldinterface-foundation/storage/src/control_plane.rs",
-          "source_sha256": "13e69306d4ec81bade8179f580dc511c051139b1f631972b9f86d8505b28398a",
+          "source_sha256": "bcfe727fe5a2c1bbb655336beaabe46d66dbcc689c592a765128a152665aff37",
           "treatment": "WIP-13 shared embedded control-plane support/evidence: retain scoped authentication, administration and custody boundaries; review selective legacy removal without deleting these contracts. Disposition proposal in docs/work-items/WIP-13.md."
         },
         {
@@ -8613,7 +8653,7 @@
         },
         {
           "path": "crates/worldinterface-foundation/storage/src/effect.rs",
-          "source_sha256": "925bec89804583544ff7f8d5b4d6f482f34814e686a9c2226f53d934362ec239",
+          "source_sha256": "9b5d750a34cbe03b377dfcf8e3ae726a56abb506c9281cace5c75d7a8006ce39",
           "treatment": "Retain WI-04 guarded domain and production admission binding; review selective changes without weakening replacement or qualification gates."
         },
         {
@@ -8623,7 +8663,7 @@
         },
         {
           "path": "crates/worldinterface-foundation/storage/src/ingress.rs",
-          "source_sha256": "28be862e6ffe5ec5d223a713c7969bbb7be0235f469cfebe9fe26cdfa373b348",
+          "source_sha256": "1186fe49c4bdf69230e851c45df6a344d27de3a9efde4ae3014151f1a1875fa2",
           "treatment": "Retain isolated ingress domain implementation and fixtures. Any future selective legacy removal must preserve WI-03 coverage; no runtime removal is claimed."
         },
         {
@@ -8692,8 +8732,13 @@
           "treatment": "Retain target protocol, capability, state-machine and store infrastructure; preserve isolation from legacy connector removal."
         },
         {
+          "path": "crates/worldinterface-foundation/storage/tests/support/control_plane.rs",
+          "source_sha256": "b4c5ee6d316e7ed61fc3449426d3304b4b83ebbaa5036887980ae677ecf1d4dd",
+          "treatment": "Retain WSP-02 package evidence/support and registry consumer. Future legacy removal must preserve authoritative byte equality and release consumer coverage."
+        },
+        {
           "path": "crates/worldinterface-foundation/storage/tests/support/crash.rs",
-          "source_sha256": "713a2239d363fb995047de74ad52aa2f672235c1220cabec05da0a893b04a7ea",
+          "source_sha256": "1046279f7f79d0609d2dd5b09a80b5f7eb529a8fffb0d5c7faebeed002908516",
           "treatment": "Retain target integration source and tests; audit shared declarations before any later selective removal."
         },
         {
@@ -8753,7 +8798,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/Cargo.toml",
-          "source_sha256": "dcedd59c9dfd8bd67b4f37ac645e97ff4e549a7f55907e859ac9566ffdbc039a",
+          "source_sha256": "4af30cfa319f79b045ec89ba228f0474e87244375da1a8be0131d4dba2c3c8b8",
           "treatment": "Retain target integration source and tests; audit shared declarations before any later selective removal."
         },
         {
@@ -8813,7 +8858,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/src/embedded/credential.rs",
-          "source_sha256": "44b67c4bfda17713a7ae8f336652ee26be4600947df2db19f4435b89d777c778",
+          "source_sha256": "43b4cf75bb17244fcbf0af5dc75fd8d8a936823928b214e8e7af925250bd7845",
           "treatment": "Retain WIP-14 embedded runtime, AQ-free control-plane ownership and WI-owned consumer proof; no connector removal or qualification claim."
         },
         {
@@ -8968,12 +9013,12 @@
         },
         {
           "path": "crates/worldinterface-runtime/src/worker_process/mod.rs",
-          "source_sha256": "a17e61926676c7890d25aba93d90dbaaff50a145e5c240ff1da859c5caf20c61",
+          "source_sha256": "64e04b9003318dbe15d508eaad5e37a85ec081f4969ed6cfe9982f9c1a3048f6",
           "treatment": "WIP-09: retain reviewed process adapter mechanics and fixture evidence; selective shared-infrastructure maintenance only, with no legacy removal or new approval claim."
         },
         {
           "path": "crates/worldinterface-runtime/src/worker_process/ownership.rs",
-          "source_sha256": "4e35f4f7d6b51ae0ca83b23d4e0cd151295a9096fd337baaad4f5e2de5829d01",
+          "source_sha256": "abf28bfdd7795af9ad9b41302106bc2c9a505014135f567481ca22c6c4625aec",
           "treatment": "WIP-09: retain reviewed process adapter mechanics and fixture evidence; selective shared-infrastructure maintenance only, with no legacy removal or new approval claim."
         },
         {
@@ -9073,7 +9118,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/tests/receipt_inspection.rs",
-          "source_sha256": "80b3c2ed23518aec7d746adf09ceb4b7abb7773bd9a23bd21bca87f45dcfe213",
+          "source_sha256": "8ab30c3b7db15a702df2794131941d3613a02a8c105811e07d1f5b591f6a1ab7",
           "treatment": "Retain target WI-05 completion, receipt inspection or crash evidence; shared infrastructure is not a legacy connector deletion surface (WIP-04)."
         },
         {
@@ -9108,7 +9153,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/tests/support/effect_fixture.rs",
-          "source_sha256": "e9e4e920ab6692309418d184757ec53b6a0439144ead01feb8f47ed38a62d1af",
+          "source_sha256": "2e7e9bdf49295553493123e825da04b92831790a846caa2b290f1f55620d5e33",
           "treatment": "Retain target WI-05 completion, receipt inspection or crash evidence; shared infrastructure is not a legacy connector deletion surface (WIP-04)."
         },
         {
@@ -9240,6 +9285,16 @@
           "path": "examples/agent-embedding/src/main.rs",
           "source_sha256": "1c72db4e7d31ed0f4aa0f8baf52f23246d136c67bb094b67d9b95400a0ba4040",
           "treatment": "Review shared exports, registration, schemas, tests and integration paths; selectively update references, retain unrelated Fabric support."
+        },
+        {
+          "path": "examples/downstream-consumer/Cargo.toml",
+          "source_sha256": "b1d5f106eed5a286460cac00c31465407fd3f13077d8941fcae773688d3a0ccb",
+          "treatment": "Retain WSP-02 package evidence/support and registry consumer. Future legacy removal must preserve authoritative byte equality and release consumer coverage."
+        },
+        {
+          "path": "examples/downstream-consumer/src/main.rs",
+          "source_sha256": "e81457c49983747da1978d4c8e65cd3bde76efee6a8c2dbe3f86a6751f60e949",
+          "treatment": "Retain WSP-02 package evidence/support and registry consumer. Future legacy removal must preserve authoritative byte equality and release consumer coverage."
         }
       ],
       "replacement_requirements": [
@@ -10745,7 +10800,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/Cargo.toml",
-          "source_sha256": "dcedd59c9dfd8bd67b4f37ac645e97ff4e549a7f55907e859ac9566ffdbc039a",
+          "source_sha256": "4af30cfa319f79b045ec89ba228f0474e87244375da1a8be0131d4dba2c3c8b8",
           "treatment": "WIP-09: retain reviewed process adapter mechanics and fixture evidence; selective shared-infrastructure maintenance only, with no legacy removal or new approval claim."
         },
         {

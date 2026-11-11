@@ -1,0 +1,15 @@
+[workspace]
+resolver = "2"
+
+[package]
+name = "wi-downstream-consumer"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+[dependencies]
+worldinterface-runtime = "=0.2.0-alpha.1"
+worldinterface-protocol = "=0.2.0-alpha.1"
+worldinterface-storage = "=0.2.0-alpha.1"
+serde_json = "1"
+tempfile = "3"
