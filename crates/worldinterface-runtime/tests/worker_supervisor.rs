@@ -53,7 +53,8 @@ fn wi_supervisor_child() {
     );
     let runtime = tokio::runtime::Builder::new_current_thread().enable_all().build().unwrap();
     let stage = std::env::var("WI_SUPERVISOR_STAGE").unwrap();
-    let h = if stage == "invoke" {
+    let invoke = stage.starts_with("invoke");
+    let h = if invoke {
         let submission =
             serde_json::from_slice(&std::fs::read(root.join("submission.json")).unwrap()).unwrap();
         let h = Harness::new(&root, connector, submission, snapshot);
@@ -80,11 +81,18 @@ fn wi_supervisor_child() {
             clock: Clock::new(),
         }
     };
-    if stage == "invoke" {
+    if let Some(point) =
+        stage.strip_prefix("invoke-cut-").or_else(|| stage.strip_prefix("reconcile-cut-"))
+    {
+        std::env::set_var("WI_CRASH_POINT", point);
+        std::env::set_var("WI_CRASH_READY", root.join("wi-crash-ready"));
+    }
+    if invoke {
         runtime.block_on(h.execute());
         assert_eq!(h.effect().phase, Phase::Uncertain);
         assert!(h.effect().outcomes.iter().all(|o| o.outcome != ExecutionOutcome::Succeeded));
     } else {
+        runtime.block_on(h.execute());
         let original = h.bundle.wi().effect_receipts(h.caller().tenant(), &h.id).unwrap();
         runtime.block_on(h.reconcile());
         assert_eq!(h.effect().phase, Phase::Reconciled);
@@ -171,6 +179,12 @@ fn wi(root: &Path, client: Arc<Client>, stage: &str) {
     let mut child = KillOnDrop(command.spawn().unwrap());
     let deadline = std::time::Instant::now() + std::time::Duration::from_secs(12);
     loop {
+        if stage.contains("-cut-") && root.join("wi-crash-ready").exists() {
+            child.kill().unwrap();
+            child.wait().unwrap();
+            std::fs::remove_file(root.join("wi-crash-ready")).unwrap();
+            return;
+        }
         if let Some(status) = child.try_wait().unwrap() {
             assert!(status.success(), "WI stage {stage}: {status}");
             return;
@@ -179,7 +193,13 @@ fn wi(root: &Path, client: Arc<Client>, stage: &str) {
         std::thread::sleep(std::time::Duration::from_millis(5));
     }
 }
-fn lifecycle(operation: Operation, lost_ack: bool, ambiguous: bool, failed_guest_first: bool) {
+fn lifecycle(
+    operation: Operation,
+    lost_ack: bool,
+    ambiguous: bool,
+    failed_guest_first: bool,
+    cut: Option<&str>,
+) {
     live_packet();
     let temp = tempfile::tempdir().unwrap();
     let root = temp.path();
@@ -224,7 +244,11 @@ fn lifecycle(operation: Operation, lost_ack: bool, ambiguous: bool, failed_guest
         std::fs::write(root.join("interrupt-dispatch"), b"1").unwrap();
     }
     let (client, supervisor) = channel(root, &config);
-    wi(root, client, "invoke");
+    let initial = cut
+        .filter(|p| p.starts_with("fabric-"))
+        .map(|p| format!("invoke-cut-{p}"))
+        .unwrap_or_else(|| "invoke".into());
+    wi(root, client, &initial);
     wait(&root.join("backend-command"));
     assert_eq!(std::fs::read(root.join("activations")).unwrap(), b"1");
     if !failed_guest_first {
@@ -237,9 +261,17 @@ fn lifecycle(operation: Operation, lost_ack: bool, ambiguous: bool, failed_guest
     // Completion belongs to the operator backend, and needs no guest callback.
     std::fs::write(root.join("complete"), b"stopped/recovered outside guest").unwrap();
     let (client, supervisor) = channel(root, &config);
-    wi(root, client, "reconcile");
+    if let Some(point) = cut.filter(|p| p.starts_with("reconciliation-")) {
+        wi(root, client, &format!("reconcile-cut-{point}"));
+        drop(supervisor);
+        let (client, supervisor) = channel(root, &config);
+        wi(root, client, "reconcile");
+        drop(supervisor);
+    } else {
+        wi(root, client, "reconcile");
+        drop(supervisor);
+    }
     assert_eq!(std::fs::read(root.join("activations")).unwrap(), b"1");
-    drop(supervisor);
 }
 #[test]
 fn wp_035_authenticated_supervisor_binds_exact_lifecycle_operation() {
@@ -292,35 +324,36 @@ fn wp_035_authenticated_supervisor_binds_exact_lifecycle_operation() {
         *operation = r("recover");
     }
     snapshot.facts[0].attested_document = digest(&snapshot.facts[0].document).unwrap();
-    let error = worldinterface_egress::Egress::new(store)
-        .apply(
-            &caller,
-            Timestamp::from_epoch_millis(now()).unwrap(),
-            worldinterface_domain::effect::EffectAction::Resolve {
-                id,
-                snapshot:
-                    worldinterface_domain::authorization::VerifiedSnapshot::from_trusted_verifier(
-                        snapshot,
-                    )
-                    .unwrap(),
-            },
-        )
-        .unwrap_err();
-    assert!(error.to_string().contains("lifecycle target operation mismatch"), "{error}");
+    let intent = store.effect_snapshot(caller.tenant()).unwrap().effects[&id].intent.clone();
+    let error = worldinterface_domain::resource::resolve_resource(
+        &intent,
+        caller.tenant(),
+        &snapshot.registry,
+        &snapshot.facts,
+        &Timestamp::from_epoch_millis(now()).unwrap(),
+    )
+    .unwrap_err();
+    assert!(error.contains("lifecycle target operation mismatch"), "{error}");
 }
 #[test]
 fn wp_036_acceptance_is_uncertain_until_external_transition_completes() {
-    lifecycle(Operation::Stop, false, false, false);
+    lifecycle(Operation::Stop, false, false, false, None);
 }
 #[test]
 fn wp_037_external_result_survives_stopped_guest_and_wi_restart() {
-    lifecycle(Operation::Replace, false, false, false);
+    lifecycle(Operation::Replace, false, false, false, None);
 }
 #[test]
 fn wp_038_lost_ack_and_callback_converge_through_durable_inspect() {
-    lifecycle(Operation::Replace, true, true, false);
+    for cut in [
+        "fabric-receipt-history",
+        "fabric-receipt-committed",
+        "reconciliation-transition-committed",
+    ] {
+        lifecycle(Operation::Replace, true, true, false, Some(cut));
+    }
 }
 #[test]
 fn wp_039_operator_recovery_is_independent_of_failed_guest() {
-    lifecycle(Operation::Recover, false, false, true);
+    lifecycle(Operation::Recover, false, false, true, None);
 }

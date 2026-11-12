@@ -1,4 +1,4 @@
-//! Inactive WI-owned worker boundary. Validation of these declarations grants no authority.
+//! WI-owned worker and separate supervisor boundary. Declarations alone grant no authority.
 pub mod artifacts;
 pub mod controls;
 pub mod credential;

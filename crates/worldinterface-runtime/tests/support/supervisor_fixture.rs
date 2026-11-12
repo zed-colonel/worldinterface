@@ -11,7 +11,7 @@ use std::{
     sync::{atomic::AtomicBool, Arc},
     time::{Duration, Instant},
 };
-use worldinterface_protocol::OpaqueRef;
+use worldinterface_protocol::{ContentHash, OpaqueRef};
 use worldinterface_runtime::supervisor::*;
 use worldinterface_worker::supervisor::*;
 pub fn r(s: &str) -> OpaqueRef {
@@ -94,6 +94,18 @@ impl SupervisorHandler for Fixture {
 }
 pub fn live_packet() {
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let environment: serde_json::Value = serde_json::from_slice(
+        &std::fs::read(root.join("conformance/wi-fabric-2/worker/evaluation-environment.json"))
+            .unwrap(),
+    )
+    .unwrap();
+    for (path, expected) in environment["support_binary_sha256"].as_object().unwrap() {
+        assert_eq!(
+            ContentHash::of(&std::fs::read(path).unwrap()).as_str(),
+            expected.as_str().unwrap(),
+            "supervisor support binary drift"
+        );
+    }
     assert!(Process::new("timeout")
         .args(["30s", "python3", "-B", "scripts/wi_worker_evaluation.py", "--require-committed"])
         .current_dir(root)

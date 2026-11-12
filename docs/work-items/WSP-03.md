@@ -45,7 +45,9 @@ ambiguous backend dispatch, WI restart and supervisor restart retain the same ke
 without duplicate activation or final reconciliation.
 
 WP-035–039 are registered in `worker/supervisor-coverage.json` and the 60-case
-campaign registry. WP-A08 is resolved there by the external result journal and
+campaign registry and the committed evaluation packet. The six worker operations
+and existing tasks remain unchanged; supervisor operations use separate operator
+grants. WP-A08 is resolved there by the external result journal and
 authenticated inspect. Imported planning matrices/assumptions remain unchanged.
 The historical worker milestone and packaged handoff retain exactly their 55
 cases and ten gates. WP-040, G5 closure and supervisor handoff remain WSP-04.

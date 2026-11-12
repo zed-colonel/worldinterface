@@ -73,7 +73,7 @@ fn terminal(
     for _ in 0..300 {
         if let Ok(Response::Record(record)) = server.request(p, inspect(c), 1) {
             if record.observation.state.terminal() {
-                return record;
+                return *record;
             }
         }
         std::thread::sleep(std::time::Duration::from_millis(5));
@@ -107,7 +107,7 @@ fn public_server_durable_acceptance_replay_revocation_and_terminal_immutability(
     handler.complete.store(false, Ordering::SeqCst);
     assert_eq!(
         server.request(&policy, inspect(&command), 99999).unwrap(),
-        Response::Record(result.clone())
+        Response::Record(Box::new(result.clone()))
     );
     let mut wrong = policy.clone();
     wrong.session.tenant = r("other");
@@ -125,7 +125,7 @@ fn public_server_durable_acceptance_replay_revocation_and_terminal_immutability(
     let server = Server::open(&root, handler.clone()).unwrap();
     assert_eq!(
         server.request(&policy, inspect(&command), 99999).unwrap(),
-        Response::Record(result)
+        Response::Record(Box::new(result))
     );
     assert_eq!(handler.calls.load(Ordering::SeqCst), 1);
     drop(server);
@@ -198,13 +198,13 @@ fn connector_rejects_stale_authenticated_response_and_never_treats_acceptance_as
     command.key = r("different-command-key");
     let (client, channel) = PrivateChannel::provision(policy.clone()).unwrap();
     let (mut stream, _) = channel.into_parts();
-    let stale = Response::Record(worldinterface_worker::supervisor::Record {
+    let stale = Response::Record(Box::new(worldinterface_worker::supervisor::Record {
         version: 1,
         command: command.clone(),
         tenant: policy.session.tenant.clone(),
         principal: policy.session.principal.clone(),
         observation: Observation { state: State::Completed, evidence: vec![] },
-    });
+    }));
     let reply = std::thread::spawn(move || {
         use std::io::{Read, Write};
         let mut size = [0; 4];

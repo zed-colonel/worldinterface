@@ -47,7 +47,9 @@ and embedded host surfaces.
 
 - Active work: WI-SUPERVISOR-PROOF-1, [WSP-03](docs/work-items/WSP-03.md).
   Supervisor lifecycle authority is separate from WorkerPort; preserve the original
-  55-case worker milestone and ten gates. WSP-03 adds WP-035–039; WSP-04 owns WP-040/G5.
+  55-case worker milestone and ten gates. WSP-03 adds WP-035–039 to the campaign
+  and evaluation packet, with separate operator grants and no new worker operation;
+  WSP-04 owns WP-040/G5.
 - Register implemented cases in `conformance/wi-fabric-2/proof/cases.json`; preserve
   authoritative scope coverage and exact manifest/package/test references.
 - Run `cargo run --locked --manifest-path tools/wi-contract-check/Cargo.toml -- hashes refresh`

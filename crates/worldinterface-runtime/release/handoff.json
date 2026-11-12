@@ -3599,7 +3599,7 @@
     "scripts/release.py": "6420b283485931dd0ad5b78de03de1075d1af573273efdac9600275089a93d0a",
     "scripts/wi_release.py": "cf1c0594b6dcfb3aafa5cbbbfa12930b18d8a7167e2726cbb601799628e62462",
     "scripts/wi_release_packages.py": "e551cb3e1450b8df509c5790bfbb7f780f72b14b40d4bbacf8af4695860e7858",
-    "scripts/wi_worker_evaluation.py": "63936acd560877c4cfe7a0ae88bd412407fb27212984c6bd89d1475156a8f2a6",
+    "scripts/wi_worker_evaluation.py": "84c8ae3e339f96b4ec82e146dbb707212d4419f41e9d0ab2da619096e7c545fa",
     "tools/wi-contract-check/Cargo.lock": "e23d73ebc1773d7c638713f63e51cf3e6f0c1982ee3f96a3b46b804185cce057"
   },
   "kind": "wi-embedded-worker-handoff-descriptor-v1",

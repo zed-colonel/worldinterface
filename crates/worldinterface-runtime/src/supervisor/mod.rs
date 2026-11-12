@@ -124,7 +124,7 @@ impl Server {
         }
         drop(journal);
         // Acceptance is returned even if a fast backend has already completed.
-        Ok(Response::Record(record))
+        Ok(Response::Record(Box::new(record)))
     }
     fn drive(&self, policy: &ChannelPolicy, record: &Record, now: u64, fresh: bool) -> Result<()> {
         if self.busy.compare_exchange(false, true, Ordering::SeqCst, Ordering::SeqCst).is_err() {

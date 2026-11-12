@@ -117,7 +117,7 @@ pub struct Record {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "kind", content = "body", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Response {
-    Record(Record),
+    Record(Box<Record>),
     Unavailable,
 }
 
