@@ -9,7 +9,7 @@ pub const DOCUMENT: &str = "docs/evidence/WI-EMBEDDED-WORKER-PROOF-1.md";
 
 /// Keep the human-readable gate/case/test appendix in the same generation too.
 pub fn mapping_markdown(root: &Path) -> Result<String> {
-    let (registry, gates) = proof::load(root)?;
+    let (registry, gates) = proof::load_worker(root)?;
     let mut text = String::from("\n| Gate | Pass criteria | Required cases |\n|---|---|---|\n");
     for gate in gates {
         let criteria: Vec<String> = serde_json::from_value(gate.pass_criteria)?;
@@ -40,7 +40,7 @@ pub fn mapping_markdown(root: &Path) -> Result<String> {
 /// No commit or packet digest enters this descriptor. The packet hashes
 /// it, and the external execution bundle resolves all concrete generation pins.
 pub fn descriptor(root: &Path) -> Result<Value> {
-    let (registry, gates) = proof::load(root)?;
+    let (registry, gates) = proof::load_worker(root)?;
     let aq = read(&root.join("contracts/aq-integration-target.json"))?;
     let manifest: toml::Value = toml::from_str(&fs::read_to_string(
         root.join("crates/worldinterface-runtime/Cargo.toml"),
@@ -181,7 +181,7 @@ pub fn validate(root: &Path, value: &Value) -> Result<()> {
         );
     }
     validate_package_data(root)?;
-    let (registry, gates) = proof::load(root)?;
+    let (registry, gates) = proof::load_worker(root)?;
     if registry.cases.len() != 55
         || registry.cases.iter().any(|c| c.status != "implemented" || c.tests.is_empty())
         || gates.len() != 10

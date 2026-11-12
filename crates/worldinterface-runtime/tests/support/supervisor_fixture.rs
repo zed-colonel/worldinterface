@@ -1,0 +1,162 @@
+#![allow(dead_code)]
+use super::child::KillOnDrop;
+use serde::{Deserialize, Serialize};
+use std::{
+    os::{
+        fd::{AsRawFd, FromRawFd},
+        unix::{net::UnixStream, process::CommandExt},
+    },
+    path::{Path, PathBuf},
+    process::{Command as Process, Stdio},
+    sync::{atomic::AtomicBool, Arc},
+    time::{Duration, Instant},
+};
+use worldinterface_protocol::OpaqueRef;
+use worldinterface_runtime::supervisor::*;
+use worldinterface_worker::supervisor::*;
+pub fn r(s: &str) -> OpaqueRef {
+    s.to_owned().try_into().unwrap()
+}
+pub fn now() -> u64 {
+    std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_millis() as u64
+}
+#[derive(Serialize, Deserialize)]
+pub struct Config {
+    pub request: LifecycleRequest,
+    pub tenant: OpaqueRef,
+    pub principal: OpaqueRef,
+}
+impl Config {
+    pub fn policy(&self) -> ChannelPolicy {
+        let session = Session {
+            tenant: self.tenant.clone(),
+            principal: self.principal.clone(),
+            audience: self.request.audience.clone(),
+            authority_generation: self.request.authority_generation.clone(),
+            policy_revision: self.request.policy_revision.clone(),
+        };
+        ChannelPolicy {
+            grants: vec![Grant { session: session.clone(), request: self.request.clone() }],
+            session,
+            revoked: Arc::new(AtomicBool::new(false)),
+        }
+    }
+}
+pub struct Fixture {
+    pub root: PathBuf,
+}
+impl SupervisorHandler for Fixture {
+    fn supports_authoritative_inspect(&self) -> bool {
+        true
+    }
+    fn dispatch(&self, command: AuthorizedSupervisorCommand) -> Result<Observation, String> {
+        // The consumer's durable stable-key backend lives outside WI and guest.
+        let path = self.root.join("backend-command");
+        let digest = command.command().digest()?;
+        if path.exists() {
+            if std::fs::read(&path).unwrap() != digest.as_str().as_bytes() {
+                return Err("backend conflict".into());
+            }
+        } else {
+            use std::io::Write;
+            let mut file = std::fs::OpenOptions::new()
+                .write(true)
+                .create_new(true)
+                .open(path)
+                .map_err(|e| e.to_string())?;
+            file.write_all(digest.as_str().as_bytes()).map_err(|e| e.to_string())?;
+            file.sync_all().map_err(|e| e.to_string())?;
+            std::fs::File::open(&self.root).unwrap().sync_all().unwrap();
+            std::fs::write(self.root.join("activations"), b"1").unwrap();
+        }
+        if self.root.join("interrupt-dispatch").exists() {
+            std::process::abort();
+        }
+        Ok(Observation { state: State::Running, evidence: b"durably dispatched".to_vec() })
+    }
+    fn inspect(&self, command: AuthorizedSupervisorInspect) -> Result<Observation, String> {
+        let path = self.root.join("backend-command");
+        if !path.exists() {
+            return Ok(Observation {
+                state: State::Rejected,
+                evidence: b"authoritatively absent".to_vec(),
+            });
+        }
+        if std::fs::read(path).unwrap() != command.command().digest()?.as_str().as_bytes() {
+            return Ok(Observation { state: State::Escalated, evidence: b"conflict".to_vec() });
+        }
+        let complete = self.root.join("complete").exists();
+        Ok(Observation {
+            state: if complete { State::Completed } else { State::Running },
+            evidence: if complete { b"external lifecycle completed".to_vec() } else { vec![] },
+        })
+    }
+}
+pub fn live_packet() {
+    let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    assert!(Process::new("timeout")
+        .args(["30s", "python3", "-B", "scripts/wi_worker_evaluation.py", "--require-committed"])
+        .current_dir(root)
+        .status()
+        .unwrap()
+        .success());
+}
+pub fn transfer(command: &mut Process, stream: &UnixStream) {
+    let fd = stream.as_raw_fd();
+    unsafe {
+        command.pre_exec(move || {
+            if libc::dup2(fd, 198) < 0 {
+                return Err(std::io::Error::last_os_error());
+            }
+            Ok(())
+        });
+    }
+}
+pub fn channel(root: &Path, config: &Config) -> (Arc<Client>, KillOnDrop) {
+    let (client, channel) = PrivateChannel::provision(config.policy()).unwrap();
+    let (stream, _) = channel.into_parts();
+    let mut command = Process::new(std::env::current_exe().unwrap());
+    command
+        .args(["--exact", "supervisor_child", "--nocapture"])
+        .env_clear()
+        .env("WI_SUPERVISOR_ROOT", root)
+        .env("TMPDIR", std::env::var_os("TMPDIR").unwrap())
+        .stdout(Stdio::null())
+        .stderr(Stdio::inherit());
+    transfer(&mut command, &stream);
+    let child = KillOnDrop(command.spawn().unwrap());
+    (Arc::new(client), child)
+}
+pub fn server_child(root: &Path) {
+    let config: Config =
+        serde_json::from_slice(&std::fs::read(root.join("config.json")).unwrap()).unwrap();
+    let stream = unsafe { UnixStream::from_raw_fd(198) };
+    let mut channel = PrivateChannel::from_provisioned(stream, config.policy());
+    let server =
+        Server::open(&root.join("journal"), Arc::new(Fixture { root: root.to_owned() })).unwrap();
+    if root.join("drop-ack").exists() {
+        use std::io::Read;
+        let (mut stream, policy) = channel.into_parts();
+        let mut size = [0; 4];
+        stream.read_exact(&mut size).unwrap();
+        let len = u32::from_be_bytes(size) as usize;
+        assert!(len <= MAX_FRAME_BYTES);
+        let mut bytes = vec![0; len];
+        stream.read_exact(&mut bytes).unwrap();
+        server.request(&policy, decode(&bytes).unwrap(), now()).unwrap();
+        wait(&root.join("backend-command"));
+        return; // Intentionally lose every acknowledgement and callback.
+    }
+    loop {
+        if channel.serve_one(&server, now()).is_err() {
+            return;
+        }
+    }
+}
+pub fn wait(path: &Path) {
+    let deadline = Instant::now() + Duration::from_secs(10);
+    while !path.exists() && Instant::now() < deadline {
+        std::thread::sleep(Duration::from_millis(5));
+    }
+    assert!(path.exists(), "missing fixture evidence {}", path.display());
+}

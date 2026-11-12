@@ -7,6 +7,7 @@ pub mod lifecycle;
 pub mod mapping;
 pub mod ports;
 pub mod profile;
+pub mod supervisor;
 
 use serde::{de::DeserializeOwned, Serialize};
 use worldinterface_protocol::{canonical_collection, strict_collection};

@@ -1,0 +1,80 @@
+{
+  "version": 1,
+  "scope": "wi/WI-11/supervisor-boundary",
+  "owning_item": "WSP-03",
+  "runtime_pass_asserted": false,
+  "assumption": {
+    "id": "WP-A08",
+    "status": "resolved-by-implementation",
+    "result_store": "operator-owned journal outside StoreBundle and guest",
+    "recovery": "authenticated inspect; ambiguous dispatch never redispatched",
+    "real_instance_qualification": "Exoskeleton-owned; WSP-04 owns WP-040 and G5"
+  },
+  "assigned_cases": {
+    "WP-035": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "wp_035_authenticated_supervisor_binds_exact_lifecycle_operation"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "public_server_durable_acceptance_replay_revocation_and_terminal_immutability"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "private_transport_rejects_malformed_and_oversized_frames_outside_guest"
+      },
+      {
+        "manifest": "crates/worldinterface-foundation/Cargo.toml",
+        "package": "worldinterface-worker",
+        "test": "strict_supervisor_protocol_and_exact_server_authorization"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "connector_rejects_stale_authenticated_response_and_never_treats_acceptance_as_commit"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "supervisor_generation_deadline_and_unsupported_recovery_fail_closed"
+      }
+    ],
+    "WP-036": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "wp_036_acceptance_is_uncertain_until_external_transition_completes"
+      }
+    ],
+    "WP-037": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "wp_037_external_result_survives_stopped_guest_and_wi_restart"
+      }
+    ],
+    "WP-038": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "wp_038_lost_ack_and_callback_converge_through_durable_inspect"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "interrupted_result_persistence_requires_reopen_and_authoritative_inspect"
+      }
+    ],
+    "WP-039": [
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "wp_039_operator_recovery_is_independent_of_failed_guest"
+      }
+    ]
+  }
+}

@@ -129,6 +129,12 @@
           "disposition": "repository-only",
           "owner": "foundation-test",
           "reason": "Repository conformance fixtures, sibling support, or committed worker campaign and its source-bound evidence."
+        },
+        {
+          "target": "supervisor",
+          "disposition": "packaged",
+          "owner": "foundation-test",
+          "reason": "Self-contained downstream implementation of the public supervisor handler and strict protocol."
         }
       ]
     },
@@ -366,6 +372,18 @@
           "disposition": "repository-only",
           "owner": "runtime-test",
           "reason": "Repository conformance fixtures, sibling support, or committed worker campaign and its source-bound evidence."
+        },
+        {
+          "target": "supervisor_consumer",
+          "disposition": "packaged",
+          "owner": "runtime-test",
+          "reason": "Self-contained public supervisor consumer with independent journal and authenticated private channel."
+        },
+        {
+          "target": "worker_supervisor",
+          "disposition": "repository-only",
+          "owner": "runtime-test",
+          "reason": "External supervisor/guest processes and committed campaign evaluation evidence."
         }
       ]
     }

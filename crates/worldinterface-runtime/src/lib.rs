@@ -10,6 +10,8 @@ pub mod inspection;
 pub mod resolution;
 pub mod run_discovery;
 pub mod storage;
+#[cfg(unix)]
+pub mod supervisor;
 pub type Result<T> = std::result::Result<T, Box<dyn std::error::Error + Send + Sync>>;
 
 #[cfg(test)]

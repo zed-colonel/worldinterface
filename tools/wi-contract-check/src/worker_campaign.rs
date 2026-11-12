@@ -18,7 +18,7 @@ use std::{
 
 pub const COVERAGE: &str = "conformance/wi-fabric-2/worker/campaign-coverage.json";
 pub const ENTRY: &str = "wi_owned_worker_acceptance_campaign";
-pub const PARALLELISM: usize = 8;
+pub const PARALLELISM: usize = 12;
 use crate::proof::RUNTIME;
 const PACKET: &str = "conformance/wi-fabric-2/worker/evaluation-manifest.json";
 const LOCKS: [&str; 3] = [
@@ -89,7 +89,8 @@ fn pins(root: &Path) -> Result<Value> {
             );
         }
     }
-    if aq.len() != 6 || registry.cases.len() != 55 {
+    proof::validate_campaign_scope(&registry)?;
+    if aq.len() != 6 {
         return Err("incomplete AQ graph or registry".into());
     }
     Ok(json!({"commit":output(root,"git", &["rev-parse","HEAD"])? ,
@@ -190,6 +191,7 @@ pub fn validate_gates(root: &Path, gates: &Value) -> Result<()> {
 }
 /// Static coverage remains definition-review evidence, never a runtime pass claim.
 pub fn validate_coverage(root: &Path, registry: &Registry, index: &proof::TestIndex) -> Result<()> {
+    proof::validate_supervisor(root, registry, index)?;
     let contract = read(&root.join("conformance/wi-fabric-2/worker/handoff-contract.json"))?;
     if contract["version"] != 1
         || contract["kind"] != "wi-producer-evidence-v1"
@@ -582,7 +584,7 @@ fn validate_receipt_with_harnesses(
     validate_runtime_results(&runtime_suite, &additional, base)?;
     validate_executables(&outcomes, &selected)?;
     let cases = receipt["cases"].as_object().ok_or("missing case outcomes")?;
-    if cases.len() != 55
+    if cases.keys().cloned().collect::<BTreeSet<_>>() != proof::campaign_case_ids()
         || registry
             .cases
             .iter()

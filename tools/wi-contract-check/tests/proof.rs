@@ -44,7 +44,7 @@ fn rejects(rule: &str, edit: impl FnOnce(&mut Registry, &mut Vec<Gate>, &mut Tes
 fn baseline_records_have_precise_g1_coverage_and_no_source_result_claims() {
     let (r, g, index) = records();
     assert!(proof::validate(&root(), &r, &g, &index).unwrap().is_empty());
-    assert_eq!(r.cases.len(), 55);
+    assert_eq!(r.cases.len(), 60);
     // Later work items add evidence without changing WIP-01's precise G1 baseline.
     assert_eq!(
         r.cases.iter().filter(|c| c.owning_item == "WIP-01" && c.status == "implemented").count(),
@@ -555,7 +555,7 @@ fn wi07_domain_requires_complete_exact_executable_tests_and_no_runtime_claim() {
         assert!(!proof::validate_flow(t.path(), &index).unwrap().is_empty());
     }
     let (registry, _, _) = records();
-    assert_eq!(registry.cases.len(), 55);
+    assert_eq!(registry.cases.len(), 60);
     for id in ["AB-WI-005", "AB-WI-010", "AB-WI-013"] {
         let case = registry.cases.iter().find(|c| c.id == id).unwrap();
         assert_eq!(case.status, "implemented");
@@ -854,4 +854,42 @@ test=false
     )
     .unwrap();
     assert!(proof::discover_configuration(t.path(), manifest, &[]).is_err());
+}
+
+#[test]
+fn supervisor_campaign_scope_preserves_worker_milestone_and_rejects_substitution() {
+    let root = std::path::Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let (registry, gates) = proof::load(&root).unwrap();
+    proof::validate_campaign_scope(&registry).unwrap();
+    let (worker, _) = proof::load_worker(&root).unwrap();
+    assert_eq!(
+        worker.cases.iter().map(|c| c.id.clone()).collect::<std::collections::BTreeSet<_>>(),
+        proof::worker_case_ids()
+    );
+    let milestone = gates.iter().find(|g| g.id == "WI-EMBEDDED-WORKER-PROOF-1").unwrap();
+    assert_eq!(
+        milestone.required_cases.iter().cloned().collect::<std::collections::BTreeSet<_>>(),
+        proof::worker_case_ids()
+    );
+    let mut bad = registry.clone();
+    bad.cases.last_mut().unwrap().id = "WP-040".into();
+    assert!(proof::validate_campaign_scope(&bad).is_err());
+    bad = registry.clone();
+    bad.cases.pop();
+    assert!(proof::validate_campaign_scope(&bad).is_err());
+}
+
+#[test]
+fn supervisor_resolution_rejects_missing_cases_and_inflated_claims() {
+    let temp = fixture();
+    let (registry, _, index) = records();
+    proof::validate_supervisor(temp.path(), &registry, &index).unwrap();
+    let path = temp.path().join("conformance/wi-fabric-2/worker/supervisor-coverage.json");
+    let original = read(&path).unwrap();
+    for key in ["runtime_pass_asserted", "assumption", "assigned_cases"] {
+        let mut changed = original.clone();
+        changed[key] = json!(true);
+        fs::write(&path, serde_json::to_vec(&changed).unwrap()).unwrap();
+        assert!(proof::validate_supervisor(temp.path(), &registry, &index).is_err());
+    }
 }
