@@ -7631,22 +7631,22 @@
         },
         {
           "id": "crates/worldinterface-runtime/tests/support/supervisor_harness.rs::::source-module:crates/worldinterface-runtime/tests/support/supervisor_harness.rs",
-          "source_sha256": "6cefad7b9f178d674aeb678213a8a5f03bd7d6eec6b7441ff596074d4e80ed55",
+          "source_sha256": "7217447c44808bf8ffdb4937e610144a610bfcaad112005ea6ebc1683cc19c36",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/support/supervisor_harness.rs::::struct:AqClock",
-          "source_sha256": "6cefad7b9f178d674aeb678213a8a5f03bd7d6eec6b7441ff596074d4e80ed55",
+          "source_sha256": "7217447c44808bf8ffdb4937e610144a610bfcaad112005ea6ebc1683cc19c36",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/support/supervisor_harness.rs::::struct:Harness",
-          "source_sha256": "6cefad7b9f178d674aeb678213a8a5f03bd7d6eec6b7441ff596074d4e80ed55",
+          "source_sha256": "7217447c44808bf8ffdb4937e610144a610bfcaad112005ea6ebc1683cc19c36",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/support/supervisor_harness.rs::::struct:Noop",
-          "source_sha256": "6cefad7b9f178d674aeb678213a8a5f03bd7d6eec6b7441ff596074d4e80ed55",
+          "source_sha256": "7217447c44808bf8ffdb4937e610144a610bfcaad112005ea6ebc1683cc19c36",
           "registration_sites": []
         },
         {
@@ -9393,7 +9393,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/tests/support/supervisor_harness.rs",
-          "source_sha256": "6cefad7b9f178d674aeb678213a8a5f03bd7d6eec6b7441ff596074d4e80ed55",
+          "source_sha256": "7217447c44808bf8ffdb4937e610144a610bfcaad112005ea6ebc1683cc19c36",
           "treatment": "WSP-03 candidate: preserve separate bounded supervisor/public API and consumer regressions; selectively audit shared dependencies. No deletion or worker authority expansion."
         },
         {

@@ -795,8 +795,15 @@ pub fn validate_observation(v: &Value, seam: bool) -> Result<()> {
 /// Generate the contract payload from receipt evidence. Callers granting passage
 /// must first validate the receipt; this function also supports non-live fixtures.
 pub fn handoff_candidate(receipt: &Value, base: &Path) -> Result<Value> {
+    let worker_cases: BTreeMap<_, _> = receipt["cases"]
+        .as_object()
+        .into_iter()
+        .flatten()
+        .filter(|(id, _)| proof::worker_case_ids().contains(*id))
+        .map(|(id, result)| (id.clone(), result.clone()))
+        .collect();
     Ok(json!({"version":1,"kind":"wi-producer-evidence-v1", "producer":receipt["after"],
-        "campaign_sha256":hash(serde_json::to_vec(receipt)?),"cases":receipt["cases"],
+        "campaign_sha256":hash(serde_json::to_vec(receipt)?),"cases":worker_cases,
         "tests":receipt["outcomes"],"runtime_suite_tests":receipt["runtime_suite_outcomes"],"observations":receipt["embedded_observations"],
         "gates":receipt["gates"],"claims":claims(),
         "producer_execution": [read(&local(base,"coding.json")?)?,read(&local(base,"transform.json")?)?,read(&local(base,"seam.json")?)?],"limitations":limitations(),

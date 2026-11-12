@@ -201,7 +201,8 @@ impl Harness {
             if engine.projection().get_run_state(&self.run)
                 == Some(&actionqueue_core::run::state::RunState::RetryWait)
             {
-                self.clock.advance(60_000);
+                // Recovery must not jump over the pending lifecycle case deadline.
+                self.clock.advance(1000);
             }
             if engine.projection().get_run_state(&self.run)
                 == Some(&actionqueue_core::run::state::RunState::Scheduled)
