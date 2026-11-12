@@ -38,6 +38,7 @@ impl Journal {
     pub fn open(root: &Path) -> Result<Self> {
         // All ancestor symlinks are refused, including a symlink to a guest root.
         let absolute = std::path::absolute(root)?;
+        let root = absolute.as_path();
         let mut ancestor = PathBuf::new();
         for component in absolute.components() {
             ancestor.push(component);
@@ -47,6 +48,7 @@ impl Journal {
         }
         if !root.exists() {
             fs::DirBuilder::new().mode(0o700).create(root)?;
+            File::open(root.parent().ok_or("supervisor root parent absent")?)?.sync_all()?;
         }
         let meta = fs::symlink_metadata(root)?;
         if !meta.is_dir() || meta.mode() & 0o077 != 0 || meta.uid() != unsafe { libc::geteuid() } {

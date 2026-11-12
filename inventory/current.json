@@ -12112,7 +12112,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-runtime/src/supervisor/journal.rs",
     "name": "crates/worldinterface-runtime/src/supervisor/journal.rs",
-    "source_sha256": "3995d52f478463685705f6fec3f37cb6481acde24ca84e5dcead215594d08d34",
+    "source_sha256": "8898dfd17ccd37c4a236f943aa14c91b125a8e3925753574938a9d4a2a134307",
     "conditions": [],
     "registration_sites": []
   },
@@ -12121,7 +12121,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/src/supervisor/journal.rs",
     "name": "Journal",
-    "source_sha256": "3995d52f478463685705f6fec3f37cb6481acde24ca84e5dcead215594d08d34",
+    "source_sha256": "8898dfd17ccd37c4a236f943aa14c91b125a8e3925753574938a9d4a2a134307",
     "conditions": [],
     "registration_sites": []
   },
@@ -12130,7 +12130,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/src/supervisor/journal.rs",
     "name": "Stored",
-    "source_sha256": "3995d52f478463685705f6fec3f37cb6481acde24ca84e5dcead215594d08d34",
+    "source_sha256": "8898dfd17ccd37c4a236f943aa14c91b125a8e3925753574938a9d4a2a134307",
     "conditions": [],
     "registration_sites": []
   },

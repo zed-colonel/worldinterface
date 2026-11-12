@@ -247,7 +247,7 @@
     "crates/worldinterface-runtime/src/run_discovery.rs": "871a466d2e07a99c7b69e9d4e9f818b57cd33e2ce7a06a4d690d0995a8d2c4aa",
     "crates/worldinterface-runtime/src/storage.rs": "aa6aa9981fed86f2b000faedc0e2ed0080956887c1c6e98bc1ce9908030b6cd2",
     "crates/worldinterface-runtime/src/supervisor/connector.rs": "584efd0633c0a4d72a09ba78538d289287143cb099549ec10a041404409ee672",
-    "crates/worldinterface-runtime/src/supervisor/journal.rs": "3995d52f478463685705f6fec3f37cb6481acde24ca84e5dcead215594d08d34",
+    "crates/worldinterface-runtime/src/supervisor/journal.rs": "8898dfd17ccd37c4a236f943aa14c91b125a8e3925753574938a9d4a2a134307",
     "crates/worldinterface-runtime/src/supervisor/mod.rs": "1ddff55161fde426304fd9f7f78d90523b747d9dfe40d726c3d6dc070c236c10",
     "crates/worldinterface-runtime/src/supervisor/transport.rs": "cb08224ef60e9a6f50050d3b385b8af0889c290647bfa770eb9c0953f8cfae6a",
     "crates/worldinterface-runtime/src/worker/admission.rs": "1078e316efec52c094c06522537aebd56d171692b1b813edb0a6c391cffa1b33",
