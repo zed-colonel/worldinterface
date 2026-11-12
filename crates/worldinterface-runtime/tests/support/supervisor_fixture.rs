@@ -156,7 +156,7 @@ pub fn server_child(root: &Path) {
         let mut bytes = vec![0; len];
         stream.read_exact(&mut bytes).unwrap();
         server.request(&policy, decode(&bytes).unwrap(), now()).unwrap();
-        wait(&root.join("backend-command"));
+        wait_for_activation(root);
         return; // Intentionally lose every acknowledgement and callback.
     }
     loop {
@@ -165,10 +165,19 @@ pub fn server_child(root: &Path) {
         }
     }
 }
-pub fn wait(path: &Path) {
+pub fn wait_for_activation(root: &Path) {
+    // backend-command is created before its contents are synced and before the
+    // activation record is written. Do not exit/kill the supervisor in that gap.
+    let path = root.join("activations");
     let deadline = Instant::now() + Duration::from_secs(10);
-    while !path.exists() && Instant::now() < deadline {
+    loop {
+        match std::fs::read(&path) {
+            Ok(bytes) if bytes == b"1" => return,
+            Ok(bytes) => assert!(bytes.is_empty(), "unexpected activation evidence: {bytes:?}"),
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => {}
+            Err(error) => panic!("activation evidence read failed: {error}"),
+        }
+        assert!(Instant::now() < deadline, "missing fixture evidence {}", path.display());
         std::thread::sleep(Duration::from_millis(5));
     }
-    assert!(path.exists(), "missing fixture evidence {}", path.display());
 }

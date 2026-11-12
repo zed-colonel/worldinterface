@@ -72,6 +72,9 @@ The parent owns and reaps the guest, including on panic, and the existing bounde
 WI invocation precedes guest shutdown. Remediation stress results, negative
 controls and adopted-check timings are retained at
 `/mnt/workhorse/craftingtable/runs/0581b1d4-30b9-40fd-840d-4c0d2df9608d/scratch/verification/`.
+Parallel repeats also exposed an activation-publication race: both the lost-ack
+helper and the harness now wait for the completed activation record, rather than
+the earlier creation of the backend command file, before supervisor teardown.
 
 A separate security pass and its retained review evidence examine authentication
 provenance, descriptor inheritance, exact replay/generation binding, cross-tenant

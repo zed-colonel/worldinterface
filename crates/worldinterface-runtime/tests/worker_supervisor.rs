@@ -276,7 +276,7 @@ fn lifecycle(
         .map(|p| format!("invoke-cut-{p}"))
         .unwrap_or_else(|| "invoke".into());
     wi(root, client, &initial);
-    wait(&root.join("backend-command"));
+    wait_for_activation(root);
     assert_eq!(std::fs::read(root.join("activations")).unwrap(), b"1");
     if !failed_guest_first {
         guest.kill().unwrap();
