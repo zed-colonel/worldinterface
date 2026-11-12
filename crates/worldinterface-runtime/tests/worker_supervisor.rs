@@ -197,9 +197,22 @@ fn lifecycle(operation: Operation, lost_ack: bool, ambiguous: bool, failed_guest
     // No supervisor descriptors or host credentials are inherited by the target.
     let env = std::fs::read(format!("/proc/{}/environ", guest.id())).unwrap();
     assert!(env.is_empty());
-    let descriptors: Vec<_> =
-        std::fs::read_dir(format!("/proc/{}/fd", guest.id())).unwrap().collect();
-    assert!(descriptors.len() <= 3);
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(1);
+    loop {
+        let descriptors: Vec<_> = std::fs::read_dir(format!("/proc/{}/fd", guest.id()))
+            .unwrap()
+            .map(|e| e.unwrap().path().read_link())
+            .collect();
+        if descriptors.len() <= 3 {
+            break;
+        }
+        assert!(
+            std::time::Instant::now() < deadline,
+            "unexpected guest descriptors: {descriptors:?}"
+        );
+        // The dynamic loader can briefly open a fourth file after exec.
+        std::thread::sleep(std::time::Duration::from_millis(2));
+    }
     if failed_guest_first {
         guest.kill().unwrap();
         guest.wait().unwrap();
@@ -251,6 +264,12 @@ fn wp_035_authenticated_supervisor_binds_exact_lifecycle_operation() {
     )
     .unwrap();
     let store = bundle.wi();
+    for bytes in [b"resolution".as_slice(), b"grant"] {
+        store.publish(caller.tenant().clone(), bytes).unwrap();
+    }
+    store
+        .publish(caller.tenant().clone(), &std::fs::read(temp.path().join("request.json")).unwrap())
+        .unwrap();
     let verified = || {
         worldinterface_domain::authorization::VerifiedSnapshot::from_trusted_verifier(
             snapshot.clone(),
