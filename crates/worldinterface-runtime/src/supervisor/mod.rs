@@ -111,14 +111,6 @@ impl Server {
                 (old.clone(), false)
             }
         };
-        let mut record = record;
-        if !record.observation.state.terminal()
-            && !fresh
-            && now_ms >= record.command.request.deadline_ms
-        {
-            record.observation = Observation { state: State::Escalated, evidence: vec![] };
-            journal.persist(&record)?;
-        }
         if !record.observation.state.terminal() {
             self.drive(policy, &record, now_ms, fresh)?;
         }
@@ -162,8 +154,9 @@ impl Server {
                 if revoked.load(Ordering::SeqCst) {
                     return Ok(());
                 }
-                if now.saturating_add(admitted.elapsed().as_millis() as u64)
-                    >= next.command.request.deadline_ms
+                if fresh
+                    && now.saturating_add(admitted.elapsed().as_millis() as u64)
+                        >= next.command.request.deadline_ms
                 {
                     next.observation = Observation { state: State::Escalated, evidence: vec![] };
                     journal.lock().map_err(|_| "supervisor journal poisoned")?.persist(&next)?;
@@ -179,8 +172,12 @@ impl Server {
                     observed.unwrap_or(Observation { state: State::Ambiguous, evidence: vec![] });
                 if observation.evidence.len() > next.command.request.max_evidence_bytes as usize
                     || started.elapsed().as_millis() > MAX_WALL_MS as u128
-                    || now.saturating_add(admitted.elapsed().as_millis() as u64)
-                        >= next.command.request.deadline_ms
+                    // Inspect is read-only authority. A result retained by the
+                    // backend remains recoverable after the dispatch deadline.
+                    // Completion asserts the consumer enforced execution bounds.
+                    || ((fresh || !observation.state.terminal())
+                        && now.saturating_add(admitted.elapsed().as_millis() as u64)
+                            >= next.command.request.deadline_ms)
                     || observation.state == State::Accepted
                 {
                     observation = Observation { state: State::Escalated, evidence: vec![] };

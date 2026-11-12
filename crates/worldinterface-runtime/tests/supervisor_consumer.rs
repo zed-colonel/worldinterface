@@ -248,11 +248,16 @@ fn supervisor_generation_deadline_and_unsupported_recovery_fail_closed() {
     other.key = r("different-key");
     assert!(server.request(&policy, Request::Submit(other), 1).is_err());
     // A finite deadline is enforced by the server even if backend work is pending.
-    let Response::Record(record) = server.request(&policy, inspect(&command), 15001).unwrap()
-    else {
-        panic!()
-    };
-    assert_eq!(record.observation.state, State::Escalated);
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(2);
+    loop {
+        if let Ok(Response::Record(record)) = server.request(&policy, inspect(&command), 15001) {
+            if record.observation.state == State::Escalated {
+                break;
+            }
+        }
+        assert!(std::time::Instant::now() < deadline);
+        std::thread::sleep(std::time::Duration::from_millis(2));
+    }
     struct Unsupported;
     impl SupervisorHandler for Unsupported {
         fn supports_authoritative_inspect(&self) -> bool {
@@ -348,4 +353,39 @@ fn interrupted_result_persistence_requires_reopen_and_authoritative_inspect() {
     assert_eq!(terminal(&server, &policy, &command).observation.state, State::Completed);
     assert_eq!(std::fs::read(temp.path().join("dispatched")).unwrap(), b"once");
     assert!(!root.join(".pending-interrupted").exists());
+}
+
+#[test]
+fn authenticated_inspect_recovers_retained_backend_completion_after_dispatch_deadline() {
+    let temp = tempfile::tempdir().unwrap();
+    let root = temp.path().join("supervisor");
+    let (command, policy) = config();
+    let handler =
+        Arc::new(Consumer { calls: AtomicUsize::new(0), complete: AtomicBool::new(false) });
+    let server = Server::open(&root, handler.clone()).unwrap();
+    server.request(&policy, Request::Submit(command.clone()), 1).unwrap();
+    drop(server);
+    // Reopening waits for the original dispatch owner to durably finish its call.
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(3);
+    let server = loop {
+        if let Ok(server) = Server::open(&root, handler.clone()) {
+            break server;
+        }
+        assert!(std::time::Instant::now() < deadline);
+        std::thread::sleep(std::time::Duration::from_millis(2));
+    };
+    assert_eq!(handler.calls.load(Ordering::SeqCst), 1);
+    handler.complete.store(true, Ordering::SeqCst);
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(3);
+    loop {
+        if let Ok(Response::Record(record)) = server.request(&policy, inspect(&command), 20000) {
+            if record.observation.state.terminal() {
+                assert_eq!(record.observation.state, State::Completed);
+                break;
+            }
+        }
+        assert!(std::time::Instant::now() < deadline);
+        std::thread::sleep(std::time::Duration::from_millis(2));
+    }
+    assert_eq!(handler.calls.load(Ordering::SeqCst), 1);
 }

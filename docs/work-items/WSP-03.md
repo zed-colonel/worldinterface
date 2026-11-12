@@ -32,8 +32,8 @@ Operator journal rollback while a backend may still run is unsupported.
 The server admits one outstanding trusted backend call and no unbounded queue;
 retains at most 256 commands, 32 grants/channel, 65,536-byte frames and 4,096-byte
 backend evidence; bounds complete frame I/O to one second and command deadlines
-to 15,000 ms. Pending requests return promptly. Deadline expiry escalates; late
-backend results cannot establish completion. The consumer must execute bounded
+to 15,000 ms. Pending requests return promptly. Deadline expiry escalates unfinished observations and late dispatch results;
+authoritative inspect can recover retained completion after the deadline. The consumer must execute bounded
 backend commands outside the target; trusted Rust handlers are not preemptible
 sandboxes. A stuck handler keeps its single slot and owner lock until exit.
 

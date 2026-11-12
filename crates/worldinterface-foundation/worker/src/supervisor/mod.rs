@@ -210,6 +210,9 @@ pub fn authorize_inspect(command: AuthorizedSupervisorCommand) -> AuthorizedSupe
 /// The backend must be able to inspect a stable command key across process loss.
 /// Unsupported semantics are refused before any command is accepted. Calls must
 /// initiate bounded work and return promptly; a running transition returns Running.
+/// Completed asserts that the backend enforced the command execution deadline.
+/// Authoritative inspect must remain available after that deadline, so retained
+/// completion survives a lost result publication without granting fresh dispatch.
 /// The server admits at most one outstanding handler call and polls at a finite
 /// deadline; a stuck consumer cannot create an unbounded queue or more dispatches.
 pub trait SupervisorHandler: Send + Sync + 'static {

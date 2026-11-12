@@ -67,6 +67,11 @@
         "manifest": "crates/worldinterface-runtime/Cargo.toml",
         "package": "worldinterface-runtime",
         "test": "interrupted_result_persistence_requires_reopen_and_authoritative_inspect"
+      },
+      {
+        "manifest": "crates/worldinterface-runtime/Cargo.toml",
+        "package": "worldinterface-runtime",
+        "test": "authenticated_inspect_recovers_retained_backend_completion_after_dispatch_deadline"
       }
     ],
     "WP-039": [

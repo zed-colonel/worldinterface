@@ -32,7 +32,9 @@ retry an activation.
 Bounds: 32 exact grants/channel, 256 retained journal records, 65,536-byte frames,
 4,096-byte backend evidence, one outstanding backend call, one-second total
 frame reads/writes, and at most 15,000 ms to the command deadline. The server
-escalates unfinished work at its deadline and refuses late terminal publication.
+escalates unfinished observations at the command deadline and refuses late
+dispatch completion. Authoritative inspect can still recover retained backend
+completion after that deadline, without dispatching again.
 Consumers implement bounded backend commands outside the guest, returning
 `Running` promptly while transitions continue. The Rust handler is trusted host
 code: it is not a sandbox; a stuck handler retains its owner lock and slot until

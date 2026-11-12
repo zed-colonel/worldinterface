@@ -22,7 +22,9 @@ publication uses file/directory fsync and fail-stop on persistence error.
 
 Bounds are enforced in host code: frame size and total I/O time, grant count,
 retained command count, evidence size, one outstanding backend call, exact command
-deadline and immutable escalation after expiry. Pending calls return promptly to
+deadline and immutable escalation for unfinished observations after expiry.
+Authoritative read-only inspect remains available after the execution deadline
+to recover retained backend completion; it never reactivates the target. Pending calls return promptly to
 WI. Arbitrary trusted handler code cannot be safely killed by Rust; consumers
 must enforce engine execution/cancellation bounds outside the guest and isolate
 their supervisor process. A stuck handler retains the slot/owner, denying further
