@@ -323,7 +323,7 @@
     "crates/worldinterface-runtime/tests/worker_lifecycle_crash.rs": "b80b17aa40a59daa01aba7cdebbf109215314bc1453aede0e0aefd26a74ad10e",
     "crates/worldinterface-runtime/tests/worker_process.rs": "4481f4dadba4f26d84223d83fa8e8bed76705021abcc00986967d971fa97cb36",
     "crates/worldinterface-runtime/tests/worker_seam.rs": "8b3ad24290485f61de1a0d322d9640628f7b42d50bda63039f9394573408f020",
-    "crates/worldinterface-runtime/tests/worker_supervisor.rs": "2649ff1389a48e9e10c16abc77adecd3acfb378341272018df2e238a407826b8",
+    "crates/worldinterface-runtime/tests/worker_supervisor.rs": "1b8395c391643fcfadf2f45eb820b2ae006c97c384f472d1bf68720546c2c843",
     "docs/evidence/WI-EMBEDDED-WORKER-PROOF-1.md": "72a9a804d19da342d52aee155fdab250bebfb5d3ac5de8f005da6f00c5d70aec",
     "docs/release/0.2.0-alpha.1.md": "5d154457da88f20895c395c1ac43f358d6be31b6f32ff4f02d5242cda5c28b21",
     "docs/release/blockers.json": "6fa2d9a311e2138c37da98a3d2bafb6c01c9fcd1e422f286db9782ec37bcd3eb",

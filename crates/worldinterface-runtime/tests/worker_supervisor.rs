@@ -95,7 +95,14 @@ fn wi_supervisor_child() {
         runtime.block_on(h.execute());
         let original = h.bundle.wi().effect_receipts(h.caller().tenant(), &h.id).unwrap();
         runtime.block_on(h.reconcile());
-        assert_eq!(h.effect().phase, Phase::Reconciled);
+        assert_eq!(
+            h.effect().phase,
+            Phase::Reconciled,
+            "case status {:?}, observations {}, evidence count {}",
+            h.case().status,
+            h.case().observations,
+            h.case().evidence.len()
+        );
         assert_eq!(
             h.case().status,
             worldinterface_domain::reconciliation::CaseStatus::ConfirmedCommitted

@@ -8126,37 +8126,37 @@
         },
         {
           "id": "crates/worldinterface-runtime/tests/worker_supervisor.rs::::module:support",
-          "source_sha256": "2649ff1389a48e9e10c16abc77adecd3acfb378341272018df2e238a407826b8",
+          "source_sha256": "1b8395c391643fcfadf2f45eb820b2ae006c97c384f472d1bf68720546c2c843",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/worker_supervisor.rs::::source-module:crates/worldinterface-runtime/tests/worker_supervisor.rs",
-          "source_sha256": "2649ff1389a48e9e10c16abc77adecd3acfb378341272018df2e238a407826b8",
+          "source_sha256": "1b8395c391643fcfadf2f45eb820b2ae006c97c384f472d1bf68720546c2c843",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/worker_supervisor.rs::::struct:Metadata",
-          "source_sha256": "2649ff1389a48e9e10c16abc77adecd3acfb378341272018df2e238a407826b8",
+          "source_sha256": "1b8395c391643fcfadf2f45eb820b2ae006c97c384f472d1bf68720546c2c843",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/worker_supervisor.rs::support::module:child",
-          "source_sha256": "2649ff1389a48e9e10c16abc77adecd3acfb378341272018df2e238a407826b8",
+          "source_sha256": "1b8395c391643fcfadf2f45eb820b2ae006c97c384f472d1bf68720546c2c843",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/worker_supervisor.rs::support::module:connectors",
-          "source_sha256": "2649ff1389a48e9e10c16abc77adecd3acfb378341272018df2e238a407826b8",
+          "source_sha256": "1b8395c391643fcfadf2f45eb820b2ae006c97c384f472d1bf68720546c2c843",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/worker_supervisor.rs::support::module:supervisor_fixture",
-          "source_sha256": "2649ff1389a48e9e10c16abc77adecd3acfb378341272018df2e238a407826b8",
+          "source_sha256": "1b8395c391643fcfadf2f45eb820b2ae006c97c384f472d1bf68720546c2c843",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/worker_supervisor.rs::support::module:supervisor_harness",
-          "source_sha256": "2649ff1389a48e9e10c16abc77adecd3acfb378341272018df2e238a407826b8",
+          "source_sha256": "1b8395c391643fcfadf2f45eb820b2ae006c97c384f472d1bf68720546c2c843",
           "registration_sites": []
         },
         {
@@ -9493,7 +9493,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/tests/worker_supervisor.rs",
-          "source_sha256": "2649ff1389a48e9e10c16abc77adecd3acfb378341272018df2e238a407826b8",
+          "source_sha256": "1b8395c391643fcfadf2f45eb820b2ae006c97c384f472d1bf68720546c2c843",
           "treatment": "WSP-03 candidate: preserve separate bounded supervisor/public API and consumer regressions; selectively audit shared dependencies. No deletion or worker authority expansion."
         },
         {
