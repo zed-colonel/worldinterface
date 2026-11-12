@@ -6,7 +6,11 @@ mod support {
 }
 use serde::{Deserialize, Serialize};
 use std::{
-    os::{fd::FromRawFd, unix::net::UnixStream},
+    io::{Read, Write},
+    os::{
+        fd::{FromRawFd, OwnedFd},
+        unix::net::UnixStream,
+    },
     path::{Path, PathBuf},
     process::{Command as Process, Stdio},
     sync::Arc,
@@ -200,6 +204,38 @@ fn wi(root: &Path, client: Arc<Client>, stage: &str) {
         std::thread::sleep(std::time::Duration::from_millis(5));
     }
 }
+fn assert_guest_isolated(pid: u32, readiness: &mut UnixStream) {
+    // /bin/cat must echo from guest code after exec before procfs is sampled.
+    // spawn() alone can expose the parent's environment, transient EACCES, or
+    // an empty environment before the guest's environment has been installed.
+    readiness.set_read_timeout(Some(std::time::Duration::from_secs(1))).unwrap();
+    readiness.set_write_timeout(Some(std::time::Duration::from_secs(1))).unwrap();
+    let expected = b"guest ready\n";
+    readiness.write_all(expected).unwrap();
+    let mut echoed = [0; 12];
+    readiness.read_exact(&mut echoed).unwrap();
+    assert_eq!(&echoed, expected);
+
+    // No supervisor descriptors or host credentials are inherited by the target.
+    let env = std::fs::read(format!("/proc/{pid}/environ")).unwrap();
+    assert!(env.is_empty(), "guest inherited environment after readiness");
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(1);
+    loop {
+        let descriptors: Vec<_> = std::fs::read_dir(format!("/proc/{pid}/fd"))
+            .unwrap()
+            .map(|e| e.unwrap().path().read_link())
+            .collect();
+        if descriptors.len() <= 3 {
+            break;
+        }
+        assert!(
+            std::time::Instant::now() < deadline,
+            "unexpected guest descriptors: {descriptors:?}"
+        );
+        std::thread::sleep(std::time::Duration::from_millis(2));
+    }
+}
+
 fn lifecycle(
     operation: Operation,
     lost_ack: bool,
@@ -211,35 +247,19 @@ fn lifecycle(
     let temp = tempfile::tempdir().unwrap();
     let root = temp.path();
     let config = prepare(root, operation);
+    let (mut readiness, stdio) = UnixStream::pair().unwrap();
     let mut guest = KillOnDrop(
-        Process::new("/bin/sleep")
-            .arg("15")
+        Process::new("/bin/cat")
+            // Process ASCII readiness through stdio without cat's splice pipes.
+            .arg("-v")
             .env_clear()
-            .stdin(Stdio::null())
-            .stdout(Stdio::null())
+            .stdin(Stdio::from(OwnedFd::from(stdio.try_clone().unwrap())))
+            .stdout(Stdio::from(OwnedFd::from(stdio)))
             .stderr(Stdio::null())
             .spawn()
             .unwrap(),
     );
-    // No supervisor descriptors or host credentials are inherited by the target.
-    let env = std::fs::read(format!("/proc/{}/environ", guest.id())).unwrap();
-    assert!(env.is_empty());
-    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(1);
-    loop {
-        let descriptors: Vec<_> = std::fs::read_dir(format!("/proc/{}/fd", guest.id()))
-            .unwrap()
-            .map(|e| e.unwrap().path().read_link())
-            .collect();
-        if descriptors.len() <= 3 {
-            break;
-        }
-        assert!(
-            std::time::Instant::now() < deadline,
-            "unexpected guest descriptors: {descriptors:?}"
-        );
-        // The dynamic loader can briefly open a fourth file after exec.
-        std::thread::sleep(std::time::Duration::from_millis(2));
-    }
+    assert_guest_isolated(guest.id(), &mut readiness);
     if failed_guest_first {
         guest.kill().unwrap();
         guest.wait().unwrap();

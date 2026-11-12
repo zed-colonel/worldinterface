@@ -63,6 +63,16 @@ coverage and the adopted 30-minute ceiling are unchanged. The acceptance target
 is at most 1,500 seconds for the full runtime check. The final implementation
 report supplies the measured value and exact verification head.
 
+F-001 remediation: the guest now echoes a fixed ASCII readiness message through
+standard streams using the already bound `/bin/cat` fixture, before the host reads
+its procfs environment and descriptors. Socket reads and writes have one-second
+timeouts. This avoids both the inherited-parent snapshot and the transient empty
+snapshot during exec; the empty-environment and stdio-only assertions remain.
+The parent owns and reaps the guest, including on panic, and the existing bounded
+WI invocation precedes guest shutdown. Remediation stress results, negative
+controls and adopted-check timings are retained at
+`/mnt/workhorse/craftingtable/runs/0581b1d4-30b9-40fd-840d-4c0d2df9608d/scratch/verification/`.
+
 A separate security pass and its retained review evidence examine authentication
 provenance, descriptor inheritance, exact replay/generation binding, cross-tenant
 inspect, corruption/crash windows, server limits and duplicate activation. See

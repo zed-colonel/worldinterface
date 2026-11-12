@@ -10,7 +10,9 @@ endpoint and its server-owned session. Wire types contain no principal, tenant,
 engine options or deployment credential. Strict decoding rejects unknown fields,
 duplicate keys and oversized input. Submit and inspect both check revocation and
 exact operator grants. Worker credentials have no supervisor authentication route.
-The fixture clears guest environment and verifies that only stdio is inherited.
+The fixture clears guest environment and verifies that only stdio is inherited,
+after a bounded stdio echo proves guest code has executed. The fixed readiness
+message conveys no supervisor authority or credential (F-001 remediation).
 
 Complete bindings, stable keys and generation claims precede dispatch. The journal
 owner lock remains held by an outstanding handler across Server drop, fencing

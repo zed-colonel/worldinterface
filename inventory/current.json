@@ -15987,7 +15987,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/tests/worker_supervisor.rs",
     "name": "support",
-    "source_sha256": "1b8395c391643fcfadf2f45eb820b2ae006c97c384f472d1bf68720546c2c843",
+    "source_sha256": "da4b6b2fc3b931a30a3f8f99d1c136b2116caae7fc2402b423aa45431d7be7f5",
     "conditions": [],
     "registration_sites": []
   },
@@ -15996,7 +15996,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-runtime/tests/worker_supervisor.rs",
     "name": "crates/worldinterface-runtime/tests/worker_supervisor.rs",
-    "source_sha256": "1b8395c391643fcfadf2f45eb820b2ae006c97c384f472d1bf68720546c2c843",
+    "source_sha256": "da4b6b2fc3b931a30a3f8f99d1c136b2116caae7fc2402b423aa45431d7be7f5",
     "conditions": [],
     "registration_sites": []
   },
@@ -16005,7 +16005,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/worker_supervisor.rs",
     "name": "Metadata",
-    "source_sha256": "1b8395c391643fcfadf2f45eb820b2ae006c97c384f472d1bf68720546c2c843",
+    "source_sha256": "da4b6b2fc3b931a30a3f8f99d1c136b2116caae7fc2402b423aa45431d7be7f5",
     "conditions": [],
     "registration_sites": []
   },
@@ -16014,7 +16014,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/tests/worker_supervisor.rs",
     "name": "child",
-    "source_sha256": "1b8395c391643fcfadf2f45eb820b2ae006c97c384f472d1bf68720546c2c843",
+    "source_sha256": "da4b6b2fc3b931a30a3f8f99d1c136b2116caae7fc2402b423aa45431d7be7f5",
     "conditions": [],
     "registration_sites": []
   },
@@ -16023,7 +16023,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/tests/worker_supervisor.rs",
     "name": "connectors",
-    "source_sha256": "1b8395c391643fcfadf2f45eb820b2ae006c97c384f472d1bf68720546c2c843",
+    "source_sha256": "da4b6b2fc3b931a30a3f8f99d1c136b2116caae7fc2402b423aa45431d7be7f5",
     "conditions": [],
     "registration_sites": []
   },
@@ -16032,7 +16032,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/tests/worker_supervisor.rs",
     "name": "supervisor_fixture",
-    "source_sha256": "1b8395c391643fcfadf2f45eb820b2ae006c97c384f472d1bf68720546c2c843",
+    "source_sha256": "da4b6b2fc3b931a30a3f8f99d1c136b2116caae7fc2402b423aa45431d7be7f5",
     "conditions": [],
     "registration_sites": []
   },
@@ -16041,7 +16041,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/tests/worker_supervisor.rs",
     "name": "supervisor_harness",
-    "source_sha256": "1b8395c391643fcfadf2f45eb820b2ae006c97c384f472d1bf68720546c2c843",
+    "source_sha256": "da4b6b2fc3b931a30a3f8f99d1c136b2116caae7fc2402b423aa45431d7be7f5",
     "conditions": [],
     "registration_sites": []
   },
