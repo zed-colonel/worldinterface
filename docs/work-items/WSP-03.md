@@ -122,12 +122,24 @@ time for every operation. Pending executor polls are paced at 20 ms instead of
 2 ms, avoiding repeated reads of growing durable state while blocking handlers
 validate and journal. The thirty-second operation deadline is unchanged.
 
-The campaign starts this longest runtime remainder with its first wave instead
-of queuing it behind all registered cases. A create-once marker/barrier regression
-requires that priority while still filling all twelve slots with exact tests
-from one harness and retaining every result and binary/log digest. The twelve
-workers, complete coverage, 600-second per-test timeout and adopted 30-minute
-ceiling remain unchanged. Two adopted runtime-test runs and the remaining checks
+The first-wave experiment still timed out under load: its operation log reached
+the final cycle, but cold trusted-build setup and competing harnesses consumed
+the margin. The campaign now runs the existing non-live reviewed-build test once,
+then reserves execution for the capacity regression alone, then runs all remaining
+tests on the shared twelve-worker pool. Timing reports these three execution
+phases. Build time remains inside the complete adopted command, and each test
+retains its 600-second timeout. A create-once marker/barrier regression requires
+build-before-capacity order, no overlap with peers, all twelve subsequent slots,
+and exactly one result per test with binary/log digests retained.
+
+The test host's usual live build accessor also avoids a second non-live packet
+reconstruction immediately after its fresh committed reconstruction of the exact
+same source root. It still rechecks every committed source byte before accessing
+the immutable compiled-artifact cache and compares the complete packet digest;
+the external-root diagnostic accessor retains its independent root checks.
+
+Complete coverage and the adopted 30-minute ceiling remain unchanged.
+Two adopted runtime-test runs and the remaining checks
 on the committed remediation head are recorded in
 `/mnt/workhorse/craftingtable/runs/33239bf2-55ea-473b-bae0-ff9d42564888/scratch/verification/`;
 the final report records the capacity-test and complete check durations separately.

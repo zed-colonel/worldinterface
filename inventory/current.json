@@ -15108,7 +15108,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/tests/support/worker_build.rs",
     "name": "packet",
-    "source_sha256": "759022e5ab84f91dc76338e5b446c616020bf1b0039a252438778ddbc271b3f7",
+    "source_sha256": "8f9e9377f8a0a4d3ff79e6d9213ea6f4748a6c23049036f0a3f65efde6157b5e",
     "conditions": [],
     "registration_sites": []
   },
@@ -15117,7 +15117,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-runtime/tests/support/worker_build.rs",
     "name": "crates/worldinterface-runtime/tests/support/worker_build.rs",
-    "source_sha256": "759022e5ab84f91dc76338e5b446c616020bf1b0039a252438778ddbc271b3f7",
+    "source_sha256": "8f9e9377f8a0a4d3ff79e6d9213ea6f4748a6c23049036f0a3f65efde6157b5e",
     "conditions": [],
     "registration_sites": []
   },
@@ -15126,7 +15126,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/support/worker_build.rs",
     "name": "WorkerBuild",
-    "source_sha256": "759022e5ab84f91dc76338e5b446c616020bf1b0039a252438778ddbc271b3f7",
+    "source_sha256": "8f9e9377f8a0a4d3ff79e6d9213ea6f4748a6c23049036f0a3f65efde6157b5e",
     "conditions": [],
     "registration_sites": []
   },

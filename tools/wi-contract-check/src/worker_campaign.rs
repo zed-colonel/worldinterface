@@ -351,7 +351,7 @@ pub fn run(root: &Path, directory: &Path) -> Result<()> {
         )?;
     }
     let timing = json!({"discovery_build_and_listing_seconds":discovery_seconds,
-        "campaign_execution_seconds":execution_seconds,"execution_phases":1,
+        "campaign_execution_seconds":execution_seconds,"execution_phases":3,
         "receipt_validation_seconds":validation_started.elapsed().as_secs_f64(),
         "total_seconds":started.elapsed().as_secs_f64(),"discovery_passes":1,
         "registered_tests":outcomes.len(),"additional_runtime_tests":runtime_suite_outcomes.len()});
@@ -396,25 +396,44 @@ fn cached_digest<'a>(digests: &'a mut BTreeMap<PathBuf, String>, path: &Path) ->
         Entry::Vacant(entry) => entry.insert(hash(fs::read(path)?)),
     })
 }
+fn execution_priority(reference: &TestRef) -> u8 {
+    if reference.manifest == RUNTIME && reference.package == "worldinterface-runtime" {
+        match reference.test.as_str() {
+            "reviewed_build_artifacts_are_bounded_and_publishable_without_launch" => return 0,
+            "one_host_releases_capacity_for_more_than_64_sequential_runs" => return 1,
+            _ => {}
+        }
+    }
+    2
+}
 fn execute_harnesses(
     root: &Path,
     selected: impl Iterator<Item = (TestRef, PathBuf)>,
     directory: &Path,
 ) -> Result<Vec<Outcome>> {
     let mut selected = selected.collect::<Vec<_>>();
-    // This 66-cycle capacity regression is the campaign's longest individual
-    // test. Start it with the first wave instead of after all registered cases,
-    // so it can use the whole campaign window within its unchanged 600s bound.
-    selected.sort_by_key(|(reference, _)| {
-        !(reference.manifest == RUNTIME
-            && reference.package == "worldinterface-runtime"
-            && reference.test == "one_host_releases_capacity_for_more_than_64_sequential_runs")
-    });
+    // Count the existing non-live build test once, then run the longest capacity
+    // regression without competing harnesses. Cold compiler-cache setup and the
+    // campaign's IO peak must not consume that test's unchanged 600s budget.
+    selected.sort_by_key(|(reference, _)| execution_priority(reference));
     let mut digests = BTreeMap::new();
     for (_, executable) in &selected {
         cached_digest(&mut digests, executable)?;
     }
-    let pending = Mutex::new(VecDeque::from(selected));
+    let mut selected = VecDeque::from(selected);
+    let mut outcomes = Vec::new();
+    while selected.front().is_some_and(|(reference, _)| execution_priority(reference) < 2) {
+        let (reference, executable) = selected.pop_front().unwrap();
+        let outcome =
+            execute_bound(root, reference, &executable, directory, &digests[&executable])?;
+        eprintln!(
+            "campaign {}: {}",
+            outcome.reference.test,
+            if outcome.passed { "passed" } else { "FAILED" }
+        );
+        outcomes.push(outcome);
+    }
+    let pending = Mutex::new(selected);
     let batches = std::thread::scope(|scope| {
         let workers = (0..PARALLELISM)
             .map(|_| {
@@ -452,7 +471,6 @@ fn execute_harnesses(
             return Err("campaign harness changed during execution".into());
         }
     }
-    let mut outcomes = Vec::new();
     for worker in batches {
         for batch in worker.map_err(|_| "campaign worker panicked")? {
             outcomes.push(batch.map_err(|e| format!("campaign harness failed: {e}"))?);

@@ -1254,7 +1254,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/release/handoff.json",
-          "source_sha256": "7e89e3ce31446491f5d36f21ff0af4f0414474b63e7a7211b34548caacf8e0de",
+          "source_sha256": "2f889ac9d3debd53daa02b023266a932b886acebf71d8d454747feb99c4adf1d",
           "treatment": "Retain WSP-02 package evidence/support and registry consumer. Future legacy removal must preserve authoritative byte equality and release consumer coverage."
         },
         {
@@ -1349,12 +1349,12 @@
         },
         {
           "path": "docs/work-items/WSP-03-security.md",
-          "source_sha256": "4785ec26d5c6e1970b5e905f0394a13a5aea1a061d9bdf73d282f6ab06790da0",
+          "source_sha256": "db0c0c9efa182ac37c143ed7a938335839e1de98dbffd0e13da4008122905b13",
           "treatment": "WSP-03 F-002/F-003 candidate disposition: preserve supervisor frame timing regressions and slow backend inspection evidence. Delay wording refers to test scheduling, with no dependency on the legacy delay connector. Effective through qualifying source review/merge; no deletion authority."
         },
         {
           "path": "docs/work-items/WSP-03.md",
-          "source_sha256": "bd6592462ee9ffe1a35fe9fd7ef5c6528c1adb42e8b57a69275ef1a5df195da9",
+          "source_sha256": "4e21b5ecba8604e288a402b949b72afcda375ca27da40a47244e52411337e71a",
           "treatment": "WSP-03 F-002/F-003 candidate disposition: preserve supervisor frame timing regressions and slow backend inspection evidence. Delay wording refers to test scheduling, with no dependency on the legacy delay connector. Effective through qualifying source review/merge; no deletion authority."
         },
         {
@@ -7681,17 +7681,17 @@
         },
         {
           "id": "crates/worldinterface-runtime/tests/support/worker_build.rs::::module:packet",
-          "source_sha256": "759022e5ab84f91dc76338e5b446c616020bf1b0039a252438778ddbc271b3f7",
+          "source_sha256": "8f9e9377f8a0a4d3ff79e6d9213ea6f4748a6c23049036f0a3f65efde6157b5e",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/support/worker_build.rs::::source-module:crates/worldinterface-runtime/tests/support/worker_build.rs",
-          "source_sha256": "759022e5ab84f91dc76338e5b446c616020bf1b0039a252438778ddbc271b3f7",
+          "source_sha256": "8f9e9377f8a0a4d3ff79e6d9213ea6f4748a6c23049036f0a3f65efde6157b5e",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/support/worker_build.rs::::struct:WorkerBuild",
-          "source_sha256": "759022e5ab84f91dc76338e5b446c616020bf1b0039a252438778ddbc271b3f7",
+          "source_sha256": "8f9e9377f8a0a4d3ff79e6d9213ea6f4748a6c23049036f0a3f65efde6157b5e",
           "registration_sites": []
         },
         {
@@ -9428,7 +9428,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/tests/support/worker_build.rs",
-          "source_sha256": "759022e5ab84f91dc76338e5b446c616020bf1b0039a252438778ddbc271b3f7",
+          "source_sha256": "8f9e9377f8a0a4d3ff79e6d9213ea6f4748a6c23049036f0a3f65efde6157b5e",
           "treatment": "WIP-10 revised evaluation test source: build verified locked helper sources in the trusted host, retain independent digests and private copies, and verify artifact bounds and canonical journal replay without worker launch. No source-generator policy exception or evaluation approval."
         },
         {
