@@ -100,6 +100,11 @@ impl SupervisorHandler for Fixture {
 /// Suppress workstation crash dumps only at the intentional crash cut. Earlier
 /// procfs/environment/descriptor probes must retain their ordinary visibility.
 pub fn abort_without_core_dump(root: &Path) -> ! {
+    if root.join("delay-abort").exists() {
+        // Give the lost-ack main thread time to return if its crash wait is
+        // missing. Dumpability is changed only after this deliberate race cut.
+        std::thread::sleep(Duration::from_millis(250));
+    }
     let disabled = libc::rlimit { rlim_cur: 0, rlim_max: 0 };
     assert_eq!(unsafe { libc::setrlimit(libc::RLIMIT_CORE, &disabled) }, 0);
     assert_eq!(unsafe { libc::prctl(libc::PR_SET_DUMPABLE, 0, 0, 0, 0) }, 0);
@@ -175,6 +180,12 @@ pub fn server_child(root: &Path) {
         stream.read_exact(&mut bytes).unwrap();
         server.request(&policy, decode(&bytes).unwrap(), now()).unwrap();
         wait_for_activation(root);
+        if root.join("interrupt-dispatch").exists() {
+            // Activation is published just before the dispatch thread's abort
+            // cut. Do not let the test main thread exit normally in that gap.
+            std::thread::sleep(Duration::from_secs(3));
+            panic!("interrupted dispatch did not abort the supervisor");
+        }
         return; // Intentionally lose every acknowledgement and callback.
     }
     loop {

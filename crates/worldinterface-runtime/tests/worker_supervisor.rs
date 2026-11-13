@@ -285,6 +285,7 @@ fn lifecycle(
     }
     if ambiguous {
         std::fs::write(root.join("interrupt-dispatch"), b"1").unwrap();
+        std::fs::write(root.join("delay-abort"), b"1").unwrap();
     }
     let (client, mut supervisor) = channel(root, &config);
     let initial = cut

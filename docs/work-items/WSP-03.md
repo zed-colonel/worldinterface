@@ -168,6 +168,9 @@ all projections unchanged; stale commands retain the existing contention error.
 Intentional supervisor crashes disable dumpability with `PR_SET_DUMPABLE` and set
 both `RLIMIT_CORE` limits to zero immediately at the abort cut. The helper asserts
 both settings and writes evidence before aborting. WP-038 requires that evidence,
-a real SIGABRT death, and no core-dump flag on every crash-cut iteration. Earlier
+a real SIGABRT death, and no core-dump flag on every crash-cut iteration. The lost-ack server waits boundedly for an interrupted dispatch to abort, rather
+than returning normally between activation publication and the abort cut. WP-038
+delays the dispatch thread by 250 ms before the abort settings to expose this race
+deterministically while preserving all three crash cuts. Earlier
 guest procfs isolation checks run with normal dumpability. Supplemental repeats
 are limited to four simultaneous harnesses on the shared workstation.

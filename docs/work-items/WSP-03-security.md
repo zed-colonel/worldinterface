@@ -117,3 +117,10 @@ with the same revision. Storage preserves the typed contention error. Independen
 byte-journal replay computes its own digest and shares only the strict decoder.
 No digest or cached reduction can be supplied by a caller. The new domain
 regression checks equivalent reduction and both forms of base drift.
+
+The lost-ack helper retains its main thread for up to three seconds after
+activation when interrupted dispatch is requested. This closes the normal-exit
+race with the aborting dispatch thread; lack of SIGABRT fails the existing parent
+assertion. No additional wait is taken on non-crash paths. WP-038 injects a 250 ms delay
+before the abort settings to expose the race deterministically; dumpability and
+core limits are still changed immediately before aborting. All earlier procfs probes precede the abort settings.
