@@ -16,7 +16,10 @@ use std::{
     sync::Arc,
 };
 use support::{
-    child::KillOnDrop, connectors::*, supervisor_fixture::*, supervisor_harness::Harness,
+    child::KillOnDrop,
+    connectors::*,
+    supervisor_fixture::*,
+    supervisor_harness::{AqClock as SupervisorClock, Harness},
 };
 use worldinterface_domain::{
     authorization::AuthorizationSnapshot, ingress::digest, resource::Target, Phase,
@@ -82,7 +85,7 @@ fn wi_supervisor_child() {
             snapshot: metadata.snapshot,
             id: metadata.id,
             run: metadata.run.parse().unwrap(),
-            clock: Clock::new(),
+            clock: SupervisorClock::new(),
         }
     };
     if let Some(point) =
@@ -266,6 +269,7 @@ fn lifecycle(
     }
     if lost_ack {
         std::fs::write(root.join("drop-ack"), b"1").unwrap();
+        std::fs::write(root.join("delay-inspect"), b"1").unwrap();
     }
     if ambiguous {
         std::fs::write(root.join("interrupt-dispatch"), b"1").unwrap();

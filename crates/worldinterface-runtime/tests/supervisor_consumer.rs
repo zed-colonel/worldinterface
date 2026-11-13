@@ -160,6 +160,91 @@ fn private_transport_rejects_malformed_and_oversized_frames_outside_guest() {
 }
 
 #[test]
+fn private_transport_gives_a_late_submit_its_own_frame_budget() {
+    use std::{
+        io::{Read, Write},
+        time::Duration,
+    };
+    for idle_ms in [100, 990] {
+        let temp = tempfile::tempdir().unwrap();
+        let (command, policy) = config();
+        let server = Server::open(
+            &temp.path().join("supervisor"),
+            Arc::new(Consumer { calls: AtomicUsize::new(0), complete: AtomicBool::new(false) }),
+        )
+        .unwrap();
+        let (client, mut channel) = PrivateChannel::provision(policy).unwrap();
+        let mut stream = client.into_stream().unwrap();
+        stream.set_read_timeout(Some(Duration::from_secs(5))).unwrap();
+        let request = encode(&Request::Submit(command.clone())).unwrap();
+        let header = (request.len() as u32).to_be_bytes();
+        let (ready, waiting) = std::sync::mpsc::channel();
+        let serve = std::thread::spawn(move || {
+            ready.send(()).unwrap();
+            // A delayed test thread may miss an idle poll entirely. Retrying
+            // an empty poll is legal; consuming a partial frame is not.
+            loop {
+                channel.serve_one(&server, 1).unwrap();
+                if matches!(
+                    server.request(&config().1, inspect(&command), 1),
+                    Ok(Response::Record(_))
+                ) {
+                    return;
+                }
+            }
+        });
+        waiting.recv().unwrap();
+        std::thread::sleep(Duration::from_millis(idle_ms));
+        stream.write_all(&header[..1]).unwrap();
+        std::thread::sleep(Duration::from_millis(30));
+        stream.write_all(&header[1..]).unwrap();
+        stream.write_all(&request).unwrap();
+        let mut size = [0; 4];
+        stream.read_exact(&mut size).unwrap();
+        let len = u32::from_be_bytes(size) as usize;
+        assert!(len <= MAX_FRAME_BYTES);
+        let mut response = vec![0; len];
+        stream.read_exact(&mut response).unwrap();
+        assert!(matches!(decode::<Response>(&response).unwrap(), Response::Record(ref r)
+            if r.observation.state == State::Accepted));
+        serve.join().unwrap();
+    }
+}
+
+#[test]
+fn private_transport_partial_progress_does_not_renew_frame_deadline() {
+    use std::{
+        io::{Read, Write},
+        time::{Duration, Instant},
+    };
+    let temp = tempfile::tempdir().unwrap();
+    let (_, policy) = config();
+    let server = Server::open(
+        &temp.path().join("supervisor"),
+        Arc::new(Consumer { calls: AtomicUsize::new(0), complete: AtomicBool::new(false) }),
+    )
+    .unwrap();
+    let (client, mut channel) = PrivateChannel::provision(policy).unwrap();
+    let mut stream = client.into_stream().unwrap();
+    stream.set_read_timeout(Some(Duration::from_secs(5))).unwrap();
+    // Send a partial header, then make progress without completing the frame.
+    stream.write_all(&[0]).unwrap();
+    let serve = std::thread::spawn(move || {
+        let started = Instant::now();
+        assert!(channel.serve_one(&server, 1).is_err());
+        assert!(started.elapsed() < Duration::from_secs(3));
+        // Keep the channel object alive to prove shutdown, rather than drop,
+        // closes the poisoned endpoint and prevents interpreting a suffix.
+        assert!(channel.serve_one(&server, 1).is_err());
+        channel
+    });
+    std::thread::sleep(Duration::from_millis(600));
+    stream.write_all(&[0]).unwrap();
+    assert_eq!(stream.read(&mut [0]).unwrap(), 0);
+    let _channel = serve.join().unwrap();
+}
+
+#[test]
 fn connector_rejects_stale_authenticated_response_and_never_treats_acceptance_as_commit() {
     use worldinterface_domain::resource::{Target, TargetDocument};
     use worldinterface_protocol::{ConnectorExecution, PrincipalId};

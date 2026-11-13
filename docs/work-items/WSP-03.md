@@ -76,6 +76,26 @@ Parallel repeats also exposed an activation-publication race: both the lost-ack
 helper and the harness now wait for the completed activation record, rather than
 the earlier creation of the backend command file, before supervisor teardown.
 
+F-002 remediation separates the one-second idle poll from the one-second frame
+budget, which starts after the first byte is received. Already buffered bytes
+are read before checking the remaining budget; partial progress cannot renew it.
+Transport errors close both endpoints. Consumers must provision a fresh
+authenticated channel and inspect the same durable key, preserving uncertainty
+about admission after a lost response. Public consumer regressions cover a valid
+30 ms Submit beginning 990 ms into an idle poll, slow partial-header progress,
+and closure of the unusable channel. A unit regression covers buffered data when
+the reader resumes after its deadline.
+
+F-003 remediation uses monotonic elapsed time for the process fixture's WI and
+AQ clocks, replacing the one-second jump per idle queue tick. This keeps command
+admission and reconciliation budgets independent of scheduler tick count. Both
+settling loops retain ten-second wall bounds inside the existing twelve-second
+WI child bound. WP-038 deliberately delays backend inspect by 250 ms, retains all
+three crash cuts, and still requires confirmed commit, unchanged original
+receipts, idempotent reconciliation and exactly one activation. No EOF is ignored.
+Remediation stress, negative-control and adopted-check evidence is retained at
+`/mnt/workhorse/craftingtable/runs/6633cf7b-ebd1-48e7-930c-c2df381fb74a/scratch/verification/`.
+
 A separate security pass and its retained review evidence examine authentication
 provenance, descriptor inheritance, exact replay/generation binding, cross-tenant
 inspect, corruption/crash windows, server limits and duplicate activation. See

@@ -1273,14 +1273,29 @@
           "treatment": "Retain the independent receipt-inspection provider latency regression, shared fixture support and documentation, including exact authorization and the bounded attempt budget. These contain no legacy DelayConnector registration; selective connector removal must preserve this coverage."
         },
         {
+          "path": "crates/worldinterface-runtime/tests/supervisor_consumer.rs",
+          "source_sha256": "d878a94a5c38ae8d3fe681017800b612b763f4efd79d6e8248dc8b17ec8f5712",
+          "treatment": "WSP-03 F-002/F-003 candidate disposition: preserve supervisor frame timing regressions and slow backend inspection evidence. Delay wording refers to test scheduling, with no dependency on the legacy delay connector. Effective through qualifying source review/merge; no deletion authority."
+        },
+        {
           "path": "crates/worldinterface-runtime/tests/support/effect_fixture.rs",
           "source_sha256": "2e7e9bdf49295553493123e825da04b92831790a846caa2b290f1f55620d5e33",
           "treatment": "Retain the independent receipt-inspection provider latency regression, shared fixture support and documentation, including exact authorization and the bounded attempt budget. These contain no legacy DelayConnector registration; selective connector removal must preserve this coverage."
         },
         {
+          "path": "crates/worldinterface-runtime/tests/support/supervisor_fixture.rs",
+          "source_sha256": "f8185cb21fa379351a9cb7cd42ef0c2c170cfbef701dbf5d96e4b23397c95d8c",
+          "treatment": "WSP-03 F-002/F-003 candidate disposition: preserve supervisor frame timing regressions and slow backend inspection evidence. Delay wording refers to test scheduling, with no dependency on the legacy delay connector. Effective through qualifying source review/merge; no deletion authority."
+        },
+        {
           "path": "crates/worldinterface-runtime/tests/worker_seam.rs",
           "source_sha256": "8b3ad24290485f61de1a0d322d9640628f7b42d50bda63039f9394573408f020",
           "treatment": "Shared WIP-11 artifact/seam support or evidence: retain run scoping, publication and quarantine obligations; review selective legacy removal without deleting these contracts. Candidate disposition in docs/work-items/WIP-11.md."
+        },
+        {
+          "path": "crates/worldinterface-runtime/tests/worker_supervisor.rs",
+          "source_sha256": "3f1e9c446570aac915a35507bdd1fb74822e51bf11175fbb193df62896b1a0d8",
+          "treatment": "WSP-03 F-002/F-003 candidate disposition: preserve supervisor frame timing regressions and slow backend inspection evidence. Delay wording refers to test scheduling, with no dependency on the legacy delay connector. Effective through qualifying source review/merge; no deletion authority."
         },
         {
           "path": "docs/evidence/WI-EMBEDDED-WORKER-PROOF-1.md",
@@ -1331,6 +1346,16 @@
           "path": "docs/work-items/WSP-02.md",
           "source_sha256": "7c865084bdd55bed36847275ffbb436443b33c84b59046a631ea811f6b8eedf1",
           "treatment": "Retain the independent receipt-inspection provider latency regression, shared fixture support and documentation, including exact authorization and the bounded attempt budget. These contain no legacy DelayConnector registration; selective connector removal must preserve this coverage."
+        },
+        {
+          "path": "docs/work-items/WSP-03-security.md",
+          "source_sha256": "44bb0009d13030e0096cdfc4ef261c04c65b6c78f9097daa533ee364025938ff",
+          "treatment": "WSP-03 F-002/F-003 candidate disposition: preserve supervisor frame timing regressions and slow backend inspection evidence. Delay wording refers to test scheduling, with no dependency on the legacy delay connector. Effective through qualifying source review/merge; no deletion authority."
+        },
+        {
+          "path": "docs/work-items/WSP-03.md",
+          "source_sha256": "73396b0048673eab85076ead50e09d7cf2c1503659a26e44895efbd037e6045e",
+          "treatment": "WSP-03 F-002/F-003 candidate disposition: preserve supervisor frame timing regressions and slow backend inspection evidence. Delay wording refers to test scheduling, with no dependency on the legacy delay connector. Effective through qualifying source review/merge; no deletion authority."
         },
         {
           "path": "docs/work-items/wi-03-integration.md",
@@ -6061,17 +6086,17 @@
         },
         {
           "id": "crates/worldinterface-runtime/src/supervisor/transport.rs::::source-module:crates/worldinterface-runtime/src/supervisor/transport.rs",
-          "source_sha256": "cb08224ef60e9a6f50050d3b385b8af0889c290647bfa770eb9c0953f8cfae6a",
+          "source_sha256": "c5586ff91b6444791f8bddedadd4d78e2a8ecd62cdf8211e135040f1ae5b600a",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/supervisor/transport.rs::::struct:Client",
-          "source_sha256": "cb08224ef60e9a6f50050d3b385b8af0889c290647bfa770eb9c0953f8cfae6a",
+          "source_sha256": "c5586ff91b6444791f8bddedadd4d78e2a8ecd62cdf8211e135040f1ae5b600a",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/supervisor/transport.rs::::struct:PrivateChannel",
-          "source_sha256": "cb08224ef60e9a6f50050d3b385b8af0889c290647bfa770eb9c0953f8cfae6a",
+          "source_sha256": "c5586ff91b6444791f8bddedadd4d78e2a8ecd62cdf8211e135040f1ae5b600a",
           "registration_sites": []
         },
         {
@@ -7401,22 +7426,22 @@
         },
         {
           "id": "crates/worldinterface-runtime/tests/supervisor_consumer.rs::::source-module:crates/worldinterface-runtime/tests/supervisor_consumer.rs",
-          "source_sha256": "00c1adf57633a11304183a2ea541d4b65de8e53f48229b8a0d96db63bb17d529",
+          "source_sha256": "d878a94a5c38ae8d3fe681017800b612b763f4efd79d6e8248dc8b17ec8f5712",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/supervisor_consumer.rs::::struct:Consumer",
-          "source_sha256": "00c1adf57633a11304183a2ea541d4b65de8e53f48229b8a0d96db63bb17d529",
+          "source_sha256": "d878a94a5c38ae8d3fe681017800b612b763f4efd79d6e8248dc8b17ec8f5712",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/supervisor_consumer.rs::interrupted_result_persistence_requires_reopen_and_authoritative_inspect::struct:Backend",
-          "source_sha256": "00c1adf57633a11304183a2ea541d4b65de8e53f48229b8a0d96db63bb17d529",
+          "source_sha256": "d878a94a5c38ae8d3fe681017800b612b763f4efd79d6e8248dc8b17ec8f5712",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/supervisor_consumer.rs::supervisor_generation_deadline_and_unsupported_recovery_fail_closed::struct:Unsupported",
-          "source_sha256": "00c1adf57633a11304183a2ea541d4b65de8e53f48229b8a0d96db63bb17d529",
+          "source_sha256": "d878a94a5c38ae8d3fe681017800b612b763f4efd79d6e8248dc8b17ec8f5712",
           "registration_sites": []
         },
         {
@@ -7616,37 +7641,37 @@
         },
         {
           "id": "crates/worldinterface-runtime/tests/support/supervisor_fixture.rs::::source-module:crates/worldinterface-runtime/tests/support/supervisor_fixture.rs",
-          "source_sha256": "d7c59388ec84049239ab0a9d0c71a3168d6e804526bde5e6545e565f627185c6",
+          "source_sha256": "f8185cb21fa379351a9cb7cd42ef0c2c170cfbef701dbf5d96e4b23397c95d8c",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/support/supervisor_fixture.rs::::struct:Config",
-          "source_sha256": "d7c59388ec84049239ab0a9d0c71a3168d6e804526bde5e6545e565f627185c6",
+          "source_sha256": "f8185cb21fa379351a9cb7cd42ef0c2c170cfbef701dbf5d96e4b23397c95d8c",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/support/supervisor_fixture.rs::::struct:Fixture",
-          "source_sha256": "d7c59388ec84049239ab0a9d0c71a3168d6e804526bde5e6545e565f627185c6",
+          "source_sha256": "f8185cb21fa379351a9cb7cd42ef0c2c170cfbef701dbf5d96e4b23397c95d8c",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/support/supervisor_harness.rs::::source-module:crates/worldinterface-runtime/tests/support/supervisor_harness.rs",
-          "source_sha256": "7217447c44808bf8ffdb4937e610144a610bfcaad112005ea6ebc1683cc19c36",
+          "source_sha256": "738beb5263094d3d59c0acd9a2fc88df642c30f42713ee3647ac563c1b613d5c",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/support/supervisor_harness.rs::::struct:AqClock",
-          "source_sha256": "7217447c44808bf8ffdb4937e610144a610bfcaad112005ea6ebc1683cc19c36",
+          "source_sha256": "738beb5263094d3d59c0acd9a2fc88df642c30f42713ee3647ac563c1b613d5c",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/support/supervisor_harness.rs::::struct:Harness",
-          "source_sha256": "7217447c44808bf8ffdb4937e610144a610bfcaad112005ea6ebc1683cc19c36",
+          "source_sha256": "738beb5263094d3d59c0acd9a2fc88df642c30f42713ee3647ac563c1b613d5c",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/support/supervisor_harness.rs::::struct:Noop",
-          "source_sha256": "7217447c44808bf8ffdb4937e610144a610bfcaad112005ea6ebc1683cc19c36",
+          "source_sha256": "738beb5263094d3d59c0acd9a2fc88df642c30f42713ee3647ac563c1b613d5c",
           "registration_sites": []
         },
         {
@@ -8126,37 +8151,37 @@
         },
         {
           "id": "crates/worldinterface-runtime/tests/worker_supervisor.rs::::module:support",
-          "source_sha256": "20b207faffb8fe75def25694783c1377e259dc15164df7dd1a2b619829fd0d4d",
+          "source_sha256": "3f1e9c446570aac915a35507bdd1fb74822e51bf11175fbb193df62896b1a0d8",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/worker_supervisor.rs::::source-module:crates/worldinterface-runtime/tests/worker_supervisor.rs",
-          "source_sha256": "20b207faffb8fe75def25694783c1377e259dc15164df7dd1a2b619829fd0d4d",
+          "source_sha256": "3f1e9c446570aac915a35507bdd1fb74822e51bf11175fbb193df62896b1a0d8",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/worker_supervisor.rs::::struct:Metadata",
-          "source_sha256": "20b207faffb8fe75def25694783c1377e259dc15164df7dd1a2b619829fd0d4d",
+          "source_sha256": "3f1e9c446570aac915a35507bdd1fb74822e51bf11175fbb193df62896b1a0d8",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/worker_supervisor.rs::support::module:child",
-          "source_sha256": "20b207faffb8fe75def25694783c1377e259dc15164df7dd1a2b619829fd0d4d",
+          "source_sha256": "3f1e9c446570aac915a35507bdd1fb74822e51bf11175fbb193df62896b1a0d8",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/worker_supervisor.rs::support::module:connectors",
-          "source_sha256": "20b207faffb8fe75def25694783c1377e259dc15164df7dd1a2b619829fd0d4d",
+          "source_sha256": "3f1e9c446570aac915a35507bdd1fb74822e51bf11175fbb193df62896b1a0d8",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/worker_supervisor.rs::support::module:supervisor_fixture",
-          "source_sha256": "20b207faffb8fe75def25694783c1377e259dc15164df7dd1a2b619829fd0d4d",
+          "source_sha256": "3f1e9c446570aac915a35507bdd1fb74822e51bf11175fbb193df62896b1a0d8",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/worker_supervisor.rs::support::module:supervisor_harness",
-          "source_sha256": "20b207faffb8fe75def25694783c1377e259dc15164df7dd1a2b619829fd0d4d",
+          "source_sha256": "3f1e9c446570aac915a35507bdd1fb74822e51bf11175fbb193df62896b1a0d8",
           "registration_sites": []
         },
         {
@@ -8978,7 +9003,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/README.md",
-          "source_sha256": "36428b597aabb9b211d6e8a010f0a785f5c5a9f028841478f60041a19f80f205",
+          "source_sha256": "f7d628fe081dc089229c3db1e0810f5658a031ca50ad6480e1527cdf23b39e61",
           "treatment": "WSP-03 candidate: preserve separate bounded supervisor/public API and consumer regressions; selectively audit shared dependencies. No deletion or worker authority expansion."
         },
         {
@@ -9133,7 +9158,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/src/supervisor/transport.rs",
-          "source_sha256": "cb08224ef60e9a6f50050d3b385b8af0889c290647bfa770eb9c0953f8cfae6a",
+          "source_sha256": "c5586ff91b6444791f8bddedadd4d78e2a8ecd62cdf8211e135040f1ae5b600a",
           "treatment": "WSP-03 candidate: preserve separate bounded supervisor/public API and consumer regressions; selectively audit shared dependencies. No deletion or worker authority expansion."
         },
         {
@@ -9333,7 +9358,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/tests/supervisor_consumer.rs",
-          "source_sha256": "00c1adf57633a11304183a2ea541d4b65de8e53f48229b8a0d96db63bb17d529",
+          "source_sha256": "d878a94a5c38ae8d3fe681017800b612b763f4efd79d6e8248dc8b17ec8f5712",
           "treatment": "WSP-03 candidate: preserve separate bounded supervisor/public API and consumer regressions; selectively audit shared dependencies. No deletion or worker authority expansion."
         },
         {
@@ -9388,12 +9413,12 @@
         },
         {
           "path": "crates/worldinterface-runtime/tests/support/supervisor_fixture.rs",
-          "source_sha256": "d7c59388ec84049239ab0a9d0c71a3168d6e804526bde5e6545e565f627185c6",
+          "source_sha256": "f8185cb21fa379351a9cb7cd42ef0c2c170cfbef701dbf5d96e4b23397c95d8c",
           "treatment": "WSP-03 candidate: preserve separate bounded supervisor/public API and consumer regressions; selectively audit shared dependencies. No deletion or worker authority expansion."
         },
         {
           "path": "crates/worldinterface-runtime/tests/support/supervisor_harness.rs",
-          "source_sha256": "7217447c44808bf8ffdb4937e610144a610bfcaad112005ea6ebc1683cc19c36",
+          "source_sha256": "738beb5263094d3d59c0acd9a2fc88df642c30f42713ee3647ac563c1b613d5c",
           "treatment": "WSP-03 candidate: preserve separate bounded supervisor/public API and consumer regressions; selectively audit shared dependencies. No deletion or worker authority expansion."
         },
         {
@@ -9493,7 +9518,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/tests/worker_supervisor.rs",
-          "source_sha256": "20b207faffb8fe75def25694783c1377e259dc15164df7dd1a2b619829fd0d4d",
+          "source_sha256": "3f1e9c446570aac915a35507bdd1fb74822e51bf11175fbb193df62896b1a0d8",
           "treatment": "WSP-03 candidate: preserve separate bounded supervisor/public API and consumer regressions; selectively audit shared dependencies. No deletion or worker authority expansion."
         },
         {

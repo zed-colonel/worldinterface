@@ -9,7 +9,7 @@ use actionqueue_core::{
 };
 use actionqueue_executor_local::handler::{ExecutorContext, ExecutorHandler};
 use actionqueue_runtime::{config::RuntimeConfig, engine::ActionQueueEngine};
-use std::sync::Arc;
+use std::{sync::Arc, time::Instant};
 use worldinterface_domain::{
     agency::AuthenticatedCaller,
     authorization::{AuthorizationSnapshot, VerifiedSnapshot},
@@ -40,11 +40,27 @@ impl ExecutorHandler for Noop {
         AttemptDisposition::complete(None)
     }
 }
+/// This fixture crosses real process and socket boundaries. Advancing a fake
+/// second per AQ tick can expire a command before Submit, or exhaust a case
+/// while an authenticated inspect is still outstanding under host load.
 #[derive(Clone)]
-pub struct AqClock(pub Clock);
+pub struct AqClock {
+    epoch_ms: u64,
+    started: Instant,
+}
+impl AqClock {
+    pub fn new() -> Self {
+        Self { epoch_ms: super::supervisor_fixture::now(), started: Instant::now() }
+    }
+}
+impl TrustedClock for AqClock {
+    fn now(&self) -> worldinterface_runtime::Result<Timestamp> {
+        Ok(Timestamp::from_epoch_millis(self.epoch_ms + self.started.elapsed().as_millis() as u64)?)
+    }
+}
 impl actionqueue_core::time::clock::Clock for AqClock {
     fn now(&self) -> u64 {
-        self.0.now().unwrap().epoch_millis().unwrap() / 1000
+        TrustedClock::now(self).unwrap().epoch_millis().unwrap() / 1000
     }
 }
 pub struct Harness {
@@ -53,7 +69,7 @@ pub struct Harness {
     pub snapshot: AuthorizationSnapshot,
     pub id: EffectIntentId,
     pub run: RunId,
-    pub clock: Clock,
+    pub clock: AqClock,
 }
 impl Harness {
     pub fn new(
@@ -62,7 +78,7 @@ impl Harness {
         submission: EffectSubmission,
         snapshot: AuthorizationSnapshot,
     ) -> Self {
-        let clock = Clock::new();
+        let clock = AqClock::new();
         let bundle = Arc::new(
             StoreBundle::initialize(
                 &root.join("bundle"),
@@ -165,7 +181,7 @@ impl Harness {
     ) -> EffectAttemptHandler<
         Arc<worldinterface_runtime::supervisor::SupervisorConnector>,
         Evidence,
-        Clock,
+        AqClock,
     > {
         EffectAttemptHandler {
             bundle: self.bundle.clone(),
@@ -183,10 +199,11 @@ impl Harness {
             },
             self.handler(),
         )
-        .bootstrap_with_clock(AqClock(self.clock.clone()))
+        .bootstrap_with_clock(self.clock.clone())
         .unwrap()
         .with_host(host());
-        for _ in 0..3000 {
+        let deadline = Instant::now() + std::time::Duration::from_secs(10);
+        while Instant::now() < deadline {
             let _ = engine.tick().await.unwrap();
             if engine.projection().get_run_state(&self.run).is_some_and(|s| s.is_terminal()) {
                 if self.effect().phase == worldinterface_domain::Phase::Succeeded {
@@ -197,17 +214,6 @@ impl Harness {
                 }
                 engine.shutdown().unwrap();
                 return;
-            }
-            if engine.projection().get_run_state(&self.run)
-                == Some(&actionqueue_core::run::state::RunState::RetryWait)
-            {
-                // Recovery must not jump over the pending lifecycle case deadline.
-                self.clock.advance(1000);
-            }
-            if engine.projection().get_run_state(&self.run)
-                == Some(&actionqueue_core::run::state::RunState::Scheduled)
-            {
-                self.clock.advance(1000);
             }
             tokio::time::sleep(std::time::Duration::from_millis(1)).await;
         }
@@ -237,10 +243,11 @@ impl Harness {
             },
             handler,
         )
-        .bootstrap_with_clock(AqClock(self.clock.clone()))
+        .bootstrap_with_clock(self.clock.clone())
         .unwrap()
         .with_host(host());
-        for _ in 0..3000 {
+        let deadline = Instant::now() + std::time::Duration::from_secs(10);
+        while Instant::now() < deadline {
             let _ = engine.tick().await.unwrap();
             if self.case().status.terminal()
                 && engine
@@ -256,17 +263,6 @@ impl Harness {
                 }
                 engine.shutdown().unwrap();
                 return;
-            }
-            if engine.projection().run_instances().any(|r| {
-                r.id() != self.run
-                    && matches!(
-                        r.state(),
-                        actionqueue_core::run::state::RunState::Awaiting
-                            | actionqueue_core::run::state::RunState::Scheduled
-                            | actionqueue_core::run::state::RunState::RetryWait
-                    )
-            }) {
-                self.clock.advance(1000);
             }
             tokio::time::sleep(std::time::Duration::from_millis(1)).await;
         }

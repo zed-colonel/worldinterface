@@ -47,6 +47,18 @@ revocation, corrupt journal, concurrent duplicate submission and unsupported
 backend admission. Process regressions exercise guest loss, lost acknowledgment,
 ambiguous dispatch and fresh host reconnection after WI/supervisor restart.
 
+F-002/F-003 remediation pass: idle polling has a separate finite bound from the
+frame read. A per-call nonblocking receive drains already buffered bytes without
+changing shared socket flags, then any blocking read uses the remainder of the
+original frame budget. Progress never resets that budget; the frame-size cap
+bounds buffered work. Server I/O failures now shut down the channel, preventing
+partial-frame suffixes from being reinterpreted as new commands. Fresh channels
+retain the same exact operator grants and recover through authenticated inspect;
+neither a timeout nor reconnection grants dispatch authority. No authentication,
+journal, worker operation or guest descriptor path changes. Process fixture clocks
+now measure elapsed time and WP-038 includes delayed inspection without relaxing
+the convergence, receipt, activation or isolation assertions.
+
 No open blocking or major finding identified within this bounded trusted-host
 contract. Real backend, OS isolation and Kata qualification remain downstream
 consumer work, as specified by the accepted WSP-03 scope. Retained pass results

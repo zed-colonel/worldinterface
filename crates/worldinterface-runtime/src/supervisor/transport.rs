@@ -2,7 +2,7 @@ use super::{ChannelPolicy, Server};
 use crate::Result;
 use std::{
     io::{Read, Write},
-    os::unix::net::UnixStream,
+    os::{fd::AsRawFd, unix::net::UnixStream},
     sync::Mutex,
     time::{Duration, Instant},
 };
@@ -21,7 +21,19 @@ impl PrivateChannel {
         let (client, server) = UnixStream::pair()?;
         Ok((Client { stream: Mutex::new(client) }, Self { stream: server, policy }))
     }
+    /// Poll an idle endpoint for up to one second. A frame gets a separate
+    /// one-second budget starting at its first byte. Any I/O error closes the
+    /// endpoint: a partial frame cannot be resumed on this channel. The host
+    /// must provision a fresh authenticated channel and inspect the durable key;
+    /// loss of a reply does not establish whether Submit was admitted.
     pub fn serve_one(&mut self, server: &Server, now_ms: u64) -> Result<()> {
+        let result = self.serve_frame(server, now_ms);
+        if result.is_err() {
+            let _ = self.stream.shutdown(std::net::Shutdown::Both);
+        }
+        result
+    }
+    fn serve_frame(&mut self, server: &Server, now_ms: u64) -> Result<()> {
         let Some(bytes) = read_frame(&mut self.stream)? else {
             return Ok(());
         };
@@ -77,8 +89,27 @@ fn remaining(start: Instant) -> Result<Duration> {
 }
 fn read_exact(stream: &mut UnixStream, mut bytes: &mut [u8], start: Instant) -> Result<()> {
     while !bytes.is_empty() {
-        stream.set_read_timeout(Some(remaining(start)?))?;
-        let read = stream.read(bytes)?;
+        // Drain buffered bytes before checking the deadline. MSG_DONTWAIT is
+        // per-call, so it cannot change flags on a transferred/duplicated fd.
+        // SAFETY: bytes is a live writable slice and stream owns this socket.
+        let buffered = unsafe {
+            libc::recv(
+                stream.as_raw_fd(),
+                bytes.as_mut_ptr().cast(),
+                bytes.len(),
+                libc::MSG_DONTWAIT,
+            )
+        };
+        let read = if buffered >= 0 {
+            buffered as usize
+        } else {
+            let error = std::io::Error::last_os_error();
+            if error.kind() != std::io::ErrorKind::WouldBlock {
+                return Err(error.into());
+            }
+            stream.set_read_timeout(Some(remaining(start)?))?;
+            stream.read(bytes)?
+        };
         if read == 0 {
             return Err("closed supervisor channel".into());
         }
@@ -87,11 +118,9 @@ fn read_exact(stream: &mut UnixStream, mut bytes: &mut [u8], start: Instant) -> 
     Ok(())
 }
 fn read_frame(stream: &mut UnixStream) -> Result<Option<Vec<u8>>> {
-    let start = Instant::now();
     let mut size = [0; 4];
-    // Idle channels may poll again. Once the first byte arrives the entire
-    // frame must complete within this same finite read budget.
-    stream.set_read_timeout(Some(remaining(start)?))?;
+    // Idle polling consumes no frame budget and no bytes on timeout.
+    stream.set_read_timeout(Some(Duration::from_millis(1000)))?;
     match stream.read(&mut size[..1]) {
         Ok(0) => return Err("closed supervisor channel".into()),
         Ok(_) => {}
@@ -105,6 +134,7 @@ fn read_frame(stream: &mut UnixStream) -> Result<Option<Vec<u8>>> {
         }
         Err(e) => return Err(e.into()),
     }
+    let start = Instant::now();
     read_exact(stream, &mut size[1..], start)?;
     let len = u32::from_be_bytes(size) as usize;
     if len > MAX_FRAME_BYTES {
@@ -115,6 +145,7 @@ fn read_frame(stream: &mut UnixStream) -> Result<Option<Vec<u8>>> {
     read_exact(stream, &mut bytes, start)?;
     Ok(Some(bytes))
 }
+
 fn write_frame(stream: &mut UnixStream, bytes: &[u8]) -> Result<()> {
     if bytes.len() > MAX_FRAME_BYTES {
         return Err("supervisor frame bound".into());
@@ -131,4 +162,17 @@ fn write_frame(stream: &mut UnixStream, bytes: &[u8]) -> Result<()> {
         pending = &pending[written..];
     }
     Ok(())
+}
+
+#[cfg(test)]
+#[test]
+fn buffered_frame_bytes_are_read_even_when_reader_wakes_after_deadline() {
+    let (mut sender, mut reader) = UnixStream::pair().unwrap();
+    sender.write_all(b"buffered").unwrap();
+    let expired = Instant::now() - Duration::from_secs(2);
+    let mut bytes = [0; 8];
+    read_exact(&mut reader, &mut bytes, expired).unwrap();
+    assert_eq!(&bytes, b"buffered");
+    // Buffered progress must not renew an expired budget for missing bytes.
+    assert!(read_exact(&mut reader, &mut bytes, expired).is_err());
 }

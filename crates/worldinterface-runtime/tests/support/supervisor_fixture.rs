@@ -75,6 +75,11 @@ impl SupervisorHandler for Fixture {
         Ok(Observation { state: State::Running, evidence: b"durably dispatched".to_vec() })
     }
     fn inspect(&self, command: AuthorizedSupervisorInspect) -> Result<Observation, String> {
+        if self.root.join("delay-inspect").exists() {
+            // Deliberately outlast many AQ ticks. Host latency must not burn
+            // virtual seconds and exhaust reconciliation before this finishes.
+            std::thread::sleep(Duration::from_millis(250));
+        }
         let path = self.root.join("backend-command");
         if !path.exists() {
             return Ok(Observation {

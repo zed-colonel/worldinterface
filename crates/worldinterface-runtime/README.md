@@ -17,6 +17,11 @@ an exact `ChannelPolicy`. Never transfer it to the guest or worker. Requests do
 not carry authentication credentials or choose their own principal/tenant.
 Revoke the server-owned policy to fence both submit and inspect. A fresh host
 connection is required after WI restarts.
+`PrivateChannel::serve_one` may return successfully after an idle one-second poll
+without consuming bytes. Its separate frame deadline starts with the first byte;
+buffered bytes are drained before requiring more time. Any transport error closes
+the endpoint. Provision a fresh authenticated channel and inspect the same durable
+key to recover; a lost reply alone does not establish whether Submit was admitted.
 
 Open the supervisor journal in a private operator-owned directory outside both
 `StoreBundle` and the guest's filesystem. It atomically syncs complete command

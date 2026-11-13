@@ -12202,7 +12202,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-runtime/src/supervisor/transport.rs",
     "name": "crates/worldinterface-runtime/src/supervisor/transport.rs",
-    "source_sha256": "cb08224ef60e9a6f50050d3b385b8af0889c290647bfa770eb9c0953f8cfae6a",
+    "source_sha256": "c5586ff91b6444791f8bddedadd4d78e2a8ecd62cdf8211e135040f1ae5b600a",
     "conditions": [],
     "registration_sites": []
   },
@@ -12211,7 +12211,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/src/supervisor/transport.rs",
     "name": "Client",
-    "source_sha256": "cb08224ef60e9a6f50050d3b385b8af0889c290647bfa770eb9c0953f8cfae6a",
+    "source_sha256": "c5586ff91b6444791f8bddedadd4d78e2a8ecd62cdf8211e135040f1ae5b600a",
     "conditions": [],
     "registration_sites": []
   },
@@ -12220,7 +12220,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/src/supervisor/transport.rs",
     "name": "PrivateChannel",
-    "source_sha256": "cb08224ef60e9a6f50050d3b385b8af0889c290647bfa770eb9c0953f8cfae6a",
+    "source_sha256": "c5586ff91b6444791f8bddedadd4d78e2a8ecd62cdf8211e135040f1ae5b600a",
     "conditions": [],
     "registration_sites": []
   },
@@ -14649,7 +14649,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-runtime/tests/supervisor_consumer.rs",
     "name": "crates/worldinterface-runtime/tests/supervisor_consumer.rs",
-    "source_sha256": "00c1adf57633a11304183a2ea541d4b65de8e53f48229b8a0d96db63bb17d529",
+    "source_sha256": "d878a94a5c38ae8d3fe681017800b612b763f4efd79d6e8248dc8b17ec8f5712",
     "conditions": [],
     "registration_sites": []
   },
@@ -14658,7 +14658,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/supervisor_consumer.rs",
     "name": "Consumer",
-    "source_sha256": "00c1adf57633a11304183a2ea541d4b65de8e53f48229b8a0d96db63bb17d529",
+    "source_sha256": "d878a94a5c38ae8d3fe681017800b612b763f4efd79d6e8248dc8b17ec8f5712",
     "conditions": [],
     "registration_sites": []
   },
@@ -14667,7 +14667,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/supervisor_consumer.rs",
     "name": "Backend",
-    "source_sha256": "00c1adf57633a11304183a2ea541d4b65de8e53f48229b8a0d96db63bb17d529",
+    "source_sha256": "d878a94a5c38ae8d3fe681017800b612b763f4efd79d6e8248dc8b17ec8f5712",
     "conditions": [],
     "registration_sites": []
   },
@@ -14676,7 +14676,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/supervisor_consumer.rs",
     "name": "Unsupported",
-    "source_sha256": "00c1adf57633a11304183a2ea541d4b65de8e53f48229b8a0d96db63bb17d529",
+    "source_sha256": "d878a94a5c38ae8d3fe681017800b612b763f4efd79d6e8248dc8b17ec8f5712",
     "conditions": [],
     "registration_sites": []
   },
@@ -15036,7 +15036,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-runtime/tests/support/supervisor_fixture.rs",
     "name": "crates/worldinterface-runtime/tests/support/supervisor_fixture.rs",
-    "source_sha256": "d7c59388ec84049239ab0a9d0c71a3168d6e804526bde5e6545e565f627185c6",
+    "source_sha256": "f8185cb21fa379351a9cb7cd42ef0c2c170cfbef701dbf5d96e4b23397c95d8c",
     "conditions": [],
     "registration_sites": []
   },
@@ -15045,7 +15045,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/support/supervisor_fixture.rs",
     "name": "Config",
-    "source_sha256": "d7c59388ec84049239ab0a9d0c71a3168d6e804526bde5e6545e565f627185c6",
+    "source_sha256": "f8185cb21fa379351a9cb7cd42ef0c2c170cfbef701dbf5d96e4b23397c95d8c",
     "conditions": [],
     "registration_sites": []
   },
@@ -15054,7 +15054,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/support/supervisor_fixture.rs",
     "name": "Fixture",
-    "source_sha256": "d7c59388ec84049239ab0a9d0c71a3168d6e804526bde5e6545e565f627185c6",
+    "source_sha256": "f8185cb21fa379351a9cb7cd42ef0c2c170cfbef701dbf5d96e4b23397c95d8c",
     "conditions": [],
     "registration_sites": []
   },
@@ -15063,7 +15063,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-runtime/tests/support/supervisor_harness.rs",
     "name": "crates/worldinterface-runtime/tests/support/supervisor_harness.rs",
-    "source_sha256": "7217447c44808bf8ffdb4937e610144a610bfcaad112005ea6ebc1683cc19c36",
+    "source_sha256": "738beb5263094d3d59c0acd9a2fc88df642c30f42713ee3647ac563c1b613d5c",
     "conditions": [],
     "registration_sites": []
   },
@@ -15072,7 +15072,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/support/supervisor_harness.rs",
     "name": "AqClock",
-    "source_sha256": "7217447c44808bf8ffdb4937e610144a610bfcaad112005ea6ebc1683cc19c36",
+    "source_sha256": "738beb5263094d3d59c0acd9a2fc88df642c30f42713ee3647ac563c1b613d5c",
     "conditions": [],
     "registration_sites": []
   },
@@ -15081,7 +15081,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/support/supervisor_harness.rs",
     "name": "Harness",
-    "source_sha256": "7217447c44808bf8ffdb4937e610144a610bfcaad112005ea6ebc1683cc19c36",
+    "source_sha256": "738beb5263094d3d59c0acd9a2fc88df642c30f42713ee3647ac563c1b613d5c",
     "conditions": [],
     "registration_sites": []
   },
@@ -15090,7 +15090,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/support/supervisor_harness.rs",
     "name": "Noop",
-    "source_sha256": "7217447c44808bf8ffdb4937e610144a610bfcaad112005ea6ebc1683cc19c36",
+    "source_sha256": "738beb5263094d3d59c0acd9a2fc88df642c30f42713ee3647ac563c1b613d5c",
     "conditions": [],
     "registration_sites": []
   },
@@ -15987,7 +15987,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/tests/worker_supervisor.rs",
     "name": "support",
-    "source_sha256": "20b207faffb8fe75def25694783c1377e259dc15164df7dd1a2b619829fd0d4d",
+    "source_sha256": "3f1e9c446570aac915a35507bdd1fb74822e51bf11175fbb193df62896b1a0d8",
     "conditions": [],
     "registration_sites": []
   },
@@ -15996,7 +15996,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-runtime/tests/worker_supervisor.rs",
     "name": "crates/worldinterface-runtime/tests/worker_supervisor.rs",
-    "source_sha256": "20b207faffb8fe75def25694783c1377e259dc15164df7dd1a2b619829fd0d4d",
+    "source_sha256": "3f1e9c446570aac915a35507bdd1fb74822e51bf11175fbb193df62896b1a0d8",
     "conditions": [],
     "registration_sites": []
   },
@@ -16005,7 +16005,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/worker_supervisor.rs",
     "name": "Metadata",
-    "source_sha256": "20b207faffb8fe75def25694783c1377e259dc15164df7dd1a2b619829fd0d4d",
+    "source_sha256": "3f1e9c446570aac915a35507bdd1fb74822e51bf11175fbb193df62896b1a0d8",
     "conditions": [],
     "registration_sites": []
   },
@@ -16014,7 +16014,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/tests/worker_supervisor.rs",
     "name": "child",
-    "source_sha256": "20b207faffb8fe75def25694783c1377e259dc15164df7dd1a2b619829fd0d4d",
+    "source_sha256": "3f1e9c446570aac915a35507bdd1fb74822e51bf11175fbb193df62896b1a0d8",
     "conditions": [],
     "registration_sites": []
   },
@@ -16023,7 +16023,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/tests/worker_supervisor.rs",
     "name": "connectors",
-    "source_sha256": "20b207faffb8fe75def25694783c1377e259dc15164df7dd1a2b619829fd0d4d",
+    "source_sha256": "3f1e9c446570aac915a35507bdd1fb74822e51bf11175fbb193df62896b1a0d8",
     "conditions": [],
     "registration_sites": []
   },
@@ -16032,7 +16032,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/tests/worker_supervisor.rs",
     "name": "supervisor_fixture",
-    "source_sha256": "20b207faffb8fe75def25694783c1377e259dc15164df7dd1a2b619829fd0d4d",
+    "source_sha256": "3f1e9c446570aac915a35507bdd1fb74822e51bf11175fbb193df62896b1a0d8",
     "conditions": [],
     "registration_sites": []
   },
@@ -16041,7 +16041,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/tests/worker_supervisor.rs",
     "name": "supervisor_harness",
-    "source_sha256": "20b207faffb8fe75def25694783c1377e259dc15164df7dd1a2b619829fd0d4d",
+    "source_sha256": "3f1e9c446570aac915a35507bdd1fb74822e51bf11175fbb193df62896b1a0d8",
     "conditions": [],
     "registration_sites": []
   },
