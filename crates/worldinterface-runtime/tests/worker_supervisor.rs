@@ -9,7 +9,7 @@ use std::{
     io::{Read, Write},
     os::{
         fd::{FromRawFd, OwnedFd},
-        unix::net::UnixStream,
+        unix::{net::UnixStream, process::ExitStatusExt},
     },
     path::{Path, PathBuf},
     process::{Command as Process, Stdio},
@@ -286,7 +286,7 @@ fn lifecycle(
     if ambiguous {
         std::fs::write(root.join("interrupt-dispatch"), b"1").unwrap();
     }
-    let (client, supervisor) = channel(root, &config);
+    let (client, mut supervisor) = channel(root, &config);
     let initial = cut
         .filter(|p| p.starts_with("fabric-"))
         .map(|p| format!("invoke-cut-{p}"))
@@ -294,6 +294,22 @@ fn lifecycle(
     wi(root, client, &initial);
     wait_for_activation(root);
     assert_eq!(std::fs::read(root.join("activations")).unwrap(), b"1");
+    if ambiguous {
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(3);
+        let status = loop {
+            if let Some(status) = supervisor.try_wait().unwrap() {
+                break status;
+            }
+            assert!(std::time::Instant::now() < deadline, "supervisor did not abort");
+            std::thread::sleep(std::time::Duration::from_millis(5));
+        };
+        assert_eq!(status.signal(), Some(libc::SIGABRT), "real abnormal death required");
+        assert!(!status.core_dumped(), "intentional crash produced a core dump");
+        assert_eq!(
+            std::fs::read(root.join("abort-no-core")).unwrap(),
+            b"dumpable=0\nrlimit_core=0:0\n"
+        );
+    }
     if !failed_guest_first {
         guest.kill().unwrap();
         guest.wait().unwrap();

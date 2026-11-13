@@ -91,3 +91,19 @@ bounded shared pool. Exact test selection, before/after executable measurements,
 complete outcomes and all deadlines remain. Compiler preparation is included in
 complete adopted-check timing, and every actual worker admission and dispatch
 still independently verifies the packet.
+
+Follow-up F-004 and crash-helper pass (2026-11-12): artifact verification now runs
+inside the existing Fabric writer transaction against exactly the reduced state
+being published. It performs local artifact reads as the receipt path already
+does; it cannot publish a command that failed artifact verification. Stale-command
+fencing, receipt-only outcome publication, accounting and transaction rollback
+remain enforced. The focused storage regressions exercise rejection, stale
+commands, injected write failures and identical replayed projections. No new
+supervisor or worker authority is introduced.
+
+The deliberate supervisor abort disables dumpability and both core size limits
+only at its crash cut, preserving earlier procfs credential/descriptor probes.
+WP-038 checks in-child setting assertions, evidence, SIGABRT and the parent's
+no-core wait status. No other deliberate process abort was found in the repository.
+This follow-up implementation security pass has no open blocking or major
+finding; independent qualifying review remains CraftingTable-owned.

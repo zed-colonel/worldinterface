@@ -193,11 +193,20 @@ fn transact(
     c: &mut Connection,
     command: &ValidatedEffectCommand,
     fault: Option<&str>,
+    verify_artifacts: impl FnOnce(&worldinterface_domain::effect::EffectAggregate) -> Result<()>,
 ) -> Result<EffectIntentId> {
     let tx = c.transaction_with_behavior(TransactionBehavior::Immediate)?;
     let tenant = command.tenant();
     let old = snapshot(&tx, tenant)?;
     let (new, id) = replay_validated(&old, command)?;
+    let aggregate = new.effects.get(&id).ok_or_else(|| invalid("missing effect"))?;
+    if aggregate.outcomes.len() != old.effects.get(&id).map_or(0, |e| e.outcomes.len()) {
+        return Err(invalid("outcome requires atomic receipt transaction"));
+    }
+    // Verify the same reduced state that will be committed, under the writer
+    // lock. A separate preflight snapshot/replay doubled work for every command
+    // and could not eliminate the need to validate again under this lock.
+    verify_artifacts(aggregate)?;
     crate::control_plane::reserve_effect(&tx, tenant, &old, &new, &id, command.bytes())?;
     if !old.effects.contains_key(&id) {
         let exists: bool = tx.query_row(
@@ -581,16 +590,12 @@ impl StoreRoot {
         snapshot(&self.connect(StoreKind::Fabric)?, tenant)
     }
     pub fn effect_transact(&self, command: &ValidatedEffectCommand) -> Result<EffectIntentId> {
-        let state = self.effect_snapshot(command.tenant())?;
-        let (new, id) = replay_validated(&state, command)?;
-        let aggregate = new.effects.get(&id).ok_or_else(|| invalid("missing effect"))?;
-        if aggregate.outcomes.len() != state.effects.get(&id).map_or(0, |e| e.outcomes.len()) {
-            return Err(invalid("outcome requires atomic receipt transaction"));
-        }
-        for reference in worldinterface_domain::effect::required_artifacts(aggregate) {
-            self.read_artifact(reference)?;
-        }
-        transact(&mut self.connect(StoreKind::Fabric)?, command, None)
+        transact(&mut self.connect(StoreKind::Fabric)?, command, None, |aggregate| {
+            for reference in worldinterface_domain::effect::required_artifacts(aggregate) {
+                self.read_artifact(reference)?;
+            }
+            Ok(())
+        })
     }
     /// Commits a local outcome, receipt and effect outbox in one Fabric transaction.
     /// The command must append exactly one new Outcome; other actions use effect_transact.
@@ -924,7 +929,7 @@ mod tests {
                 },
             )
             .unwrap();
-            let id = transact(&mut c, &command, None).unwrap();
+            let id = transact(&mut c, &command, None, |_| Ok(())).unwrap();
             if n == 0 {
                 // Even an identical upsert of the retained intent is forbidden.
                 // The next command must update only its own derived outbox.
@@ -1212,15 +1217,27 @@ mod tests {
             let cmd =
                 worldinterface_domain::effect::validate_command(&old, &caller, at.clone(), action)
                     .unwrap();
+            // Rejection by artifact verification must publish no journal,
+            // accounting, state or outbox; the same command remains usable.
+            let error = transact(&mut c, &cmd, None, |aggregate| {
+                assert_eq!(&aggregate.intent.id, &id);
+                Err(invalid("missing or corrupt artifact"))
+            })
+            .unwrap_err();
+            assert_eq!(error.to_string(), "missing or corrupt artifact");
+            assert_eq!(snapshot_state(&c, &caller), old);
+            let count: u64 =
+                c.query_row("SELECT count(*) FROM effect_history", [], |r| r.get(0)).unwrap();
+            assert_eq!(count, old.revision);
             for fault in ["history", "state", "outbox"] {
-                assert!(transact(&mut c, &cmd, Some(fault)).is_err());
+                assert!(transact(&mut c, &cmd, Some(fault), |_| Ok(())).is_err());
                 assert_eq!(snapshot_state(&c, &caller), old);
                 let count: u64 =
                     c.query_row("SELECT count(*) FROM effect_history", [], |r| r.get(0)).unwrap();
                 assert_eq!(count, old.revision);
             }
-            transact(&mut c, &cmd, None).unwrap();
-            let conflict = transact(&mut c, &cmd, None).unwrap_err();
+            transact(&mut c, &cmd, None, |_| Ok(())).unwrap();
+            let conflict = transact(&mut c, &cmd, None, |_| Ok(())).unwrap_err();
             assert!(conflict.is::<EffectJournalConflict>());
             assert!(is_effect_contention(conflict.as_ref()));
             assert!(!is_effect_contention(invalid("stale or unsupported effect journal").as_ref()));
@@ -1241,10 +1258,10 @@ mod tests {
         )
         .unwrap();
         for fault in ["history", "state", "outbox"] {
-            assert!(transact(&mut c, &cmd, Some(fault)).is_err());
+            assert!(transact(&mut c, &cmd, Some(fault), |_| Ok(())).is_err());
             assert_eq!(snapshot_state(&c, &caller), old);
         }
-        transact(&mut c, &cmd, None).unwrap();
+        transact(&mut c, &cmd, None, |_| Ok(())).unwrap();
     }
     fn snapshot_state(
         c: &Connection,

@@ -70,7 +70,7 @@ impl SupervisorHandler for Fixture {
             std::fs::write(self.root.join("activations"), b"1").unwrap();
         }
         if self.root.join("interrupt-dispatch").exists() {
-            std::process::abort();
+            abort_without_core_dump(&self.root);
         }
         Ok(Observation { state: State::Running, evidence: b"durably dispatched".to_vec() })
     }
@@ -96,6 +96,19 @@ impl SupervisorHandler for Fixture {
             evidence: if complete { b"external lifecycle completed".to_vec() } else { vec![] },
         })
     }
+}
+/// Suppress workstation crash dumps only at the intentional crash cut. Earlier
+/// procfs/environment/descriptor probes must retain their ordinary visibility.
+pub fn abort_without_core_dump(root: &Path) -> ! {
+    let disabled = libc::rlimit { rlim_cur: 0, rlim_max: 0 };
+    assert_eq!(unsafe { libc::setrlimit(libc::RLIMIT_CORE, &disabled) }, 0);
+    assert_eq!(unsafe { libc::prctl(libc::PR_SET_DUMPABLE, 0, 0, 0, 0) }, 0);
+    let mut limit = disabled;
+    assert_eq!(unsafe { libc::getrlimit(libc::RLIMIT_CORE, &mut limit) }, 0);
+    assert_eq!((limit.rlim_cur, limit.rlim_max), (0, 0));
+    assert_eq!(unsafe { libc::prctl(libc::PR_GET_DUMPABLE, 0, 0, 0, 0) }, 0);
+    std::fs::write(root.join("abort-no-core"), b"dumpable=0\nrlimit_core=0:0\n").unwrap();
+    std::process::abort();
 }
 pub fn live_packet() {
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");

@@ -147,7 +147,23 @@ the immutable compiled-artifact cache and compares the complete packet digest;
 the external-root diagnostic accessor retains its independent root checks.
 
 Complete coverage and the adopted 30-minute ceiling remain unchanged.
-Two adopted runtime-test runs and the remaining checks
-on the committed remediation head are recorded in
-`/mnt/workhorse/craftingtable/runs/33239bf2-55ea-473b-bae0-ff9d42564888/scratch/verification/`;
-the final report records the capacity-test and complete check durations separately.
+The previous run stopped before measuring the final optimized head; its earlier
+experiments do not establish F-004 closure. Follow-up verification is retained in
+`/mnt/workhorse/craftingtable/runs/23025397-d028-4de5-b5e7-4180ec153db1/scratch/verification/`.
+The final report records two adopted runtime-test durations and the individual
+capacity durations separately.
+
+The follow-up also removes the second effect preflight snapshot/reduction.
+Non-receipt commands now validate artifacts against the reduced state under the
+same writer lock that protects journal, accounting and projection publication.
+The transaction still checks the command's exact base digest, replays the domain
+command, rejects outcome commands that need atomic receipts, and verifies every
+required artifact before writes. Artifact rejection and injected failures leave
+all projections unchanged; stale commands retain the existing contention error.
+
+Intentional supervisor crashes disable dumpability with `PR_SET_DUMPABLE` and set
+both `RLIMIT_CORE` limits to zero immediately at the abort cut. The helper asserts
+both settings and writes evidence before aborting. WP-038 requires that evidence,
+a real SIGABRT death, and no core-dump flag on every crash-cut iteration. Earlier
+guest procfs isolation checks run with normal dumpability. Supplemental repeats
+are limited to four simultaneous harnesses on the shared workstation.
