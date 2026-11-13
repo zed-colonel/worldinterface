@@ -938,6 +938,7 @@ pub(crate) fn record_uncertain_after_terminal_run(
 
 impl<P: Connector, V: EvidenceAuthority, C: TrustedClock> EffectAttemptHandler<P, V, C> {
     pub(crate) fn execute_context(&self, ctx: &ExecutorContext) -> AttemptDisposition {
+        let _p = worldinterface_storage::wsp_profile::Span::new("handler_work");
         let mut started = false;
         self.execute_staged(ctx, &mut started).unwrap_or_else(|_| {
             if started {

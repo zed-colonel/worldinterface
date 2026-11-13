@@ -414,6 +414,34 @@ impl StoreRoot {
         // DELETE-journal commits must sync the directory after unlinking the
         // journal before AQ or a provider can act on the committed WI record.
         c.execute_batch("PRAGMA synchronous=EXTRA; PRAGMA foreign_keys=ON;")?;
+        unsafe {
+            unsafe extern "C" fn commit(_: *mut std::ffi::c_void) -> std::ffi::c_int {
+                eprintln!("WSP_PROFILE_COMMIT {}", crate::wsp_profile::now());
+                0
+            }
+            unsafe extern "C" fn trace(
+                _: u32,
+                _: *mut std::ffi::c_void,
+                stmt: *mut std::ffi::c_void,
+                elapsed: *mut std::ffi::c_void,
+            ) -> std::ffi::c_int {
+                let stmt = stmt.cast::<rusqlite::ffi::sqlite3_stmt>();
+                let sql =
+                    std::ffi::CStr::from_ptr(rusqlite::ffi::sqlite3_sql(stmt)).to_string_lossy();
+                eprintln!(
+                    "WSP_PROFILE_SQL {}",
+                    serde_json::json!({"end":crate::wsp_profile::now().to_string(),"ns":*elapsed.cast::<u64>(),"sql":sql,"fullscan":rusqlite::ffi::sqlite3_stmt_status(stmt, rusqlite::ffi::SQLITE_STMTSTATUS_FULLSCAN_STEP, 0),"vm":rusqlite::ffi::sqlite3_stmt_status(stmt, rusqlite::ffi::SQLITE_STMTSTATUS_VM_STEP, 0)})
+                );
+                0
+            }
+            rusqlite::ffi::sqlite3_commit_hook(c.handle(), Some(commit), std::ptr::null_mut());
+            rusqlite::ffi::sqlite3_trace_v2(
+                c.handle(),
+                rusqlite::ffi::SQLITE_TRACE_PROFILE as u32,
+                Some(trace),
+                std::ptr::null_mut(),
+            );
+        }
         #[cfg(test)]
         crate::crash::prepare(&c);
         Ok(c)

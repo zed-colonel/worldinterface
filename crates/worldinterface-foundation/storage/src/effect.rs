@@ -50,6 +50,7 @@ CREATE TRIGGER dispatch_fault_no_delete BEFORE DELETE ON effect_dispatch_fault_h
 CREATE TABLE effect_outbox(tenant TEXT NOT NULL, intent TEXT NOT NULL, dispatch BLOB NOT NULL, PRIMARY KEY(tenant,intent));
 ";
 fn snapshot(c: &Connection, tenant: &OpaqueRef) -> Result<EffectState> {
+    let _p = crate::wsp_profile::Span::new("effect_snapshot");
     let b: Option<Vec<u8>> = c
         .query_row("SELECT state FROM effect_state WHERE tenant=?", [tenant.as_str()], |r| r.get(0))
         .optional()?;
@@ -138,6 +139,7 @@ fn write_projection(
     fault: Option<&str>,
     receipt: bool,
 ) -> Result<()> {
+    let _p = crate::wsp_profile::Span::new("effect_write_projection");
     // A reducer command changes exactly the returned effect ID (plus tenant
     // revision/use accounting). Other dispatch projections are immutable for
     // this command; rewriting them makes sequential admissions quadratic.
@@ -190,6 +192,7 @@ fn transact(
     fault: Option<&str>,
     verify_artifacts: impl FnOnce(&worldinterface_domain::effect::EffectAggregate) -> Result<()>,
 ) -> Result<EffectIntentId> {
+    let _p = crate::wsp_profile::Span::new("effect_transaction");
     let tx = c.transaction_with_behavior(TransactionBehavior::Immediate)?;
     let tenant = command.tenant();
     let old = snapshot(&tx, tenant)?;
