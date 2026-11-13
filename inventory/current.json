@@ -15153,7 +15153,7 @@
     "kind": "connector",
     "path": "crates/worldinterface-runtime/tests/support/worker_fixture.rs",
     "name": "AmbiguousConnector < C >",
-    "source_sha256": "b971d3b0d4cea3d2e968571a03d73e5461c10ab688292a0261b32ef2eb88487e",
+    "source_sha256": "73ca373033022ff03edf3723689175f6d32e5fa15da201bd76241343fd5b59b1",
     "conditions": [],
     "registration_sites": []
   },
@@ -15162,7 +15162,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/tests/support/worker_fixture.rs",
     "name": "build",
-    "source_sha256": "b971d3b0d4cea3d2e968571a03d73e5461c10ab688292a0261b32ef2eb88487e",
+    "source_sha256": "73ca373033022ff03edf3723689175f6d32e5fa15da201bd76241343fd5b59b1",
     "conditions": [],
     "registration_sites": []
   },
@@ -15171,7 +15171,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/tests/support/worker_fixture.rs",
     "name": "packet",
-    "source_sha256": "b971d3b0d4cea3d2e968571a03d73e5461c10ab688292a0261b32ef2eb88487e",
+    "source_sha256": "73ca373033022ff03edf3723689175f6d32e5fa15da201bd76241343fd5b59b1",
     "conditions": [],
     "registration_sites": []
   },
@@ -15180,7 +15180,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/tests/support/worker_fixture.rs",
     "name": "seam",
-    "source_sha256": "b971d3b0d4cea3d2e968571a03d73e5461c10ab688292a0261b32ef2eb88487e",
+    "source_sha256": "73ca373033022ff03edf3723689175f6d32e5fa15da201bd76241343fd5b59b1",
     "conditions": [],
     "registration_sites": []
   },
@@ -15189,7 +15189,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-runtime/tests/support/worker_fixture.rs",
     "name": "crates/worldinterface-runtime/tests/support/worker_fixture.rs",
-    "source_sha256": "b971d3b0d4cea3d2e968571a03d73e5461c10ab688292a0261b32ef2eb88487e",
+    "source_sha256": "73ca373033022ff03edf3723689175f6d32e5fa15da201bd76241343fd5b59b1",
     "conditions": [],
     "registration_sites": []
   },
@@ -15198,7 +15198,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/support/worker_fixture.rs",
     "name": "AmbiguousConnector",
-    "source_sha256": "b971d3b0d4cea3d2e968571a03d73e5461c10ab688292a0261b32ef2eb88487e",
+    "source_sha256": "73ca373033022ff03edf3723689175f6d32e5fa15da201bd76241343fd5b59b1",
     "conditions": [],
     "registration_sites": []
   },
@@ -15207,7 +15207,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/support/worker_fixture.rs",
     "name": "Approval",
-    "source_sha256": "b971d3b0d4cea3d2e968571a03d73e5461c10ab688292a0261b32ef2eb88487e",
+    "source_sha256": "73ca373033022ff03edf3723689175f6d32e5fa15da201bd76241343fd5b59b1",
     "conditions": [],
     "registration_sites": []
   },
@@ -15216,7 +15216,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/support/worker_fixture.rs",
     "name": "Harness",
-    "source_sha256": "b971d3b0d4cea3d2e968571a03d73e5461c10ab688292a0261b32ef2eb88487e",
+    "source_sha256": "73ca373033022ff03edf3723689175f6d32e5fa15da201bd76241343fd5b59b1",
     "conditions": [],
     "registration_sites": []
   },
@@ -15225,7 +15225,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/support/worker_fixture.rs",
     "name": "HostClock",
-    "source_sha256": "b971d3b0d4cea3d2e968571a03d73e5461c10ab688292a0261b32ef2eb88487e",
+    "source_sha256": "73ca373033022ff03edf3723689175f6d32e5fa15da201bd76241343fd5b59b1",
     "conditions": [],
     "registration_sites": []
   },
@@ -15234,7 +15234,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/support/worker_fixture.rs",
     "name": "HostEvidence",
-    "source_sha256": "b971d3b0d4cea3d2e968571a03d73e5461c10ab688292a0261b32ef2eb88487e",
+    "source_sha256": "73ca373033022ff03edf3723689175f6d32e5fa15da201bd76241343fd5b59b1",
     "conditions": [],
     "registration_sites": []
   },
@@ -15243,7 +15243,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/support/worker_fixture.rs",
     "name": "WorkerAqBoundary",
-    "source_sha256": "b971d3b0d4cea3d2e968571a03d73e5461c10ab688292a0261b32ef2eb88487e",
+    "source_sha256": "73ca373033022ff03edf3723689175f6d32e5fa15da201bd76241343fd5b59b1",
     "conditions": [],
     "registration_sites": []
   },
@@ -15252,7 +15252,7 @@
     "kind": "type",
     "path": "crates/worldinterface-runtime/tests/support/worker_fixture.rs",
     "name": "Evidence",
-    "source_sha256": "b971d3b0d4cea3d2e968571a03d73e5461c10ab688292a0261b32ef2eb88487e",
+    "source_sha256": "73ca373033022ff03edf3723689175f6d32e5fa15da201bd76241343fd5b59b1",
     "conditions": [],
     "registration_sites": []
   },

@@ -118,7 +118,9 @@ submission, authorization snapshot and configuration to execution together,
 avoiding a second packet/build check and repeated durable artifact publication.
 Admission and dispatch still independently validate the complete committed
 packet. No validation result is cached. The test logs preparation and execution
-time for every operation.
+time for every operation. Pending executor polls are paced at 20 ms instead of
+2 ms, avoiding repeated reads of growing durable state while blocking handlers
+validate and journal. The thirty-second operation deadline is unchanged.
 
 The campaign starts this longest runtime remainder with its first wave instead
 of queuing it behind all registered cases. A create-once marker/barrier regression

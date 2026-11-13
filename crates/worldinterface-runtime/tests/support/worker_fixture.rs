@@ -866,7 +866,10 @@ impl Harness {
                 break run.outcome.clone().unwrap();
             }
             assert!(Instant::now() < deadline, "worker Flow deadline: {run:?}");
-            tokio::time::sleep(Duration::from_millis(2)).await;
+            // The handler validates packet bytes and journals on blocking
+            // threads. Repeated idle ticks also read the growing durable state;
+            // pace them so polling does not compete with the work it awaits.
+            tokio::time::sleep(Duration::from_millis(20)).await;
         };
         queue.shutdown().unwrap();
         outcome
