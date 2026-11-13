@@ -384,7 +384,7 @@
     "tools/wi-contract-check/src/lib.rs": "4ed954c0a14734da46e4685bc91269d8230fdb30cd1bf858a866aa14f4250cd2",
     "tools/wi-contract-check/src/main.rs": "a6c3a3fde66763d2249c8bd9eda05df71b22a519ea2186002bef2d2deb3e05ba",
     "tools/wi-contract-check/src/policy.rs": "4613b4006d13344e48e915be171d93c8a7bbf610db1b21f6c91a627dd74f6698",
-    "tools/wi-contract-check/src/proof.rs": "7707aa1789842f4a2584037fb9f25f923cee7a6eddb55c9a18e30cf031994b81",
+    "tools/wi-contract-check/src/proof.rs": "e72f1e0dd3b24dd7e3c299622a61363a69fc72a7bc3ccef0c20357cc459c62cc",
     "tools/wi-contract-check/src/refresh.rs": "9c5962065a1ad87f70a7ad5dc6ef958062d2026ee8e8b58e7635b858096166ab",
     "tools/wi-contract-check/src/worker_campaign.rs": "88b345556825dd669caf033a456aa1c1cb297f726af5c3ec8834404ae51af469",
     "tools/wi-contract-check/tests/catalog.rs": "edc8741899a5b38e122476d69fb67a533d6bfd14966ef954d21a099ddb18f4e1",

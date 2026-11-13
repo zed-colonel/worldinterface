@@ -1548,32 +1548,6 @@ fn embedded_consumer_violations(code: &str, helper: bool) -> Result<Vec<String>>
     boundary.visit_file(&file);
     Ok(boundary.violations)
 }
-#[cfg(test)]
-mod embedded_boundary_tests {
-    use super::*;
-    #[test]
-    fn embedded_boundary_scans_helper_imports_and_fields_but_not_comment_or_string_mentions() {
-        assert!(
-            embedded_consumer_violations("use std::{fs, time::Instant};", true).unwrap().len() == 1
-        );
-        assert!(
-            embedded_consumer_violations("use worldinterface_runtime::storage::StoreBundle;", true)
-                .unwrap()
-                .len()
-                == 1
-        );
-        assert!(!embedded_consumer_violations("fn bypass(app: A) { let x=app.bundle; }", true)
-            .unwrap()
-            .is_empty());
-        assert!(embedded_consumer_violations(
-            "// std::fs\nfn valid(){let text=\"worldinterface_runtime::storage\";}",
-            true
-        )
-        .unwrap()
-        .is_empty());
-    }
-}
-
 /// Implementation resolution only; imported planning sources and G5 stay intact.
 pub fn validate_supervisor(root: &Path, registry: &Registry, index: &TestIndex) -> Result<()> {
     validate_campaign_scope(registry)?;
@@ -1609,4 +1583,30 @@ pub fn validate_supervisor(root: &Path, registry: &Registry, index: &TestIndex) 
         }
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod embedded_boundary_tests {
+    use super::*;
+    #[test]
+    fn embedded_boundary_scans_helper_imports_and_fields_but_not_comment_or_string_mentions() {
+        assert!(
+            embedded_consumer_violations("use std::{fs, time::Instant};", true).unwrap().len() == 1
+        );
+        assert!(
+            embedded_consumer_violations("use worldinterface_runtime::storage::StoreBundle;", true)
+                .unwrap()
+                .len()
+                == 1
+        );
+        assert!(!embedded_consumer_violations("fn bypass(app: A) { let x=app.bundle; }", true)
+            .unwrap()
+            .is_empty());
+        assert!(embedded_consumer_violations(
+            "// std::fs\nfn valid(){let text=\"worldinterface_runtime::storage\";}",
+            true
+        )
+        .unwrap()
+        .is_empty());
+    }
 }
