@@ -341,8 +341,8 @@
     "docs/work-items/WIP-16.md": "d9325bd9a419af1f68fcfeadb7dfda7baae63df1ab50c6b3b5618daf64d9f50c",
     "docs/work-items/WSP-01.md": "b8294aba39915e71a15c15ecd01972b7e4a67ad836ff7ecf2d5b46e5046c02d5",
     "docs/work-items/WSP-02.md": "7c865084bdd55bed36847275ffbb436443b33c84b59046a631ea811f6b8eedf1",
-    "docs/work-items/WSP-03-security.md": "24f78adecfe3011f0a9878f3498deca9acc14c75288f779d2159eec8c4629cf2",
-    "docs/work-items/WSP-03.md": "18f51714fc7271b13bc7cbaac22e99e88277e9be0ebac3d2c7bb8ae740c47cad",
+    "docs/work-items/WSP-03-security.md": "aafe62503e5a4da261e82916a034d22f297dba8f35321c94012c52bedf17cb98",
+    "docs/work-items/WSP-03.md": "ddfe953a78e4935e6b5d7f95ae3d3426501d2123470ce6953cc467be5cdc8ccd",
     "docs/work-items/wi-worker-proof-1.md": "bb194b9042a9927ea9a85c6dc10618d899d63f5fc07f79f37fe83ee5cfb5cd63",
     "examples/downstream-consumer/Cargo.toml": "b1d5f106eed5a286460cac00c31465407fd3f13077d8941fcae773688d3a0ccb",
     "examples/downstream-consumer/src/main.rs": "e81457c49983747da1978d4c8e65cd3bde76efee6a8c2dbe3f86a6751f60e949",
@@ -386,7 +386,7 @@
     "tools/wi-contract-check/src/policy.rs": "4613b4006d13344e48e915be171d93c8a7bbf610db1b21f6c91a627dd74f6698",
     "tools/wi-contract-check/src/proof.rs": "7707aa1789842f4a2584037fb9f25f923cee7a6eddb55c9a18e30cf031994b81",
     "tools/wi-contract-check/src/refresh.rs": "9c5962065a1ad87f70a7ad5dc6ef958062d2026ee8e8b58e7635b858096166ab",
-    "tools/wi-contract-check/src/worker_campaign.rs": "171eeddd1f640a33d73a85f4f31fd889f0fc66079831eee5bd1a63da8dc758c9",
+    "tools/wi-contract-check/src/worker_campaign.rs": "88b345556825dd669caf033a456aa1c1cb297f726af5c3ec8834404ae51af469",
     "tools/wi-contract-check/tests/catalog.rs": "edc8741899a5b38e122476d69fb67a533d6bfd14966ef954d21a099ddb18f4e1",
     "tools/wi-contract-check/tests/checker.rs": "328bd0cec690ff3a9510b854bb993fe9ec9d84233793c5998e3f2332d2c5b82d",
     "tools/wi-contract-check/tests/continuations.rs": "d00d51f8ae04809b47c5b2976fb0a860e48cc3d873f832aa2f8f27672070e2a9",
@@ -395,7 +395,7 @@
     "tools/wi-contract-check/tests/proof.rs": "cbc95b7c9c9a487a4492841d253532ddcf015b6b563b6afd490e9423d00eb809",
     "tools/wi-contract-check/tests/release.rs": "2bbc997d5f04d9b85c55a47c26eadcbb3adb410a62160a9da49f71252aee5500",
     "tools/wi-contract-check/tests/runtime_evidence.rs": "232c78c728ff6ca2040b1b591b95cc051498bac4ba6acb5a36d803b1387faad9",
-    "tools/wi-contract-check/tests/worker_campaign.rs": "efeff9f3f869bd8436d2047dcfe903efebfa7bde4e862a220e9046f951b8879d"
+    "tools/wi-contract-check/tests/worker_campaign.rs": "e77a9d892b29047bdfdc9438f5728b2e5081ec6ad472b63cbc4dc37d1d55aa9a"
   },
   "tasks": [
     "1c53ab56a9058b4b0000f6e4ff5b10509b6c7f074d070aceff78e1267f3385ba",

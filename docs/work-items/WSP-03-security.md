@@ -124,3 +124,11 @@ race with the aborting dispatch thread; lack of SIGABRT fails the existing paren
 assertion. No additional wait is taken on non-crash paths. WP-038 injects a 250 ms delay
 before the abort settings to expose the race deterministically; dumpability and
 core limits are still changed immediately before aborting. All earlier procfs probes precede the abort settings.
+
+The final scheduling pass changes only execution order and phase concurrency:
+counted build preparation runs alone, the two history-heavy regressions overlap
+on two workers without other peers, and the remaining complete suite uses the
+existing twelve-worker bound. Every exact executable/result binding, outcome
+partition, full coverage requirement and 600-second test deadline remains. The
+barrier regression proves isolation, two-way and twelve-way overlap, exactly-once
+execution and binary/log digest retention; a serial negative control fails.

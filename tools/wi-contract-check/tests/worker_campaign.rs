@@ -265,11 +265,13 @@ fn campaign_tests_in_one_harness_fill_the_bounded_pool_and_run_exactly_once() {
         r#"
 fn peer(index: usize) {{
     let base = std::path::PathBuf::from(std::env::var_os("WI_WORKER_CAMPAIGN_EVIDENCE").unwrap());
+    assert!(base.join("build.ready").exists());
+    assert!(base.join("capacity.done").exists() && base.join("history.done").exists(),
+        "general pool started before both long tests completed");
     std::fs::OpenOptions::new().write(true).create_new(true)
         .open(base.join(format!("{{index}}.ready"))).unwrap();
     let deadline = std::time::Instant::now() + std::time::Duration::from_secs(15);
-    while !base.join("capacity.ready").exists()
-        || !(0..{}).all(|i| base.join(format!("{{i}}.ready")).exists()) {{
+    while !(0..{}).all(|i| base.join(format!("{{i}}.ready")).exists()) {{
         assert!(std::time::Instant::now() < deadline, "tests in one executable did not overlap");
         std::thread::sleep(std::time::Duration::from_millis(10));
     }}
@@ -285,34 +287,49 @@ fn peer(index: usize) {{
         peer.manifest = "a-fixture".into();
         selected.insert(peer, executable.clone());
     }
-    // Both priority tests sort after every peer in the input map. The build
-    // must finish alone before capacity leads the pool and all twelve peers
-    // reach their barrier. Create-once markers reject repeated execution.
-    let capacity = "one_host_releases_capacity_for_more_than_64_sequential_runs";
-    fixture.push_str(&format!(
-        r#"
-#[test] fn {capacity}() {{
+    // Priority tests sort after every peer in the input map. Preparation runs
+    // alone, both long tests must overlap without peers, then all twelve peers
+    // must overlap. Create-once markers reject duplicate execution.
+    for (name, own, other) in [
+        ("one_host_releases_capacity_for_more_than_64_sequential_runs", "capacity", "history"),
+        ("flow_capacity_is_enforced_without_losing_existing_history", "history", "capacity"),
+    ] {
+        fixture.push_str(&format!(
+            r#"
+#[test] fn {name}() {{
     let base = std::path::PathBuf::from(std::env::var_os("WI_WORKER_CAMPAIGN_EVIDENCE").unwrap());
     assert!(base.join("build.ready").exists());
     std::fs::OpenOptions::new().write(true).create_new(true)
-        .open(base.join("capacity.ready")).unwrap();
+        .open(base.join("{own}.ready")).unwrap();
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(15);
+    while !base.join("{other}.ready").exists() {{
+        assert!(std::time::Instant::now() < deadline, "long tests did not overlap");
+        std::thread::sleep(std::time::Duration::from_millis(10));
+    }}
+    std::thread::sleep(std::time::Duration::from_millis(100));
+    assert!(!(0..{parallelism}).any(|i| base.join(format!("{{i}}.ready")).exists()),
+        "long test overlapped general pool");
+    std::fs::OpenOptions::new().write(true).create_new(true)
+        .open(base.join("{own}.done")).unwrap();
 }}
-"#
-    ));
-    selected.insert(
-        TestRef {
-            manifest: "crates/worldinterface-runtime/Cargo.toml".into(),
-            package: "worldinterface-runtime".into(),
-            test: capacity.into(),
-        },
-        executable.clone(),
-    );
+"#,
+            parallelism = campaign::PARALLELISM
+        ));
+        selected.insert(
+            TestRef {
+                manifest: "crates/worldinterface-runtime/Cargo.toml".into(),
+                package: "worldinterface-runtime".into(),
+                test: name.into(),
+            },
+            executable.clone(),
+        );
+    }
     let build = "reviewed_build_artifacts_are_bounded_and_publishable_without_launch";
     fixture.push_str(&format!(
         r#"
 #[test] fn {build}() {{
     let base = std::path::PathBuf::from(std::env::var_os("WI_WORKER_CAMPAIGN_EVIDENCE").unwrap());
-    assert!(!base.join("capacity.ready").exists());
+    assert!(!base.join("capacity.ready").exists() && !base.join("history.ready").exists());
     std::thread::sleep(std::time::Duration::from_millis(100));
     assert!(!(0..{parallelism}).any(|i| base.join(format!("{{i}}.ready")).exists()), "build test overlapped a peer");
     std::fs::OpenOptions::new().write(true).create_new(true)

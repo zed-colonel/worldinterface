@@ -131,14 +131,16 @@ uses the same incremental projection path. A regression rejects even identical
 writes to an unrelated retained outbox and requires identical replayed state and
 outboxes. Existing stale-command, rollback and receipt-crash checks remain.
 
-The campaign first runs the existing non-live reviewed-build test exactly once,
-then starts capacity at the head of the shared twelve-worker pool. Timing reports
-these two execution phases. Serializing the whole capacity test used too much of
-the full-check budget; all behavioral tests therefore share the bounded pool.
-Compiler preparation remains inside the complete adopted command, and every test
-retains its 600-second timeout. A marker/barrier regression requires build-before-
-capacity order, no peers during preparation, all twelve subsequent slots, and
-exactly one result per test with binary/log digests retained.
+The campaign first runs the existing non-live reviewed-build test exactly once.
+The two history-heavy capacity regressions then run together on two workers,
+without other test peers. After both finish, all remaining tests share the
+bounded twelve-worker pool. This reserves execution capacity for the long tests
+without serializing them with each other or removing any test. Compiler
+preparation counts toward the full adopted command; all tests retain their
+600-second timeout. Timing reports three execution phases. A marker/barrier
+regression requires preparation alone, both long tests overlapping without
+other peers, all twelve subsequent slots, and exactly one result per test with
+binary/log digests retained. Serializing the two long tests fails this regression.
 
 The test host's usual live build accessor also avoids a second non-live packet
 reconstruction immediately after its fresh committed reconstruction of the exact
@@ -162,15 +164,16 @@ required artifact before writes. `ValidatedEffectCommand::apply_to` computes tha
 base digest once and reuses it only within the same immutable-state reduction;
 independent byte-journal replay still computes its own digest and checks canonical
 bytes. A domain regression compares both reductions and rejects stale or divergent
-states, including divergence at the same revision. Artifact rejection and injected failures leave
-all projections unchanged; stale commands retain the existing contention error.
+states, including divergence at the same revision. Artifact rejection and injected
+failures leave all projections unchanged; stale commands retain the existing contention error.
 
 Intentional supervisor crashes disable dumpability with `PR_SET_DUMPABLE` and set
 both `RLIMIT_CORE` limits to zero immediately at the abort cut. The helper asserts
 both settings and writes evidence before aborting. WP-038 requires that evidence,
-a real SIGABRT death, and no core-dump flag on every crash-cut iteration. The lost-ack server waits boundedly for an interrupted dispatch to abort, rather
-than returning normally between activation publication and the abort cut. WP-038
+a real SIGABRT death, and no core-dump flag on every crash-cut iteration. The
+lost-ack server waits boundedly for an interrupted dispatch to abort, rather than
+returning normally between activation publication and the abort cut. WP-038
 delays the dispatch thread by 250 ms before the abort settings to expose this race
-deterministically while preserving all three crash cuts. Earlier
-guest procfs isolation checks run with normal dumpability. Supplemental repeats
+deterministically while preserving all three crash cuts. Earlier guest procfs
+isolation checks run with normal dumpability. Supplemental repeats
 are limited to four simultaneous harnesses on the shared workstation.
