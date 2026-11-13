@@ -7371,27 +7371,27 @@
         },
         {
           "id": "crates/worldinterface-runtime/tests/reconciliation.rs::::module:support",
-          "source_sha256": "1148a8d6076f8be607e4a9a4617bb5b7593c52423b217f6f5a29be1f188c4c44",
+          "source_sha256": "b4ee86bf65a2bad1bf8451cd9f4a4086abb3bf98c886cf4a80b22c63e7f262b9",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/reconciliation.rs::::source-module:crates/worldinterface-runtime/tests/reconciliation.rs",
-          "source_sha256": "1148a8d6076f8be607e4a9a4617bb5b7593c52423b217f6f5a29be1f188c4c44",
+          "source_sha256": "b4ee86bf65a2bad1bf8451cd9f4a4086abb3bf98c886cf4a80b22c63e7f262b9",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/reconciliation.rs::reconciliation_retries_transient_clock_and_rejects_binding_errors::struct:FlakyClock",
-          "source_sha256": "1148a8d6076f8be607e4a9a4617bb5b7593c52423b217f6f5a29be1f188c4c44",
+          "source_sha256": "b4ee86bf65a2bad1bf8451cd9f4a4086abb3bf98c886cf4a80b22c63e7f262b9",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/reconciliation.rs::support::module:connectors",
-          "source_sha256": "1148a8d6076f8be607e4a9a4617bb5b7593c52423b217f6f5a29be1f188c4c44",
+          "source_sha256": "b4ee86bf65a2bad1bf8451cd9f4a4086abb3bf98c886cf4a80b22c63e7f262b9",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/reconciliation.rs::support::module:spi_harness",
-          "source_sha256": "1148a8d6076f8be607e4a9a4617bb5b7593c52423b217f6f5a29be1f188c4c44",
+          "source_sha256": "b4ee86bf65a2bad1bf8451cd9f4a4086abb3bf98c886cf4a80b22c63e7f262b9",
           "registration_sites": []
         },
         {
@@ -9353,7 +9353,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/tests/reconciliation.rs",
-          "source_sha256": "1148a8d6076f8be607e4a9a4617bb5b7593c52423b217f6f5a29be1f188c4c44",
+          "source_sha256": "b4ee86bf65a2bad1bf8451cd9f4a4086abb3bf98c886cf4a80b22c63e7f262b9",
           "treatment": "Retain target connector contracts, executor, reconciliation and conformance evidence; edit selectively when retiring legacy surfaces."
         },
         {
