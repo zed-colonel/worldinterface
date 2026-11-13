@@ -27,12 +27,7 @@ fn replay_validated(
     state: &EffectState,
     command: &ValidatedEffectCommand,
 ) -> Result<(EffectState, EffectIntentId)> {
-    if &worldinterface_domain::effect::state_digest(state).map_err(invalid)?
-        != command.base_digest()
-    {
-        return Err(EffectJournalConflict.into());
-    }
-    replay_command(state, command.tenant(), command.bytes()).map_err(invalid)
+    command.apply_to(state).map_err(invalid)?.ok_or_else(|| EffectJournalConflict.into())
 }
 
 /// Prepared under the Fabric writer lock; the receipt is still domain validated.

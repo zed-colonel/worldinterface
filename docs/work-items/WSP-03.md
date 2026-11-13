@@ -158,7 +158,11 @@ Non-receipt commands now validate artifacts against the reduced state under the
 same writer lock that protects journal, accounting and projection publication.
 The transaction still checks the command's exact base digest, replays the domain
 command, rejects outcome commands that need atomic receipts, and verifies every
-required artifact before writes. Artifact rejection and injected failures leave
+required artifact before writes. `ValidatedEffectCommand::apply_to` computes that
+base digest once and reuses it only within the same immutable-state reduction;
+independent byte-journal replay still computes its own digest and checks canonical
+bytes. A domain regression compares both reductions and rejects stale or divergent
+states, including divergence at the same revision. Artifact rejection and injected failures leave
 all projections unchanged; stale commands retain the existing contention error.
 
 Intentional supervisor crashes disable dumpability with `PR_SET_DUMPABLE` and set

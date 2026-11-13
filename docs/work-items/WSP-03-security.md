@@ -107,3 +107,13 @@ WP-038 checks in-child setting assertions, evidence, SIGABRT and the parent's
 no-core wait status. No other deliberate process abort was found in the repository.
 This follow-up implementation security pass has no open blocking or major
 finding; independent qualifying review remains CraftingTable-owned.
+
+The follow-up typed-command reduction computes the complete current-state digest
+inside `apply_to`, compares it with the private validated command's base, and then
+reuses that digest only for reduction of the same immutable state. It decodes and
+checks canonical tenant-bound command bytes and re-runs all domain checks. It
+returns an optimistic conflict for any base drift, including a divergent state
+with the same revision. Storage preserves the typed contention error. Independent
+byte-journal replay computes its own digest and shares only the strict decoder.
+No digest or cached reduction can be supplied by a caller. The new domain
+regression checks equivalent reduction and both forms of base drift.

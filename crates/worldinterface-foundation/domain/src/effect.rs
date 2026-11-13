@@ -569,6 +569,18 @@ impl ValidatedEffectCommand {
     pub fn tenant(&self) -> &OpaqueRef {
         &self.tenant
     }
+    /// Revalidate and reduce against this exact base state. None is an
+    /// optimistic journal conflict, including divergent states at one revision.
+    /// The digest is computed here and reused only for this immutable state;
+    /// no caller-supplied digest or previous validation result is trusted.
+    pub fn apply_to(&self, state: &EffectState) -> Result<Option<(EffectState, EffectIntentId)>> {
+        let before = state_digest(state)?;
+        if before != self.before {
+            return Ok(None);
+        }
+        let entry = decode_entry(&self.tenant, &self.bytes)?;
+        apply_with_digest(state, &entry, &before).map(Some)
+    }
 }
 pub fn validate_command(
     state: &EffectState,
@@ -611,11 +623,14 @@ pub fn replay_command(
     tenant: &OpaqueRef,
     bytes: &[u8],
 ) -> Result<(EffectState, EffectIntentId)> {
+    apply(state, &decode_entry(tenant, bytes)?)
+}
+fn decode_entry(tenant: &OpaqueRef, bytes: &[u8]) -> Result<Entry> {
     let e: Entry = serde_json::from_value(strict_json(bytes)?).map_err(|e| e.to_string())?;
     if &e.tenant != tenant || canonical_data(&e)? != bytes {
         return Err("noncanonical or cross-tenant journal".into());
     }
-    apply(state, &e)
+    Ok(e)
 }
 fn current(
     e: &EffectAggregate,
