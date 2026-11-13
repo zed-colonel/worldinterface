@@ -60,6 +60,9 @@ is restored from durable WI history and advances only to recorded AQ timers.
 Distinct polling waits are paced in real time so asynchronous inspect cannot
 exhaust a virtual deadline through idle ticks. WP-038 includes delayed inspection
 without relaxing convergence, receipt, activation, isolation or deadline assertions.
+The fixture's AQ attempt budget explicitly matches the existing 15,000 ms
+supervisor ceiling, rather than inheriting a one-second generic egress watchdog
+that can cancel before Submit. Frame and child-process cutoffs remain unchanged.
 
 No open blocking or major finding identified within this bounded trusted-host
 contract. Real backend, OS isolation and Kata qualification remain downstream

@@ -145,6 +145,11 @@ fn prepare(root: &Path, operation: Operation) -> Config {
     };
     let bytes = protocol::encode(&request).unwrap();
     submission.effect_class = EffectClass::Lifecycle;
+    // The generic egress example allows only a one-second AQ attempt, which
+    // can cancel during durable WI preparation before Submit is written. Use
+    // the supervisor's existing host-enforced wall budget; transport frames
+    // still have their independent one-second bound and WI children twelve.
+    submission.budget.timeout_millis = MAX_WALL_MS;
     submission.resource.namespace = r("lifecycle");
     submission.deadline = Some(Timestamp::from_epoch_millis(request.deadline_ms).unwrap());
     submission.input.artifact.content = ContentHash::of(&bytes);

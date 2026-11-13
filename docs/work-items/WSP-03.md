@@ -94,6 +94,11 @@ deadline, allowing the supervisor's asynchronous inspect to finish without
 burning the virtual reconciliation budget. The engines use an explicit
 one-second recovery backoff. Submission and reconciliation deadlines, the
 ten-second settling bounds and the twelve-second WI child bound remain intact.
+The lifecycle submission explicitly uses the existing 15,000 ms supervisor
+attempt budget. The generic egress example's inherited 1,000 ms AQ watchdog
+could otherwise cancel during WI preparation before writing Submit, explaining
+the lost-ack helper's EOF. Frame I/O remains bounded to one second and the child
+cutoff still applies; no EOF or convergence assertion is ignored.
  WP-038 deliberately delays backend inspect by 250 ms, retains all
 three crash cuts, and still requires confirmed commit, unchanged original
 receipts, idempotent reconciliation and exactly one activation. No EOF is ignored.
