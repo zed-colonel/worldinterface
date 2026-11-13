@@ -1254,7 +1254,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/release/handoff.json",
-          "source_sha256": "978efcd06c0b4da360a7053db1a9a84d1f26555b9be963f60dd291d3a79dd64b",
+          "source_sha256": "7e89e3ce31446491f5d36f21ff0af4f0414474b63e7a7211b34548caacf8e0de",
           "treatment": "Retain WSP-02 package evidence/support and registry consumer. Future legacy removal must preserve authoritative byte equality and release consumer coverage."
         },
         {

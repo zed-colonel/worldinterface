@@ -3581,7 +3581,7 @@
     "crates/worldinterface-runtime/src/worker_process/ownership.rs": "abf28bfdd7795af9ad9b41302106bc2c9a505014135f567481ca22c6c4625aec",
     "crates/worldinterface-runtime/src/worker_process/supervision.rs": "b5af2594163db0a18c1548216ad6e708c51b6d906a2f229f27ab98281739a1b5",
     "crates/worldinterface-runtime/tests/support/worker_build.rs": "759022e5ab84f91dc76338e5b446c616020bf1b0039a252438778ddbc271b3f7",
-    "crates/worldinterface-runtime/tests/support/worker_fixture.rs": "2ff4e5f3829e6ac90e3553f3362a3c9aa8dcb3ffcb740276be539e5dc5b6dcab",
+    "crates/worldinterface-runtime/tests/support/worker_fixture.rs": "73ca373033022ff03edf3723689175f6d32e5fa15da201bd76241343fd5b59b1",
     "crates/worldinterface-runtime/tests/support/worker_seam.rs": "0f050f1e154faccc2d1cd1530dff25fc933714da6e22a387cd50a76bdbaa72da",
     "docs/evidence/WI-EMBEDDED-WORKER-PROOF-1.md": "72a9a804d19da342d52aee155fdab250bebfb5d3ac5de8f005da6f00c5d70aec",
     "docs/release/0.2.0-alpha.1.md": "5d154457da88f20895c395c1ac43f358d6be31b6f32ff4f02d5242cda5c28b21",
