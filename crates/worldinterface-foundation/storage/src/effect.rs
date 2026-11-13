@@ -400,7 +400,7 @@ fn receipt_source(
         }
         let entry = strict_json(&bytes).map_err(invalid)?;
         let action = &entry["action"];
-        if !matches!(entry["version"].as_u64(), Some(1 | 2 | 3))
+        if !matches!(entry["version"].as_u64(), Some(1..=3))
             || canonical_data(&entry).map_err(invalid)? != bytes
             || entry["tenant"].as_str() != Some(tenant.as_str())
             || action["id"].as_str() != Some(id.as_str())
