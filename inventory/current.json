@@ -15063,7 +15063,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-runtime/tests/support/supervisor_harness.rs",
     "name": "crates/worldinterface-runtime/tests/support/supervisor_harness.rs",
-    "source_sha256": "738beb5263094d3d59c0acd9a2fc88df642c30f42713ee3647ac563c1b613d5c",
+    "source_sha256": "54a25de4372cbf6035dce5fbe20df25cd23a37c60d0fd734ff45908fc82c9fa4",
     "conditions": [],
     "registration_sites": []
   },
@@ -15072,7 +15072,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/support/supervisor_harness.rs",
     "name": "AqClock",
-    "source_sha256": "738beb5263094d3d59c0acd9a2fc88df642c30f42713ee3647ac563c1b613d5c",
+    "source_sha256": "54a25de4372cbf6035dce5fbe20df25cd23a37c60d0fd734ff45908fc82c9fa4",
     "conditions": [],
     "registration_sites": []
   },
@@ -15081,7 +15081,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/support/supervisor_harness.rs",
     "name": "Harness",
-    "source_sha256": "738beb5263094d3d59c0acd9a2fc88df642c30f42713ee3647ac563c1b613d5c",
+    "source_sha256": "54a25de4372cbf6035dce5fbe20df25cd23a37c60d0fd734ff45908fc82c9fa4",
     "conditions": [],
     "registration_sites": []
   },
@@ -15090,7 +15090,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/support/supervisor_harness.rs",
     "name": "Noop",
-    "source_sha256": "738beb5263094d3d59c0acd9a2fc88df642c30f42713ee3647ac563c1b613d5c",
+    "source_sha256": "54a25de4372cbf6035dce5fbe20df25cd23a37c60d0fd734ff45908fc82c9fa4",
     "conditions": [],
     "registration_sites": []
   },

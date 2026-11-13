@@ -8,7 +8,10 @@ use actionqueue_core::{
     ids::RunId,
 };
 use actionqueue_executor_local::handler::{ExecutorContext, ExecutorHandler};
-use actionqueue_runtime::{config::RuntimeConfig, engine::ActionQueueEngine};
+use actionqueue_runtime::{
+    config::{BackoffStrategyConfig, RuntimeConfig},
+    engine::ActionQueueEngine,
+};
 use std::{sync::Arc, time::Instant};
 use worldinterface_domain::{
     agency::AuthenticatedCaller,
@@ -195,6 +198,9 @@ impl Harness {
             RuntimeConfig {
                 data_dir: self.bundle.aq_path(),
                 tick_interval: std::time::Duration::from_millis(1),
+                backoff_strategy: BackoffStrategyConfig::Fixed {
+                    interval: std::time::Duration::from_secs(1),
+                },
                 ..Default::default()
             },
             self.handler(),
@@ -239,6 +245,9 @@ impl Harness {
             RuntimeConfig {
                 data_dir: self.bundle.aq_path(),
                 tick_interval: std::time::Duration::from_millis(1),
+                backoff_strategy: BackoffStrategyConfig::Fixed {
+                    interval: std::time::Duration::from_secs(1),
+                },
                 ..Default::default()
             },
             handler,

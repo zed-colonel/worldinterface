@@ -89,6 +89,10 @@ the reader resumes after its deadline.
 F-003 remediation uses monotonic elapsed time for the process fixture's WI and
 AQ clocks, replacing the one-second jump per idle queue tick. This keeps command
 admission and reconciliation budgets independent of scheduler tick count. Both
+engines use an explicit one-second recovery retry backoff, so the default
+five-second retry does not consume most of the fixture's 15-second deadline
+across WI crash cuts. The submission and reconciliation deadlines are unchanged.
+Both
 settling loops retain ten-second wall bounds inside the existing twelve-second
 WI child bound. WP-038 deliberately delays backend inspect by 250 ms, retains all
 three crash cuts, and still requires confirmed commit, unchanged original

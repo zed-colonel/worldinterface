@@ -1354,7 +1354,7 @@
         },
         {
           "path": "docs/work-items/WSP-03.md",
-          "source_sha256": "73396b0048673eab85076ead50e09d7cf2c1503659a26e44895efbd037e6045e",
+          "source_sha256": "b3f1e1c574dc13e9afaa2372e1fd5081d9db0a10a1721398cba4d24e233b93fd",
           "treatment": "WSP-03 F-002/F-003 candidate disposition: preserve supervisor frame timing regressions and slow backend inspection evidence. Delay wording refers to test scheduling, with no dependency on the legacy delay connector. Effective through qualifying source review/merge; no deletion authority."
         },
         {
@@ -7656,22 +7656,22 @@
         },
         {
           "id": "crates/worldinterface-runtime/tests/support/supervisor_harness.rs::::source-module:crates/worldinterface-runtime/tests/support/supervisor_harness.rs",
-          "source_sha256": "738beb5263094d3d59c0acd9a2fc88df642c30f42713ee3647ac563c1b613d5c",
+          "source_sha256": "54a25de4372cbf6035dce5fbe20df25cd23a37c60d0fd734ff45908fc82c9fa4",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/support/supervisor_harness.rs::::struct:AqClock",
-          "source_sha256": "738beb5263094d3d59c0acd9a2fc88df642c30f42713ee3647ac563c1b613d5c",
+          "source_sha256": "54a25de4372cbf6035dce5fbe20df25cd23a37c60d0fd734ff45908fc82c9fa4",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/support/supervisor_harness.rs::::struct:Harness",
-          "source_sha256": "738beb5263094d3d59c0acd9a2fc88df642c30f42713ee3647ac563c1b613d5c",
+          "source_sha256": "54a25de4372cbf6035dce5fbe20df25cd23a37c60d0fd734ff45908fc82c9fa4",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/support/supervisor_harness.rs::::struct:Noop",
-          "source_sha256": "738beb5263094d3d59c0acd9a2fc88df642c30f42713ee3647ac563c1b613d5c",
+          "source_sha256": "54a25de4372cbf6035dce5fbe20df25cd23a37c60d0fd734ff45908fc82c9fa4",
           "registration_sites": []
         },
         {
@@ -9418,7 +9418,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/tests/support/supervisor_harness.rs",
-          "source_sha256": "738beb5263094d3d59c0acd9a2fc88df642c30f42713ee3647ac563c1b613d5c",
+          "source_sha256": "54a25de4372cbf6035dce5fbe20df25cd23a37c60d0fd734ff45908fc82c9fa4",
           "treatment": "WSP-03 candidate: preserve separate bounded supervisor/public API and consumer regressions; selectively audit shared dependencies. No deletion or worker authority expansion."
         },
         {
