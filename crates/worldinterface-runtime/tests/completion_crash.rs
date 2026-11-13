@@ -118,15 +118,101 @@ struct SignalAfterDisposition<H> {
     inner: H,
     sent: tokio::sync::mpsc::UnboundedSender<()>,
 }
-struct CrashBeforeDisposition<H>(H);
+struct CrashBeforeDisposition<H> {
+    inner: H,
+    diagnostics: std::path::PathBuf,
+}
 impl<H: actionqueue_executor_local::handler::ExecutorHandler>
     actionqueue_executor_local::handler::ExecutorHandler for CrashBeforeDisposition<H>
 {
     fn execute(&self, ctx: ExecutorContext) -> actionqueue_core::disposition::AttemptDisposition {
-        let disposition = self.0.execute(ctx);
+        let attempt = ctx.input.attempt_id;
+        let timeout_secs = ctx.input.metadata.timeout_secs;
+        let started = Instant::now();
+        let disposition = self.inner.execute(ctx);
+        // Record the handler's proposal separately from AQ's authoritative
+        // disposition: its executor may replace a late success with Timeout.
+        let diagnostic = serde_json::json!({
+            "attempt": attempt.to_string(), "timeout_secs": timeout_secs,
+            "handler_elapsed_seconds": started.elapsed().as_secs_f64(),
+            "proposed_disposition": disposition,
+        });
+        fs::write(
+            self.diagnostics.join(format!("handler-{attempt}.json")),
+            serde_json::to_vec_pretty(&diagnostic).unwrap(),
+        )
+        .unwrap();
         barrier("before-aq-disposition");
         disposition
     }
+}
+
+/// Preserve the complete two-store bundle, child output and snapshots on any
+/// assertion/panic. Successful fixtures still clean up their temporary state.
+struct DispositionFixture(Option<tempfile::TempDir>);
+impl DispositionFixture {
+    fn new(point: &str) -> Self {
+        let base = std::env::var_os("WI_WORKER_CAMPAIGN_EVIDENCE")
+            .map(std::path::PathBuf::from)
+            .unwrap_or_else(|| std::env::temp_dir().join("verification"));
+        fs::create_dir_all(&base).unwrap();
+        Self(Some(
+            tempfile::Builder::new()
+                .prefix(&format!("aq-disposition-{point}-"))
+                .tempdir_in(base)
+                .unwrap(),
+        ))
+    }
+    fn path(&self) -> &Path {
+        self.0.as_ref().unwrap().path()
+    }
+}
+impl Drop for DispositionFixture {
+    fn drop(&mut self) {
+        if std::thread::panicking() {
+            let path = self.0.take().unwrap().keep();
+            eprintln!("AQ disposition failure bundle retained at {}", path.display());
+        }
+    }
+}
+
+fn disposition_diagnostics(
+    projection: &actionqueue_storage::recovery::reducer::ReplayReducer,
+    bundle: &StoreBundle,
+    tenant: &OpaqueRef,
+    id: &EffectIntentId,
+    directory: &Path,
+    stage: &str,
+) {
+    let runs = projection.run_instances().map(|run| {
+        let attempts = projection.get_attempt_history(&run.id()).into_iter().flatten().map(|a| {
+            let outcome = a.disposition.as_ref().map(|d| d.disposition.outcome());
+            let error_code = match outcome {
+                Some(DispositionOutcome::RetryableFailure { error }
+                    | DispositionOutcome::TerminalFailure { error }
+                    | DispositionOutcome::Timeout { error }) => Some(error.code.as_str()),
+                _ => None,
+            };
+            serde_json::json!({
+                "attempt": a.attempt_id().to_string(), "started_at": a.started_at(),
+                "finished_at": a.finished_at(), "result": format!("{:?}", a.result()),
+                "finish_origin": format!("{:?}", a.finish_origin()),
+                "disposition_outcome": outcome, "error_code": error_code, "error": a.error(),
+                "timeout": a.result() == Some(actionqueue_core::mutation::AttemptResultKind::Timeout),
+            })
+        }).collect::<Vec<_>>();
+        serde_json::json!({"run": run.id().to_string(), "state": format!("{:?}", run.state()),
+            "attempt_count": run.attempt_count(), "failure_attempt_count": run.failure_attempt_count(),
+            "attempts": attempts})
+    }).collect::<Vec<_>>();
+    let fabric = match bundle.wi().effect_intent_snapshot(tenant, id) {
+        Ok(state) => serde_json::to_value(&state.effects[id]).unwrap(),
+        Err(error) => serde_json::json!({"snapshot_error": error.to_string()}),
+    };
+    let diagnostic = serde_json::json!({"stage": stage, "runs": runs, "fabric": fabric});
+    let bytes = serde_json::to_vec_pretty(&diagnostic).unwrap();
+    fs::write(directory.join(format!("{stage}.json")), &bytes).unwrap();
+    eprintln!("AQ disposition diagnostics: {}", String::from_utf8_lossy(&bytes));
 }
 impl<H: actionqueue_executor_local::handler::ExecutorHandler>
     actionqueue_executor_local::handler::ExecutorHandler for SignalAfterDisposition<H>
@@ -764,13 +850,19 @@ fn aq_disposition_process_kills_replay_the_original_locator() {
     if let Some(path) = std::env::var_os("WI_AQ_CHILD_BUNDLE") {
         let bundle = Arc::new(StoreBundle::open(Path::new(&path)).unwrap());
         let (_, snapshot) = fixture();
+        let tenant = snapshot.bindings[0].tenant.clone();
+        let id: EffectIntentId = std::env::var("WI_AQ_CHILD_INTENT").unwrap().try_into().unwrap();
+        let diagnostics = Path::new(&path).parent().unwrap();
         let count = std::path::PathBuf::from(std::env::var_os("WI_COMPLETION_COUNT").unwrap());
-        let handler = CrashBeforeDisposition(EffectAttemptHandler {
-            bundle: bundle.clone(),
-            port: MockSuccessfulPort { count },
-            evidence: Evidence(snapshot),
-            clock: Clock,
-        });
+        let handler = CrashBeforeDisposition {
+            inner: EffectAttemptHandler {
+                bundle: bundle.clone(),
+                port: MockSuccessfulPort { count },
+                evidence: Evidence(snapshot),
+                clock: Clock,
+            },
+            diagnostics: diagnostics.to_owned(),
+        };
         let mut aq = ActionQueueEngine::new(
             RuntimeConfig { data_dir: bundle.aq_path(), ..Default::default() },
             handler,
@@ -785,12 +877,20 @@ fn aq_disposition_process_kills_replay_the_original_locator() {
                 .unwrap()
                 .unwrap();
         });
+        disposition_diagnostics(
+            aq.projection(),
+            &bundle,
+            &tenant,
+            &id,
+            diagnostics,
+            "child-after-idle",
+        );
         barrier("after-aq-disposition");
         aq.shutdown().unwrap();
         return;
     }
     for point in ["before-aq-disposition", "after-aq-disposition"] {
-        let temp = tempfile::tempdir().unwrap();
+        let temp = DispositionFixture::new(point);
         let path = temp.path().join("bundle");
         let count = temp.path().join("port-count");
         let ready = temp.path().join("ready");
@@ -866,10 +966,12 @@ fn aq_disposition_process_kills_replay_the_original_locator() {
                 "--nocapture",
             ])
             .env("WI_AQ_CHILD_BUNDLE", &path)
+            .env("WI_AQ_CHILD_INTENT", id.as_str())
             .env("WI_COMPLETION_COUNT", &count)
             .env("WI_PORT_CRASH_POINT", point)
             .env("WI_CRASH_READY", &ready)
-            .stdout(std::process::Stdio::null())
+            .stdout(fs::File::create(temp.path().join("child-stdout.log")).unwrap())
+            .stderr(fs::File::create(temp.path().join("child-stderr.log")).unwrap())
             .spawn()
             .map(KillOnDrop)
             .unwrap();
@@ -904,6 +1006,14 @@ fn aq_disposition_process_kills_replay_the_original_locator() {
         .bootstrap_with_clock(retry_clock.clone())
         .unwrap()
         .with_host(host());
+        disposition_diagnostics(
+            aq.projection(),
+            &bundle,
+            &tenant,
+            &id,
+            temp.path(),
+            "parent-after-bootstrap",
+        );
         let runtime = tokio::runtime::Builder::new_current_thread().enable_all().build().unwrap();
         runtime.block_on(async {
             for _ in 0..4 {
@@ -919,6 +1029,14 @@ fn aq_disposition_process_kills_replay_the_original_locator() {
                 retry_clock.0.fetch_add(10, Ordering::SeqCst);
             }
         });
+        disposition_diagnostics(
+            aq.projection(),
+            &bundle,
+            &tenant,
+            &id,
+            temp.path(),
+            "parent-after-recovery",
+        );
         assert_eq!(
             aq.projection().get_run_state(&run),
             Some(&actionqueue_core::run::state::RunState::Completed),
