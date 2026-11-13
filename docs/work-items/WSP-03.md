@@ -122,15 +122,23 @@ time for every operation. Pending executor polls are paced at 20 ms instead of
 2 ms, avoiding repeated reads of growing durable state while blocking handlers
 validate and journal. The thirty-second operation deadline is unchanged.
 
-The first-wave experiment still timed out under load: its operation log reached
-the final cycle, but cold trusted-build setup and competing harnesses consumed
-the margin. The campaign now runs the existing non-live reviewed-build test once,
-then reserves execution for the capacity regression alone, then runs all remaining
-tests on the shared twelve-worker pool. Timing reports these three execution
-phases. Build time remains inside the complete adopted command, and each test
-retains its 600-second timeout. A create-once marker/barrier regression requires
-build-before-capacity order, no overlap with peers, all twelve subsequent slots,
-and exactly one result per test with binary/log digests retained.
+Scheduling alone did not remove the growing cost. The effect reducer now reuses
+its freshly computed digest within validation of the same immutable state;
+replay still computes and verifies its own digest. The storage writer persists
+the complete tenant state, accounting and journal as before, but updates dispatch
+outboxes and run bindings only for the effect ID returned by the reducer. Recovery
+uses the same incremental projection path. A regression rejects even identical
+writes to an unrelated retained outbox and requires identical replayed state and
+outboxes. Existing stale-command, rollback and receipt-crash checks remain.
+
+The campaign first runs the existing non-live reviewed-build test exactly once,
+then starts capacity at the head of the shared twelve-worker pool. Timing reports
+these two execution phases. Serializing the whole capacity test used too much of
+the full-check budget; all behavioral tests therefore share the bounded pool.
+Compiler preparation remains inside the complete adopted command, and every test
+retains its 600-second timeout. A marker/barrier regression requires build-before-
+capacity order, no peers during preparation, all twelve subsequent slots, and
+exactly one result per test with binary/log digests retained.
 
 The test host's usual live build accessor also avoids a second non-live packet
 reconstruction immediately after its fresh committed reconstruction of the exact

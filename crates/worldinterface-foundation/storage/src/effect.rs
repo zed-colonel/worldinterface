@@ -126,16 +126,27 @@ pub(crate) fn snapshot_at_revision(
     }
     Ok(state)
 }
-fn write(c: &Connection, tenant: &OpaqueRef, s: &EffectState, fault: Option<&str>) -> Result<()> {
-    write_projection(c, tenant, s, fault, false)
+fn write(
+    c: &Connection,
+    tenant: &OpaqueRef,
+    s: &EffectState,
+    changed: &EffectIntentId,
+    fault: Option<&str>,
+) -> Result<()> {
+    write_projection(c, tenant, s, changed, fault, false)
 }
 fn write_projection(
     c: &Connection,
     tenant: &OpaqueRef,
     s: &EffectState,
+    changed: &EffectIntentId,
     fault: Option<&str>,
     receipt: bool,
 ) -> Result<()> {
+    // A reducer command changes exactly the returned effect ID (plus tenant
+    // revision/use accounting). Other dispatch projections are immutable for
+    // this command; rewriting them makes sequential admissions quadratic.
+    let e = s.effects.get(changed).ok_or_else(|| invalid("changed effect absent"))?;
     let _ = receipt;
     c.execute("INSERT INTO effect_state VALUES(?,?) ON CONFLICT(tenant) DO UPDATE SET state=excluded.state",params![tenant.as_str(),canonical_collection(s).map_err(invalid)?])?;
     if fault == Some("state") {
@@ -147,30 +158,29 @@ fn write_projection(
         #[cfg(all(feature = "crash-points", not(test)))]
         crate::crashpoint::checkpoint("fabric-receipt-state");
     }
-    for (id, e) in &s.effects {
-        // An empty list is the durable non-dispatch-ready source outbox. Queue delivery cannot read
-        // it as a request. All operation requests/acks remain in the authoritative journal.
-        c.execute("INSERT INTO effect_outbox VALUES(?,?,?) ON CONFLICT(tenant,intent) DO UPDATE SET dispatch=excluded.dispatch",params![tenant.as_str(),id.as_str(),canonical_data(&e.dispatches).map_err(invalid)?])?;
-        for admission in e.dispatches.iter().filter_map(|d| d.admission.as_ref()) {
-            for run in &admission.observed_runs {
-                c.execute(
-                    "INSERT OR IGNORE INTO effect_run_index VALUES(?,?,?,?)",
-                    params![run.as_str(), tenant.as_str(), id.as_str(), admission.task.as_str()],
-                )?;
-                let binding: (String, String, String) = c.query_row(
-                    "SELECT tenant,intent,task FROM effect_run_index WHERE run=?",
-                    [run.as_str()],
-                    |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
-                )?;
-                if binding
-                    != (
-                        tenant.as_str().to_owned(),
-                        id.as_str().to_owned(),
-                        admission.task.as_str().to_owned(),
-                    )
-                {
-                    return Err(invalid("conflicting effect run binding"));
-                }
+    let id = changed;
+    // An empty list is the durable non-dispatch-ready source outbox. Queue delivery cannot read
+    // it as a request. All operation requests/acks remain in the authoritative journal.
+    c.execute("INSERT INTO effect_outbox VALUES(?,?,?) ON CONFLICT(tenant,intent) DO UPDATE SET dispatch=excluded.dispatch",params![tenant.as_str(),id.as_str(),canonical_data(&e.dispatches).map_err(invalid)?])?;
+    for admission in e.dispatches.iter().filter_map(|d| d.admission.as_ref()) {
+        for run in &admission.observed_runs {
+            c.execute(
+                "INSERT OR IGNORE INTO effect_run_index VALUES(?,?,?,?)",
+                params![run.as_str(), tenant.as_str(), id.as_str(), admission.task.as_str()],
+            )?;
+            let binding: (String, String, String) = c.query_row(
+                "SELECT tenant,intent,task FROM effect_run_index WHERE run=?",
+                [run.as_str()],
+                |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
+            )?;
+            if binding
+                != (
+                    tenant.as_str().to_owned(),
+                    id.as_str().to_owned(),
+                    admission.task.as_str().to_owned(),
+                )
+            {
+                return Err(invalid("conflicting effect run binding"));
             }
         }
     }
@@ -212,7 +222,7 @@ fn transact(
         if fault == Some("history") {
             return Err(invalid("injected effect history"));
         }
-        write(&tx, tenant, &new, fault)?;
+        write(&tx, tenant, &new, &id, fault)?;
         crate::continuation::effect_events(&tx, tenant, &old, &new)?;
     }
     tx.commit()?;
@@ -719,7 +729,7 @@ impl StoreRoot {
         crate::crash::checkpoint("fabric-receipt-history");
         #[cfg(all(feature = "crash-points", not(test)))]
         crate::crashpoint::checkpoint("fabric-receipt-history");
-        write_projection(c, tenant, &new, None, true)?;
+        write_projection(c, tenant, &new, &id, None, true)?;
         crate::continuation::effect_events(c, tenant, old, &new)?;
         #[cfg(test)]
         crate::crash::checkpoint("fabric-receipt-outbox");
@@ -841,11 +851,11 @@ pub(crate) fn replay(source: &Connection, target: &Connection) -> Result<()> {
         }
         let tenant: OpaqueRef = tenant.try_into().map_err(invalid)?;
         let old = snapshot(target, &tenant)?;
-        let (new, _) = replay_command(&old, &tenant, &bytes).map_err(invalid)?;
+        let (new, id) = replay_command(&old, &tenant, &bytes).map_err(invalid)?;
         if new.revision != revision || old.revision.checked_add(1) != Some(revision) {
             return Err(invalid("effect journal revision"));
         }
-        write(target, &tenant, &new, None)?;
+        write(target, &tenant, &new, &id, None)?;
         crate::continuation::effect_events(target, &tenant, &old, &new)?;
     }
     Ok(())
@@ -864,6 +874,89 @@ pub(crate) fn reject_generic(c: &Connection, batch: &Batch) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn one_effect_update_preserves_other_outboxes_and_replay_rebuilds_identical_state() {
+        use worldinterface_domain::{
+            agency::AuthenticatedCaller,
+            authorization::{AuthorizationSnapshot, VerifiedSnapshot},
+            effect::{validate_command, EffectAction},
+        };
+        let fixture: serde_json::Value =
+            serde_json::from_str(include_str!("../tests/support/egress.json")).unwrap();
+        let source: EffectSubmission =
+            serde_json::from_value(fixture["submission"].clone()).unwrap();
+        let snapshot: AuthorizationSnapshot =
+            serde_json::from_value(fixture["snapshot"].clone()).unwrap();
+        let caller = AuthenticatedCaller::from_trusted_authentication(
+            snapshot.bindings[0].tenant.clone(),
+            snapshot.bindings[0].principal.clone(),
+        );
+        let at: Timestamp = "2026-09-21T00:00:00.000000000Z".to_owned().try_into().unwrap();
+        let mut c = Connection::open_in_memory().unwrap();
+        for schema in [
+            SCHEMA,
+            crate::continuation::SCHEMA,
+            crate::repository::SCHEMA,
+            crate::control_plane::SCHEMA,
+        ] {
+            c.execute_batch(schema).unwrap();
+        }
+        let mut first = None;
+        for n in 0..2 {
+            let mut submission = source.clone();
+            submission.client_request_id = format!("projection-{n}").try_into().unwrap();
+            let demand = worldinterface_protocol::data_digest(&submission).unwrap();
+            let mut facts = snapshot.clone();
+            for binding in &mut facts.bindings {
+                binding.principal_authority.insert(demand.clone());
+                binding.capacity_authority.insert(demand.clone());
+            }
+            let state = snapshot_state(&c, &caller);
+            let command = validate_command(
+                &state,
+                &caller,
+                at.clone(),
+                EffectAction::Submit {
+                    id: EffectIntentId::generate(),
+                    submission: Box::new(submission),
+                    snapshot: VerifiedSnapshot::from_trusted_verifier(facts).unwrap(),
+                    link: None,
+                },
+            )
+            .unwrap();
+            let id = transact(&mut c, &command, None).unwrap();
+            if n == 0 {
+                // Even an identical upsert of the retained intent is forbidden.
+                // The next command must update only its own derived outbox.
+                c.execute_batch(&format!(
+                    "CREATE TEMP TRIGGER retain_insert BEFORE INSERT ON effect_outbox WHEN NEW.intent='{}' BEGIN SELECT RAISE(ABORT,'rewrote retained outbox'); END; CREATE TEMP TRIGGER retain_update BEFORE UPDATE ON effect_outbox WHEN OLD.intent='{}' BEGIN SELECT RAISE(ABORT,'rewrote retained outbox'); END;",
+                    id.as_str(), id.as_str()
+                ))
+                .unwrap();
+                first = Some(id);
+            }
+        }
+        let outboxes = |c: &Connection| {
+            let mut q =
+                c.prepare("SELECT intent,dispatch FROM effect_outbox ORDER BY intent").unwrap();
+            q.query_map([], |r| Ok((r.get::<_, String>(0)?, r.get::<_, Vec<u8>>(1)?)))
+                .unwrap()
+                .collect::<rusqlite::Result<Vec<_>>>()
+                .unwrap()
+        };
+        let before = outboxes(&c);
+        assert_eq!(before.len(), 2);
+        assert!(before
+            .iter()
+            .any(|(id, bytes)| Some(id.as_str()) == first.as_ref().map(EffectIntentId::as_str)
+                && bytes == b"[]"));
+        let rebuilt = Connection::open_in_memory().unwrap();
+        rebuilt.execute_batch(SCHEMA).unwrap();
+        rebuilt.execute_batch(crate::continuation::SCHEMA).unwrap();
+        replay(&c, &rebuilt).unwrap();
+        assert_eq!(snapshot_state(&c, &caller), snapshot_state(&rebuilt, &caller));
+        assert_eq!(before, outboxes(&rebuilt));
+    }
     #[test]
     fn receipt_source_seeks_one_intent_and_fences_revision_tenant_dispatch_and_start() {
         use worldinterface_domain::effect::{

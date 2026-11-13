@@ -577,6 +577,7 @@ pub fn validate_command(
     action: EffectAction,
 ) -> Result<ValidatedEffectCommand> {
     let action: JournalAction = action.into();
+    let before = state_digest(state)?;
     let version = match &action {
         JournalAction::ReconciliationCase { .. } => 2,
         JournalAction::Outcome { evidence, .. }
@@ -588,13 +589,13 @@ pub fn validate_command(
     };
     let entry = Entry {
         version,
-        before: state_digest(state)?,
+        before: before.clone(),
         tenant: caller.tenant.clone(),
         principal: caller.principal.clone(),
         at,
         action,
     };
-    apply(state, &entry)?;
+    apply_with_digest(state, &entry, &before)?;
     Ok(ValidatedEffectCommand {
         bytes: canonical_data(&entry)?,
         tenant: caller.tenant.clone(),
@@ -704,8 +705,17 @@ pub fn validate_outcome_publication(tenant: &OpaqueRef, o: &OutcomeEvidence) -> 
 }
 
 fn apply(state: &EffectState, entry: &Entry) -> Result<(EffectState, EffectIntentId)> {
+    apply_with_digest(state, entry, &state_digest(state)?)
+}
+// Only private callers may reuse a digest computed from this same immutable
+// state. Replay always computes it anew; no caller-supplied digest is trusted.
+fn apply_with_digest(
+    state: &EffectState,
+    entry: &Entry,
+    before: &ContentHash,
+) -> Result<(EffectState, EffectIntentId)> {
     if ![1, 2].contains(&entry.version)
-        || entry.before != state_digest(state)?
+        || &entry.before != before
         || state.last_at.as_ref().is_some_and(|t| t > &entry.at)
     {
         return Err("stale or unsupported effect journal".into());

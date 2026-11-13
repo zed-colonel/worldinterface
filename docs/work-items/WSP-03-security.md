@@ -69,13 +69,25 @@ contract. Real backend, OS isolation and Kata qualification remain downstream
 consumer work, as specified by the accepted WSP-03 scope. Retained pass results
 and source revision are in this run's scratch/review and scratch/verification.
 
-F-004 pass: production supervisor and worker authority paths are unchanged. The
-live compiler-artifact accessor performs a fresh complete committed packet check
-before consulting the artifact cache, then checks its packet digest; removing the
-immediately repeated non-live reconstruction caches no validation result. The
-external-root diagnostic path still validates its own root and the compiler root.
-The existing non-live artifact-build test is counted once before an exclusive
-capacity test and the bounded shared pool. All phases retain exact test selection,
-before/after executable measurements, complete outcomes and per-test deadlines.
-Compiler preparation is included in complete adopted-check timing, and every
-actual worker admission and dispatch still independently verifies the packet.
+F-004 pass: supervisor authentication, journal and worker authority paths are
+unchanged. The effect validator reuses a digest computed immediately from the
+same immutable state inside a private helper. Public replay computes the digest
+anew; storage still verifies the typed command's base digest and all canonical
+journal bytes. No digest is accepted from an untrusted caller or cached across
+commands. Every reducer action mutates only the effect ID it returns, plus tenant
+revision/use accounting. Storage persists the full tenant state and journal but
+updates only that effect's derived dispatch/index rows, in the same transaction.
+Run-binding collision checks remain on every affected binding. Recovery applies
+every command and reconstructs identical projections; full reopen comparison and
+receipt/fault atomicity checks remain. A regression forbids rewriting an unrelated
+outbox and checks fresh replay equivalence.
+
+The live compiler-artifact accessor performs a fresh complete committed packet
+check before consulting the artifact cache, then checks its packet digest;
+removing the immediately repeated non-live reconstruction caches no validation
+result. The external-root diagnostic path still validates its own root and the
+compiler root. The existing non-live build test is counted once before the
+bounded shared pool. Exact test selection, before/after executable measurements,
+complete outcomes and all deadlines remain. Compiler preparation is included in
+complete adopted-check timing, and every actual worker admission and dispatch
+still independently verifies the packet.

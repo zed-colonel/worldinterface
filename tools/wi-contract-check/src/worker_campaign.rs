@@ -351,7 +351,7 @@ pub fn run(root: &Path, directory: &Path) -> Result<()> {
         )?;
     }
     let timing = json!({"discovery_build_and_listing_seconds":discovery_seconds,
-        "campaign_execution_seconds":execution_seconds,"execution_phases":3,
+        "campaign_execution_seconds":execution_seconds,"execution_phases":2,
         "receipt_validation_seconds":validation_started.elapsed().as_secs_f64(),
         "total_seconds":started.elapsed().as_secs_f64(),"discovery_passes":1,
         "registered_tests":outcomes.len(),"additional_runtime_tests":runtime_suite_outcomes.len()});
@@ -412,9 +412,9 @@ fn execute_harnesses(
     directory: &Path,
 ) -> Result<Vec<Outcome>> {
     let mut selected = selected.collect::<Vec<_>>();
-    // Count the existing non-live build test once, then run the longest capacity
-    // regression without competing harnesses. Cold compiler-cache setup and the
-    // campaign's IO peak must not consume that test's unchanged 600s budget.
+    // Count the existing non-live build test once before worker cases. The
+    // capacity regression then leads the shared pool, with its full 600s budget
+    // available for behavior rather than competing cold compiler-cache setup.
     selected.sort_by_key(|(reference, _)| execution_priority(reference));
     let mut digests = BTreeMap::new();
     for (_, executable) in &selected {
@@ -422,7 +422,7 @@ fn execute_harnesses(
     }
     let mut selected = VecDeque::from(selected);
     let mut outcomes = Vec::new();
-    while selected.front().is_some_and(|(reference, _)| execution_priority(reference) < 2) {
+    while selected.front().is_some_and(|(reference, _)| execution_priority(reference) == 0) {
         let (reference, executable) = selected.pop_front().unwrap();
         let outcome =
             execute_bound(root, reference, &executable, directory, &digests[&executable])?;

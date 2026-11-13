@@ -285,22 +285,19 @@ fn peer(index: usize) {{
         peer.manifest = "a-fixture".into();
         selected.insert(peer, executable.clone());
     }
-    // The reserved tests sort after every peer in the input map. They must run
-    // in order without overlapping any peer, before all twelve peers fill the
-    // pool. Create-once markers also reject repeated execution.
+    // Both priority tests sort after every peer in the input map. The build
+    // must finish alone before capacity leads the pool and all twelve peers
+    // reach their barrier. Create-once markers reject repeated execution.
     let capacity = "one_host_releases_capacity_for_more_than_64_sequential_runs";
     fixture.push_str(&format!(
         r#"
 #[test] fn {capacity}() {{
     let base = std::path::PathBuf::from(std::env::var_os("WI_WORKER_CAMPAIGN_EVIDENCE").unwrap());
     assert!(base.join("build.ready").exists());
-    std::thread::sleep(std::time::Duration::from_millis(100));
-    assert!(!(0..{parallelism}).any(|i| base.join(format!("{{i}}.ready")).exists()), "capacity test overlapped a peer");
     std::fs::OpenOptions::new().write(true).create_new(true)
         .open(base.join("capacity.ready")).unwrap();
 }}
-"#,
-        parallelism = campaign::PARALLELISM
+"#
     ));
     selected.insert(
         TestRef {
