@@ -29,7 +29,7 @@ impl<'a> Egress<'a> {
         }
         // Optimistic retries revalidate against the newly committed authority/use state.
         for _ in 0..32 {
-            let state = self.root.effect_snapshot(caller.tenant())?;
+            let state = self.root.effect_action_snapshot(caller, &action)?;
             let command =
                 validate_command(&state, caller, at.clone(), action.clone()).map_err(invalid)?;
             match self.root.effect_transact(&command) {
@@ -41,7 +41,7 @@ impl<'a> Egress<'a> {
         Err(invalid("effect contention"))
     }
     pub fn inspect(&self, caller: &AuthenticatedCaller, id: &EffectIntentId) -> Result<EffectView> {
-        let state = self.root.effect_snapshot(caller.tenant())?;
+        let state = self.root.effect_intent_snapshot(caller.tenant(), id)?;
         let e = state
             .effects
             .get(id)

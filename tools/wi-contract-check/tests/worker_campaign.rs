@@ -431,3 +431,27 @@ fn campaign_shared_runtime_support_tests_retain_each_harness_and_reject_omission
     fs::write(right, b"substituted binary").unwrap();
     assert!(campaign::validate_runtime_results(&expected, &outcomes, temp.path()).is_err());
 }
+
+#[test]
+fn priority_test_renames_and_removals_fail_before_campaign_execution() {
+    let names = [
+        "reviewed_build_artifacts_are_bounded_and_publishable_without_launch",
+        "one_host_releases_capacity_for_more_than_64_sequential_runs",
+        "flow_capacity_is_enforced_without_losing_existing_history",
+    ];
+    let required = names.map(|test| TestRef {
+        manifest: "crates/worldinterface-runtime/Cargo.toml".into(),
+        package: "worldinterface-runtime".into(),
+        test: test.into(),
+    });
+    campaign::validate_priority_tests(required.iter()).unwrap();
+    for omitted in 0..required.len() {
+        assert!(campaign::validate_priority_tests(
+            required.iter().enumerate().filter_map(|(i, r)| (i != omitted).then_some(r))
+        )
+        .is_err());
+        let mut renamed = required.clone();
+        renamed[omitted].test.push_str("_renamed");
+        assert!(campaign::validate_priority_tests(renamed.iter()).is_err());
+    }
+}

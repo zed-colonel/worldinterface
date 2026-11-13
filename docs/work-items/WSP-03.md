@@ -177,3 +177,47 @@ delays the dispatch thread by 250 ms before the abort settings to expose this ra
 deterministically while preserving all three crash cuts. Earlier guest procfs
 isolation checks run with normal dumpability. Supplemental repeats
 are limited to four simultaneous harnesses on the shared workstation.
+
+F-005 measurement and remediation (2026-11-13) supersede the full-tenant effect
+projection described above. The unchanged 66-cycle capacity regression was first
+profiled alone, using per-phase timers, SQLite commit/profile hooks and a syscall
+interposer that called the original fsync/fdatasync functions. It took 408.97 s.
+Cycle 1 provision spent 7 ms decoding effect snapshots; cycle 60 spent 845 ms.
+There were 40 such reads per operation. Durable SQLite commits stayed at 46 for
+provision and 47 for release. AQ bootstrap grew from under 1 ms to 64–68 ms;
+this AQ startup/replay cost is reported, with no WI workaround. Detailed phase,
+commit and sync counts are retained in this run's scratch/verification report.
+All temporary measurement instrumentation was removed after that baseline.
+
+Effects and request identities now have separate indexed projections. An ordinary
+command reads its tenant's revision, timestamp and shared grant-use accounting,
+its target, a linked original when applicable, and a duplicate request's existing
+target. It rewrites only the changed effect and tenant metadata. Version-3 journal
+entries bind this read set to the tenant revision, retained-intent count and hash
+of the previous journal entry. Every committed transition advances that chain;
+unrelated commits therefore still invalidate a prepared command. The retained
+count enforces the original 10,000-effect cap without loading every effect.
+Versions 1 and 2 retain their original full-state digest/replay rules. A transition
+from legacy entries seeds the chain from their complete state exactly once;
+replay derives the same seed. Full inspection/recovery still reconstructs the
+complete tenant state. Interim database schemas fail the existing schema check;
+this change does not supply an on-disk migration for a prior interim store.
+
+Runtime execution, flow ownership checks, completion and reconciliation now use
+indexed intent/owner lookups. The worker reservation query also has a partial
+index covering reserved runs, so released history does not enter its scan.
+A count-based regression measures the reader and writer together at 66 retained
+histories: both early and late commands read three SQLite result rows, perform
+zero full-scan steps and commit once; decoded columns differ only by numeric
+metadata width (349 versus 353 bytes). It also checks stale-command rejection,
+legacy-to-v3 replay and complete rebuilt projection equality. The original
+capacity test, duplicate admissions, final process launch, 600 s timeout, DELETE
+journal mode and synchronous=EXTRA remain unchanged.
+
+F-006 remediation validates the required priority-test names against the complete
+selected campaign before execution. A missing or renamed test fails explicitly.
+Partial supplemental selections remain supported. Execution phase counts are
+computed from nonempty phases actually executed, including zero for no tests.
+The existing scheduling barrier and new missing/renamed-test regressions cover
+these rules. Final adopted-check evidence is retained under
+`/mnt/workhorse/craftingtable/runs/30a36125-9b7c-42fa-aaaf-62c5b33fe42e/scratch/verification/`.

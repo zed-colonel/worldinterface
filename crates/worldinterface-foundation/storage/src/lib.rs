@@ -26,27 +26,6 @@ pub(crate) fn decode_collection<T: serde::de::DeserializeOwned>(bytes: &[u8]) ->
     Ok(serde_json::from_value(worldinterface_protocol::strict_collection(bytes).map_err(invalid)?)?)
 }
 
-/// Temporary measurement only; removed after the baseline profile.
-pub mod wsp_profile {
-    pub fn now() -> u128 {
-        std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_nanos()
-    }
-    pub struct Span(String, u128);
-    impl Span {
-        pub fn new(name: impl Into<String>) -> Self {
-            Self(name.into(), now())
-        }
-    }
-    impl Drop for Span {
-        fn drop(&mut self) {
-            eprintln!(
-                "WSP_PROFILE {}",
-                serde_json::json!({"phase":self.0,"start":self.1.to_string(),"end":now().to_string()})
-            );
-        }
-    }
-}
-
 mod ingress;
 
 #[cfg(feature = "crash-points")]

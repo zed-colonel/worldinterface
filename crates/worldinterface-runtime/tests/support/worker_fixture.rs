@@ -798,10 +798,6 @@ impl Harness {
         snapshot: AuthorizationSnapshot,
         config: Config,
     ) -> FlowOutcome {
-        let _operation_profile = worldinterface_storage::wsp_profile::Span::new(format!(
-            "operation {} {op:?}",
-            self.run
-        ));
         let evidence = Evidence {
             base: HostEvidence(snapshot.clone()),
             evaluation: self.evaluation.clone(),
@@ -828,9 +824,7 @@ impl Harness {
             bundle: self.bundle.clone(),
             binding: if op == Operation::CollectArtifacts { Some(self.binding()) } else { None },
         };
-        let bootstrap_profile = worldinterface_storage::wsp_profile::Span::new("bootstrap");
         let mut queue = QueueEngine::bootstrap(&self.bundle, handler, host()).unwrap();
-        drop(bootstrap_profile);
         let service = EffectService {
             root: self.bundle.wi(),
             authentication: &self.auth,
@@ -842,7 +836,6 @@ impl Harness {
             connector: descriptor(op).unwrap().connector,
             operation: op.name().to_string().try_into().unwrap(),
         };
-        let admission_profile = worldinterface_storage::wsp_profile::Span::new("admission_1");
         let id =
             match service.submit_direct(&(), submission.clone(), selection, &config, &mut queue) {
                 Ok(id) => id,
@@ -851,8 +844,6 @@ impl Harness {
                     return FlowOutcome::Denied;
                 }
             };
-        drop(admission_profile);
-        let admission_profile = worldinterface_storage::wsp_profile::Span::new("admission_2");
         let duplicate = service
             .submit_direct(
                 &(),
@@ -865,11 +856,8 @@ impl Harness {
                 &mut queue,
             )
             .unwrap();
-        drop(admission_profile);
         assert_eq!(id, duplicate, "duplicate admission changed run identity");
         let deadline = Instant::now() + Duration::from_secs(30);
-        let polling_profile =
-            worldinterface_storage::wsp_profile::Span::new("snapshot_polling_and_ticks");
         let outcome = loop {
             let _ = queue.tick().await.unwrap();
             let state = self.bundle.wi().flow_run_snapshot(&self.auth.0, &id).unwrap();
@@ -883,10 +871,7 @@ impl Harness {
             // pace them so polling does not compete with the work it awaits.
             tokio::time::sleep(Duration::from_millis(20)).await;
         };
-        drop(polling_profile);
-        let shutdown_profile = worldinterface_storage::wsp_profile::Span::new("shutdown");
         queue.shutdown().unwrap();
-        drop(shutdown_profile);
         outcome
     }
     pub async fn reconcile_start(&self) {

@@ -132,3 +132,28 @@ existing twelve-worker bound. Every exact executable/result binding, outcome
 partition, full coverage requirement and 600-second test deadline remains. The
 barrier regression proves isolation, two-way and twelve-way overlap, exactly-once
 execution and binary/log digest retention; a serial negative control fails.
+
+Separate F-005/F-006 implementation security pass (2026-11-13): reviewed the
+bounded effect read set against every JournalAction. Only Submit reads a second
+intent (its linked original) or request identity; all other actions read/mutate
+the named intent. The writer reconstructs the read set from canonical typed
+command bytes under the Fabric writer transaction. It compares the current
+revision, previous-entry hash, count, timestamp, shared uses and selected facts
+before reducing, then verifies artifacts and publishes the journal, metadata,
+changed aggregate, request/outbox/run projections and events atomically. The
+chain head covers skipped committed history; it is never supplied independently
+by an executable caller. Legacy entries still verify the complete state; v3
+replay independently derives and checks its bounded digest. Existing schema and
+complete replay comparisons cover corruption of derived projections on open.
+
+Per-tenant grant uses are retained together, preserving last-use arbitration;
+the retained count preserves capacity despite sparse views. Request indexes are
+tenant scoped and duplicate submissions still compare complete submission,
+link and owner. Owner lookups are tenant/flow/node indexed and their callers
+retain principal and child bindings. Receipt/outcome atomicity and all artifact
+checks are unchanged. Regression evidence includes constant read/commit counts,
+stale command rejection, mixed legacy/v3 replay equivalence, rollback and receipt
+crash recovery. Supervisor authentication, grants, bounds, channel handling and
+guest authority paths have no changes. No open blocking or major finding was
+identified in this implementation pass; qualifying independent review remains
+CraftingTable-owned.

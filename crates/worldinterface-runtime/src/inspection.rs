@@ -93,7 +93,7 @@ impl<A: Authentication, D: ReceiptDisclosure<A>> ReceiptInspector<'_, A, D> {
         principal: &AuthenticatedCaller,
         id: &EffectIntentId,
     ) -> Result<EffectState> {
-        let state = self.root.effect_snapshot(principal.tenant())?;
+        let state = self.root.effect_intent_snapshot(principal.tenant(), id)?;
         state
             .effects
             .get(id)

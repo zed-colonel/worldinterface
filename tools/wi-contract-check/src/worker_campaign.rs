@@ -293,8 +293,9 @@ pub fn run(root: &Path, directory: &Path) -> Result<()> {
     let runtime_suite = runtime_remainder(&harnesses, &selected)?;
     // Share workers across both sets so a long runtime test can overlap the
     // registered cases. Receipt validation still checks each set independently.
+    validate_priority_tests(selected.keys().chain(runtime_suite.keys()))?;
     let execution_started = Instant::now();
-    let all_outcomes = execute_harnesses(
+    let (all_outcomes, execution_phases) = execute_harnesses(
         root,
         selected.iter().map(|(r, p)| (r.clone(), p.clone())).chain(
             runtime_suite
@@ -351,7 +352,7 @@ pub fn run(root: &Path, directory: &Path) -> Result<()> {
         )?;
     }
     let timing = json!({"discovery_build_and_listing_seconds":discovery_seconds,
-        "campaign_execution_seconds":execution_seconds,"execution_phases":3,
+        "campaign_execution_seconds":execution_seconds,"execution_phases":execution_phases,
         "receipt_validation_seconds":validation_started.elapsed().as_secs_f64(),
         "total_seconds":started.elapsed().as_secs_f64(),"discovery_passes":1,
         "registered_tests":outcomes.len(),"additional_runtime_tests":runtime_suite_outcomes.len()});
@@ -388,6 +389,7 @@ pub fn execute_selected(
     directory: &Path,
 ) -> Result<Vec<Outcome>> {
     execute_harnesses(root, selected.iter().map(|(r, p)| (r.clone(), p.clone())), directory)
+        .map(|(outcomes, _)| outcomes)
 }
 fn cached_digest<'a>(digests: &'a mut BTreeMap<PathBuf, String>, path: &Path) -> Result<&'a str> {
     use std::collections::btree_map::Entry;
@@ -396,13 +398,35 @@ fn cached_digest<'a>(digests: &'a mut BTreeMap<PathBuf, String>, path: &Path) ->
         Entry::Vacant(entry) => entry.insert(hash(fs::read(path)?)),
     })
 }
+const PRIORITY_TESTS: [&str; 3] = [
+    "reviewed_build_artifacts_are_bounded_and_publishable_without_launch",
+    "one_host_releases_capacity_for_more_than_64_sequential_runs",
+    "flow_capacity_is_enforced_without_losing_existing_history",
+];
+/// A rename/removal must fail before execution, never silently demote a long test.
+/// Supplemental partial selections use execute_selected without this requirement.
+pub fn validate_priority_tests<'a>(selected: impl Iterator<Item = &'a TestRef>) -> Result<()> {
+    let selected = selected.collect::<Vec<_>>();
+    for test in PRIORITY_TESTS {
+        let count = selected
+            .iter()
+            .filter(|r| {
+                r.manifest == RUNTIME && r.package == "worldinterface-runtime" && r.test == test
+            })
+            .count();
+        if count != 1 {
+            return Err(format!(
+                "required campaign priority test {test}: expected one selection, found {count}"
+            )
+            .into());
+        }
+    }
+    Ok(())
+}
 fn execution_priority(reference: &TestRef) -> u8 {
     if reference.manifest == RUNTIME && reference.package == "worldinterface-runtime" {
-        match reference.test.as_str() {
-            "reviewed_build_artifacts_are_bounded_and_publishable_without_launch" => return 0,
-            "one_host_releases_capacity_for_more_than_64_sequential_runs"
-            | "flow_capacity_is_enforced_without_losing_existing_history" => return 1,
-            _ => {}
+        if let Some(index) = PRIORITY_TESTS.iter().position(|test| reference.test == *test) {
+            return if index == 0 { 0 } else { 1 };
         }
     }
     2
@@ -411,7 +435,7 @@ fn execute_harnesses(
     root: &Path,
     selected: impl Iterator<Item = (TestRef, PathBuf)>,
     directory: &Path,
-) -> Result<Vec<Outcome>> {
+) -> Result<(Vec<Outcome>, usize)> {
     let mut selected = selected.collect::<Vec<_>>();
     // Count the existing non-live build test once before worker cases. The
     // two history-heavy regressions then share a bounded pair of workers before
@@ -424,6 +448,10 @@ fn execute_harnesses(
     }
     let mut selected = VecDeque::from(selected);
     let mut outcomes = Vec::new();
+    let mut execution_phases = 0;
+    if selected.front().is_some_and(|(reference, _)| execution_priority(reference) == 0) {
+        execution_phases += 1;
+    }
     while selected.front().is_some_and(|(reference, _)| execution_priority(reference) == 0) {
         let (reference, executable) = selected.pop_front().unwrap();
         let outcome =
@@ -443,6 +471,10 @@ fn execute_harnesses(
         {
             phase.push_back(selected.pop_front().unwrap());
         }
+        if phase.is_empty() {
+            continue;
+        }
+        execution_phases += 1;
         let parallelism = if priority == 1 { 2 } else { PARALLELISM };
         let pending = Mutex::new(phase);
         let batches = std::thread::scope(|scope| {
@@ -489,7 +521,7 @@ fn execute_harnesses(
         }
     }
     outcomes.sort_by(|a, b| (&a.reference, &a.log).cmp(&(&b.reference, &b.log)));
-    Ok(outcomes)
+    Ok((outcomes, execution_phases))
 }
 pub fn execute(
     root: &Path,
@@ -864,4 +896,14 @@ pub fn validate_contract(handoff: &Value, expected: &Value) -> Result<()> {
         return Err("handoff substitution, incomplete pins or semantic completion claim".into());
     }
     Ok(())
+}
+
+#[cfg(test)]
+#[test]
+fn no_selected_tests_execute_no_phases() {
+    let temp = tempfile::tempdir().unwrap();
+    let (outcomes, phases) =
+        execute_harnesses(temp.path(), std::iter::empty(), temp.path()).unwrap();
+    assert!(outcomes.is_empty());
+    assert_eq!(phases, 0);
 }

@@ -78,7 +78,6 @@ impl Validator {
         Ok(Self { root, process: Mutex::new(ValidatorProcess { child, input, output }) })
     }
     pub fn validate(&self, root: &Path, manifest: &EvaluationManifest) -> Result<()> {
-        let _p = worldinterface_storage::wsp_profile::Span::new("packet_verification");
         if root.canonicalize()? != self.root {
             return Err("evaluation validator source root mismatch".into());
         }

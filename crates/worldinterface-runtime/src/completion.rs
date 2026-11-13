@@ -259,7 +259,7 @@ impl<P: Connector, V: EvidenceAuthority, C: TrustedClock> EffectAttemptHandler<P
         let run: OpaqueRef = ctx.input.run_id.to_string().try_into()?;
         let store = self.bundle.aq_store_id()?.to_string();
         let (tenant, id) = root.effect_run_binding(&run)?.ok_or("unobserved AQ effect run")?;
-        let state = root.effect_snapshot(&tenant)?;
+        let state = root.effect_intent_snapshot(&tenant, &id)?;
         let effect = state.effects.get(&id).ok_or("missing AQ-bound effect")?;
         let admission = effect
             .dispatches
@@ -317,7 +317,7 @@ impl<P: Connector, V: EvidenceAuthority, C: TrustedClock> EffectAttemptHandler<P
         let Some(outcome) = view.outcome else {
             return Ok(None);
         };
-        let state = root.effect_snapshot(caller.tenant())?;
+        let state = root.effect_intent_snapshot(caller.tenant(), id)?;
         let effect = state.effects.get(id).ok_or("missing committed effect")?;
         if effect.attempt.as_ref() != Some(&outcome.attempt)
             || matches!(effect.phase, Phase::Authorized | Phase::DispatchPending | Phase::Running)
@@ -423,7 +423,7 @@ impl<P: Connector, V: EvidenceAuthority, C: TrustedClock> EffectAttemptHandler<P
         let root = self.bundle.wi();
         // Avoid publishing an already superseded provider observation. The
         // transactional seam rechecks this fence after publication as well.
-        let state = retry_storage(|| root.effect_snapshot(caller.tenant()))?;
+        let state = retry_storage(|| root.effect_intent_snapshot(caller.tenant(), id))?;
         let effect = state.effects.get(id).ok_or("missing completion effect")?;
         if effect.phase != Phase::Running
             || effect.attempt.as_ref() != Some(&attempt)
@@ -601,7 +601,7 @@ impl<P: Connector, V: EvidenceAuthority, C: TrustedClock> EffectAttemptHandler<P
         let view = Egress::new(root).inspect(&caller, &id)?;
         if view.phase == Phase::Running {
             *started = true;
-            let state = root.effect_snapshot(caller.tenant())?;
+            let state = root.effect_intent_snapshot(caller.tenant(), &id)?;
             let original = state
                 .effects
                 .get(&id)
@@ -622,7 +622,7 @@ impl<P: Connector, V: EvidenceAuthority, C: TrustedClock> EffectAttemptHandler<P
             );
         }
         let attempt: OpaqueRef = ctx.input.attempt_id.to_string().try_into()?;
-        let state = root.effect_snapshot(caller.tenant())?;
+        let state = root.effect_intent_snapshot(caller.tenant(), &id)?;
         let effect = state.effects.get(&id).ok_or("missing pre-dispatch effect")?;
         let bound = BoundExecution {
             tenant: caller.tenant().clone(),
@@ -704,7 +704,7 @@ impl<P: Connector, V: EvidenceAuthority, C: TrustedClock> EffectAttemptHandler<P
         let mut provider_commit = CommitObservation::Unknown;
         let result = (|| -> Result<AttemptDisposition> {
             // Recheck the Start fence immediately before crossing the port.
-            let current = root.effect_snapshot(caller.tenant())?;
+            let current = root.effect_intent_snapshot(caller.tenant(), &id)?;
             let current = current.effects.get(&id).ok_or("missing invocation effect")?;
             if current.phase != Phase::Running
                 || current.attempt.as_ref() != Some(&attempt)
@@ -741,7 +741,7 @@ impl<P: Connector, V: EvidenceAuthority, C: TrustedClock> EffectAttemptHandler<P
                         resource: authorized.resolved.resource.clone(),
                     })
                     .map_or(true, |r| r.resource != authorized.resolved.resource);
-            let final_state = root.effect_snapshot(caller.tenant())?;
+            let final_state = root.effect_intent_snapshot(caller.tenant(), &id)?;
             let final_effect =
                 final_state.effects.get(&id).ok_or("missing final invocation fence")?;
             if final_effect.phase != Phase::Running
@@ -938,7 +938,6 @@ pub(crate) fn record_uncertain_after_terminal_run(
 
 impl<P: Connector, V: EvidenceAuthority, C: TrustedClock> EffectAttemptHandler<P, V, C> {
     pub(crate) fn execute_context(&self, ctx: &ExecutorContext) -> AttemptDisposition {
-        let _p = worldinterface_storage::wsp_profile::Span::new("handler_work");
         let mut started = false;
         self.execute_staged(ctx, &mut started).unwrap_or_else(|_| {
             if started {
@@ -949,7 +948,7 @@ impl<P: Connector, V: EvidenceAuthority, C: TrustedClock> EffectAttemptHandler<P
             let Ok((caller, id, run, _)) = self.bind(ctx) else {
                 return terminal("wi.effect.phase_unknown");
             };
-            let Ok(state) = self.bundle.wi().effect_snapshot(caller.tenant()) else {
+            let Ok(state) = self.bundle.wi().effect_intent_snapshot(caller.tenant(), &id) else {
                 return terminal("wi.effect.phase_unknown");
             };
             let Some(effect) = state.effects.get(&id) else {
