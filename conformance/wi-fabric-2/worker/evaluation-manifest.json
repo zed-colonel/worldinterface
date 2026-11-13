@@ -352,7 +352,7 @@
     "fixtures/pre-wi-fabric-2/exo/repos/sample-rust/src/lib.rs": "4f6a07ed71fc95baaa7243cb58588a956f3905730ad5201d751ad914a9bb2722",
     "fixtures/pre-wi-fabric-2/source/rust-toolchain.toml": "bf22a6bd08945cfed9b5bdd0c1990dfeb65cf397983cce0dde1cc33b68e3d625",
     "inventory/README.md": "32bef7e518bb860922c5b5ecb200b3163e2a398bc2d3fe85e1f07caae38dde78",
-    "inventory/dispositions.json": "a6a48137a28445446a339f4fd5091c6b6757b0b1033cf9094a71448a3012ddb9",
+    "inventory/dispositions.json": "e20a19250450a2d954f0ee1efeaf01d8a963f126864c357a75c59520523c7a4d",
     "rust-toolchain.toml": "2a0049652fe5a89222a0fc64fa0e4a403435f134bd6fbdf9556e986a62e59128",
     "scripts/build-wi-worker-evaluation.sh": "2ed4f98edf61c1b03f59130b0ca0f110e0b61c69c3af80274dce053f6a0076a4",
     "scripts/check-consumer.py": "4a42c400910b2e1e433f4f98f78ce76749b675fb56a2de656267ac9fd2c49d96",
