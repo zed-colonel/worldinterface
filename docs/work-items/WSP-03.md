@@ -86,15 +86,15 @@ about admission after a lost response. Public consumer regressions cover a valid
 and closure of the unusable channel. A unit regression covers buffered data when
 the reader resumes after its deadline.
 
-F-003 remediation uses monotonic elapsed time for the process fixture's WI and
-AQ clocks, replacing the one-second jump per idle queue tick. This keeps command
-admission and reconciliation budgets independent of scheduler tick count. Both
-engines use an explicit one-second recovery retry backoff, so the default
-five-second retry does not consume most of the fixture's 15-second deadline
-across WI crash cuts. The submission and reconciliation deadlines are unchanged.
-Both
-settling loops retain ten-second wall bounds inside the existing twelve-second
-WI child bound. WP-038 deliberately delays backend inspect by 250 ms, retains all
+F-003 remediation restores the controlled fixture clock from durable WI history
+on restart. It advances directly to a Scheduled or RetryWait timer, once per
+actual due time, rather than adding a second on every idle tick. Each distinct
+AQ polling wait is paced for one real second before advancing to its recorded
+deadline, allowing the supervisor's asynchronous inspect to finish without
+burning the virtual reconciliation budget. The engines use an explicit
+one-second recovery backoff. Submission and reconciliation deadlines, the
+ten-second settling bounds and the twelve-second WI child bound remain intact.
+ WP-038 deliberately delays backend inspect by 250 ms, retains all
 three crash cuts, and still requires confirmed commit, unchanged original
 receipts, idempotent reconciliation and exactly one activation. No EOF is ignored.
 Remediation stress, negative-control and adopted-check evidence is retained at

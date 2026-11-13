@@ -55,9 +55,11 @@ bounds buffered work. Server I/O failures now shut down the channel, preventing
 partial-frame suffixes from being reinterpreted as new commands. Fresh channels
 retain the same exact operator grants and recover through authenticated inspect;
 neither a timeout nor reconnection grants dispatch authority. No authentication,
-journal, worker operation or guest descriptor path changes. Process fixture clocks
-now measure elapsed time and WP-038 includes delayed inspection without relaxing
-the convergence, receipt, activation or isolation assertions.
+journal, worker operation or guest descriptor path changes. Process fixture time
+is restored from durable WI history and advances only to recorded AQ timers.
+Distinct polling waits are paced in real time so asynchronous inspect cannot
+exhaust a virtual deadline through idle ticks. WP-038 includes delayed inspection
+without relaxing convergence, receipt, activation, isolation or deadline assertions.
 
 No open blocking or major finding identified within this bounded trusted-host
 contract. Real backend, OS isolation and Kata qualification remain downstream

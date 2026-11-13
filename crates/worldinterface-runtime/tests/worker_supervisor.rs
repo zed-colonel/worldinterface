@@ -16,10 +16,7 @@ use std::{
     sync::Arc,
 };
 use support::{
-    child::KillOnDrop,
-    connectors::*,
-    supervisor_fixture::*,
-    supervisor_harness::{AqClock as SupervisorClock, Harness},
+    child::KillOnDrop, connectors::*, supervisor_fixture::*, supervisor_harness::Harness,
 };
 use worldinterface_domain::{
     authorization::AuthorizationSnapshot, ingress::digest, resource::Target, Phase,
@@ -79,13 +76,23 @@ fn wi_supervisor_child() {
     } else {
         let metadata: Metadata =
             serde_json::from_slice(&std::fs::read(root.join("metadata.json")).unwrap()).unwrap();
+        let bundle = Arc::new(StoreBundle::open(&root.join("bundle")).unwrap());
+        // Restore fixture time from durable WI history rather than counting
+        // process startup/storage latency against the command's virtual budget.
+        let at = bundle
+            .wi()
+            .effect_snapshot(&metadata.snapshot.bindings[0].tenant)
+            .unwrap()
+            .last_at
+            .unwrap();
+        let clock = Clock(Arc::new(std::sync::atomic::AtomicU64::new(at.epoch_millis().unwrap())));
         Harness {
-            bundle: Arc::new(StoreBundle::open(&root.join("bundle")).unwrap()),
+            bundle,
             connector,
             snapshot: metadata.snapshot,
             id: metadata.id,
             run: metadata.run.parse().unwrap(),
-            clock: SupervisorClock::new(),
+            clock,
         }
     };
     if let Some(point) =

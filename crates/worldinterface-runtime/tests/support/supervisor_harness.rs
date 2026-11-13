@@ -12,7 +12,7 @@ use actionqueue_runtime::{
     config::{BackoffStrategyConfig, RuntimeConfig},
     engine::ActionQueueEngine,
 };
-use std::{sync::Arc, time::Instant};
+use std::{collections::BTreeMap, sync::Arc, time::Instant};
 use worldinterface_domain::{
     agency::AuthenticatedCaller,
     authorization::{AuthorizationSnapshot, VerifiedSnapshot},
@@ -43,27 +43,11 @@ impl ExecutorHandler for Noop {
         AttemptDisposition::complete(None)
     }
 }
-/// This fixture crosses real process and socket boundaries. Advancing a fake
-/// second per AQ tick can expire a command before Submit, or exhaust a case
-/// while an authenticated inspect is still outstanding under host load.
 #[derive(Clone)]
-pub struct AqClock {
-    epoch_ms: u64,
-    started: Instant,
-}
-impl AqClock {
-    pub fn new() -> Self {
-        Self { epoch_ms: super::supervisor_fixture::now(), started: Instant::now() }
-    }
-}
-impl TrustedClock for AqClock {
-    fn now(&self) -> worldinterface_runtime::Result<Timestamp> {
-        Ok(Timestamp::from_epoch_millis(self.epoch_ms + self.started.elapsed().as_millis() as u64)?)
-    }
-}
+pub struct AqClock(pub Clock);
 impl actionqueue_core::time::clock::Clock for AqClock {
     fn now(&self) -> u64 {
-        TrustedClock::now(self).unwrap().epoch_millis().unwrap() / 1000
+        self.0.now().unwrap().epoch_millis().unwrap() / 1000
     }
 }
 pub struct Harness {
@@ -72,7 +56,7 @@ pub struct Harness {
     pub snapshot: AuthorizationSnapshot,
     pub id: EffectIntentId,
     pub run: RunId,
-    pub clock: AqClock,
+    pub clock: Clock,
 }
 impl Harness {
     pub fn new(
@@ -81,7 +65,7 @@ impl Harness {
         submission: EffectSubmission,
         snapshot: AuthorizationSnapshot,
     ) -> Self {
-        let clock = AqClock::new();
+        let clock = Clock::new();
         let bundle = Arc::new(
             StoreBundle::initialize(
                 &root.join("bundle"),
@@ -184,7 +168,7 @@ impl Harness {
     ) -> EffectAttemptHandler<
         Arc<worldinterface_runtime::supervisor::SupervisorConnector>,
         Evidence,
-        AqClock,
+        Clock,
     > {
         EffectAttemptHandler {
             bundle: self.bundle.clone(),
@@ -192,6 +176,10 @@ impl Harness {
             evidence: Evidence(self.snapshot.clone()),
             clock: self.clock.clone(),
         }
+    }
+    fn advance_to(&self, seconds: u64) {
+        let current = self.clock.now().unwrap().epoch_millis().unwrap();
+        self.clock.advance((seconds * 1000).saturating_sub(current));
     }
     pub async fn execute(&self) {
         let mut engine = ActionQueueEngine::new(
@@ -205,7 +193,7 @@ impl Harness {
             },
             self.handler(),
         )
-        .bootstrap_with_clock(self.clock.clone())
+        .bootstrap_with_clock(AqClock(self.clock.clone()))
         .unwrap()
         .with_host(host());
         let deadline = Instant::now() + std::time::Duration::from_secs(10);
@@ -220,6 +208,19 @@ impl Harness {
                 }
                 engine.shutdown().unwrap();
                 return;
+            }
+            // Release only an actual AQ timer, once. Never consume virtual
+            // seconds merely because the executor has not picked up work yet.
+            for run in engine.projection().run_instances().filter(|r| r.id() == self.run) {
+                match run.state() {
+                    actionqueue_core::run::state::RunState::Scheduled => {
+                        self.advance_to(run.scheduled_at())
+                    }
+                    actionqueue_core::run::state::RunState::RetryWait => {
+                        self.advance_to(run.last_state_change_at() + 1)
+                    }
+                    _ => {}
+                }
             }
             tokio::time::sleep(std::time::Duration::from_millis(1)).await;
         }
@@ -252,10 +253,11 @@ impl Harness {
             },
             handler,
         )
-        .bootstrap_with_clock(self.clock.clone())
+        .bootstrap_with_clock(AqClock(self.clock.clone()))
         .unwrap()
         .with_host(host());
         let deadline = Instant::now() + std::time::Duration::from_secs(10);
+        let mut waits = BTreeMap::new();
         while Instant::now() < deadline {
             let _ = engine.tick().await.unwrap();
             if self.case().status.terminal()
@@ -272,6 +274,29 @@ impl Harness {
                 }
                 engine.shutdown().unwrap();
                 return;
+            }
+            for run in engine.projection().run_instances().filter(|r| r.id() != self.run) {
+                match run.state() {
+                    actionqueue_core::run::state::RunState::Scheduled => {
+                        self.advance_to(run.scheduled_at())
+                    }
+                    actionqueue_core::run::state::RunState::RetryWait => {
+                        self.advance_to(run.last_state_change_at() + 1)
+                    }
+                    actionqueue_core::run::state::RunState::Awaiting => {
+                        if let Some(wait) = engine.projection().waits().active(run.id()) {
+                            // The supervisor drives inspect on a real thread. Pace
+                            // each distinct polling wait in real time so a busy
+                            // backend cannot exhaust the virtual policy budget.
+                            let first_seen =
+                                waits.entry(wait.spec.wait_id()).or_insert_with(Instant::now);
+                            if first_seen.elapsed() >= std::time::Duration::from_secs(1) {
+                                self.advance_to(wait.spec.deadline().unwrap().at);
+                            }
+                        }
+                    }
+                    _ => {}
+                }
             }
             tokio::time::sleep(std::time::Duration::from_millis(1)).await;
         }

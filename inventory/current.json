@@ -15063,7 +15063,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-runtime/tests/support/supervisor_harness.rs",
     "name": "crates/worldinterface-runtime/tests/support/supervisor_harness.rs",
-    "source_sha256": "54a25de4372cbf6035dce5fbe20df25cd23a37c60d0fd734ff45908fc82c9fa4",
+    "source_sha256": "53d36473919e3c2a93183da3d40fe1a40b3c3ca731ae23226e947312cb5a9b85",
     "conditions": [],
     "registration_sites": []
   },
@@ -15072,7 +15072,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/support/supervisor_harness.rs",
     "name": "AqClock",
-    "source_sha256": "54a25de4372cbf6035dce5fbe20df25cd23a37c60d0fd734ff45908fc82c9fa4",
+    "source_sha256": "53d36473919e3c2a93183da3d40fe1a40b3c3ca731ae23226e947312cb5a9b85",
     "conditions": [],
     "registration_sites": []
   },
@@ -15081,7 +15081,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/support/supervisor_harness.rs",
     "name": "Harness",
-    "source_sha256": "54a25de4372cbf6035dce5fbe20df25cd23a37c60d0fd734ff45908fc82c9fa4",
+    "source_sha256": "53d36473919e3c2a93183da3d40fe1a40b3c3ca731ae23226e947312cb5a9b85",
     "conditions": [],
     "registration_sites": []
   },
@@ -15090,7 +15090,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/support/supervisor_harness.rs",
     "name": "Noop",
-    "source_sha256": "54a25de4372cbf6035dce5fbe20df25cd23a37c60d0fd734ff45908fc82c9fa4",
+    "source_sha256": "53d36473919e3c2a93183da3d40fe1a40b3c3ca731ae23226e947312cb5a9b85",
     "conditions": [],
     "registration_sites": []
   },
@@ -15987,7 +15987,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/tests/worker_supervisor.rs",
     "name": "support",
-    "source_sha256": "3f1e9c446570aac915a35507bdd1fb74822e51bf11175fbb193df62896b1a0d8",
+    "source_sha256": "6a84d5d28571732c6ea403f8680ff1dd43e4e9db17b8a45fa6cedeae90d2ae02",
     "conditions": [],
     "registration_sites": []
   },
@@ -15996,7 +15996,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-runtime/tests/worker_supervisor.rs",
     "name": "crates/worldinterface-runtime/tests/worker_supervisor.rs",
-    "source_sha256": "3f1e9c446570aac915a35507bdd1fb74822e51bf11175fbb193df62896b1a0d8",
+    "source_sha256": "6a84d5d28571732c6ea403f8680ff1dd43e4e9db17b8a45fa6cedeae90d2ae02",
     "conditions": [],
     "registration_sites": []
   },
@@ -16005,7 +16005,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/worker_supervisor.rs",
     "name": "Metadata",
-    "source_sha256": "3f1e9c446570aac915a35507bdd1fb74822e51bf11175fbb193df62896b1a0d8",
+    "source_sha256": "6a84d5d28571732c6ea403f8680ff1dd43e4e9db17b8a45fa6cedeae90d2ae02",
     "conditions": [],
     "registration_sites": []
   },
@@ -16014,7 +16014,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/tests/worker_supervisor.rs",
     "name": "child",
-    "source_sha256": "3f1e9c446570aac915a35507bdd1fb74822e51bf11175fbb193df62896b1a0d8",
+    "source_sha256": "6a84d5d28571732c6ea403f8680ff1dd43e4e9db17b8a45fa6cedeae90d2ae02",
     "conditions": [],
     "registration_sites": []
   },
@@ -16023,7 +16023,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/tests/worker_supervisor.rs",
     "name": "connectors",
-    "source_sha256": "3f1e9c446570aac915a35507bdd1fb74822e51bf11175fbb193df62896b1a0d8",
+    "source_sha256": "6a84d5d28571732c6ea403f8680ff1dd43e4e9db17b8a45fa6cedeae90d2ae02",
     "conditions": [],
     "registration_sites": []
   },
@@ -16032,7 +16032,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/tests/worker_supervisor.rs",
     "name": "supervisor_fixture",
-    "source_sha256": "3f1e9c446570aac915a35507bdd1fb74822e51bf11175fbb193df62896b1a0d8",
+    "source_sha256": "6a84d5d28571732c6ea403f8680ff1dd43e4e9db17b8a45fa6cedeae90d2ae02",
     "conditions": [],
     "registration_sites": []
   },
@@ -16041,7 +16041,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/tests/worker_supervisor.rs",
     "name": "supervisor_harness",
-    "source_sha256": "3f1e9c446570aac915a35507bdd1fb74822e51bf11175fbb193df62896b1a0d8",
+    "source_sha256": "6a84d5d28571732c6ea403f8680ff1dd43e4e9db17b8a45fa6cedeae90d2ae02",
     "conditions": [],
     "registration_sites": []
   },
