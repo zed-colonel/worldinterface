@@ -401,12 +401,20 @@ fn execute_harnesses(
     selected: impl Iterator<Item = (TestRef, PathBuf)>,
     directory: &Path,
 ) -> Result<Vec<Outcome>> {
-    let selected = selected.collect::<VecDeque<_>>();
+    let mut selected = selected.collect::<Vec<_>>();
+    // This 66-cycle capacity regression is the campaign's longest individual
+    // test. Start it with the first wave instead of after all registered cases,
+    // so it can use the whole campaign window within its unchanged 600s bound.
+    selected.sort_by_key(|(reference, _)| {
+        !(reference.manifest == RUNTIME
+            && reference.package == "worldinterface-runtime"
+            && reference.test == "one_host_releases_capacity_for_more_than_64_sequential_runs")
+    });
     let mut digests = BTreeMap::new();
     for (_, executable) in &selected {
         cached_digest(&mut digests, executable)?;
     }
-    let pending = Mutex::new(selected);
+    let pending = Mutex::new(VecDeque::from(selected));
     let batches = std::thread::scope(|scope| {
         let workers = (0..PARALLELISM)
             .map(|_| {

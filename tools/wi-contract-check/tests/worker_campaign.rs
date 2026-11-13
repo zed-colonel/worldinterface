@@ -268,7 +268,8 @@ fn peer(index: usize) {{
     std::fs::OpenOptions::new().write(true).create_new(true)
         .open(base.join(format!("{{index}}.ready"))).unwrap();
     let deadline = std::time::Instant::now() + std::time::Duration::from_secs(15);
-    while !(0..{}).all(|i| base.join(format!("{{i}}.ready")).exists()) {{
+    while !base.join("capacity.ready").exists()
+        || !(0..{}).all(|i| base.join(format!("{{i}}.ready")).exists()) {{
         assert!(std::time::Instant::now() < deadline, "tests in one executable did not overlap");
         std::thread::sleep(std::time::Duration::from_millis(10));
     }}
@@ -280,8 +281,31 @@ fn peer(index: usize) {{
     for index in 0..campaign::PARALLELISM {
         let name = format!("peer_{index}");
         fixture.push_str(&format!("#[test] fn {name}() {{ peer({index}); }}\n"));
-        selected.insert(reference(&name), executable.clone());
+        let mut peer = reference(&name);
+        peer.manifest = "a-fixture".into();
+        selected.insert(peer, executable.clone());
     }
+    // This runtime remainder sorts after every peer in the input map. Without
+    // priority scheduling, the full pool blocks waiting for its marker. It must
+    // finish first and free its slot for the last peer to reach the barrier.
+    let capacity = "one_host_releases_capacity_for_more_than_64_sequential_runs";
+    fixture.push_str(&format!(
+        r#"
+#[test] fn {capacity}() {{
+    let base = std::path::PathBuf::from(std::env::var_os("WI_WORKER_CAMPAIGN_EVIDENCE").unwrap());
+    std::fs::OpenOptions::new().write(true).create_new(true)
+        .open(base.join("capacity.ready")).unwrap();
+}}
+"#
+    ));
+    selected.insert(
+        TestRef {
+            manifest: "crates/worldinterface-runtime/Cargo.toml".into(),
+            package: "worldinterface-runtime".into(),
+            test: capacity.into(),
+        },
+        executable.clone(),
+    );
     fs::write(&source, fixture).unwrap();
     assert!(Command::new("timeout")
         .args(["60s", "rustc", "--test"])

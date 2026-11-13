@@ -99,14 +99,22 @@ async fn wp_018_duplicate_admission_and_start_preserve_one_immutable_run() {
 #[tokio::test]
 async fn one_host_releases_capacity_for_more_than_64_sequential_runs() {
     async fn operation(h: &Harness, op: Operation) {
-        let mut snapshot = h.demand(op).1;
+        let started = std::time::Instant::now();
+        let (submission, mut snapshot, config) = h.demand(op);
         // The default 100-use grant runs out after 50 provision/release pairs,
         // before this test can reach the provider's former 64-run lifetime cap.
         for grant in &mut snapshot.grants {
             grant.max_uses = 256;
         }
+        let prepared = started.elapsed();
+        let outcome = h.operation_prepared(op, submission, snapshot, config).await;
+        eprintln!(
+            "{} {op:?}: prepare={prepared:?}, execute={:?}",
+            h.run,
+            started.elapsed() - prepared
+        );
         assert_eq!(
-            h.operation_snapshot(op, snapshot).await,
+            outcome,
             worldinterface_storage::flow::FlowOutcome::Succeeded,
             "run {} operation {op:?}",
             h.run

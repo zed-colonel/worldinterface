@@ -774,9 +774,9 @@ impl Harness {
         .await;
     }
     pub async fn operation_expect(&self, op: Operation, expected: FlowOutcome) {
-        let snapshot = self.demand(op).1;
+        let (submission, snapshot, config) = self.demand(op);
         assert_eq!(
-            self.operation_snapshot(op, snapshot).await,
+            self.operation_prepared(op, submission, snapshot, config).await,
             expected,
             "worker operation {op:?}"
         );
@@ -787,6 +787,17 @@ impl Harness {
         snapshot: AuthorizationSnapshot,
     ) -> FlowOutcome {
         let (submission, _, config) = self.demand(op);
+        self.operation_prepared(op, submission, snapshot, config).await
+    }
+    /// Execute one freshly constructed demand, retaining duplicate admission and
+    /// all live admission/dispatch checks without republishing its artifacts.
+    pub async fn operation_prepared(
+        &self,
+        op: Operation,
+        submission: EffectSubmission,
+        snapshot: AuthorizationSnapshot,
+        config: Config,
+    ) -> FlowOutcome {
         let evidence = Evidence {
             base: HostEvidence(snapshot.clone()),
             evaluation: self.evaluation.clone(),

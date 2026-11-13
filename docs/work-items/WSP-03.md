@@ -109,3 +109,23 @@ A separate security pass and its retained review evidence examine authentication
 provenance, descriptor inheritance, exact replay/generation binding, cross-tenant
 inspect, corruption/crash windows, server limits and duplicate activation. See
 `WSP-03-security.md`; qualifying independent review remains CraftingTable-owned.
+
+F-004 remediation retains all 66 sequential provision/release cycles, duplicate
+admission and release checks, the final real process launch, durable inspection
+evidence and the one-host/one-slot assertions. The isolated predecessor took
+512.83 seconds. Fixture operations now construct their demand once and pass its
+submission, authorization snapshot and configuration to execution together,
+avoiding a second packet/build check and repeated durable artifact publication.
+Admission and dispatch still independently validate the complete committed
+packet. No validation result is cached. The test logs preparation and execution
+time for every operation.
+
+The campaign starts this longest runtime remainder with its first wave instead
+of queuing it behind all registered cases. A create-once marker/barrier regression
+requires that priority while still filling all twelve slots with exact tests
+from one harness and retaining every result and binary/log digest. The twelve
+workers, complete coverage, 600-second per-test timeout and adopted 30-minute
+ceiling remain unchanged. Two adopted runtime-test runs and the remaining checks
+on the committed remediation head are recorded in
+`/mnt/workhorse/craftingtable/runs/33239bf2-55ea-473b-bae0-ff9d42564888/scratch/verification/`;
+the final report records the capacity-test and complete check durations separately.
