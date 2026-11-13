@@ -599,15 +599,23 @@ fn committed_disposition_rejects_request_admission_and_outcome_binding_drift() {
             _ => unreachable!(),
         }
         c.execute(
-            "UPDATE effect_state SET state=? WHERE tenant=?",
-            rusqlite::params![canonical_collection(&state).unwrap(), actor.tenant().as_str()],
+            "UPDATE effect_instances SET state=? WHERE tenant=? AND intent=?",
+            rusqlite::params![
+                canonical_collection(&state.effects[&case.id]).unwrap(),
+                actor.tenant().as_str(),
+                case.id.as_str()
+            ],
         )
         .unwrap();
         assert!(handler.execute_bound(&ctx).is_err(), "{drift}");
     }
     c.execute(
-        "UPDATE effect_state SET state=? WHERE tenant=?",
-        rusqlite::params![canonical_collection(&original).unwrap(), actor.tenant().as_str()],
+        "UPDATE effect_instances SET state=? WHERE tenant=? AND intent=?",
+        rusqlite::params![
+            canonical_collection(&original.effects[&case.id]).unwrap(),
+            actor.tenant().as_str(),
+            case.id.as_str()
+        ],
     )
     .unwrap();
     assert!(matches!(handler.execute_bound(&ctx).unwrap().outcome(), DispositionOutcome::Complete));
@@ -663,9 +671,22 @@ fn completion_and_redelivery_bound_latency_and_writer_delay_with_long_history() 
         )
         .unwrap();
     }
+    // Persist the same genuine history in the normalized projection layout.
+    tx.execute(
+        "UPDATE effect_instances SET state=? WHERE tenant=? AND intent=?",
+        rusqlite::params![
+            canonical_collection(&state.effects[&case.id]).unwrap(),
+            actor.tenant().as_str(),
+            case.id.as_str()
+        ],
+    )
+    .unwrap();
+    let mut header = state.clone();
+    header.effects.clear();
+    header.requests.clear();
     tx.execute(
         "UPDATE effect_state SET state=? WHERE tenant=?",
-        rusqlite::params![canonical_collection(&state).unwrap(), actor.tenant().as_str()],
+        rusqlite::params![canonical_collection(&header).unwrap(), actor.tenant().as_str()],
     )
     .unwrap();
     // Keep the derived outbox identical to a normal sequence of transactions.

@@ -1259,7 +1259,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/tests/completion_regressions.rs",
-          "source_sha256": "6d5475374535b68a366060b3618b0566918c80b2e7586b27b9d99223ea49eed0",
+          "source_sha256": "be540d001f50d2212302ead45afb92c3479635456317aafb850265ed14d1177d",
           "treatment": "Retain bounded completion latency and concurrent-writer test evidence; references to delay are not permission to remove these tests with the legacy delay connector."
         },
         {
@@ -1349,12 +1349,12 @@
         },
         {
           "path": "docs/work-items/WSP-03-security.md",
-          "source_sha256": "e0711f3f333b719cd08b98c1d41b102f529d5f69cee41cafa0cf53ffda2f7ef8",
+          "source_sha256": "4b5f6e9996fc2cbc75536f75d3fad2c192fa8a12ffaeab8fa9e1b23e1322e348",
           "treatment": "WSP-03 F-002/F-003 candidate disposition: preserve supervisor frame timing regressions and slow backend inspection evidence. Delay wording refers to test scheduling, with no dependency on the legacy delay connector. Effective through qualifying source review/merge; no deletion authority."
         },
         {
           "path": "docs/work-items/WSP-03.md",
-          "source_sha256": "b016cee403cfbeb1325188452566cd2d7a8cab76c0fd5e8edc705d8f926431a1",
+          "source_sha256": "68bfd404c8cf933e0bcfe1f7d4aeb0a7c64ff90729a00feca9c447ffc0e85f05",
           "treatment": "WSP-03 F-002/F-003 candidate disposition: preserve supervisor frame timing regressions and slow backend inspection evidence. Delay wording refers to test scheduling, with no dependency on the legacy delay connector. Effective through qualifying source review/merge; no deletion authority."
         },
         {
@@ -4706,37 +4706,37 @@
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/effect.rs::::module:tests@10d1b0eff34c",
-          "source_sha256": "1e1a5192f437f2dfb5ca4df2b6a596abf81e8291eb05b31e53f7e9c1bb2cbe74",
+          "source_sha256": "57b3cb2f8db00538934d482e411ccbe00e5a53624272d444115f761f5c1b026f",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/effect.rs::::source-module:crates/worldinterface-foundation/storage/src/effect.rs",
-          "source_sha256": "1e1a5192f437f2dfb5ca4df2b6a596abf81e8291eb05b31e53f7e9c1bb2cbe74",
+          "source_sha256": "57b3cb2f8db00538934d482e411ccbe00e5a53624272d444115f761f5c1b026f",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/effect.rs::::struct:DispatchFault",
-          "source_sha256": "1e1a5192f437f2dfb5ca4df2b6a596abf81e8291eb05b31e53f7e9c1bb2cbe74",
+          "source_sha256": "57b3cb2f8db00538934d482e411ccbe00e5a53624272d444115f761f5c1b026f",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/effect.rs::::struct:EffectExecutionTimes",
-          "source_sha256": "1e1a5192f437f2dfb5ca4df2b6a596abf81e8291eb05b31e53f7e9c1bb2cbe74",
+          "source_sha256": "57b3cb2f8db00538934d482e411ccbe00e5a53624272d444115f761f5c1b026f",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/effect.rs::::struct:EffectJournalConflict",
-          "source_sha256": "1e1a5192f437f2dfb5ca4df2b6a596abf81e8291eb05b31e53f7e9c1bb2cbe74",
+          "source_sha256": "57b3cb2f8db00538934d482e411ccbe00e5a53624272d444115f761f5c1b026f",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/effect.rs::::struct:EffectReceiptCommand",
-          "source_sha256": "1e1a5192f437f2dfb5ca4df2b6a596abf81e8291eb05b31e53f7e9c1bb2cbe74",
+          "source_sha256": "57b3cb2f8db00538934d482e411ccbe00e5a53624272d444115f761f5c1b026f",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/effect.rs::::struct:EffectReceiptSource",
-          "source_sha256": "1e1a5192f437f2dfb5ca4df2b6a596abf81e8291eb05b31e53f7e9c1bb2cbe74",
+          "source_sha256": "57b3cb2f8db00538934d482e411ccbe00e5a53624272d444115f761f5c1b026f",
           "registration_sites": []
         },
         {
@@ -6621,72 +6621,72 @@
         },
         {
           "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::module:child_guard",
-          "source_sha256": "6d5475374535b68a366060b3618b0566918c80b2e7586b27b9d99223ea49eed0",
+          "source_sha256": "be540d001f50d2212302ead45afb92c3479635456317aafb850265ed14d1177d",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::module:support",
-          "source_sha256": "6d5475374535b68a366060b3618b0566918c80b2e7586b27b9d99223ea49eed0",
+          "source_sha256": "be540d001f50d2212302ead45afb92c3479635456317aafb850265ed14d1177d",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::source-module:crates/worldinterface-runtime/tests/completion_regressions.rs",
-          "source_sha256": "6d5475374535b68a366060b3618b0566918c80b2e7586b27b9d99223ea49eed0",
+          "source_sha256": "be540d001f50d2212302ead45afb92c3479635456317aafb850265ed14d1177d",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::struct:BrokenCompletionClock",
-          "source_sha256": "6d5475374535b68a366060b3618b0566918c80b2e7586b27b9d99223ea49eed0",
+          "source_sha256": "be540d001f50d2212302ead45afb92c3479635456317aafb850265ed14d1177d",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::struct:Clock",
-          "source_sha256": "6d5475374535b68a366060b3618b0566918c80b2e7586b27b9d99223ea49eed0",
+          "source_sha256": "be540d001f50d2212302ead45afb92c3479635456317aafb850265ed14d1177d",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::struct:Evidence",
-          "source_sha256": "6d5475374535b68a366060b3618b0566918c80b2e7586b27b9d99223ea49eed0",
+          "source_sha256": "be540d001f50d2212302ead45afb92c3479635456317aafb850265ed14d1177d",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::struct:InterleavingClock",
-          "source_sha256": "6d5475374535b68a366060b3618b0566918c80b2e7586b27b9d99223ea49eed0",
+          "source_sha256": "be540d001f50d2212302ead45afb92c3479635456317aafb850265ed14d1177d",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::struct:InterleavingPort",
-          "source_sha256": "6d5475374535b68a366060b3618b0566918c80b2e7586b27b9d99223ea49eed0",
+          "source_sha256": "be540d001f50d2212302ead45afb92c3479635456317aafb850265ed14d1177d",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::struct:Noop",
-          "source_sha256": "6d5475374535b68a366060b3618b0566918c80b2e7586b27b9d99223ea49eed0",
+          "source_sha256": "be540d001f50d2212302ead45afb92c3479635456317aafb850265ed14d1177d",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::struct:Port",
-          "source_sha256": "6d5475374535b68a366060b3618b0566918c80b2e7586b27b9d99223ea49eed0",
+          "source_sha256": "be540d001f50d2212302ead45afb92c3479635456317aafb850265ed14d1177d",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::struct:Prepared",
-          "source_sha256": "6d5475374535b68a366060b3618b0566918c80b2e7586b27b9d99223ea49eed0",
+          "source_sha256": "be540d001f50d2212302ead45afb92c3479635456317aafb850265ed14d1177d",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::::struct:SequenceClock",
-          "source_sha256": "6d5475374535b68a366060b3618b0566918c80b2e7586b27b9d99223ea49eed0",
+          "source_sha256": "be540d001f50d2212302ead45afb92c3479635456317aafb850265ed14d1177d",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::invocation_fence_rechecks_after_supersession::struct:Forbidden",
-          "source_sha256": "6d5475374535b68a366060b3618b0566918c80b2e7586b27b9d99223ea49eed0",
+          "source_sha256": "be540d001f50d2212302ead45afb92c3479635456317aafb850265ed14d1177d",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/completion_regressions.rs::support::module:effect_fixture",
-          "source_sha256": "6d5475374535b68a366060b3618b0566918c80b2e7586b27b9d99223ea49eed0",
+          "source_sha256": "be540d001f50d2212302ead45afb92c3479635456317aafb850265ed14d1177d",
           "registration_sites": []
         },
         {
@@ -8853,7 +8853,7 @@
         },
         {
           "path": "crates/worldinterface-foundation/storage/src/effect.rs",
-          "source_sha256": "1e1a5192f437f2dfb5ca4df2b6a596abf81e8291eb05b31e53f7e9c1bb2cbe74",
+          "source_sha256": "57b3cb2f8db00538934d482e411ccbe00e5a53624272d444115f761f5c1b026f",
           "treatment": "Retain WI-04 guarded domain and production admission binding; review selective changes without weakening replacement or qualification gates."
         },
         {
@@ -9258,7 +9258,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/tests/completion_regressions.rs",
-          "source_sha256": "6d5475374535b68a366060b3618b0566918c80b2e7586b27b9d99223ea49eed0",
+          "source_sha256": "be540d001f50d2212302ead45afb92c3479635456317aafb850265ed14d1177d",
           "treatment": "Retain focused WI-05 remediation evidence for uncertainty, dispatch convergence, invocation fencing, historical receipt binding and reopen invariants (WIP-04)."
         },
         {

@@ -157,3 +157,15 @@ crash recovery. Supervisor authentication, grants, bounds, channel handling and
 guest authority paths have no changes. No open blocking or major finding was
 identified in this implementation pass; qualifying independent review remains
 CraftingTable-owned.
+
+The receipt-source reader now recognizes v3 journal entries alongside v1/v2;
+unknown versions still fail even with canonical bytes and a matching digest.
+Indexed intent/tenant selection, exact receipt revision, admission/Start/run
+bindings and outcome checks remain unchanged. Mixed-version and unknown-version
+regressions cover the allowlist extension.
+
+Catalog decoding rejects nonempty aggregate/request maps. Corruption fixtures now
+target the normalized rows, preserving their original negative controls; a focused
+count regression also rejects an aggregate injected into the catalog. The genuine
+1,000-entry completion fixture persists the normalized projection and keeps all
+original completion, redelivery, writer-delay and single-invocation assertions.

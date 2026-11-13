@@ -57,7 +57,12 @@ fn catalog(c: &Connection, tenant: &OpaqueRef) -> Result<EffectState> {
     let b: Option<Vec<u8>> = c
         .query_row("SELECT state FROM effect_state WHERE tenant=?", [tenant.as_str()], |r| r.get(0))
         .optional()?;
-    b.map_or_else(|| Ok(EffectState::default()), |b| crate::decode_collection(&b))
+    let state: EffectState =
+        b.map_or_else(|| Ok(EffectState::default()), |b| crate::decode_collection(&b))?;
+    if !state.effects.is_empty() || !state.requests.is_empty() {
+        return Err(invalid("effect catalog contains aggregate projections"));
+    }
+    Ok(state)
 }
 fn load_intent(
     c: &Connection,
@@ -395,7 +400,7 @@ fn receipt_source(
         }
         let entry = strict_json(&bytes).map_err(invalid)?;
         let action = &entry["action"];
-        if !matches!(entry["version"].as_u64(), Some(1 | 2))
+        if !matches!(entry["version"].as_u64(), Some(1 | 2 | 3))
             || canonical_data(&entry).map_err(invalid)? != bytes
             || entry["tenant"].as_str() != Some(tenant.as_str())
             || action["id"].as_str() != Some(id.as_str())
@@ -1244,6 +1249,16 @@ mod tests {
         rebuilt.execute_batch(crate::continuation::SCHEMA).unwrap();
         replay(&c, &rebuilt).unwrap();
         assert_eq!(snapshot_state(&c, &caller), snapshot_state(&rebuilt, &caller));
+        let full = snapshot_state(&c, &caller);
+        c.execute(
+            "UPDATE effect_state SET state=? WHERE tenant=?",
+            params![canonical_collection(&full).unwrap(), caller.tenant().as_str()],
+        )
+        .unwrap();
+        assert!(bounded_view(&c, caller.tenant(), &[], None)
+            .unwrap_err()
+            .to_string()
+            .contains("effect catalog contains aggregate projections"));
     }
     #[test]
     fn receipt_source_seeks_one_intent_and_fences_revision_tenant_dispatch_and_start() {
@@ -1256,9 +1271,10 @@ mod tests {
         let tenant: OpaqueRef = "tenant-a".to_owned().try_into().unwrap();
         let id = EffectIntentId::generate();
         let insert = |scope: &str, revision, action: serde_json::Value| {
-            let bytes =
-                canonical_data(&serde_json::json!({"version":1,"tenant":scope,"action":action}))
-                    .unwrap();
+            let bytes = canonical_data(
+                &serde_json::json!({"version":1 + revision % 3,"tenant":scope,"action":action}),
+            )
+            .unwrap();
             c.execute(
                 "INSERT INTO effect_history(tenant,revision,entry,digest) VALUES(?,?,?,?)",
                 params![scope, revision, &bytes, ContentHash::of(&bytes).as_str()],
@@ -1355,7 +1371,31 @@ mod tests {
         assert!(plan.iter().any(|s| s.contains("effect_history_intent (tenant=? AND <expr>=? AND revision<?)")), "{plan:?}");
         assert!(!plan.iter().any(|s| s.contains("SCAN") || s.contains("TEMP B-TREE")), "{plan:?}");
         drop(q);
-        c.execute_batch("DROP TRIGGER effect_no_update; UPDATE effect_history SET digest='bad' WHERE tenant='tenant-a' AND revision=2010").unwrap();
+        c.execute_batch("DROP TRIGGER effect_no_update").unwrap();
+        // Unknown versions still fail with valid canonical bytes and digest.
+        let bytes: Vec<u8> = c
+            .query_row(
+                "SELECT entry FROM effect_history WHERE tenant='tenant-a' AND revision=2010",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap();
+        let mut entry = strict_json(&bytes).unwrap();
+        entry["version"] = serde_json::json!(4);
+        let bytes = canonical_data(&entry).unwrap();
+        c.execute(
+            "UPDATE effect_history SET entry=?,digest=? WHERE tenant='tenant-a' AND revision=2010",
+            params![bytes, ContentHash::of(&bytes).as_str()],
+        )
+        .unwrap();
+        assert!(receipt_source(&c, &tenant, &id, 2010)
+            .unwrap_err()
+            .to_string()
+            .contains("receipt source journal binding"));
+        c.execute_batch(
+            "UPDATE effect_history SET digest='bad' WHERE tenant='tenant-a' AND revision=2010",
+        )
+        .unwrap();
         assert!(receipt_source(&c, &tenant, &id, 2010).is_err());
     }
 

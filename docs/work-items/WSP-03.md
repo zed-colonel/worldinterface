@@ -221,3 +221,17 @@ computed from nonempty phases actually executed, including zero for no tests.
 The existing scheduling barrier and new missing/renamed-test regressions cover
 these rules. Final adopted-check evidence is retained under
 `/mnt/workhorse/craftingtable/runs/30a36125-9b7c-42fa-aaaf-62c5b33fe42e/scratch/verification/`.
+
+The first adopted campaign exposed a receipt-source reader that still accepted
+only journal versions 1 and 2. It now also accepts version 3, retaining all
+canonical-byte, digest, tenant, revision, dispatch and Start bindings. Its indexed
+source regression mixes all three supported versions and rejects an unknown
+version even with canonical bytes and a valid digest. The failed campaign is
+retained as diagnostic evidence and does not count toward final timing acceptance.
+
+Catalog reads also reject aggregate/request maps embedded in metadata, rather than
+silently treating a corrupted header as an intent projection. The completion
+projection-drift fixture now corrupts the indexed aggregate row. The long-history
+completion fixture retains the same 1,000 genuine discovery entries and latency,
+redelivery and writer-delay assertions, and writes the corresponding aggregate
+and metadata rows in the same batched fixture transaction.
