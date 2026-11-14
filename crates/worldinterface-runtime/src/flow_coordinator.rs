@@ -320,7 +320,8 @@ pub const RECONCILE_ROWS_PER_TICK: usize = 8;
 pub(crate) struct ReconcileCursor {
     position: Option<(u64, u64)>,
     pass_position: Option<(u64, u64)>,
-    tenant: Option<OpaqueRef>,
+    tenant: Option<(i64, OpaqueRef)>,
+    scan_bounds: (i64, i64),
     after: i64,
     retry: bool,
     work: ReconcileWork,
@@ -362,15 +363,16 @@ fn reconcile_page<H: actionqueue_executor_local::handler::ExecutorHandler + 'sta
     cursor.position = None;
     if cursor.pass_position.is_none() {
         cursor.pass_position = Some(position);
-        cursor.tenant = root.flow_next_tenant(None)?;
+        cursor.scan_bounds = root.flow_scan_bounds()?;
+        cursor.tenant = root.flow_next_tenant(0, cursor.scan_bounds.0)?;
         cursor.after = 0;
     }
-    let Some(tenant) = cursor.tenant.clone() else {
+    let Some((tenant_position, tenant)) = cursor.tenant.clone() else {
         cursor.position = cursor.pass_position.take();
         return Ok(());
     };
     let limit = *remaining;
-    let page = root.flow_pending_page(&tenant, cursor.after, limit)?;
+    let page = root.flow_pending_page(&tenant, cursor.after, cursor.scan_bounds.1, limit)?;
     cursor.work.pages += 1;
     cursor.work.rows += page.len();
     *remaining -= page.len();
@@ -582,7 +584,7 @@ fn reconcile_page<H: actionqueue_executor_local::handler::ExecutorHandler + 'sta
         }
     }
     if page.len() < limit {
-        cursor.tenant = root.flow_next_tenant(Some(&tenant))?;
+        cursor.tenant = root.flow_next_tenant(tenant_position, cursor.scan_bounds.0)?;
         cursor.after = 0;
         if cursor.tenant.is_none() {
             let completed = cursor.pass_position.take();

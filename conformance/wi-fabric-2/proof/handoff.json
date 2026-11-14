@@ -3596,7 +3596,7 @@
     "docs/evidence/WI-WORKER-G5.md": "fe75eeb3f1775a3a3e03614b921cf5683543e4cf57a76e819d8417176a772173",
     "docs/release/0.2.0-alpha.1.md": "5d154457da88f20895c395c1ac43f358d6be31b6f32ff4f02d5242cda5c28b21",
     "docs/release/package-tests.json": "2c17e1d7844413c84632034ab38c7a91c5dac92f1b543d72d48c04be29370538",
-    "docs/work-items/WSP-04.md": "94bacc8ff28514f2e3adb662eafe75eafa0e9bda396b1dacd4c2b9f52647e297",
+    "docs/work-items/WSP-04.md": "92458b77be524558325f1d61b7fa2fe69aff2dd61d5a6248f0f5d382211a4ad8",
     "examples/downstream-consumer/Cargo.toml": "b1d5f106eed5a286460cac00c31465407fd3f13077d8941fcae773688d3a0ccb",
     "examples/downstream-consumer/src/main.rs": "e81457c49983747da1978d4c8e65cd3bde76efee6a8c2dbe3f86a6751f60e949",
     "fixtures/pre-wi-fabric-2/exo/repos/sample-rust/.gitignore": "12cc0f91b51fedf41ae1670d1624ee1d78a284bdb101645b60a06a12de16c069",

@@ -22,7 +22,10 @@ Reconciliation now reads indexed pages before deserialization, shares an eight-r
 budget across both calls per tick, and walks tenants/runs with disposable cursors.
 It reuses a verified plan within a pass. Changed journals trigger another full
 bounded traversal; continuous traffic cannot reset traversal or starve later runs.
-Errors retry; bundle reopen still validates all plans, artifacts and AQ references.
+Each pass also captures finite run/tenant admission cutoffs, so continuing
+admissions cannot extend the pass indefinitely and starve earlier changed rows.
+Tenant traversal uses indexed rowid bounds; a regression appends 1000 new pending
+rows and confirms the original pass still ends at its cutoff. Errors retry; bundle reopen still validates all plans, artifacts and AQ references.
 No schema change or new continuation exception is needed. The existing timing
 limits remain. A first complete continuation suite passed: active average 51.43 ms,
 maximum 71.15 ms. Count assertions also vary 0/10/100 waits and completed history.
@@ -47,7 +50,7 @@ also cover that sibling fixture, preserving all four modes and restart assertion
 list this additive trusted-host API alongside the supervisor APIs in alpha.2 notes.
 Also record `QueueEngine::tick_diagnostics`, `TickDiagnostics`, `ReconcileWork`,
 `RECONCILE_ROWS_PER_TICK`, and storage `PendingFlow`/`flow_pending_page`/
-`flow_next_tenant`: additive trusted-host diagnostics and bounded scheduling reads.
+`flow_next_tenant`/`flow_scan_bounds`: additive trusted-host diagnostics and bounded scheduling reads.
 The explicit inventory/disposition additions are submitted with this item for review.
 
 ## Evidence and consumer boundary

@@ -1254,7 +1254,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/release/handoff.json",
-          "source_sha256": "0dddf561b0cf8906613cba1841fdb2f6d55e2742418763b802c3a1085773fe14",
+          "source_sha256": "6279ace3f13bd975c6c42a05b9b209356a9b26f035c3019417b9298907481184",
           "treatment": "Retain WSP-02 package evidence/support and registry consumer. Future legacy removal must preserve authoritative byte equality and release consumer coverage."
         },
         {
@@ -4741,92 +4741,92 @@
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/flow.rs::::enum:FlowCapacity",
-          "source_sha256": "cb13b65c485321853fe2f271dba037f51520d206c991d2cf395c0ca785572290",
+          "source_sha256": "f0e87b038584c00650ca77c6a61927ebf421ada049b08d3f0fe95d883be87927",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/flow.rs::::enum:FlowCommand",
-          "source_sha256": "cb13b65c485321853fe2f271dba037f51520d206c991d2cf395c0ca785572290",
+          "source_sha256": "f0e87b038584c00650ca77c6a61927ebf421ada049b08d3f0fe95d883be87927",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/flow.rs::::enum:FlowOutcome",
-          "source_sha256": "cb13b65c485321853fe2f271dba037f51520d206c991d2cf395c0ca785572290",
+          "source_sha256": "f0e87b038584c00650ca77c6a61927ebf421ada049b08d3f0fe95d883be87927",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/flow.rs::::enum:NodeDisposition",
-          "source_sha256": "cb13b65c485321853fe2f271dba037f51520d206c991d2cf395c0ca785572290",
+          "source_sha256": "f0e87b038584c00650ca77c6a61927ebf421ada049b08d3f0fe95d883be87927",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/flow.rs::::module:scheduling_index_tests@10d1b0eff34c",
-          "source_sha256": "cb13b65c485321853fe2f271dba037f51520d206c991d2cf395c0ca785572290",
+          "source_sha256": "f0e87b038584c00650ca77c6a61927ebf421ada049b08d3f0fe95d883be87927",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/flow.rs::::source-module:crates/worldinterface-foundation/storage/src/flow.rs",
-          "source_sha256": "cb13b65c485321853fe2f271dba037f51520d206c991d2cf395c0ca785572290",
+          "source_sha256": "f0e87b038584c00650ca77c6a61927ebf421ada049b08d3f0fe95d883be87927",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/flow.rs::::struct:ChildBinding",
-          "source_sha256": "cb13b65c485321853fe2f271dba037f51520d206c991d2cf395c0ca785572290",
+          "source_sha256": "f0e87b038584c00650ca77c6a61927ebf421ada049b08d3f0fe95d883be87927",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/flow.rs::::struct:Entry",
-          "source_sha256": "cb13b65c485321853fe2f271dba037f51520d206c991d2cf395c0ca785572290",
+          "source_sha256": "f0e87b038584c00650ca77c6a61927ebf421ada049b08d3f0fe95d883be87927",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/flow.rs::::struct:FlowDispatchGuard",
-          "source_sha256": "cb13b65c485321853fe2f271dba037f51520d206c991d2cf395c0ca785572290",
+          "source_sha256": "f0e87b038584c00650ca77c6a61927ebf421ada049b08d3f0fe95d883be87927",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/flow.rs::::struct:FlowIntegrity",
-          "source_sha256": "cb13b65c485321853fe2f271dba037f51520d206c991d2cf395c0ca785572290",
+          "source_sha256": "f0e87b038584c00650ca77c6a61927ebf421ada049b08d3f0fe95d883be87927",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/flow.rs::::struct:FlowPins",
-          "source_sha256": "cb13b65c485321853fe2f271dba037f51520d206c991d2cf395c0ca785572290",
+          "source_sha256": "f0e87b038584c00650ca77c6a61927ebf421ada049b08d3f0fe95d883be87927",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/flow.rs::::struct:FlowRevisionConflict",
-          "source_sha256": "cb13b65c485321853fe2f271dba037f51520d206c991d2cf395c0ca785572290",
+          "source_sha256": "f0e87b038584c00650ca77c6a61927ebf421ada049b08d3f0fe95d883be87927",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/flow.rs::::struct:FlowRun",
-          "source_sha256": "cb13b65c485321853fe2f271dba037f51520d206c991d2cf395c0ca785572290",
+          "source_sha256": "f0e87b038584c00650ca77c6a61927ebf421ada049b08d3f0fe95d883be87927",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/flow.rs::::struct:FlowState",
-          "source_sha256": "cb13b65c485321853fe2f271dba037f51520d206c991d2cf395c0ca785572290",
+          "source_sha256": "f0e87b038584c00650ca77c6a61927ebf421ada049b08d3f0fe95d883be87927",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/flow.rs::::struct:NodeResult",
-          "source_sha256": "cb13b65c485321853fe2f271dba037f51520d206c991d2cf395c0ca785572290",
+          "source_sha256": "f0e87b038584c00650ca77c6a61927ebf421ada049b08d3f0fe95d883be87927",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/flow.rs::::struct:PendingFlow",
-          "source_sha256": "cb13b65c485321853fe2f271dba037f51520d206c991d2cf395c0ca785572290",
+          "source_sha256": "f0e87b038584c00650ca77c6a61927ebf421ada049b08d3f0fe95d883be87927",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/flow.rs::::struct:WaitCursor",
-          "source_sha256": "cb13b65c485321853fe2f271dba037f51520d206c991d2cf395c0ca785572290",
+          "source_sha256": "f0e87b038584c00650ca77c6a61927ebf421ada049b08d3f0fe95d883be87927",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/flow.rs::restore_pinned_plan::type:Plans",
-          "source_sha256": "cb13b65c485321853fe2f271dba037f51520d206c991d2cf395c0ca785572290",
+          "source_sha256": "f0e87b038584c00650ca77c6a61927ebf421ada049b08d3f0fe95d883be87927",
           "registration_sites": []
         },
         {
@@ -5706,17 +5706,17 @@
         },
         {
           "id": "crates/worldinterface-runtime/src/flow_coordinator.rs::::source-module:crates/worldinterface-runtime/src/flow_coordinator.rs",
-          "source_sha256": "f45fe2f6459fee4bd248cbb910bdbc4941bb13d1ab96853b514b76ce49434713",
+          "source_sha256": "1d1660ae5e24a821467b4646cd20e0b693f1e6557e5f2f56023726c0e26427b3",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/flow_coordinator.rs::::struct:ReconcileCursor",
-          "source_sha256": "f45fe2f6459fee4bd248cbb910bdbc4941bb13d1ab96853b514b76ce49434713",
+          "source_sha256": "1d1660ae5e24a821467b4646cd20e0b693f1e6557e5f2f56023726c0e26427b3",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/flow_coordinator.rs::::struct:ReconcileWork",
-          "source_sha256": "f45fe2f6459fee4bd248cbb910bdbc4941bb13d1ab96853b514b76ce49434713",
+          "source_sha256": "1d1660ae5e24a821467b4646cd20e0b693f1e6557e5f2f56023726c0e26427b3",
           "registration_sites": []
         },
         {
@@ -8898,7 +8898,7 @@
         },
         {
           "path": "crates/worldinterface-foundation/storage/src/flow.rs",
-          "source_sha256": "cb13b65c485321853fe2f271dba037f51520d206c991d2cf395c0ca785572290",
+          "source_sha256": "f0e87b038584c00650ca77c6a61927ebf421ada049b08d3f0fe95d883be87927",
           "treatment": "Retain WIP-07 Flow execution, journal, publication and conformance support; preserve shared infrastructure during any legacy connector removal. Retain the bounded sealed-plan validation cache and its Plans alias; cache reuse requires exact plan bytes, expected hash and complete pins and carries no run progress or authorization state."
         },
         {
@@ -9048,7 +9048,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/release/handoff.json",
-          "source_sha256": "0dddf561b0cf8906613cba1841fdb2f6d55e2742418763b802c3a1085773fe14",
+          "source_sha256": "6279ace3f13bd975c6c42a05b9b209356a9b26f035c3019417b9298907481184",
           "treatment": "WSP-04: retain the new supervisor interface/reconciliation evidence and selective legacy references; this surface does not grant legacy removal, Kata qualification or ordinary use."
         },
         {
@@ -9128,7 +9128,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/src/flow_coordinator.rs",
-          "source_sha256": "f45fe2f6459fee4bd248cbb910bdbc4941bb13d1ab96853b514b76ce49434713",
+          "source_sha256": "1d1660ae5e24a821467b4646cd20e0b693f1e6557e5f2f56023726c0e26427b3",
           "treatment": "Retain WIP-07 Flow execution, journal, publication and conformance support; preserve shared infrastructure during any legacy connector removal."
         },
         {

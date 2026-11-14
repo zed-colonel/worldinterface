@@ -57,7 +57,7 @@ pub struct PendingFlow {
     pub run: FlowRun,
     pub quarantine: Option<String>,
 }
-const PENDING_PAGE_SQL: &str = "SELECT rowid,state,quarantine FROM flow_runs INDEXED BY flow_pending WHERE tenant=?1 AND terminal=0 AND rowid>?2 ORDER BY rowid LIMIT ?3";
+const PENDING_PAGE_SQL: &str = "SELECT rowid,state,quarantine FROM flow_runs INDEXED BY flow_pending WHERE tenant=?1 AND terminal=0 AND rowid>?2 AND rowid<=?4 ORDER BY rowid LIMIT ?3";
 
 /// Match the existing per-tenant effect capacity. Runs retain complete history.
 pub const MAX_FLOW_RUNS: usize = 10_000;
@@ -1073,6 +1073,7 @@ impl StoreRoot {
         &self,
         tenant: &OpaqueRef,
         after: i64,
+        through: i64,
         limit: usize,
     ) -> Result<Vec<PendingFlow>> {
         if limit == 0 || limit > 64 {
@@ -1080,7 +1081,7 @@ impl StoreRoot {
         }
         let c = self.connect(StoreKind::Flow)?;
         let mut q = c.prepare(PENDING_PAGE_SQL)?;
-        let rows = q.query_map(params![tenant.as_str(), after, limit as i64], |r| {
+        let rows = q.query_map(params![tenant.as_str(), after, limit as i64, through], |r| {
             Ok((r.get::<_, i64>(0)?, r.get::<_, Vec<u8>>(1)?, r.get::<_, Option<String>>(2)?))
         })?;
         rows.map(|row| {
@@ -1089,17 +1090,17 @@ impl StoreRoot {
         })
         .collect()
     }
-    /// Keyset tenant traversal also bounds work when many tenants have only history.
-    pub fn flow_next_tenant(&self, after: Option<&OpaqueRef>) -> Result<Option<OpaqueRef>> {
+    /// Capture finite admission bounds for a disposable pass. New tenants and
+    /// runs cannot extend it indefinitely while older changed rows await a revisit.
+    pub fn flow_scan_bounds(&self) -> Result<(i64, i64)> {
+        Ok(self.connect(StoreKind::Flow)?.query_row("SELECT COALESCE((SELECT MAX(rowid) FROM flow_state),0),COALESCE((SELECT MAX(rowid) FROM flow_runs),0)", [], |r| Ok((r.get(0)?,r.get(1)?)))?)
+    }
+    /// Rowid keyset traversal avoids scanning newly inserted or history-only
+    /// tenant rows before applying the per-call bound.
+    pub fn flow_next_tenant(&self, after: i64, through: i64) -> Result<Option<(i64, OpaqueRef)>> {
         let c = self.connect(StoreKind::Flow)?;
-        let tenant: Option<String> = c
-            .query_row(
-                "SELECT tenant FROM flow_state WHERE tenant>?1 ORDER BY tenant LIMIT 1",
-                [after.map_or("", OpaqueRef::as_str)],
-                |r| r.get(0),
-            )
-            .optional()?;
-        tenant.map(|t| t.try_into().map_err(invalid)).transpose()
+        let row: Option<(i64,String)> = c.query_row("SELECT rowid,tenant FROM flow_state WHERE rowid>?1 AND rowid<=?2 ORDER BY rowid LIMIT 1", params![after,through], |r| Ok((r.get(0)?,r.get(1)?))).optional()?;
+        row.map(|(key, t)| Ok((key, t.try_into().map_err(invalid)?))).transpose()
     }
     pub fn flow_pending_snapshot(&self, tenant: &OpaqueRef) -> Result<FlowState> {
         read_view(self, tenant, None, true)
@@ -1274,7 +1275,7 @@ mod scheduling_index_tests {
         let measure = |after| {
             let mut q = c.prepare(PENDING_PAGE_SQL).unwrap();
             let rows = q
-                .query_map(params!["t", after, 8], |r| r.get::<_, i64>(0))
+                .query_map(params!["t", after, 8, 10010], |r| r.get::<_, i64>(0))
                 .unwrap()
                 .collect::<std::result::Result<Vec<_>, _>>()
                 .unwrap();
@@ -1290,5 +1291,24 @@ mod scheduling_index_tests {
         assert!(measure(10).0.is_empty());
         c.execute("DELETE FROM flow_runs WHERE terminal=1", []).unwrap();
         assert_eq!(measure(0).1, work_with_history);
+        // A finite pass cannot chase admissions that arrive after its cutoff.
+        for i in 10011..11011 {
+            c.execute("INSERT INTO flow_runs(rowid,tenant,id,request,terminal,state) VALUES(?1,'t',?2,?2,0,x'00')", params![i,i.to_string()]).unwrap();
+        }
+        assert_eq!(measure(8).0, vec![9, 10]);
+        assert!(measure(10).0.is_empty());
+        // Tenant traversal has the same finite cutoff and uses the rowid index.
+        for i in 1..=1000 {
+            c.execute(
+                "INSERT INTO flow_state(rowid,tenant,state) VALUES(?1,?2,x'00')",
+                params![i, format!("tenant-{i}")],
+            )
+            .unwrap();
+        }
+        let mut q=c.prepare("SELECT rowid,tenant FROM flow_state WHERE rowid>?1 AND rowid<=?2 ORDER BY rowid LIMIT 1").unwrap();
+        let key: i64 = q.query_row(params![9, 10], |r| r.get(0)).unwrap();
+        assert_eq!(key, 10);
+        assert!(q.query_row(params![10, 10], |r| r.get::<_, i64>(0)).optional().unwrap().is_none());
+        assert_eq!(q.get_status(rusqlite::StatementStatus::FullscanStep), 0);
     }
 }
