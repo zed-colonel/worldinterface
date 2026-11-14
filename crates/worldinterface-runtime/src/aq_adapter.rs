@@ -429,7 +429,8 @@ impl QueueReferences {
                             {
                                 return Err("invalid effect completion locator".into());
                             }
-                            let state = wi.effect_snapshot(&artifact.scope)?;
+                            let state =
+                                wi.effect_intent_snapshot(&artifact.scope, &locator.intent)?;
                             let effect = state
                                 .effects
                                 .get(&locator.intent)

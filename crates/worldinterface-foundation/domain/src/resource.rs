@@ -240,6 +240,11 @@ pub fn resolve_resource(
                     return Err("worker target operation mismatch".into());
                 }
             }
+            if let Target::Lifecycle { operation, .. } = &f.document.target {
+                if operation != &d.operation {
+                    return Err("lifecycle target operation mismatch".into());
+                }
+            }
             Ok(ConnectorExecution {
                 binding: binding.clone(),
                 operation_identity: intent.stable_idempotency_identity.clone(),

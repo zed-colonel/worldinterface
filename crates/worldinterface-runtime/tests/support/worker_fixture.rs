@@ -774,9 +774,9 @@ impl Harness {
         .await;
     }
     pub async fn operation_expect(&self, op: Operation, expected: FlowOutcome) {
-        let snapshot = self.demand(op).1;
+        let (submission, snapshot, config) = self.demand(op);
         assert_eq!(
-            self.operation_snapshot(op, snapshot).await,
+            self.operation_prepared(op, submission, snapshot, config).await,
             expected,
             "worker operation {op:?}"
         );
@@ -787,6 +787,17 @@ impl Harness {
         snapshot: AuthorizationSnapshot,
     ) -> FlowOutcome {
         let (submission, _, config) = self.demand(op);
+        self.operation_prepared(op, submission, snapshot, config).await
+    }
+    /// Execute one freshly constructed demand, retaining duplicate admission and
+    /// all live admission/dispatch checks without republishing its artifacts.
+    pub async fn operation_prepared(
+        &self,
+        op: Operation,
+        submission: EffectSubmission,
+        snapshot: AuthorizationSnapshot,
+        config: Config,
+    ) -> FlowOutcome {
         let evidence = Evidence {
             base: HostEvidence(snapshot.clone()),
             evaluation: self.evaluation.clone(),
@@ -855,7 +866,10 @@ impl Harness {
                 break run.outcome.clone().unwrap();
             }
             assert!(Instant::now() < deadline, "worker Flow deadline: {run:?}");
-            tokio::time::sleep(Duration::from_millis(2)).await;
+            // The handler validates packet bytes and journals on blocking
+            // threads. Repeated idle ticks also read the growing durable state;
+            // pace them so polling does not compete with the work it awaits.
+            tokio::time::sleep(Duration::from_millis(20)).await;
         };
         queue.shutdown().unwrap();
         outcome

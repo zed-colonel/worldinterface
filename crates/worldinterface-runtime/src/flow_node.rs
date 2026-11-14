@@ -170,7 +170,8 @@ impl<
         }
         if let Some(result) = r.results.get(node) {
             if result.effect.is_some() && result.disposition == NodeDisposition::Succeeded {
-                let state = root.effect_snapshot(&r.tenant)?;
+                let state =
+                    root.effect_intent_snapshot(&r.tenant, result.effect.as_ref().unwrap())?;
                 let effect = state
                     .effects
                     .get(result.effect.as_ref().unwrap())
@@ -348,7 +349,7 @@ impl<
                     r.tenant.clone(),
                     r.principal.clone(),
                 );
-                let state = root.effect_snapshot(&r.tenant)?;
+                let state = root.effect_owner_snapshot(&r.tenant, &r.id, Some(node))?;
                 if let Some(effect) = state
                     .effects
                     .values()
@@ -398,7 +399,7 @@ impl<
                         owner: EffectOwner { flow: r.id.clone(), node: node.clone() },
                     },
                 )?;
-                let owned = root.effect_snapshot(&r.tenant)?;
+                let owned = root.effect_intent_snapshot(&r.tenant, &id)?;
                 if owned.effects.get(&id).and_then(|e| e.owner.as_ref())
                     != Some(&EffectOwner { flow: r.id.clone(), node: node.clone() })
                 {
@@ -443,7 +444,7 @@ impl<
                     return self.record(r, node, result);
                 }
                 if view.phase == Phase::Authorized {
-                    let state = root.effect_snapshot(&r.tenant)?;
+                    let state = root.effect_intent_snapshot(&r.tenant, &id)?;
                     let effect = &state.effects[&id];
                     let boundary_request = admission_request(
                         &r.tenant,
@@ -673,7 +674,7 @@ pub(crate) fn require_dispatch_open(
     tenant: &OpaqueRef,
     id: &EffectIntentId,
 ) -> Result<()> {
-    let effects = root.effect_snapshot(tenant)?;
+    let effects = root.effect_intent_snapshot(tenant, id)?;
     let effect = effects.effects.get(id).ok_or_else(|| rejected("missing dispatch effect"))?;
     if let Some(owner) = &effect.owner {
         let state = root.flow_run_snapshot(tenant, &owner.flow)?;

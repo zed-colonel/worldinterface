@@ -13,6 +13,7 @@ CREATE TABLE worker_history(seq INTEGER PRIMARY KEY, command BLOB NOT NULL, dige
 CREATE TRIGGER worker_no_update BEFORE UPDATE ON worker_history BEGIN SELECT RAISE(ABORT,'append only'); END;
 CREATE TRIGGER worker_no_delete BEFORE DELETE ON worker_history BEGIN SELECT RAISE(ABORT,'append only'); END;
 CREATE TABLE worker_runs(tenant TEXT NOT NULL, provider TEXT NOT NULL, run TEXT NOT NULL, request TEXT NOT NULL, reserved INTEGER NOT NULL, state BLOB NOT NULL, PRIMARY KEY(tenant,provider,run), UNIQUE(tenant,request));
+CREATE INDEX worker_reserved ON worker_runs(tenant,provider,run) WHERE reserved=1;
 CREATE TABLE worker_snapshots(identity TEXT PRIMARY KEY, content TEXT NOT NULL, bytes BLOB NOT NULL);
 CREATE TRIGGER worker_snapshot_no_update BEFORE UPDATE ON worker_snapshots BEGIN SELECT RAISE(ABORT,'immutable'); END;
 CREATE TRIGGER worker_snapshot_no_delete BEFORE DELETE ON worker_snapshots BEGIN SELECT RAISE(ABORT,'immutable'); END;

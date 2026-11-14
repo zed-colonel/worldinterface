@@ -231,7 +231,7 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
         &self,
         bound: &crate::completion::BoundExecution,
     ) -> Result<Option<(WorkerBinding, WorkerRequestV1)>> {
-        let snapshot = self.bundle.wi().effect_snapshot(&bound.tenant)?;
+        let snapshot = self.bundle.wi().effect_intent_snapshot(&bound.tenant, &bound.intent)?;
         let effect = snapshot.effects.get(&bound.intent).ok_or("worker effect absent")?;
         let facts = effect.authorization_inputs.as_ref().ok_or("worker authority absent")?;
         let Some(recovery) = &facts.recovery else {
@@ -759,7 +759,7 @@ impl<S> Clone for WorkerConnector<S> {
 impl<S: TrustedWorkerBuild> WorkerConnector<S> {
     fn recovery_state(&self, r: &ReconcileRequest) -> Result<WorkerState> {
         let root = self.runtime.bundle.wi();
-        let snapshot = root.effect_snapshot(&r.tenant)?;
+        let snapshot = root.effect_intent_snapshot(&r.tenant, &r.intent)?;
         let effect = snapshot.effects.get(&r.intent).ok_or("recovery effect absent")?;
         let w = effect
             .authorization_inputs

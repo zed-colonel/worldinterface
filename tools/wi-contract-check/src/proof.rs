@@ -312,6 +312,9 @@ fn validate_runtime_ownership(packages: &BTreeMap<String, &Value>) -> Result<()>
 }
 
 fn allocation(id: &str, source: &Value) -> Result<(String, String)> {
+    if matches!(id, "WP-035" | "WP-036" | "WP-037" | "WP-038" | "WP-039") {
+        return Ok((string(source, "checkpoint")?.to_owned(), "WSP-03".into()));
+    }
     let n: usize = id.rsplit('-').next().ok_or("case number missing")?.parse()?;
     let (gate, item) = if id.starts_with("WP-") {
         let item = match n {
@@ -471,6 +474,7 @@ fn coverage(root: &Path, id: &str) -> Result<(Vec<String>, BTreeSet<TestRef>)> {
     for path in [
         "conformance/wi-fabric-2/worker/embedded-coverage.json",
         "conformance/wi-fabric-2/worker/campaign-coverage.json",
+        "conformance/wi-fabric-2/worker/supervisor-coverage.json",
     ] {
         let v = read(&root.join(path))?;
         if let Some(references) = v["assigned_cases"].get(id) {
@@ -657,7 +661,7 @@ pub fn validate(
         }
     }
     if seen != sources.keys().cloned().collect() {
-        reject("PROOF-CASE", "registry", "register exactly all 55 in-scope cases");
+        reject("PROOF-CASE", "registry", "register exactly all 60 campaign cases");
     }
     let source_gates = array(&export, "checkpoints")?;
     let expected_ids: BTreeSet<_> =
@@ -712,7 +716,7 @@ pub fn validate(
         let required: BTreeSet<String> = sources
             .iter()
             .filter(|(id, (_, _, gate, _))| match g.id.as_str() {
-                "WI-EMBEDDED-WORKER-PROOF-1" => true,
+                "WI-EMBEDDED-WORKER-PROOF-1" => worker_case_ids().contains(*id),
                 "WI-EMBEDDED-CORE-1" => {
                     id.starts_with("AB-") && !["AB-WI-019", "AB-WI-021"].contains(&id.as_str())
                 }
@@ -771,6 +775,29 @@ pub fn validate(
         reject("PROOF-CYCLE", "gates", "prerequisite cycle");
     }
     Ok(f)
+}
+/// Historical worker milestone membership remains fixed at 55 cases.
+pub fn worker_case_ids() -> BTreeSet<String> {
+    (1..=34)
+        .map(|n| format!("WP-{n:03}"))
+        .chain((1..=23).filter(|n| ![17, 18].contains(n)).map(|n| format!("AB-WI-{n:03}")))
+        .collect()
+}
+pub fn campaign_case_ids() -> BTreeSet<String> {
+    worker_case_ids().into_iter().chain((35..=39).map(|n| format!("WP-{n:03}"))).collect()
+}
+pub fn validate_campaign_scope(registry: &Registry) -> Result<()> {
+    let ids: BTreeSet<_> = registry.cases.iter().map(|c| c.id.clone()).collect();
+    if registry.cases.len() != 60 || ids != campaign_case_ids() {
+        return Err("campaign requires exactly the historical 55 plus WP-035 through WP-039".into());
+    }
+    Ok(())
+}
+pub fn load_worker(root: &Path) -> Result<(Registry, Vec<Gate>)> {
+    let (mut registry, gates) = load(root)?;
+    validate_campaign_scope(&registry)?;
+    registry.cases.retain(|c| worker_case_ids().contains(&c.id));
+    Ok((registry, gates))
 }
 pub fn load(root: &Path) -> Result<(Registry, Vec<Gate>)> {
     let registry = serde_json::from_value(read(&root.join(format!("{BASE}/cases.json")))?)?;
@@ -1521,6 +1548,43 @@ fn embedded_consumer_violations(code: &str, helper: bool) -> Result<Vec<String>>
     boundary.visit_file(&file);
     Ok(boundary.violations)
 }
+/// Implementation resolution only; imported planning sources and G5 stay intact.
+pub fn validate_supervisor(root: &Path, registry: &Registry, index: &TestIndex) -> Result<()> {
+    validate_campaign_scope(registry)?;
+    let v = read(&root.join("conformance/wi-fabric-2/worker/supervisor-coverage.json"))?;
+    if v["version"] != 1
+        || v["owning_item"] != "WSP-03"
+        || v["scope"] != "wi/WI-11/supervisor-boundary"
+        || v["runtime_pass_asserted"] != false
+        || v["assumption"]["id"] != "WP-A08"
+        || v["assumption"]["status"] != "resolved-by-implementation"
+        || v["assumption"]["result_store"] != "operator-owned journal outside StoreBundle and guest"
+        || v["assumption"]["recovery"]
+            != "authenticated inspect; ambiguous dispatch never redispatched"
+        || v["assumption"]["real_instance_qualification"]
+            != "Exoskeleton-owned; WSP-04 owns WP-040 and G5"
+    {
+        return Err("supervisor scope, authority or WP-A08 resolution drift".into());
+    }
+    let assigned = v["assigned_cases"].as_object().ok_or("missing supervisor cases")?;
+    let expected: BTreeSet<_> = (35..=39).map(|n| format!("WP-{n:03}")).collect();
+    if assigned.keys().cloned().collect::<BTreeSet<_>>() != expected {
+        return Err("exact supervisor case set required".into());
+    }
+    for (id, references) in assigned {
+        let refs: Vec<TestRef> = serde_json::from_value(references.clone())?;
+        let case = registry.cases.iter().find(|c| c.id == *id).ok_or("supervisor case missing")?;
+        if refs.is_empty()
+            || case.status != "implemented"
+            || case.owning_item != "WSP-03"
+            || refs.iter().any(|r| index.get(r) != Some(&1) || !case.tests.contains(r))
+        {
+            return Err("supervisor implementation evidence incomplete".into());
+        }
+    }
+    Ok(())
+}
+
 #[cfg(test)]
 mod embedded_boundary_tests {
     use super::*;

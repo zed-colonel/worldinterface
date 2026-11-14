@@ -48,7 +48,7 @@ impl<A: Authentication, P: EventAuthorization> EventIntake<'_, A, P> {
         artifact: ArtifactRef,
     ) -> Result<OpaqueRef> {
         let caller = caller(self.authentication, session)?;
-        let state = self.root.effect_snapshot(caller.tenant())?;
+        let state = self.root.effect_intent_snapshot(caller.tenant(), intent)?;
         let effect = state.effects.get(intent).ok_or("callback effect unavailable")?;
         let source: OpaqueRef = intent.as_str().to_string().try_into()?;
         let route = self.policy.authorize(&caller, EventKind::ProviderCallback, &source)?;

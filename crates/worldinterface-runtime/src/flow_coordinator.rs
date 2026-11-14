@@ -381,7 +381,7 @@ pub(crate) fn reconcile<H: actionqueue_executor_local::handler::ExecutorHandler 
                     let outcome = if outcome == FlowOutcome::Succeeded {
                         // A terminal coordinator may have been canceled after an
                         // owned effect committed, before its Finish publication.
-                        let effects = root.effect_snapshot(&tenant)?;
+                        let effects = root.effect_owner_snapshot(&tenant, &r.id, None)?;
                         if effects.effects.values().any(|e| {
                             e.owner.as_ref().is_some_and(|o| o.flow == r.id)
                                 && e.phase == worldinterface_domain::Phase::Succeeded
@@ -549,7 +549,7 @@ fn cancel_quarantined<H: actionqueue_executor_local::handler::ExecutorHandler + 
 fn domain_outcome(root: &StoreRoot, r: &FlowRun, missing: FlowOutcome) -> Result<FlowOutcome> {
     let mut outcome =
         if r.cancel_requested { FlowOutcome::Canceled } else { FlowOutcome::Succeeded };
-    let effects = root.effect_snapshot(&r.tenant)?;
+    let effects = root.effect_owner_snapshot(&r.tenant, &r.id, None)?;
     let mut fold = |next: FlowOutcome| {
         let rank = |o: &FlowOutcome| match o {
             FlowOutcome::Succeeded => 0,

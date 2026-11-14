@@ -1,4 +1,4 @@
-//! Inactive WI-owned worker boundary. Validation of these declarations grants no authority.
+//! WI-owned worker and separate supervisor boundary. Declarations alone grant no authority.
 pub mod artifacts;
 pub mod controls;
 pub mod credential;
@@ -7,6 +7,7 @@ pub mod lifecycle;
 pub mod mapping;
 pub mod ports;
 pub mod profile;
+pub mod supervisor;
 
 use serde::{de::DeserializeOwned, Serialize};
 use worldinterface_protocol::{canonical_collection, strict_collection};

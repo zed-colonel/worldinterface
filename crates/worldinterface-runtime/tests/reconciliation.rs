@@ -49,25 +49,51 @@ async fn reconciliation_waits_when_dispatched_before_acknowledgment() {
         serde_json::from_slice(&h.case().admission_request.unwrap()).unwrap();
     let admission = q.ensure_task(request).unwrap();
     let run = q.engine().projection().run_ids_for_task(admission.task_id())[0];
-    for _ in 0..20 {
+    // Exercise the unacknowledged dispatch through its durable wait. A fixed
+    // number of short polls can finish before the executor runs under pool load.
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(10);
+    let mut waited_without_ack = false;
+    while std::time::Instant::now() < deadline {
         let _ = q.tick().await.unwrap();
+        waited_without_ack =
+            q.engine().projection().get_attempt_history(&run).into_iter().flatten().any(|a| {
+                a.disposition.as_ref().is_some_and(|d| {
+                    matches!(
+                        d.disposition.outcome(),
+                        actionqueue_core::disposition::DispositionOutcome::Awaiting
+                    )
+                })
+            });
+        if waited_without_ack {
+            break;
+        }
         tokio::time::sleep(std::time::Duration::from_millis(2)).await;
     }
+    assert!(waited_without_ack, "{:?}", q.engine().projection().get_attempt_history(&run));
     assert!(h.case().aq_run.is_none());
     assert!(!q.engine().projection().get_run_state(&run).unwrap().is_terminal());
     assert_eq!(h.case().observations, 0);
     reconciliation::deliver(&mut q, &h.caller(), &h.clock, &h.id).unwrap();
     h.clock.advance(2000);
     tokio::time::sleep(std::time::Duration::from_millis(2100)).await;
-    for _ in 0..100 {
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(10);
+    while std::time::Instant::now() < deadline {
         let _ = q.tick().await.unwrap();
         if h.case().status.terminal() {
             break;
         }
         tokio::time::sleep(std::time::Duration::from_millis(2)).await;
     }
-    assert_eq!(h.case().status, CaseStatus::ConfirmedCommitted);
+    let case = h.case();
+    let attempts = format!("{:?}", q.engine().projection().get_attempt_history(&run));
     q.shutdown().unwrap();
+    if case.status != CaseStatus::ConfirmedCommitted {
+        let path = h.temp.keep();
+        panic!(
+            "reconciliation did not settle: {case:?}; AQ attempts: {attempts}; bundle retained at {}",
+            path.display()
+        );
+    }
 }
 
 #[tokio::test]
