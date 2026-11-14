@@ -1254,7 +1254,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/release/handoff.json",
-          "source_sha256": "e8a7ce8cd04c16a1d3ab3c7665e82a385277abcf7a2022dc2b56e8d05c87ce61",
+          "source_sha256": "ee84f42894014e21bbe1d51ac4e3ad9e1e9689d8c5d06e037d1dd7e20564cd70",
           "treatment": "Retain WSP-02 package evidence/support and registry consumer. Future legacy removal must preserve authoritative byte equality and release consumer coverage."
         },
         {
@@ -6531,37 +6531,37 @@
         },
         {
           "id": "crates/worldinterface-runtime/src/worker_process/ownership.rs::::enum:Acquisition",
-          "source_sha256": "d14488c93e6594d796e3906b9b51a5fff99e39053b22509a039c014987cf7909",
+          "source_sha256": "e49ae805fbe1595f23c9ef91e882d1b28ac68dadc1aa2d104f2bb3ab2d6512b1",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/worker_process/ownership.rs::::module:tests@10d1b0eff34c",
-          "source_sha256": "d14488c93e6594d796e3906b9b51a5fff99e39053b22509a039c014987cf7909",
+          "source_sha256": "e49ae805fbe1595f23c9ef91e882d1b28ac68dadc1aa2d104f2bb3ab2d6512b1",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/worker_process/ownership.rs::::source-module:crates/worldinterface-runtime/src/worker_process/ownership.rs",
-          "source_sha256": "d14488c93e6594d796e3906b9b51a5fff99e39053b22509a039c014987cf7909",
+          "source_sha256": "e49ae805fbe1595f23c9ef91e882d1b28ac68dadc1aa2d104f2bb3ab2d6512b1",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/worker_process/ownership.rs::::struct:Context",
-          "source_sha256": "d14488c93e6594d796e3906b9b51a5fff99e39053b22509a039c014987cf7909",
+          "source_sha256": "e49ae805fbe1595f23c9ef91e882d1b28ac68dadc1aa2d104f2bb3ab2d6512b1",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/worker_process/ownership.rs::::struct:Identity",
-          "source_sha256": "d14488c93e6594d796e3906b9b51a5fff99e39053b22509a039c014987cf7909",
+          "source_sha256": "e49ae805fbe1595f23c9ef91e882d1b28ac68dadc1aa2d104f2bb3ab2d6512b1",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/worker_process/ownership.rs::::struct:Owned",
-          "source_sha256": "d14488c93e6594d796e3906b9b51a5fff99e39053b22509a039c014987cf7909",
+          "source_sha256": "e49ae805fbe1595f23c9ef91e882d1b28ac68dadc1aa2d104f2bb3ab2d6512b1",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/src/worker_process/ownership.rs::tests::struct:ChildGuard@10d1b0eff34c",
-          "source_sha256": "d14488c93e6594d796e3906b9b51a5fff99e39053b22509a039c014987cf7909",
+          "source_sha256": "e49ae805fbe1595f23c9ef91e882d1b28ac68dadc1aa2d104f2bb3ab2d6512b1",
           "registration_sites": []
         },
         {
@@ -9048,7 +9048,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/release/handoff.json",
-          "source_sha256": "e8a7ce8cd04c16a1d3ab3c7665e82a385277abcf7a2022dc2b56e8d05c87ce61",
+          "source_sha256": "ee84f42894014e21bbe1d51ac4e3ad9e1e9689d8c5d06e037d1dd7e20564cd70",
           "treatment": "WSP-04: retain the new supervisor interface/reconciliation evidence and selective legacy references; this surface does not grant legacy removal, Kata qualification or ordinary use."
         },
         {
@@ -9288,7 +9288,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/src/worker_process/ownership.rs",
-          "source_sha256": "d14488c93e6594d796e3906b9b51a5fff99e39053b22509a039c014987cf7909",
+          "source_sha256": "e49ae805fbe1595f23c9ef91e882d1b28ac68dadc1aa2d104f2bb3ab2d6512b1",
           "treatment": "WIP-09: retain reviewed process adapter mechanics and fixture evidence; selective shared-infrastructure maintenance only, with no legacy removal or new approval claim."
         },
         {

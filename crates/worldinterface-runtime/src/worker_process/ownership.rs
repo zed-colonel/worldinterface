@@ -100,7 +100,7 @@ impl Owned {
         parent: u32,
         subreaper: Option<u32>,
         context: &Context,
-        barrier: impl FnOnce(),
+        after_handle_acquired: impl FnOnce(),
     ) -> Result<Acquisition> {
         let Some((_, birth)) = stat_if_present(pid)? else {
             return Ok(Acquisition::Departed);
@@ -125,7 +125,7 @@ impl Owned {
             handle,
         };
         // Tests force parent exit or child reaping after the handle is acquired.
-        barrier();
+        after_handle_acquired();
         let validated = record.validate(context);
         if record.exited() {
             return Ok(Acquisition::Departed);

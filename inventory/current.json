@@ -13030,7 +13030,7 @@
     "kind": "enum",
     "path": "crates/worldinterface-runtime/src/worker_process/ownership.rs",
     "name": "Acquisition",
-    "source_sha256": "d14488c93e6594d796e3906b9b51a5fff99e39053b22509a039c014987cf7909",
+    "source_sha256": "e49ae805fbe1595f23c9ef91e882d1b28ac68dadc1aa2d104f2bb3ab2d6512b1",
     "conditions": [],
     "registration_sites": []
   },
@@ -13039,7 +13039,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/src/worker_process/ownership.rs",
     "name": "tests",
-    "source_sha256": "d14488c93e6594d796e3906b9b51a5fff99e39053b22509a039c014987cf7909",
+    "source_sha256": "e49ae805fbe1595f23c9ef91e882d1b28ac68dadc1aa2d104f2bb3ab2d6512b1",
     "conditions": [
       "# [cfg (test)]"
     ],
@@ -13050,7 +13050,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-runtime/src/worker_process/ownership.rs",
     "name": "crates/worldinterface-runtime/src/worker_process/ownership.rs",
-    "source_sha256": "d14488c93e6594d796e3906b9b51a5fff99e39053b22509a039c014987cf7909",
+    "source_sha256": "e49ae805fbe1595f23c9ef91e882d1b28ac68dadc1aa2d104f2bb3ab2d6512b1",
     "conditions": [],
     "registration_sites": []
   },
@@ -13059,7 +13059,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/src/worker_process/ownership.rs",
     "name": "Context",
-    "source_sha256": "d14488c93e6594d796e3906b9b51a5fff99e39053b22509a039c014987cf7909",
+    "source_sha256": "e49ae805fbe1595f23c9ef91e882d1b28ac68dadc1aa2d104f2bb3ab2d6512b1",
     "conditions": [],
     "registration_sites": []
   },
@@ -13068,7 +13068,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/src/worker_process/ownership.rs",
     "name": "Identity",
-    "source_sha256": "d14488c93e6594d796e3906b9b51a5fff99e39053b22509a039c014987cf7909",
+    "source_sha256": "e49ae805fbe1595f23c9ef91e882d1b28ac68dadc1aa2d104f2bb3ab2d6512b1",
     "conditions": [],
     "registration_sites": []
   },
@@ -13077,7 +13077,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/src/worker_process/ownership.rs",
     "name": "Owned",
-    "source_sha256": "d14488c93e6594d796e3906b9b51a5fff99e39053b22509a039c014987cf7909",
+    "source_sha256": "e49ae805fbe1595f23c9ef91e882d1b28ac68dadc1aa2d104f2bb3ab2d6512b1",
     "conditions": [],
     "registration_sites": []
   },
@@ -13086,7 +13086,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/src/worker_process/ownership.rs",
     "name": "ChildGuard",
-    "source_sha256": "d14488c93e6594d796e3906b9b51a5fff99e39053b22509a039c014987cf7909",
+    "source_sha256": "e49ae805fbe1595f23c9ef91e882d1b28ac68dadc1aa2d104f2bb3ab2d6512b1",
     "conditions": [
       "# [cfg (test)]"
     ],

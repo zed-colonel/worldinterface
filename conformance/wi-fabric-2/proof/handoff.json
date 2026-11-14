@@ -3584,7 +3584,7 @@
     "crates/worldinterface-runtime/src/worker_process/journal.rs": "be08dc629329b801f506652dee8178d9285646e4f9297ceb225306dc2639d467",
     "crates/worldinterface-runtime/src/worker_process/launch.rs": "42bd7c004c2971e70adacc129f47714c7997299d58b5512b83ca5d10792d5003",
     "crates/worldinterface-runtime/src/worker_process/mod.rs": "64e04b9003318dbe15d508eaad5e37a85ec081f4969ed6cfe9982f9c1a3048f6",
-    "crates/worldinterface-runtime/src/worker_process/ownership.rs": "d14488c93e6594d796e3906b9b51a5fff99e39053b22509a039c014987cf7909",
+    "crates/worldinterface-runtime/src/worker_process/ownership.rs": "e49ae805fbe1595f23c9ef91e882d1b28ac68dadc1aa2d104f2bb3ab2d6512b1",
     "crates/worldinterface-runtime/src/worker_process/supervision.rs": "0508107c755ccc77b898e600b93938539e4d7c0041bba26f0afbbda11b376675",
     "crates/worldinterface-runtime/tests/support/supervisor_fixture.rs": "245753ea690f51655f0fd51f90604d6cdf9105bcb5c34b8d40f717b41611128d",
     "crates/worldinterface-runtime/tests/support/supervisor_harness.rs": "53d36473919e3c2a93183da3d40fe1a40b3c3ca731ae23226e947312cb5a9b85",

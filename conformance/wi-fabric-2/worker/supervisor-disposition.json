@@ -16,7 +16,7 @@
     },
     {
       "path": "crates/worldinterface-runtime/src/worker_process/ownership.rs",
-      "sha256": "d14488c93e6594d796e3906b9b51a5fff99e39053b22509a039c014987cf7909",
+      "sha256": "e49ae805fbe1595f23c9ef91e882d1b28ac68dadc1aa2d104f2bb3ab2d6512b1",
       "rationale": "WSP-04 F-008: acquired/departed/rediscovery states distinguish child reparenting to the dedicated subreaper or exit during acquisition; fresh root acquisition validates stable birth, handle and context before adoption. Live identity mismatches remain fatal. Deterministic barriers preserve unrelated-process and descendant cleanup assertions. No broader continuation exception, operations, authority or isolation claim. Candidate verification requires exact committed packet bindings; durable acceptance requires qualifying review/merge with adopted checks."
     }
   ]
