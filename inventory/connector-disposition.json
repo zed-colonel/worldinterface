@@ -1254,7 +1254,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/release/handoff.json",
-          "source_sha256": "6279ace3f13bd975c6c42a05b9b209356a9b26f035c3019417b9298907481184",
+          "source_sha256": "e8a7ce8cd04c16a1d3ab3c7665e82a385277abcf7a2022dc2b56e8d05c87ce61",
           "treatment": "Retain WSP-02 package evidence/support and registry consumer. Future legacy removal must preserve authoritative byte equality and release consumer coverage."
         },
         {
@@ -7941,7 +7941,7 @@
         },
         {
           "id": "crates/worldinterface-runtime/tests/worker_campaign.rs::::source-module:crates/worldinterface-runtime/tests/worker_campaign.rs",
-          "source_sha256": "2ce9697f01ac3d32ad75ed7df622fb97404fa8282d76715a01d3e1c3041b46de",
+          "source_sha256": "4873be2c61a1df3ae17bb404d959d3627786064158ace190bd8ee4ece0338af1",
           "registration_sites": []
         },
         {
@@ -9048,7 +9048,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/release/handoff.json",
-          "source_sha256": "6279ace3f13bd975c6c42a05b9b209356a9b26f035c3019417b9298907481184",
+          "source_sha256": "e8a7ce8cd04c16a1d3ab3c7665e82a385277abcf7a2022dc2b56e8d05c87ce61",
           "treatment": "WSP-04: retain the new supervisor interface/reconciliation evidence and selective legacy references; this surface does not grant legacy removal, Kata qualification or ordinary use."
         },
         {
@@ -9523,7 +9523,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/tests/worker_campaign.rs",
-          "source_sha256": "2ce9697f01ac3d32ad75ed7df622fb97404fa8282d76715a01d3e1c3041b46de",
+          "source_sha256": "4873be2c61a1df3ae17bb404d959d3627786064158ace190bd8ee4ece0338af1",
           "treatment": "Retain WIP-15 campaign infrastructure and executable producer evidence; no legacy removal or replacement qualification is asserted."
         },
         {

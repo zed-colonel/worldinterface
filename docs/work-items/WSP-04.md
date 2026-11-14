@@ -64,6 +64,11 @@ No alpha version change or publication occurs here; WSP-05 prepares alpha.2.
 
 ## Verification
 
+The adopted runtime entry point independently runs `handoff verify` after campaign
+construction, while the exact private source/build environment still exists. This
+checks persisted receipt, observation, executable and publication bindings without
+repeating physical scenarios or requiring another campaign.
+
 Targeted checks and adopted committed-head checks are recorded in the implementation
 run's external scratch/verification logs. Final results are recorded by CraftingTable
 and the implementation handoff. Any F-007 recurrence is blocking and requires

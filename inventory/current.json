@@ -15589,7 +15589,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-runtime/tests/worker_campaign.rs",
     "name": "crates/worldinterface-runtime/tests/worker_campaign.rs",
-    "source_sha256": "2ce9697f01ac3d32ad75ed7df622fb97404fa8282d76715a01d3e1c3041b46de",
+    "source_sha256": "4873be2c61a1df3ae17bb404d959d3627786064158ace190bd8ee4ece0338af1",
     "conditions": [],
     "registration_sites": []
   },
