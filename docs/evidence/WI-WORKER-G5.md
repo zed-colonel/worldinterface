@@ -26,6 +26,10 @@ receipt, reconciliation result and activation count. The campaign binds each fil
 to an exact passing test, executable/log hashes, source generation and evaluation
 packet. Missing, substituted, contradictory and unowned evidence fails closed.
 Failed scenarios retain their operator records for diagnosis in external evidence.
+F-003 lifetime fields are derived from observed facts: the guest's reaped SIGKILL
+exit status, absence of the temporary WI path after removal, and a different
+supervisor process ID for the final authenticated inspect. Each is asserted before
+publication of the observation.
 
 Exoskeleton owns actual Kata stop/recreate, storage durability, image compatibility,
 deployment controls and isolation qualification. No Kata engine, real VM lifecycle,

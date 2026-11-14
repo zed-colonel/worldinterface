@@ -5169,8 +5169,8 @@
     "id": "crates/worldinterface-foundation/storage/src/repository.rs::::source-module:crates/worldinterface-foundation/storage/src/repository.rs",
     "disposition": "retain-align",
     "target": "worldinterface-storage",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Fresh local persistence and query/backup primitives; no legacy readers or external effects."
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses; docs/work-items/WSP-04.md: F-001 remediation",
+    "rationale": "Fresh local persistence and query/backup primitives; no legacy readers or external effects. WSP-04 F-001 remediation: AQ changed-task hints prioritize active Flows within the shared eight-row bound; an optional exactly validated global pending index skips history tenants. Submitted for qualifying source review with adopted checks."
   },
   {
     "id": "crates/worldinterface-foundation/storage/src/repository.rs::::struct:Admission",
@@ -10335,8 +10335,8 @@
     "id": "crates/worldinterface-runtime/src/flow_coordinator.rs::::struct:ReconcileCursor",
     "disposition": "retain-align",
     "target": "continuation domain/storage/runtime",
-    "rationale": "WIP-08 F-011 through F-014 remediation: disposable scalar scan cursor and acknowledgment/operator regression fixtures.",
-    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+    "rationale": "WIP-08 F-011 through F-014 remediation: disposable scalar scan cursor and acknowledgment/operator regression fixtures. WSP-04 F-001 remediation: AQ changed-task hints prioritize active Flows within the shared eight-row bound; an optional exactly validated global pending index skips history tenants. Submitted for qualifying source review with adopted checks.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015; docs/work-items/WSP-04.md: F-001 remediation"
   },
   {
     "id": "crates/worldinterface-runtime/tests/continuation_recovery.rs::::struct:CheckWakeAcknowledgment",

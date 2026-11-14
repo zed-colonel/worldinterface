@@ -449,6 +449,16 @@ pub(crate) fn validate_database(c: &Connection) -> Result<()> {
         let rows = q.query_map([], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)))?;
         Ok(rows.collect::<rusqlite::Result<Vec<_>>>()?)
     };
+    // The only optional schema-1 addition is a derived scheduling index. Match
+    // its exact definition too: an index with the same name cannot hide drift.
+    let scheduling_index: bool = c.query_row(
+        "SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE name='flow_pending_global')",
+        [],
+        |r| r.get(0),
+    )?;
+    if scheduling_index {
+        expected.execute_batch(crate::flow::SCHEDULING_INDEX_SQL)?;
+    }
     if schema(c)? != schema(&expected)? {
         return Err(invalid("unsupported schema"));
     }
@@ -458,6 +468,29 @@ pub(crate) fn validate_database(c: &Connection) -> Result<()> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn optional_scheduling_index_preserves_legacy_schema_and_rejects_drift() {
+        let c = Connection::open_in_memory().unwrap();
+        for schema in [
+            SCHEMA,
+            crate::ingress::SCHEMA,
+            crate::effect::SCHEMA,
+            crate::flow::SCHEMA,
+            crate::continuation::SCHEMA,
+            crate::worker::SCHEMA,
+            crate::control_plane::SCHEMA,
+        ] {
+            c.execute_batch(schema).unwrap();
+        }
+        validate_database(&c).unwrap();
+        c.execute_batch(crate::flow::SCHEDULING_INDEX_SQL).unwrap();
+        validate_database(&c).unwrap();
+        c.execute_batch(
+            "DROP INDEX flow_pending_global; CREATE INDEX flow_pending_global ON flow_runs(tenant)",
+        )
+        .unwrap();
+        assert!(validate_database(&c).unwrap_err().to_string().contains("unsupported schema"));
+    }
     #[test]
     fn every_transaction_fault_rolls_back_records_outbox_history_and_projection() {
         for fault in ["records", "outbox", "history"] {

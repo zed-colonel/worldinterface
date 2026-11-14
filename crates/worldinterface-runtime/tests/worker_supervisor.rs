@@ -297,9 +297,10 @@ fn lifecycle(
             .unwrap(),
     );
     assert_guest_isolated(guest.id(), &mut readiness);
+    let mut guest_exit = None;
     if failed_guest_first {
         guest.kill().unwrap();
-        guest.wait().unwrap();
+        guest_exit = Some(guest.wait().unwrap());
     }
     if lost_ack {
         std::fs::write(root.join("drop-ack"), b"1").unwrap();
@@ -310,6 +311,7 @@ fn lifecycle(
         std::fs::write(root.join("delay-abort"), b"1").unwrap();
     }
     let (client, mut supervisor) = channel(root, &config);
+    let initial_supervisor = supervisor.id();
     let initial = cut
         .filter(|p| p.starts_with("fabric-"))
         .map(|p| format!("invoke-cut-{p}"))
@@ -335,8 +337,10 @@ fn lifecycle(
     }
     if !failed_guest_first {
         guest.kill().unwrap();
-        guest.wait().unwrap();
+        guest_exit = Some(guest.wait().unwrap());
     }
+    let guest_stopped = guest_exit.is_some_and(|status| status.signal() == Some(libc::SIGKILL));
+    assert!(guest_stopped, "guest death was not reaped");
     drop(supervisor);
     let _ = std::fs::remove_file(root.join("drop-ack"));
     let _ = std::fs::remove_file(root.join("interrupt-dispatch"));
@@ -358,11 +362,16 @@ fn lifecycle(
     // temporary state before one final authenticated inspect of retained results.
     let wi_evidence: serde_json::Value =
         serde_json::from_slice(&std::fs::read(wi_root.join("wi-evidence.json")).unwrap()).unwrap();
+    let wi_path = wi_root.to_path_buf();
     drop(temp);
+    let wi_state_removed = !wi_path.exists();
+    assert!(wi_state_removed, "temporary WI state survived removal");
     let backend: serde_json::Value =
         serde_json::from_slice(&std::fs::read(root.join("backend-record.json")).unwrap()).unwrap();
     let command: protocol::Command = serde_json::from_value(backend["command"].clone()).unwrap();
     let (client, supervisor) = channel(root, &config);
+    let supervisor_restarted = supervisor.id() != initial_supervisor;
+    assert!(supervisor_restarted, "inspect reused the original supervisor process");
     let Response::Record(inspected) = client
         .request(&Request::Inspect(Inspect {
             version: 1,
@@ -410,7 +419,7 @@ fn lifecycle(
         "authorization":{"tenant":config.tenant,"principal":config.principal,"audience":config.request.audience,"authority_generation":config.request.authority_generation,"policy_revision":config.request.policy_revision},
         "backend_command":backend,"backend_result":serde_json::from_slice::<serde_json::Value>(&std::fs::read(root.join("backend-result.json")).unwrap()).unwrap(),
         "inspect_record":inspected,"wi":wi_evidence,"activation_count":1,
-        "guest_stopped":true,"wi_state_removed":true,"supervisor_restarted":true,"records":records,
+        "guest_stopped":guest_stopped,"wi_state_removed":wi_state_removed,"supervisor_restarted":supervisor_restarted,"records":records,
         "build":{"packet":ContentHash::of(&canonical_collection(&packet).unwrap()),
             "profile_definition":ContentHash::of(&std::fs::read(source.join("contracts/sources/wi-fabric-2-worker-execution-profile.yaml")).unwrap()),
             "fixture_source":ContentHash::of(&std::fs::read(source.join("crates/worldinterface-runtime/tests/support/supervisor_fixture.rs")).unwrap())}

@@ -98,12 +98,15 @@ impl<'a, H: ExecutorHandler + 'static> QueueEngine<'a, H> {
         if bundle.aq_store_id()? != store.as_uuid() {
             return Err("AQ store changed during engine bootstrap".into());
         }
+        bundle.wi().flow_prepare_scheduling()?;
+        let flow_scan =
+            crate::flow_coordinator::ReconcileCursor::new(engine.projection().latest_sequence());
         Ok(Self {
             bundle,
             store,
             engine,
             signal_scan: Default::default(),
-            flow_scan: Default::default(),
+            flow_scan,
             signal_delivery_status: Default::default(),
             signal_limits,
             tick_diagnostics: Default::default(),
@@ -204,9 +207,6 @@ impl<'a, H: ExecutorHandler + 'static> QueueEngine<'a, H> {
             drain: drain + started.elapsed(),
             execute,
         };
-        if std::env::var_os("WI_TICK_PROFILE").is_some() {
-            eprintln!("WI tick {:?}", self.tick_diagnostics);
-        }
         Ok(result)
     }
     /// Trusted host cancellation retains AQ's normal child lifecycle semantics.

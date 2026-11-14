@@ -18,17 +18,49 @@ Holding 10 waits constant and adding 100 completed flows kept work at 30 plans/2
 artifacts (38.26 ms representative pass). Counts, rather than load-sensitive timing,
 establish history independence. Timings are diagnostics, not a raised threshold.
 
-Reconciliation now reads indexed pages before deserialization, shares an eight-row
-budget across both calls per tick, and walks tenants/runs with disposable cursors.
-It reuses a verified plan within a pass. Changed journals trigger another full
-bounded traversal; continuous traffic cannot reset traversal or starve later runs.
-Each pass also captures finite run/tenant admission cutoffs, so continuing
-admissions cannot extend the pass indefinitely and starve earlier changed rows.
-Tenant traversal uses indexed rowid bounds; a regression appends 1000 new pending
-rows and confirms the original pass still ends at its cutoff. Errors retry; bundle reopen still validates all plans, artifacts and AQ references.
-No schema change or new continuation exception is needed. The existing timing
-limits remain. A first complete continuation suite passed: active average 51.43 ms,
-maximum 71.15 ms. Count assertions also vary 0/10/100 waits and completed history.
+F-001 review found that the first bounded implementation moved the cost into
+binding latency and durable AQ attempts: with 100 waits a new single-node Flow
+needed 28 ticks and 14 coordinator/13 node attempts (reviewer probe), versus four
+ticks and two/two attempts on the predecessor. Tenant-at-a-time scans also visited
+history-only tenants. The remediation measures the original eight-row version at
+0/10/100 waits and 100 completed runs in `scratch/verification/f001-before.log`;
+100-wait reconciliation took 11–17 ms and still visited eight unchanged rows.
+
+Reconciliation now prioritizes Flows named by AQ's indexed changed-task hints.
+Each of the two calls per tick can validate at most four rows: up to three priority
+rows and at least one background row when a pass is pending. The total remains
+eight rows, two pages and at most 128 task-to-Flow lookups per tick. Hint discovery
+is proportional to changed AQ tasks, with a deduplicated disposable queue; it does
+not enumerate unchanged waits or recovered terminal history. A newly admitted Flow
+and its changed children no longer wait for the background pass. All selected runs
+still undergo complete plan, artifact, admission and ancestry validation. Hints
+confer no authority. Continuing traffic cannot reset or starve the finite recovery
+pass, whose admission cutoff excludes later runs. Errors retry; reopen validates
+all plans, artifacts and AQ references and restarts the pass.
+
+A global pending-run index skips completed rows across all tenants before the
+page limit or deserialization. It is an optional derived schema-1 index, built
+once at QueueEngine bootstrap for legacy stores after full validation. The schema
+validator accepts its exact definition or its absence, and rejects a substituted
+index. Source journal/projection formats and manifest versions stay unchanged;
+older binaries do not accept stores once this optional index is installed. WSP-05
+must identify this forward-compatible read / backward-reader restriction.
+SQL VM-step tests cover 9,999 completed history tenants and a finite admission
+cutoff, with no full scan or sort. Index construction and full reopen validation
+are startup work, outside the per-tick bound.
+
+The new non-ignored latency regression covers 0/100 waits crossed with 0/100
+definition-only history tenants, both before and after QueueEngine restart. A
+fresh single-node Flow must succeed within eight host ticks, yielding between
+polls to the blocking executor, with at most two coordinator and two node attempts
+in every configuration; this bounds scheduling under the fixture's single active
+Flow workload, not arbitrary changing backlogs or handler execution time. The
+first isolated result was four to five ticks and exactly two/two attempts in all
+eight configurations. The existing unrelated-traffic test also limits the fresh
+Flow to eight ticks. Active and idle elapsed times are diagnostics; invariant work
+counts replace the shared-workstation-sensitive timing assertions without raising
+their limits. F-002 removes the production environment-controlled stderr hook;
+hosts retain explicit `tick_diagnostics` access.
 
 F-008 distinguishes acquired descendants, departure and subreaper rediscovery.
 A reparented child is reacquired from a fresh root scan, with stable birth/handle/
@@ -50,7 +82,9 @@ also cover that sibling fixture, preserving all four modes and restart assertion
 list this additive trusted-host API alongside the supervisor APIs in alpha.2 notes.
 Also record `QueueEngine::tick_diagnostics`, `TickDiagnostics`, `ReconcileWork`,
 `RECONCILE_ROWS_PER_TICK`, and storage `PendingFlow`/`flow_pending_page`/
-`flow_next_tenant`/`flow_scan_bounds`: additive trusted-host diagnostics and bounded scheduling reads.
+`flow_next_tenant`/`flow_scan_bounds`, plus `flow_prepare_scheduling`,
+`flow_pending_global_page` and `flow_pending_run`: additive trusted-host diagnostics
+and scheduling reads. The runtime no longer uses tenant-at-a-time scheduling.
 The explicit inventory/disposition additions are submitted with this item for review.
 
 ## Evidence and consumer boundary

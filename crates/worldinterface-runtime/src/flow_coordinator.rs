@@ -26,6 +26,7 @@ use worldinterface_storage::{flow::*, StoreRoot};
 pub struct ReconcileWork {
     pub rows: usize,
     pub pages: usize,
+    pub task_lookups: usize,
     pub plans: usize,
     pub artifacts: usize,
     pub plan_time: std::time::Duration,
@@ -320,11 +321,18 @@ pub const RECONCILE_ROWS_PER_TICK: usize = 8;
 pub(crate) struct ReconcileCursor {
     position: Option<(u64, u64)>,
     pass_position: Option<(u64, u64)>,
-    tenant: Option<(i64, OpaqueRef)>,
-    scan_bounds: (i64, i64),
+    through: i64,
+    aq_sequence: u64,
+    changed: std::collections::VecDeque<TaskId>,
+    queued: std::collections::BTreeSet<TaskId>,
     after: i64,
     retry: bool,
     work: ReconcileWork,
+}
+impl ReconcileCursor {
+    pub(crate) fn new(aq_sequence: u64) -> Self {
+        Self { aq_sequence, ..Self::default() }
+    }
 }
 pub(crate) fn begin_tick(cursor: &mut ReconcileCursor) {
     cursor.work = ReconcileWork::default();
@@ -343,7 +351,6 @@ pub(crate) fn reconcile<H: actionqueue_executor_local::handler::ExecutorHandler 
     if result.is_err() {
         cursor.pass_position = None;
         cursor.position = None;
-        cursor.tenant = None;
         cursor.after = 0;
         cursor.retry = false;
     }
@@ -356,30 +363,66 @@ fn reconcile_page<H: actionqueue_executor_local::handler::ExecutorHandler + 'sta
     cursor: &mut ReconcileCursor,
     remaining: &mut usize,
 ) -> Result<()> {
-    let position = (root.flow_journal_position()?, engine.projection().latest_sequence());
-    if *remaining == 0 || cursor.position == Some(position) {
+    // Changes are hints only. Every selected row still passes full validation.
+    // The AQ index enumerates changed tasks, never unchanged waits or history.
+    for task in engine.projection().changed_tasks_since(cursor.aq_sequence) {
+        if cursor.queued.insert(task) {
+            cursor.changed.push_back(task);
+        }
+    }
+    cursor.aq_sequence = engine.projection().latest_sequence();
+    let position = (root.flow_journal_position()?, cursor.aq_sequence);
+    let phase_limit = (*remaining).min(RECONCILE_ROWS_PER_TICK / 2);
+    if phase_limit == 0 {
         return Ok(());
     }
-    cursor.position = None;
-    if cursor.pass_position.is_none() {
-        cursor.pass_position = Some(position);
-        cursor.scan_bounds = root.flow_scan_bounds()?;
-        cursor.tenant = root.flow_next_tenant(0, cursor.scan_bounds.0)?;
-        cursor.after = 0;
+    let mut entries = Vec::new();
+    let mut selected = std::collections::BTreeSet::new();
+    // Reserve one row for the finite recovery pass, even under continuous traffic.
+    // Limit task-to-Flow lookups too; many children may name the same Flow.
+    for _ in 0..64 {
+        if entries.len() >= phase_limit - 1 {
+            break;
+        }
+        let Some(task) = cursor.changed.pop_front() else {
+            break;
+        };
+        cursor.queued.remove(&task);
+        cursor.work.task_lookups += 1;
+        if let Some((tenant, run)) = root.flow_task(&task.to_string())? {
+            if selected.insert((tenant.clone(), run.clone())) {
+                if let Some(entry) = root.flow_pending_run(&tenant, &run)? {
+                    entries.push(entry);
+                }
+            }
+        }
     }
-    let Some((tenant_position, tenant)) = cursor.tenant.clone() else {
-        cursor.position = cursor.pass_position.take();
-        return Ok(());
-    };
-    let limit = *remaining;
-    let page = root.flow_pending_page(&tenant, cursor.after, cursor.scan_bounds.1, limit)?;
-    cursor.work.pages += 1;
-    cursor.work.rows += page.len();
-    *remaining -= page.len();
-    for entry in &page {
+    let background_limit = phase_limit - entries.len();
+    let mut page_len = 0;
+    let scanning = cursor.position != Some(position);
+    if scanning {
+        cursor.position = None;
+        if cursor.pass_position.is_none() {
+            cursor.pass_position = Some(position);
+            cursor.through = root.flow_scan_bounds()?.1;
+            cursor.after = 0;
+        }
+        let page = root.flow_pending_global_page(cursor.after, cursor.through, background_limit)?;
+        cursor.work.pages += 1;
+        page_len = page.len();
+        if let Some(last) = page.last() {
+            cursor.after = last.position;
+        }
+        // Count all fetched rows, including a row also selected by the priority lane.
+        cursor.work.rows += page.len();
+        entries.extend(page);
+    }
+    cursor.work.rows += entries.len() - page_len;
+    *remaining -= entries.len();
+    for entry in &entries {
         let r = &entry.run;
+        let tenant = &r.tenant;
         let quarantine = &entry.quarantine;
-        cursor.after = entry.position;
         if quarantine.is_some() {
             cancel_quarantined(engine, r)?;
             continue;
@@ -410,7 +453,7 @@ fn reconcile_page<H: actionqueue_executor_local::handler::ExecutorHandler + 'sta
             if r.parent_run.is_none() {
                 transact(
                     root,
-                    &tenant,
+                    tenant,
                     FlowCommand::BindCoordinator {
                         run: r.id.clone(),
                         parent_run: parent_run.to_string().try_into()?,
@@ -440,7 +483,7 @@ fn reconcile_page<H: actionqueue_executor_local::handler::ExecutorHandler + 'sta
                     FlowOutcome::Failed
                 };
                 let guard = root.flow_dispatch_guard()?;
-                let fresh = root.flow_run_snapshot(&tenant, &r.id)?;
+                let fresh = root.flow_run_snapshot(tenant, &r.id)?;
                 let r = fresh.runs.get(&r.id).ok_or_else(|| rejected("missing Flow at Finish"))?;
                 if r.outcome.is_some() {
                     return Ok(());
@@ -450,7 +493,7 @@ fn reconcile_page<H: actionqueue_executor_local::handler::ExecutorHandler + 'sta
                 let outcome = if outcome == FlowOutcome::Succeeded {
                     // A terminal coordinator may have been canceled after an
                     // owned effect committed, before its Finish publication.
-                    let effects = root.effect_owner_snapshot(&tenant, &r.id, None)?;
+                    let effects = root.effect_owner_snapshot(tenant, &r.id, None)?;
                     if effects.effects.values().any(|e| {
                         e.owner.as_ref().is_some_and(|o| o.flow == r.id)
                             && e.phase == worldinterface_domain::Phase::Succeeded
@@ -464,7 +507,7 @@ fn reconcile_page<H: actionqueue_executor_local::handler::ExecutorHandler + 'sta
                 };
                 root.flow_update_guarded(
                     &guard,
-                    &tenant,
+                    tenant,
                     fresh.revision,
                     FlowCommand::Finish { run: r.id.clone(), outcome, exports: Default::default() },
                 )?;
@@ -541,11 +584,11 @@ fn reconcile_page<H: actionqueue_executor_local::handler::ExecutorHandler + 'sta
                 };
                 transact(
                     root,
-                    &tenant,
+                    tenant,
                     FlowCommand::BindChild { run: r.id.clone(), node, binding },
                 )?;
             }
-            let fresh = root.flow_run_snapshot(&tenant, &r.id)?;
+            let fresh = root.flow_run_snapshot(tenant, &r.id)?;
             if let Some(run) = fresh.runs.get(&r.id) {
                 crate::flow_wait::prepare_eligible(
                     root,
@@ -557,7 +600,7 @@ fn reconcile_page<H: actionqueue_executor_local::handler::ExecutorHandler + 'sta
         })();
         if let Err(error) = result {
             if root
-                .flow_run_snapshot(&tenant, &r.id)?
+                .flow_run_snapshot(tenant, &r.id)?
                 .runs
                 .get(&r.id)
                 .is_some_and(|r| r.outcome.is_some())
@@ -574,7 +617,7 @@ fn reconcile_page<H: actionqueue_executor_local::handler::ExecutorHandler + 'sta
             // errors while persisting quarantine still fail globally.
             transact(
                 root,
-                &tenant,
+                tenant,
                 FlowCommand::QuarantineRun {
                     run: r.id.clone(),
                     diagnostic: bounded_diagnostic(&error.to_string()),
@@ -583,16 +626,12 @@ fn reconcile_page<H: actionqueue_executor_local::handler::ExecutorHandler + 'sta
             cancel_quarantined(engine, r)?;
         }
     }
-    if page.len() < limit {
-        cursor.tenant = root.flow_next_tenant(tenant_position, cursor.scan_bounds.0)?;
-        cursor.after = 0;
-        if cursor.tenant.is_none() {
-            let completed = cursor.pass_position.take();
-            if !cursor.retry {
-                cursor.position = completed;
-            }
-            cursor.retry = false;
+    if scanning && page_len < background_limit {
+        let completed = cursor.pass_position.take();
+        if !cursor.retry {
+            cursor.position = completed;
         }
+        cursor.retry = false;
     }
     Ok(())
 }
