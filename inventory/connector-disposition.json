@@ -1354,7 +1354,7 @@
         },
         {
           "path": "docs/work-items/WSP-03.md",
-          "source_sha256": "68bfd404c8cf933e0bcfe1f7d4aeb0a7c64ff90729a00feca9c447ffc0e85f05",
+          "source_sha256": "9b664f50c9c81beb9046244e05565200d67ac1084929784b0e187b867bf47e16",
           "treatment": "WSP-03 F-002/F-003 candidate disposition: preserve supervisor frame timing regressions and slow backend inspection evidence. Delay wording refers to test scheduling, with no dependency on the legacy delay connector. Effective through qualifying source review/merge; no deletion authority."
         },
         {
@@ -6566,62 +6566,62 @@
         },
         {
           "id": "crates/worldinterface-runtime/tests/completion_crash.rs::::module:child_guard",
-          "source_sha256": "984be8d3a140d7cdc9d10a290b1804e8b45afa124ffd7329ced949f86e02e84f",
+          "source_sha256": "332ba2e908c6991961431c1bc14aa04097842f227a60806c1ca214a04e62ef12",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/completion_crash.rs::::module:spi_fixture",
-          "source_sha256": "984be8d3a140d7cdc9d10a290b1804e8b45afa124ffd7329ced949f86e02e84f",
+          "source_sha256": "332ba2e908c6991961431c1bc14aa04097842f227a60806c1ca214a04e62ef12",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/completion_crash.rs::::source-module:crates/worldinterface-runtime/tests/completion_crash.rs",
-          "source_sha256": "984be8d3a140d7cdc9d10a290b1804e8b45afa124ffd7329ced949f86e02e84f",
+          "source_sha256": "332ba2e908c6991961431c1bc14aa04097842f227a60806c1ca214a04e62ef12",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/completion_crash.rs::::struct:AqClock",
-          "source_sha256": "984be8d3a140d7cdc9d10a290b1804e8b45afa124ffd7329ced949f86e02e84f",
+          "source_sha256": "332ba2e908c6991961431c1bc14aa04097842f227a60806c1ca214a04e62ef12",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/completion_crash.rs::::struct:Clock",
-          "source_sha256": "984be8d3a140d7cdc9d10a290b1804e8b45afa124ffd7329ced949f86e02e84f",
+          "source_sha256": "332ba2e908c6991961431c1bc14aa04097842f227a60806c1ca214a04e62ef12",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/completion_crash.rs::::struct:CrashBeforeDisposition",
-          "source_sha256": "984be8d3a140d7cdc9d10a290b1804e8b45afa124ffd7329ced949f86e02e84f",
+          "source_sha256": "332ba2e908c6991961431c1bc14aa04097842f227a60806c1ca214a04e62ef12",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/completion_crash.rs::::struct:DispositionFixture",
-          "source_sha256": "984be8d3a140d7cdc9d10a290b1804e8b45afa124ffd7329ced949f86e02e84f",
+          "source_sha256": "332ba2e908c6991961431c1bc14aa04097842f227a60806c1ca214a04e62ef12",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/completion_crash.rs::::struct:Evidence",
-          "source_sha256": "984be8d3a140d7cdc9d10a290b1804e8b45afa124ffd7329ced949f86e02e84f",
+          "source_sha256": "332ba2e908c6991961431c1bc14aa04097842f227a60806c1ca214a04e62ef12",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/completion_crash.rs::::struct:HeldResultPort",
-          "source_sha256": "984be8d3a140d7cdc9d10a290b1804e8b45afa124ffd7329ced949f86e02e84f",
+          "source_sha256": "332ba2e908c6991961431c1bc14aa04097842f227a60806c1ca214a04e62ef12",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/completion_crash.rs::::struct:MockSuccessfulPort",
-          "source_sha256": "984be8d3a140d7cdc9d10a290b1804e8b45afa124ffd7329ced949f86e02e84f",
+          "source_sha256": "332ba2e908c6991961431c1bc14aa04097842f227a60806c1ca214a04e62ef12",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/completion_crash.rs::::struct:Noop",
-          "source_sha256": "984be8d3a140d7cdc9d10a290b1804e8b45afa124ffd7329ced949f86e02e84f",
+          "source_sha256": "332ba2e908c6991961431c1bc14aa04097842f227a60806c1ca214a04e62ef12",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/completion_crash.rs::::struct:SignalAfterDisposition",
-          "source_sha256": "984be8d3a140d7cdc9d10a290b1804e8b45afa124ffd7329ced949f86e02e84f",
+          "source_sha256": "332ba2e908c6991961431c1bc14aa04097842f227a60806c1ca214a04e62ef12",
           "registration_sites": []
         },
         {
@@ -9258,7 +9258,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/tests/completion_crash.rs",
-          "source_sha256": "984be8d3a140d7cdc9d10a290b1804e8b45afa124ffd7329ced949f86e02e84f",
+          "source_sha256": "332ba2e908c6991961431c1bc14aa04097842f227a60806c1ca214a04e62ef12",
           "treatment": "Retain target WI-05 completion, receipt inspection or crash evidence; shared infrastructure is not a legacy connector deletion surface (WIP-04)."
         },
         {

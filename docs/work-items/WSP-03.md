@@ -235,3 +235,24 @@ projection-drift fixture now corrupts the indexed aggregate row. The long-histor
 completion fixture retains the same 1,000 genuine discovery entries and latency,
 redelivery and writer-delay assertions, and writes the corresponding aggregate
 and metadata rows in the same batched fixture transaction.
+
+## Known limitation: F-007
+
+Operator disposition (2026-11-13): F-007 is accepted as a known, unexplained
+intermittent and no longer blocks WSP-03. There was one unexplained failure of
+`aq_disposition_process_kills_replay_the_original_locator` at
+`after-aq-disposition` on `86794c5`: AQ reported Failed instead of Completed.
+It was not reproduced in eight further campaign/pool rounds. The cause remains
+unknown; the effect-storage rewrite is not cleared. No further reproduction
+rounds are authorized in this item. The committed per-attempt AQ disposition,
+error/timeout and Fabric effect diagnostics and complete failure-bundle retention
+remain in place. WSP-03 still requires a successful gating `runtime-test` on the
+reviewed head, with at least five minutes under its thirty-minute limit.
+
+Standing rule: a failure of this case in any later campaign is blocking where
+it occurs, the retained bundle must be diagnosed, and a rerun does not clear it.
+
+The reconciliation fixture fix in `39d5766` stays for review. The separate
+507.67 ms active-tick performance miss is an open observation assigned to WSP-04;
+it is outside WSP-03 and is not profiled here. Its eight measured values and
+contemporaneous load are retained in the implementation handoff report.

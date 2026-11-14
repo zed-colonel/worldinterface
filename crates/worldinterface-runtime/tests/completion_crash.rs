@@ -845,6 +845,11 @@ async fn three_expired_deliveries_record_convergence_fault_without_second_port_c
     );
 }
 
+// WSP-03 F-007: one unexplained after-aq-disposition failure on 86794c5;
+// not reproduced in eight further campaign/pool rounds. The cause is unknown,
+// and the effect-storage rewrite is not cleared. See docs/work-items/WSP-03.md.
+// Standing rule: a failure of this case in any later campaign is blocking where
+// it occurs. Diagnose the retained bundle; a rerun does not clear the failure.
 #[test]
 fn aq_disposition_process_kills_replay_the_original_locator() {
     if let Some(path) = std::env::var_os("WI_AQ_CHILD_BUNDLE") {
