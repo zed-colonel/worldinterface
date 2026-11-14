@@ -680,14 +680,24 @@ async fn idle_ticks_skip_unchanged_waiting_flows_and_reconcile_changes_after_res
         q.engine().projection().run_instances().filter(|r| r.state() == RunState::Awaiting).count(),
         200
     );
-    // Complete the final disposable watermark pass before measurement.
-    for _ in 0..2 {
+    // Let the finite, budgeted traversal settle before measuring steady idle.
+    // Two ticks no longer suffice for a 100-row pass with an eight-row budget.
+    let mut settled = false;
+    for _ in 0..64 {
         let _ = q.tick().await.unwrap();
+        if q.tick_diagnostics.work.rows == 0 {
+            settled = true;
+            break;
+        }
     }
+    assert!(settled, "unchanged waiting flows never reached a zero-work tick");
     let started = Instant::now();
     for _ in 0..8 {
         let tick = q.tick().await.unwrap();
         assert_eq!(tick.dispatched, 0);
+        assert_eq!(q.tick_diagnostics.work.rows, 0);
+        assert_eq!(q.tick_diagnostics.work.plans, 0);
+        assert_eq!(q.tick_diagnostics.work.artifacts, 0);
     }
     let average = started.elapsed() / 8;
     eprintln!("100 waiting Flows: average idle tick {average:?}");

@@ -6821,57 +6821,57 @@
         },
         {
           "id": "crates/worldinterface-runtime/tests/continuation_recovery.rs::::module:support",
-          "source_sha256": "ef6a42cb7ac5575620e8a1467938cdd61bfb9346b98f72e2bb7ac39af294de41",
+          "source_sha256": "4064b5b3097bed6f1a289d55a607b92696b87763098ba241d8400ec4d7dbe08a",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/continuation_recovery.rs::::source-module:crates/worldinterface-runtime/tests/continuation_recovery.rs",
-          "source_sha256": "ef6a42cb7ac5575620e8a1467938cdd61bfb9346b98f72e2bb7ac39af294de41",
+          "source_sha256": "4064b5b3097bed6f1a289d55a607b92696b87763098ba241d8400ec4d7dbe08a",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/continuation_recovery.rs::::struct:CheckWakeAcknowledgment",
-          "source_sha256": "ef6a42cb7ac5575620e8a1467938cdd61bfb9346b98f72e2bb7ac39af294de41",
+          "source_sha256": "4064b5b3097bed6f1a289d55a607b92696b87763098ba241d8400ec4d7dbe08a",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/continuation_recovery.rs::::struct:HoldFinish",
-          "source_sha256": "ef6a42cb7ac5575620e8a1467938cdd61bfb9346b98f72e2bb7ac39af294de41",
+          "source_sha256": "4064b5b3097bed6f1a289d55a607b92696b87763098ba241d8400ec4d7dbe08a",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/continuation_recovery.rs::::struct:RevokeAfterAccept",
-          "source_sha256": "ef6a42cb7ac5575620e8a1467938cdd61bfb9346b98f72e2bb7ac39af294de41",
+          "source_sha256": "4064b5b3097bed6f1a289d55a607b92696b87763098ba241d8400ec4d7dbe08a",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/continuation_recovery.rs::continuation_inspection_authorizes_and_reports_pending_and_accepted_chain::struct:OpenEventReads",
-          "source_sha256": "ef6a42cb7ac5575620e8a1467938cdd61bfb9346b98f72e2bb7ac39af294de41",
+          "source_sha256": "4064b5b3097bed6f1a289d55a607b92696b87763098ba241d8400ec4d7dbe08a",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/continuation_recovery.rs::continuation_inspection_authorizes_and_reports_pending_and_accepted_chain::struct:OperatorPolicy",
-          "source_sha256": "ef6a42cb7ac5575620e8a1467938cdd61bfb9346b98f72e2bb7ac39af294de41",
+          "source_sha256": "4064b5b3097bed6f1a289d55a607b92696b87763098ba241d8400ec4d7dbe08a",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/continuation_recovery.rs::support::module:connectors",
-          "source_sha256": "ef6a42cb7ac5575620e8a1467938cdd61bfb9346b98f72e2bb7ac39af294de41",
+          "source_sha256": "4064b5b3097bed6f1a289d55a607b92696b87763098ba241d8400ec4d7dbe08a",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/continuation_recovery.rs::support::module:continuation_fixture",
-          "source_sha256": "ef6a42cb7ac5575620e8a1467938cdd61bfb9346b98f72e2bb7ac39af294de41",
+          "source_sha256": "4064b5b3097bed6f1a289d55a607b92696b87763098ba241d8400ec4d7dbe08a",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/continuation_recovery.rs::support::module:flow_fixture",
-          "source_sha256": "ef6a42cb7ac5575620e8a1467938cdd61bfb9346b98f72e2bb7ac39af294de41",
+          "source_sha256": "4064b5b3097bed6f1a289d55a607b92696b87763098ba241d8400ec4d7dbe08a",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/continuation_recovery.rs::support::module:spi_harness",
-          "source_sha256": "ef6a42cb7ac5575620e8a1467938cdd61bfb9346b98f72e2bb7ac39af294de41",
+          "source_sha256": "4064b5b3097bed6f1a289d55a607b92696b87763098ba241d8400ec4d7dbe08a",
           "registration_sites": []
         },
         {
@@ -9323,7 +9323,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/tests/continuation_recovery.rs",
-          "source_sha256": "ef6a42cb7ac5575620e8a1467938cdd61bfb9346b98f72e2bb7ac39af294de41",
+          "source_sha256": "4064b5b3097bed6f1a289d55a607b92696b87763098ba241d8400ec4d7dbe08a",
           "treatment": "Retain durable-continuation producer and recovery regression evidence; review separately from legacy connector removal."
         },
         {
