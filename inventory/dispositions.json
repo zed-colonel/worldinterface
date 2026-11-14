@@ -13207,5 +13207,54 @@
     "target": "bounded-host-supervisor",
     "rationale": "WSP-03 candidate: separate public supervisor lifecycle API, authenticated private channel, independent durable journal and bounded reconciliation. No engine client or worker instance-control authority. Effective only through qualifying source review/merge.",
     "source": "docs/work-items/WSP-03.md; accepted WI-SUPERVISOR-PROOF-1 WSP-03 design; WI-ADR-010/016/018"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/flow.rs::::module:scheduling_index_tests@10d1b0eff34c",
+    "disposition": "test-evidence",
+    "target": "WSP-04 supervisor conformance and carried regressions",
+    "source": "WI-SUPERVISOR-PROOF-1-PLAN-1 WSP-04; docs/work-items/WSP-04.md; operator F-008/F-009 and idle-tick instructions",
+    "rationale": "Bounded indexed reconciliation and its disposable diagnostic/test evidence, stable descendant acquisition states, or trusted delivery time. No new worker operation, continuation exception or consumer Kata qualification; submitted for qualifying source review/merge with adopted checks."
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/flow.rs::::struct:PendingFlow",
+    "disposition": "retain-align",
+    "target": "WSP-04 supervisor conformance and carried regressions",
+    "source": "WI-SUPERVISOR-PROOF-1-PLAN-1 WSP-04; docs/work-items/WSP-04.md; operator F-008/F-009 and idle-tick instructions",
+    "rationale": "Bounded indexed reconciliation and its disposable diagnostic/test evidence, stable descendant acquisition states, or trusted delivery time. No new worker operation, continuation exception or consumer Kata qualification; submitted for qualifying source review/merge with adopted checks."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/aq_adapter.rs::::struct:TickDiagnostics",
+    "disposition": "retain-align",
+    "target": "WSP-04 supervisor conformance and carried regressions",
+    "source": "WI-SUPERVISOR-PROOF-1-PLAN-1 WSP-04; docs/work-items/WSP-04.md; operator F-008/F-009 and idle-tick instructions",
+    "rationale": "Bounded indexed reconciliation and its disposable diagnostic/test evidence, stable descendant acquisition states, or trusted delivery time. No new worker operation, continuation exception or consumer Kata qualification; submitted for qualifying source review/merge with adopted checks."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/flow_coordinator.rs::::struct:ReconcileWork",
+    "disposition": "retain-align",
+    "target": "WSP-04 supervisor conformance and carried regressions",
+    "source": "WI-SUPERVISOR-PROOF-1-PLAN-1 WSP-04; docs/work-items/WSP-04.md; operator F-008/F-009 and idle-tick instructions",
+    "rationale": "Bounded indexed reconciliation and its disposable diagnostic/test evidence, stable descendant acquisition states, or trusted delivery time. No new worker operation, continuation exception or consumer Kata qualification; submitted for qualifying source review/merge with adopted checks."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/ingress.rs::::struct:DeliverySystemClock",
+    "disposition": "retain-align",
+    "target": "WSP-04 supervisor conformance and carried regressions",
+    "source": "WI-SUPERVISOR-PROOF-1-PLAN-1 WSP-04; docs/work-items/WSP-04.md; operator F-008/F-009 and idle-tick instructions",
+    "rationale": "Bounded indexed reconciliation and its disposable diagnostic/test evidence, stable descendant acquisition states, or trusted delivery time. No new worker operation, continuation exception or consumer Kata qualification; submitted for qualifying source review/merge with adopted checks."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/ownership.rs::::enum:Acquisition",
+    "disposition": "retain-align",
+    "target": "WSP-04 supervisor conformance and carried regressions",
+    "source": "WI-SUPERVISOR-PROOF-1-PLAN-1 WSP-04; docs/work-items/WSP-04.md; operator F-008/F-009 and idle-tick instructions",
+    "rationale": "Bounded indexed reconciliation and its disposable diagnostic/test evidence, stable descendant acquisition states, or trusted delivery time. No new worker operation, continuation exception or consumer Kata qualification; submitted for qualifying source review/merge with adopted checks."
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/ingress_recovery.rs::::struct:DeliveryClock",
+    "disposition": "test-evidence",
+    "target": "WSP-04 supervisor conformance and carried regressions",
+    "source": "WI-SUPERVISOR-PROOF-1-PLAN-1 WSP-04; docs/work-items/WSP-04.md; operator F-008/F-009 and idle-tick instructions",
+    "rationale": "Bounded indexed reconciliation and its disposable diagnostic/test evidence, stable descendant acquisition states, or trusted delivery time. No new worker operation, continuation exception or consumer Kata qualification; submitted for qualifying source review/merge with adopted checks."
   }
 ]

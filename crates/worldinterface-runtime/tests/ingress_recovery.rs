@@ -225,6 +225,28 @@ fn setup_with_recovery_budget(
     max_attempts: u32,
     backoff_ms: u64,
 ) -> (Arc<StoreBundle>, IngressBinding, DeliveryId) {
+    setup_with_recovery_budget_at(
+        path,
+        acknowledgment_timeout_ms,
+        retention_ms,
+        binding_lifetime_ms,
+        quarantine_content,
+        max_attempts,
+        backoff_ms,
+        now(),
+    )
+}
+#[allow(clippy::too_many_arguments)]
+fn setup_with_recovery_budget_at(
+    path: &Path,
+    acknowledgment_timeout_ms: u64,
+    retention_ms: u64,
+    binding_lifetime_ms: u64,
+    quarantine_content: bool,
+    max_attempts: u32,
+    backoff_ms: u64,
+    current: u64,
+) -> (Arc<StoreBundle>, IngressBinding, DeliveryId) {
     let bundle = Arc::new(
         StoreBundle::initialize(
             path,
@@ -239,7 +261,6 @@ fn setup_with_recovery_budget(
     let mut binding: IngressBinding =
         serde_json::from_str(include_str!("../../../conformance/wi-fabric-2/ingress/binding.json"))
             .unwrap();
-    let current = now();
     binding.expires_at_ms = current + binding_lifetime_ms;
     binding.policy.retention_ms = retention_ms;
     binding.policy.acknowledgment_timeout_ms = acknowledgment_timeout_ms;
@@ -319,11 +340,30 @@ async fn wi03p_f001_admitted_delivery_completes_after_expiry() {
     wi03p_f001_expiration(true).await;
 }
 
+#[derive(Clone)]
+struct DeliveryClock(Arc<std::sync::atomic::AtomicU64>);
+impl DeliveryClock {
+    fn millis(&self) -> u64 {
+        self.0.load(std::sync::atomic::Ordering::SeqCst)
+    }
+}
+impl worldinterface_runtime::authority::TrustedClock for DeliveryClock {
+    fn now(&self) -> worldinterface_runtime::Result<Timestamp> {
+        Ok(Timestamp::from_epoch_millis(self.millis())?)
+    }
+}
+impl actionqueue_core::time::clock::Clock for DeliveryClock {
+    fn now(&self) -> u64 {
+        self.millis() / 1000
+    }
+}
+
 async fn wi03p_f001_expiration(admit_before_expiry: bool) {
+    let clock = DeliveryClock(Arc::new(std::sync::atomic::AtomicU64::new(now())));
     let temp = tempfile::tempdir().unwrap();
     let path = temp.path().join("bundle");
     let (mut bundle, binding, id) =
-        setup_with_recovery_budget(&path, 100, 1_000, 1_000_000, false, 2, 0);
+        setup_with_recovery_budget_at(&path, 100, 1_000, 1_000_000, false, 2, 0, clock.millis());
     let tenant = binding.profile.scope.tenant.clone();
     let initial = bundle.wi().ingress_snapshot(&tenant).unwrap();
     let original_queue = initial.queue[&id].clone();
@@ -337,7 +377,8 @@ async fn wi03p_f001_expiration(admit_before_expiry: bool) {
     let recorder = Arc::new(Recorder::default());
     let mut resident = None;
     for restart in 0..2 {
-        let delivery_handler = handler(&bundle, &binding, recorder.clone());
+        let delivery_handler =
+            handler(&bundle, &binding, recorder.clone()).with_clock(Arc::new(clock.clone()));
         let registry = delivery_handler.subscriber_registry();
         let mut aq = ActionQueueEngine::new(
             RuntimeConfig {
@@ -350,11 +391,12 @@ async fn wi03p_f001_expiration(admit_before_expiry: bool) {
             },
             delivery_handler,
         )
-        .bootstrap()
+        .bootstrap_with_clock(clock.clone())
         .unwrap()
         .with_host(host());
         let service = IngressRuntime::new(bundle.wi(), tenant.clone());
         if restart == 0 {
+            assert!(clock.millis() < initial.deliveries[&id].expires_at_ms);
             if admit_before_expiry {
                 assert_eq!(
                     service
@@ -362,7 +404,7 @@ async fn wi03p_f001_expiration(admit_before_expiry: bool) {
                             &mut BoundAqIngress::new(&mut aq, tenant.clone())
                                 .with_subscriber_registry(registry.clone()),
                             10,
-                            now(),
+                            clock.millis(),
                         )
                         .unwrap(),
                     1
@@ -371,9 +413,14 @@ async fn wi03p_f001_expiration(admit_before_expiry: bool) {
             let stats = aq.signal_statistics();
             assert_eq!(stats.retained, usize::from(admit_before_expiry));
             resident = Some((stats.retained, stats.bytes));
-            // Real elapsed retention reproduces the review probe's boundary.
-            tokio::time::sleep(Duration::from_millis(1_200)).await;
-            assert!(now() >= initial.deliveries[&id].expires_at_ms);
+            // No physical execution occurred before advancing the shared clock.
+            assert!(clock.millis() < initial.deliveries[&id].expires_at_ms);
+            assert!(initial.deliveries[&id].attempts.is_empty());
+            clock.0.store(
+                initial.deliveries[&id].expires_at_ms + 200,
+                std::sync::atomic::Ordering::SeqCst,
+            );
+            assert!(clock.millis() >= initial.deliveries[&id].expires_at_ms);
             if !admit_before_expiry {
                 assert_eq!(
                     service
@@ -381,7 +428,7 @@ async fn wi03p_f001_expiration(admit_before_expiry: bool) {
                             &mut BoundAqIngress::new(&mut aq, tenant.clone())
                                 .with_subscriber_registry(registry.clone()),
                             10,
-                            now(),
+                            clock.millis(),
                         )
                         .unwrap(),
                     0
@@ -416,7 +463,7 @@ async fn wi03p_f001_expiration(admit_before_expiry: bool) {
                         &mut BoundAqIngress::new(&mut aq, tenant.clone())
                             .with_subscriber_registry(registry.clone()),
                         10,
-                        now(),
+                        clock.millis(),
                     )
                     .unwrap(),
                 0
@@ -430,8 +477,10 @@ async fn wi03p_f001_expiration(admit_before_expiry: bool) {
         assert!(recorder.1.lock().unwrap().is_empty());
         let subscriber =
             AuthenticatedScope { tenant: tenant.clone(), principal: binding.subscriber.clone() };
-        assert!(service.claim(&subscriber, &id, now()).is_err());
-        assert!(Ingress::new(bundle.wi()).inspect_delivery(&subscriber, &id, now()).is_err());
+        assert!(service.claim(&subscriber, &id, clock.millis()).is_err());
+        assert!(Ingress::new(bundle.wi())
+            .inspect_delivery(&subscriber, &id, clock.millis())
+            .is_err());
         aq.shutdown().unwrap();
         drop(service);
         if restart == 0 {
@@ -860,10 +909,20 @@ async fn token_invalidated_after_delivery_denies_ack_and_recovery_after_restart(
 #[tokio::test]
 async fn inactive_binding_and_missing_registration_never_regenerate_aq_work() {
     for mode in ["revoked", "suspended", "binding-expired", "unregistered"] {
+        let clock = DeliveryClock(Arc::new(std::sync::atomic::AtomicU64::new(now())));
         let temp = tempfile::tempdir().unwrap();
         let path = temp.path().join("bundle");
         let lifetime = if mode == "binding-expired" { 1000 } else { 30_000 };
-        let (bundle, binding, id) = setup_with_binding_expiry(&path, 1000, 30_000, lifetime);
+        let (bundle, binding, id) = setup_with_recovery_budget_at(
+            &path,
+            1000,
+            30_000,
+            lifetime,
+            false,
+            2,
+            1000,
+            clock.millis(),
+        );
         let tenant = binding.profile.scope.tenant.clone();
         let owner =
             AuthenticatedScope { tenant: tenant.clone(), principal: binding.principal.clone() };
@@ -874,18 +933,24 @@ async fn inactive_binding_and_missing_registration_never_regenerate_aq_work() {
             } else {
                 handler(bundle, &binding, recorder.clone())
             }
+            .with_clock(Arc::new(clock.clone()))
         };
         let mut aq = ActionQueueEngine::new(
             RuntimeConfig { data_dir: bundle.aq_path(), ..Default::default() },
             subscriber_handler(&bundle),
         )
-        .bootstrap()
+        .bootstrap_with_clock(clock.clone())
         .unwrap()
         .with_host(host());
         let service = IngressRuntime::new(bundle.wi(), tenant.clone());
+        assert!(clock.millis() < binding.expires_at_ms, "{mode}: admission precondition");
         assert_eq!(
             service
-                .dispatch_pending(&mut BoundAqIngress::new(&mut aq, tenant.clone()), 1, now())
+                .dispatch_pending(
+                    &mut BoundAqIngress::new(&mut aq, tenant.clone()),
+                    1,
+                    clock.millis()
+                )
                 .unwrap(),
             1
         );
@@ -901,11 +966,13 @@ async fn inactive_binding_and_missing_registration_never_regenerate_aq_work() {
                         &owner,
                         &BindingVersion { id: binding.id.clone(), revision: 1 },
                         status,
-                        now(),
+                        clock.millis(),
                     )
                     .unwrap();
             }
-            "binding-expired" => tokio::time::sleep(Duration::from_millis(1100)).await,
+            "binding-expired" => {
+                clock.0.fetch_add(1100, std::sync::atomic::Ordering::SeqCst);
+            }
             _ => {}
         }
         let _ = aq.run_until_idle().await.unwrap();
@@ -918,13 +985,17 @@ async fn inactive_binding_and_missing_registration_never_regenerate_aq_work() {
         );
         let attempts = aq.get_run(run).unwrap().attempt_count;
         assert_eq!(aq.get_run(run).unwrap().failure_attempt_count, 0, "{mode}");
-        tokio::time::sleep(Duration::from_millis(2300)).await;
+        clock.0.fetch_add(2300, std::sync::atomic::Ordering::SeqCst);
         let _ = aq.run_until_idle().await.unwrap();
         assert_eq!(aq.get_run(run).unwrap().attempt_count, attempts, "{mode}");
         for _ in 0..3 {
             assert_eq!(
                 service
-                    .dispatch_pending(&mut BoundAqIngress::new(&mut aq, tenant.clone()), 1, now())
+                    .dispatch_pending(
+                        &mut BoundAqIngress::new(&mut aq, tenant.clone()),
+                        1,
+                        clock.millis()
+                    )
                     .unwrap(),
                 0,
                 "{mode}"
@@ -945,13 +1016,17 @@ async fn inactive_binding_and_missing_registration_never_regenerate_aq_work() {
             RuntimeConfig { data_dir: reopened.aq_path(), ..Default::default() },
             subscriber_handler(&reopened),
         )
-        .bootstrap()
+        .bootstrap_with_clock(clock.clone())
         .unwrap()
         .with_host(host());
         for _ in 0..3 {
             assert_eq!(
                 IngressRuntime::new(reopened.wi(), tenant.clone())
-                    .dispatch_pending(&mut BoundAqIngress::new(&mut aq, tenant.clone()), 1, now())
+                    .dispatch_pending(
+                        &mut BoundAqIngress::new(&mut aq, tenant.clone()),
+                        1,
+                        clock.millis()
+                    )
                     .unwrap(),
                 0,
                 "{mode}"
@@ -974,17 +1049,18 @@ async fn inactive_binding_and_missing_registration_never_regenerate_aq_work() {
                         &owner,
                         &BindingVersion { id: binding.id.clone(), revision: 2 },
                         BindingStatus::Active,
-                        now(),
+                        clock.millis(),
                     )
                     .unwrap();
             }
-            let delivery_handler = handler(&reopened, &binding, recorder.clone());
+            let delivery_handler =
+                handler(&reopened, &binding, recorder.clone()).with_clock(Arc::new(clock.clone()));
             let registry = delivery_handler.subscriber_registry();
             let mut resumed = ActionQueueEngine::new(
                 RuntimeConfig { data_dir: reopened.aq_path(), ..Default::default() },
                 delivery_handler,
             )
-            .bootstrap()
+            .bootstrap_with_clock(clock.clone())
             .unwrap()
             .with_host(host());
             assert_eq!(
@@ -993,7 +1069,7 @@ async fn inactive_binding_and_missing_registration_never_regenerate_aq_work() {
                         &mut BoundAqIngress::new(&mut resumed, tenant.clone())
                             .with_subscriber_registry(registry.clone()),
                         1,
-                        now()
+                        clock.millis()
                     )
                     .unwrap(),
                 1,

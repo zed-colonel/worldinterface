@@ -1,5 +1,8 @@
 # WI-EMBEDDED-WORKER-PROOF-1 producer evidence and consumer handoff
 
+The separate [WI-WORKER-G5 supervisor evidence](WI-WORKER-G5.md) covers authenticated
+interface behavior and durable reconciliation. Exoskeleton owns actual Kata lifecycle qualification.
+
 This is the integration-only, WI-owned proof for `process-managed-proof-1`,
 execution profile `WI-WORKER-EXECUTION-1`. The containing committed revision is
 the producer source identity. Resolve its exact commit and tree in the external

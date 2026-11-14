@@ -694,7 +694,7 @@ async fn idle_ticks_skip_unchanged_waiting_flows_and_reconcile_changes_after_res
     assert!(average < Duration::from_millis(250), "idle tick: {average:?}");
 
     // Each unrelated source/outbox commit advances AQ without satisfying any
-    // Flow. Unlike idle ticks, every measured tick must reconcile all waits.
+    // Flow. Every tick shares the bounded reconciliation budget.
     let mut traffic_route = event_route(&f);
     traffic_route.correlation = r("scale-traffic");
     let traffic_policy = Policy(traffic_route);
@@ -717,6 +717,12 @@ async fn idle_ticks_skip_unchanged_waiting_flows_and_reconcile_changes_after_res
         let started = Instant::now();
         assert_eq!(q.tick().await.unwrap().dispatched, 0);
         active.push(started.elapsed());
+        assert!(
+            q.tick_diagnostics.work.rows
+                <= worldinterface_runtime::aq_adapter::RECONCILE_ROWS_PER_TICK
+        );
+        assert!(q.tick_diagnostics.work.plans <= q.tick_diagnostics.work.rows);
+        eprintln!("active tick: {:?}", q.tick_diagnostics);
         assert!(f
             .bundle
             .wi()
@@ -749,7 +755,29 @@ async fn idle_ticks_skip_unchanged_waiting_flows_and_reconcile_changes_after_res
     pure.body.entries = vec![r("value")];
     service.activate_flow_version(&(), pure.clone(), None).unwrap();
     let unrelated = service.submit_flow(&(), &pure.id, submissions[100].clone(), &mut q).unwrap();
-    f.drive(&mut q, &unrelated).await;
+    for sequence in 9..=208 {
+        intake
+            .worker_observation(
+                &(),
+                worldinterface_worker::ports::Observation {
+                    provider: "scale-traffic".into(),
+                    run: "unrelated".into(),
+                    event: format!("traffic-{sequence}"),
+                    sequence,
+                    kind: worldinterface_worker::ports::ObservationKind::Exited,
+                },
+            )
+            .unwrap();
+        let _ = q.tick().await.unwrap();
+        assert!(
+            q.tick_diagnostics.work.rows
+                <= worldinterface_runtime::aq_adapter::RECONCILE_ROWS_PER_TICK
+        );
+        if f.run(&unrelated).outcome.is_some() {
+            break;
+        }
+        tokio::time::sleep(Duration::from_millis(1)).await;
+    }
     assert_eq!(f.run(&unrelated).outcome, Some(FlowOutcome::Succeeded));
     let canceled = ids.last().unwrap();
     q.cancel_task(f.run(canceled).coordinator_task.as_str().parse().unwrap()).unwrap();
@@ -765,4 +793,71 @@ async fn idle_ticks_skip_unchanged_waiting_flows_and_reconcile_changes_after_res
     assert_eq!(f.run(&ids[0]).outcome, Some(FlowOutcome::Succeeded));
     assert_eq!(f.run(canceled).outcome, Some(FlowOutcome::Canceled));
     q.shutdown().unwrap();
+}
+
+#[tokio::test]
+async fn reconciliation_work_is_bounded_independently_of_waits_and_history() {
+    for (waiting, history) in [(0, 0), (10, 0), (100, 0), (10, 100)] {
+        let mut f = Fixture::new();
+        let submissions: Vec<_> = (0..waiting + history)
+            .map(|i| {
+                let mut s = f.submission.clone();
+                s.client_request_id = format!("profile:{i}").try_into().unwrap();
+                s
+            })
+            .collect();
+        allow_demands(&mut f, &submissions);
+        let evidence = Evidence(f.snapshot.clone());
+        let service = f.service(&evidence);
+        let d = definition(&f, true, SignalProgress::Once {}, None);
+        service.activate_flow_version(&(), d.clone(), None).unwrap();
+        let mut pure = d.clone();
+        pure.id = r("profile-history");
+        pure.body.nodes = vec![pure_node("value", vec![], true.into(), "bool")];
+        pure.body.entries = vec![r("value")];
+        service.activate_flow_version(&(), pure.clone(), None).unwrap();
+        let mut q = QueueEngine::bootstrap(&f.bundle, f.handler(), host()).unwrap();
+        for s in &submissions[..history] {
+            let id = service.submit_flow(&(), &pure.id, s.clone(), &mut q).unwrap();
+            f.drive(&mut q, &id).await;
+        }
+        let ids: Vec<_> = submissions[history..]
+            .iter()
+            .map(|s| service.submit_flow(&(), &d.id, s.clone(), &mut q).unwrap())
+            .collect();
+        for id in &ids {
+            until_wait(&f, &mut q, id).await;
+        }
+        for _ in 0..20 {
+            let _ = q.tick().await.unwrap();
+        }
+        eprintln!("PROFILE waiting={waiting} completed_history={history}");
+        // Unrelated AQ progress invalidates the old watermark each time.
+        let mut route = event_route(&f);
+        route.correlation = r("profile-unrelated");
+        let policy = Policy(route);
+        let intake = EventIntake { root: f.bundle.wi(), authentication: &f.auth, policy: &policy };
+        for sequence in 1..=4 {
+            intake
+                .worker_observation(
+                    &(),
+                    worldinterface_worker::ports::Observation {
+                        provider: "profile".into(),
+                        run: "unrelated".into(),
+                        event: format!("profile-{sequence}"),
+                        sequence,
+                        kind: worldinterface_worker::ports::ObservationKind::Exited,
+                    },
+                )
+                .unwrap();
+            let _ = q.tick().await.unwrap();
+            let w = &q.tick_diagnostics.work;
+            assert!(w.rows <= worldinterface_runtime::aq_adapter::RECONCILE_ROWS_PER_TICK);
+            assert_eq!(w.plans, w.rows);
+            assert!(w.artifacts <= 2 * w.rows);
+            assert!(w.pages <= 2);
+            eprintln!("waiting={waiting} history={history}: {:?}", q.tick_diagnostics);
+        }
+        q.shutdown().unwrap();
+    }
 }

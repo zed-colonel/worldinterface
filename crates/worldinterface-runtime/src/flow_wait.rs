@@ -44,7 +44,15 @@ fn route(r: &FlowRun, signal: &SignalWait) -> Result<EventRoute> {
 }
 /// Live engine projection supplies the actual signal high-water mark before dispatch.
 pub(crate) fn prepare_eligible(root: &StoreRoot, r: &FlowRun, high_water: u64) -> Result<()> {
-    for n in &r.restore()?.document().body.nodes {
+    prepare_eligible_with_plan(root, r, &r.restore()?, high_water)
+}
+pub(crate) fn prepare_eligible_with_plan(
+    root: &StoreRoot,
+    r: &FlowRun,
+    plan: &ExecutionPlan,
+    high_water: u64,
+) -> Result<()> {
+    for n in &plan.document().body.nodes {
         if matches!(n.operation, PlanOperation::Wait { .. } | PlanOperation::Timer { .. })
             && r.bindings.contains_key(&n.id)
             && !r.results.contains_key(&n.id)
@@ -416,6 +424,15 @@ pub(crate) fn validate(
     n: &PlanNode,
     w: &WaitCheckpoint,
 ) -> Result<()> {
+    validate_measured(root, r, n, w, &mut crate::flow_coordinator::ReconcileWork::default())
+}
+pub(crate) fn validate_measured(
+    root: &StoreRoot,
+    r: &FlowRun,
+    n: &PlanNode,
+    w: &WaitCheckpoint,
+    work: &mut crate::flow_coordinator::ReconcileWork,
+) -> Result<()> {
     let wait: WaitSpec = serde_json::from_slice(&w.wait).map_err(rejected)?;
     let checkpoint: CheckpointRef = serde_json::from_slice(&w.checkpoint).map_err(rejected)?;
     let (expected, route) = wait_spec(r, n, wait.wait_id())?;
@@ -440,7 +457,7 @@ pub(crate) fn validate(
     if artifact != w.artifact || artifact.scope != r.tenant {
         return Err(rejected("foreign checkpoint artifact"));
     }
-    let b = root.read_artifact(&artifact)?;
+    let b = crate::flow_coordinator::read_artifact(root, &artifact, work)?;
     checkpoint.data.verify_bytes(&b).map_err(rejected)?;
     // Control reestablishment changes only the wait identity, preserving its checkpoint evidence.
     let original: (ContentHash, OpaqueRef, WaitSpec) =

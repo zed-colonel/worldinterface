@@ -1,0 +1,139 @@
+{
+  "version": 1,
+  "id": "WI-WORKER-G5",
+  "source_record_sha256": "2b33832d1a4593c208a44c93463c88564543740c2133495eaf682461e2da6ee0",
+  "pass_criteria": [
+    "Authenticated lifecycle adapter and results survive target shutdown; real instance qualification remains EXO-owned."
+  ],
+  "requires": [
+    {
+      "id": "WI-WORKER-G1",
+      "kind": "checkpoint",
+      "state": "passed"
+    },
+    {
+      "id": "WI-WORKER-G2",
+      "kind": "checkpoint",
+      "state": "passed"
+    },
+    {
+      "id": "WI-AQ-G1",
+      "kind": "checkpoint",
+      "state": "passed"
+    },
+    {
+      "id": "WI-AQ-G2",
+      "kind": "checkpoint",
+      "state": "passed"
+    },
+    {
+      "id": "WI-AQ-G3",
+      "kind": "checkpoint",
+      "state": "passed"
+    },
+    {
+      "id": "WI-AQ-G4",
+      "kind": "checkpoint",
+      "state": "passed"
+    },
+    {
+      "id": "wi/WI-11/supervisor-boundary",
+      "kind": "slice",
+      "state": "verified"
+    }
+  ],
+  "required_cases": [
+    "WP-035",
+    "WP-036",
+    "WP-037",
+    "WP-038",
+    "WP-039",
+    "WP-040"
+  ],
+  "closing_item": "WSP-04",
+  "status": "closed",
+  "effective_on": "reviewed-merge-with-adopted-checks",
+  "historical_evidence": [],
+  "requirement_bindings": [
+    {
+      "requirement": {
+        "id": "WI-WORKER-G1",
+        "kind": "checkpoint",
+        "state": "passed"
+      },
+      "binding": {
+        "kind": "closed-gate",
+        "record": "conformance/wi-fabric-2/proof/gates/WI-WORKER-G1.json"
+      }
+    },
+    {
+      "requirement": {
+        "id": "WI-WORKER-G2",
+        "kind": "checkpoint",
+        "state": "passed"
+      },
+      "binding": {
+        "kind": "closed-gate",
+        "record": "conformance/wi-fabric-2/proof/gates/WI-WORKER-G2.json"
+      }
+    },
+    {
+      "requirement": {
+        "id": "WI-AQ-G1",
+        "kind": "checkpoint",
+        "state": "passed"
+      },
+      "binding": {
+        "kind": "closed-gate",
+        "record": "conformance/wi-fabric-2/proof/gates/WI-AQ-G1.json"
+      }
+    },
+    {
+      "requirement": {
+        "id": "WI-AQ-G2",
+        "kind": "checkpoint",
+        "state": "passed"
+      },
+      "binding": {
+        "kind": "closed-gate",
+        "record": "conformance/wi-fabric-2/proof/gates/WI-AQ-G2.json"
+      }
+    },
+    {
+      "requirement": {
+        "id": "WI-AQ-G3",
+        "kind": "checkpoint",
+        "state": "passed"
+      },
+      "binding": {
+        "kind": "closed-gate",
+        "record": "conformance/wi-fabric-2/proof/gates/WI-AQ-G3.json"
+      }
+    },
+    {
+      "requirement": {
+        "id": "WI-AQ-G4",
+        "kind": "checkpoint",
+        "state": "passed"
+      },
+      "binding": {
+        "kind": "closed-gate",
+        "record": "conformance/wi-fabric-2/proof/gates/WI-AQ-G4.json"
+      }
+    },
+    {
+      "requirement": {
+        "id": "wi/WI-11/supervisor-boundary",
+        "kind": "slice",
+        "state": "verified"
+      },
+      "binding": {
+        "kind": "reviewed-item-scope",
+        "covering_items": [
+          "WSP-03"
+        ],
+        "effective_on": "reviewed-merge-with-adopted-checks"
+      }
+    }
+  ]
+}

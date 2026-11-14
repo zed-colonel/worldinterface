@@ -44,7 +44,7 @@ fn rejects(rule: &str, edit: impl FnOnce(&mut Registry, &mut Vec<Gate>, &mut Tes
 fn baseline_records_have_precise_g1_coverage_and_no_source_result_claims() {
     let (r, g, index) = records();
     assert!(proof::validate(&root(), &r, &g, &index).unwrap().is_empty());
-    assert_eq!(r.cases.len(), 60);
+    assert_eq!(r.cases.len(), 61);
     // Later work items add evidence without changing WIP-01's precise G1 baseline.
     assert_eq!(
         r.cases.iter().filter(|c| c.owning_item == "WIP-01" && c.status == "implemented").count(),
@@ -65,7 +65,7 @@ fn baseline_records_have_precise_g1_coverage_and_no_source_result_claims() {
     // WIP-16 publishes all ten gates, effective only on reviewed merge with adopted checks.
     let allowed = baseline
         .into_iter()
-        .chain(["WI-WORKER-G3", "WI-WORKER-G4", "WI-EMBEDDED-WORKER-PROOF-1"])
+        .chain(["WI-WORKER-G3", "WI-WORKER-G4", "WI-WORKER-G5", "WI-EMBEDDED-WORKER-PROOF-1"])
         .collect::<BTreeSet<_>>();
     assert_eq!(closed, allowed);
     assert_eq!(r.cases.iter().find(|c| c.id == "WP-002").unwrap().tests.len(), 3);
@@ -555,7 +555,7 @@ fn wi07_domain_requires_complete_exact_executable_tests_and_no_runtime_claim() {
         assert!(!proof::validate_flow(t.path(), &index).unwrap().is_empty());
     }
     let (registry, _, _) = records();
-    assert_eq!(registry.cases.len(), 60);
+    assert_eq!(registry.cases.len(), 61);
     for id in ["AB-WI-005", "AB-WI-010", "AB-WI-013"] {
         let case = registry.cases.iter().find(|c| c.id == id).unwrap();
         assert_eq!(case.status, "implemented");
@@ -872,7 +872,7 @@ fn supervisor_campaign_scope_preserves_worker_milestone_and_rejects_substitution
         proof::worker_case_ids()
     );
     let mut bad = registry.clone();
-    bad.cases.last_mut().unwrap().id = "WP-040".into();
+    bad.cases.last_mut().unwrap().id = "WP-041".into();
     assert!(proof::validate_campaign_scope(&bad).is_err());
     bad = registry.clone();
     bad.cases.pop();
@@ -892,4 +892,44 @@ fn supervisor_resolution_rejects_missing_cases_and_inflated_claims() {
         fs::write(&path, serde_json::to_vec(&changed).unwrap()).unwrap();
         assert!(proof::validate_supervisor(temp.path(), &registry, &index).is_err());
     }
+}
+
+#[test]
+fn supervisor_g5_rejects_incomplete_prerequisites_cases_and_inflated_criteria() {
+    for field in ["requires", "required_cases", "requirement_bindings"] {
+        rejects(
+            if field == "requires" {
+                "PROOF-GATE-SOURCE"
+            } else if field == "required_cases" {
+                "PROOF-GATE-CASES"
+            } else {
+                "PROOF-BINDING"
+            },
+            |_, gates, _| {
+                let g = gates.iter_mut().find(|g| g.id == "WI-WORKER-G5").unwrap();
+                match field {
+                    "requires" => {
+                        g.requires.pop();
+                    }
+                    "required_cases" => {
+                        g.required_cases.pop();
+                    }
+                    _ => {
+                        g.requirement_bindings.pop();
+                    }
+                }
+            },
+        );
+    }
+    rejects("PROOF-GATE-SOURCE", |_, gates, _| {
+        gates.iter_mut().find(|g| g.id == "WI-WORKER-G5").unwrap().pass_criteria =
+            json!(["Kata qualified"]);
+    });
+    rejects("PROOF-TEST", |r, _, index| {
+        let c = r.cases.iter().find(|c| c.id == "WP-040").unwrap();
+        index.remove(&c.tests[0]);
+    });
+    let (_, gates) = proof::load_worker(&root()).unwrap();
+    assert_eq!(gates.len(), 10);
+    assert!(!gates.iter().any(|g| g.id == "WI-WORKER-G5"));
 }
