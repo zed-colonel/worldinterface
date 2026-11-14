@@ -36,7 +36,7 @@ fn wi_owned_worker_acceptance_campaign() {
             "run",
         ])
         .arg(&path)
-        .current_dir(root)
+        .current_dir(&root)
         .status()
         .unwrap();
     assert!(status.success(), "worker campaign failed; evidence {}", path.display());
@@ -57,7 +57,7 @@ fn wi_owned_worker_acceptance_campaign() {
             "verify",
         ])
         .arg(&path)
-        .current_dir(root)
+        .current_dir(&root)
         .status()
         .unwrap();
     assert!(verified.success(), "worker handoff verification failed; evidence {}", path.display());

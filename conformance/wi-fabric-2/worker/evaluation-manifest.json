@@ -316,7 +316,7 @@
     "crates/worldinterface-runtime/tests/worker_artifact_validation.rs": "c18f5a38332f3a8435272cfdc4bf04e7f65f7f9ae5e84e1f12d78bc19c9a1311",
     "crates/worldinterface-runtime/tests/worker_artifacts.rs": "a222c25195532eb99eccd07b5f4b3a144739b371c6404e140a784f5ebd4b1570",
     "crates/worldinterface-runtime/tests/worker_build.rs": "f1093cb1cc8e144a10d6fb5f3403727ab271f7306bef92bde6b128f69ba9f5cb",
-    "crates/worldinterface-runtime/tests/worker_campaign.rs": "4873be2c61a1df3ae17bb404d959d3627786064158ace190bd8ee4ece0338af1",
+    "crates/worldinterface-runtime/tests/worker_campaign.rs": "fe9ae641f461daec60490bb357553cec372ff1156cebb2966d7812060b1a1f74",
     "crates/worldinterface-runtime/tests/worker_campaign_cases.rs": "b712b56415425c6d2173a4ea3fa35d218ae6c64ff398dc8124789a220a1cef67",
     "crates/worldinterface-runtime/tests/worker_catalog.rs": "7fd91de0fc0ede4d15d34362f61f461f73435cd47de35e14360e3685b1125589",
     "crates/worldinterface-runtime/tests/worker_evaluation.rs": "61d901d68bc7bb975b37bc6551c58891ac5311817042b29d75044154f5cf7a6b",
