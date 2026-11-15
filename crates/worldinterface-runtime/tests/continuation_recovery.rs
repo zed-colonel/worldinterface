@@ -20,6 +20,54 @@ use worldinterface_runtime::{
 };
 use worldinterface_storage::{flow::*, StoreKind};
 
+#[test]
+fn bootstrap_prepares_missing_scheduling_index_and_pending_page_survives_reopen() {
+    let f = Fixture::new();
+    let database = f._temp.path().join("bundle/wi/flow.sqlite");
+    let connect = || {
+        rusqlite::Connection::open_with_flags(&database, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY)
+            .unwrap()
+    };
+    let index_count = || -> u64 {
+        connect().query_row(
+            "SELECT COUNT(*) FROM sqlite_master WHERE type='index' AND name='flow_pending_global'",
+            [],
+            |row| row.get(0),
+        ).unwrap()
+    };
+    assert_eq!(index_count(), 0);
+    let error = f.bundle.wi().flow_pending_global_page(0, i64::MAX, 1).err().unwrap();
+    assert!(error.is::<FlowIntegrity>());
+    assert_eq!(error.to_string(), "Flow scheduling index missing; call flow_prepare_scheduling before reading global pending pages");
+    assert_eq!(index_count(), 0);
+
+    let evidence = Evidence(f.snapshot.clone());
+    let service = f.service(&evidence);
+    let d = definition(&f, true, SignalProgress::Once {}, None);
+    service.activate_flow_version(&(), d.clone(), None).unwrap();
+    let mut q = QueueEngine::bootstrap(&f.bundle, f.handler(), host()).unwrap();
+    assert_eq!(index_count(), 1);
+    let id = service.submit_flow(&(), &d.id, f.submission.clone(), &mut q).unwrap();
+    let pending = f.run(&id);
+    q.shutdown().unwrap();
+    drop(f.bundle);
+
+    let reopened =
+        worldinterface_runtime::storage::StoreBundle::open(&f._temp.path().join("bundle")).unwrap();
+    assert_eq!(index_count(), 1);
+    let schema: u32 = connect().query_row("PRAGMA user_version", [], |row| row.get(0)).unwrap();
+    assert_eq!(schema, 1);
+    let page = reopened.wi().flow_pending_global_page(0, i64::MAX, 1).unwrap();
+    assert_eq!(page.len(), 1);
+    assert_eq!(page[0].run, pending);
+    assert!(page[0].quarantine.is_none());
+    assert!(reopened
+        .wi()
+        .flow_pending_global_page(page[0].position, i64::MAX, 1)
+        .unwrap()
+        .is_empty());
+}
+
 // Observe inside the executor, before control returns to tick's next outbox
 // drain. This distinguishes handler repair from eventual scan acknowledgment.
 struct CheckWakeAcknowledgment<H> {

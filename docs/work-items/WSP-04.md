@@ -42,9 +42,21 @@ A global pending-run index skips completed rows across all tenants before the
 page limit or deserialization. It is an optional derived schema-1 index, built
 once at QueueEngine bootstrap for legacy stores after full validation. The schema
 validator accepts its exact definition or its absence, and rejects a substituted
-index. Source journal/projection formats and manifest versions stay unchanged;
-older binaries do not accept stores once this optional index is installed. WSP-05
-must identify this forward-compatible read / backward-reader restriction.
+index. Source journal/projection formats and manifest versions stay unchanged.
+F-004 operator decision (2026-11-14): accept `flow_pending_global`, keep Flow
+schema version 1, and add no migration or in-memory pending set. WSP-03, merged
+in `8f27b9a`, already added `effect_instances`, `effect_owner`, `effect_requests`
+and `worker_reserved` without a migration. Full-schema validation therefore
+already rejects stores across the alpha.1 / supervisor-line boundary in both
+directions; this index removes no existing alpha.1 rollback path. The base
+`8f27b9a` validator also rejects stores after index installation. This decision
+accepts that restriction here rather than deferring it to WSP-05.
+`flow_pending_global_page` returns a typed storage error identifying the missing
+index and `flow_prepare_scheduling` prerequisite when called before preparation.
+The non-ignored regression
+`bootstrap_prepares_missing_scheduling_index_and_pending_page_survives_reopen`
+checks that error, QueueEngine bootstrap from a store without the index, close,
+reopen, schema version 1 and the retained pending page.
 SQL VM-step tests cover 9,999 completed history tenants and a finite admission
 cutoff, with no full scan or sort. Index construction and full reopen validation
 are startup work, outside the per-tick bound.

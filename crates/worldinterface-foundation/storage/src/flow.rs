@@ -1100,6 +1100,7 @@ impl StoreRoot {
         Ok(())
     }
     /// Global pending page, skipping completed runs and history-only tenants.
+    /// Requires `flow_prepare_scheduling` (also called by QueueEngine bootstrap).
     pub fn flow_pending_global_page(
         &self,
         after: i64,
@@ -1110,6 +1111,16 @@ impl StoreRoot {
             return Err(invalid("Flow page bound"));
         }
         let c = self.connect(StoreKind::Flow)?;
+        let prepared: bool = c.query_row(
+            "SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE type='index' AND name='flow_pending_global')",
+            [],
+            |row| row.get(0),
+        )?;
+        if !prepared {
+            return Err(invalid(
+                "Flow scheduling index missing; call flow_prepare_scheduling before reading global pending pages",
+            ));
+        }
         let mut q = c.prepare(GLOBAL_PAGE_SQL)?;
         let rows = q.query_map(params![after, through, limit as i64], |r| {
             Ok((r.get::<_, i64>(0)?, r.get::<_, Vec<u8>>(1)?, r.get::<_, Option<String>>(2)?))
