@@ -44,6 +44,15 @@ def gate_environment():
 
 
 def preflight(version, commit, output):
+    # tempfile otherwise silently falls back to a platform default. Gates need
+    # the caller's explicit external directory before any preparation begins.
+    message = ('TMPDIR must name an existing writable directory outside the checkout; '
+               'create and export one before prepare.')
+    temporary = os.environ.get('TMPDIR')
+    require(bool(temporary), message)
+    temporary = Path(temporary).resolve()
+    require(temporary.is_dir() and os.access(temporary, os.W_OK | os.X_OK)
+            and not temporary.is_relative_to(ROOT.resolve()), message)
     clean(commit)
     require(not output.is_symlink(), 'symlink output directory')
     output = output.resolve()
@@ -103,6 +112,8 @@ def validate_packages(manifest, output):
     locks = {}
     for name in PACKAGES:
         files = validate_archive(output / f'crates/{name}-{version}.crate', name, version, checksums)
+        if name == 'worldinterface-runtime':
+            descriptor = json.loads(files['release/handoff.json'])
         digest = __import__('hashlib').sha256(files['Cargo.lock']).hexdigest()
         locks[name] = digest
         expected_tests = [['test', '--lib'], *[['test', '--test', r['target']] for r in inventory['packages'][name]['tests'] if r['disposition'] == 'packaged'], ['test', '--doc']]
@@ -117,6 +128,7 @@ def validate_packages(manifest, output):
         validate_resolution(meta, name, version)
     require(manifest['packaged_locks'] == locks, 'manifest packaged locks disagreement')
     handoff = read(safe(output, 'consumer-handoff.json'))
+    validate_consumer_contract(handoff, descriptor)
     require(handoff['kind'] == 'wi-release-consumer-handoff-v1' and handoff['schema_version'] == 1 and handoff['source_commit'] == manifest['source_commit'] and handoff['version'] == version, 'wrong consumer handoff identity')
     require(handoff['descriptor_sha256'] == manifest['descriptor_sha256'] and handoff['archives'] == checksums, 'wrong handoff archives/descriptor')
     require(handoff['repository_lock_sha256'] == repository_digest and handoff['packaged_lock_sha256'] == locks['worldinterface-runtime'], 'repository/package lock provenance confusion')
@@ -142,6 +154,16 @@ def validate_packages(manifest, output):
     validate_resolution(consumer_meta, 'wi-downstream-consumer', version)
     check_graph(consumer_meta, toml(safe(output, 'consumer-Cargo.lock')), 'wi-downstream-consumer', version, checksums, inspect_manifests=False)
     check_artifacts(read(safe(output, 'production/consumer.json')))
+
+
+def validate_consumer_contract(handoff, descriptor):
+    require(handoff.get('supervisor') == {
+        'gate': descriptor['supervisor']['gate']['id'],
+        'available_since': descriptor['supervisor']['available_since']},
+        'consumer supervisor gate/release identity disagreement')
+    require(json.dumps(handoff.get('store_compatibility'), sort_keys=True)
+            == json.dumps(descriptor['release']['store_compatibility'], sort_keys=True),
+            'consumer store compatibility disagreement')
 
 
 def validate_resolution(meta, root_name, version):

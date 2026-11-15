@@ -196,7 +196,38 @@ fn packaged_handoff_gates_fixtures_and_repository_lock_reject_drift() {
         fs::write(path, original).unwrap();
     }
     let value = handoff::descriptor(temp.path()).unwrap();
-    assert_eq!(value["release"]["package_version"], "0.2.0-alpha.1");
+    assert_eq!(value["release"]["package_version"], "0.2.0-alpha.2");
+    assert!(value["identities"]["docs/release/0.2.0-alpha.2.md"].is_string());
+    assert!(value["identities"].get("docs/release/0.2.0-alpha.1.md").is_none());
+}
+
+#[test]
+fn alpha2_handoff_requires_g5_release_and_two_way_store_incompatibility() {
+    let temp = fixture();
+    let value = read(&temp.path().join(handoff::DESCRIPTOR)).unwrap();
+    assert_eq!(value["supervisor"]["available_since"], "0.2.0-alpha.2");
+    let compatibility = &value["release"]["store_compatibility"];
+    assert_eq!(compatibility["previous_version"], "0.2.0-alpha.1");
+    assert_eq!(compatibility["previous_store_requires_recreation"], true);
+    assert_eq!(compatibility["current_store_readable_by_previous"], false);
+    for (parent, key) in std::iter::once(("/supervisor", "available_since".to_owned())).chain(
+        compatibility
+            .as_object()
+            .unwrap()
+            .keys()
+            .map(|k| ("/release/store_compatibility", k.clone())),
+    ) {
+        for remove in [false, true] {
+            let mut changed = value.clone();
+            let fields = changed.pointer_mut(parent).unwrap().as_object_mut().unwrap();
+            if remove {
+                fields.remove(&key);
+            } else {
+                fields.insert(key.clone(), json!("substituted"));
+            }
+            assert!(handoff::validate(temp.path(), &changed).is_err(), "{parent}/{key}");
+        }
+    }
 }
 
 #[test]

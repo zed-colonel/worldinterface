@@ -45,7 +45,7 @@ and embedded host surfaces.
 
 ## Active work items
 
-- Active work: WI-SUPERVISOR-PROOF-1, [WSP-04](docs/work-items/WSP-04.md).
+- Active work: WI-SUPERVISOR-PROOF-1, [WSP-05](docs/work-items/WSP-05.md).
   Supervisor lifecycle authority is separate from WorkerPort; preserve the original
   55-case worker milestone and ten gates. WSP-03 adds WP-035–039 to the campaign
   and evaluation packet, with separate operator grants and no new worker operation.
