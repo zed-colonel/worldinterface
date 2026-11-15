@@ -8,6 +8,7 @@ pub mod inventory;
 pub mod policy;
 pub mod proof;
 pub mod refresh;
+pub mod supervisor_evidence;
 
 use serde::{Deserialize, Serialize};
 use serde_json::Value;

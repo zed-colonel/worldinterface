@@ -1,13 +1,23 @@
 {
   "version": 1,
   "status": "candidate-for-review",
-  "effective_on": "explicit-operator-disposition-for-evaluation-then-qualifying-CraftingTable-review",
-  "scope": "same five supervisor files; WSP-02 package-local repository-lock snapshot update; generic continuation ban unchanged",
+  "effective_on": "reviewed-merge-with-adopted-checks",
+  "scope": "same five supervisor exception files; F-008 ownership acquisition has no waiting exception; candidate execution requires complete committed packet validation",
   "updates": [
     {
       "path": "crates/worldinterface-runtime/src/worker_process/mod.rs",
       "sha256": "64e04b9003318dbe15d508eaad5e37a85ec081f4969ed6cfe9982f9c1a3048f6",
       "rationale": "Correctness remediation F-002/F-003/F-007/F-013: exact-scope host cleanup and evidence survive worker credential expiry; released provider state is retired; capacity is concurrent; never-started exports do not block release; the helper spawn boundary is counted. Worker credential checks remain on worker-facing access and fresh launch. No new waiting exception, process identity disclosure or isolation claim. Requires complete committed packet validation for candidate verification and qualifying source review/merge for durable acceptance under WSP-01 (2026-11-09); no separate receipt, anchor or calendar expiry. WSP-02 changes only dependencies_digest() to embed release/repository-Cargo.lock. handoff check proves that snapshot equals the repository runtime Cargo.lock; packaged Cargo.lock normalization is recorded separately. No supervisor logic, waiting exception, operations, bounds or authority changes. This exact source update is submitted for qualifying review with WSP-02."
+    },
+    {
+      "path": "crates/worldinterface-runtime/src/worker_process/supervision.rs",
+      "sha256": "0508107c755ccc77b898e600b93938539e4d7c0041bba26f0afbbda11b376675",
+      "rationale": "WSP-04 F-008: acquired/departed/rediscovery states distinguish child reparenting to the dedicated subreaper or exit during acquisition; fresh root acquisition validates stable birth, handle and context before adoption. Live identity mismatches remain fatal. Deterministic barriers preserve unrelated-process and descendant cleanup assertions. No broader continuation exception, operations, authority or isolation claim. Candidate verification requires exact committed packet bindings; durable acceptance requires qualifying review/merge with adopted checks."
+    },
+    {
+      "path": "crates/worldinterface-runtime/src/worker_process/ownership.rs",
+      "sha256": "e49ae805fbe1595f23c9ef91e882d1b28ac68dadc1aa2d104f2bb3ab2d6512b1",
+      "rationale": "WSP-04 F-008: acquired/departed/rediscovery states distinguish child reparenting to the dedicated subreaper or exit during acquisition; fresh root acquisition validates stable birth, handle and context before adoption. Live identity mismatches remain fatal. Deterministic barriers preserve unrelated-process and descendant cleanup assertions. No broader continuation exception, operations, authority or isolation claim. Candidate verification requires exact committed packet bindings; durable acceptance requires qualifying review/merge with adopted checks."
     }
   ]
 }

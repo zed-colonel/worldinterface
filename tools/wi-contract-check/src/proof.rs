@@ -312,6 +312,9 @@ fn validate_runtime_ownership(packages: &BTreeMap<String, &Value>) -> Result<()>
 }
 
 fn allocation(id: &str, source: &Value) -> Result<(String, String)> {
+    if id == "WP-040" {
+        return Ok((string(source, "checkpoint")?.to_owned(), "WSP-04".into()));
+    }
     if matches!(id, "WP-035" | "WP-036" | "WP-037" | "WP-038" | "WP-039") {
         return Ok((string(source, "checkpoint")?.to_owned(), "WSP-03".into()));
     }
@@ -485,6 +488,30 @@ fn coverage(root: &Path, id: &str) -> Result<(Vec<String>, BTreeSet<TestRef>)> {
     refs.sort();
     Ok((refs, tests))
 }
+/// G5 was not exported by the retired ten-gate map. Its authority is the
+/// immutable worker profile plus the accepted WSP-04 prerequisite mapping.
+pub fn supervisor_gate_source(root: &Path) -> Result<Value> {
+    const PROFILE: &str = "contracts/sources/wi-fabric-2-worker-execution-profile.yaml";
+    if hash(fs::read(root.join(PROFILE))?)
+        != "6523baf56d14dafa4b199c7493dc030461cc061754c180b4c83006308e633986"
+    {
+        return Err("supervisor profile source drift".into());
+    }
+    let profile = read(&root.join(PROFILE))?;
+    let source = array(&profile, "checkpoints")?
+        .iter()
+        .find(|g| g["id"] == "WI-WORKER-G5")
+        .ok_or("missing G5 profile")?;
+    let mut requires: Vec<Value> = array(source, "requires_checkpoints")?
+        .iter()
+        .chain(array(source, "required_aq_gates_for_real_integration")?)
+        .map(|id| json!({"id":id,"kind":"checkpoint","state":"passed"}))
+        .collect();
+    requires.push(json!({"id":"wi/WI-11/supervisor-boundary","kind":"slice","state":"verified"}));
+    Ok(
+        json!({"id":"WI-WORKER-G5","profile_record":source,"pass_criteria":[source["criterion"]],"requires":requires,"plan_revision":"WI-SUPERVISOR-PROOF-1-PLAN-1","plan_item":"WSP-04"}),
+    )
+}
 fn binding(root: &Path, requirement: &Value) -> Result<Value> {
     let id = string(requirement, "id")?;
     Ok(match id {
@@ -524,6 +551,7 @@ fn binding(root: &Path, requirement: &Value) -> Result<Value> {
                 "wi/WI-10/process-catalog" => vec!["WIP-12"],
                 "wi/WI-11/embedded-runtime" => vec!["WIP-14"],
                 "wi/WI-13/worker-conformance" => vec!["WIP-15"],
+                "wi/WI-11/supervisor-boundary" => vec!["WSP-03"],
                 "wi/WI-14/worker-handoff" => vec!["WIP-15", "WIP-16"],
                 _ => return Err(format!("unmapped slice {id}").into()),
             };
@@ -661,9 +689,11 @@ pub fn validate(
         }
     }
     if seen != sources.keys().cloned().collect() {
-        reject("PROOF-CASE", "registry", "register exactly all 60 campaign cases");
+        reject("PROOF-CASE", "registry", "register exactly all 61 campaign cases");
     }
-    let source_gates = array(&export, "checkpoints")?;
+    let mut source_gates = array(&export, "checkpoints")?.clone();
+    let supervisor_source = supervisor_gate_source(root)?;
+    source_gates.push(supervisor_source.clone());
     let expected_ids: BTreeSet<_> =
         source_gates.iter().map(|g| string(g, "id")).collect::<Result<_>>()?;
     let mut ids = BTreeSet::new();
@@ -682,6 +712,7 @@ pub fn validate(
             "WI-WORKER-G4" | "WI-EMBEDDED-WORKER-PROOF-1" => "WIP-16",
             "WI-AQ-G3" | "WI-EMBEDDED-CORE-1" => "WIP-08",
             "WI-AQ-G4" => "WIP-07",
+            "WI-WORKER-G5" => "WSP-04",
             _ => return Err("unknown exported gate".into()),
         };
         let historical: Vec<&str> = match g.id.as_str() {
@@ -724,6 +755,12 @@ pub fn validate(
             })
             .map(|(id, _)| id.clone())
             .collect();
+        if g.id == "WI-WORKER-G5"
+            && json!(required.iter().cloned().collect::<Vec<_>>())
+                != supervisor_source["profile_record"]["cases"]
+        {
+            reject("PROOF-GATE-CASES", &g.id, "G5 cases must match immutable profile");
+        }
         if g.required_cases != required.iter().cloned().collect::<Vec<_>>() {
             reject(
                 "PROOF-GATE-CASES",
@@ -769,7 +806,11 @@ pub fn validate(
         }
     }
     if ids != expected_ids {
-        reject("PROOF-GATE", "registry", "exactly ten exported gates required");
+        reject(
+            "PROOF-GATE",
+            "registry",
+            "exactly ten historical gates and separate supervisor G5 required",
+        );
     }
     if prerequisite_cycles(gates) {
         reject("PROOF-CYCLE", "gates", "prerequisite cycle");
@@ -784,19 +825,20 @@ pub fn worker_case_ids() -> BTreeSet<String> {
         .collect()
 }
 pub fn campaign_case_ids() -> BTreeSet<String> {
-    worker_case_ids().into_iter().chain((35..=39).map(|n| format!("WP-{n:03}"))).collect()
+    worker_case_ids().into_iter().chain((35..=40).map(|n| format!("WP-{n:03}"))).collect()
 }
 pub fn validate_campaign_scope(registry: &Registry) -> Result<()> {
     let ids: BTreeSet<_> = registry.cases.iter().map(|c| c.id.clone()).collect();
-    if registry.cases.len() != 60 || ids != campaign_case_ids() {
-        return Err("campaign requires exactly the historical 55 plus WP-035 through WP-039".into());
+    if registry.cases.len() != 61 || ids != campaign_case_ids() {
+        return Err("campaign requires exactly the historical 55 plus WP-035 through WP-040".into());
     }
     Ok(())
 }
 pub fn load_worker(root: &Path) -> Result<(Registry, Vec<Gate>)> {
-    let (mut registry, gates) = load(root)?;
+    let (mut registry, mut gates) = load(root)?;
     validate_campaign_scope(&registry)?;
     registry.cases.retain(|c| worker_case_ids().contains(&c.id));
+    gates.retain(|g| g.id != "WI-WORKER-G5");
     Ok((registry, gates))
 }
 pub fn load(root: &Path) -> Result<(Registry, Vec<Gate>)> {
@@ -1555,6 +1597,7 @@ pub fn validate_supervisor(root: &Path, registry: &Registry, index: &TestIndex) 
     if v["version"] != 1
         || v["owning_item"] != "WSP-03"
         || v["scope"] != "wi/WI-11/supervisor-boundary"
+        || v["conformance_item"] != "WSP-04"
         || v["runtime_pass_asserted"] != false
         || v["assumption"]["id"] != "WP-A08"
         || v["assumption"]["status"] != "resolved-by-implementation"
@@ -1562,12 +1605,12 @@ pub fn validate_supervisor(root: &Path, registry: &Registry, index: &TestIndex) 
         || v["assumption"]["recovery"]
             != "authenticated inspect; ambiguous dispatch never redispatched"
         || v["assumption"]["real_instance_qualification"]
-            != "Exoskeleton-owned; WSP-04 owns WP-040 and G5"
+            != "Exoskeleton-owned; WI claims authenticated interface and durable reconciliation only"
     {
         return Err("supervisor scope, authority or WP-A08 resolution drift".into());
     }
     let assigned = v["assigned_cases"].as_object().ok_or("missing supervisor cases")?;
-    let expected: BTreeSet<_> = (35..=39).map(|n| format!("WP-{n:03}")).collect();
+    let expected: BTreeSet<_> = (35..=40).map(|n| format!("WP-{n:03}")).collect();
     if assigned.keys().cloned().collect::<BTreeSet<_>>() != expected {
         return Err("exact supervisor case set required".into());
     }
@@ -1576,7 +1619,7 @@ pub fn validate_supervisor(root: &Path, registry: &Registry, index: &TestIndex) 
         let case = registry.cases.iter().find(|c| c.id == *id).ok_or("supervisor case missing")?;
         if refs.is_empty()
             || case.status != "implemented"
-            || case.owning_item != "WSP-03"
+            || case.owning_item != if id == "WP-040" { "WSP-04" } else { "WSP-03" }
             || refs.iter().any(|r| index.get(r) != Some(&1) || !case.tests.contains(r))
         {
             return Err("supervisor implementation evidence incomplete".into());

@@ -36,8 +36,29 @@ fn wi_owned_worker_acceptance_campaign() {
             "run",
         ])
         .arg(&path)
-        .current_dir(root)
+        .current_dir(&root)
         .status()
         .unwrap();
     assert!(status.success(), "worker campaign failed; evidence {}", path.display());
+    // Verify the persisted handoff independently while its exact source/build
+    // environment is still present in the adopted check's private clone.
+    let verified = std::process::Command::new("timeout")
+        .args([
+            "--kill-after=15s",
+            "600s",
+            "cargo",
+            "run",
+            "--locked",
+            "--offline",
+            "--manifest-path",
+            "tools/wi-contract-check/Cargo.toml",
+            "--",
+            "handoff",
+            "verify",
+        ])
+        .arg(&path)
+        .current_dir(&root)
+        .status()
+        .unwrap();
+    assert!(verified.success(), "worker handoff verification failed; evidence {}", path.display());
 }

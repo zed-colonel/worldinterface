@@ -125,6 +125,22 @@ fn wi_supervisor_child() {
         let case = h.case();
         runtime.block_on(h.reconcile());
         assert_eq!(h.case(), case);
+        let access = worldinterface_domain::receipt::ReceiptAccess::from_trusted_authorizer(
+            h.caller().tenant().clone(),
+            h.caller().principal().clone(),
+            worldinterface_domain::receipt::DisclosureProfile::Full,
+        );
+        let envelopes: Vec<_> = original
+            .iter()
+            .map(|(id, _, _)| {
+                h.bundle.wi().inspect_receipt(&access, id).unwrap().unwrap().canonical.unwrap()
+            })
+            .collect();
+        durable_write(&root.join("wi-evidence.json"), &serde_json::to_vec(&serde_json::json!({
+            "intent":h.effect().intent,"original_receipts":original,"receipt_envelopes":envelopes,
+            "reconciled_receipts":h.bundle.wi().effect_receipts(h.caller().tenant(), &h.id).unwrap(),
+            "case":case,"case_after_retry":h.case(),"phase":h.effect().phase
+        })).unwrap());
     }
 }
 fn prepare(root: &Path, operation: Operation) -> Config {
@@ -252,6 +268,7 @@ fn assert_guest_isolated(pid: u32, readiness: &mut UnixStream) {
 }
 
 fn lifecycle(
+    case: &str,
     operation: Operation,
     lost_ack: bool,
     ambiguous: bool,
@@ -260,8 +277,13 @@ fn lifecycle(
 ) {
     live_packet();
     let temp = tempfile::tempdir().unwrap();
-    let root = temp.path();
-    let config = prepare(root, operation);
+    let wi_root = temp.path();
+    let config = prepare(wi_root, operation);
+    let scenario = cut.unwrap_or("restart");
+    let operator_root = retained_operator_root(case, scenario);
+    let root = operator_root.as_path();
+    assert!(!root.starts_with(wi_root) && !wi_root.starts_with(root));
+    durable_write(&root.join("config.json"), &std::fs::read(wi_root.join("config.json")).unwrap());
     let (mut readiness, stdio) = UnixStream::pair().unwrap();
     let mut guest = KillOnDrop(
         Process::new("/bin/cat")
@@ -275,9 +297,10 @@ fn lifecycle(
             .unwrap(),
     );
     assert_guest_isolated(guest.id(), &mut readiness);
+    let mut guest_exit = None;
     if failed_guest_first {
         guest.kill().unwrap();
-        guest.wait().unwrap();
+        guest_exit = Some(guest.wait().unwrap());
     }
     if lost_ack {
         std::fs::write(root.join("drop-ack"), b"1").unwrap();
@@ -288,11 +311,12 @@ fn lifecycle(
         std::fs::write(root.join("delay-abort"), b"1").unwrap();
     }
     let (client, mut supervisor) = channel(root, &config);
+    let initial_supervisor = supervisor.id();
     let initial = cut
         .filter(|p| p.starts_with("fabric-"))
         .map(|p| format!("invoke-cut-{p}"))
         .unwrap_or_else(|| "invoke".into());
-    wi(root, client, &initial);
+    wi(wi_root, client, &initial);
     wait_for_activation(root);
     assert_eq!(std::fs::read(root.join("activations")).unwrap(), b"1");
     if ambiguous {
@@ -313,25 +337,98 @@ fn lifecycle(
     }
     if !failed_guest_first {
         guest.kill().unwrap();
-        guest.wait().unwrap();
+        guest_exit = Some(guest.wait().unwrap());
     }
+    let guest_stopped = guest_exit.is_some_and(|status| status.signal() == Some(libc::SIGKILL));
+    assert!(guest_stopped, "guest death was not reaped");
     drop(supervisor);
     let _ = std::fs::remove_file(root.join("drop-ack"));
     let _ = std::fs::remove_file(root.join("interrupt-dispatch"));
     // Completion belongs to the operator backend, and needs no guest callback.
-    std::fs::write(root.join("complete"), b"stopped/recovered outside guest").unwrap();
+    complete_backend(root);
     let (client, supervisor) = channel(root, &config);
     if let Some(point) = cut.filter(|p| p.starts_with("reconciliation-")) {
-        wi(root, client, &format!("reconcile-cut-{point}"));
+        wi(wi_root, client, &format!("reconcile-cut-{point}"));
         drop(supervisor);
         let (client, supervisor) = channel(root, &config);
-        wi(root, client, "reconcile");
+        wi(wi_root, client, "reconcile");
         drop(supervisor);
     } else {
-        wi(root, client, "reconcile");
+        wi(wi_root, client, "reconcile");
         drop(supervisor);
     }
     assert_eq!(std::fs::read(root.join("activations")).unwrap(), b"1");
+    // Read WI evidence only after the WI process has exited. Then destroy its
+    // temporary state before one final authenticated inspect of retained results.
+    let wi_evidence: serde_json::Value =
+        serde_json::from_slice(&std::fs::read(wi_root.join("wi-evidence.json")).unwrap()).unwrap();
+    let wi_path = wi_root.to_path_buf();
+    drop(temp);
+    let wi_state_removed = !wi_path.exists();
+    assert!(wi_state_removed, "temporary WI state survived removal");
+    let backend: serde_json::Value =
+        serde_json::from_slice(&std::fs::read(root.join("backend-record.json")).unwrap()).unwrap();
+    let command: protocol::Command = serde_json::from_value(backend["command"].clone()).unwrap();
+    let (client, supervisor) = channel(root, &config);
+    let supervisor_restarted = supervisor.id() != initial_supervisor;
+    assert!(supervisor_restarted, "inspect reused the original supervisor process");
+    let Response::Record(inspected) = client
+        .request(&Request::Inspect(Inspect {
+            version: 1,
+            key: command.key.clone(),
+            command: command.digest().unwrap(),
+        }))
+        .unwrap()
+    else {
+        panic!("authenticated inspect unavailable")
+    };
+    assert_eq!(inspected.command, command);
+    assert_eq!(inspected.observation.state, State::Completed);
+    drop(client);
+    drop(supervisor);
+    let base = root.parent().unwrap();
+    let mut records = std::collections::BTreeMap::new();
+    let mut names = vec![
+        root.join("backend-command"),
+        root.join("config.json"),
+        root.join("backend-record.json"),
+        root.join("backend-result.json"),
+        root.join("activations"),
+    ];
+    names.extend(
+        std::fs::read_dir(root.join("journal"))
+            .unwrap()
+            .map(|e| e.unwrap().path())
+            .filter(|p| p.extension().is_some_and(|e| e == "json")),
+    );
+    assert_eq!(names.len(), 6);
+    for path in names {
+        records.insert(
+            path.strip_prefix(base).unwrap().to_str().unwrap().to_owned(),
+            ContentHash::of(&std::fs::read(path).unwrap()),
+        );
+    }
+    let source = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
+    let packet: serde_json::Value = serde_json::from_slice(
+        &std::fs::read(source.join("conformance/wi-fabric-2/worker/evaluation-manifest.json"))
+            .unwrap(),
+    )
+    .unwrap();
+    let observation = serde_json::json!({"version":1,"kind":"wi-supervisor-observation-v1", "case":case,"scenario":scenario,
+        "command":command,"command_digest":command.digest().unwrap(),
+        "authorization":{"tenant":config.tenant,"principal":config.principal,"audience":config.request.audience,"authority_generation":config.request.authority_generation,"policy_revision":config.request.policy_revision},
+        "backend_command":backend,"backend_result":serde_json::from_slice::<serde_json::Value>(&std::fs::read(root.join("backend-result.json")).unwrap()).unwrap(),
+        "inspect_record":inspected,"wi":wi_evidence,"activation_count":1,
+        "guest_stopped":guest_stopped,"wi_state_removed":wi_state_removed,"supervisor_restarted":supervisor_restarted,"records":records,
+        "build":{"packet":ContentHash::of(&canonical_collection(&packet).unwrap()),
+            "profile_definition":ContentHash::of(&std::fs::read(source.join("contracts/sources/wi-fabric-2-worker-execution-profile.yaml")).unwrap()),
+            "fixture_source":ContentHash::of(&std::fs::read(source.join("crates/worldinterface-runtime/tests/support/supervisor_fixture.rs")).unwrap())}
+    });
+    let bytes = serde_json::to_vec(&observation).unwrap();
+    assert!(bytes.len() <= 65536, "supervisor observation bound");
+    let name = format!("supervisor-{case}-{scenario}.json");
+    durable_write(&base.join(&name), &bytes);
+    eprintln!("WI-SUPERVISOR-OBSERVATION {name} {}", ContentHash::of(&bytes).as_str());
 }
 #[test]
 fn wp_035_authenticated_supervisor_binds_exact_lifecycle_operation() {
@@ -394,14 +491,16 @@ fn wp_035_authenticated_supervisor_binds_exact_lifecycle_operation() {
     )
     .unwrap_err();
     assert!(error.contains("lifecycle target operation mismatch"), "{error}");
+    drop(bundle);
+    lifecycle("WP-035", Operation::Stop, false, false, false, None);
 }
 #[test]
 fn wp_036_acceptance_is_uncertain_until_external_transition_completes() {
-    lifecycle(Operation::Stop, false, false, false, None);
+    lifecycle("WP-036", Operation::Stop, false, false, false, None);
 }
 #[test]
 fn wp_037_external_result_survives_stopped_guest_and_wi_restart() {
-    lifecycle(Operation::Replace, false, false, false, None);
+    lifecycle("WP-037", Operation::Replace, false, false, false, None);
 }
 #[test]
 fn wp_038_lost_ack_and_callback_converge_through_durable_inspect() {
@@ -410,10 +509,10 @@ fn wp_038_lost_ack_and_callback_converge_through_durable_inspect() {
         "fabric-receipt-committed",
         "reconciliation-transition-committed",
     ] {
-        lifecycle(Operation::Replace, true, true, false, Some(cut));
+        lifecycle("WP-038", Operation::Replace, true, true, false, Some(cut));
     }
 }
 #[test]
 fn wp_039_operator_recovery_is_independent_of_failed_guest() {
-    lifecycle(Operation::Recover, false, false, true, None);
+    lifecycle("WP-039", Operation::Recover, false, false, true, None);
 }

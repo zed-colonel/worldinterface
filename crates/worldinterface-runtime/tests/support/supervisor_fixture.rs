@@ -42,6 +42,49 @@ impl Config {
         }
     }
 }
+/// Atomic publication with file and directory synchronization, outside WI.
+pub fn durable_write(path: &Path, bytes: &[u8]) {
+    use std::{io::Write, os::unix::fs::OpenOptionsExt};
+    let parent = path.parent().unwrap();
+    let pending = parent.join(format!(".pending-{}", path.file_name().unwrap().to_str().unwrap()));
+    let mut file = std::fs::OpenOptions::new()
+        .write(true)
+        .create_new(true)
+        .mode(0o600)
+        .open(&pending)
+        .unwrap();
+    file.write_all(bytes).unwrap();
+    file.sync_all().unwrap();
+    std::fs::rename(pending, path).unwrap();
+    std::fs::File::open(parent).unwrap().sync_all().unwrap();
+}
+pub fn retained_operator_root(case: &str, scenario: &str) -> PathBuf {
+    use std::os::unix::fs::DirBuilderExt;
+    let base =
+        std::env::var_os("WI_WORKER_CAMPAIGN_EVIDENCE").map(PathBuf::from).unwrap_or_else(|| {
+            let verification =
+                PathBuf::from(std::env::var_os("TMPDIR").unwrap()).join("verification");
+            std::fs::create_dir_all(&verification).unwrap();
+            tempfile::Builder::new()
+                .prefix("supervisor-evidence-")
+                .tempdir_in(verification)
+                .unwrap()
+                .keep()
+        });
+    let path = base.join(format!("supervisor-records-{case}-{scenario}"));
+    std::fs::DirBuilder::new().mode(0o700).create(&path).unwrap();
+    std::fs::File::open(&base).unwrap().sync_all().unwrap();
+    eprintln!("retained operator records {}", path.display());
+    path
+}
+pub fn complete_backend(root: &Path) {
+    let command: serde_json::Value =
+        serde_json::from_slice(&std::fs::read(root.join("backend-record.json")).unwrap()).unwrap();
+    durable_write(&root.join("backend-result.json"), &serde_json::to_vec(&serde_json::json!({
+        "version":1,"key":command["command"]["key"],"command_digest":command["command_digest"],
+        "observation":Observation { state:State::Completed, evidence:b"external lifecycle completed".to_vec() }
+    })).unwrap());
+}
 pub struct Fixture {
     pub root: PathBuf,
 }
@@ -58,16 +101,25 @@ impl SupervisorHandler for Fixture {
                 return Err("backend conflict".into());
             }
         } else {
-            use std::io::Write;
+            use std::{io::Write, os::unix::fs::OpenOptionsExt};
             let mut file = std::fs::OpenOptions::new()
                 .write(true)
                 .create_new(true)
+                .mode(0o600)
                 .open(path)
                 .map_err(|e| e.to_string())?;
             file.write_all(digest.as_str().as_bytes()).map_err(|e| e.to_string())?;
             file.sync_all().map_err(|e| e.to_string())?;
             std::fs::File::open(&self.root).unwrap().sync_all().unwrap();
-            std::fs::write(self.root.join("activations"), b"1").unwrap();
+            durable_write(
+                &self.root.join("backend-record.json"),
+                &serde_json::to_vec(&serde_json::json!({
+                    "version":1,"command":command.command(),"command_digest":digest,
+                    "tenant":command.session().tenant,"principal":command.session().principal
+                }))
+                .unwrap(),
+            );
+            durable_write(&self.root.join("activations"), b"1");
         }
         if self.root.join("interrupt-dispatch").exists() {
             abort_without_core_dump(&self.root);
@@ -90,11 +142,16 @@ impl SupervisorHandler for Fixture {
         if std::fs::read(path).unwrap() != command.command().digest()?.as_str().as_bytes() {
             return Ok(Observation { state: State::Escalated, evidence: b"conflict".to_vec() });
         }
-        let complete = self.root.join("complete").exists();
-        Ok(Observation {
-            state: if complete { State::Completed } else { State::Running },
-            evidence: if complete { b"external lifecycle completed".to_vec() } else { vec![] },
-        })
+        if let Ok(bytes) = std::fs::read(self.root.join("backend-result.json")) {
+            let value: serde_json::Value = serde_json::from_slice(&bytes).unwrap();
+            if value["command_digest"] != command.command().digest()?.as_str()
+                || value["key"] != command.command().key.as_str()
+            {
+                return Err("backend result binding mismatch".into());
+            }
+            return Ok(serde_json::from_value(value["observation"].clone()).unwrap());
+        }
+        Ok(Observation { state: State::Running, evidence: vec![] })
     }
 }
 /// Suppress workstation crash dumps only at the intentional crash cut. Earlier

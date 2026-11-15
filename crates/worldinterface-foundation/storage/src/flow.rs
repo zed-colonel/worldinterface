@@ -51,6 +51,17 @@ impl std::fmt::Display for FlowCapacity {
 }
 impl std::error::Error for FlowCapacity {}
 
+/// One unfinished run selected through the scheduling index.
+pub struct PendingFlow {
+    pub position: i64,
+    pub run: FlowRun,
+    pub quarantine: Option<String>,
+}
+pub(crate) const SCHEDULING_INDEX_SQL: &str =
+    "CREATE INDEX IF NOT EXISTS flow_pending_global ON flow_runs(terminal)";
+const GLOBAL_PAGE_SQL: &str = "SELECT rowid,state,quarantine FROM flow_runs INDEXED BY flow_pending_global WHERE terminal=0 AND rowid>?1 AND rowid<=?2 ORDER BY rowid LIMIT ?3";
+const PENDING_PAGE_SQL: &str = "SELECT rowid,state,quarantine FROM flow_runs INDEXED BY flow_pending WHERE tenant=?1 AND terminal=0 AND rowid>?2 AND rowid<=?4 ORDER BY rowid LIMIT ?3";
+
 /// Match the existing per-tenant effect capacity. Runs retain complete history.
 pub const MAX_FLOW_RUNS: usize = 10_000;
 pub const MAX_FLOW_VERSIONS: usize = 256;
@@ -1058,6 +1069,97 @@ impl StoreRoot {
             |row| row.get(0),
         )?)
     }
+    /// Indexed scheduling page. SQLite applies the bound before decoding any
+    /// run; completed history and the definition catalog are never loaded.
+    /// Rowids are disposable cursors, valid only within one open host session.
+    pub fn flow_pending_page(
+        &self,
+        tenant: &OpaqueRef,
+        after: i64,
+        through: i64,
+        limit: usize,
+    ) -> Result<Vec<PendingFlow>> {
+        if limit == 0 || limit > 64 {
+            return Err(invalid("Flow page bound"));
+        }
+        let c = self.connect(StoreKind::Flow)?;
+        let mut q = c.prepare(PENDING_PAGE_SQL)?;
+        let rows = q.query_map(params![tenant.as_str(), after, limit as i64, through], |r| {
+            Ok((r.get::<_, i64>(0)?, r.get::<_, Vec<u8>>(1)?, r.get::<_, Option<String>>(2)?))
+        })?;
+        rows.map(|row| {
+            let (key, bytes, quarantine) = row?;
+            Ok(PendingFlow { position: key, run: decode(&bytes)?, quarantine })
+        })
+        .collect()
+    }
+    /// Add the optional, derived scheduling index to a validated store. Existing
+    /// schema-1 stores remain readable; no journal or projection bytes change.
+    pub fn flow_prepare_scheduling(&self) -> Result<()> {
+        self.connect(StoreKind::Flow)?.execute_batch(SCHEDULING_INDEX_SQL)?;
+        Ok(())
+    }
+    /// Global pending page, skipping completed runs and history-only tenants.
+    /// Requires `flow_prepare_scheduling` (also called by QueueEngine bootstrap).
+    pub fn flow_pending_global_page(
+        &self,
+        after: i64,
+        through: i64,
+        limit: usize,
+    ) -> Result<Vec<PendingFlow>> {
+        if limit == 0 || limit > 64 {
+            return Err(invalid("Flow page bound"));
+        }
+        let c = self.connect(StoreKind::Flow)?;
+        let prepared: bool = c.query_row(
+            "SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE type='index' AND name='flow_pending_global')",
+            [],
+            |row| row.get(0),
+        )?;
+        if !prepared {
+            return Err(invalid(
+                "Flow scheduling index missing; call flow_prepare_scheduling before reading global pending pages",
+            ));
+        }
+        let mut q = c.prepare(GLOBAL_PAGE_SQL)?;
+        let rows = q.query_map(params![after, through, limit as i64], |r| {
+            Ok((r.get::<_, i64>(0)?, r.get::<_, Vec<u8>>(1)?, r.get::<_, Option<String>>(2)?))
+        })?;
+        rows.map(|row| {
+            let (position, bytes, quarantine) = row?;
+            Ok(PendingFlow { position, run: decode(&bytes)?, quarantine })
+        })
+        .collect()
+    }
+    /// Point lookup for a changed AQ task's unfinished Flow, without the catalog.
+    pub fn flow_pending_run(
+        &self,
+        tenant: &OpaqueRef,
+        run: &OpaqueRef,
+    ) -> Result<Option<PendingFlow>> {
+        let c = self.connect(StoreKind::Flow)?;
+        let row: Option<(i64, Vec<u8>, Option<String>)> = c.query_row(
+            "SELECT rowid,state,quarantine FROM flow_runs WHERE tenant=?1 AND id=?2 AND terminal=0",
+            params![tenant.as_str(), run.as_str()],
+            |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
+        ).optional()?;
+        row.map(|(position, bytes, quarantine)| {
+            Ok(PendingFlow { position, run: decode(&bytes)?, quarantine })
+        })
+        .transpose()
+    }
+    /// Capture finite admission bounds for a disposable pass. New tenants and
+    /// runs cannot extend it indefinitely while older changed rows await a revisit.
+    pub fn flow_scan_bounds(&self) -> Result<(i64, i64)> {
+        Ok(self.connect(StoreKind::Flow)?.query_row("SELECT COALESCE((SELECT MAX(rowid) FROM flow_state),0),COALESCE((SELECT MAX(rowid) FROM flow_runs),0)", [], |r| Ok((r.get(0)?,r.get(1)?)))?)
+    }
+    /// Rowid keyset traversal avoids scanning newly inserted or history-only
+    /// tenant rows before applying the per-call bound.
+    pub fn flow_next_tenant(&self, after: i64, through: i64) -> Result<Option<(i64, OpaqueRef)>> {
+        let c = self.connect(StoreKind::Flow)?;
+        let row: Option<(i64,String)> = c.query_row("SELECT rowid,tenant FROM flow_state WHERE rowid>?1 AND rowid<=?2 ORDER BY rowid LIMIT 1", params![after,through], |r| Ok((r.get(0)?,r.get(1)?))).optional()?;
+        row.map(|(key, t)| Ok((key, t.try_into().map_err(invalid)?))).transpose()
+    }
     pub fn flow_pending_snapshot(&self, tenant: &OpaqueRef) -> Result<FlowState> {
         read_view(self, tenant, None, true)
     }
@@ -1215,5 +1317,85 @@ impl StoreRoot {
             }
         }
         Ok(())
+    }
+}
+
+#[cfg(test)]
+mod scheduling_index_tests {
+    use super::*;
+    #[test]
+    fn global_pending_sql_skips_history_tenants_and_keeps_finite_cutoff() {
+        let c = Connection::open_in_memory().unwrap();
+        c.execute_batch(SCHEMA).unwrap();
+        c.execute_batch(SCHEDULING_INDEX_SQL).unwrap();
+        let measure = || {
+            let mut q = c.prepare(GLOBAL_PAGE_SQL).unwrap();
+            let rows = q
+                .query_map(params![0, 10000, 8], |r| r.get::<_, i64>(0))
+                .unwrap()
+                .collect::<rusqlite::Result<Vec<_>>>()
+                .unwrap();
+            assert_eq!(q.get_status(rusqlite::StatementStatus::FullscanStep), 0);
+            assert_eq!(q.get_status(rusqlite::StatementStatus::Sort), 0);
+            (rows, q.get_status(rusqlite::StatementStatus::VmStep))
+        };
+        c.execute("INSERT INTO flow_runs(rowid,tenant,id,request,terminal,state) VALUES(1,'live','live','live',0,x'00')", []).unwrap();
+        let before = measure();
+        for i in 2..=10000 {
+            c.execute("INSERT INTO flow_runs(rowid,tenant,id,request,terminal,state) VALUES(?1,?2,?2,?2,1,x'00')", params![i, format!("history-{i}")]).unwrap();
+        }
+        let after = measure();
+        assert_eq!(after.0, before.0);
+        assert!(after.1 <= before.1 + 2, "SQL work grew with history-only tenants: {after:?}");
+        c.execute("INSERT INTO flow_runs(rowid,tenant,id,request,terminal,state) VALUES(10001,'new','new','new',0,x'00')", []).unwrap();
+        let after = measure();
+        assert_eq!(after.0, before.0, "new admission extended the finite pass");
+        assert!(after.1 <= before.1 + 2);
+    }
+    #[test]
+    fn pending_page_sql_work_does_not_scan_completed_history_or_sort_waiting_runs() {
+        let c = Connection::open_in_memory().unwrap();
+        c.execute_batch(SCHEMA).unwrap();
+        for i in 0..10010 {
+            c.execute("INSERT INTO flow_runs(tenant,id,request,terminal,state) VALUES('t',?1,?1,?2,x'00')", params![i.to_string(), i >= 10]).unwrap();
+        }
+        let measure = |after| {
+            let mut q = c.prepare(PENDING_PAGE_SQL).unwrap();
+            let rows = q
+                .query_map(params!["t", after, 8, 10010], |r| r.get::<_, i64>(0))
+                .unwrap()
+                .collect::<std::result::Result<Vec<_>, _>>()
+                .unwrap();
+            let work = q.get_status(rusqlite::StatementStatus::VmStep);
+            assert_eq!(q.get_status(rusqlite::StatementStatus::FullscanStep), 0);
+            assert_eq!(q.get_status(rusqlite::StatementStatus::Sort), 0);
+            assert!(work < 200, "unbounded SQL work: {work}");
+            (rows, work)
+        };
+        let (first, work_with_history) = measure(0);
+        assert_eq!(first, (1..=8).collect::<Vec<_>>());
+        assert_eq!(measure(8).0, vec![9, 10]);
+        assert!(measure(10).0.is_empty());
+        c.execute("DELETE FROM flow_runs WHERE terminal=1", []).unwrap();
+        assert_eq!(measure(0).1, work_with_history);
+        // A finite pass cannot chase admissions that arrive after its cutoff.
+        for i in 10011..11011 {
+            c.execute("INSERT INTO flow_runs(rowid,tenant,id,request,terminal,state) VALUES(?1,'t',?2,?2,0,x'00')", params![i,i.to_string()]).unwrap();
+        }
+        assert_eq!(measure(8).0, vec![9, 10]);
+        assert!(measure(10).0.is_empty());
+        // Tenant traversal has the same finite cutoff and uses the rowid index.
+        for i in 1..=1000 {
+            c.execute(
+                "INSERT INTO flow_state(rowid,tenant,state) VALUES(?1,?2,x'00')",
+                params![i, format!("tenant-{i}")],
+            )
+            .unwrap();
+        }
+        let mut q=c.prepare("SELECT rowid,tenant FROM flow_state WHERE rowid>?1 AND rowid<=?2 ORDER BY rowid LIMIT 1").unwrap();
+        let key: i64 = q.query_row(params![9, 10], |r| r.get(0)).unwrap();
+        assert_eq!(key, 10);
+        assert!(q.query_row(params![10, 10], |r| r.get::<_, i64>(0)).optional().unwrap().is_none());
+        assert_eq!(q.get_status(rusqlite::StatementStatus::FullscanStep), 0);
     }
 }

@@ -71,25 +71,45 @@ pub(super) struct Owned {
     allocation: String,
     handle: File,
 }
+pub(super) enum Acquisition {
+    Acquired(Owned),
+    Departed,
+    Rediscover,
+}
 impl Owned {
     pub fn identity(&self) -> Identity {
         Identity { pid: self.pid, boot: self.boot.clone(), birth: self.birth }
     }
     pub fn acquire(pid: u32, parent: u32, context: &Context) -> Result<Self> {
-        Self::acquire_if_present(pid, parent, context)?.ok_or_else(|| "process departed".into())
-    }
-    pub fn acquire_if_present(pid: u32, parent: u32, context: &Context) -> Result<Option<Self>> {
-        let Some((observed_parent, birth)) = stat_if_present(pid)? else {
-            return Ok(None);
-        };
-        if observed_parent != parent {
-            return Err("unproven descendant".into());
+        match Self::acquire_descendant(pid, parent, None, context)? {
+            Acquisition::Acquired(record) => Ok(record),
+            Acquisition::Departed => Err("process departed".into()),
+            Acquisition::Rediscover => Err("descendant relationship changed".into()),
         }
+    }
+    pub fn acquire_descendant(
+        pid: u32,
+        parent: u32,
+        subreaper: Option<u32>,
+        context: &Context,
+    ) -> Result<Acquisition> {
+        Self::acquire_with_barrier(pid, parent, subreaper, context, || {})
+    }
+    fn acquire_with_barrier(
+        pid: u32,
+        parent: u32,
+        subreaper: Option<u32>,
+        context: &Context,
+        after_handle_acquired: impl FnOnce(),
+    ) -> Result<Acquisition> {
+        let Some((_, birth)) = stat_if_present(pid)? else {
+            return Ok(Acquisition::Departed);
+        };
         // SAFETY: pidfd_open has no pointer arguments; the returned descriptor is owned once.
         let fd = unsafe { libc::syscall(libc::SYS_pidfd_open, pid, 0) };
         if fd < 0 {
             if std::io::Error::last_os_error().raw_os_error() == Some(libc::ESRCH) {
-                return Ok(None);
+                return Ok(Acquisition::Departed);
             }
             return Err("stable process handle unavailable".into());
         }
@@ -104,20 +124,30 @@ impl Owned {
             allocation: context.allocation.clone(),
             handle,
         };
-        let validated: Result<()> = (|| {
-            record.validate(context)?;
-            if stat(pid)?.0 != parent {
-                return Err("descendant relationship changed".into());
-            }
-            Ok(())
-        })();
-        // A parent may reap its child during registration. Only stable-handle exit
-        // evidence makes a failed validation benign; live mismatches remain errors.
+        // Tests force parent exit or child reaping after the handle is acquired.
+        after_handle_acquired();
+        let validated = record.validate(context);
         if record.exited() {
-            return Ok(None);
+            return Ok(Acquisition::Departed);
         }
-        validated?;
-        Ok(Some(record))
+        validated?; // A live birth/handle/context mismatch always fails closed.
+        let relationship = stat_if_present(pid)?;
+        if record.exited() || relationship.is_none() {
+            return Ok(Acquisition::Departed);
+        }
+        let (observed_parent, observed_birth) = relationship.unwrap();
+        if observed_birth != record.birth {
+            return Err("process ownership mismatch".into());
+        }
+        if observed_parent == parent {
+            return Ok(Acquisition::Acquired(record));
+        }
+        if subreaper == Some(observed_parent) && observed_parent != parent {
+            // Do not adopt through a stale ancestry edge. The next root scan
+            // must acquire and validate a fresh stable handle to this identity.
+            return Ok(Acquisition::Rediscover);
+        }
+        Err("unproven descendant".into())
     }
     pub fn validate(&self, c: &Context) -> Result<()> {
         if self.boot != boot()?
@@ -281,6 +311,77 @@ mod tests {
             assert!(stat_from_read(Err(std::io::Error::from_raw_os_error(errno))).is_err());
         }
         assert!(stat_from_read(Ok("malformed identity".into())).is_err());
+    }
+    #[test]
+    fn acquisition_reparenting_and_departure_are_rediscovered_without_relaxing_identity() {
+        const CHILD: &str = "WI_TEST_ACQUISITION_BARRIER";
+        if std::env::var_os(CHILD).is_none() {
+            let mut process = ChildGuard(Command::new(std::env::current_exe().unwrap()).args(["--exact", "worker_process::ownership::tests::acquisition_reparenting_and_departure_are_rediscovered_without_relaxing_identity", "--test-threads=1"]).env(CHILD, "1").spawn().unwrap());
+            let deadline = std::time::Instant::now() + std::time::Duration::from_secs(15);
+            loop {
+                if let Some(status) = process.0.try_wait().unwrap() {
+                    assert!(status.success());
+                    return;
+                }
+                assert!(std::time::Instant::now() < deadline, "acquisition regression deadline");
+                std::thread::sleep(std::time::Duration::from_millis(5));
+            }
+        }
+        assert_eq!(unsafe { libc::prctl(libc::PR_SET_CHILD_SUBREAPER, 1, 0, 0, 0) }, 0);
+        let c = Context {
+            provider: "p".into(),
+            run: "r".into(),
+            nonce: random().unwrap(),
+            allocation: random().unwrap(),
+        };
+        let root = std::process::id();
+        for during in [false, true] {
+            let mut parent = ChildGuard(
+                Command::new("/bin/sh")
+                    .args(["-c", "sleep 30 & echo $!; read value"])
+                    .stdin(Stdio::piped())
+                    .stdout(Stdio::piped())
+                    .spawn()
+                    .unwrap(),
+            );
+            let mut line = String::new();
+            BufReader::new(parent.0.stdout.as_mut().unwrap()).read_line(&mut line).unwrap();
+            let pid: u32 = line.trim().parse().unwrap();
+            let parent_pid = parent.0.id();
+            let mut depart = || {
+                drop(parent.0.stdin.take());
+                let _ = parent.0.wait().unwrap();
+                assert_eq!(stat(pid).unwrap().0, root);
+            };
+            if !during {
+                depart();
+            }
+            let acquired = Owned::acquire_with_barrier(pid, parent_pid, Some(root), &c, || {
+                if during {
+                    depart();
+                }
+            })
+            .unwrap();
+            assert!(matches!(acquired, Acquisition::Rediscover));
+            let owned = Owned::acquire(pid, root, &c).unwrap();
+            assert!(Owned::acquire_descendant(pid, root + 1, None, &c).is_err());
+            owned.signal(&c, libc::SIGKILL).unwrap();
+            let deadline = std::time::Instant::now() + std::time::Duration::from_secs(2);
+            while !owned.exited() {
+                assert!(std::time::Instant::now() < deadline);
+                std::thread::yield_now();
+            }
+            assert!(owned.reap(&c).unwrap());
+        }
+        let mut child = ChildGuard(
+            Command::new("/bin/cat").stdin(Stdio::piped()).stdout(Stdio::null()).spawn().unwrap(),
+        );
+        let result = Owned::acquire_with_barrier(child.0.id(), root, Some(root), &c, || {
+            drop(child.0.stdin.take());
+            child.0.wait().unwrap();
+        })
+        .unwrap();
+        assert!(matches!(result, Acquisition::Departed));
     }
     #[test]
     fn recycled_pid_simulation_never_adopts_or_signals_unrelated_child() {

@@ -124,6 +124,7 @@ fn wp_034_publication_requires_complete_gate_state_and_valid_descriptor() {
         .unwrap()
         .iter()
         .map(|g| (g["id"].as_str().unwrap().to_string(), g["status"].clone()))
+        .chain(std::iter::once(("WI-WORKER-G5".to_string(), json!("closed"))))
         .collect();
     worker_campaign::validate_gates(temp.path(), &states).unwrap();
     for id in ["WI-WORKER-G4", "WI-EMBEDDED-WORKER-PROOF-1", "WI-AQ-G1"] {
@@ -196,4 +197,37 @@ fn packaged_handoff_gates_fixtures_and_repository_lock_reject_drift() {
     }
     let value = handoff::descriptor(temp.path()).unwrap();
     assert_eq!(value["release"]["package_version"], "0.2.0-alpha.1");
+}
+
+#[test]
+fn wp_040_supervisor_handoff_limits_claims_to_interface_and_reconciliation() {
+    let temp = fixture();
+    let value = read(&temp.path().join(handoff::DESCRIPTOR)).unwrap();
+    handoff::validate(temp.path(), &value).unwrap();
+    assert_eq!(value["cases"].as_array().unwrap().len(), 55);
+    assert_eq!(value["gates"].as_array().unwrap().len(), 10);
+    assert_eq!(value["supervisor"]["cases"].as_array().unwrap().len(), 6);
+    for pointer in [
+        "/supervisor/claims/kata_lifecycle_qualified",
+        "/supervisor/claims/isolation_qualified",
+        "/supervisor/execution_grants_closure",
+        "/supervisor/scope",
+        "/supervisor/consumer/owner",
+        "/supervisor/evidence/producer",
+        "/supervisor/gate/effective_on",
+    ] {
+        let mut changed = value.clone();
+        *changed.pointer_mut(pointer).unwrap() = json!("inflated");
+        assert!(handoff::validate(temp.path(), &changed).is_err(), "{pointer}");
+    }
+    for pointer in [
+        "/supervisor/cases",
+        "/supervisor/consumer/obligations",
+        "/supervisor/evidence/binding",
+        "/supervisor/gate/requirement_bindings",
+    ] {
+        let mut changed = value.clone();
+        changed.pointer_mut(pointer).unwrap().as_array_mut().unwrap().pop();
+        assert!(handoff::validate(temp.path(), &changed).is_err(), "{pointer}");
+    }
 }

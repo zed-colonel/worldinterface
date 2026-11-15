@@ -37,6 +37,34 @@ pub fn mapping_markdown(root: &Path) -> Result<String> {
     Ok(text)
 }
 
+pub const SUPERVISOR_DOCUMENT: &str = "docs/evidence/WI-WORKER-G5.md";
+pub fn supervisor_descriptor(root: &Path) -> Result<Value> {
+    let (registry, gates) = proof::load(root)?;
+    let gate =
+        gates.into_iter().find(|g| g.id == "WI-WORKER-G5").ok_or("missing supervisor gate")?;
+    let cases: Vec<_> = registry.cases.into_iter().filter(|c| c.gate == "WI-WORKER-G5").collect();
+    Ok(json!({
+        "version":1,"owner":"WSP-04","implementation_owner":"WSP-03",
+        "scope":"authenticated interface and durable reconciliation only",
+        "gate":gate,"cases":cases,"document":SUPERVISOR_DOCUMENT,
+        "effective_on":"reviewed-merge-with-adopted-checks","execution_grants_closure":false,
+        "interfaces":["worldinterface_worker::supervisor::{SupervisorHandler,Command,Inspect,Record,Session,Grant}",
+            "worldinterface_runtime::supervisor::{Server,ChannelPolicy,PrivateChannel,Client,SupervisorConnector}"],
+        "evidence":{
+            "schema":"wi-supervisor-observation-v1","producer":"bounded external producer fixture; separate process and independently retained operator records; same OS identity",
+            "binding":["case and crash scenario","stable command key and digest","server-owned authorization scope","durable backend result","authenticated inspect record","original WI intent and unchanged receipt","idempotent reconciliation","one activation","exact test outcome, executable/log hashes, source generation and evaluation packet"],
+            "files":"supervisor-WP-NNN-SCENARIO.json; retained operator records outside guest and StoreBundle; all three WP-038 cuts are separate observations"
+        },
+        "bounds":{"wall_ms":15000,"frame_bytes":65536,"backend_evidence_bytes":4096,"observation_bytes":65536},
+        "claims":{"authenticated_interface":true,"durable_reconciliation":true,"kata_lifecycle_qualified":false,"isolation_qualified":false,"consumer_task_accepted":false},
+        "consumer":{
+            "owner":"Exoskeleton",
+            "obligations":["actual Kata stop/recreate","storage durability","image compatibility","deployment controls","isolation qualification"],
+            "implementation":"implement SupervisorHandler in an operator-owned supervisor outside the target lifetime; stable-key dispatch and authoritative inspect survive target loss; never give a WorkerPort lifecycle authority"
+        }
+    }))
+}
+
 /// No commit or packet digest enters this descriptor. The packet hashes
 /// it, and the external execution bundle resolves all concrete generation pins.
 pub fn descriptor(root: &Path) -> Result<Value> {
@@ -78,11 +106,19 @@ pub fn descriptor(root: &Path) -> Result<Value> {
         "conformance/wi-fabric-2/worker/handoff-contract.json",
         "conformance/wi-fabric-2/worker/campaign-coverage.json",
         DOCUMENT,
+        SUPERVISOR_DOCUMENT,
+        "docs/work-items/WSP-04.md",
+        "conformance/wi-fabric-2/worker/supervisor-coverage.json",
+        "crates/worldinterface-runtime/tests/worker_supervisor.rs",
+        "crates/worldinterface-runtime/tests/support/supervisor_fixture.rs",
+        "crates/worldinterface-runtime/tests/support/supervisor_harness.rs",
+        "crates/worldinterface-foundation/worker/src/supervisor/mod.rs",
     ] {
         identities.insert(path.to_owned(), hash(fs::read(root.join(path))?));
     }
     for directory in [
         "crates/worldinterface-runtime/src/worker_process",
+        "crates/worldinterface-runtime/src/supervisor",
         "crates/worldinterface-runtime/src/bin",
         "fixtures/pre-wi-fabric-2/exo/repos/sample-rust",
     ] {
@@ -100,6 +136,7 @@ pub fn descriptor(root: &Path) -> Result<Value> {
             "effective_on":"reviewed-merge-with-adopted-checks",
             "execution_grants_closure":false
         },
+        "supervisor":supervisor_descriptor(root)?,
         "execution_claims":worker_campaign::claims(),
         "toolchain":"Rust 1.89.0; locked, offline Cargo; Linux x86_64",
         "aq":{"historical_target":aq["target"], "historical_release":aq["published_release"],

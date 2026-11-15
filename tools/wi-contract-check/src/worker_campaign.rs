@@ -164,6 +164,7 @@ pub fn validate_gates(root: &Path, gates: &Value) -> Result<()> {
         "WI-WORKER-G2",
         "WI-WORKER-G3",
         "WI-WORKER-G4",
+        "WI-WORKER-G5",
         "WI-EMBEDDED-CORE-1",
         "WI-EMBEDDED-WORKER-PROOF-1",
     ];
@@ -180,7 +181,7 @@ pub fn validate_gates(root: &Path, gates: &Value) -> Result<()> {
         })
     {
         return Err(
-            "campaign requires eight closed/two open or ten closed gates; mixed states rejected"
+            "campaign requires eleven gates including separate supervisor G5; mixed states rejected"
                 .into(),
         );
     }
@@ -325,10 +326,11 @@ pub fn run(root: &Path, directory: &Path) -> Result<()> {
             )
         })
         .collect();
-    let receipt = json!({"version":3,"before":before,"after":after,"os":{
+    let supervisor_observations = crate::supervisor_evidence::bindings(&directory, &outcomes);
+    let receipt = json!({"version":4,"before":before,"after":after,"os":{
         "kernel":output(root,"uname", &["-srv"])? ,"architecture":output(root,"uname", &["-m"])? ,
         "release":fs::read_to_string("/etc/os-release")?},"execution_identity":output(root,"id",&[])? ,
-        "evaluation_packet":acceptance,"outcomes":outcomes,"runtime_suite_outcomes":runtime_suite_outcomes,"cases":cases,"embedded_observations":observations,
+        "evaluation_packet":acceptance,"outcomes":outcomes,"runtime_suite_outcomes":runtime_suite_outcomes,"cases":cases,"embedded_observations":observations,"supervisor_observations":supervisor_observations,
         "gates":gates,"claims":claims(),"limitations":limitations(),
         "campaign_parallelism":PARALLELISM});
     fs::write(directory.join("receipt.json"), serde_json::to_vec_pretty(&receipt)?)?;
@@ -575,6 +577,7 @@ pub fn limitations() -> Value {
         "no independent VM or hostile-code qualification",
         "seam simulation only; no remote provider qualification",
         "worker exit and WI receipt do not establish consumer task acceptance",
+        "supervisor fixture evidence covers authenticated interface and durable reconciliation; Exoskeleton owns actual Kata lifecycle, storage durability, image compatibility, deployment controls and isolation qualification",
         "reviewed milestone closure is effective only on reviewed merge with adopted checks; execution grants no closure"
     ])
 }
@@ -613,13 +616,14 @@ fn validate_receipt_with_harnesses(
             "runtime_suite_outcomes",
             "cases",
             "embedded_observations",
+            "supervisor_observations",
             "gates",
             "claims",
             "limitations",
             "campaign_parallelism",
         ],
     )?;
-    if receipt["version"] != 3 || receipt["campaign_parallelism"] != PARALLELISM {
+    if receipt["version"] != 4 || receipt["campaign_parallelism"] != PARALLELISM {
         return Err("unsupported campaign receipt".into());
     }
     validate_generation(&receipt["before"], &receipt["after"])?;
@@ -662,6 +666,7 @@ fn validate_receipt_with_harnesses(
     {
         return Err("incomplete case aggregation".into());
     }
+    crate::supervisor_evidence::validate(root, receipt, base, &outcomes)?;
     let observations =
         receipt["embedded_observations"].as_object().ok_or("missing embedded evidence")?;
     if observations.len() != 3 {
@@ -876,6 +881,7 @@ pub fn handoff_candidate(receipt: &Value, base: &Path) -> Result<Value> {
         "campaign_sha256":hash(serde_json::to_vec(receipt)?),"cases":worker_cases,
         "tests":receipt["outcomes"],"runtime_suite_tests":receipt["runtime_suite_outcomes"],"observations":receipt["embedded_observations"],
         "gates":receipt["gates"],"claims":claims(),
+        "supervisor":{"observations":receipt["supervisor_observations"],"gate":receipt["gates"]["WI-WORKER-G5"],"scope":"authenticated interface and durable reconciliation only","kata_lifecycle_qualified":false},
         "producer_execution": [read(&local(base,"coding.json")?)?,read(&local(base,"transform.json")?)?,read(&local(base,"seam.json")?)?],"limitations":limitations(),
         "supported_operations":["provision","start","inspect","terminate","collect_artifacts","release"],
         "unavailable_operations":["pause","resume","checkpoint","remote-provider","daemon","python"],

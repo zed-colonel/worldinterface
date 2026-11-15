@@ -97,7 +97,7 @@ def expected_manifest(root, read_source=None):
         "scripts/check-wi-contract.sh", "scripts/check-wi-domain.sh",
         "scripts/check-wi-domain-isolation.py", "scripts/check-wi-integration.sh",
         "scripts/check-wi-integration.py", "scripts/wi_crash_isolation.py", "scripts/worker-proof-evidence.sh",
-        "docs/work-items/WSP-01.md", "docs/work-items/WSP-02.md", "docs/work-items/WSP-03.md", "docs/work-items/WSP-03-security.md", "LICENSE", "docs/work-items/WIP-11.md", "docs/work-items/WIP-12.md", "docs/work-items/WIP-13.md", "docs/work-items/WIP-14.md", "docs/work-items/WIP-15.md", "docs/work-items/wi-worker-proof-1.md",
+        "docs/work-items/WSP-01.md", "docs/work-items/WSP-02.md", "docs/work-items/WSP-03.md", "docs/work-items/WSP-03-security.md", "docs/work-items/WSP-04.md", "docs/evidence/WI-WORKER-G5.md", "LICENSE", "docs/work-items/WIP-11.md", "docs/work-items/WIP-12.md", "docs/work-items/WIP-13.md", "docs/work-items/WIP-14.md", "docs/work-items/WIP-15.md", "docs/work-items/wi-worker-proof-1.md",
         "docs/work-items/WIP-16.md", "docs/work-items/WI-WORKER-PROOF-1-simplification.md", "docs/evidence/WI-EMBEDDED-WORKER-PROOF-1.md",
     ]:
         files.add(name)
@@ -123,7 +123,7 @@ def expected_manifest(root, read_source=None):
         "environment": digest(read_source("conformance/wi-fabric-2/worker/evaluation-environment.json")),
         "files": {name: digest(read_source(name)) for name in sorted(files)},
         "tasks": sorted({digest(canonical(task)) for task in tasks}),
-        "cases": sorted(["WP-007", "WP-032", "AB-WI-021", "WIP-09-adapter-regressions"] + [f"WP-{n:03}" for n in range(17, 27)] + [f"WP-{n:03}" for n in [27, 28, 29, 30, 31, 33, 34]] + [f"WP-{n:03}" for n in range(35, 40)]),
+        "cases": sorted(["WP-007", "WP-032", "AB-WI-021", "WIP-09-adapter-regressions"] + [f"WP-{n:03}" for n in range(17, 27)] + [f"WP-{n:03}" for n in [27, 28, 29, 30, 31, 33, 34]] + [f"WP-{n:03}" for n in range(35, 41)]),
         "operations": sorted(["provision", "start", "inspect", "terminate", "collect_artifacts", "release"]),
         "max_wall_ms": 15000, "max_output_bytes": 65536,
         "nonsensitive_only": True, "production_credentials": False, "ordinary_use": False,
