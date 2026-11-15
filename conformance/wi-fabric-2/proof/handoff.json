@@ -3565,10 +3565,10 @@
     "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml": "9c11d92d056b0411ed4af00a8f076182d95c500acd6e360f42a3a0bdd8aec2eb",
     "contracts/sources/wi-fabric-2-worker-execution-profile.md": "9f597cffb7117dc679e9f001c25c7d54f2a6157f6ead563b0c7cbd11f45a04f9",
     "contracts/sources/wi-fabric-2-worker-execution-profile.yaml": "6523baf56d14dafa4b199c7493dc030461cc061754c180b4c83006308e633986",
-    "crates/worldinterface-foundation/Cargo.lock": "01feb468c1bb5c09eee4c64fd6f41fe10d3a39cfb53eaacf4357679b3a76242b",
+    "crates/worldinterface-foundation/Cargo.lock": "56874bb747edc46378e077987475bbccbd0f0f6457c707d6fe77cd676d439253",
     "crates/worldinterface-foundation/worker/src/supervisor/mod.rs": "d6939b62a3e49830d97bdc5f2ca04adc683641163bda53710d7dba2dde865925",
-    "crates/worldinterface-runtime/Cargo.lock": "a106910ea24c55d0b1059c9431c77ce0c06834aa28e859004425d778d3e5d15b",
-    "crates/worldinterface-runtime/Cargo.toml": "970a6d421399b67c2e13754a6c41a6bfcd3ac45a620a699c791d542821bc883e",
+    "crates/worldinterface-runtime/Cargo.lock": "9d2260f38b44878fb1f69978c654f72602049698cec9f2e0080ffe30cda04058",
+    "crates/worldinterface-runtime/Cargo.toml": "590b57c677d4a58074c79c4f1e17792383d49fa318d510b1fedeb09afbb6e132",
     "crates/worldinterface-runtime/src/bin/wi-process-fixture.rs": "27b8137ed69a852190ca0a842aa386da3e9ee76425d817eb315aaaf18f5044fb",
     "crates/worldinterface-runtime/src/bin/wi-process-reaper.rs": "667a53244fd6e9f71569affc89c6302a2e7b14c3a155cc55eae31d26d3651542",
     "crates/worldinterface-runtime/src/supervisor/connector.rs": "584efd0633c0a4d72a09ba78538d289287143cb099549ec10a041404409ee672",
@@ -3594,10 +3594,11 @@
     "crates/worldinterface-runtime/tests/worker_supervisor.rs": "093c9befdeb24a900690093ad738ab70e61cf16c00f0850b35d7b63bb21eb90a",
     "docs/evidence/WI-EMBEDDED-WORKER-PROOF-1.md": "4621e4b3cb61ec598adbf0f22531a3b66a75fbbe531bae8278671e08b4beb5c9",
     "docs/evidence/WI-WORKER-G5.md": "9575896b26bc20ea079e179ddbe42905e4bfbbe465b018930a5937e594769dc0",
-    "docs/release/0.2.0-alpha.1.md": "5d154457da88f20895c395c1ac43f358d6be31b6f32ff4f02d5242cda5c28b21",
+    "docs/release/0.2.0-alpha.2.md": "b1c55e601c20261ff58cc12e545ba5cf995a5557bae290cf5ba1831eac48b79e",
     "docs/release/package-tests.json": "2c17e1d7844413c84632034ab38c7a91c5dac92f1b543d72d48c04be29370538",
     "docs/work-items/WSP-04.md": "ea9c4fe14d9ee18be5b277e6da7677235d68c9d78f65ac5f09866df2686fa5af",
-    "examples/downstream-consumer/Cargo.toml": "b1d5f106eed5a286460cac00c31465407fd3f13077d8941fcae773688d3a0ccb",
+    "docs/work-items/WSP-05.md": "68574e07972d93cda4f2c418a3a1d598adadc543b9d7236c8c2c69eb43e20750",
+    "examples/downstream-consumer/Cargo.toml": "07d9882a606bde88fb6a115af0603415fa9c1fbe6c6a10d844cf84089e187f0c",
     "examples/downstream-consumer/src/main.rs": "e81457c49983747da1978d4c8e65cd3bde76efee6a8c2dbe3f86a6751f60e949",
     "fixtures/pre-wi-fabric-2/exo/repos/sample-rust/.gitignore": "12cc0f91b51fedf41ae1670d1624ee1d78a284bdb101645b60a06a12de16c069",
     "fixtures/pre-wi-fabric-2/exo/repos/sample-rust/Cargo.lock": "05c88a19f6c1a4bd2a4f0d92e280e80827f001080d82c84b8a18426a00a3f1bc",
@@ -3605,19 +3606,19 @@
     "fixtures/pre-wi-fabric-2/exo/repos/sample-rust/src/lib.rs": "4f6a07ed71fc95baaa7243cb58588a956f3905730ad5201d751ad914a9bb2722",
     "rust-toolchain.toml": "2a0049652fe5a89222a0fc64fa0e4a403435f134bd6fbdf9556e986a62e59128",
     "scripts/build-wi-worker-evaluation.sh": "2ed4f98edf61c1b03f59130b0ca0f110e0b61c69c3af80274dce053f6a0076a4",
-    "scripts/check-consumer.py": "4a42c400910b2e1e433f4f98f78ce76749b675fb56a2de656267ac9fd2c49d96",
+    "scripts/check-consumer.py": "70ce1652fdc8e2b66c567b82f5efc8def4457029af2317edb36ceec411f9bbe9",
     "scripts/check-packages.py": "08e88f56fffdc9be09558078c0e3643d2132a8a3fabed3cc1953c2ef4ee4f384",
-    "scripts/release.py": "6420b283485931dd0ad5b78de03de1075d1af573273efdac9600275089a93d0a",
+    "scripts/release.py": "ab0d7b530a0a0d6885554bc02649eeecafe28d14c7b8abb3f4e48fa092a6ecb8",
     "scripts/wi_release.py": "cf1c0594b6dcfb3aafa5cbbbfa12930b18d8a7167e2726cbb601799628e62462",
     "scripts/wi_release_packages.py": "e551cb3e1450b8df509c5790bfbb7f780f72b14b40d4bbacf8af4695860e7858",
-    "scripts/wi_worker_evaluation.py": "b3a6196dca0e5282e319221d061b8af4d9425e63ed0bce7823b95720f83670e3",
+    "scripts/wi_worker_evaluation.py": "8fd614fc99e0bd57c8714c468cf7a6f463e6c1565abea3b3e38f9c989e78b8f3",
     "tools/wi-contract-check/Cargo.lock": "e23d73ebc1773d7c638713f63e51cf3e6f0c1982ee3f96a3b46b804185cce057"
   },
   "kind": "wi-embedded-worker-handoff-descriptor-v1",
   "maturity": "integration-only",
   "milestone": "WI-EMBEDDED-WORKER-PROOF-1",
   "profile": {
-    "adapter": "worldinterface-runtime 0.2.0-alpha.1 worker_process; source digests in identities",
+    "adapter": "worldinterface-runtime 0.2.0-alpha.2 worker_process; source digests in identities",
     "execution": "WI-WORKER-EXECUTION-1",
     "provider": "process-managed-proof-1"
   },
@@ -3625,13 +3626,28 @@
   "release": {
     "consumer_handoff": "external release consumer-handoff.json binds source commit, descriptor, archives, both lock identities, measured worker digests and build environment; operator relays exact bytes and manifest SHA-256 through the published map record to EXV-11/EXV-27 as a downstream input",
     "digest_scope": "registry, staging and sysroot source paths remapped; recorded compiler, target, profile, environment and linker/system only",
-    "package_version": "0.2.0-alpha.1",
+    "package_version": "0.2.0-alpha.2",
     "packaged_descriptor": "release/handoff.json",
     "packaged_gates": "release/gates/*.json; byte-equal authoritative reviewed records",
     "packaged_lock": "Cargo.lock; normalized archive digest recorded separately in external consumer-handoff.json",
     "procedure": "docs/release/publication-staging.md",
     "repository_lock": "release/repository-Cargo.lock; dependencies_digest() preserves repository provenance",
-    "worker_recipe": "canonicalize build root, CARGO_HOME and CARGO_TARGET_DIR before invoking Cargo; replace inherited RUSTFLAGS and CARGO_ENCODED_RUSTFLAGS with --remap-path-prefix for build root=/wi/build, target directory=/wi/target, each CARGO_HOME/registry/src/* root=/wi/registry, then sysroot/lib/rustlib/src/rust=/rustc/<commit-hash from rustc -vV> (ASCII 31 separators); cargo +1.89.0 install --locked --version '=0.2.0-alpha.1' --target x86_64-unknown-linux-gnu --profile release --bin wi-process-fixture --bin wi-process-reaper --root INSTALL_ROOT worldinterface-runtime"
+    "store_compatibility": {
+      "current_store_readable_by_previous": false,
+      "migration_supported": false,
+      "previous_store_requires_recreation": true,
+      "previous_version": "0.2.0-alpha.1",
+      "rollback_compatible": false,
+      "schema_changes": [
+        "effect_instances",
+        "effect_owner",
+        "effect_requests",
+        "worker_reserved",
+        "flow_pending_global"
+      ],
+      "warning": "An alpha.1 store must be recreated under alpha.2. A store opened by alpha.2 cannot be read by alpha.1. No migration or rollback compatibility is provided."
+    },
+    "worker_recipe": "canonicalize build root, CARGO_HOME and CARGO_TARGET_DIR before invoking Cargo; replace inherited RUSTFLAGS and CARGO_ENCODED_RUSTFLAGS with --remap-path-prefix for build root=/wi/build, target directory=/wi/target, each CARGO_HOME/registry/src/* root=/wi/registry, then sysroot/lib/rustlib/src/rust=/rustc/<commit-hash from rustc -vV> (ASCII 31 separators); cargo +1.89.0 install --locked --version '=0.2.0-alpha.2' --target x86_64-unknown-linux-gnu --profile release --bin wi-process-fixture --bin wi-process-reaper --root INSTALL_ROOT worldinterface-runtime"
   },
   "reproduction": {
     "adopted_checks": ".craftingtable/checks.json; ct-check --declared ID for all ten IDs on committed HEAD",
@@ -3670,6 +3686,7 @@
     "reviewed milestone closure is effective only on reviewed merge with adopted checks; execution grants no closure"
   ],
   "supervisor": {
+    "available_since": "0.2.0-alpha.2",
     "bounds": {
       "backend_evidence_bytes": 4096,
       "frame_bytes": 65536,

@@ -45,6 +45,7 @@ pub fn supervisor_descriptor(root: &Path) -> Result<Value> {
     let cases: Vec<_> = registry.cases.into_iter().filter(|c| c.gate == "WI-WORKER-G5").collect();
     Ok(json!({
         "version":1,"owner":"WSP-04","implementation_owner":"WSP-03",
+        "available_since":"0.2.0-alpha.2",
         "scope":"authenticated interface and durable reconciliation only",
         "gate":gate,"cases":cases,"document":SUPERVISOR_DOCUMENT,
         "effective_on":"reviewed-merge-with-adopted-checks","execution_grants_closure":false,
@@ -75,11 +76,12 @@ pub fn descriptor(root: &Path) -> Result<Value> {
     )?)?;
     let adapter_version =
         manifest["package"]["version"].as_str().ok_or("missing adapter version")?;
+    let release_notes = format!("docs/release/{adapter_version}.md");
     let mut identities = BTreeMap::new();
     for path in [
         "rust-toolchain.toml",
         "docs/release/package-tests.json",
-        "docs/release/0.2.0-alpha.1.md",
+        release_notes.as_str(),
         "scripts/release.py",
         "scripts/wi_release.py",
         "scripts/wi_release_packages.py",
@@ -108,6 +110,7 @@ pub fn descriptor(root: &Path) -> Result<Value> {
         DOCUMENT,
         SUPERVISOR_DOCUMENT,
         "docs/work-items/WSP-04.md",
+        "docs/work-items/WSP-05.md",
         "conformance/wi-fabric-2/worker/supervisor-coverage.json",
         "crates/worldinterface-runtime/tests/worker_supervisor.rs",
         "crates/worldinterface-runtime/tests/support/supervisor_fixture.rs",
@@ -163,6 +166,14 @@ pub fn descriptor(root: &Path) -> Result<Value> {
         "risks":worker_campaign::limitations(),
         "release":{
             "package_version":adapter_version,
+            "store_compatibility":{
+                "previous_version":"0.2.0-alpha.1",
+                "previous_store_requires_recreation":true,
+                "current_store_readable_by_previous":false,
+                "migration_supported":false,"rollback_compatible":false,
+                "schema_changes":["effect_instances","effect_owner","effect_requests","worker_reserved","flow_pending_global"],
+                "warning":"An alpha.1 store must be recreated under alpha.2. A store opened by alpha.2 cannot be read by alpha.1. No migration or rollback compatibility is provided."
+            },
             "packaged_descriptor":"release/handoff.json",
             "packaged_gates":"release/gates/*.json; byte-equal authoritative reviewed records",
             "repository_lock":"release/repository-Cargo.lock; dependencies_digest() preserves repository provenance",

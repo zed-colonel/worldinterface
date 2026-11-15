@@ -55,10 +55,14 @@ def consumer(output, work, version):
         dest = output / 'workers' / name; dest.parent.mkdir(exist_ok=True)
         shutil.copy2(install / 'bin' / name, dest)
         binaries[name] = dict(ref(output, dest), size=dest.stat().st_size)
+    descriptor = read(source / 'release/handoff.json')
     write(output / 'consumer-handoff.json', {
         'schema_version': 1, 'kind': 'wi-release-consumer-handoff-v1',
         'source_commit': subprocess.check_output(['git', 'rev-parse', 'HEAD'], cwd=ROOT, text=True, timeout=30).strip(),
         'descriptor_sha256': sha(source / 'release/handoff.json'), 'version': version,
+        'supervisor': {'gate': descriptor['supervisor']['gate']['id'],
+                       'available_since': descriptor['supervisor']['available_since']},
+        'store_compatibility': descriptor['release']['store_compatibility'],
         'archives': checksums, 'repository_lock_sha256': sha(source / 'release/repository-Cargo.lock'),
         'packaged_lock_sha256': sha(work / 'extracted/worldinterface-runtime/Cargo.lock'),
         'consumer_lock_sha256': sha(output / 'consumer-Cargo.lock'), 'build': build,

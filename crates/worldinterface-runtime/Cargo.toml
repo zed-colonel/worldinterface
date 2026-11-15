@@ -3,7 +3,7 @@ resolver = "2"
 
 [package]
 name = "worldinterface-runtime"
-version = "0.2.0-alpha.1"
+version = "0.2.0-alpha.2"
 edition = "2021"
 rust-version = "1.89"
 description = "Runtime layer for WorldInterface durable embedded workflows"
@@ -164,17 +164,17 @@ test = false
 bench = false
 
 [dependencies]
-worldinterface-capability = { version = "=0.2.0-alpha.1", path = "../worldinterface-foundation/capability" }
+worldinterface-capability = { version = "=0.2.0-alpha.2", path = "../worldinterface-foundation/capability" }
 actionqueue-core = { version = "=0.3.0", default-features = false, features = ["serde"] }
 actionqueue-runtime = { version = "=0.3.0", default-features = false, features = ["serde"] }
 actionqueue-storage = { version = "=0.3.0", default-features = false }
 actionqueue-executor-local = "=0.3.0"
-worldinterface-protocol = { version = "=0.2.0-alpha.1", path = "../worldinterface-foundation/protocol" }
-worldinterface-storage = { version = "=0.2.0-alpha.1", path = "../worldinterface-foundation/storage" }
-worldinterface-domain = { version = "=0.2.0-alpha.1", path = "../worldinterface-foundation/domain" }
-worldinterface-egress = { version = "=0.2.0-alpha.1", path = "../worldinterface-foundation/egress" }
-worldinterface-worker = { version = "=0.2.0-alpha.1", path = "../worldinterface-foundation/worker" }
-worldinterface-ingress = { version = "=0.2.0-alpha.1", path = "../worldinterface-foundation/ingress" }
+worldinterface-protocol = { version = "=0.2.0-alpha.2", path = "../worldinterface-foundation/protocol" }
+worldinterface-storage = { version = "=0.2.0-alpha.2", path = "../worldinterface-foundation/storage" }
+worldinterface-domain = { version = "=0.2.0-alpha.2", path = "../worldinterface-foundation/domain" }
+worldinterface-egress = { version = "=0.2.0-alpha.2", path = "../worldinterface-foundation/egress" }
+worldinterface-worker = { version = "=0.2.0-alpha.2", path = "../worldinterface-foundation/worker" }
+worldinterface-ingress = { version = "=0.2.0-alpha.2", path = "../worldinterface-foundation/ingress" }
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
 fs2 = "0.4"
@@ -185,7 +185,7 @@ sha2 = "0.10"
 libc = "0.2"
 
 [dev-dependencies]
-worldinterface-storage = { version = "=0.2.0-alpha.1", path = "../worldinterface-foundation/storage", features = ["crash-points"] }
+worldinterface-storage = { version = "=0.2.0-alpha.2", path = "../worldinterface-foundation/storage", features = ["crash-points"] }
 tokio = { version = "1", features = ["macros", "rt-multi-thread"] }
 rusqlite = { version = "0.32", features = ["bundled"] }
 hmac = "0.12"

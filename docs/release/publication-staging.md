@@ -1,11 +1,11 @@
 # Operator publication staging
 
-WSP-02 prepares eight 0.2.0-alpha.1 archives and verification evidence on
-`wi-supervisor-proof-1`. WSP-05 repeats the route for alpha.2. Publication is
+WSP-02 prepared eight 0.2.0-alpha.1 archives and verification evidence on
+`wi-supervisor-proof-1`. WSP-05 prepares 0.2.0-alpha.2 with WI-WORKER-G5. Publication is
 operator-owned. Neither work item tags, pushes, publishes, merges, changes remote
 protection, or records publication completion.
 
-The supplied CraftingTable repository-policy observation has settings version 1,
+The historical WSP-02 CraftingTable repository-policy observation had settings version 1,
 observed 2026-11-10T05:57:55.908Z, integration branch `wi-supervisor-proof-1` at
 `b67245d07f45b1e4e0ddf42d835355fc3cbb3a85`, and proposed `main` freeze at
 `928b5ef07797762bc002920af05a01aa4a4b0e0c`. Its controller controls require a
@@ -17,6 +17,14 @@ of a freeze. Retain separately the applicable adopted freeze instruction and
 fresh observations at publication. These local controls do not establish GitHub
 protection or constrain direct Git outside CraftingTable.
 
+For WSP-05, the supplied adopted repository-policy evidence is settings version 1,
+observed 2026-11-15T03:55:06.734Z: integration `wi-supervisor-proof-1` at
+`451aa6484a9552cc17eaa0d9c3c6f5b561a01ec8`, no reported issues, and proposed
+`main` freeze at `928b5ef07797762bc002920af05a01aa4a4b0e0c`. The same controller
+review and integration controls apply. This fresh local observation records no
+remote protection inspection or publication. Remote obligations remain in steps
+2–5; their absence does not block local preparation.
+
 The former WI-01 procedure's `wi-fabric-2` destination, `f48df82` freeze,
 controller Cargo and `ct-act` references are historical. Current checks use Rust
 1.89.0 and crates.io ActionQueue 0.3.0. There is no controller Cargo launcher or
@@ -25,16 +33,33 @@ schemas and their WI validator remain authoritative.
 
 1. At the reviewed item's eventual merge commit, use a clean independent clone
    outside CraftingTable's checkout and an external empty output directory. Keep
-   `CARGO_TARGET_DIR` external and separate from evidence. Run:
+   `CARGO_TARGET_DIR` external and separate from evidence. `TMPDIR` must name an
+   existing writable directory outside the checkout. Unset, empty or unusable
+   `TMPDIR` refuses preparation before toolchain probing, fetching or gates, with
+   instructions to create and export it. Preserve CraftingTable's supplied
+   temporary and build directories. In an ordinary shell, set up missing values:
+
+   ```sh
+   if [ -z "${TMPDIR:-}" ]; then
+     export TMPDIR="$(mktemp -d /tmp/wi-release-tmp.XXXXXXXX)"
+   fi
+   export TMP="$TMPDIR" TEMP="$TMPDIR"
+   if [ -z "${CARGO_TARGET_DIR:-}" ]; then
+     export CARGO_TARGET_DIR="$(mktemp -d /tmp/wi-release-build.XXXXXXXX)"
+   fi
+   ```
+
+   Caller-supplied paths are canonicalized for gates and staging, retaining the
+   store boundary's rejection of symlink components. Run:
 
    ```sh
    cargo +1.89.0 fetch --locked --manifest-path crates/worldinterface-foundation/Cargo.toml
    cargo +1.89.0 fetch --locked --manifest-path crates/worldinterface-runtime/Cargo.toml
-   python3 -B scripts/release.py prepare --version 0.2.0-alpha.1 \
-     --commit "$(git rev-parse HEAD)" --output /absolute/new/wi-alpha1
-   python3 -B scripts/release.py verify --manifest /absolute/new/wi-alpha1/release-manifest.json
-   crate-release plan /absolute/new/wi-alpha1/release-manifest.json
-   crate-release check /absolute/new/wi-alpha1/release-manifest.json
+   python3 -B scripts/release.py prepare --version 0.2.0-alpha.2 \
+     --commit "$(git rev-parse HEAD)" --output /absolute/new/wi-alpha2
+   python3 -B scripts/release.py verify --manifest /absolute/new/wi-alpha2/release-manifest.json
+   crate-release plan /absolute/new/wi-alpha2/release-manifest.json
+   crate-release check /absolute/new/wi-alpha2/release-manifest.json
    ```
 
    Preparation fetches dependencies, runs every adopted argv with separate logs,
@@ -59,20 +84,20 @@ schemas and their WI validator remain authoritative.
    in hashed external evidence. Verify it covers the current destination and
    settings. Missing or stale verification blocks publication, not local
    preparation. Authentication failure establishes neither presence nor absence
-   of protection. No exemption is claimed by WSP-02. Preserve this observation
+   of protection. No exemption is claimed by WSP-02 or WSP-05. Preserve this observation
    with the publication records and reference it in the operator's final
    preparation receipt; validate that receipt through WI's receipt validator.
 
-3. After the protection gate and release approval, create `v0.2.0-alpha.1` at the
+3. After the protection gate and release approval, create `v0.2.0-alpha.2` at the
    prepared merge commit on `wi-supervisor-proof-1` and push the tag. Run
-   `crate-release publish /absolute/new/wi-alpha1/release-manifest.json --verified`.
+   `crate-release publish /absolute/new/wi-alpha2/release-manifest.json --verified`.
    The operator retains the exact publisher path, digest, invocation and
    destination. The tagged integration commit reaches `main` only through the
-   approved final promotion. Repeat for alpha.2; a subsequent published code
-   change needs another pre-release.
+   approved final promotion. Alpha.1 used this route for `v0.2.0-alpha.1`; a
+   subsequent published code change needs another pre-release.
 
 4. From an external copy, run the registry-only consumer and worker install route
-   in [0.2.0-alpha.1.md](0.2.0-alpha.1.md), using crates.io with no replacement or
+   in [0.2.0-alpha.2.md](0.2.0-alpha.2.md), using crates.io with no replacement or
    patches. Retain resolution, lock, commands, worker measurements and outcome
    under `~/.local/share/worldinterface-releases/<version>/`. Record publication
    for the Exoskeleton map's waiting item only after registry availability and

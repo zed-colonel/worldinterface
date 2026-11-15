@@ -18,7 +18,7 @@ import wi_release as shared
 import wi_release_packages as packages
 from wi_crash_isolation import check_artifacts
 
-VERSION = '0.2.0-alpha.1'
+VERSION = '0.2.0-alpha.2'
 
 
 class ReleaseTests(unittest.TestCase):
@@ -55,6 +55,39 @@ class ReleaseTests(unittest.TestCase):
         with patch.object(release, 'clean'):
             for output in [internal, self.base, alias]:
                 with self.subTest(output=output), self.assertRaises(ValueError): release.preflight(VERSION, 'a' * 40, output)
+
+    def test_prepare_refuses_missing_or_empty_tmpdir_before_side_effects(self):
+        message = 'TMPDIR must name an existing writable directory outside the checkout; create and export one before prepare.'
+        for value in [None, '']:
+            env = dict(os.environ)
+            env.pop('TMPDIR', None)
+            if value is not None: env['TMPDIR'] = value
+            output = self.base / 'not-created'
+            with self.subTest(value=value), patch.dict(os.environ, env, clear=True), \
+                    patch.object(release, 'clean') as clean, \
+                    patch.object(release, 'toolchain') as toolchain, \
+                    patch.object(release, 'metadata') as metadata, \
+                    patch.object(release.subprocess, 'run') as run, \
+                    patch.object(release, 'gates') as gates:
+                with self.assertRaisesRegex(ValueError, 'TMPDIR must name'):
+                    release.prepare(VERSION, 'a' * 40, output)
+                for action in [clean, toolchain, metadata, run, gates]: action.assert_not_called()
+            result = subprocess.run([sys.executable, '-B', str(shared.ROOT / 'scripts/release.py'),
+                                     'prepare', '--version', VERSION, '--commit', 'a' * 40,
+                                     '--output', str(output)], env=env, capture_output=True, text=True, timeout=30)
+            self.assertEqual(result.returncode, 1)
+            self.assertEqual(result.stderr.strip(), 'Release refused: ' + message)
+            self.assertFalse(output.exists())
+
+    def test_preflight_refuses_unusable_or_internal_tmpdir(self):
+        file = self.base / 'file'; file.write_text('not a directory')
+        for directory in [self.base / 'missing', file, shared.ROOT]:
+            with self.subTest(directory=directory), patch.dict(os.environ, TMPDIR=str(directory)), \
+                    self.assertRaisesRegex(ValueError, 'TMPDIR must name'):
+                release.preflight(VERSION, 'a' * 40, self.base / 'output')
+        with patch.dict(os.environ, TMPDIR=str(self.base)), patch.object(os, 'access', return_value=False), \
+                self.assertRaisesRegex(ValueError, 'TMPDIR must name'):
+            release.preflight(VERSION, 'a' * 40, self.base / 'output')
 
     def test_preflight_rejects_wrong_toolchain(self):
         for cargo, rustc in [('cargo 1.90.0 (fixture)', 'release: 1.89.0\nhost: x86_64-unknown-linux-gnu\n'), ('cargo 1.89.0 (fixture)', 'release: 1.90.0\nhost: x86_64-unknown-linux-gnu\n')]:
@@ -106,7 +139,13 @@ class ReleaseTests(unittest.TestCase):
         logical = self.base / 'logical temporary directory'
         logical.symlink_to(physical, target_is_directory=True)
         with patch.dict(os.environ, {key: str(logical) for key in ['TMPDIR', 'TMP', 'TEMP']}):
+            with patch.object(release, 'clean'), patch.object(release, 'toolchain', return_value={}), \
+                    patch.object(release, 'metadata', return_value={}):
+                output, _, _ = release.preflight(VERSION, 'a' * 40, self.base / 'output')
+                self.assertEqual(output, (self.base / 'output').resolve())
             env = release.gate_environment()
+            self.assertEqual(os.environ['TMPDIR'], str(logical))
+            self.assertEqual(env['CARGO_TARGET_DIR'], str(shared.external_target()))
         for key in ['TMPDIR', 'TMP', 'TEMP']:
             self.assertEqual(env[key], str(physical.resolve()))
         # Creation through the gate environment must have no symlink component;
@@ -251,6 +290,27 @@ class ReleaseTests(unittest.TestCase):
         shared.write(self.base / 'publication-preparation.json', {'source_revision': 'b' * 40})
         with self.assertRaises(ValueError): release.validate_receipt({'source_commit': 'a' * 40, 'baseline_revision': 'c' * 40}, self.base)
 
+    def test_consumer_handoff_requires_g5_release_and_both_store_directions(self):
+        descriptor = shared.read(shared.ROOT / shared.RUNTIME / 'release/handoff.json')
+        handoff = {'supervisor': {'gate': 'WI-WORKER-G5', 'available_since': VERSION},
+                   'store_compatibility': copy.deepcopy(descriptor['release']['store_compatibility'])}
+        release.validate_consumer_contract(handoff, descriptor)
+        for section, field in [('supervisor', 'gate'), ('supervisor', 'available_since'),
+                               *[('store_compatibility', key) for key in handoff['store_compatibility']]]:
+            for remove in [True, False]:
+                changed = copy.deepcopy(handoff)
+                if remove: changed[section].pop(field)
+                else: changed[section][field] = 'substituted'
+                with self.subTest(section=section, field=field, remove=remove), self.assertRaises(ValueError):
+                    release.validate_consumer_contract(changed, descriptor)
+        for section in handoff:
+            changed = copy.deepcopy(handoff); changed.pop(section)
+            with self.assertRaises(ValueError): release.validate_consumer_contract(changed, descriptor)
+        for field in ['previous_store_requires_recreation', 'current_store_readable_by_previous']:
+            changed = copy.deepcopy(handoff)
+            changed['store_compatibility'][field] = int(changed['store_compatibility'][field])
+            with self.assertRaises(ValueError): release.validate_consumer_contract(changed, descriptor)
+
     def test_silent_commands_have_nonempty_receipt_logs_without_polluting_metadata(self):
         log = self.base / 'silent.log'
         command = [sys.executable, '-c', 'pass']
@@ -341,7 +401,7 @@ class ReleaseTests(unittest.TestCase):
             self.assertEqual(Path(env['CARGO_TARGET_DIR']), target_alias.resolve())
             # Execute the documented canonical exports and remapping snippet,
             # then use its actual flags for one of the real install routes.
-            notes = (shared.ROOT / 'docs/release/0.2.0-alpha.1.md').read_text()
+            notes = (shared.ROOT / 'docs/release/0.2.0-alpha.2.md').read_text()
             exports = notes.split('```sh\n', 1)[1].split('export RUSTUP_TOOLCHAIN', 1)[0]
             script = exports + "python3 -c 'import json,os; print(json.dumps({k: os.environ[k] for k in [\"WI_WORKER_BUILD_ROOT\", \"CARGO_HOME\", \"CARGO_TARGET_DIR\"]}))'"
             documented = json.loads(subprocess.check_output(['bash', '-c', script], cwd=staging, text=True, timeout=30))
