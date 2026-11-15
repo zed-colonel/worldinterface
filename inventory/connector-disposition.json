@@ -1254,7 +1254,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/release/handoff.json",
-          "source_sha256": "b57dd2745764ece947a7b1149e898304fb2a2f1063aff872c476ba5862647d2a",
+          "source_sha256": "00301c2ee8dfead295f8a4b07e28b4ca2df786cb564620f54e159d0005d8c2fa",
           "treatment": "Retain WSP-02 package evidence/support and registry consumer. Future legacy removal must preserve authoritative byte equality and release consumer coverage."
         },
         {
@@ -6821,57 +6821,57 @@
         },
         {
           "id": "crates/worldinterface-runtime/tests/continuation_recovery.rs::::module:support",
-          "source_sha256": "c92256ef2b571f08a066d08b8b6a6cd5a22c4f67762d64262f1385074583379d",
+          "source_sha256": "f1d08ea965ce3e6d90b3195f247a8673e044f9dc9248f5fdba474b828c28222a",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/continuation_recovery.rs::::source-module:crates/worldinterface-runtime/tests/continuation_recovery.rs",
-          "source_sha256": "c92256ef2b571f08a066d08b8b6a6cd5a22c4f67762d64262f1385074583379d",
+          "source_sha256": "f1d08ea965ce3e6d90b3195f247a8673e044f9dc9248f5fdba474b828c28222a",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/continuation_recovery.rs::::struct:CheckWakeAcknowledgment",
-          "source_sha256": "c92256ef2b571f08a066d08b8b6a6cd5a22c4f67762d64262f1385074583379d",
+          "source_sha256": "f1d08ea965ce3e6d90b3195f247a8673e044f9dc9248f5fdba474b828c28222a",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/continuation_recovery.rs::::struct:HoldFinish",
-          "source_sha256": "c92256ef2b571f08a066d08b8b6a6cd5a22c4f67762d64262f1385074583379d",
+          "source_sha256": "f1d08ea965ce3e6d90b3195f247a8673e044f9dc9248f5fdba474b828c28222a",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/continuation_recovery.rs::::struct:RevokeAfterAccept",
-          "source_sha256": "c92256ef2b571f08a066d08b8b6a6cd5a22c4f67762d64262f1385074583379d",
+          "source_sha256": "f1d08ea965ce3e6d90b3195f247a8673e044f9dc9248f5fdba474b828c28222a",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/continuation_recovery.rs::continuation_inspection_authorizes_and_reports_pending_and_accepted_chain::struct:OpenEventReads",
-          "source_sha256": "c92256ef2b571f08a066d08b8b6a6cd5a22c4f67762d64262f1385074583379d",
+          "source_sha256": "f1d08ea965ce3e6d90b3195f247a8673e044f9dc9248f5fdba474b828c28222a",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/continuation_recovery.rs::continuation_inspection_authorizes_and_reports_pending_and_accepted_chain::struct:OperatorPolicy",
-          "source_sha256": "c92256ef2b571f08a066d08b8b6a6cd5a22c4f67762d64262f1385074583379d",
+          "source_sha256": "f1d08ea965ce3e6d90b3195f247a8673e044f9dc9248f5fdba474b828c28222a",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/continuation_recovery.rs::support::module:connectors",
-          "source_sha256": "c92256ef2b571f08a066d08b8b6a6cd5a22c4f67762d64262f1385074583379d",
+          "source_sha256": "f1d08ea965ce3e6d90b3195f247a8673e044f9dc9248f5fdba474b828c28222a",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/continuation_recovery.rs::support::module:continuation_fixture",
-          "source_sha256": "c92256ef2b571f08a066d08b8b6a6cd5a22c4f67762d64262f1385074583379d",
+          "source_sha256": "f1d08ea965ce3e6d90b3195f247a8673e044f9dc9248f5fdba474b828c28222a",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/continuation_recovery.rs::support::module:flow_fixture",
-          "source_sha256": "c92256ef2b571f08a066d08b8b6a6cd5a22c4f67762d64262f1385074583379d",
+          "source_sha256": "f1d08ea965ce3e6d90b3195f247a8673e044f9dc9248f5fdba474b828c28222a",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/continuation_recovery.rs::support::module:spi_harness",
-          "source_sha256": "c92256ef2b571f08a066d08b8b6a6cd5a22c4f67762d64262f1385074583379d",
+          "source_sha256": "f1d08ea965ce3e6d90b3195f247a8673e044f9dc9248f5fdba474b828c28222a",
           "registration_sites": []
         },
         {
@@ -9048,7 +9048,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/release/handoff.json",
-          "source_sha256": "b57dd2745764ece947a7b1149e898304fb2a2f1063aff872c476ba5862647d2a",
+          "source_sha256": "00301c2ee8dfead295f8a4b07e28b4ca2df786cb564620f54e159d0005d8c2fa",
           "treatment": "WSP-04: retain the new supervisor interface/reconciliation evidence and selective legacy references; this surface does not grant legacy removal, Kata qualification or ordinary use."
         },
         {
@@ -9323,7 +9323,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/tests/continuation_recovery.rs",
-          "source_sha256": "c92256ef2b571f08a066d08b8b6a6cd5a22c4f67762d64262f1385074583379d",
+          "source_sha256": "f1d08ea965ce3e6d90b3195f247a8673e044f9dc9248f5fdba474b828c28222a",
           "treatment": "Retain durable-continuation producer and recovery regression evidence; review separately from legacy connector removal."
         },
         {
@@ -9578,7 +9578,7 @@
         },
         {
           "path": "docs/work-items/WSP-05.md",
-          "source_sha256": "68574e07972d93cda4f2c418a3a1d598adadc543b9d7236c8c2c69eb43e20750",
+          "source_sha256": "e3b4bb38e716e4d9226840c9f657a0facba2f47173c17ac08f8508e63b953a1a",
           "treatment": "Retain WSP-05 release-preparation provenance; audit SupervisorConnector references selectively if replacing Fabric support. This work item changes no connector removal or replacement authority."
         },
         {

@@ -919,8 +919,19 @@ async fn reconciliation_work_is_bounded_independently_of_waits_and_history() {
 
 /// F-001: a fresh Flow must not wait for the scan of unchanged waits or
 /// history-only tenants, nor accrue an AQ attempt for every skipped scan page.
-#[tokio::test]
-async fn new_flow_progress_and_attempts_are_independent_of_waits_and_history_tenants() {
+#[test]
+fn new_flow_progress_and_attempts_are_independent_of_waits_and_history_tenants() {
+    // One blocking worker makes the completion marker an executor barrier.
+    // The fixture has one active Flow; unchanged waiting Flows remain in storage.
+    tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .max_blocking_threads(1)
+        .build()
+        .unwrap()
+        .block_on(assert_flow_progress_after_executor_completion());
+}
+
+async fn assert_flow_progress_after_executor_completion() {
     let mut baseline = None;
     for (waiting, history_tenants) in [(0, 0), (100, 0), (0, 100), (100, 100)] {
         let mut f = Fixture::new();
@@ -969,17 +980,26 @@ async fn new_flow_progress_and_attempts_are_independent_of_waits_and_history_ten
             }
             let submission = submissions[waiting + usize::from(restart)].clone();
             let id = service.submit_flow(&(), &pure.id, submission, &mut q).unwrap();
+            // Occupy the one blocking worker beyond the old eight 10-ms sleeps.
+            // This models executor scheduling contention independently of Flow history.
+            let occupied = tokio::task::spawn_blocking(|| {
+                std::thread::sleep(std::time::Duration::from_millis(250));
+            });
             let mut ticks = 0;
             while f.run(&id).outcome.is_none() && ticks < 8 {
                 let _ = q.tick().await.unwrap();
                 ticks += 1;
-                // Let the blocking executor return its result between host polls.
-                tokio::time::sleep(std::time::Duration::from_millis(10)).await;
+                // AQ queues handlers with spawn_blocking. With one worker, this
+                // FIFO marker runs after every handler queued by the tick, including
+                // AQ's result publication. Count host scheduling ticks only after
+                // that work has finished, without another tick or a wall-time guess.
+                tokio::task::spawn_blocking(|| ()).await.unwrap();
                 assert!(
                     q.tick_diagnostics.work.rows
                         <= worldinterface_runtime::aq_adapter::RECONCILE_ROWS_PER_TICK
                 );
             }
+            occupied.await.unwrap();
             let run = f.run(&id);
             assert_eq!(
                 run.outcome,

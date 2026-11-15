@@ -13562,7 +13562,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/tests/continuation_recovery.rs",
     "name": "support",
-    "source_sha256": "c92256ef2b571f08a066d08b8b6a6cd5a22c4f67762d64262f1385074583379d",
+    "source_sha256": "f1d08ea965ce3e6d90b3195f247a8673e044f9dc9248f5fdba474b828c28222a",
     "conditions": [],
     "registration_sites": []
   },
@@ -13571,7 +13571,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-runtime/tests/continuation_recovery.rs",
     "name": "crates/worldinterface-runtime/tests/continuation_recovery.rs",
-    "source_sha256": "c92256ef2b571f08a066d08b8b6a6cd5a22c4f67762d64262f1385074583379d",
+    "source_sha256": "f1d08ea965ce3e6d90b3195f247a8673e044f9dc9248f5fdba474b828c28222a",
     "conditions": [],
     "registration_sites": []
   },
@@ -13580,7 +13580,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/continuation_recovery.rs",
     "name": "CheckWakeAcknowledgment",
-    "source_sha256": "c92256ef2b571f08a066d08b8b6a6cd5a22c4f67762d64262f1385074583379d",
+    "source_sha256": "f1d08ea965ce3e6d90b3195f247a8673e044f9dc9248f5fdba474b828c28222a",
     "conditions": [],
     "registration_sites": []
   },
@@ -13589,7 +13589,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/continuation_recovery.rs",
     "name": "HoldFinish",
-    "source_sha256": "c92256ef2b571f08a066d08b8b6a6cd5a22c4f67762d64262f1385074583379d",
+    "source_sha256": "f1d08ea965ce3e6d90b3195f247a8673e044f9dc9248f5fdba474b828c28222a",
     "conditions": [],
     "registration_sites": []
   },
@@ -13598,7 +13598,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/continuation_recovery.rs",
     "name": "RevokeAfterAccept",
-    "source_sha256": "c92256ef2b571f08a066d08b8b6a6cd5a22c4f67762d64262f1385074583379d",
+    "source_sha256": "f1d08ea965ce3e6d90b3195f247a8673e044f9dc9248f5fdba474b828c28222a",
     "conditions": [],
     "registration_sites": []
   },
@@ -13607,7 +13607,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/continuation_recovery.rs",
     "name": "OpenEventReads",
-    "source_sha256": "c92256ef2b571f08a066d08b8b6a6cd5a22c4f67762d64262f1385074583379d",
+    "source_sha256": "f1d08ea965ce3e6d90b3195f247a8673e044f9dc9248f5fdba474b828c28222a",
     "conditions": [],
     "registration_sites": []
   },
@@ -13616,7 +13616,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/continuation_recovery.rs",
     "name": "OperatorPolicy",
-    "source_sha256": "c92256ef2b571f08a066d08b8b6a6cd5a22c4f67762d64262f1385074583379d",
+    "source_sha256": "f1d08ea965ce3e6d90b3195f247a8673e044f9dc9248f5fdba474b828c28222a",
     "conditions": [],
     "registration_sites": []
   },
@@ -13625,7 +13625,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/tests/continuation_recovery.rs",
     "name": "connectors",
-    "source_sha256": "c92256ef2b571f08a066d08b8b6a6cd5a22c4f67762d64262f1385074583379d",
+    "source_sha256": "f1d08ea965ce3e6d90b3195f247a8673e044f9dc9248f5fdba474b828c28222a",
     "conditions": [],
     "registration_sites": []
   },
@@ -13634,7 +13634,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/tests/continuation_recovery.rs",
     "name": "continuation_fixture",
-    "source_sha256": "c92256ef2b571f08a066d08b8b6a6cd5a22c4f67762d64262f1385074583379d",
+    "source_sha256": "f1d08ea965ce3e6d90b3195f247a8673e044f9dc9248f5fdba474b828c28222a",
     "conditions": [],
     "registration_sites": []
   },
@@ -13643,7 +13643,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/tests/continuation_recovery.rs",
     "name": "flow_fixture",
-    "source_sha256": "c92256ef2b571f08a066d08b8b6a6cd5a22c4f67762d64262f1385074583379d",
+    "source_sha256": "f1d08ea965ce3e6d90b3195f247a8673e044f9dc9248f5fdba474b828c28222a",
     "conditions": [],
     "registration_sites": []
   },
@@ -13652,7 +13652,7 @@
     "kind": "module",
     "path": "crates/worldinterface-runtime/tests/continuation_recovery.rs",
     "name": "spi_harness",
-    "source_sha256": "c92256ef2b571f08a066d08b8b6a6cd5a22c4f67762d64262f1385074583379d",
+    "source_sha256": "f1d08ea965ce3e6d90b3195f247a8673e044f9dc9248f5fdba474b828c28222a",
     "conditions": [],
     "registration_sites": []
   },

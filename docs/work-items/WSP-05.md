@@ -35,6 +35,20 @@ the upgrade evidence and review any future replacement selectively. No removal o
 claimed. New documentation is bound by the handoff/evaluation packet. Candidate
 execution requires the committed manifest and all source bytes to match HEAD exactly.
 
+The first candidate c8f6835 passed nine adopted checks but failed
+`new_flow_progress_and_attempts_are_independent_of_waits_and_history_tenants`
+in the runtime campaign (waiting=0, history=100, no restart). Its unchanged binary
+passed alone in 23.6 seconds with four or five ticks and two/two attempts. The
+fixture's fixed 10-ms sleeps could count polls before asynchronous execution
+finished under the campaign's general pool. The retained failure bundle is part
+of the external verification record; the standalone pass does not clear it.
+The fixture now uses one blocking worker and awaits a FIFO completion marker
+between ticks, including a deliberately queued 250-ms worker occupancy. It preserves
+the eight-tick, two/two-attempt, history/restart and reconciliation-row assertions.
+No production code, timeout, campaign coverage or adopted definition changes.
+This test-only correction is the code-forced deviation from release-only edits.
+The carried F-007 case passed in that failed campaign; no recurrence was observed.
+
 Verification logs, timings and archive evidence are retained externally under
 the implementation run's scratch/verification; the implementation handoff names
 the exact commit, manifest and SHA-256. All ten declared adopted checks must pass
