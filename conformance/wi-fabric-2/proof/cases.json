@@ -2072,6 +2072,11 @@
           "manifest": "crates/worldinterface-runtime/Cargo.toml",
           "package": "worldinterface-runtime",
           "test": "supervisor_generation_deadline_and_unsupported_recovery_fail_closed"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "private_transport_samples_authorization_clock_after_receiving_submit"
         }
       ]
     },
@@ -2136,6 +2141,11 @@
           "manifest": "crates/worldinterface-runtime/Cargo.toml",
           "package": "worldinterface-runtime",
           "test": "authenticated_inspect_recovers_retained_backend_completion_after_dispatch_deadline"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "transient_inspect_error_after_deadline_preserves_recovery_after_restart"
         }
       ]
     },

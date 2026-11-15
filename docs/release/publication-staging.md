@@ -69,8 +69,12 @@ schemas and their WI validator remain authoritative.
    workers. Local-registry Cargo homes live under disposable staging; the shared
    crates.io archive cache is read only during registry seeding. Rustdoc clears
    the external target's `doc` directory before generating release documentation.
-   Worker builds replace inherited Rust flags with the path remappings recorded
-   in the recipe and actual build environment. It produces source.bundle, notes, API docs, archives, resolution and
+   Archive sources come from the committed Git tree; ignored checkout files are
+   excluded. Gates clear inherited compiler flags, wrappers, C/C++ compiler
+   overrides and Cargo build/target/profile overrides. `gate-environment.json`
+   records that environment separately from the worker install environment in
+   `build-environment.json`; both are hashed into the receipt and manifest.
+   Worker builds add the path remappings recorded in the recipe. It produces source.bundle, notes, API docs, archives, resolution and
    production-feature evidence, the linked consumer handoff, the WI preparation
    receipt, release-manifest.json and SHA256SUMS. Failures retain logs without a
    successful manifest. Rebase or merge requires fresh preparation. CraftingTable

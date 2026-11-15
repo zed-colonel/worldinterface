@@ -150,13 +150,57 @@ fn private_transport_rejects_malformed_and_oversized_frames_outside_guest() {
     let (client, mut channel) = PrivateChannel::provision(policy.clone()).unwrap();
     let mut stream = client.into_stream().unwrap();
     stream.write_all(&((MAX_FRAME_BYTES + 1) as u32).to_be_bytes()).unwrap();
-    assert!(channel.serve_one(&server, 1).is_err());
+    assert!(channel.serve_one(&server, || 1).is_err());
     let (client, mut channel) = PrivateChannel::provision(policy).unwrap();
     let mut stream = client.into_stream().unwrap();
     let bytes = br#"{"kind":"submit","body":{"credentials":"forged"}}"#;
     stream.write_all(&(bytes.len() as u32).to_be_bytes()).unwrap();
     stream.write_all(bytes).unwrap();
-    channel.serve_one(&server, 1).unwrap();
+    channel.serve_one(&server, || 1).unwrap();
+}
+
+#[test]
+fn private_transport_samples_authorization_clock_after_receiving_submit() {
+    use std::{sync::atomic::AtomicU64, time::Duration};
+    for expired in [true, false] {
+        let temp = tempfile::tempdir().unwrap();
+        let (mut command, mut policy) = config();
+        if !expired {
+            command.request.deadline_ms = 35000;
+            policy.grants[0].request = command.request.clone();
+        }
+        let handler =
+            Arc::new(Consumer { calls: AtomicUsize::new(0), complete: AtomicBool::new(false) });
+        let server = Server::open(&temp.path().join("supervisor"), handler.clone()).unwrap();
+        let (client, mut channel) = PrivateChannel::provision(policy).unwrap();
+        let clock = Arc::new(AtomicU64::new(1));
+        let now = clock.clone();
+        let (sampled, samples) = std::sync::mpsc::channel();
+        let serving = std::thread::spawn(move || {
+            channel
+                .serve_one(&server, || {
+                    sampled.send(()).unwrap();
+                    now.load(Ordering::SeqCst)
+                })
+                .unwrap();
+        });
+        // The server is idle. A clock sample here would predate the request.
+        assert!(matches!(
+            samples.recv_timeout(Duration::from_millis(50)),
+            Err(std::sync::mpsc::RecvTimeoutError::Timeout)
+        ));
+        clock.store(20000, Ordering::SeqCst);
+        let response = client.request(&Request::Submit(command)).unwrap();
+        if expired {
+            assert_eq!(response, Response::Unavailable);
+            assert_eq!(handler.calls.load(Ordering::SeqCst), 0);
+        } else {
+            assert!(matches!(response, Response::Record(ref record)
+                if record.observation.state == State::Accepted));
+        }
+        samples.recv_timeout(Duration::from_secs(3)).unwrap();
+        serving.join().unwrap();
+    }
 }
 
 #[test]
@@ -184,7 +228,7 @@ fn private_transport_gives_a_late_submit_its_own_frame_budget() {
             // A delayed test thread may miss an idle poll entirely. Retrying
             // an empty poll is legal; consuming a partial frame is not.
             loop {
-                channel.serve_one(&server, 1).unwrap();
+                channel.serve_one(&server, || 1).unwrap();
                 if matches!(
                     server.request(&config().1, inspect(&command), 1),
                     Ok(Response::Record(_))
@@ -231,11 +275,11 @@ fn private_transport_partial_progress_does_not_renew_frame_deadline() {
     stream.write_all(&[0]).unwrap();
     let serve = std::thread::spawn(move || {
         let started = Instant::now();
-        assert!(channel.serve_one(&server, 1).is_err());
+        assert!(channel.serve_one(&server, || 1).is_err());
         assert!(started.elapsed() < Duration::from_secs(3));
         // Keep the channel object alive to prove shutdown, rather than drop,
         // closes the poisoned endpoint and prevents interpreting a suffix.
-        assert!(channel.serve_one(&server, 1).is_err());
+        assert!(channel.serve_one(&server, || 1).is_err());
         channel
     });
     std::thread::sleep(Duration::from_millis(600));
@@ -473,4 +517,67 @@ fn authenticated_inspect_recovers_retained_backend_completion_after_dispatch_dea
         std::thread::sleep(std::time::Duration::from_millis(2));
     }
     assert_eq!(handler.calls.load(Ordering::SeqCst), 1);
+}
+
+#[test]
+fn transient_inspect_error_after_deadline_preserves_recovery_after_restart() {
+    use std::time::{Duration, Instant};
+    struct Backend {
+        dispatches: AtomicUsize,
+        available: AtomicBool,
+    }
+    impl SupervisorHandler for Backend {
+        fn supports_authoritative_inspect(&self) -> bool {
+            true
+        }
+        fn dispatch(&self, _: AuthorizedSupervisorCommand) -> Result<Observation, String> {
+            self.dispatches.fetch_add(1, Ordering::SeqCst);
+            Ok(Observation { state: State::Running, evidence: vec![] })
+        }
+        fn inspect(&self, _: AuthorizedSupervisorInspect) -> Result<Observation, String> {
+            if !self.available.load(Ordering::SeqCst) {
+                return Err("temporarily unavailable".into());
+            }
+            Ok(Observation { state: State::Completed, evidence: b"retained result".to_vec() })
+        }
+    }
+    let temp = tempfile::tempdir().unwrap();
+    let root = temp.path().join("supervisor");
+    let (command, policy) = config();
+    let handler =
+        Arc::new(Backend { dispatches: AtomicUsize::new(0), available: AtomicBool::new(false) });
+    let server = Server::open(&root, handler.clone()).unwrap();
+    server.request(&policy, Request::Submit(command.clone()), 1).unwrap();
+    drop(server);
+    let limit = Instant::now() + Duration::from_secs(5);
+    let server = loop {
+        if let Ok(server) = Server::open(&root, handler.clone()) {
+            break server;
+        }
+        assert!(Instant::now() < limit);
+        std::thread::sleep(Duration::from_millis(2));
+    };
+    loop {
+        if let Ok(Response::Record(record)) = server.request(&policy, inspect(&command), 20000) {
+            assert!(!record.observation.state.terminal(), "failed inspect must remain recoverable");
+            if record.observation.state == State::Ambiguous {
+                break;
+            }
+        }
+        assert!(Instant::now() < limit);
+        std::thread::sleep(Duration::from_millis(2));
+    }
+    handler.available.store(true, Ordering::SeqCst);
+    loop {
+        if let Ok(Response::Record(record)) = server.request(&policy, inspect(&command), 20000) {
+            if record.observation.state.terminal() {
+                assert_eq!(record.observation.state, State::Completed);
+                assert_eq!(record.observation.evidence, b"retained result");
+                break;
+            }
+        }
+        assert!(Instant::now() < limit);
+        std::thread::sleep(Duration::from_millis(2));
+    }
+    assert_eq!(handler.dispatches.load(Ordering::SeqCst), 1);
 }

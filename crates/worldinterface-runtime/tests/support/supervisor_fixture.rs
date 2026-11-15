@@ -187,7 +187,16 @@ pub fn live_packet() {
         );
     }
     assert!(Process::new("timeout")
-        .args(["30s", "python3", "-B", "scripts/wi_worker_evaluation.py", "--require-committed"])
+        .args([
+            "30s",
+            "python3",
+            "-I",
+            "-B",
+            "scripts/wi_worker_evaluation.py",
+            "--require-committed",
+            "--root"
+        ])
+        .arg(&root)
         .current_dir(root)
         .status()
         .unwrap()
@@ -246,7 +255,7 @@ pub fn server_child(root: &Path) {
         return; // Intentionally lose every acknowledgement and callback.
     }
     loop {
-        if channel.serve_one(&server, now()).is_err() {
+        if channel.serve_one(&server, now).is_err() {
             return;
         }
     }

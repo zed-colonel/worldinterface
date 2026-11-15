@@ -80,6 +80,19 @@ def clean(commit):
     require(not git('ls-files', '-v').splitlines() or all(x.startswith('H ') for x in git('ls-files', '-v').splitlines()), 'index flags hide source state')
 
 
+def compiler_environment():
+    """Release gates use the committed compiler settings, not shell overrides."""
+    exact = {'RUSTFLAGS', 'CARGO_ENCODED_RUSTFLAGS', 'RUSTDOCFLAGS',
+             'CARGO_ENCODED_RUSTDOCFLAGS', 'RUSTC', 'RUSTDOC', 'RUSTC_WRAPPER',
+             'RUSTC_WORKSPACE_WRAPPER', 'CC', 'CXX', 'CFLAGS', 'CXXFLAGS',
+             'CPPFLAGS', 'AR', 'ARFLAGS', 'RANLIB', 'LDFLAGS', 'SOURCE_DATE_EPOCH'}
+    prefixes = ('CARGO_BUILD_', 'CARGO_PROFILE_', 'CARGO_TARGET_',
+                'CC_', 'CXX_', 'CFLAGS_', 'CXXFLAGS_', 'AR_', 'ARFLAGS_',
+                'HOST_CC', 'HOST_CFLAGS', 'HOST_CXX', 'HOST_CXXFLAGS',
+                'TARGET_CC', 'TARGET_CFLAGS', 'TARGET_CXX', 'TARGET_CXXFLAGS')
+    return {k: v for k, v in os.environ.items() if k not in exact and not k.startswith(prefixes)}
+
+
 def toolchain(env=None):
     current_env = os.environ if env is None else env
     rust = subprocess.check_output([current_env.get('RUSTC', 'rustc'), '-vV'], env=env, text=True, timeout=30)
@@ -231,6 +244,8 @@ def validate_archive(path, name, version, checksums):
     require(files.get('Cargo.toml.orig') == re.sub(r', path = "[^"]+"', '', original).encode(), 'archive original manifest drift')
     for rel, content in files.items():
         if rel not in ['Cargo.toml', 'Cargo.toml.orig', 'Cargo.lock']:
+            require(git('ls-tree', '--name-only', 'HEAD', '--', str(directory / rel))
+                    == str(directory / rel), 'uncommitted archive member: ' + rel)
             require(content == safe(ROOT / directory, rel).read_bytes(), 'archive/source byte mismatch: ' + rel)
     expected = tomllib.loads(original)
     for key in ['features', 'profile']:

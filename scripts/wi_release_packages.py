@@ -1,5 +1,6 @@
 """Archive-backed Cargo local registry and exact package verification."""
 import json
+import io
 import os
 import re
 from pathlib import Path
@@ -12,6 +13,7 @@ import urllib.request
 from wi_release import (ROOT, FOUNDATION, RUNTIME, PACKAGES, CRATES_IO, TOOLCHAIN, archive_files,
                         check_graph, external_target, metadata, read, require, run, sha,
                         toml, toolchain, validate_archive, write)
+from wi_release import compiler_environment
 from wi_crash_isolation import check_artifacts
 
 
@@ -111,11 +113,27 @@ def environment(work):
     # Cargo preserves CARGO_HOME's spelling in rustc source paths. Canonicalize
     # before any resolution/build so remapping and recorded paths agree even
     # when TMPDIR or the disposable home is reached through a symlink.
-    return dict(os.environ, CARGO_HOME=str(home.resolve()),
+    return dict(compiler_environment(), CARGO_HOME=str(home.resolve()),
                 CARGO_TARGET_DIR=str(external_target()), CARGO_NET_OFFLINE='true',
                 RUSTUP_TOOLCHAIN=TOOLCHAIN,
                 CARGO_BUILD_JOBS=os.environ.get('CARGO_BUILD_JOBS', '8'), RUST_TEST_THREADS='4',
                 PROPTEST_DISABLE_FAILURE_PERSISTENCE='1')
+
+
+def committed_sources(directory, destination):
+    """Stage only HEAD's bytes, never ignored or untracked checkout contents."""
+    data = subprocess.check_output(['git', 'archive', '--format=tar', 'HEAD', str(directory)],
+                                   cwd=ROOT, timeout=60)
+    with tarfile.open(fileobj=io.BytesIO(data)) as archive:
+        for member in archive.getmembers():
+            if member.isdir(): continue
+            require(member.isfile(), 'special committed package source')
+            relative = Path(member.name).relative_to(directory)
+            require('..' not in relative.parts, 'unsafe committed package source')
+            path = destination / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(archive.extractfile(member).read())
+            path.chmod(member.mode & 0o777)
 
 
 def prepare_archives(output, work, version):
@@ -129,7 +147,7 @@ def prepare_archives(output, work, version):
     # before Cargo may resolve its dependent's normalized package lockfile.
     for name, directory in PACKAGES.items():
         source = work / 'sources' / name
-        shutil.copytree(ROOT / directory, source, ignore=shutil.ignore_patterns('target', 'dev-output'))
+        committed_sources(directory, source)
         shutil.copyfile(ROOT / (RUNTIME if name == 'worldinterface-runtime' else FOUNDATION) / 'Cargo.lock', source / 'Cargo.lock')
         manifest_path = source / 'Cargo.toml'
         manifest_path.write_text(re.sub(r', path = "[^"]+"', '', manifest_path.read_text()))

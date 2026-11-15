@@ -18,7 +18,9 @@ not carry authentication credentials or choose their own principal/tenant.
 Revoke the server-owned policy to fence both submit and inspect. A fresh host
 connection is required after WI restarts.
 `PrivateChannel::serve_one` may return successfully after an idle one-second poll
-without consuming bytes. Its separate frame deadline starts with the first byte;
+without consuming bytes. Pass a host clock function (for example `|| now_ms()`);
+it samples the clock after receiving the request, before checking authorization.
+Its separate frame deadline starts with the first byte;
 buffered bytes are drained before requiring more time. Any transport error closes
 the endpoint. Provision a fresh authenticated channel and inspect the same durable
 key to recover; a lost reply alone does not establish whether Submit was admitted.
@@ -40,6 +42,8 @@ frame reads/writes, and at most 15,000 ms to the command deadline. The server
 escalates unfinished observations at the command deadline and refuses late
 dispatch completion. Authoritative inspect can still recover retained backend
 completion after that deadline, without dispatching again.
+Transient inspect errors remain ambiguous so later authenticated inspect can
+recover the retained result; WI's bounded reconciliation owns eventual escalation.
 Consumers implement bounded backend commands outside the guest, returning
 `Running` promptly while transitions continue. The Rust handler is trusted host
 code: it is not a sandbox; a stuck handler retains its owner lock and slot until

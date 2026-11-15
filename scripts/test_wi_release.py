@@ -155,6 +155,30 @@ class ReleaseTests(unittest.TestCase):
             env=env, text=True, timeout=30).splitlines()
         self.assertEqual(result[0], result[1])
 
+    def test_compiler_overrides_are_cleared_and_gate_environment_is_separate(self):
+        overrides = {key: 'caller-override' for key in [
+            'RUSTFLAGS', 'CARGO_ENCODED_RUSTFLAGS', 'CC', 'CFLAGS', 'RUSTC_WRAPPER',
+            'RUSTC_WORKSPACE_WRAPPER', 'CARGO_BUILD_RUSTFLAGS',
+            'CARGO_TARGET_X86_64_UNKNOWN_LINUX_GNU_RUSTFLAGS',
+            'CARGO_PROFILE_RELEASE_LTO', 'CC_x86_64_unknown_linux_gnu']}
+        with patch.dict(os.environ, overrides):
+            gate = release.gate_environment()
+            package = packages.environment(self.base)
+            for key in overrides:
+                self.assertNotIn(key, gate)
+                self.assertNotIn(key, package)
+            recorded = shared.toolchain(gate)
+            self.assertEqual(recorded['build_environment']['RUSTFLAGS'], '')
+            roots = [Path(package['CARGO_HOME']) / 'registry/src/fixture']
+            worker = shared.worker_environment(package, self.base.resolve(), roots, recorded)
+            installed = shared.toolchain(worker)
+        shared.write(self.base / 'gate-environment.json', recorded)
+        shared.write(self.base / 'build-environment.json', installed)
+        self.assertEqual(shared.read(self.base / 'gate-environment.json'), recorded)
+        self.assertNotEqual(recorded['cargo_home'], installed['cargo_home'])
+        self.assertEqual(recorded['build_environment']['CARGO_ENCODED_RUSTFLAGS'], '')
+        self.assertIn('--remap-path-prefix=', installed['build_environment']['CARGO_ENCODED_RUSTFLAGS'])
+
     def test_documentation_discards_pages_from_previous_preparations(self):
         target = self.base / 'target'; docs = target / 'doc'; docs.mkdir(parents=True)
         (docs / 'removed-api.html').write_text('stale')
@@ -248,6 +272,10 @@ class ReleaseTests(unittest.TestCase):
         files = {'Cargo.toml': normalized, 'Cargo.toml.orig': normalized, 'src/lib.rs': b'foreign source'}
         with patch.object(shared, 'archive_files', return_value=files), self.assertRaisesRegex(ValueError, 'archive/source byte mismatch'):
             shared.validate_archive(self.base / 'fixture.crate', 'worldinterface-protocol', VERSION, {})
+        files['src/lib.rs'] = (shared.ROOT / shared.FOUNDATION / 'protocol/src/lib.rs').read_bytes()
+        files['src/.env'] = b'SECRET=must-not-ship'
+        with patch.object(shared, 'archive_files', return_value=files), self.assertRaisesRegex(ValueError, 'uncommitted archive member'):
+            shared.validate_archive(self.base / 'fixture.crate', 'worldinterface-protocol', VERSION, {})
 
     def test_schema_refuses_partial_or_failed_manifest(self):
         schema = shared.read(shared.ROOT / 'docs/release/release-manifest.schema.json')
@@ -288,7 +316,118 @@ class ReleaseTests(unittest.TestCase):
 
     def test_receipt_manifest_disagreement_fails_before_authority_invocation(self):
         shared.write(self.base / 'publication-preparation.json', {'source_revision': 'b' * 40})
-        with self.assertRaises(ValueError): release.validate_receipt({'source_commit': 'a' * 40, 'baseline_revision': 'c' * 40}, self.base)
+        with patch.object(release.subprocess, 'run') as authority:
+            with self.assertRaises(ValueError): release.validate_receipt({'source_commit': 'a' * 40, 'baseline_revision': 'c' * 40}, self.base)
+            authority.assert_not_called()
+
+    def synthetic_bundle(self):
+        """Opaque package bytes; real manifest, inventory, gates and receipt checks.
+
+        Package internals/registry builds have separate real-Cargo coverage below.
+        Only external Git/Cargo commands and package-content validation are stubbed.
+        """
+        commit = 'a' * 40
+        meta = shared.metadata(VERSION)
+        manifest = dict(meta, source_commit=commit, baseline_revision=shared.BASELINE,
+                        source_before={'commit': commit, 'tree': 'b' * 40, 'clean': True},
+                        source_after={'commit': commit, 'tree': 'b' * 40, 'clean': True},
+                        build_work='/external/work', preparation_output=str(self.base),
+                        packaged_locks={}, evidence=[])
+        files = ['source.bundle', 'package-verification.json', 'consumer-resolution.json',
+                 'consumer-Cargo.lock', 'consumer-handoff.json', 'api-docs.tar.gz',
+                 'workers/wi-process-fixture', 'workers/wi-process-reaper']
+        files += [f'crates/{name}-{VERSION}.crate' for name in shared.PACKAGES]
+        for name in files:
+            path = self.base / name; path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(b'synthetic artifact')
+        for source, dest in [(f'docs/release/{VERSION}.md', 'release-notes.md'),
+                             ('docs/release/package-tests.json', 'package-tests.json'),
+                             ('docs/release/release-manifest.schema.json', 'release-manifest.schema.json')]:
+            shutil.copyfile(shared.ROOT / source, self.base / dest)
+        build = shared.toolchain(release.gate_environment())
+        shared.write(self.base / 'gate-environment.json', build)
+        shared.write(self.base / 'build-environment.json', build)
+        for name, command in release.gates():
+            log = self.base / f'logs/{name}.log'; log.parent.mkdir(exist_ok=True)
+            log.write_text('passed')
+            argv = [x.replace('{output}', str(self.base)).replace('{work}', manifest['build_work']).replace('{version}', VERSION) for x in command]
+            shared.write(log.with_suffix('.result.json'), {'argv': argv, 'exit_code': 0,
+                         'elapsed_seconds': 1, 'result': 'passed'})
+            manifest['evidence'].append({'gate': name, 'command': command, 'source_commit': commit,
+                'result': 'passed', 'log': f'logs/{name}.log', 'record': f'logs/{name}.result.json',
+                'sha256': shared.sha(log)})
+        artifacts = [shared.ref(self.base, p) for p in sorted(self.base.rglob('*')) if p.is_file()]
+        by_path = {a['path']: a for a in artifacts}
+        shared.write(self.base / 'publication-preparation.json', {
+            'source_revision': commit, 'baseline_revision': shared.BASELINE, 'owner': 'operator',
+            'publication_status': 'not-performed', 'toolchain': 'Rust and Cargo 1.89.0',
+            'environment_sha256': shared.sha(self.base / 'build-environment.json'),
+            'artifacts': artifacts, 'verification_receipts': [by_path[e['record']] for e in manifest['evidence']],
+            'commands': [{'argv': shared.read(self.base / e['record'])['argv'], 'exit_code': 0,
+                          'log': by_path[e['log']]} for e in manifest['evidence']]})
+        (self.base / 'logs/publication-validation.log').write_text('passed')
+        shared.write(self.base / 'logs/publication-validation.result.json', {
+            'argv': release.publication_command(self.base / 'publication-preparation.json'),
+            'exit_code': 0, 'result': 'passed'})
+        manifest['artifacts'] = [shared.ref(self.base, p) for p in sorted(self.base.rglob('*')) if p.is_file()]
+        shared.write(self.base / 'release-manifest.json', manifest)
+        (self.base / 'SHA256SUMS').write_text(release.sums(self.base,
+            {a['path'] for a in manifest['artifacts']} | {'release-manifest.json'}))
+        return manifest, meta
+
+    def test_verify_refuses_tampered_artifacts_extra_missing_files_and_checksum_inventory(self):
+        manifest, meta = self.synthetic_bundle()
+        path = self.base / 'release-manifest.json'
+        with patch.object(release, 'clean'), patch.object(release, 'metadata', return_value=meta), \
+                patch.object(release, 'git', return_value=manifest['source_before']['tree']), \
+                patch.object(release.subprocess, 'run'), \
+                patch.object(release.subprocess, 'check_output', return_value=manifest['source_commit'] + ' HEAD\n'), \
+                patch.object(release, 'validate_packages') as package_check, patch.object(release, 'plan'):
+            release.verify(path)
+            package_check.assert_called_once_with(manifest, self.base)
+            # Every artifact class, including crates, binaries, docs, provenance,
+            # gate logs/results, both environments and the preparation receipt.
+            for artifact in manifest['artifacts']:
+                target = self.base / artifact['path']; original = target.read_bytes()
+                with self.subTest(tampered=artifact['path']):
+                    target.write_bytes(original + b'drift')
+                    with self.assertRaisesRegex(ValueError, 'artifact checksum mismatch'): release.verify(path)
+                    target.write_bytes(original)
+                with self.subTest(missing=artifact['path']):
+                    target.unlink()
+                    with self.assertRaisesRegex(ValueError, 'missing artifact'): release.verify(path)
+                    target.write_bytes(original)
+            extra = self.base / 'unlisted'; extra.write_text('extra')
+            with self.assertRaisesRegex(ValueError, 'unlisted or missing'): release.verify(path)
+            extra.unlink()
+            (self.base / 'SHA256SUMS').write_text('wrong inventory\n')
+            with self.assertRaisesRegex(ValueError, 'checksum inventory disagreement'): release.verify(path)
+            (self.base / 'SHA256SUMS').unlink()
+            with self.assertRaisesRegex(ValueError, 'unlisted or missing'): release.verify(path)
+
+    def test_failed_final_verification_removes_both_success_markers(self):
+        for error in [ValueError('final verify failed'), KeyboardInterrupt()]:
+            output = self.base / type(error).__name__
+            meta = {'packaged_locks': {}}
+            def run(argv, cwd, log, *args, **kwargs):
+                shared.write(output / 'package-verification.json', {})
+                shared.write(output / 'build-environment.json', {})
+                Path(log).parent.mkdir(exist_ok=True)
+                Path(log).write_text('passed')
+                shared.write(Path(log).with_suffix('.result.json'), {'argv': argv})
+                return {'elapsed_seconds': 1}
+            def fail(path):
+                self.assertTrue(path.is_file())
+                self.assertTrue((output / 'SHA256SUMS').is_file())
+                raise error
+            with patch.object(release, 'preflight', return_value=(output, {}, meta)), \
+                    patch.object(release, 'git', return_value='a' * 40), \
+                    patch.object(release.subprocess, 'run'), patch.object(release, 'clean'), \
+                    patch.object(release, 'gates', return_value=[('fixture', ['fixture'])]), \
+                    patch.object(release, 'run', side_effect=run), patch.object(release, 'verify', side_effect=fail):
+                with self.assertRaises(type(error)): release.prepare(VERSION, 'a' * 40, output)
+            self.assertFalse((output / 'release-manifest.json').exists())
+            self.assertFalse((output / 'SHA256SUMS').exists())
 
     def test_consumer_handoff_requires_g5_release_and_both_store_directions(self):
         descriptor = shared.read(shared.ROOT / shared.RUNTIME / 'release/handoff.json')
@@ -353,14 +492,36 @@ class ReleaseTests(unittest.TestCase):
         source = self.base / 'source'; (source / 'src').mkdir(parents=True)
         (source / 'Cargo.toml').write_text('[workspace]\n[package]\nname="wi-release-test-dependency"\nversion="1.0.0"\nedition="2021"\n')
         (source / 'src/lib.rs').write_text('pub fn value() -> u32 { 42 }\npub fn location() -> &\'static str { file!() }\n#[test] fn unit() { assert_eq!(value(),42); }\n')
+        # Package from a real commit while ignored sensitive/editor files are
+        # present under Cargo's include globs in the caller's clean checkout.
+        (source / '.gitignore').write_text('.env\n*.swp\n')
+        with (source / 'Cargo.toml').open('a') as manifest:
+            manifest.write('include=["src/**"]\n')
+        def git(*args):
+            return subprocess.check_output(['git', *args], cwd=source, text=True, timeout=30)
+        git('init', '--quiet')
+        git('add', '.')
+        git('-c', 'user.name=Release Test', '-c', 'user.email=release@example.invalid', 'commit', '--quiet', '-m', 'fixture')
+        (source / 'src/.env').write_text('SECRET=must-not-ship')
+        (source / 'src/lib.rs.swp').write_text('editor contents')
+        self.assertEqual(git('status', '--porcelain'), '')
+        staged = self.base / 'committed'
+        with patch.object(packages, 'ROOT', source):
+            packages.committed_sources(Path('.'), staged)
+        self.assertFalse((staged / 'src/.env').exists())
+        self.assertFalse((staged / 'src/lib.rs.swp').exists())
         target = shared.external_target()
         def cargo(args, cwd, env=None):
-            result = subprocess.run(['cargo', *args], cwd=cwd, capture_output=True, text=True, timeout=120,
+            # The outer Rust harness bounds this entire suite at 900 seconds.
+            # A nested command may wait on the shared target lock under load.
+            result = subprocess.run(['cargo', *args], cwd=cwd, capture_output=True, text=True, timeout=600,
                                     env=packages.environment(self.base) if env is None else env)
             self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
             return result
-        cargo(['package', '--offline', '--no-verify', '--allow-dirty'], source)
+        cargo(['package', '--offline', '--no-verify', '--allow-dirty'], staged)
         archive = target / 'package/wi-release-test-dependency-1.0.0.crate'
+        with tarfile.open(archive) as packed:
+            self.assertFalse(any(name.endswith(('.env', '.swp')) for name in packed.getnames()))
         packages.add_registry(registry, archive, 'wi-release-test-dependency', '1.0.0', shared.sha(archive))
         extracted = self.base / 'extracted'
         with tarfile.open(archive) as packed:

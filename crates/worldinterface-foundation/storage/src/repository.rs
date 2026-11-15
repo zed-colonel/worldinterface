@@ -401,7 +401,6 @@ fn replay_into(source: &Connection, target: &Connection) -> Result<()> {
 pub(crate) fn validate_database(c: &Connection) -> Result<()> {
     // Validate under one SQLite read snapshot. Replay never calls authorization or providers.
     c.execute_batch("BEGIN")?;
-    crate::continuation::validate_source_order(c)?;
     let expected = Connection::open_in_memory()?;
     expected.execute_batch(SCHEMA)?;
     expected.execute_batch(crate::ingress::SCHEMA)?;
@@ -410,6 +409,28 @@ pub(crate) fn validate_database(c: &Connection) -> Result<()> {
     expected.execute_batch(crate::continuation::SCHEMA)?;
     expected.execute_batch(crate::worker::SCHEMA)?;
     expected.execute_batch(crate::control_plane::SCHEMA)?;
+    // Schema SQL (including append-only triggers and unique indexes) must match exactly.
+    let sql =
+        "SELECT type,name,sql FROM sqlite_master WHERE name NOT LIKE 'sqlite_%' ORDER BY name";
+    let schema = |c: &Connection| -> Result<Vec<(String, String, String)>> {
+        let mut q = c.prepare(sql)?;
+        let rows = q.query_map([], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)))?;
+        Ok(rows.collect::<rusqlite::Result<Vec<_>>>()?)
+    };
+    // The only optional schema-1 addition is a derived scheduling index. Match
+    // its exact definition too: an index with the same name cannot hide drift.
+    let scheduling_index: bool = c.query_row(
+        "SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE name='flow_pending_global')",
+        [],
+        |r| r.get(0),
+    )?;
+    if scheduling_index {
+        expected.execute_batch(crate::flow::SCHEDULING_INDEX_SQL)?;
+    }
+    if schema(c)? != schema(&expected)? {
+        return Err(invalid("unsupported schema: recreate the store for this version"));
+    }
+    crate::continuation::validate_source_order(c)?;
     replay_into(c, &expected)?;
     crate::ingress::replay(c, &expected)?;
     crate::effect::replay(c, &expected)?;
@@ -441,27 +462,6 @@ pub(crate) fn validate_database(c: &Connection) -> Result<()> {
             }
         }
  }
-    // Schema SQL (including append-only triggers and unique indexes) must match exactly.
-    let sql =
-        "SELECT type,name,sql FROM sqlite_master WHERE name NOT LIKE 'sqlite_%' ORDER BY name";
-    let schema = |c: &Connection| -> Result<Vec<(String, String, String)>> {
-        let mut q = c.prepare(sql)?;
-        let rows = q.query_map([], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)))?;
-        Ok(rows.collect::<rusqlite::Result<Vec<_>>>()?)
-    };
-    // The only optional schema-1 addition is a derived scheduling index. Match
-    // its exact definition too: an index with the same name cannot hide drift.
-    let scheduling_index: bool = c.query_row(
-        "SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE name='flow_pending_global')",
-        [],
-        |r| r.get(0),
-    )?;
-    if scheduling_index {
-        expected.execute_batch(crate::flow::SCHEDULING_INDEX_SQL)?;
-    }
-    if schema(c)? != schema(&expected)? {
-        return Err(invalid("unsupported schema"));
-    }
     c.execute_batch("COMMIT")?;
     Ok(())
 }

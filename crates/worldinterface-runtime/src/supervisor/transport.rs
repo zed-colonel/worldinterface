@@ -25,21 +25,22 @@ impl PrivateChannel {
     /// one-second budget starting at its first byte. Any I/O error closes the
     /// endpoint: a partial frame cannot be resumed on this channel. The host
     /// must provision a fresh authenticated channel and inspect the durable key;
-    /// loss of a reply does not establish whether Submit was admitted.
-    pub fn serve_one(&mut self, server: &Server, now_ms: u64) -> Result<()> {
-        let result = self.serve_frame(server, now_ms);
+    /// loss of a reply does not establish whether Submit was admitted. The clock
+    /// is sampled after receiving the frame, so idle time cannot extend a deadline.
+    pub fn serve_one(&mut self, server: &Server, clock: impl Fn() -> u64) -> Result<()> {
+        let result = self.serve_frame(server, clock);
         if result.is_err() {
             let _ = self.stream.shutdown(std::net::Shutdown::Both);
         }
         result
     }
-    fn serve_frame(&mut self, server: &Server, now_ms: u64) -> Result<()> {
+    fn serve_frame(&mut self, server: &Server, clock: impl Fn() -> u64) -> Result<()> {
         let Some(bytes) = read_frame(&mut self.stream)? else {
             return Ok(());
         };
         let response = match decode::<Request>(&bytes)
             .map_err(Into::into)
-            .and_then(|q| server.request(&self.policy, q, now_ms))
+            .and_then(|q| server.request(&self.policy, q, clock()))
         {
             Ok(r) => r,
             Err(_) => Response::Unavailable,

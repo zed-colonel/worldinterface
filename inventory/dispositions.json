@@ -13256,5 +13256,12 @@
     "target": "WSP-04 supervisor conformance and carried regressions",
     "source": "WI-SUPERVISOR-PROOF-1-PLAN-1 WSP-04; docs/work-items/WSP-04.md; operator F-008/F-009 and idle-tick instructions",
     "rationale": "Bounded indexed reconciliation and its disposable diagnostic/test evidence, stable descendant acquisition states, or trusted delivery time. No new worker operation, continuation exception or consumer Kata qualification; submitted for qualifying source review/merge with adopted checks."
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/supervisor_consumer.rs::transient_inspect_error_after_deadline_preserves_recovery_after_restart::struct:Backend",
+    "disposition": "test-evidence",
+    "target": "bounded-host-supervisor",
+    "rationale": "Finalization F-003 regression backend: transient post-deadline inspect errors preserve retained completion without redispatch. Candidate disposition for correctness review; effective only through qualifying review/merge.",
+    "source": "WI-SUPERVISOR-PROOF-1 correctness finding F-003; docs/work-items/WSP-03.md"
   }
 ]

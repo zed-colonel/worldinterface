@@ -16,6 +16,7 @@ sys.dont_write_bytecode = True
 from wi_release import (ROOT, FOUNDATION, RUNTIME, PACKAGES, ADOPTED, BASELINE, TOOLCHAIN, archive_files,
                         clean, check_graph, external_target, git, metadata, read, ref, require, run, worker_recipe, worker_environment, recipe_digest,
                         safe, sha, toolchain, toml, validate_archive, validate_schema, write, check_worker_paths)
+from wi_release import compiler_environment
 from wi_crash_isolation import check_artifacts
 
 
@@ -33,8 +34,8 @@ def gates():
 
 
 def gate_environment():
-    env = dict(os.environ, CARGO_TARGET_DIR=str(external_target()),
-               PYTHONDONTWRITEBYTECODE='1', RUSTUP_TOOLCHAIN=TOOLCHAIN)
+    env = dict(compiler_environment(), CARGO_TARGET_DIR=str(external_target()),
+               PYTHONDONTWRITEBYTECODE='1', RUSTUP_TOOLCHAIN=TOOLCHAIN, CARGO_BUILD_JOBS='8')
     # Runtime stores deliberately reject symlinked directory components. Give
     # gates canonical temporary paths too, rather than weakening that boundary
     # or passing the caller's logical TMPDIR into live fixture creation.
@@ -59,7 +60,7 @@ def preflight(version, commit, output):
     require(not output.is_relative_to(ROOT.resolve()), 'output is inside repository')
     require(not output.exists() or (output.is_dir() and not any(output.iterdir())), 'output directory is not empty')
     external_target()
-    build = toolchain()
+    build = toolchain(gate_environment())
     meta = metadata(version)
     return output, build, meta
 
@@ -98,7 +99,7 @@ def validate_receipt(manifest, output):
     require(receipt['verification_receipts'] == [artifact_map[e['record']] for e in manifest['evidence']], 'receipt/gate disagreement')
     require(receipt['commands'] == [{'argv': read(output / e['record'])['argv'], 'exit_code': 0, 'log': artifact_map[e['log']]} for e in manifest['evidence']], 'receipt/command disagreement')
     # Reuse the existing schema and artifact authority, with no replacement schema.
-    subprocess.run(publication_command(output / 'publication-preparation.json'), cwd=ROOT, check=True, stdout=subprocess.DEVNULL, timeout=120)
+    subprocess.run(publication_command(output / 'publication-preparation.json'), cwd=ROOT, env=gate_environment(), check=True, stdout=subprocess.DEVNULL, timeout=120)
     result = read(safe(output, 'logs/publication-validation.result.json'))
     require(result['exit_code'] == 0 and result['result'] == 'passed' and result['argv'] == publication_command(Path(manifest['preparation_output']) / 'publication-preparation.json'), 'missing receipt validation evidence')
 
@@ -203,7 +204,7 @@ def validate_manifest(manifest, output):
     for a in artifacts:
         require(set(a) == {'path', 'sha256'} and sha(safe(output, a['path'])) == a['sha256'], 'artifact checksum mismatch')
     paths = {a['path'] for a in artifacts}
-    required = {'source.bundle', 'release-notes.md', 'release-manifest.schema.json', 'package-tests.json', 'build-environment.json', 'package-verification.json', 'consumer-resolution.json', 'consumer-Cargo.lock', 'consumer-handoff.json', 'publication-preparation.json', 'api-docs.tar.gz', 'logs/publication-validation.log', 'logs/publication-validation.result.json', 'workers/wi-process-fixture', 'workers/wi-process-reaper'}
+    required = {'source.bundle', 'release-notes.md', 'release-manifest.schema.json', 'package-tests.json', 'build-environment.json', 'gate-environment.json', 'package-verification.json', 'consumer-resolution.json', 'consumer-Cargo.lock', 'consumer-handoff.json', 'publication-preparation.json', 'api-docs.tar.gz', 'logs/publication-validation.log', 'logs/publication-validation.result.json', 'workers/wi-process-fixture', 'workers/wi-process-reaper'}
     required |= {f'crates/{n}-{manifest["version"]}.crate' for n in PACKAGES}
     required |= {p for e in manifest['evidence'] for p in [e['log'], e['record']]}
     require(required <= paths, 'missing release artifacts')
@@ -212,6 +213,13 @@ def validate_manifest(manifest, output):
     for source, dest in [(f'docs/release/{manifest["version"]}.md', 'release-notes.md'), ('docs/release/package-tests.json', 'package-tests.json'), ('docs/release/release-manifest.schema.json', 'release-manifest.schema.json')]:
         require(sha(safe(output, dest)) == sha(ROOT / source), 'stale release document')
     build = read(safe(output, 'build-environment.json'))
+    gate_build = read(safe(output, 'gate-environment.json'))
+    require(all(not value for key, value in gate_build['build_environment'].items()
+                if key not in ['RUSTUP_TOOLCHAIN', 'CARGO_BUILD_JOBS']), 'uncontrolled gate compiler environment')
+    require(gate_build['build_environment']['RUSTUP_TOOLCHAIN'] == TOOLCHAIN
+            and gate_build['build_environment']['CARGO_BUILD_JOBS'] == '8'
+            and gate_build['rustc'] == build['rustc'] and gate_build['cargo'] == build['cargo'],
+            'gate/worker toolchain disagreement')
     require('release: 1.89.0\n' in build['rustc'] and build['cargo'].startswith('cargo 1.89.0 ') and build['target'] == 'x86_64-unknown-linux-gnu' and build['profile'] == 'release' and build['build_environment']['RUSTUP_TOOLCHAIN'] == TOOLCHAIN, 'wrong recorded build environment')
     heads = subprocess.check_output(['git', 'bundle', 'list-heads', str(output / 'source.bundle')], text=True, timeout=60).splitlines()
     require(heads == [manifest['source_commit'] + ' HEAD'], 'wrong source bundle identity')
@@ -245,12 +253,12 @@ def prepare(version, commit, output):
         work = Path(temporary).resolve() / 'work'
         manifest.update(source_commit=commit, baseline_revision=BASELINE,
                         source_before={'commit': commit, 'tree': git('rev-parse', 'HEAD^{tree}'), 'clean': True}, build_work=str(work), preparation_output=str(output))
-        write(output / 'build-environment.json', build)
+        write(output / 'gate-environment.json', build)
         evidence = []
         env = gate_environment()
         # Fetch before all offline gates; these source workspaces remain distinct.
         for scope in [FOUNDATION, RUNTIME, Path('tools/wi-contract-check')]:
-            subprocess.run(['cargo', 'fetch', '--locked', '--manifest-path', str(scope / 'Cargo.toml')], cwd=ROOT, check=True, timeout=600)
+            subprocess.run(['cargo', 'fetch', '--locked', '--manifest-path', str(scope / 'Cargo.toml')], cwd=ROOT, env=env, check=True, timeout=600)
         env['CARGO_NET_OFFLINE'] = 'true'
         for name, command in gates():
             print('Running gate ' + name, flush=True)
@@ -275,7 +283,7 @@ def prepare(version, commit, output):
         'commands': [{'argv': read(output / e['record'])['argv'], 'exit_code': 0, 'log': by_path[e['log']]} for e in evidence],
         'toolchain': 'Rust and Cargo 1.89.0', 'environment_sha256': sha(output / 'build-environment.json'),
         'verification_receipts': [by_path[e['record']] for e in evidence], 'publication_status': 'not-performed', 'owner': 'operator'})
-    run(publication_command(output / 'publication-preparation.json'), ROOT, output / 'logs/publication-validation.log', timeout=120)
+    run(publication_command(output / 'publication-preparation.json'), ROOT, output / 'logs/publication-validation.log', gate_environment(), timeout=120)
     clean(commit)
     manifest['artifacts'] = [ref(output, p) for p in sorted(output.rglob('*')) if p.is_file()]
     path = output / 'release-manifest.json'

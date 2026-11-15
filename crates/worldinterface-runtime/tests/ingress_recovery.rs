@@ -419,7 +419,9 @@ async fn wi03p_f001_expiration(admit_before_expiry: bool) {
             resident = Some((stats.retained, stats.bytes));
             // No physical execution occurred before advancing the shared clock.
             assert!(clock.millis() < initial.deliveries[&id].expires_at_ms);
-            assert!(initial.deliveries[&id].attempts.is_empty());
+            assert!(bundle.wi().ingress_snapshot(&tenant).unwrap().deliveries[&id]
+                .attempts
+                .is_empty());
             clock.0.store(
                 initial.deliveries[&id].expires_at_ms + 200,
                 std::sync::atomic::Ordering::SeqCst,

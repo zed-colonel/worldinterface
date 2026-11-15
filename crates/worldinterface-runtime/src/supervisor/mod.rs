@@ -168,6 +168,9 @@ impl Server {
                 } else {
                     handler.inspect(authorize_inspect(auth))
                 };
+                // A failed read does not establish backend execution state. Keep
+                // it recoverable; bounded WI reconciliation owns eventual escalation.
+                let inspect_failed = !fresh && observed.is_err();
                 let mut observation =
                     observed.unwrap_or(Observation { state: State::Ambiguous, evidence: vec![] });
                 if observation.evidence.len() > next.command.request.max_evidence_bytes as usize
@@ -175,7 +178,7 @@ impl Server {
                     // Inspect is read-only authority. A result retained by the
                     // backend remains recoverable after the dispatch deadline.
                     // Completion asserts the consumer enforced execution bounds.
-                    || ((fresh || !observation.state.terminal())
+                    || ((fresh || (!inspect_failed && !observation.state.terminal()))
                         && now.saturating_add(admitted.elapsed().as_millis() as u64)
                             >= next.command.request.deadline_ms)
                     || observation.state == State::Accepted
