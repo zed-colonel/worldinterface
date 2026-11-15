@@ -1254,7 +1254,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/release/handoff.json",
-          "source_sha256": "00301c2ee8dfead295f8a4b07e28b4ca2df786cb564620f54e159d0005d8c2fa",
+          "source_sha256": "37d0838bfbe9b72203d21f6c34caeed586f0e113358628a590fdb4ccf4accbb7",
           "treatment": "Retain WSP-02 package evidence/support and registry consumer. Future legacy removal must preserve authoritative byte equality and release consumer coverage."
         },
         {
@@ -4706,37 +4706,37 @@
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/effect.rs::::module:tests@10d1b0eff34c",
-          "source_sha256": "babdf6bed0c6ddc3d586702020a3ebbdaa2b03bdb2bf7f26fc0c73a591aaa72e",
+          "source_sha256": "e5d7aeb9692b994ba12f6f49fb5b342c4f0bbfb343e3fc3731a8d2ade963b69c",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/effect.rs::::source-module:crates/worldinterface-foundation/storage/src/effect.rs",
-          "source_sha256": "babdf6bed0c6ddc3d586702020a3ebbdaa2b03bdb2bf7f26fc0c73a591aaa72e",
+          "source_sha256": "e5d7aeb9692b994ba12f6f49fb5b342c4f0bbfb343e3fc3731a8d2ade963b69c",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/effect.rs::::struct:DispatchFault",
-          "source_sha256": "babdf6bed0c6ddc3d586702020a3ebbdaa2b03bdb2bf7f26fc0c73a591aaa72e",
+          "source_sha256": "e5d7aeb9692b994ba12f6f49fb5b342c4f0bbfb343e3fc3731a8d2ade963b69c",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/effect.rs::::struct:EffectExecutionTimes",
-          "source_sha256": "babdf6bed0c6ddc3d586702020a3ebbdaa2b03bdb2bf7f26fc0c73a591aaa72e",
+          "source_sha256": "e5d7aeb9692b994ba12f6f49fb5b342c4f0bbfb343e3fc3731a8d2ade963b69c",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/effect.rs::::struct:EffectJournalConflict",
-          "source_sha256": "babdf6bed0c6ddc3d586702020a3ebbdaa2b03bdb2bf7f26fc0c73a591aaa72e",
+          "source_sha256": "e5d7aeb9692b994ba12f6f49fb5b342c4f0bbfb343e3fc3731a8d2ade963b69c",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/effect.rs::::struct:EffectReceiptCommand",
-          "source_sha256": "babdf6bed0c6ddc3d586702020a3ebbdaa2b03bdb2bf7f26fc0c73a591aaa72e",
+          "source_sha256": "e5d7aeb9692b994ba12f6f49fb5b342c4f0bbfb343e3fc3731a8d2ade963b69c",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-foundation/storage/src/effect.rs::::struct:EffectReceiptSource",
-          "source_sha256": "babdf6bed0c6ddc3d586702020a3ebbdaa2b03bdb2bf7f26fc0c73a591aaa72e",
+          "source_sha256": "e5d7aeb9692b994ba12f6f49fb5b342c4f0bbfb343e3fc3731a8d2ade963b69c",
           "registration_sites": []
         },
         {
@@ -8898,7 +8898,7 @@
         },
         {
           "path": "crates/worldinterface-foundation/storage/src/effect.rs",
-          "source_sha256": "babdf6bed0c6ddc3d586702020a3ebbdaa2b03bdb2bf7f26fc0c73a591aaa72e",
+          "source_sha256": "e5d7aeb9692b994ba12f6f49fb5b342c4f0bbfb343e3fc3731a8d2ade963b69c",
           "treatment": "Retain WI-04 guarded domain and production admission binding; review selective changes without weakening replacement or qualification gates."
         },
         {
@@ -9053,7 +9053,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/release/handoff.json",
-          "source_sha256": "00301c2ee8dfead295f8a4b07e28b4ca2df786cb564620f54e159d0005d8c2fa",
+          "source_sha256": "37d0838bfbe9b72203d21f6c34caeed586f0e113358628a590fdb4ccf4accbb7",
           "treatment": "WSP-04: retain the new supervisor interface/reconciliation evidence and selective legacy references; this surface does not grant legacy removal, Kata qualification or ordinary use."
         },
         {

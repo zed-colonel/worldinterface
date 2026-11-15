@@ -1487,7 +1487,7 @@ mod tests {
         let before = std::fs::read(&fabric).unwrap();
         for _ in 0..2 {
             let error = StoreRoot::open_existing(&path).err().expect("incompatible interim layout");
-            assert_eq!(error.to_string(), "unsupported schema");
+            assert_eq!(error.to_string(), "unsupported schema: recreate the store for this version");
             assert_eq!(std::fs::read(&fabric).unwrap(), before);
         }
     }
