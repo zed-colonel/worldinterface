@@ -16,6 +16,23 @@ fn reference(test: &str) -> TestRef {
     TestRef { manifest: "fixture".into(), package: "fixture".into(), test: test.into() }
 }
 #[test]
+fn capacity_batch_timeout_is_scoped_without_relaxing_operation_or_other_test_bounds() {
+    let mut batch = reference("flow_capacity_is_enforced_without_losing_existing_history");
+    assert_eq!(campaign::harness_timeout_seconds(&batch), 600);
+    batch.manifest = "crates/worldinterface-runtime/Cargo.toml".into();
+    assert_eq!(campaign::harness_timeout_seconds(&batch), 600);
+    batch.package = "worldinterface-runtime".into();
+    assert_eq!(campaign::harness_timeout_seconds(&batch), 900);
+    for name in [
+        "one_host_releases_capacity_for_more_than_64_sequential_runs",
+        "wp_035_authenticated_supervisor_binds_exact_lifecycle_operation",
+        "unrecognized_test",
+    ] {
+        batch.test = name.into();
+        assert_eq!(campaign::harness_timeout_seconds(&batch), 600);
+    }
+}
+#[test]
 fn wp_033_inflated_claims_cannot_convert_worker_success_to_consumer_acceptance() {
     campaign::validate_claims(&campaign::claims()).unwrap();
     for field in [

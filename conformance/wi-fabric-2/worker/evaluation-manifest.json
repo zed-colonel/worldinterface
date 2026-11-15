@@ -345,7 +345,7 @@
     "docs/work-items/WSP-01.md": "b8294aba39915e71a15c15ecd01972b7e4a67ad836ff7ecf2d5b46e5046c02d5",
     "docs/work-items/WSP-02.md": "7c865084bdd55bed36847275ffbb436443b33c84b59046a631ea811f6b8eedf1",
     "docs/work-items/WSP-03-security.md": "4b5f6e9996fc2cbc75536f75d3fad2c192fa8a12ffaeab8fa9e1b23e1322e348",
-    "docs/work-items/WSP-03.md": "9b664f50c9c81beb9046244e05565200d67ac1084929784b0e187b867bf47e16",
+    "docs/work-items/WSP-03.md": "780ca66cdf7461903f86eb391addd8ad744def12c44045a2839169e671ef5444",
     "docs/work-items/WSP-04.md": "ea9c4fe14d9ee18be5b277e6da7677235d68c9d78f65ac5f09866df2686fa5af",
     "docs/work-items/WSP-05.md": "e3b4bb38e716e4d9226840c9f657a0facba2f47173c17ac08f8508e63b953a1a",
     "docs/work-items/wi-worker-proof-1.md": "bb194b9042a9927ea9a85c6dc10618d899d63f5fc07f79f37fe83ee5cfb5cd63",
@@ -392,7 +392,7 @@
     "tools/wi-contract-check/src/proof.rs": "d623d87d52373cb2bd788433772eefdb25cda9a4e8afbb23b36401af8a58ec8f",
     "tools/wi-contract-check/src/refresh.rs": "9c5962065a1ad87f70a7ad5dc6ef958062d2026ee8e8b58e7635b858096166ab",
     "tools/wi-contract-check/src/supervisor_evidence.rs": "3a72c97d05b0b3cf78a9b10dfa98136679302007e522bd986d572924f7aa3b46",
-    "tools/wi-contract-check/src/worker_campaign.rs": "8bd31ad14c99f98c4927d8e73d6a34df6b883721c893893c7121f73b93f96348",
+    "tools/wi-contract-check/src/worker_campaign.rs": "ae6902127d742f28e0f05526b7b30b5d3cd56ba85d12f2c9817074de41007f2f",
     "tools/wi-contract-check/tests/catalog.rs": "edc8741899a5b38e122476d69fb67a533d6bfd14966ef954d21a099ddb18f4e1",
     "tools/wi-contract-check/tests/checker.rs": "328bd0cec690ff3a9510b854bb993fe9ec9d84233793c5998e3f2332d2c5b82d",
     "tools/wi-contract-check/tests/continuations.rs": "d00d51f8ae04809b47c5b2976fb0a860e48cc3d873f832aa2f8f27672070e2a9",
@@ -402,7 +402,7 @@
     "tools/wi-contract-check/tests/release.rs": "fd9fb6529aedea00a553a802419abc322787027ef967a788328e2fc58efcb5d0",
     "tools/wi-contract-check/tests/runtime_evidence.rs": "232c78c728ff6ca2040b1b591b95cc051498bac4ba6acb5a36d803b1387faad9",
     "tools/wi-contract-check/tests/supervisor_evidence.rs": "841072b2c6addd27fc6ea1a7c4151dc1aba33f702adeec8560c79fdea359c1c8",
-    "tools/wi-contract-check/tests/worker_campaign.rs": "93013cc6b13e3bad56ebb68b62c5575833372a9ab09f298f4327c0e2807d1ddb"
+    "tools/wi-contract-check/tests/worker_campaign.rs": "7c2c535f97b6fc8f4b4e1fb1d2ec9a648836a7bccdba2932d9064c5044d7cd1e"
   },
   "tasks": [
     "1c53ab56a9058b4b0000f6e4ff5b10509b6c7f074d070aceff78e1267f3385ba",

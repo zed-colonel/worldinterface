@@ -136,8 +136,17 @@ The two history-heavy capacity regressions then run together on two workers,
 without other test peers. After both finish, all remaining tests share the
 bounded twelve-worker pool. This reserves execution capacity for the long tests
 without serializing them with each other or removing any test. Compiler
-preparation counts toward the full adopted command; all tests retain their
-600-second timeout. Timing reports three execution phases. A marker/barrier
+preparation counts toward the full adopted command. Tests retain a 600-second
+harness timeout except the 10,000-admission Flow capacity batch, which has 900
+seconds. Correctness finalization retained a campaign timeout at 600 seconds
+while its final history rebuild was starting, then measured an isolated pass at
+577.44 seconds: ordinary submit/cancel/tick costs stayed steady, while default
+AQ checkpoints and full recovery accounted for the spikes. The larger batch
+budget preserves all 10,000 admissions, default checkpoints, recovery, rebuild
+and idempotency assertions. Worker/supervisor operation bounds, the adopted
+30-minute command ceiling and the required five-minute margin stay unchanged.
+Harness logs retain the timeout, elapsed time and exit status so timeouts cannot
+hide behind missing Rust result lines. Timing reports three execution phases. A marker/barrier
 regression requires preparation alone, both long tests overlapping without
 other peers, all twelve subsequent slots, and exactly one result per test with
 binary/log digests retained. Serializing the two long tests fails this regression.

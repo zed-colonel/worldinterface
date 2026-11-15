@@ -1354,7 +1354,7 @@
         },
         {
           "path": "docs/work-items/WSP-03.md",
-          "source_sha256": "9b664f50c9c81beb9046244e05565200d67ac1084929784b0e187b867bf47e16",
+          "source_sha256": "780ca66cdf7461903f86eb391addd8ad744def12c44045a2839169e671ef5444",
           "treatment": "WSP-03 F-002/F-003 candidate disposition: preserve supervisor frame timing regressions and slow backend inspection evidence. Delay wording refers to test scheduling, with no dependency on the legacy delay connector. Effective through qualifying source review/merge; no deletion authority."
         },
         {

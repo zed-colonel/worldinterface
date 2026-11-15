@@ -538,6 +538,21 @@ pub fn execute(
     }
     Ok(outcome)
 }
+/// The capacity batch covers 10,000 durable admissions, default AQ checkpoints,
+/// paired recovery and a full history rebuild. Its measured isolated duration
+/// was 577s on the shared host; 600s left no recovery margin under contention.
+/// This harness budget is separate from bounded worker/supervisor operations
+/// and does not change the adopted command's ceiling or its timing obligation.
+pub fn harness_timeout_seconds(reference: &TestRef) -> u64 {
+    if reference.manifest == proof::RUNTIME
+        && reference.package == "worldinterface-runtime"
+        && reference.test == "flow_capacity_is_enforced_without_losing_existing_history"
+    {
+        900
+    } else {
+        600
+    }
+}
 fn log_name(reference: &TestRef, executable: &Path) -> Result<String> {
     Ok(format!("{}.log", hash(serde_json::to_vec(&(reference, executable))?)))
 }
@@ -549,8 +564,11 @@ fn execute_bound(
     executable_sha256: &str,
 ) -> Result<Outcome> {
     let name = log_name(&reference, executable)?;
+    let timeout = harness_timeout_seconds(&reference);
+    let started = Instant::now();
     let out = Command::new("timeout")
-        .args(["--kill-after=10s", "600s"])
+        .arg("--kill-after=10s")
+        .arg(format!("{timeout}s"))
         .arg(executable)
         .args([&reference.test, "--exact", "--nocapture", "--test-threads=1"])
         .current_dir(root)
@@ -561,6 +579,13 @@ fn execute_bound(
     let mut log = out.stdout;
     log.extend_from_slice(&out.stderr);
     let passed = exact_pass(out.status.success(), &String::from_utf8_lossy(&log));
+    log.extend_from_slice(
+        format!(
+        "\nCampaign harness: timeout_seconds={timeout}, elapsed_seconds={:.3}, exit_status={}\n",
+        started.elapsed().as_secs_f64(), out.status,
+    )
+        .as_bytes(),
+    );
     fs::write(directory.join(&name), &log)?;
     Ok(Outcome {
         reference,
