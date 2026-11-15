@@ -14408,7 +14408,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-runtime/tests/ingress_recovery.rs",
     "name": "crates/worldinterface-runtime/tests/ingress_recovery.rs",
-    "source_sha256": "e2775699a782b8ceea2896b9ca6eb263d2c2dab30fff057a5994fb90c3a693bc",
+    "source_sha256": "c32c08220f6c31a8dda97a4242812a3376420e6c5a22493656030c57d9ea4839",
     "conditions": [],
     "registration_sites": []
   },
@@ -14417,7 +14417,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/ingress_recovery.rs",
     "name": "Authority",
-    "source_sha256": "e2775699a782b8ceea2896b9ca6eb263d2c2dab30fff057a5994fb90c3a693bc",
+    "source_sha256": "c32c08220f6c31a8dda97a4242812a3376420e6c5a22493656030c57d9ea4839",
     "conditions": [],
     "registration_sites": []
   },
@@ -14426,7 +14426,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/ingress_recovery.rs",
     "name": "ConcurrentWriter",
-    "source_sha256": "e2775699a782b8ceea2896b9ca6eb263d2c2dab30fff057a5994fb90c3a693bc",
+    "source_sha256": "c32c08220f6c31a8dda97a4242812a3376420e6c5a22493656030c57d9ea4839",
     "conditions": [],
     "registration_sites": []
   },
@@ -14435,7 +14435,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/ingress_recovery.rs",
     "name": "DelayedOldCompletion",
-    "source_sha256": "e2775699a782b8ceea2896b9ca6eb263d2c2dab30fff057a5994fb90c3a693bc",
+    "source_sha256": "c32c08220f6c31a8dda97a4242812a3376420e6c5a22493656030c57d9ea4839",
     "conditions": [],
     "registration_sites": []
   },
@@ -14444,7 +14444,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/ingress_recovery.rs",
     "name": "DelayedOldTaskCompletion",
-    "source_sha256": "e2775699a782b8ceea2896b9ca6eb263d2c2dab30fff057a5994fb90c3a693bc",
+    "source_sha256": "c32c08220f6c31a8dda97a4242812a3376420e6c5a22493656030c57d9ea4839",
     "conditions": [],
     "registration_sites": []
   },
@@ -14453,7 +14453,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/ingress_recovery.rs",
     "name": "DeliveryClock",
-    "source_sha256": "e2775699a782b8ceea2896b9ca6eb263d2c2dab30fff057a5994fb90c3a693bc",
+    "source_sha256": "c32c08220f6c31a8dda97a4242812a3376420e6c5a22493656030c57d9ea4839",
     "conditions": [],
     "registration_sites": []
   },
@@ -14462,7 +14462,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/ingress_recovery.rs",
     "name": "DurableStop",
-    "source_sha256": "e2775699a782b8ceea2896b9ca6eb263d2c2dab30fff057a5994fb90c3a693bc",
+    "source_sha256": "c32c08220f6c31a8dda97a4242812a3376420e6c5a22493656030c57d9ea4839",
     "conditions": [],
     "registration_sites": []
   },
@@ -14471,7 +14471,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/ingress_recovery.rs",
     "name": "InterruptedWake",
-    "source_sha256": "e2775699a782b8ceea2896b9ca6eb263d2c2dab30fff057a5994fb90c3a693bc",
+    "source_sha256": "c32c08220f6c31a8dda97a4242812a3376420e6c5a22493656030c57d9ea4839",
     "conditions": [],
     "registration_sites": []
   },
@@ -14480,7 +14480,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/ingress_recovery.rs",
     "name": "PauseRecoveryWake",
-    "source_sha256": "e2775699a782b8ceea2896b9ca6eb263d2c2dab30fff057a5994fb90c3a693bc",
+    "source_sha256": "c32c08220f6c31a8dda97a4242812a3376420e6c5a22493656030c57d9ea4839",
     "conditions": [],
     "registration_sites": []
   },
@@ -14489,7 +14489,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/ingress_recovery.rs",
     "name": "Recorder",
-    "source_sha256": "e2775699a782b8ceea2896b9ca6eb263d2c2dab30fff057a5994fb90c3a693bc",
+    "source_sha256": "c32c08220f6c31a8dda97a4242812a3376420e6c5a22493656030c57d9ea4839",
     "conditions": [],
     "registration_sites": []
   },
@@ -14498,7 +14498,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/ingress_recovery.rs",
     "name": "RetireDuringWake",
-    "source_sha256": "e2775699a782b8ceea2896b9ca6eb263d2c2dab30fff057a5994fb90c3a693bc",
+    "source_sha256": "c32c08220f6c31a8dda97a4242812a3376420e6c5a22493656030c57d9ea4839",
     "conditions": [],
     "registration_sites": []
   },

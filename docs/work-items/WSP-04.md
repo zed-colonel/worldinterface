@@ -99,6 +99,18 @@ Also record `QueueEngine::tick_diagnostics`, `TickDiagnostics`, `ReconcileWork`,
 and scheduling reads. The runtime no longer uses tenant-at-a-time scheduling.
 The explicit inventory/disposition additions are submitted with this item for review.
 
+F-005 applies the same controlled delivery/AQ clock to
+`expiration_during_ack_wait_completes_without_recovery_generation`, both short
+token-invalidation tests, and all three interrupted-wake expiry cases. Each
+fixture asserts unexpired admission; expiry advances only after the expected
+wait (and reopen where applicable). The acknowledgment-expiry case crosses both
+retention and retry deadlines, preserving token invalidation, one attempt, one AQ
+run, generation zero and no regeneration after reopen. The invalidated-token
+case advances past acknowledgment timeout while remaining inside retention and
+backoff, so expiry cannot mask invalidation. No retention window is raised and
+no production behavior changes. All six affected non-ignored tests pass together
+in the focused run; committed-head adopted results remain external evidence.
+
 ## Evidence and consumer boundary
 
 The external fixture retains operator-owned command, activation and terminal
