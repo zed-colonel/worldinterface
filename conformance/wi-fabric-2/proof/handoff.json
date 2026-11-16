@@ -3597,7 +3597,7 @@
     "docs/release/0.2.0-alpha.2.md": "18edfd12aab77e765417c655ad6fc5919f9aacfceab9ac1bdf760b28dd1e54ba",
     "docs/release/package-tests.json": "2c17e1d7844413c84632034ab38c7a91c5dac92f1b543d72d48c04be29370538",
     "docs/work-items/WSP-04.md": "ea9c4fe14d9ee18be5b277e6da7677235d68c9d78f65ac5f09866df2686fa5af",
-    "docs/work-items/WSP-05.md": "e3b4bb38e716e4d9226840c9f657a0facba2f47173c17ac08f8508e63b953a1a",
+    "docs/work-items/WSP-05.md": "a8d313b7c67dd81220b5c5fcc19e6130d3b6ded7c446d4ae2a75788964d79338",
     "examples/downstream-consumer/Cargo.toml": "07d9882a606bde88fb6a115af0603415fa9c1fbe6c6a10d844cf84089e187f0c",
     "examples/downstream-consumer/src/main.rs": "e81457c49983747da1978d4c8e65cd3bde76efee6a8c2dbe3f86a6751f60e949",
     "fixtures/pre-wi-fabric-2/exo/repos/sample-rust/.gitignore": "12cc0f91b51fedf41ae1670d1624ee1d78a284bdb101645b60a06a12de16c069",

@@ -1,8 +1,9 @@
 # Operator publication staging
 
 WSP-02 prepared eight 0.2.0-alpha.1 archives and verification evidence on
-`wi-supervisor-proof-1`. WSP-05 prepares 0.2.0-alpha.2 with WI-WORKER-G5. Publication is
-operator-owned. Neither work item tags, pushes, publishes, merges, changes remote
+`wi-supervisor-proof-1`. WSP-05 prepares 0.2.0-alpha.2 with WI-WORKER-G5; finalization
+updates that candidate before alpha.2 publication. Publication is operator-owned.
+Neither work item tags, pushes, publishes, merges, changes remote
 protection, or records publication completion.
 
 The historical WSP-02 CraftingTable repository-policy observation had settings version 1,
@@ -31,7 +32,11 @@ controller Cargo and `ct-act` references are historical. Current checks use Rust
 cross-project AQ checkout pin. The separate preparation/completion receipt
 schemas and their WI validator remain authoritative.
 
-1. At the reviewed item's eventual merge commit, use a clean independent clone
+1. For alpha.2, select the exact finalized candidate head that the approved final
+   promotion brings into `main`, including all finalization fixes, and prepare
+   from that commit. Do not use the WSP-05 merge
+   `3cfce074d9a78e18513d8c70410a7b033d9d140a` on `wi-supervisor-proof-1`: it lacks
+   those fixes. Alpha.1 used the WSP-02 merge commit. Use a clean independent clone
    outside CraftingTable's checkout and an external empty output directory. Keep
    `CARGO_TARGET_DIR` external and separate from evidence. `TMPDIR` must name an
    existing writable directory outside the checkout. Unset, empty or unusable
@@ -101,12 +106,18 @@ schemas and their WI validator remain authoritative.
    preparation receipt; validate that receipt through WI's receipt validator.
 
 3. After the protection gate and release approval, create `v0.2.0-alpha.2` at the
-   prepared merge commit on `wi-supervisor-proof-1` and push the tag. Run
+   exact finalized candidate head selected in step 1 and recorded as the source
+   commit in `release-manifest.json`, then push the tag. Publish that commit's
+   prepared bundle with
    `crate-release publish /absolute/new/wi-alpha2/release-manifest.json --verified`.
    The operator retains the exact publisher path, digest, invocation and
-   destination. The tagged integration commit reaches `main` only through the
-   approved final promotion. Alpha.1 used this route for `v0.2.0-alpha.1`; a
-   subsequent published code change needs another pre-release.
+   destination. That finalized head reaches `main` only through the approved final
+   promotion. Alpha.1 used the WSP-02 merge for `v0.2.0-alpha.1`. If any alpha.2
+   crate has already been published from a different commit, the remaining
+   changes to published code require alpha.3, prepared by the same procedure,
+   before Exoskeleton moves to them (plan §5). Any later finalization change to
+   published code after alpha.2 likewise requires alpha.3; never reuse a published
+   version for different bytes.
 
 4. From an external copy, run the registry-only consumer and worker install route
    in [0.2.0-alpha.2.md](0.2.0-alpha.2.md), using crates.io with no replacement or

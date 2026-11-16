@@ -1254,7 +1254,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/release/handoff.json",
-          "source_sha256": "20b1b834b441145b3eb1f1a8efbe39b910af32f0a655a722c2b30e515bc4de71",
+          "source_sha256": "481891cc2bd0a81f0b918bcff7fe67f0f669588ce3cbbab8bfe233491d95f02c",
           "treatment": "Retain WSP-02 package evidence/support and registry consumer. Future legacy removal must preserve authoritative byte equality and release consumer coverage."
         },
         {
@@ -9053,7 +9053,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/release/handoff.json",
-          "source_sha256": "20b1b834b441145b3eb1f1a8efbe39b910af32f0a655a722c2b30e515bc4de71",
+          "source_sha256": "481891cc2bd0a81f0b918bcff7fe67f0f669588ce3cbbab8bfe233491d95f02c",
           "treatment": "WSP-04: retain the new supervisor interface/reconciliation evidence and selective legacy references; this surface does not grant legacy removal, Kata qualification or ordinary use."
         },
         {
@@ -9583,7 +9583,7 @@
         },
         {
           "path": "docs/work-items/WSP-05.md",
-          "source_sha256": "e3b4bb38e716e4d9226840c9f657a0facba2f47173c17ac08f8508e63b953a1a",
+          "source_sha256": "a8d313b7c67dd81220b5c5fcc19e6130d3b6ded7c446d4ae2a75788964d79338",
           "treatment": "Retain WSP-05 release-preparation provenance; audit SupervisorConnector references selectively if replacing Fabric support. This work item changes no connector removal or replacement authority."
         },
         {

@@ -56,6 +56,13 @@ on that commit, followed by prepare, verify and offline crate-release plan.
 Any F-007 recurrence requires retained-bundle diagnosis and cannot be cleared by
 a passing rerun. Tests grant no review, integration, publication or closure.
 
-Preparation must be repeated at the eventual reviewed merge commit before the
-operator's remote-protection, tag/push, publication and EXV-27 consumer handoff
-steps. WSP-05 performs none of those actions. Only CraftingTable integrates.
+Preparation must be repeated at the exact finalized candidate head that the
+approved final promotion brings into main, including all finalization fixes,
+before the operator's remote-protection, tag/push, publication and EXV-27 consumer
+handoff steps. The WSP-05 merge 3cfce074d9a78e18513d8c70410a7b033d9d140a must not
+be used for alpha.2: it lacks those fixes. The alpha.2 tag and published bundle
+must name that same finalized head. If any alpha.2 crate is published from a
+different commit, the remaining changes to published code need alpha.3, prepared
+the same way, before Exoskeleton moves to them (plan §5). See
+[the operator procedure](../release/publication-staging.md). WSP-05 performs none
+of those actions. Only CraftingTable integrates.
