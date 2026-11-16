@@ -80,8 +80,7 @@ def clean(commit):
     require(not git('ls-files', '-v').splitlines() or all(x.startswith('H ') for x in git('ls-files', '-v').splitlines()), 'index flags hide source state')
 
 
-def compiler_environment():
-    """Release gates use the committed compiler settings, not shell overrides."""
+def compiler_override(key):
     exact = {'RUSTFLAGS', 'CARGO_ENCODED_RUSTFLAGS', 'RUSTDOCFLAGS',
              'CARGO_ENCODED_RUSTDOCFLAGS', 'RUSTC', 'RUSTDOC', 'RUSTC_WRAPPER',
              'RUSTC_WORKSPACE_WRAPPER', 'CC', 'CXX', 'CFLAGS', 'CXXFLAGS',
@@ -90,7 +89,70 @@ def compiler_environment():
                 'CC_', 'CXX_', 'CFLAGS_', 'CXXFLAGS_', 'AR_', 'ARFLAGS_',
                 'HOST_CC', 'HOST_CFLAGS', 'HOST_CXX', 'HOST_CXXFLAGS',
                 'TARGET_CC', 'TARGET_CFLAGS', 'TARGET_CXX', 'TARGET_CXXFLAGS')
-    return {k: v for k, v in os.environ.items() if k not in exact and not k.startswith(prefixes)}
+    return key in exact or key.startswith(prefixes)
+
+
+def compiler_environment():
+    """Release gates use the committed compiler settings, not shell overrides."""
+    return {k: v for k, v in os.environ.items() if not compiler_override(k)}
+
+
+def cargo_config_paths(directories, homes):
+    paths = {home / name for home in homes for name in ['config', 'config.toml']}
+    for directory in directories:
+        for parent in [directory, *directory.parents]:
+            paths.update(parent / '.cargo' / name for name in ['config', 'config.toml'])
+    return sorted(paths)
+
+
+def check_cargo_configs(directories, env, additional_homes=()):
+    """Check Cargo's file-based overrides before invoking any release gate.
+
+    Record absent candidates too, so evidence identifies the complete search.
+    Only the exact committed repository config may set compiler options. Never
+    copy config contents into release evidence: they can contain credentials.
+    """
+    directories = [Path(p).resolve() for p in directories]
+    homes = [Path(env.get('CARGO_HOME', Path.home() / '.cargo')).resolve(),
+             *[Path(p).resolve() for p in additional_homes]]
+    files = []
+    for path in cargo_config_paths(directories, homes):
+        digest = None
+        if path.exists() or path.is_symlink():
+            require(path.is_file(), 'unreadable Cargo config: ' + str(path))
+            content = path.read_bytes()
+            digest = hashlib.sha256(content).hexdigest()
+            if path == ROOT.resolve() / '.cargo/config.toml':
+                committed = subprocess.check_output(['git', 'show', 'HEAD:.cargo/config.toml'], cwd=ROOT, timeout=60)
+                require(not path.is_symlink() and content == committed, 'uncommitted Cargo config: ' + str(path))
+            else:
+                data = tomllib.loads(content.decode())
+                build = data.get('build', {})
+                keys = {'rustflags', 'rustdocflags', 'rustc', 'rustdoc', 'rustc-wrapper',
+                        'rustc-workspace-wrapper', 'target'}
+                overrides = keys.intersection(build) or any(data.get(k) for k in ['target', 'profile', 'include'])
+                overrides = overrides or any(compiler_override(k) or k in ['CARGO_HOME', 'RUSTUP_TOOLCHAIN']
+                                              for k in data.get('env', {}))
+                require(not overrides, 'compiler overrides in ambient Cargo config: ' + str(path))
+        files.append({'path': str(path), 'sha256': digest})
+    return {'working_directories': [str(p) for p in directories], 'cargo_homes': [str(p) for p in homes], 'files': files}
+
+
+def validate_cargo_config_checks(checks, work, home):
+    """Validate portable producer evidence without opening producer-only paths."""
+    require(set(checks) == {'working_directories', 'cargo_homes', 'files'}, 'missing Cargo config checks')
+    directories = [PurePosixPath(p) for p in checks['working_directories']]
+    require(len(directories) == 2 and all(p.is_absolute() for p in directories)
+            and str(directories[1]) == work and checks['cargo_homes'] == [home, work + '/cargo-home']
+            and PurePosixPath(home).is_absolute(), 'wrong Cargo config search scope')
+    expected = [str(p) for p in cargo_config_paths(directories, [PurePosixPath(p) for p in checks['cargo_homes']])]
+    require([f['path'] for f in checks['files']] == expected, 'incomplete Cargo config checks')
+    for record in checks['files']:
+        require(set(record) == {'path', 'sha256'} and (record['sha256'] is None
+                or re.fullmatch('[a-f0-9]{64}', record['sha256'])), 'invalid Cargo config digest')
+    committed = str(directories[0] / '.cargo/config.toml')
+    require({'path': committed, 'sha256': sha(ROOT / '.cargo/config.toml')} in checks['files'],
+            'recorded repository Cargo config drift')
 
 
 def toolchain(env=None):

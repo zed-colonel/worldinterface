@@ -1274,7 +1274,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/tests/supervisor_consumer.rs",
-          "source_sha256": "3a5dabd89cd0be0a5f4322a21f8e2bbe245983c08d9cb2748c319ec21b9a0634",
+          "source_sha256": "42d531523984a19446d75818e6c7ecb016e5d29499b733383ab7b351b0b49e49",
           "treatment": "WSP-03 F-002/F-003 candidate disposition: preserve supervisor frame timing regressions and slow backend inspection evidence. Delay wording refers to test scheduling, with no dependency on the legacy delay connector. Effective through qualifying source review/merge; no deletion authority."
         },
         {
@@ -7466,27 +7466,27 @@
         },
         {
           "id": "crates/worldinterface-runtime/tests/supervisor_consumer.rs::::source-module:crates/worldinterface-runtime/tests/supervisor_consumer.rs",
-          "source_sha256": "3a5dabd89cd0be0a5f4322a21f8e2bbe245983c08d9cb2748c319ec21b9a0634",
+          "source_sha256": "42d531523984a19446d75818e6c7ecb016e5d29499b733383ab7b351b0b49e49",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/supervisor_consumer.rs::::struct:Consumer",
-          "source_sha256": "3a5dabd89cd0be0a5f4322a21f8e2bbe245983c08d9cb2748c319ec21b9a0634",
+          "source_sha256": "42d531523984a19446d75818e6c7ecb016e5d29499b733383ab7b351b0b49e49",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/supervisor_consumer.rs::interrupted_result_persistence_requires_reopen_and_authoritative_inspect::struct:Backend",
-          "source_sha256": "3a5dabd89cd0be0a5f4322a21f8e2bbe245983c08d9cb2748c319ec21b9a0634",
+          "source_sha256": "42d531523984a19446d75818e6c7ecb016e5d29499b733383ab7b351b0b49e49",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/supervisor_consumer.rs::supervisor_generation_deadline_and_unsupported_recovery_fail_closed::struct:Unsupported",
-          "source_sha256": "3a5dabd89cd0be0a5f4322a21f8e2bbe245983c08d9cb2748c319ec21b9a0634",
+          "source_sha256": "42d531523984a19446d75818e6c7ecb016e5d29499b733383ab7b351b0b49e49",
           "registration_sites": []
         },
         {
           "id": "crates/worldinterface-runtime/tests/supervisor_consumer.rs::transient_inspect_error_after_deadline_preserves_recovery_after_restart::struct:Backend",
-          "source_sha256": "3a5dabd89cd0be0a5f4322a21f8e2bbe245983c08d9cb2748c319ec21b9a0634",
+          "source_sha256": "42d531523984a19446d75818e6c7ecb016e5d29499b733383ab7b351b0b49e49",
           "registration_sites": []
         },
         {
@@ -9408,7 +9408,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/tests/supervisor_consumer.rs",
-          "source_sha256": "3a5dabd89cd0be0a5f4322a21f8e2bbe245983c08d9cb2748c319ec21b9a0634",
+          "source_sha256": "42d531523984a19446d75818e6c7ecb016e5d29499b733383ab7b351b0b49e49",
           "treatment": "WSP-03 candidate: preserve separate bounded supervisor/public API and consumer regressions; selectively audit shared dependencies. No deletion or worker authority expansion."
         },
         {

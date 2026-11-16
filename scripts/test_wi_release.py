@@ -179,6 +179,78 @@ class ReleaseTests(unittest.TestCase):
         self.assertEqual(recorded['build_environment']['CARGO_ENCODED_RUSTFLAGS'], '')
         self.assertIn('--remap-path-prefix=', installed['build_environment']['CARGO_ENCODED_RUSTFLAGS'])
 
+    def test_prepare_refuses_cargo_home_compiler_config_before_gates(self):
+        home = self.base / 'cargo-home'; home.mkdir()
+        config = home / 'config.toml'
+        config.write_text('[build]\nrustflags=["--cfg", "ambient_override"]\n')
+        output = self.base / 'output'
+        with patch.dict(os.environ, CARGO_HOME=str(home)), patch.object(release, 'clean'), \
+                patch.object(release, 'toolchain') as toolchain, patch.object(release, 'gates') as gates, \
+                patch.object(release.subprocess, 'run') as run:
+            with self.assertRaisesRegex(ValueError, 'compiler overrides in ambient Cargo config: ' + str(config)):
+                release.prepare(VERSION, 'a' * 40, output)
+            for action in [toolchain, gates, run]: action.assert_not_called()
+        self.assertFalse(output.exists())
+
+    def test_cargo_config_search_covers_both_names_homes_and_ancestors(self):
+        source = self.base / 'clone'; source.mkdir()
+        work = self.base / 'staging/work'; work.mkdir(parents=True)
+        home = self.base / 'cargo-home'; home.mkdir()
+        env = dict(os.environ, CARGO_HOME=str(home))
+        bodies = ['[build]\n' + key + '="override"\n' for key in
+                  ['rustflags', 'rustdocflags', 'rustc', 'rustdoc', 'rustc-wrapper', 'rustc-workspace-wrapper', 'target']]
+        bodies += ['[target.x86_64-unknown-linux-gnu]\nlinker="override"\n',
+                   '[profile.release]\nopt-level=0\n',
+                   '[env]\nCARGO_ENCODED_RUSTFLAGS="override"\n',
+                   '[env]\nCC={value="override",force=true}\n',
+                   'include="other.toml"\n']
+        for parent in [home, source / '.cargo', self.base / '.cargo', work / '.cargo', work.parent / '.cargo']:
+            parent.mkdir(exist_ok=True)
+            for name in ['config', 'config.toml']:
+                path = parent / name
+                for body in bodies:
+                    with self.subTest(path=path, body=body):
+                        path.write_text(body)
+                        with self.assertRaisesRegex(ValueError, 'compiler overrides in ambient Cargo config'):
+                            shared.check_cargo_configs([source, work], env)
+                path.write_text('[net]\noffline=true\n')
+                checked = shared.check_cargo_configs([source, work], env)
+                self.assertIn({'path': str(path), 'sha256': shared.sha(path)}, checked['files'])
+                path.unlink()
+        checked = shared.check_cargo_configs([source, work], env)
+        self.assertIn({'path': str(home / 'config.toml'), 'sha256': None}, checked['files'])
+        alias = self.base / 'alias'; alias.symlink_to(work, target_is_directory=True)
+        self.assertEqual(shared.check_cargo_configs([source, alias], env), checked)
+
+    def test_package_environment_refuses_staging_ancestor_compiler_config(self):
+        for config in [self.base / '.cargo/config.toml', self.base / 'staging/cargo-home/config']:
+            config.parent.mkdir(parents=True, exist_ok=True)
+            config.write_text('[profile.release]\nlto=false\n')
+            with self.subTest(config=config), self.assertRaisesRegex(ValueError, 'compiler overrides in ambient Cargo config'):
+                packages.environment(self.base / 'staging')
+            config.unlink()
+
+    def test_cargo_config_evidence_binds_committed_settings_and_complete_search(self):
+        work = self.base / 'work'
+        checked = shared.check_cargo_configs([shared.ROOT, work], release.gate_environment(), [work / 'cargo-home'])
+        home = checked['cargo_homes'][0]
+        shared.validate_cargo_config_checks(checked, str(work), home)
+        for field in ['files', 'working_directories', 'cargo_homes']:
+            changed = copy.deepcopy(checked); changed.pop(field)
+            with self.subTest(field=field), self.assertRaises(ValueError):
+                shared.validate_cargo_config_checks(changed, str(work), home)
+        for change in ['omit', 'digest', 'scope']:
+            changed = copy.deepcopy(checked)
+            if change == 'omit': changed['files'].pop()
+            if change == 'digest':
+                next(f for f in changed['files'] if f['path'] == str(shared.ROOT / '.cargo/config.toml'))['sha256'] = '0' * 64
+            if change == 'scope': changed['working_directories'][1] = '/other/work'
+            with self.subTest(change=change), self.assertRaises(ValueError):
+                shared.validate_cargo_config_checks(changed, str(work), home)
+        with patch.object(shared.subprocess, 'check_output', return_value=b'uncommitted config'):
+            with self.assertRaisesRegex(ValueError, 'uncommitted Cargo config'):
+                shared.check_cargo_configs([shared.ROOT, work], release.gate_environment())
+
     def test_documentation_discards_pages_from_previous_preparations(self):
         target = self.base / 'target'; docs = target / 'doc'; docs.mkdir(parents=True)
         (docs / 'removed-api.html').write_text('stale')
@@ -345,6 +417,8 @@ class ReleaseTests(unittest.TestCase):
                              ('docs/release/release-manifest.schema.json', 'release-manifest.schema.json')]:
             shutil.copyfile(shared.ROOT / source, self.base / dest)
         build = shared.toolchain(release.gate_environment())
+        build['cargo_config_checks'] = shared.check_cargo_configs([shared.ROOT, manifest['build_work']],
+            release.gate_environment(), [Path(manifest['build_work']) / 'cargo-home'])
         shared.write(self.base / 'gate-environment.json', build)
         shared.write(self.base / 'build-environment.json', build)
         for name, command in release.gates():
@@ -381,6 +455,7 @@ class ReleaseTests(unittest.TestCase):
         with patch.object(release, 'clean'), patch.object(release, 'metadata', return_value=meta), \
                 patch.object(release, 'git', return_value=manifest['source_before']['tree']), \
                 patch.object(release.subprocess, 'run'), \
+                patch.object(release, 'check_cargo_configs'), \
                 patch.object(release.subprocess, 'check_output', return_value=manifest['source_commit'] + ' HEAD\n'), \
                 patch.object(release, 'validate_packages') as package_check, patch.object(release, 'plan'):
             release.verify(path)
@@ -421,6 +496,7 @@ class ReleaseTests(unittest.TestCase):
                 self.assertTrue((output / 'SHA256SUMS').is_file())
                 raise error
             with patch.object(release, 'preflight', return_value=(output, {}, meta)), \
+                    patch.object(release, 'check_cargo_configs', return_value={}), \
                     patch.object(release, 'git', return_value='a' * 40), \
                     patch.object(release.subprocess, 'run'), patch.object(release, 'clean'), \
                     patch.object(release, 'gates', return_value=[('fixture', ['fixture'])]), \
@@ -473,7 +549,7 @@ class ReleaseTests(unittest.TestCase):
     def test_failed_or_interrupted_gate_never_writes_success_manifest(self):
         for error in [ValueError('failed gate'), KeyboardInterrupt()]:
             output = self.base / type(error).__name__
-            with patch.object(release, 'preflight', return_value=(output, {}, {})), patch.object(release, 'git', return_value='a' * 40), patch.object(release.subprocess, 'run'), patch.object(release, 'gates', return_value=[('failure', ['fixture'])]), patch.object(release, 'run', side_effect=error):
+            with patch.object(release, 'preflight', return_value=(output, {}, {})), patch.object(release, 'check_cargo_configs', return_value={}), patch.object(release, 'git', return_value='a' * 40), patch.object(release.subprocess, 'run'), patch.object(release, 'gates', return_value=[('failure', ['fixture'])]), patch.object(release, 'run', side_effect=error):
                 with self.assertRaises(type(error)): release.prepare(VERSION, 'a' * 40, output)
             self.assertFalse((output / 'release-manifest.json').exists())
             self.assertFalse((output / 'SHA256SUMS').exists())

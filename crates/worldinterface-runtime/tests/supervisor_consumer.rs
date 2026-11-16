@@ -176,19 +176,31 @@ fn private_transport_samples_authorization_clock_after_receiving_submit() {
         let clock = Arc::new(AtomicU64::new(1));
         let now = clock.clone();
         let (sampled, samples) = std::sync::mpsc::channel();
+        let (idle, polls) = std::sync::mpsc::channel();
         let serving = std::thread::spawn(move || {
-            channel
-                .serve_one(&server, || {
-                    sampled.send(()).unwrap();
-                    now.load(Ordering::SeqCst)
-                })
-                .unwrap();
+            let served = AtomicBool::new(false);
+            // Empty idle polls are legal, including when the client thread is
+            // delayed by host load. Stop only after a frame samples the clock.
+            while !served.load(Ordering::SeqCst) {
+                channel
+                    .serve_one(&server, || {
+                        served.store(true, Ordering::SeqCst);
+                        sampled.send(()).unwrap();
+                        now.load(Ordering::SeqCst)
+                    })
+                    .unwrap();
+                if !served.load(Ordering::SeqCst) {
+                    idle.send(()).unwrap();
+                }
+            }
         });
         // The server is idle. A clock sample here would predate the request.
         assert!(matches!(
             samples.recv_timeout(Duration::from_millis(50)),
             Err(std::sync::mpsc::RecvTimeoutError::Timeout)
         ));
+        // Exercise a completed idle poll deterministically before submitting.
+        polls.recv_timeout(Duration::from_secs(5)).unwrap();
         clock.store(20000, Ordering::SeqCst);
         let response = client.request(&Request::Submit(command)).unwrap();
         if expired {

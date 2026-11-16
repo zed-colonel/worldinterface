@@ -16,7 +16,7 @@ sys.dont_write_bytecode = True
 from wi_release import (ROOT, FOUNDATION, RUNTIME, PACKAGES, ADOPTED, BASELINE, TOOLCHAIN, archive_files,
                         clean, check_graph, external_target, git, metadata, read, ref, require, run, worker_recipe, worker_environment, recipe_digest,
                         safe, sha, toolchain, toml, validate_archive, validate_schema, write, check_worker_paths)
-from wi_release import compiler_environment
+from wi_release import compiler_environment, check_cargo_configs, validate_cargo_config_checks
 from wi_crash_isolation import check_artifacts
 
 
@@ -36,6 +36,7 @@ def gates():
 def gate_environment():
     env = dict(compiler_environment(), CARGO_TARGET_DIR=str(external_target()),
                PYTHONDONTWRITEBYTECODE='1', RUSTUP_TOOLCHAIN=TOOLCHAIN, CARGO_BUILD_JOBS='8')
+    env['CARGO_HOME'] = str(Path(env.get('CARGO_HOME', Path.home() / '.cargo')).resolve())
     # Runtime stores deliberately reject symlinked directory components. Give
     # gates canonical temporary paths too, rather than weakening that boundary
     # or passing the caller's logical TMPDIR into live fixture creation.
@@ -60,7 +61,9 @@ def preflight(version, commit, output):
     require(not output.is_relative_to(ROOT.resolve()), 'output is inside repository')
     require(not output.exists() or (output.is_dir() and not any(output.iterdir())), 'output directory is not empty')
     external_target()
-    build = toolchain(gate_environment())
+    env = gate_environment()
+    check_cargo_configs([ROOT, temporary], env)
+    build = toolchain(env)
     meta = metadata(version)
     return output, build, meta
 
@@ -99,7 +102,9 @@ def validate_receipt(manifest, output):
     require(receipt['verification_receipts'] == [artifact_map[e['record']] for e in manifest['evidence']], 'receipt/gate disagreement')
     require(receipt['commands'] == [{'argv': read(output / e['record'])['argv'], 'exit_code': 0, 'log': artifact_map[e['log']]} for e in manifest['evidence']], 'receipt/command disagreement')
     # Reuse the existing schema and artifact authority, with no replacement schema.
-    subprocess.run(publication_command(output / 'publication-preparation.json'), cwd=ROOT, env=gate_environment(), check=True, stdout=subprocess.DEVNULL, timeout=120)
+    env = gate_environment()
+    check_cargo_configs([ROOT], env)
+    subprocess.run(publication_command(output / 'publication-preparation.json'), cwd=ROOT, env=env, check=True, stdout=subprocess.DEVNULL, timeout=120)
     result = read(safe(output, 'logs/publication-validation.result.json'))
     require(result['exit_code'] == 0 and result['result'] == 'passed' and result['argv'] == publication_command(Path(manifest['preparation_output']) / 'publication-preparation.json'), 'missing receipt validation evidence')
 
@@ -214,6 +219,7 @@ def validate_manifest(manifest, output):
         require(sha(safe(output, dest)) == sha(ROOT / source), 'stale release document')
     build = read(safe(output, 'build-environment.json'))
     gate_build = read(safe(output, 'gate-environment.json'))
+    validate_cargo_config_checks(gate_build['cargo_config_checks'], manifest['build_work'], gate_build['cargo_home'])
     require(all(not value for key, value in gate_build['build_environment'].items()
                 if key not in ['RUSTUP_TOOLCHAIN', 'CARGO_BUILD_JOBS']), 'uncontrolled gate compiler environment')
     require(gate_build['build_environment']['RUSTUP_TOOLCHAIN'] == TOOLCHAIN
@@ -251,11 +257,12 @@ def prepare(version, commit, output):
     # The evidence directory is persistent; registry/build staging is disposable.
     with tempfile.TemporaryDirectory(prefix='wi-release-') as temporary:
         work = Path(temporary).resolve() / 'work'
+        env = gate_environment()
+        build['cargo_config_checks'] = check_cargo_configs([ROOT, work], env, [work / 'cargo-home'])
         manifest.update(source_commit=commit, baseline_revision=BASELINE,
                         source_before={'commit': commit, 'tree': git('rev-parse', 'HEAD^{tree}'), 'clean': True}, build_work=str(work), preparation_output=str(output))
         write(output / 'gate-environment.json', build)
         evidence = []
-        env = gate_environment()
         # Fetch before all offline gates; these source workspaces remain distinct.
         for scope in [FOUNDATION, RUNTIME, Path('tools/wi-contract-check')]:
             subprocess.run(['cargo', 'fetch', '--locked', '--manifest-path', str(scope / 'Cargo.toml')], cwd=ROOT, env=env, check=True, timeout=600)
@@ -268,6 +275,8 @@ def prepare(version, commit, output):
                              'log': f'logs/{name}.log', 'record': f'logs/{name}.result.json', 'sha256': sha(output / f'logs/{name}.log')})
             print(f'Passed {name} ({result["elapsed_seconds"]}s)', flush=True)
             clean(commit)
+            require(check_cargo_configs([ROOT, work], env, [work / 'cargo-home']) == build['cargo_config_checks'],
+                    'Cargo configs changed during preparation')
         manifest['evidence'] = evidence
         manifest['packaged_locks'] = {n: r['packaged_lock_sha256'] for n, r in read(output / 'package-verification.json').items()}
         manifest['source_after'] = {'commit': commit, 'tree': git('rev-parse', 'HEAD^{tree}'), 'clean': True}

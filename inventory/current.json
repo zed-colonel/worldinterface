@@ -14723,7 +14723,7 @@
     "kind": "source-module",
     "path": "crates/worldinterface-runtime/tests/supervisor_consumer.rs",
     "name": "crates/worldinterface-runtime/tests/supervisor_consumer.rs",
-    "source_sha256": "3a5dabd89cd0be0a5f4322a21f8e2bbe245983c08d9cb2748c319ec21b9a0634",
+    "source_sha256": "42d531523984a19446d75818e6c7ecb016e5d29499b733383ab7b351b0b49e49",
     "conditions": [],
     "registration_sites": []
   },
@@ -14732,7 +14732,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/supervisor_consumer.rs",
     "name": "Consumer",
-    "source_sha256": "3a5dabd89cd0be0a5f4322a21f8e2bbe245983c08d9cb2748c319ec21b9a0634",
+    "source_sha256": "42d531523984a19446d75818e6c7ecb016e5d29499b733383ab7b351b0b49e49",
     "conditions": [],
     "registration_sites": []
   },
@@ -14741,7 +14741,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/supervisor_consumer.rs",
     "name": "Backend",
-    "source_sha256": "3a5dabd89cd0be0a5f4322a21f8e2bbe245983c08d9cb2748c319ec21b9a0634",
+    "source_sha256": "42d531523984a19446d75818e6c7ecb016e5d29499b733383ab7b351b0b49e49",
     "conditions": [],
     "registration_sites": []
   },
@@ -14750,7 +14750,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/supervisor_consumer.rs",
     "name": "Unsupported",
-    "source_sha256": "3a5dabd89cd0be0a5f4322a21f8e2bbe245983c08d9cb2748c319ec21b9a0634",
+    "source_sha256": "42d531523984a19446d75818e6c7ecb016e5d29499b733383ab7b351b0b49e49",
     "conditions": [],
     "registration_sites": []
   },
@@ -14759,7 +14759,7 @@
     "kind": "struct",
     "path": "crates/worldinterface-runtime/tests/supervisor_consumer.rs",
     "name": "Backend",
-    "source_sha256": "3a5dabd89cd0be0a5f4322a21f8e2bbe245983c08d9cb2748c319ec21b9a0634",
+    "source_sha256": "42d531523984a19446d75818e6c7ecb016e5d29499b733383ab7b351b0b49e49",
     "conditions": [],
     "registration_sites": []
   },

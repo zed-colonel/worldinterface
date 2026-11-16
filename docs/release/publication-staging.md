@@ -72,6 +72,13 @@ schemas and their WI validator remain authoritative.
    Archive sources come from the committed Git tree; ignored checkout files are
    excluded. Gates clear inherited compiler flags, wrappers, C/C++ compiler
    overrides and Cargo build/target/profile overrides. `gate-environment.json`
+   also records paths and SHA-256 digests (or absence) for both Cargo config
+   filenames in the gate and package Cargo homes and every ancestor of the checkout and staging
+   directory. Preparation refuses ambient compiler, target, profile and compiler
+   environment settings before gates run; only the exact committed repository
+   `.cargo/config.toml` may supply them. Package helpers check staging ancestors
+   too, and preparation refuses config drift between gates. Config contents are
+   excluded from evidence because they may contain credentials. The file
    records that environment separately from the worker install environment in
    `build-environment.json`; both are hashed into the receipt and manifest.
    Worker builds add the path remappings recorded in the recipe. It produces source.bundle, notes, API docs, archives, resolution and

@@ -13,7 +13,7 @@ import urllib.request
 from wi_release import (ROOT, FOUNDATION, RUNTIME, PACKAGES, CRATES_IO, TOOLCHAIN, archive_files,
                         check_graph, external_target, metadata, read, require, run, sha,
                         toml, toolchain, validate_archive, write)
-from wi_release import compiler_environment
+from wi_release import compiler_environment, check_cargo_configs
 from wi_crash_isolation import check_artifacts
 
 
@@ -113,11 +113,13 @@ def environment(work):
     # Cargo preserves CARGO_HOME's spelling in rustc source paths. Canonicalize
     # before any resolution/build so remapping and recorded paths agree even
     # when TMPDIR or the disposable home is reached through a symlink.
-    return dict(compiler_environment(), CARGO_HOME=str(home.resolve()),
+    env = dict(compiler_environment(), CARGO_HOME=str(home.resolve()),
                 CARGO_TARGET_DIR=str(external_target()), CARGO_NET_OFFLINE='true',
                 RUSTUP_TOOLCHAIN=TOOLCHAIN,
                 CARGO_BUILD_JOBS=os.environ.get('CARGO_BUILD_JOBS', '8'), RUST_TEST_THREADS='4',
                 PROPTEST_DISABLE_FAILURE_PERSISTENCE='1')
+    check_cargo_configs([work], env)
+    return env
 
 
 def committed_sources(directory, destination):
