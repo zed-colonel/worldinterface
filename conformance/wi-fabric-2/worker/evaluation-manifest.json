@@ -369,7 +369,7 @@
     "scripts/check-wi-integration.sh": "d9f3cb82190cb04a5ab34f1930ea1d9cf8405dbe6d97393d52ebe1309071bc54",
     "scripts/refresh-wi-worker-evaluation.py": "b3d15edeef6fbea6d0f6c06200ca48908b379e1bbbc8cbcec39d31b7e78877a9",
     "scripts/release.py": "f5d68a8aa2caebcc31247a4a6f940e16e0c106139cd3333c153df72b02b61ae6",
-    "scripts/test_wi_release.py": "fd35e9c5ca00145d4226daac423cff79c27f05d07ef1c77178ebbdea2b1158fa",
+    "scripts/test_wi_release.py": "1f699c0f6693ce83b2ea1f2dc0b56c8088b407edf31ee6e1e4d5cec88859c0f6",
     "scripts/test_wi_worker_evaluation.py": "ae4f8098dc34956fa1ba1e8b61f621638e8b6ba04c987128a082312374998701",
     "scripts/wi_crash_isolation.py": "1ca6ef61e2ff6e514fb21c63d7c2ec133e789d7ba9056cb925b13702652cf1f1",
     "scripts/wi_release.py": "04a1d40be636c2641fedced449bf903dc0d8414b100f9c2cfdc7e72961c915e5",

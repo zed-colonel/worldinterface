@@ -184,9 +184,14 @@ class ReleaseTests(unittest.TestCase):
         config = home / 'config.toml'
         config.write_text('[build]\nrustflags=["--cfg", "ambient_override"]\n')
         output = self.base / 'output'
+        find_configs = shared.cargo_config_paths
+        def repository_first(directories, homes):
+            return sorted(find_configs(directories, homes),
+                          key=lambda p: p != shared.ROOT / '.cargo/config.toml')
         with patch.dict(os.environ, CARGO_HOME=str(home)), patch.object(release, 'clean'), \
-                patch.object(release, 'toolchain') as toolchain, patch.object(release, 'gates') as gates, \
-                patch.object(release.subprocess, 'run') as run:
+                patch.object(shared, 'cargo_config_paths', side_effect=repository_first), \
+                patch.object(release, 'toolchain', side_effect=AssertionError('toolchain before config refusal')) as toolchain, \
+                patch.object(release, 'gates') as gates, patch.object(release, 'run') as run:
             with self.assertRaisesRegex(ValueError, 'compiler overrides in ambient Cargo config: ' + str(config)):
                 release.prepare(VERSION, 'a' * 40, output)
             for action in [toolchain, gates, run]: action.assert_not_called()
