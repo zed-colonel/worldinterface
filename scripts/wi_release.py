@@ -15,6 +15,7 @@ FOUNDATION = Path('crates/worldinterface-foundation')
 RUNTIME = Path('crates/worldinterface-runtime')
 ORDER = ['protocol', 'capability', 'domain', 'storage', 'worker', 'ingress', 'egress', 'runtime']
 PACKAGES = {'worldinterface-' + p: (RUNTIME if p == 'runtime' else FOUNDATION / p) for p in ORDER}
+CRASH_CHECKED = {'worldinterface-storage', 'worldinterface-ingress', 'worldinterface-egress', 'worldinterface-runtime'}
 CRATES_IO = 'registry+https://github.com/rust-lang/crates.io-index'
 TOOLCHAIN = '1.89.0'
 BASELINE = '928b5ef07797762bc002920af05a01aa4a4b0e0c'
@@ -77,7 +78,20 @@ def clean(commit):
     require(git('rev-parse', 'HEAD') == commit, 'different source checkout')
     require(not git('status', '--porcelain', '--untracked-files=all'), 'dirty source checkout')
     # Ignore-index bits must not hide modified tracked bytes.
-    require(not git('ls-files', '-v').splitlines() or all(x.startswith('H ') for x in git('ls-files', '-v').splitlines()), 'index flags hide source state')
+    require(all(x.startswith('H ') for x in git('ls-files', '-v').splitlines()), 'index flags hide source state')
+
+
+def repository_lock(name):
+    return ROOT / (RUNTIME if name == 'worldinterface-runtime' else FOUNDATION) / 'Cargo.lock'
+
+
+def package_test_commands(inventory, name):
+    return [['test', '--lib'], *[['test', '--test', r['target']] for r in inventory['packages'][name]['tests'] if r['disposition'] == 'packaged'], ['test', '--doc']]
+
+
+def cargo_json_records(log):
+    # Cargo emits diagnostics on stderr too: extract only JSON records.
+    return [json.loads(line) for line in Path(log).read_text().splitlines() if line.startswith('{')]
 
 
 def compiler_override(key):
@@ -323,7 +337,7 @@ def validate_archive(path, name, version, checksums):
             normalized = {alias: ({'version': dep} if isinstance(dep, str) else {k: v for k, v in dep.items() if k != 'path'}) for alias, dep in expected_scope.get(kind, {}).items()}
             require(actual_scope.get(kind, {}) == normalized, 'archive dependency declarations drift')
     require(set(data.get('target', {})) == set(expected.get('target', {})), 'archive target dependency drift')
-    repository = toml(ROOT / (RUNTIME if name == 'worldinterface-runtime' else FOUNDATION) / 'Cargo.lock')
+    repository = toml(repository_lock(name))
     validate_lock(tomllib.loads(files['Cargo.lock'].decode()), repository, name, version, checksums)
     inventory = byte_copies()
     expected_tests = {r['target'] for r in inventory['packages'][name]['tests'] if r['disposition'] == 'packaged'}
@@ -339,18 +353,26 @@ def validate_archive(path, name, version, checksums):
 def check_graph(meta, lock, root_name, version, checksums, inspect_manifests=True):
     roots = [p for p in meta['packages'] if p['name'] == root_name]
     require(len(roots) == 1, 'missing graph root')
+    wi = set()
+    resolved_aq = set()
     for p in meta['packages']:
         require(p['source'] == CRATES_IO or p['id'] == roots[0]['id'], 'non-registry resolved source: ' + p['name'])
         if inspect_manifests:
             dependencies(toml(p['manifest_path']), version, normalized=True)
         if p['name'] in PACKAGES:
             require(p['version'] == version, 'wrong graph WI version')
+            wi.add(p['name'])
+        if p['name'].startswith('actionqueue-'):
+            require(p['version'] == '0.3.0' and p['source'] == CRATES_IO, 'substituted resolved AQ')
+            resolved_aq.add(p['name'])
+        for dep in p['dependencies']:
+            require(dep['source'] == CRATES_IO and dep.get('path') is None, 'substituted resolution edge')
     aq = {p['name']: p for p in lock['package'] if p['name'].startswith('actionqueue-')}
     expected = read(ROOT / 'contracts/aq-integration-target.json')['runtime_release']['crates']
     if root_name in ['worldinterface-runtime', 'wi-downstream-consumer']:
-        require(set(aq) == set(expected), 'incomplete AQ graph')
+        require(wi == set(PACKAGES) and resolved_aq == set(aq) == set(expected), 'incomplete consumer/runtime graph')
     else:
-        require(not aq, 'AQ in foundation package')
+        require(not aq and not resolved_aq, 'AQ in foundation package')
     for name, p in aq.items():
         require(p.get('source') == CRATES_IO and p['version'] == expected[name]['version'] == '0.3.0' and p['checksum'] == expected[name]['checksum'], 'AQ checksum/source substitution')
     for p in lock['package']:
@@ -419,6 +441,14 @@ def worker_recipe(version, target):
                 ['{cargo-home}/registry/src/*', '/wi/registry'],
                 ['{sysroot}/lib/rustlib/src/rust', '/rustc/{rustc-commit-hash}']],
             'rustflags': 'canonicalize build root, CARGO_HOME and CARGO_TARGET_DIR before invoking Cargo; replace RUSTFLAGS and CARGO_ENCODED_RUSTFLAGS with the remappings, separated by ASCII 31; expand each registry source root'}
+
+
+def install_command(recipe, work):
+    work = Path(work)
+    command = [str(work / 'install') if x == '{install-root}' else x for x in recipe['argv']]
+    command[2:2] = ['--config', str(work / 'registry.toml')]
+    # Offline is a cargo install option, and the environment also forbids network.
+    return command + ['--offline']
 
 
 def worker_environment(env, work, source_roots, build):

@@ -138,7 +138,7 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
         clock: Arc<dyn Clock>,
         slots: u32,
     ) -> Result<Self> {
-        let verified = evaluation.verify(clock.unix_ms())?;
+        let verified = evaluation.verify()?;
         let executable = executable_digest(fixture)?;
         let helper_digest = executable_digest(helper)?;
         evaluation.trusted.verify_build(verified.digest(), &executable, &helper_digest)?;
@@ -179,7 +179,7 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
         clock: Arc<dyn Clock>,
         slots: u32,
     ) -> Result<Self> {
-        let verified = evaluation.verify(clock.unix_ms())?;
+        let verified = evaluation.verify()?;
         if !provenance.seam_simulation {
             return Err("external provider requires separate qualification".into());
         }
@@ -595,10 +595,7 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
         self.port.spawn_attempts()
     }
     pub fn read_artifact(&self, binding: &WorkerBinding, reference: &str) -> Result<Vec<u8>> {
-        self.evaluation
-            .as_ref()
-            .ok_or("admission approval absent")?
-            .verify(self.clock.unix_ms())?;
+        self.evaluation.as_ref().ok_or("admission approval absent")?.verify()?;
         if binding.tenant.as_str() != self.scope.tenant
             || binding.principal.as_str() != self.scope.principal
         {
@@ -708,7 +705,7 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
         if self.state(binding)?.stop_requested {
             let _ = self.port.stop(binding.provider.as_str(), binding.run.as_str());
         }
-        if self.evaluation.as_ref().is_none_or(|e| e.verify(self.clock.unix_ms()).is_err())
+        if self.evaluation.as_ref().is_none_or(|e| e.verify().is_err())
             || self
                 .bundle
                 .wi()
@@ -861,11 +858,7 @@ impl<S: TrustedWorkerBuild + 'static> Connector for WorkerConnector<S> {
     fn reconcile(&self, r: ReconcileRequest) -> Result<ReconcileOutcome> {
         let mut state = self.recovery_state(&r)?;
         let root = self.runtime.bundle.wi();
-        if self
-            .runtime
-            .evaluation
-            .as_ref()
-            .is_none_or(|e| e.verify(self.runtime.clock.unix_ms()).is_err())
+        if self.runtime.evaluation.as_ref().is_none_or(|e| e.verify().is_err())
             || root.worker_provider_quarantine(&r.tenant, &state.binding.provider)?.is_some()
         {
             super::recovery::quarantine(root, &state.binding)?;

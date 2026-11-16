@@ -216,11 +216,8 @@ async fn wp_026_unavailable_operations_are_not_registered_or_decoded_as_availabl
     }
     let h = Harness::new(Task::Probe, "WP-026", 1500, 65536);
     let (submission, snapshot, config) = h.demand(Operation::Start);
-    let evidence = Evidence {
-        base: HostEvidence(snapshot.clone()),
-        evaluation: h.evaluation.clone(),
-        clock: HostClock,
-    };
+    let evidence =
+        Evidence { base: HostEvidence(snapshot.clone()), evaluation: h.evaluation.clone() };
     let resolver = support::flow_fixture::Resolver(snapshot.facts[0].clone());
     let mut q = worldinterface_runtime::aq_adapter::QueueEngine::bootstrap(
         &h.bundle,

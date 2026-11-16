@@ -343,6 +343,9 @@ async fn wi03p_f001_admitted_delivery_completes_after_expiry() {
 #[derive(Clone)]
 struct DeliveryClock(Arc<std::sync::atomic::AtomicU64>);
 impl DeliveryClock {
+    fn start() -> Self {
+        Self(Arc::new(std::sync::atomic::AtomicU64::new(now())))
+    }
     fn millis(&self) -> u64 {
         self.0.load(std::sync::atomic::Ordering::SeqCst)
     }
@@ -362,8 +365,36 @@ impl actionqueue_core::time::clock::Clock for DeliveryClock {
     }
 }
 
+fn setup_at(
+    path: &Path,
+    acknowledgment_timeout_ms: u64,
+    retention_ms: u64,
+    clock: &DeliveryClock,
+) -> (Arc<StoreBundle>, IngressBinding, DeliveryId) {
+    setup_with_recovery_budget_at(
+        path,
+        acknowledgment_timeout_ms,
+        retention_ms,
+        1_000_000,
+        false,
+        2,
+        1_000,
+        clock.millis(),
+    )
+}
+fn clocked_engine(
+    config: RuntimeConfig,
+    handler: IngressDeliveryHandler,
+    clock: &DeliveryClock,
+) -> actionqueue_runtime::engine::BootstrappedEngine<IngressDeliveryHandler, DeliveryClock> {
+    ActionQueueEngine::new(config, handler.with_clock(Arc::new(clock.clone())))
+        .bootstrap_with_clock(clock.clone())
+        .unwrap()
+        .with_host(host())
+}
+
 async fn wi03p_f001_expiration(admit_before_expiry: bool) {
-    let clock = DeliveryClock(Arc::new(std::sync::atomic::AtomicU64::new(now())));
+    let clock = DeliveryClock::start();
     let temp = tempfile::tempdir().unwrap();
     let path = temp.path().join("bundle");
     let (mut bundle, binding, id) =
@@ -381,10 +412,9 @@ async fn wi03p_f001_expiration(admit_before_expiry: bool) {
     let recorder = Arc::new(Recorder::default());
     let mut resident = None;
     for restart in 0..2 {
-        let delivery_handler =
-            handler(&bundle, &binding, recorder.clone()).with_clock(Arc::new(clock.clone()));
+        let delivery_handler = handler(&bundle, &binding, recorder.clone());
         let registry = delivery_handler.subscriber_registry();
-        let mut aq = ActionQueueEngine::new(
+        let mut aq = clocked_engine(
             RuntimeConfig {
                 data_dir: bundle.aq_path(),
                 backoff_strategy: actionqueue_runtime::config::BackoffStrategyConfig::Fixed {
@@ -394,10 +424,8 @@ async fn wi03p_f001_expiration(admit_before_expiry: bool) {
                 ..Default::default()
             },
             delivery_handler,
-        )
-        .bootstrap_with_clock(clock.clone())
-        .unwrap()
-        .with_host(host());
+            &clock,
+        );
         let service = IngressRuntime::new(bundle.wi(), tenant.clone());
         if restart == 0 {
             assert!(clock.millis() < initial.deliveries[&id].expires_at_ms);
@@ -422,10 +450,7 @@ async fn wi03p_f001_expiration(admit_before_expiry: bool) {
             assert!(bundle.wi().ingress_snapshot(&tenant).unwrap().deliveries[&id]
                 .attempts
                 .is_empty());
-            clock.0.store(
-                initial.deliveries[&id].expires_at_ms + 200,
-                std::sync::atomic::Ordering::SeqCst,
-            );
+            clock.advance_to(initial.deliveries[&id].expires_at_ms + 200);
             assert!(clock.millis() >= initial.deliveries[&id].expires_at_ms);
             if !admit_before_expiry {
                 assert_eq!(
@@ -701,28 +726,17 @@ fn nonqueued_acknowledgment_preserves_queued_dispatch_progress_across_restart() 
 
 #[tokio::test]
 async fn expiration_during_ack_wait_completes_without_recovery_generation() {
-    let clock = DeliveryClock(Arc::new(std::sync::atomic::AtomicU64::new(now())));
+    let clock = DeliveryClock::start();
     let temp = tempfile::tempdir().unwrap();
     let path = temp.path().join("bundle");
-    let (bundle, binding, id) = setup_with_recovery_budget_at(
-        &path,
-        3_000,
-        3_000,
-        1_000_000,
-        false,
-        2,
-        1_000,
-        clock.millis(),
-    );
+    let (bundle, binding, id) = setup_at(&path, 3_000, 3_000, &clock);
     let tenant = binding.profile.scope.tenant.clone();
     let recorder = Arc::new(Recorder::default());
-    let mut aq = ActionQueueEngine::new(
+    let mut aq = clocked_engine(
         RuntimeConfig { data_dir: bundle.aq_path(), ..Default::default() },
-        handler(&bundle, &binding, recorder.clone()).with_clock(Arc::new(clock.clone())),
-    )
-    .bootstrap_with_clock(clock.clone())
-    .unwrap()
-    .with_host(host());
+        handler(&bundle, &binding, recorder.clone()),
+        &clock,
+    );
     let service = IngressRuntime::new(bundle.wi(), tenant.clone());
     assert!(
         clock.millis()
@@ -777,13 +791,11 @@ async fn expiration_during_ack_wait_completes_without_recovery_generation() {
     drop(bundle);
 
     let bundle = Arc::new(StoreBundle::open(&path).unwrap());
-    let mut aq = ActionQueueEngine::new(
+    let mut aq = clocked_engine(
         RuntimeConfig { data_dir: bundle.aq_path(), ..Default::default() },
-        handler(&bundle, &binding, recorder.clone()).with_clock(Arc::new(clock.clone())),
-    )
-    .bootstrap_with_clock(clock.clone())
-    .unwrap()
-    .with_host(host());
+        handler(&bundle, &binding, recorder.clone()),
+        &clock,
+    );
     for _ in 0..3 {
         assert_eq!(
             IngressRuntime::new(bundle.wi(), tenant.clone())
@@ -804,31 +816,20 @@ async fn expiration_during_ack_wait_completes_without_recovery_generation() {
 
 #[tokio::test]
 async fn token_invalidated_before_first_claim_never_spends_aq_retries() {
-    let clock = DeliveryClock(Arc::new(std::sync::atomic::AtomicU64::new(now())));
+    let clock = DeliveryClock::start();
     let temp = tempfile::tempdir().unwrap();
     let path = temp.path().join("bundle");
-    let (bundle, binding, id) = setup_with_recovery_budget_at(
-        &path,
-        1_000,
-        5_000,
-        1_000_000,
-        false,
-        2,
-        1_000,
-        clock.millis(),
-    );
+    let (bundle, binding, id) = setup_at(&path, 1_000, 5_000, &clock);
     let tenant = binding.profile.scope.tenant.clone();
     let owner = AuthenticatedScope { tenant: tenant.clone(), principal: binding.principal.clone() };
     let subscriber =
         AuthenticatedScope { tenant: tenant.clone(), principal: binding.subscriber.clone() };
     let recorder = Arc::new(Recorder::default());
-    let mut aq = ActionQueueEngine::new(
+    let mut aq = clocked_engine(
         RuntimeConfig { data_dir: bundle.aq_path(), ..Default::default() },
-        handler(&bundle, &binding, recorder.clone()).with_clock(Arc::new(clock.clone())),
-    )
-    .bootstrap_with_clock(clock.clone())
-    .unwrap()
-    .with_host(host());
+        handler(&bundle, &binding, recorder.clone()),
+        &clock,
+    );
     let service = IngressRuntime::new(bundle.wi(), tenant.clone());
     assert!(
         clock.millis()
@@ -869,13 +870,11 @@ async fn token_invalidated_before_first_claim_never_spends_aq_retries() {
     drop(bundle);
 
     let bundle = Arc::new(StoreBundle::open(&path).unwrap());
-    let mut aq = ActionQueueEngine::new(
+    let mut aq = clocked_engine(
         RuntimeConfig { data_dir: bundle.aq_path(), ..Default::default() },
-        handler(&bundle, &binding, recorder.clone()).with_clock(Arc::new(clock.clone())),
-    )
-    .bootstrap_with_clock(clock.clone())
-    .unwrap()
-    .with_host(host());
+        handler(&bundle, &binding, recorder.clone()),
+        &clock,
+    );
     for _ in 0..3 {
         assert_eq!(
             IngressRuntime::new(bundle.wi(), tenant.clone())
@@ -897,31 +896,20 @@ async fn token_invalidated_before_first_claim_never_spends_aq_retries() {
 
 #[tokio::test]
 async fn token_invalidated_after_delivery_denies_ack_and_recovery_after_restart() {
-    let clock = DeliveryClock(Arc::new(std::sync::atomic::AtomicU64::new(now())));
+    let clock = DeliveryClock::start();
     let temp = tempfile::tempdir().unwrap();
     let path = temp.path().join("bundle");
-    let (bundle, binding, id) = setup_with_recovery_budget_at(
-        &path,
-        1_000,
-        5_000,
-        1_000_000,
-        false,
-        2,
-        1_000,
-        clock.millis(),
-    );
+    let (bundle, binding, id) = setup_at(&path, 1_000, 5_000, &clock);
     let tenant = binding.profile.scope.tenant.clone();
     let owner = AuthenticatedScope { tenant: tenant.clone(), principal: binding.principal.clone() };
     let subscriber =
         AuthenticatedScope { tenant: tenant.clone(), principal: binding.subscriber.clone() };
     let recorder = Arc::new(Recorder::default());
-    let mut aq = ActionQueueEngine::new(
+    let mut aq = clocked_engine(
         RuntimeConfig { data_dir: bundle.aq_path(), ..Default::default() },
-        handler(&bundle, &binding, recorder.clone()).with_clock(Arc::new(clock.clone())),
-    )
-    .bootstrap_with_clock(clock.clone())
-    .unwrap()
-    .with_host(host());
+        handler(&bundle, &binding, recorder.clone()),
+        &clock,
+    );
     let service = IngressRuntime::new(bundle.wi(), tenant.clone());
     assert!(
         clock.millis()
@@ -947,13 +935,11 @@ async fn token_invalidated_after_delivery_denies_ack_and_recovery_after_restart(
     drop(bundle);
 
     let bundle = Arc::new(StoreBundle::open(&path).unwrap());
-    let mut aq = ActionQueueEngine::new(
+    let mut aq = clocked_engine(
         RuntimeConfig { data_dir: bundle.aq_path(), ..Default::default() },
-        handler(&bundle, &binding, recorder.clone()).with_clock(Arc::new(clock.clone())),
-    )
-    .bootstrap_with_clock(clock.clone())
-    .unwrap()
-    .with_host(host());
+        handler(&bundle, &binding, recorder.clone()),
+        &clock,
+    );
     let waiting = bundle.wi().ingress_snapshot(&tenant).unwrap().deliveries[&id].clone();
     // Stay inside retention and backoff: token invalidation, rather than expiry,
     // must prevent another claim or recovery after the acknowledgment timeout.
@@ -990,7 +976,7 @@ async fn token_invalidated_after_delivery_denies_ack_and_recovery_after_restart(
 #[tokio::test]
 async fn inactive_binding_and_missing_registration_never_regenerate_aq_work() {
     for mode in ["revoked", "suspended", "binding-expired", "unregistered"] {
-        let clock = DeliveryClock(Arc::new(std::sync::atomic::AtomicU64::new(now())));
+        let clock = DeliveryClock::start();
         let temp = tempfile::tempdir().unwrap();
         let path = temp.path().join("bundle");
         let lifetime = if mode == "binding-expired" { 1000 } else { 30_000 };
@@ -1014,15 +1000,12 @@ async fn inactive_binding_and_missing_registration_never_regenerate_aq_work() {
             } else {
                 handler(bundle, &binding, recorder.clone())
             }
-            .with_clock(Arc::new(clock.clone()))
         };
-        let mut aq = ActionQueueEngine::new(
+        let mut aq = clocked_engine(
             RuntimeConfig { data_dir: bundle.aq_path(), ..Default::default() },
             subscriber_handler(&bundle),
-        )
-        .bootstrap_with_clock(clock.clone())
-        .unwrap()
-        .with_host(host());
+            &clock,
+        );
         let service = IngressRuntime::new(bundle.wi(), tenant.clone());
         assert!(clock.millis() < binding.expires_at_ms, "{mode}: admission precondition");
         assert_eq!(
@@ -1052,7 +1035,7 @@ async fn inactive_binding_and_missing_registration_never_regenerate_aq_work() {
                     .unwrap();
             }
             "binding-expired" => {
-                clock.0.fetch_add(1100, std::sync::atomic::Ordering::SeqCst);
+                clock.advance_to(clock.millis() + 1100);
             }
             _ => {}
         }
@@ -1066,7 +1049,7 @@ async fn inactive_binding_and_missing_registration_never_regenerate_aq_work() {
         );
         let attempts = aq.get_run(run).unwrap().attempt_count;
         assert_eq!(aq.get_run(run).unwrap().failure_attempt_count, 0, "{mode}");
-        clock.0.fetch_add(2300, std::sync::atomic::Ordering::SeqCst);
+        clock.advance_to(clock.millis() + 2300);
         let _ = aq.run_until_idle().await.unwrap();
         assert_eq!(aq.get_run(run).unwrap().attempt_count, attempts, "{mode}");
         for _ in 0..3 {
@@ -1093,13 +1076,11 @@ async fn inactive_binding_and_missing_registration_never_regenerate_aq_work() {
         drop(bundle);
 
         let reopened = Arc::new(StoreBundle::open(&path).unwrap());
-        let mut aq = ActionQueueEngine::new(
+        let mut aq = clocked_engine(
             RuntimeConfig { data_dir: reopened.aq_path(), ..Default::default() },
             subscriber_handler(&reopened),
-        )
-        .bootstrap_with_clock(clock.clone())
-        .unwrap()
-        .with_host(host());
+            &clock,
+        );
         for _ in 0..3 {
             assert_eq!(
                 IngressRuntime::new(reopened.wi(), tenant.clone())
@@ -1134,16 +1115,13 @@ async fn inactive_binding_and_missing_registration_never_regenerate_aq_work() {
                     )
                     .unwrap();
             }
-            let delivery_handler =
-                handler(&reopened, &binding, recorder.clone()).with_clock(Arc::new(clock.clone()));
+            let delivery_handler = handler(&reopened, &binding, recorder.clone());
             let registry = delivery_handler.subscriber_registry();
-            let mut resumed = ActionQueueEngine::new(
+            let mut resumed = clocked_engine(
                 RuntimeConfig { data_dir: reopened.aq_path(), ..Default::default() },
                 delivery_handler,
-            )
-            .bootstrap_with_clock(clock.clone())
-            .unwrap()
-            .with_host(host());
+                &clock,
+            );
             assert_eq!(
                 IngressRuntime::new(reopened.wi(), tenant.clone())
                     .dispatch_pending(
@@ -2274,26 +2252,17 @@ impl<C: actionqueue_core::time::clock::Clock> AqIngressPort for InterruptedWake<
 }
 
 async fn initial_wait_expires_after_interrupted_wake(replacement: bool, fail_after_task: bool) {
-    let clock = DeliveryClock(Arc::new(std::sync::atomic::AtomicU64::new(now())));
+    let clock = DeliveryClock::start();
     let temp = tempfile::tempdir().unwrap();
     let path = temp.path().join("bundle");
-    let (bundle, binding, id) = setup_with_recovery_budget_at(
-        &path,
-        1_000,
-        5_000,
-        1_000_000,
-        false,
-        2,
-        1_000,
-        clock.millis(),
-    );
+    let (bundle, binding, id) = setup_at(&path, 1_000, 5_000, &clock);
     let tenant = binding.profile.scope.tenant.clone();
     let expires_at = bundle.wi().ingress_snapshot(&tenant).unwrap().deliveries[&id].expires_at_ms;
     let recorder = Arc::new(Recorder::default());
     let service = IngressRuntime::new(bundle.wi(), tenant.clone());
     assert!(clock.millis() < expires_at);
     if replacement {
-        let mut aq = ActionQueueEngine::new(
+        let mut aq = clocked_engine(
             RuntimeConfig {
                 data_dir: bundle.aq_path(),
                 continuation_limits: ContinuationLimits { active_waits: 0, ..Default::default() },
@@ -2303,11 +2272,9 @@ async fn initial_wait_expires_after_interrupted_wake(replacement: bool, fail_aft
                 },
                 ..Default::default()
             },
-            handler(&bundle, &binding, recorder.clone()).with_clock(Arc::new(clock.clone())),
-        )
-        .bootstrap_with_clock(clock.clone())
-        .unwrap()
-        .with_host(host());
+            handler(&bundle, &binding, recorder.clone()),
+            &clock,
+        );
         assert_eq!(
             service
                 .dispatch_pending(
@@ -2324,17 +2291,15 @@ async fn initial_wait_expires_after_interrupted_wake(replacement: bool, fail_aft
         assert_eq!(aq.get_run(run).unwrap().state, actionqueue_core::run::state::RunState::Failed);
         aq.shutdown().unwrap();
     }
-    let mut aq = ActionQueueEngine::new(
+    let mut aq = clocked_engine(
         RuntimeConfig {
             data_dir: bundle.aq_path(),
             continuation_limits: ContinuationLimits { active_waits: 1, ..Default::default() },
             ..Default::default()
         },
-        handler(&bundle, &binding, recorder.clone()).with_clock(Arc::new(clock.clone())),
-    )
-    .bootstrap_with_clock(clock.clone())
-    .unwrap()
-    .with_host(host());
+        handler(&bundle, &binding, recorder.clone()),
+        &clock,
+    );
     assert!(clock.millis() < expires_at);
     assert!(service
         .dispatch_pending(
@@ -2370,17 +2335,15 @@ async fn initial_wait_expires_after_interrupted_wake(replacement: bool, fail_aft
     drop(bundle);
 
     let bundle = Arc::new(StoreBundle::open(&path).unwrap());
-    let mut aq = ActionQueueEngine::new(
+    let mut aq = clocked_engine(
         RuntimeConfig {
             data_dir: bundle.aq_path(),
             continuation_limits: ContinuationLimits { active_waits: 1, ..Default::default() },
             ..Default::default()
         },
-        handler(&bundle, &binding, recorder.clone()).with_clock(Arc::new(clock.clone())),
-    )
-    .bootstrap_with_clock(clock.clone())
-    .unwrap()
-    .with_host(host());
+        handler(&bundle, &binding, recorder.clone()),
+        &clock,
+    );
     assert_eq!(aq.get_run(run).unwrap().state, actionqueue_core::run::state::RunState::Awaiting);
     assert_eq!(aq.projection().waits().active_count(), 1);
     assert!(clock.millis() < expires_at);

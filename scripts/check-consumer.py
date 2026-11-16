@@ -1,14 +1,14 @@
 #!/usr/bin/env python3
 """Verify a standalone registry consumer and the version-pinned worker install route."""
 import argparse
-import os
 from pathlib import Path
 import shutil
 import subprocess
 import sys
 sys.dont_write_bytecode = True
 from wi_release import (ROOT, RUNTIME, PACKAGES, check_graph, read, ref, require, run,
-                        sha, toml, toolchain, worker_recipe, worker_environment, recipe_digest, write, check_worker_paths)
+                        sha, toml, toolchain, worker_recipe, worker_environment, recipe_digest, write, check_worker_paths,
+                        install_command, cargo_json_records)
 from wi_release_packages import cargo, environment
 from wi_crash_isolation import check_artifacts
 
@@ -34,7 +34,7 @@ def consumer(output, work, version):
     for rel in ['release/handoff.json', 'release/repository-Cargo.lock', *['release/gates/' + x.name for x in (ROOT / RUNTIME / 'release/gates').glob('*.json')]]:
         require((source / rel).read_bytes() == (ROOT / RUNTIME / rel).read_bytes(), 'consumer packaged evidence mismatch')
     run(base + ['build', '--offline', '--locked', '--message-format=json'], folder, output / 'logs/consumer-production.log', env, 900)
-    records = [__import__('json').loads(line) for line in (output / 'logs/consumer-production.log').read_text().splitlines() if line.startswith('{')]
+    records = cargo_json_records(output / 'logs/consumer-production.log')
     check_artifacts(records)
     write(output / 'production/consumer.json', records)
     run(base + ['run', '--offline', '--locked'], folder, output / 'logs/consumer-run.log', env, 300)
@@ -44,10 +44,7 @@ def consumer(output, work, version):
     build = toolchain(env)
     write(output / 'build-environment.json', build)
     recipe = worker_recipe(version, build['target'])
-    command = recipe['argv'].copy(); command[command.index('{install-root}')] = str(install)
-    command[2:2] = ['--config', str(work / 'registry.toml')]
-    # Offline is a cargo install option, and the environment also forbids network.
-    command.append('--offline')
+    command = install_command(recipe, work)
     run(command, work, output / 'logs/worker-install.log', env, 1200)
     binaries = {}
     for name in ['wi-process-fixture', 'wi-process-reaper']:

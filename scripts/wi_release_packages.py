@@ -10,9 +10,9 @@ import tarfile
 import tomllib
 import urllib.request
 
-from wi_release import (ROOT, FOUNDATION, RUNTIME, PACKAGES, CRATES_IO, TOOLCHAIN, archive_files,
+from wi_release import (ROOT, FOUNDATION, RUNTIME, PACKAGES, CRATES_IO, TOOLCHAIN, CRASH_CHECKED,
                         check_graph, external_target, metadata, read, require, run, sha,
-                        toml, toolchain, validate_archive, write)
+                        toml, validate_archive, write, repository_lock, package_test_commands, cargo_json_records)
 from wi_release import compiler_environment, check_cargo_configs
 from wi_crash_isolation import check_artifacts
 
@@ -150,7 +150,7 @@ def prepare_archives(output, work, version):
     for name, directory in PACKAGES.items():
         source = work / 'sources' / name
         committed_sources(directory, source)
-        shutil.copyfile(ROOT / (RUNTIME if name == 'worldinterface-runtime' else FOUNDATION) / 'Cargo.lock', source / 'Cargo.lock')
+        shutil.copyfile(repository_lock(name), source / 'Cargo.lock')
         manifest_path = source / 'Cargo.toml'
         manifest_path.write_text(re.sub(r', path = "[^"]+"', '', manifest_path.read_text()))
         run(base + ['package', '--offline', '--allow-dirty', '--no-verify'], source,
@@ -182,19 +182,15 @@ def build_packages(output, work, version):
         write(output / f'resolutions/{name}.json', meta)
         run(base + ['build', '--locked', '--offline', '--message-format=json'], folder,
             output / f'logs/production-{name}.log', env, 900)
-        # Cargo emits diagnostics on stderr too: extract only JSON records.
-        records = []
-        for line in (output / f'logs/production-{name}.log').read_text().splitlines():
-            if line.startswith('{'):
-                records.append(json.loads(line))
-        if name in ['worldinterface-storage', 'worldinterface-ingress', 'worldinterface-egress', 'worldinterface-runtime']:
+        records = cargo_json_records(output / f'logs/production-{name}.log')
+        if name in CRASH_CHECKED:
             check_artifacts(records)
         write(output / f'production/{name}.json', records)
-        commands = [['test', '--lib'], *[['test', '--test', r['target']] for r in inventory['packages'][name]['tests'] if r['disposition'] == 'packaged'], ['test', '--doc']]
+        commands = package_test_commands(inventory, name)
         for index, command in enumerate(commands):
             run(base + command + ['--locked', '--offline'], folder, output / f'logs/test-{name}-{index}.log', env, 900)
         report[name] = {'archive_sha256': checksums[name], 'packaged_lock_sha256': sha(folder / 'Cargo.lock'),
-                        'repository_lock_sha256': sha(ROOT / (RUNTIME if name == 'worldinterface-runtime' else FOUNDATION) / 'Cargo.lock'),
+                        'repository_lock_sha256': sha(repository_lock(name)),
                         'test_commands': commands, 'result': 'passed'}
     write(output / 'package-verification.json', report)
 

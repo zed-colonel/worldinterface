@@ -132,17 +132,19 @@ impl Owned {
         }
         validated?; // A live birth/handle/context mismatch always fails closed.
         let relationship = stat_if_present(pid)?;
-        if record.exited() || relationship.is_none() {
+        if record.exited() {
             return Ok(Acquisition::Departed);
         }
-        let (observed_parent, observed_birth) = relationship.unwrap();
+        let Some((observed_parent, observed_birth)) = relationship else {
+            return Ok(Acquisition::Departed);
+        };
         if observed_birth != record.birth {
             return Err("process ownership mismatch".into());
         }
         if observed_parent == parent {
             return Ok(Acquisition::Acquired(record));
         }
-        if subreaper == Some(observed_parent) && observed_parent != parent {
+        if subreaper == Some(observed_parent) {
             // Do not adopt through a stale ancestry edge. The next root scan
             // must acquire and validate a fresh stable handle to this identity.
             return Ok(Acquisition::Rediscover);

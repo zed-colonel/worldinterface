@@ -142,6 +142,11 @@ class PacketTests(unittest.TestCase):
             with self.assertRaises(ValueError): check_packet(self.root)
 
     def test_discovery_preserves_fixture_data_and_workspace_build_exclusions(self):
+        # Build-output names in a checkout's ancestors must not hide sources.
+        with tempfile.TemporaryDirectory() as temporary:
+            relocated = Path(temporary) / 'target/dev-output/checkout'
+            shutil.copytree(self.root, relocated)
+            self.assertEqual(expected_manifest(relocated), self.manifest)
         generated = self.root / 'crates/worldinterface-runtime/target/generated.rs'
         generated.parent.mkdir(parents=True)
         generated.write_text('// excluded workspace build output')

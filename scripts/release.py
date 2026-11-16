@@ -5,6 +5,7 @@ Adapted from ActionQueue v0.3.0's prepare/verify structure. Python 3.11+.
 Failed/interrupted preparations retain logs and never leave a successful manifest.
 """
 import argparse
+import hashlib
 import json
 import os
 from pathlib import Path
@@ -12,10 +13,12 @@ import shutil
 import subprocess
 import sys
 import tempfile
+import tomllib
 sys.dont_write_bytecode = True
-from wi_release import (ROOT, FOUNDATION, RUNTIME, PACKAGES, ADOPTED, BASELINE, TOOLCHAIN, archive_files,
+from wi_release import (ROOT, FOUNDATION, RUNTIME, PACKAGES, ADOPTED, BASELINE, TOOLCHAIN, CRASH_CHECKED,
                         clean, check_graph, external_target, git, metadata, read, ref, require, run, worker_recipe, worker_environment, recipe_digest,
-                        safe, sha, toolchain, toml, validate_archive, validate_schema, write, check_worker_paths)
+                        safe, sha, toolchain, toml, validate_archive, validate_schema, write, check_worker_paths,
+                        repository_lock, package_test_commands, install_command)
 from wi_release import compiler_environment, check_cargo_configs, validate_cargo_config_checks
 from wi_crash_isolation import check_artifacts
 
@@ -118,21 +121,21 @@ def validate_packages(manifest, output):
     locks = {}
     for name in PACKAGES:
         files = validate_archive(output / f'crates/{name}-{version}.crate', name, version, checksums)
-        if name == 'worldinterface-runtime':
-            descriptor = json.loads(files['release/handoff.json'])
-        digest = __import__('hashlib').sha256(files['Cargo.lock']).hexdigest()
+        digest = hashlib.sha256(files['Cargo.lock']).hexdigest()
         locks[name] = digest
-        expected_tests = [['test', '--lib'], *[['test', '--test', r['target']] for r in inventory['packages'][name]['tests'] if r['disposition'] == 'packaged'], ['test', '--doc']]
-        repository_digest = sha(ROOT / (RUNTIME if name == 'worldinterface-runtime' else FOUNDATION) / 'Cargo.lock')
+        expected_tests = package_test_commands(inventory, name)
+        repository_digest = sha(repository_lock(name))
         require(report[name] == {'archive_sha256': checksums[name], 'packaged_lock_sha256': digest, 'repository_lock_sha256': repository_digest, 'test_commands': expected_tests, 'result': 'passed'}, 'package lock provenance/report disagreement')
         for index in range(len(expected_tests)):
             record = read(safe(output, f'logs/test-{name}-{index}.result.json'))
             require(record['exit_code'] == 0 and record['result'] == 'passed' and record['argv'] == ['cargo', '--config', manifest['build_work'] + '/registry.toml', *expected_tests[index], '--locked', '--offline'], 'missing/failed package test')
-        if name in ['worldinterface-storage', 'worldinterface-egress', 'worldinterface-ingress', 'worldinterface-runtime']:
+        if name in CRASH_CHECKED:
             check_artifacts(read(safe(output, f'production/{name}.json')))
         meta = read(safe(output, f'resolutions/{name}.json'))
-        validate_resolution(meta, name, version)
+        check_graph(meta, tomllib.loads(files['Cargo.lock'].decode()), name, version, checksums, inspect_manifests=False)
     require(manifest['packaged_locks'] == locks, 'manifest packaged locks disagreement')
+    descriptor = read(ROOT / RUNTIME / 'release/handoff.json')
+    repository_digest = sha(repository_lock('worldinterface-runtime'))
     handoff = read(safe(output, 'consumer-handoff.json'))
     validate_consumer_contract(handoff, descriptor)
     require(handoff['kind'] == 'wi-release-consumer-handoff-v1' and handoff['schema_version'] == 1 and handoff['source_commit'] == manifest['source_commit'] and handoff['version'] == version, 'wrong consumer handoff identity')
@@ -147,8 +150,7 @@ def validate_packages(manifest, output):
     roots = {str(Path(p['manifest_path']).parent.parent) for p in consumer_meta['packages'] if p['source']}
     expected_env = worker_environment({'CARGO_HOME': build['cargo_home'], 'CARGO_TARGET_DIR': build['target_directory']}, manifest['build_work'], roots, build)
     require(build['build_environment']['RUSTFLAGS'] == '' and build['build_environment']['CARGO_ENCODED_RUSTFLAGS'] == expected_env['CARGO_ENCODED_RUSTFLAGS'], 'worker path remapping drift')
-    command = recipe['argv'].copy(); command[command.index('{install-root}')] = manifest['build_work'] + '/install'
-    command[2:2] = ['--config', manifest['build_work'] + '/registry.toml']; command.append('--offline')
+    command = install_command(recipe, manifest['build_work'])
     require(handoff['install_command'] == command, 'worker install command drift')
     install = read(safe(output, 'logs/worker-install.result.json'))
     require(install['argv'] == command and install['exit_code'] == 0 and install['result'] == 'passed', 'missing/failed worker installation')
@@ -157,7 +159,6 @@ def validate_packages(manifest, output):
     for name, record in handoff['executables'].items():
         require(record['path'] == 'workers/' + name and record['sha256'] == sha(safe(output, record['path'])) and record['size'] == (output / record['path']).stat().st_size, 'worker executable drift')
         check_worker_paths(safe(output, record['path']), manifest['build_work'], build)
-    validate_resolution(consumer_meta, 'wi-downstream-consumer', version)
     check_graph(consumer_meta, toml(safe(output, 'consumer-Cargo.lock')), 'wi-downstream-consumer', version, checksums, inspect_manifests=False)
     check_artifacts(read(safe(output, 'production/consumer.json')))
 
@@ -170,26 +171,6 @@ def validate_consumer_contract(handoff, descriptor):
     require(json.dumps(handoff.get('store_compatibility'), sort_keys=True)
             == json.dumps(descriptor['release']['store_compatibility'], sort_keys=True),
             'consumer store compatibility disagreement')
-
-
-def validate_resolution(meta, root_name, version):
-    from wi_release import CRATES_IO
-    roots = [p for p in meta['packages'] if p['name'] == root_name]
-    require(len(roots) == 1, 'wrong resolution root')
-    wi = []
-    aq = []
-    for package in meta['packages']:
-        require(package['source'] == CRATES_IO or package['id'] == roots[0]['id'], 'substituted resolved dependency')
-        if package['name'] in PACKAGES:
-            require(package['version'] == version, 'wrong resolved package version'); wi.append(package['name'])
-        if package['name'].startswith('actionqueue-'):
-            require(package['version'] == '0.3.0' and package['source'] == CRATES_IO, 'substituted resolved AQ'); aq.append(package['name'])
-        for dep in package['dependencies']:
-            require(dep['source'] == CRATES_IO and dep.get('path') is None, 'substituted resolution edge')
-    if root_name in ['wi-downstream-consumer', 'worldinterface-runtime']:
-        require(set(wi) == set(PACKAGES) and set(aq) == set(read(ROOT / 'contracts/aq-integration-target.json')['runtime_release']['crates']), 'incomplete consumer/runtime graph')
-    else:
-        require(not aq, 'foundation resolved AQ')
 
 
 def validate_manifest(manifest, output):

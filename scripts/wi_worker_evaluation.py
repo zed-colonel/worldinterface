@@ -58,23 +58,18 @@ def expected_manifest(root, read_source=None):
         read_source = lambda name: source_bytes(root, name)
     files = set()
     for directory in ["crates/worldinterface-foundation", "crates/worldinterface-runtime", "tools/wi-contract-check"]:
+        suffixes = {".rs", ".txt", ".toml"}
+        names = {"Cargo.lock"}
+        if directory != "tools/wi-contract-check":
+            # Bind package evidence, C helpers and immutable lock snapshots too.
+            suffixes.update({".json", ".c", ".md", ".lock"})
+            names.add("LICENSE")
         for path in walk(root / directory, exclude_build_outputs=True):
-            if path.is_file() and (path.suffix in [".rs", ".txt", ".toml"] or path.name == "Cargo.lock"):
-                if any(part in ["target", "dev-output"] for part in path.parts):
-                    continue
+            if path.is_file() and (path.suffix in suffixes or path.name in names):
                 files.add(path.relative_to(root).as_posix())
     for directory in ["docs/release", "examples/downstream-consumer"]:
         for path in walk(root / directory, exclude_build_outputs=True):
             if path.is_file():
-                files.add(path.relative_to(root).as_posix())
-    for name in ["scripts/release.py", "scripts/wi_release.py", "scripts/wi_release_packages.py",
-                 "scripts/check-packages.py", "scripts/check-consumer.py", "scripts/test_wi_release.py"]:
-        files.add(name)
-    # Package copies include JSON, C helpers and the immutable repository lock
-    # snapshot. Gate copies are compared to authority by handoff check; bind all.
-    for directory in ["crates/worldinterface-foundation", "crates/worldinterface-runtime"]:
-        for path in walk(root / directory, exclude_build_outputs=True):
-            if path.is_file() and (path.suffix in [".json", ".c", ".md", ".lock"] or path.name == "LICENSE"):
                 files.add(path.relative_to(root).as_posix())
     for path in walk(root / "fixtures/pre-wi-fabric-2/exo/repos/sample-rust"):
         if path.is_file():
@@ -94,6 +89,8 @@ def expected_manifest(root, read_source=None):
         "conformance/wi-fabric-2/worker/supervisor-disposition.json",
         "scripts/build-wi-worker-evaluation.sh", "scripts/refresh-wi-worker-evaluation.py", "scripts/wi_worker_evaluation.py",
         "scripts/test_wi_worker_evaluation.py",
+        "scripts/release.py", "scripts/wi_release.py", "scripts/wi_release_packages.py",
+        "scripts/check-packages.py", "scripts/check-consumer.py", "scripts/test_wi_release.py",
         "scripts/check-wi-contract.sh", "scripts/check-wi-domain.sh",
         "scripts/check-wi-domain-isolation.py", "scripts/check-wi-integration.sh",
         "scripts/check-wi-integration.py", "scripts/wi_crash_isolation.py", "scripts/worker-proof-evidence.sh",

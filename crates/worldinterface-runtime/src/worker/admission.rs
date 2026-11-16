@@ -107,7 +107,6 @@ pub fn derive<S: TrustedApprovals>(
         return Err("worker realization drift".into());
     }
     let verified = evaluation.authorize(
-        now_ms,
         &demand.case,
         request.operation.name(),
         &demand.task,

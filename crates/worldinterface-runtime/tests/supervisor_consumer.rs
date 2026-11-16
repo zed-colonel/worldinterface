@@ -43,6 +43,21 @@ struct Consumer {
     calls: AtomicUsize,
     complete: AtomicBool,
 }
+impl Consumer {
+    fn new() -> Self {
+        Self { calls: AtomicUsize::new(0), complete: AtomicBool::new(false) }
+    }
+}
+fn reopen(root: &std::path::Path, handler: Arc<dyn SupervisorHandler>) -> Server {
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(5);
+    loop {
+        if let Ok(server) = Server::open(root, handler.clone()) {
+            return server;
+        }
+        assert!(std::time::Instant::now() < deadline, "supervisor owner did not release");
+        std::thread::sleep(std::time::Duration::from_millis(2));
+    }
+}
 impl SupervisorHandler for Consumer {
     fn supports_authoritative_inspect(&self) -> bool {
         true
@@ -69,9 +84,10 @@ fn terminal(
     server: &Server,
     p: &ChannelPolicy,
     c: &Command,
+    now_ms: u64,
 ) -> worldinterface_worker::supervisor::Record {
     for _ in 0..300 {
-        if let Ok(Response::Record(record)) = server.request(p, inspect(c), 1) {
+        if let Ok(Response::Record(record)) = server.request(p, inspect(c), now_ms) {
             if record.observation.state.terminal() {
                 return *record;
             }
@@ -85,8 +101,7 @@ fn public_server_durable_acceptance_replay_revocation_and_terminal_immutability(
     let temp = tempfile::tempdir().unwrap();
     let root = temp.path().join("supervisor");
     let (command, policy) = config();
-    let handler =
-        Arc::new(Consumer { calls: AtomicUsize::new(0), complete: AtomicBool::new(false) });
+    let handler = Arc::new(Consumer::new());
     let server = Arc::new(Server::open(&root, handler.clone()).unwrap());
     let accepted = server.request(&policy, Request::Submit(command.clone()), 1).unwrap();
     assert!(matches!(accepted, Response::Record(ref r) if r.observation.state == State::Accepted));
@@ -102,7 +117,7 @@ fn public_server_durable_acceptance_replay_revocation_and_terminal_immutability(
     conflict.request.image = ContentHash::of(b"other");
     assert!(server.request(&policy, Request::Submit(conflict), 1).is_err());
     handler.complete.store(true, Ordering::SeqCst);
-    let result = terminal(&server, &policy, &command);
+    let result = terminal(&server, &policy, &command, 1);
     assert_eq!(handler.calls.load(Ordering::SeqCst), 1);
     handler.complete.store(false, Ordering::SeqCst);
     assert_eq!(
@@ -142,11 +157,7 @@ fn private_transport_rejects_malformed_and_oversized_frames_outside_guest() {
     use std::io::Write;
     let temp = tempfile::tempdir().unwrap();
     let (_, policy) = config();
-    let server = Server::open(
-        &temp.path().join("supervisor"),
-        Arc::new(Consumer { calls: AtomicUsize::new(0), complete: AtomicBool::new(false) }),
-    )
-    .unwrap();
+    let server = Server::open(&temp.path().join("supervisor"), Arc::new(Consumer::new())).unwrap();
     let (client, mut channel) = PrivateChannel::provision(policy.clone()).unwrap();
     let mut stream = client.into_stream().unwrap();
     stream.write_all(&((MAX_FRAME_BYTES + 1) as u32).to_be_bytes()).unwrap();
@@ -169,8 +180,7 @@ fn private_transport_samples_authorization_clock_after_receiving_submit() {
             command.request.deadline_ms = 35000;
             policy.grants[0].request = command.request.clone();
         }
-        let handler =
-            Arc::new(Consumer { calls: AtomicUsize::new(0), complete: AtomicBool::new(false) });
+        let handler = Arc::new(Consumer::new());
         let server = Server::open(&temp.path().join("supervisor"), handler.clone()).unwrap();
         let (client, mut channel) = PrivateChannel::provision(policy).unwrap();
         let clock = Arc::new(AtomicU64::new(1));
@@ -224,11 +234,8 @@ fn private_transport_gives_a_late_submit_its_own_frame_budget() {
     for idle_ms in [100, 990] {
         let temp = tempfile::tempdir().unwrap();
         let (command, policy) = config();
-        let server = Server::open(
-            &temp.path().join("supervisor"),
-            Arc::new(Consumer { calls: AtomicUsize::new(0), complete: AtomicBool::new(false) }),
-        )
-        .unwrap();
+        let server =
+            Server::open(&temp.path().join("supervisor"), Arc::new(Consumer::new())).unwrap();
         let (client, mut channel) = PrivateChannel::provision(policy).unwrap();
         let mut stream = client.into_stream().unwrap();
         stream.set_read_timeout(Some(Duration::from_secs(5))).unwrap();
@@ -275,11 +282,7 @@ fn private_transport_partial_progress_does_not_renew_frame_deadline() {
     };
     let temp = tempfile::tempdir().unwrap();
     let (_, policy) = config();
-    let server = Server::open(
-        &temp.path().join("supervisor"),
-        Arc::new(Consumer { calls: AtomicUsize::new(0), complete: AtomicBool::new(false) }),
-    )
-    .unwrap();
+    let server = Server::open(&temp.path().join("supervisor"), Arc::new(Consumer::new())).unwrap();
     let (client, mut channel) = PrivateChannel::provision(policy).unwrap();
     let mut stream = client.into_stream().unwrap();
     stream.set_read_timeout(Some(Duration::from_secs(5))).unwrap();
@@ -381,8 +384,7 @@ fn connector_rejects_stale_authenticated_response_and_never_treats_acceptance_as
 fn supervisor_generation_deadline_and_unsupported_recovery_fail_closed() {
     let temp = tempfile::tempdir().unwrap();
     let (command, policy) = config();
-    let handler =
-        Arc::new(Consumer { calls: AtomicUsize::new(0), complete: AtomicBool::new(false) });
+    let handler = Arc::new(Consumer::new());
     let server = Server::open(&temp.path().join("supervisor"), handler.clone()).unwrap();
     server.request(&policy, Request::Submit(command.clone()), 1).unwrap();
     let mut other = command.clone();
@@ -491,7 +493,7 @@ fn interrupted_result_persistence_requires_reopen_and_authoritative_inspect() {
     partial.write_all(b"incomplete result").unwrap();
     drop(partial);
     let server = Server::open(&root, handler).unwrap();
-    assert_eq!(terminal(&server, &policy, &command).observation.state, State::Completed);
+    assert_eq!(terminal(&server, &policy, &command, 1).observation.state, State::Completed);
     assert_eq!(std::fs::read(temp.path().join("dispatched")).unwrap(), b"once");
     assert!(!root.join(".pending-interrupted").exists());
 }
@@ -501,33 +503,15 @@ fn authenticated_inspect_recovers_retained_backend_completion_after_dispatch_dea
     let temp = tempfile::tempdir().unwrap();
     let root = temp.path().join("supervisor");
     let (command, policy) = config();
-    let handler =
-        Arc::new(Consumer { calls: AtomicUsize::new(0), complete: AtomicBool::new(false) });
+    let handler = Arc::new(Consumer::new());
     let server = Server::open(&root, handler.clone()).unwrap();
     server.request(&policy, Request::Submit(command.clone()), 1).unwrap();
     drop(server);
     // Reopening waits for the original dispatch owner to durably finish its call.
-    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(3);
-    let server = loop {
-        if let Ok(server) = Server::open(&root, handler.clone()) {
-            break server;
-        }
-        assert!(std::time::Instant::now() < deadline);
-        std::thread::sleep(std::time::Duration::from_millis(2));
-    };
+    let server = reopen(&root, handler.clone());
     assert_eq!(handler.calls.load(Ordering::SeqCst), 1);
     handler.complete.store(true, Ordering::SeqCst);
-    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(3);
-    loop {
-        if let Ok(Response::Record(record)) = server.request(&policy, inspect(&command), 20000) {
-            if record.observation.state.terminal() {
-                assert_eq!(record.observation.state, State::Completed);
-                break;
-            }
-        }
-        assert!(std::time::Instant::now() < deadline);
-        std::thread::sleep(std::time::Duration::from_millis(2));
-    }
+    assert_eq!(terminal(&server, &policy, &command, 20000).observation.state, State::Completed);
     assert_eq!(handler.calls.load(Ordering::SeqCst), 1);
 }
 
@@ -561,14 +545,8 @@ fn transient_inspect_error_after_deadline_preserves_recovery_after_restart() {
     let server = Server::open(&root, handler.clone()).unwrap();
     server.request(&policy, Request::Submit(command.clone()), 1).unwrap();
     drop(server);
+    let server = reopen(&root, handler.clone());
     let limit = Instant::now() + Duration::from_secs(5);
-    let server = loop {
-        if let Ok(server) = Server::open(&root, handler.clone()) {
-            break server;
-        }
-        assert!(Instant::now() < limit);
-        std::thread::sleep(Duration::from_millis(2));
-    };
     loop {
         if let Ok(Response::Record(record)) = server.request(&policy, inspect(&command), 20000) {
             assert!(!record.observation.state.terminal(), "failed inspect must remain recoverable");
@@ -580,16 +558,8 @@ fn transient_inspect_error_after_deadline_preserves_recovery_after_restart() {
         std::thread::sleep(Duration::from_millis(2));
     }
     handler.available.store(true, Ordering::SeqCst);
-    loop {
-        if let Ok(Response::Record(record)) = server.request(&policy, inspect(&command), 20000) {
-            if record.observation.state.terminal() {
-                assert_eq!(record.observation.state, State::Completed);
-                assert_eq!(record.observation.evidence, b"retained result");
-                break;
-            }
-        }
-        assert!(Instant::now() < limit);
-        std::thread::sleep(Duration::from_millis(2));
-    }
+    let record = terminal(&server, &policy, &command, 20000);
+    assert_eq!(record.observation.state, State::Completed);
+    assert_eq!(record.observation.evidence, b"retained result");
     assert_eq!(handler.dispatches.load(Ordering::SeqCst), 1);
 }

@@ -587,7 +587,8 @@ impl ValidatedEffectCommand {
     /// no caller-supplied digest or previous validation result is trusted.
     pub fn apply_to(&self, state: &EffectState) -> Result<Option<(EffectState, EffectIntentId)>> {
         let entry = decode_entry(&self.tenant, &self.bytes)?;
-        let before = entry_base(state, &entry)?;
+        let before =
+            entry_base(state, entry.version, &entry.tenant, &entry.principal, &entry.action)?;
         if before != self.before {
             return Ok(None);
         }
@@ -615,15 +616,14 @@ pub fn validate_command(
             _ => 1,
         }
     };
-    let mut entry = Entry {
+    let entry = Entry {
         version,
-        before: state_digest(&EffectState::default())?,
+        before: entry_base(state, version, &caller.tenant, &caller.principal, &action)?,
         tenant: caller.tenant.clone(),
         principal: caller.principal.clone(),
         at,
         action,
     };
-    entry.before = entry_base(state, &entry)?;
     apply_with_digest(state, &entry, &entry.before)?;
     Ok(ValidatedEffectCommand {
         bytes: canonical_data(&entry)?,
@@ -783,18 +783,29 @@ fn action_scope(
     };
     Ok((ids, key))
 }
-fn entry_base(state: &EffectState, entry: &Entry) -> Result<ContentHash> {
-    if entry.version != 3 {
+/// Seed the bounded ledger from a complete historical projection before its
+/// first version-3 entry. Replay and storage must use this identical transition.
+pub fn legacy_ledger(state: &EffectState) -> Result<(u64, ContentHash)> {
+    Ok((state.effects.len() as u64, state_digest(state)?))
+}
+fn entry_base(
+    state: &EffectState,
+    version: u32,
+    tenant: &OpaqueRef,
+    principal: &PrincipalId,
+    action: &JournalAction,
+) -> Result<ContentHash> {
+    if version != 3 {
         return state_digest(state);
     }
-    let (ids, key) = action_scope(&entry.tenant, &entry.principal, &entry.action)?;
+    let (ids, key) = action_scope(tenant, principal, action)?;
     let mut view = EffectState {
         revision: state.revision,
         last_at: state.last_at.clone(),
         uses: state.uses.clone(),
         ledger: Some(match &state.ledger {
             Some(ledger) => ledger.clone(),
-            None => (state.effects.len() as u64, state_digest(state)?),
+            None => legacy_ledger(state)?,
         }),
         ..Default::default()
     };
@@ -814,7 +825,11 @@ fn entry_base(state: &EffectState, entry: &Entry) -> Result<ContentHash> {
 }
 
 fn apply(state: &EffectState, entry: &Entry) -> Result<(EffectState, EffectIntentId)> {
-    apply_with_digest(state, entry, &entry_base(state, entry)?)
+    apply_with_digest(
+        state,
+        entry,
+        &entry_base(state, entry.version, &entry.tenant, &entry.principal, &entry.action)?,
+    )
 }
 // Only private callers may reuse a digest computed from this same immutable
 // state. Replay always computes it anew; no caller-supplied digest is trusted.
@@ -836,7 +851,7 @@ fn apply_with_digest(
     let now = &entry.at;
     let mut s = state.clone();
     if entry.version == 3 && s.ledger.is_none() {
-        s.ledger = Some((s.effects.len() as u64, state_digest(state)?));
+        s.ledger = Some(legacy_ledger(state)?);
     }
     if let JournalAction::Submit { id, submission, snapshot, link, owner } = &entry.action {
         let key = if let Some(owner) = owner {

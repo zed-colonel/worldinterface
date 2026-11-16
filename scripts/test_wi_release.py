@@ -334,12 +334,42 @@ class ReleaseTests(unittest.TestCase):
         expected = shared.read(shared.ROOT / 'contracts/aq-integration-target.json')['runtime_release']['crates']
         lock = {'package': [{'name': n, 'version': VERSION, **({'source': shared.CRATES_IO, 'checksum': checksums[n]} if n != 'worldinterface-runtime' else {})} for n in shared.PACKAGES]}
         lock['package'] += [{'name': n, 'version': p['version'], 'source': shared.CRATES_IO, 'checksum': p['checksum']} for n, p in expected.items()]
-        meta = {'packages': [{'id': p['name'], 'name': p['name'], 'version': p['version'], 'source': p.get('source')} for p in lock['package']]}
+        meta = {'packages': [{'id': p['name'], 'name': p['name'], 'version': p['version'], 'source': p.get('source'), 'dependencies': []} for p in lock['package']]}
         shared.check_graph(meta, lock, 'worldinterface-runtime', VERSION, checksums, inspect_manifests=False)
         for name in ['actionqueue-core', 'worldinterface-protocol']:
             changed = copy.deepcopy(lock)
             next(p for p in changed['package'] if p['name'] == name)['checksum'] = 'f' * 64
             with self.assertRaises(ValueError): shared.check_graph(meta, changed, 'worldinterface-runtime', VERSION, checksums, inspect_manifests=False)
+
+    def test_graph_rejects_substituted_edges_and_incomplete_runtime(self):
+        checksums = {n: 'b' * 64 for n in shared.PACKAGES}
+        aq = shared.read(shared.ROOT / 'contracts/aq-integration-target.json')['runtime_release']['crates']
+        lock = {'package': [
+            {'name': n, 'version': VERSION, **({'source': shared.CRATES_IO, 'checksum': checksums[n]} if n != 'worldinterface-runtime' else {})}
+            for n in shared.PACKAGES] + [
+            {'name': n, 'version': p['version'], 'source': shared.CRATES_IO, 'checksum': p['checksum']}
+            for n, p in aq.items()]}
+        meta = {'packages': [
+            {'id': p['name'], 'name': p['name'], 'version': p['version'], 'source': p.get('source'),
+             'dependencies': [{'source': shared.CRATES_IO, 'path': None}]}
+            for p in lock['package']]}
+        def check(value):
+            shared.check_graph(value, lock, 'worldinterface-runtime', VERSION, checksums, inspect_manifests=False)
+        check(meta)
+        for source, path in [(shared.CRATES_IO, '/override'), ('git+https://example.invalid', None), (None, None)]:
+            changed = copy.deepcopy(meta)
+            changed['packages'][0]['dependencies'][0].update(source=source, path=path)
+            with self.subTest(source=source, path=path), self.assertRaisesRegex(ValueError, 'resolution edge'):
+                check(changed)
+        for name in ['worldinterface-worker', 'actionqueue-core']:
+            changed = copy.deepcopy(meta)
+            changed['packages'] = [p for p in changed['packages'] if p['name'] != name]
+            with self.subTest(missing=name), self.assertRaisesRegex(ValueError, 'incomplete'):
+                check(changed)
+        changed = copy.deepcopy(meta)
+        next(p for p in changed['packages'] if p['name'] == 'actionqueue-core')['version'] = '0.2.0'
+        with self.assertRaisesRegex(ValueError, 'resolved AQ'):
+            check(changed)
 
     def test_archive_paths_duplicates_symlinks_and_tampering(self):
         path = self.base / 'bad.crate'

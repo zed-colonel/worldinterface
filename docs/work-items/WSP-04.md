@@ -93,8 +93,8 @@ the load-sensitive precondition; the shared clock and explicit precondition now
 also cover that sibling fixture, preserving all four modes and restart assertions. WSP-05 must
 list this additive trusted-host API alongside the supervisor APIs in alpha.2 notes.
 Also record `QueueEngine::tick_diagnostics`, `TickDiagnostics`, `ReconcileWork`,
-`RECONCILE_ROWS_PER_TICK`, and storage `PendingFlow`/`flow_pending_page`/
-`flow_next_tenant`/`flow_scan_bounds`, plus `flow_prepare_scheduling`,
+`RECONCILE_ROWS_PER_TICK`, and storage `PendingFlow`/`flow_scan_bounds`
+(the maximum run rowid), plus `flow_prepare_scheduling`,
 `flow_pending_global_page` and `flow_pending_run`: additive trusted-host diagnostics
 and scheduling reads. The runtime no longer uses tenant-at-a-time scheduling.
 The explicit inventory/disposition additions are submitted with this item for review.

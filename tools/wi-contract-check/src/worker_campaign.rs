@@ -410,12 +410,7 @@ const PRIORITY_TESTS: [&str; 3] = [
 pub fn validate_priority_tests<'a>(selected: impl Iterator<Item = &'a TestRef>) -> Result<()> {
     let selected = selected.collect::<Vec<_>>();
     for test in PRIORITY_TESTS {
-        let count = selected
-            .iter()
-            .filter(|r| {
-                r.manifest == RUNTIME && r.package == "worldinterface-runtime" && r.test == test
-            })
-            .count();
+        let count = selected.iter().filter(|r| is_runtime_test(r, test)).count();
         if count != 1 {
             return Err(format!(
                 "required campaign priority test {test}: expected one selection, found {count}"
@@ -425,13 +420,19 @@ pub fn validate_priority_tests<'a>(selected: impl Iterator<Item = &'a TestRef>) 
     }
     Ok(())
 }
+fn is_runtime_test(reference: &TestRef, name: &str) -> bool {
+    reference.manifest == RUNTIME
+        && reference.package == "worldinterface-runtime"
+        && reference.test == name
+}
 fn execution_priority(reference: &TestRef) -> u8 {
-    if reference.manifest == RUNTIME && reference.package == "worldinterface-runtime" {
-        if let Some(index) = PRIORITY_TESTS.iter().position(|test| reference.test == *test) {
-            return if index == 0 { 0 } else { 1 };
+    PRIORITY_TESTS.iter().position(|test| is_runtime_test(reference, test)).map_or(2, |index| {
+        if index == 0 {
+            0
+        } else {
+            1
         }
-    }
-    2
+    })
 }
 fn execute_harnesses(
     root: &Path,
@@ -451,21 +452,7 @@ fn execute_harnesses(
     let mut selected = VecDeque::from(selected);
     let mut outcomes = Vec::new();
     let mut execution_phases = 0;
-    if selected.front().is_some_and(|(reference, _)| execution_priority(reference) == 0) {
-        execution_phases += 1;
-    }
-    while selected.front().is_some_and(|(reference, _)| execution_priority(reference) == 0) {
-        let (reference, executable) = selected.pop_front().unwrap();
-        let outcome =
-            execute_bound(root, reference, &executable, directory, &digests[&executable])?;
-        eprintln!(
-            "campaign {}: {}",
-            outcome.reference.test,
-            if outcome.passed { "passed" } else { "FAILED" }
-        );
-        outcomes.push(outcome);
-    }
-    for priority in [1, 2] {
+    for (priority, parallelism) in [(0, 1), (1, 2), (2, PARALLELISM)] {
         let mut phase = VecDeque::new();
         while selected
             .front()
@@ -477,7 +464,6 @@ fn execute_harnesses(
             continue;
         }
         execution_phases += 1;
-        let parallelism = if priority == 1 { 2 } else { PARALLELISM };
         let pending = Mutex::new(phase);
         let batches = std::thread::scope(|scope| {
             let workers = (0..parallelism)
@@ -544,10 +530,7 @@ pub fn execute(
 /// This harness budget is separate from bounded worker/supervisor operations
 /// and does not change the adopted command's ceiling or its timing obligation.
 pub fn harness_timeout_seconds(reference: &TestRef) -> u64 {
-    if reference.manifest == proof::RUNTIME
-        && reference.package == "worldinterface-runtime"
-        && reference.test == "flow_capacity_is_enforced_without_losing_existing_history"
-    {
+    if is_runtime_test(reference, "flow_capacity_is_enforced_without_losing_existing_history") {
         900
     } else {
         600

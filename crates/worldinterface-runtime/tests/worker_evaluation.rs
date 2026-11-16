@@ -46,24 +46,22 @@ fn fixture() -> (tempfile::TempDir, EvaluationVerifier<Trust>) {
 #[test]
 fn packet_acceptance_is_independent_of_calendar_and_rejects_revocation() {
     let (_t, v) = fixture();
-    for now in [0, 100, 200, u64::MAX] {
-        v.verify(now).unwrap();
-    }
+    v.verify().unwrap();
     v.trusted.revoked.store(true, Ordering::SeqCst);
-    assert!(v.verify(100).is_err());
+    assert!(v.verify().is_err());
 }
 #[test]
 fn committed_packet_cannot_widen_tasks_operations_cases_environment_or_source_bindings() {
     let (t, mut v) = fixture();
     let env = v.manifest.environment.clone();
-    v.authorize(100, "WP-017", "start", &Task::Probe, &env).unwrap();
+    v.authorize("WP-017", "start", &Task::Probe, &env).unwrap();
     for (case, op, task, environment) in [
         ("WP-018", "start", Task::Probe, env.clone()),
         ("WP-017", "command", Task::Probe, env.clone()),
         ("WP-017", "start", Task::Transform { xor: 7 }, env.clone()),
         ("WP-017", "start", Task::Probe, ContentHash::of(b"other-environment")),
     ] {
-        assert!(v.authorize(100, case, op, &task, &environment).is_err());
+        assert!(v.authorize(case, op, &task, &environment).is_err());
     }
     let original = v.manifest.clone();
     for mode in ["ordinary", "credential", "input", "profile", "bound", "new-task"] {
@@ -79,11 +77,11 @@ fn committed_packet_cannot_widen_tasks_operations_cases_environment_or_source_bi
             }
         };
         // A changed request cannot update the independently bound host packet.
-        assert!(v.verify(100).is_err(), "{mode}");
+        assert!(v.verify().is_err(), "{mode}");
     }
     v.manifest = original;
     std::fs::write(t.path().join("fixture.rs"), b"changed source").unwrap();
-    assert!(v.verify(100).is_err());
+    assert!(v.verify().is_err());
 }
 
 #[test]

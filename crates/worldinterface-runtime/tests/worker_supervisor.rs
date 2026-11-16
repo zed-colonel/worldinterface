@@ -1,6 +1,7 @@
 mod support {
     pub mod child;
     pub mod connectors;
+    pub mod spi_harness;
     pub mod supervisor_fixture;
     pub mod supervisor_harness;
 }
@@ -453,30 +454,10 @@ fn wp_035_authenticated_supervisor_binds_exact_lifecycle_operation() {
     )
     .unwrap();
     let store = bundle.wi();
-    for bytes in [b"resolution".as_slice(), b"grant"] {
-        store.publish(caller.tenant().clone(), bytes).unwrap();
-    }
     store
         .publish(caller.tenant().clone(), &std::fs::read(temp.path().join("request.json")).unwrap())
         .unwrap();
-    let verified = || {
-        worldinterface_domain::authorization::VerifiedSnapshot::from_trusted_verifier(
-            snapshot.clone(),
-        )
-        .unwrap()
-    };
-    let id = worldinterface_egress::Egress::new(store)
-        .apply(
-            &caller,
-            Timestamp::from_epoch_millis(now()).unwrap(),
-            worldinterface_domain::effect::EffectAction::Submit {
-                id: EffectIntentId::generate(),
-                submission: Box::new(submission),
-                snapshot: verified(),
-                link: None,
-            },
-        )
-        .unwrap();
+    let id = support::spi_harness::submit(store, &Clock::new(), submission, &snapshot);
     if let Target::Lifecycle { operation, .. } = &mut snapshot.facts[0].document.target {
         *operation = r("recover");
     }

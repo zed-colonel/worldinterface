@@ -2,7 +2,9 @@
 //! The root is trusted local storage, never an authenticated public API.
 use crate::{invalid, Batch, Result, StoreKind, StoreRoot};
 use rusqlite::{params, Connection, OptionalExtension, TransactionBehavior};
-use worldinterface_domain::effect::{replay_command, EffectState, ValidatedEffectCommand};
+use worldinterface_domain::effect::{
+    legacy_ledger, replay_command, EffectState, ValidatedEffectCommand,
+};
 use worldinterface_protocol::*;
 
 /// Optimistic journal conflict or SQLite writer contention. Callers must
@@ -116,10 +118,7 @@ fn bounded_view(
         // One-time transition from historical full-state commands. Replay derives
         // the identical seed from the complete legacy projection.
         state = snapshot(c, tenant)?;
-        let ledger = (
-            state.effects.len() as u64,
-            worldinterface_domain::effect::state_digest(&state).map_err(invalid)?,
-        );
+        let ledger = legacy_ledger(&state).map_err(invalid)?;
         state.effects.clear();
         state.requests.clear();
         state.ledger = Some(ledger);
@@ -1076,10 +1075,7 @@ mod tests {
             if n == 2 {
                 // First v3 command after legacy entries derives a full legacy
                 // seed once; byte replay must make the identical transition.
-                state.ledger = Some((
-                    state.effects.len() as u64,
-                    worldinterface_domain::effect::state_digest(&state).unwrap(),
-                ));
+                state.ledger = Some(legacy_ledger(&state).unwrap());
             }
             let command = validate_command(
                 &state,

@@ -47,6 +47,67 @@ impl actionqueue_core::time::clock::Clock for AqClock {
         self.0.now().unwrap().epoch_millis().unwrap() / 1000
     }
 }
+/// Publish the shared fixture evidence and submit through the real WI reducer.
+pub fn submit(
+    store: &worldinterface_storage::StoreRoot,
+    clock: &Clock,
+    submission: EffectSubmission,
+    snapshot: &AuthorizationSnapshot,
+) -> EffectIntentId {
+    let caller = AuthenticatedCaller::from_trusted_authentication(
+        snapshot.bindings[0].tenant.clone(),
+        snapshot.bindings[0].principal.clone(),
+    );
+    for bytes in [b"resolution".as_slice(), b"grant"] {
+        store.publish(caller.tenant().clone(), bytes).unwrap();
+    }
+    Egress::new(store)
+        .apply(
+            &caller,
+            clock.now().unwrap(),
+            EffectAction::Submit {
+                id: EffectIntentId::generate(),
+                submission: Box::new(submission),
+                snapshot: VerifiedSnapshot::from_trusted_verifier(snapshot.clone()).unwrap(),
+                link: None,
+            },
+        )
+        .unwrap()
+}
+pub fn admit(
+    bundle: &StoreBundle,
+    clock: &Clock,
+    snapshot: &AuthorizationSnapshot,
+    id: &EffectIntentId,
+) -> RunId {
+    let caller = AuthenticatedCaller::from_trusted_authentication(
+        snapshot.bindings[0].tenant.clone(),
+        snapshot.bindings[0].principal.clone(),
+    );
+    let egress = Egress::new(bundle.wi());
+    let verified = || VerifiedSnapshot::from_trusted_verifier(snapshot.clone()).unwrap();
+    for action in [
+        EffectAction::Resolve { id: id.clone(), snapshot: verified() },
+        EffectAction::Authorize { id: id.clone(), snapshot: verified() },
+    ] {
+        egress.apply(&caller, clock.now().unwrap(), action).unwrap();
+    }
+    assert_eq!(
+        egress.inspect(&caller, id).unwrap().phase,
+        worldinterface_domain::Phase::Authorized
+    );
+    let mut queue = QueueEngine::bootstrap(bundle, Noop, host()).unwrap();
+    admission::prepare(bundle, &caller, clock.now().unwrap(), id, verified()).unwrap();
+    admission::deliver(&mut queue, &caller, clock.now().unwrap(), id, verified()).unwrap();
+    run_discovery::discover(&queue, &caller, clock.now().unwrap(), id, 8).unwrap();
+    let state = bundle.wi().effect_snapshot(caller.tenant()).unwrap();
+    let run = state.effects[id].dispatches[0].admission.as_ref().unwrap().observed_runs[0]
+        .as_str()
+        .parse()
+        .unwrap();
+    queue.shutdown().unwrap();
+    run
+}
 pub struct Harness {
     pub temp: tempfile::TempDir,
     pub bundle: Arc<StoreBundle>,
@@ -82,43 +143,9 @@ impl Harness {
             snapshot.bindings[0].tenant.clone(),
             snapshot.bindings[0].principal.clone(),
         );
-        for bytes in [b"input".as_slice(), b"resolution", b"grant"] {
-            bundle.wi().publish(caller.tenant().clone(), bytes).unwrap();
-        }
-        let egress = Egress::new(bundle.wi());
-        let verified = || VerifiedSnapshot::from_trusted_verifier(snapshot.clone()).unwrap();
-        let id = egress
-            .apply(
-                &caller,
-                clock.now().unwrap(),
-                EffectAction::Submit {
-                    id: EffectIntentId::generate(),
-                    submission: Box::new(submission),
-                    snapshot: verified(),
-                    link: None,
-                },
-            )
-            .unwrap();
-        for action in [
-            EffectAction::Resolve { id: id.clone(), snapshot: verified() },
-            EffectAction::Authorize { id: id.clone(), snapshot: verified() },
-        ] {
-            egress.apply(&caller, clock.now().unwrap(), action).unwrap();
-        }
-        assert_eq!(
-            egress.inspect(&caller, &id).unwrap().phase,
-            worldinterface_domain::Phase::Authorized
-        );
-        let mut queue = QueueEngine::bootstrap(&bundle, Noop, host()).unwrap();
-        admission::prepare(&bundle, &caller, clock.now().unwrap(), &id, verified()).unwrap();
-        admission::deliver(&mut queue, &caller, clock.now().unwrap(), &id, verified()).unwrap();
-        run_discovery::discover(&queue, &caller, clock.now().unwrap(), &id, 8).unwrap();
-        let state = bundle.wi().effect_snapshot(caller.tenant()).unwrap();
-        let run = state.effects[&id].dispatches[0].admission.as_ref().unwrap().observed_runs[0]
-            .as_str()
-            .parse()
-            .unwrap();
-        queue.shutdown().unwrap();
+        bundle.wi().publish(caller.tenant().clone(), b"input").unwrap();
+        let id = submit(bundle.wi(), &clock, submission, &snapshot);
+        let run = admit(&bundle, &clock, &snapshot, &id);
         Self { temp, bundle, connector, snapshot, id, run, clock }
     }
     pub fn caller(&self) -> AuthenticatedCaller {

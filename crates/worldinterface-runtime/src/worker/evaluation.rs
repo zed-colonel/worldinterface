@@ -110,7 +110,7 @@ pub struct EvaluationVerifier<S> {
     pub source_root: std::path::PathBuf,
 }
 impl<S: TrustedApprovals> EvaluationVerifier<S> {
-    pub fn verify(&self, _now_ms: u64) -> Result<VerifiedEvaluation> {
+    pub fn verify(&self) -> Result<VerifiedEvaluation> {
         self.manifest.verify_sources(&self.source_root)?;
         let digest = self.manifest.digest()?;
         if !self.trusted.accepted(&self.manifest, &self.source_root)? {
@@ -120,13 +120,12 @@ impl<S: TrustedApprovals> EvaluationVerifier<S> {
     }
     pub fn authorize(
         &self,
-        now_ms: u64,
         case: &str,
         operation: &str,
         task: &Task,
         environment: &ContentHash,
     ) -> Result<VerifiedEvaluation> {
-        let verified = self.verify(now_ms)?;
+        let verified = self.verify()?;
         if !self.manifest.cases.contains(case)
             || !self.manifest.operations.contains(operation)
             || !self.manifest.tasks.contains(&worldinterface_protocol::data_digest(task)?)
@@ -140,14 +139,11 @@ impl<S: TrustedApprovals> EvaluationVerifier<S> {
 /// Wrap the ordinary WI evidence authority so admission and dispatch both reverify packet integrity.
 /// Base evidence still authenticates caller, grants, artifacts and exact realization.
 #[derive(Clone)]
-pub struct EvaluationAuthority<A, S, C> {
+pub struct EvaluationAuthority<A, S> {
     pub base: A,
     pub evaluation: std::sync::Arc<EvaluationVerifier<S>>,
-    pub clock: C,
 }
-impl<A: EvidenceAuthority, S: TrustedApprovals, C: crate::worker_process::Clock> EvidenceAuthority
-    for EvaluationAuthority<A, S, C>
-{
+impl<A: EvidenceAuthority, S: TrustedApprovals> EvidenceAuthority for EvaluationAuthority<A, S> {
     fn current_snapshot(
         &self,
         tenant: &OpaqueRef,
@@ -162,7 +158,7 @@ impl<A: EvidenceAuthority, S: TrustedApprovals, C: crate::worker_process::Clock>
                 return Err("invalid recovery scope".into());
             }
         } else if let Some(worker) = &snapshot.worker {
-            self.evaluation.verify(self.clock.unix_ms())?;
+            self.evaluation.verify()?;
             if snapshot.qualification.is_some()
                 || snapshot.fixture.is_none()
                 || worker.profile.as_str() != self.evaluation.manifest.profile

@@ -404,7 +404,7 @@ fn reconcile_page<H: actionqueue_executor_local::handler::ExecutorHandler + 'sta
         cursor.position = None;
         if cursor.pass_position.is_none() {
             cursor.pass_position = Some(position);
-            cursor.through = root.flow_scan_bounds()?.1;
+            cursor.through = root.flow_scan_bounds()?;
             cursor.after = 0;
         }
         let page = root.flow_pending_global_page(cursor.after, cursor.through, background_limit)?;
@@ -413,11 +413,10 @@ fn reconcile_page<H: actionqueue_executor_local::handler::ExecutorHandler + 'sta
         if let Some(last) = page.last() {
             cursor.after = last.position;
         }
-        // Count all fetched rows, including a row also selected by the priority lane.
-        cursor.work.rows += page.len();
         entries.extend(page);
     }
-    cursor.work.rows += entries.len() - page_len;
+    // Count all fetched rows, including a row also selected by the priority lane.
+    cursor.work.rows += entries.len();
     *remaining -= entries.len();
     for entry in &entries {
         let r = &entry.run;

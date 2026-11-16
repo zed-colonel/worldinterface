@@ -248,7 +248,7 @@ impl<H: actionqueue_executor_local::handler::ExecutorHandler>
         result
     }
 }
-pub type Evidence = EvaluationAuthority<HostEvidence, Approval, HostClock>;
+pub type Evidence = EvaluationAuthority<HostEvidence, Approval>;
 pub struct Harness {
     pub temp: tempfile::TempDir,
     pub root: std::path::PathBuf,
@@ -798,11 +798,8 @@ impl Harness {
         snapshot: AuthorizationSnapshot,
         config: Config,
     ) -> FlowOutcome {
-        let evidence = Evidence {
-            base: HostEvidence(snapshot.clone()),
-            evaluation: self.evaluation.clone(),
-            clock: HostClock,
-        };
+        let evidence =
+            Evidence { base: HostEvidence(snapshot.clone()), evaluation: self.evaluation.clone() };
         let resolver = Resolver(snapshot.facts[0].clone());
         let connector = AmbiguousConnector {
             inner: self.runtime.connector(op).unwrap(),

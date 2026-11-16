@@ -13139,21 +13139,7 @@
     "source": "docs/work-items/WSP-03.md; accepted WI-SUPERVISOR-PROOF-1 WSP-03 design; WI-ADR-010/016/018"
   },
   {
-    "id": "crates/worldinterface-runtime/tests/support/supervisor_harness.rs::::struct:AqClock",
-    "disposition": "test-evidence",
-    "target": "bounded-host-supervisor",
-    "rationale": "WSP-03 candidate: separate public supervisor lifecycle API, authenticated private channel, independent durable journal and bounded reconciliation. No engine client or worker instance-control authority. Effective only through qualifying source review/merge.",
-    "source": "docs/work-items/WSP-03.md; accepted WI-SUPERVISOR-PROOF-1 WSP-03 design; WI-ADR-010/016/018"
-  },
-  {
     "id": "crates/worldinterface-runtime/tests/support/supervisor_harness.rs::::struct:Harness",
-    "disposition": "test-evidence",
-    "target": "bounded-host-supervisor",
-    "rationale": "WSP-03 candidate: separate public supervisor lifecycle API, authenticated private channel, independent durable journal and bounded reconciliation. No engine client or worker instance-control authority. Effective only through qualifying source review/merge.",
-    "source": "docs/work-items/WSP-03.md; accepted WI-SUPERVISOR-PROOF-1 WSP-03 design; WI-ADR-010/016/018"
-  },
-  {
-    "id": "crates/worldinterface-runtime/tests/support/supervisor_harness.rs::::struct:Noop",
     "disposition": "test-evidence",
     "target": "bounded-host-supervisor",
     "rationale": "WSP-03 candidate: separate public supervisor lifecycle API, authenticated private channel, independent durable journal and bounded reconciliation. No engine client or worker instance-control authority. Effective only through qualifying source review/merge.",
@@ -13193,6 +13179,13 @@
     "target": "bounded-host-supervisor",
     "rationale": "WSP-03 candidate: separate public supervisor lifecycle API, authenticated private channel, independent durable journal and bounded reconciliation. No engine client or worker instance-control authority. Effective only through qualifying source review/merge.",
     "source": "docs/work-items/WSP-03.md; accepted WI-SUPERVISOR-PROOF-1 WSP-03 design; WI-ADR-010/016/018"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_supervisor.rs::support::module:spi_harness",
+    "disposition": "test-evidence",
+    "target": "bounded-host-supervisor",
+    "rationale": "F-018/F-026 selected simplification: reuse SPI host, AQ clock, submission and admission helpers for supervisor evidence; no authority or case-scope change. Effective only through qualifying source review/merge.",
+    "source": "WI-SUPERVISOR-PROOF-1 selected batch F-018/F-026; docs/work-items/WSP-04.md"
   },
   {
     "id": "crates/worldinterface-runtime/tests/worker_supervisor.rs::support::module:supervisor_fixture",

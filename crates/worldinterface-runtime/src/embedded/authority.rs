@@ -1,11 +1,11 @@
 use super::*;
 
 pub(super) trait EvaluationGate: Send + Sync {
-    fn verify(&self, now: u64) -> Result<()>;
+    fn verify(&self) -> Result<()>;
 }
 impl<S: TrustedWorkerBuild> EvaluationGate for EvaluationVerifier<S> {
-    fn verify(&self, now: u64) -> Result<()> {
-        EvaluationVerifier::verify(self, now)?;
+    fn verify(&self) -> Result<()> {
+        EvaluationVerifier::verify(self)?;
         Ok(())
     }
 }
@@ -40,10 +40,7 @@ impl<V: EvidenceAuthority, C: TrustedClock> EvidenceAuthority for ManagedEvidenc
                 return Err("invalid embedded recovery scope".into());
             }
         } else if snapshot.worker.is_some() {
-            self.evaluation
-                .as_ref()
-                .ok_or("evaluation approval unavailable")?
-                .verify(self.clock.now()?.epoch_millis()?)?;
+            self.evaluation.as_ref().ok_or("evaluation approval unavailable")?.verify()?;
         }
         let principal =
             snapshot.bindings.first().ok_or("managed binding absent")?.principal.clone();

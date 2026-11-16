@@ -1,55 +1,27 @@
 #![allow(dead_code)]
-use super::connectors::*;
-use actionqueue_core::{
-    bounded::OpaqueRef as AqRef,
-    causal::ControlMutationContext,
-    control::{ControlScope, HostControlContext},
-    disposition::AttemptDisposition,
-    ids::RunId,
+use super::{
+    connectors::*,
+    spi_harness::{admit, host, submit, AqClock, Noop},
 };
-use actionqueue_executor_local::handler::{ExecutorContext, ExecutorHandler};
+use actionqueue_core::ids::RunId;
+use actionqueue_executor_local::handler::ExecutorHandler;
 use actionqueue_runtime::{
     config::{BackoffStrategyConfig, RuntimeConfig},
-    engine::ActionQueueEngine,
+    engine::{ActionQueueEngine, BootstrappedEngine},
 };
 use std::{collections::BTreeMap, sync::Arc, time::Instant};
 use worldinterface_domain::{
-    agency::AuthenticatedCaller,
-    authorization::{AuthorizationSnapshot, VerifiedSnapshot},
-    effect::EffectAction,
+    agency::AuthenticatedCaller, authorization::AuthorizationSnapshot,
     reconciliation::ReconciliationCase,
 };
-use worldinterface_egress::Egress;
 use worldinterface_protocol::*;
 use worldinterface_runtime::{
-    admission,
     aq_adapter::QueueEngine,
     authority::TrustedClock,
     completion::EffectAttemptHandler,
     reconciliation::{self, ReconciliationHandler},
-    run_discovery,
     storage::StoreBundle,
 };
-pub fn host() -> HostControlContext {
-    HostControlContext {
-        actor_id: None,
-        scope: ControlScope::SingleTenant,
-        attribution: ControlMutationContext::new(AqRef::new("host").unwrap()),
-    }
-}
-pub struct Noop;
-impl ExecutorHandler for Noop {
-    fn execute(&self, _: ExecutorContext) -> AttemptDisposition {
-        AttemptDisposition::complete(None)
-    }
-}
-#[derive(Clone)]
-pub struct AqClock(pub Clock);
-impl actionqueue_core::time::clock::Clock for AqClock {
-    fn now(&self) -> u64 {
-        self.0.now().unwrap().epoch_millis().unwrap() / 1000
-    }
-}
 pub struct Harness {
     pub bundle: Arc<StoreBundle>,
     pub connector: Arc<worldinterface_runtime::supervisor::SupervisorConnector>,
@@ -81,41 +53,10 @@ impl Harness {
             snapshot.bindings[0].tenant.clone(),
             snapshot.bindings[0].principal.clone(),
         );
-        for bytes in [b"resolution".as_slice(), b"grant"] {
-            bundle.wi().publish(caller.tenant().clone(), bytes).unwrap();
-        }
         let input = std::fs::read(root.join("request.json")).unwrap();
         bundle.wi().publish(caller.tenant().clone(), &input).unwrap();
-        let egress = Egress::new(bundle.wi());
-        let verified = || VerifiedSnapshot::from_trusted_verifier(snapshot.clone()).unwrap();
-        let id = egress
-            .apply(
-                &caller,
-                clock.now().unwrap(),
-                EffectAction::Submit {
-                    id: EffectIntentId::generate(),
-                    submission: Box::new(submission),
-                    snapshot: verified(),
-                    link: None,
-                },
-            )
-            .unwrap();
-        for action in [
-            EffectAction::Resolve { id: id.clone(), snapshot: verified() },
-            EffectAction::Authorize { id: id.clone(), snapshot: verified() },
-        ] {
-            egress.apply(&caller, clock.now().unwrap(), action).unwrap();
-        }
-        let mut queue = QueueEngine::bootstrap(&bundle, Noop, host()).unwrap();
-        admission::prepare(&bundle, &caller, clock.now().unwrap(), &id, verified()).unwrap();
-        admission::deliver(&mut queue, &caller, clock.now().unwrap(), &id, verified()).unwrap();
-        run_discovery::discover(&queue, &caller, clock.now().unwrap(), &id, 8).unwrap();
-        let state = bundle.wi().effect_snapshot(caller.tenant()).unwrap();
-        let run = state.effects[&id].dispatches[0].admission.as_ref().unwrap().observed_runs[0]
-            .as_str()
-            .parse()
-            .unwrap();
-        queue.shutdown().unwrap();
+        let id = submit(bundle.wi(), &clock, submission, &snapshot);
+        let run = admit(&bundle, &clock, &snapshot, &id);
         Self { bundle, connector, snapshot, id, run, clock }
     }
     pub fn caller(&self) -> AuthenticatedCaller {
@@ -136,33 +77,6 @@ impl Harness {
             .unwrap()
             .clone()
     }
-    pub fn context(&self) -> ExecutorContext {
-        use actionqueue_executor_local::handler::{
-            AttemptMetadata, CancellationContext, HandlerInput,
-        };
-        let effect = self.effect();
-        let admission = effect.dispatches[0].admission.as_ref().unwrap();
-        let request =
-            worldinterface_runtime::admission::load_request(self.bundle.wi(), admission).unwrap();
-        ExecutorContext {
-            children: None,
-            input: HandlerInput {
-                resume_context: None,
-                causal_context: Some(request.causal_context().clone()),
-                run_id: self.run,
-                attempt_id: actionqueue_core::ids::AttemptId::new(),
-                payload: request.task_spec().task_payload().bytes().to_vec(),
-                metadata: AttemptMetadata {
-                    failure_attempt_count: 0,
-                    max_attempts: 3,
-                    attempt_number: 1,
-                    timeout_secs: Some(30),
-                    safety_level: actionqueue_core::task::safety::SafetyLevel::Idempotent,
-                },
-                cancellation_context: CancellationContext::new(),
-            },
-        }
-    }
     pub fn handler(
         &self,
     ) -> EffectAttemptHandler<
@@ -181,8 +95,8 @@ impl Harness {
         let current = self.clock.now().unwrap().epoch_millis().unwrap();
         self.clock.advance((seconds * 1000).saturating_sub(current));
     }
-    pub async fn execute(&self) {
-        let mut engine = ActionQueueEngine::new(
+    fn engine<H: ExecutorHandler + 'static>(&self, handler: H) -> BootstrappedEngine<H, AqClock> {
+        ActionQueueEngine::new(
             RuntimeConfig {
                 data_dir: self.bundle.aq_path(),
                 tick_interval: std::time::Duration::from_millis(1),
@@ -191,11 +105,25 @@ impl Harness {
                 },
                 ..Default::default()
             },
-            self.handler(),
+            handler,
         )
         .bootstrap_with_clock(AqClock(self.clock.clone()))
         .unwrap()
-        .with_host(host());
+        .with_host(host())
+    }
+    fn release_timer(&self, run: &actionqueue_core::run::run_instance::RunInstance) {
+        match run.state() {
+            actionqueue_core::run::state::RunState::Scheduled => {
+                self.advance_to(run.scheduled_at())
+            }
+            actionqueue_core::run::state::RunState::RetryWait => {
+                self.advance_to(run.last_state_change_at() + 1)
+            }
+            _ => {}
+        }
+    }
+    pub async fn execute(&self) {
+        let mut engine = self.engine(self.handler());
         let deadline = Instant::now() + std::time::Duration::from_secs(10);
         while Instant::now() < deadline {
             let _ = engine.tick().await.unwrap();
@@ -212,15 +140,7 @@ impl Harness {
             // Release only an actual AQ timer, once. Never consume virtual
             // seconds merely because the executor has not picked up work yet.
             for run in engine.projection().run_instances().filter(|r| r.id() == self.run) {
-                match run.state() {
-                    actionqueue_core::run::state::RunState::Scheduled => {
-                        self.advance_to(run.scheduled_at())
-                    }
-                    actionqueue_core::run::state::RunState::RetryWait => {
-                        self.advance_to(run.last_state_change_at() + 1)
-                    }
-                    _ => {}
-                }
+                self.release_timer(run);
             }
             tokio::time::sleep(std::time::Duration::from_millis(1)).await;
         }
@@ -231,31 +151,15 @@ impl Harness {
         );
     }
     pub async fn reconcile(&self) {
-        self.reconcile_with_clock(self.clock.clone()).await;
-    }
-    pub async fn reconcile_with_clock<C: TrustedClock + Send + Sync + 'static>(&self, clock: C) {
         let mut queue = QueueEngine::bootstrap(&self.bundle, Noop, host()).unwrap();
         reconciliation::deliver(&mut queue, &self.caller(), &self.clock, &self.id).unwrap();
         queue.shutdown().unwrap();
         let handler = ReconciliationHandler {
             bundle: self.bundle.clone(),
             connector: self.connector.clone(),
-            clock,
+            clock: self.clock.clone(),
         };
-        let mut engine = ActionQueueEngine::new(
-            RuntimeConfig {
-                data_dir: self.bundle.aq_path(),
-                tick_interval: std::time::Duration::from_millis(1),
-                backoff_strategy: BackoffStrategyConfig::Fixed {
-                    interval: std::time::Duration::from_secs(1),
-                },
-                ..Default::default()
-            },
-            handler,
-        )
-        .bootstrap_with_clock(AqClock(self.clock.clone()))
-        .unwrap()
-        .with_host(host());
+        let mut engine = self.engine(handler);
         let deadline = Instant::now() + std::time::Duration::from_secs(10);
         let mut waits = BTreeMap::new();
         while Instant::now() < deadline {
@@ -276,26 +180,18 @@ impl Harness {
                 return;
             }
             for run in engine.projection().run_instances().filter(|r| r.id() != self.run) {
-                match run.state() {
-                    actionqueue_core::run::state::RunState::Scheduled => {
-                        self.advance_to(run.scheduled_at())
-                    }
-                    actionqueue_core::run::state::RunState::RetryWait => {
-                        self.advance_to(run.last_state_change_at() + 1)
-                    }
-                    actionqueue_core::run::state::RunState::Awaiting => {
-                        if let Some(wait) = engine.projection().waits().active(run.id()) {
-                            // The supervisor drives inspect on a real thread. Pace
-                            // each distinct polling wait in real time so a busy
-                            // backend cannot exhaust the virtual policy budget.
-                            let first_seen =
-                                waits.entry(wait.spec.wait_id()).or_insert_with(Instant::now);
-                            if first_seen.elapsed() >= std::time::Duration::from_secs(1) {
-                                self.advance_to(wait.spec.deadline().unwrap().at);
-                            }
+                self.release_timer(run);
+                if run.state() == actionqueue_core::run::state::RunState::Awaiting {
+                    if let Some(wait) = engine.projection().waits().active(run.id()) {
+                        // The supervisor drives inspect on a real thread. Pace
+                        // each distinct polling wait in real time so a busy
+                        // backend cannot exhaust the virtual policy budget.
+                        let first_seen =
+                            waits.entry(wait.spec.wait_id()).or_insert_with(Instant::now);
+                        if first_seen.elapsed() >= std::time::Duration::from_secs(1) {
+                            self.advance_to(wait.spec.deadline().unwrap().at);
                         }
                     }
-                    _ => {}
                 }
             }
             tokio::time::sleep(std::time::Duration::from_millis(1)).await;

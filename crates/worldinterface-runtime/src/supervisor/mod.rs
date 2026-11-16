@@ -67,7 +67,7 @@ impl Server {
     ) -> Result<Response> {
         let mut journal = self.journal.try_lock().map_err(|_| "supervisor journal busy")?;
         journal.healthy()?;
-        let (record, fresh) = match request {
+        let (record, authorized, fresh) = match request {
             Request::Submit(command) => {
                 let authorized = policy.authorize(command.clone(), now_ms, false)?;
                 if let Some(old) = journal.get(&command.key) {
@@ -77,14 +77,14 @@ impl Server {
                     {
                         return Err("supervisor key conflict".into());
                     }
-                    (old.clone(), false)
+                    (old.clone(), authorized, false)
                 } else {
                     if self.busy.load(Ordering::SeqCst)
-                        || journal.generation_claimed(&command, &policy.session.tenant)
+                        || journal.generation_claimed(&command, &authorized.session().tenant)
                     {
                         return Err("supervisor capacity or generation already claimed".into());
                     }
-                    policy.authorize(command.clone(), now_ms, true)?;
+                    let authorized = policy.authorize(command.clone(), now_ms, true)?;
                     let record = Record {
                         version: VERSION,
                         command,
@@ -93,7 +93,7 @@ impl Server {
                         observation: Observation { state: State::Accepted, evidence: vec![] },
                     };
                     journal.persist(&record)?;
-                    (record, true)
+                    (record, authorized, true)
                 }
             }
             Request::Inspect(query) => {
@@ -101,39 +101,38 @@ impl Server {
                     return Err("unsupported inspect version".into());
                 }
                 let old = journal.get(&query.key).ok_or("unknown supervisor command")?;
-                policy.authorize(old.command.clone(), now_ms, false)?;
-                if old.tenant != policy.session.tenant
-                    || old.principal != policy.session.principal
+                let authorized = policy.authorize(old.command.clone(), now_ms, false)?;
+                if old.tenant != authorized.session().tenant
+                    || old.principal != authorized.session().principal
                     || old.command.digest()? != query.command
                 {
                     return Err("inspect binding mismatch".into());
                 }
-                (old.clone(), false)
+                (old.clone(), authorized, false)
             }
         };
         if !record.observation.state.terminal() {
-            self.drive(policy, &record, now_ms, fresh)?;
+            self.drive(authorized, policy.revoked.clone(), &record, now_ms, fresh)?;
         }
         drop(journal);
         // Acceptance is returned even if a fast backend has already completed.
         Ok(Response::Record(Box::new(record)))
     }
-    fn drive(&self, policy: &ChannelPolicy, record: &Record, now: u64, fresh: bool) -> Result<()> {
+    fn drive(
+        &self,
+        auth: AuthorizedSupervisorCommand,
+        revoked: Arc<AtomicBool>,
+        record: &Record,
+        now: u64,
+        fresh: bool,
+    ) -> Result<()> {
         if self.busy.compare_exchange(false, true, Ordering::SeqCst, Ordering::SeqCst).is_err() {
             return Ok(());
         }
-        let auth = match policy.authorize(record.command.clone(), now, fresh) {
-            Ok(auth) => auth,
-            Err(e) => {
-                self.busy.store(false, Ordering::SeqCst);
-                return Err(e);
-            }
-        };
         let journal = self.journal.clone();
         let handler = self.handler.clone();
         let busy = self.busy.clone();
         let mut next = record.clone();
-        let revoked = policy.revoked.clone();
         let admitted = std::time::Instant::now();
         // A single outstanding trusted backend call holds the durable owner lock.
         // A new Server cannot open this journal until that call has exited. After
