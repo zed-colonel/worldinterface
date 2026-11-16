@@ -179,10 +179,9 @@ class ReleaseTests(unittest.TestCase):
         self.assertEqual(recorded['build_environment']['CARGO_ENCODED_RUSTFLAGS'], '')
         self.assertIn('--remap-path-prefix=', installed['build_environment']['CARGO_ENCODED_RUSTFLAGS'])
 
-    def test_prepare_refuses_cargo_home_compiler_config_before_gates(self):
+    def test_prepare_refuses_cargo_home_overrides_before_gates(self):
         home = self.base / 'cargo-home'; home.mkdir()
         config = home / 'config.toml'
-        config.write_text('[build]\nrustflags=["--cfg", "ambient_override"]\n')
         output = self.base / 'output'
         find_configs = shared.cargo_config_paths
         def repository_first(directories, homes):
@@ -192,8 +191,12 @@ class ReleaseTests(unittest.TestCase):
                 patch.object(shared, 'cargo_config_paths', side_effect=repository_first), \
                 patch.object(release, 'toolchain', side_effect=AssertionError('toolchain before config refusal')) as toolchain, \
                 patch.object(release, 'gates') as gates, patch.object(release, 'run') as run:
-            with self.assertRaisesRegex(ValueError, 'compiler overrides in ambient Cargo config: ' + str(config)):
-                release.prepare(VERSION, 'a' * 40, output)
+            for body in ['[build]\nrustflags=["--cfg", "ambient_override"]\n',
+                         'paths=["local-dependency"]\n']:
+                with self.subTest(body=body):
+                    config.write_text(body)
+                    with self.assertRaisesRegex(ValueError, '(compiler|source) overrides in ambient Cargo config: ' + str(config)):
+                        release.prepare(VERSION, 'a' * 40, output)
             for action in [toolchain, gates, run]: action.assert_not_called()
         self.assertFalse(output.exists())
 
@@ -208,7 +211,10 @@ class ReleaseTests(unittest.TestCase):
                    '[profile.release]\nopt-level=0\n',
                    '[env]\nCARGO_ENCODED_RUSTFLAGS="override"\n',
                    '[env]\nCC={value="override",force=true}\n',
-                   'include="other.toml"\n']
+                   'include="other.toml"\n',
+                   'paths=["local-dependency"]\n',
+                   '[patch.crates-io]\ndependency={path="local-dependency"}\n',
+                   '[source.crates-io]\nreplace-with="local"\n[source.local]\ndirectory="vendor"\n']
         for parent in [home, source / '.cargo', self.base / '.cargo', work / '.cargo', work.parent / '.cargo']:
             parent.mkdir(exist_ok=True)
             for name in ['config', 'config.toml']:
@@ -216,7 +222,7 @@ class ReleaseTests(unittest.TestCase):
                 for body in bodies:
                     with self.subTest(path=path, body=body):
                         path.write_text(body)
-                        with self.assertRaisesRegex(ValueError, 'compiler overrides in ambient Cargo config'):
+                        with self.assertRaisesRegex(ValueError, '(compiler|source) overrides in ambient Cargo config'):
                             shared.check_cargo_configs([source, work], env)
                 path.write_text('[net]\noffline=true\n')
                 checked = shared.check_cargo_configs([source, work], env)
@@ -227,12 +233,13 @@ class ReleaseTests(unittest.TestCase):
         alias = self.base / 'alias'; alias.symlink_to(work, target_is_directory=True)
         self.assertEqual(shared.check_cargo_configs([source, alias], env), checked)
 
-    def test_package_environment_refuses_staging_ancestor_compiler_config(self):
+    def test_package_environment_refuses_staging_overrides(self):
         for config in [self.base / '.cargo/config.toml', self.base / 'staging/cargo-home/config']:
             config.parent.mkdir(parents=True, exist_ok=True)
-            config.write_text('[profile.release]\nlto=false\n')
-            with self.subTest(config=config), self.assertRaisesRegex(ValueError, 'compiler overrides in ambient Cargo config'):
-                packages.environment(self.base / 'staging')
+            for body in ['[profile.release]\nlto=false\n', 'paths=["local-dependency"]\n']:
+                config.write_text(body)
+                with self.subTest(config=config, body=body), self.assertRaisesRegex(ValueError, '(compiler|source) overrides in ambient Cargo config'):
+                    packages.environment(self.base / 'staging')
             config.unlink()
 
     def test_cargo_config_evidence_binds_committed_settings_and_complete_search(self):

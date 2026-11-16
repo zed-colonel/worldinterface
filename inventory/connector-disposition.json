@@ -1254,7 +1254,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/release/handoff.json",
-          "source_sha256": "cb013f6afcf13ea34fd545cd23486d1c91c4131ab417910537c05df8c06b79fa",
+          "source_sha256": "20b1b834b441145b3eb1f1a8efbe39b910af32f0a655a722c2b30e515bc4de71",
           "treatment": "Retain WSP-02 package evidence/support and registry consumer. Future legacy removal must preserve authoritative byte equality and release consumer coverage."
         },
         {
@@ -9053,7 +9053,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/release/handoff.json",
-          "source_sha256": "cb013f6afcf13ea34fd545cd23486d1c91c4131ab417910537c05df8c06b79fa",
+          "source_sha256": "20b1b834b441145b3eb1f1a8efbe39b910af32f0a655a722c2b30e515bc4de71",
           "treatment": "WSP-04: retain the new supervisor interface/reconciliation evidence and selective legacy references; this surface does not grant legacy removal, Kata qualification or ordinary use."
         },
         {

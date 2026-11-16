@@ -74,8 +74,9 @@ schemas and their WI validator remain authoritative.
    overrides and Cargo build/target/profile overrides. `gate-environment.json`
    also records paths and SHA-256 digests (or absence) for both Cargo config
    filenames in the gate and package Cargo homes and every ancestor of the checkout and staging
-   directory. Preparation refuses ambient compiler, target, profile and compiler
-   environment settings before gates run; only the exact committed repository
+   directory. Preparation refuses ambient source overrides (`paths`, `[patch]`,
+   `[source]`), compiler, target, profile and compiler environment settings before
+   gates run; only the exact committed repository
    `.cargo/config.toml` may supply them. Package helpers check staging ancestors
    too, and preparation refuses config drift between gates. Config contents are
    excluded from evidence because they may contain credentials. The file

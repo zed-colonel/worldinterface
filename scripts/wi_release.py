@@ -127,6 +127,10 @@ def check_cargo_configs(directories, env, additional_homes=()):
                 require(not path.is_symlink() and content == committed, 'uncommitted Cargo config: ' + str(path))
             else:
                 data = tomllib.loads(content.decode())
+                # Cargo's paths overrides can replace registry dependencies
+                # without changing Cargo.lock, even with --locked --offline.
+                require(not any(k in data for k in ['paths', 'patch', 'source']),
+                        'source overrides in ambient Cargo config: ' + str(path))
                 build = data.get('build', {})
                 keys = {'rustflags', 'rustdocflags', 'rustc', 'rustdoc', 'rustc-wrapper',
                         'rustc-workspace-wrapper', 'target'}

@@ -3609,7 +3609,7 @@
     "scripts/check-consumer.py": "70ce1652fdc8e2b66c567b82f5efc8def4457029af2317edb36ceec411f9bbe9",
     "scripts/check-packages.py": "08e88f56fffdc9be09558078c0e3643d2132a8a3fabed3cc1953c2ef4ee4f384",
     "scripts/release.py": "f5d68a8aa2caebcc31247a4a6f940e16e0c106139cd3333c153df72b02b61ae6",
-    "scripts/wi_release.py": "04a1d40be636c2641fedced449bf903dc0d8414b100f9c2cfdc7e72961c915e5",
+    "scripts/wi_release.py": "c62f18f103ad6bcbddc817eacded003810648ae75754ec8182e8cd2b5b9a6586",
     "scripts/wi_release_packages.py": "e30778aecf78c7bcd9d5382744a6f6f48033e98ff09c0c8495e8fb619c8aa4c8",
     "scripts/wi_worker_evaluation.py": "8fd614fc99e0bd57c8714c468cf7a6f463e6c1565abea3b3e38f9c989e78b8f3",
     "tools/wi-contract-check/Cargo.lock": "e23d73ebc1773d7c638713f63e51cf3e6f0c1982ee3f96a3b46b804185cce057"
