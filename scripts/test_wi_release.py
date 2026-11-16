@@ -138,7 +138,9 @@ class ReleaseTests(unittest.TestCase):
         physical = self.base / 'physical'; physical.mkdir()
         logical = self.base / 'logical temporary directory'
         logical.symlink_to(physical, target_is_directory=True)
-        with patch.dict(os.environ, {key: str(logical) for key in ['TMPDIR', 'TMP', 'TEMP']}):
+        env = {key: str(logical) for key in ['TMPDIR', 'TMP', 'TEMP']}
+        env['CARGO_HOME'] = str(self.base / 'cargo-home')
+        with patch.dict(os.environ, env):
             with patch.object(release, 'clean'), patch.object(release, 'toolchain', return_value={}), \
                     patch.object(release, 'metadata', return_value={}):
                 output, _, _ = release.preflight(VERSION, 'a' * 40, self.base / 'output')
@@ -244,7 +246,8 @@ class ReleaseTests(unittest.TestCase):
 
     def test_cargo_config_evidence_binds_committed_settings_and_complete_search(self):
         work = self.base / 'work'
-        checked = shared.check_cargo_configs([shared.ROOT, work], release.gate_environment(), [work / 'cargo-home'])
+        env = dict(release.gate_environment(), CARGO_HOME=str(self.base / 'cargo-home'))
+        checked = shared.check_cargo_configs([shared.ROOT, work], env, [work / 'cargo-home'])
         home = checked['cargo_homes'][0]
         shared.validate_cargo_config_checks(checked, str(work), home)
         for field in ['files', 'working_directories', 'cargo_homes']:
@@ -261,7 +264,7 @@ class ReleaseTests(unittest.TestCase):
                 shared.validate_cargo_config_checks(changed, str(work), home)
         with patch.object(shared.subprocess, 'check_output', return_value=b'uncommitted config'):
             with self.assertRaisesRegex(ValueError, 'uncommitted Cargo config'):
-                shared.check_cargo_configs([shared.ROOT, work], release.gate_environment())
+                shared.check_cargo_configs([shared.ROOT, work], env)
 
     def test_documentation_discards_pages_from_previous_preparations(self):
         target = self.base / 'target'; docs = target / 'doc'; docs.mkdir(parents=True)
@@ -428,9 +431,12 @@ class ReleaseTests(unittest.TestCase):
                              ('docs/release/package-tests.json', 'package-tests.json'),
                              ('docs/release/release-manifest.schema.json', 'release-manifest.schema.json')]:
             shutil.copyfile(shared.ROOT / source, self.base / dest)
-        build = shared.toolchain(release.gate_environment())
+        # Config evidence describes this fixture, not the runner's Cargo home
+        # (which can contain an offline source replacement under adopted checks).
+        env = dict(release.gate_environment(), CARGO_HOME=str(self.base / 'cargo-home'))
+        build = shared.toolchain(env)
         build['cargo_config_checks'] = shared.check_cargo_configs([shared.ROOT, manifest['build_work']],
-            release.gate_environment(), [Path(manifest['build_work']) / 'cargo-home'])
+            env, [Path(manifest['build_work']) / 'cargo-home'])
         shared.write(self.base / 'gate-environment.json', build)
         shared.write(self.base / 'build-environment.json', build)
         for name, command in release.gates():
