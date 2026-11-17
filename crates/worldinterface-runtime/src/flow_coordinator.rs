@@ -21,15 +21,22 @@ use actionqueue_executor_local::handler::ExecutorContext;
 use worldinterface_protocol::{canonical_data, ContentHash, OpaqueRef};
 use worldinterface_storage::{flow::*, StoreRoot};
 
-// Counts and timings are disposable diagnostics, never scheduling authority.
+/// Counts and timings are disposable diagnostics, never scheduling authority.
 #[derive(Clone, Debug, Default)]
 pub struct ReconcileWork {
+    /// Pending Flow rows examined.
     pub rows: usize,
+    /// Pending Flow pages fetched.
     pub pages: usize,
+    /// ActionQueue task lookups performed.
     pub task_lookups: usize,
+    /// Plan reads and validations attempted.
     pub plans: usize,
+    /// Artifact reads attempted.
     pub artifacts: usize,
+    /// Time spent reading and validating plans.
     pub plan_time: std::time::Duration,
+    /// Time spent reading artifacts.
     pub artifact_time: std::time::Duration,
 }
 pub(crate) fn read_artifact(

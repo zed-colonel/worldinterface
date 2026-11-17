@@ -12,6 +12,7 @@ from pathlib import Path
 import shutil
 import subprocess
 import sys
+import tarfile
 import tempfile
 import tomllib
 sys.dont_write_bytecode = True
@@ -181,7 +182,9 @@ def validate_manifest(manifest, output):
         require(manifest.get(key) == value, 'wrong manifest ' + key)
     require(set(manifest) == set(expected) | {'source_commit', 'baseline_revision', 'source_before', 'source_after', 'build_work', 'preparation_output', 'evidence', 'artifacts', 'packaged_locks'}, 'unknown/missing manifest fields')
     require(manifest['baseline_revision'] == BASELINE, 'wrong baseline revision')
-    subprocess.run(['git', 'merge-base', '--is-ancestor', BASELINE, manifest['source_commit']], cwd=ROOT, check=True, timeout=60)
+    require(subprocess.run(['git', 'merge-base', '--is-ancestor', BASELINE, manifest['source_commit']],
+                           cwd=ROOT, timeout=60).returncode == 0,
+            'source commit does not descend from baseline ' + BASELINE)
     identity = {'commit': manifest['source_commit'], 'tree': git('rev-parse', 'HEAD^{tree}'), 'clean': True}
     require(manifest['source_before'] == manifest['source_after'] == identity, 'source changed during preparation')
     require(isinstance(manifest['preparation_output'], str) and Path(manifest['preparation_output']).is_absolute(), 'invalid preparation output identity')
@@ -288,16 +291,23 @@ def prepare(version, commit, output):
 
 
 if __name__ == '__main__':
-    parser = argparse.ArgumentParser(description=__doc__)
+    guidance = ('Prepare requires TMPDIR exported to an existing writable directory outside the checkout. '
+                'See docs/release/publication-staging.md for the operator procedure.')
+    parser = argparse.ArgumentParser(description=__doc__, epilog=guidance)
     sub = parser.add_subparsers(dest='command', required=True)
-    p = sub.add_parser('prepare')
-    p.add_argument('--version', required=True); p.add_argument('--commit', required=True)
-    p.add_argument('--output', type=Path, required=True)
-    p = sub.add_parser('verify'); p.add_argument('--manifest', type=Path, required=True)
+    p = sub.add_parser('prepare', help='build and validate archives and evidence from clean HEAD', epilog=guidance)
+    p.add_argument('--version', required=True, help='pre-release version: 0.2.0-alpha.N, matching all eight crates')
+    p.add_argument('--commit', required=True, help='full 40-hex SHA of the clean checkout HEAD')
+    p.add_argument('--output', type=Path, required=True, help='new or empty output directory outside the checkout')
+    p = sub.add_parser('verify', help='re-hash and validate prepared evidence against its clean source checkout', epilog=guidance)
+    p.add_argument('--manifest', type=Path, required=True, help='path to the prepared release-manifest.json')
     args = parser.parse_args()
     try:
         if args.command == 'prepare': prepare(args.version, args.commit, args.output)
         else: verify(args.manifest)
-    except (ValueError, OSError, KeyError, subprocess.SubprocessError) as error:
+    except KeyError as error:
+        print('Release refused: missing field ' + str(error), file=sys.stderr)
+        sys.exit(1)
+    except (ValueError, OSError, tarfile.TarError, subprocess.SubprocessError) as error:
         print('Release refused: ' + str(error), file=sys.stderr)
         sys.exit(1)

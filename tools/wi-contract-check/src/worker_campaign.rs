@@ -91,7 +91,7 @@ fn pins(root: &Path) -> Result<Value> {
     }
     proof::validate_campaign_scope(&registry)?;
     if aq.len() != 6 {
-        return Err("incomplete AQ graph or registry".into());
+        return Err("incomplete AQ graph: expected 6 actionqueue packages".into());
     }
     Ok(json!({"commit":output(root,"git", &["rev-parse","HEAD"])? ,
         "tree":output(root,"git", &["rev-parse","HEAD^{tree}"])? ,
@@ -292,10 +292,11 @@ pub fn run(root: &Path, directory: &Path) -> Result<()> {
     // The campaign is also the sole owner of non-registered runtime tests. Do
     // not lose suite coverage when removing Cargo's duplicate default execution.
     let runtime_suite = runtime_remainder(&harnesses, &selected)?;
-    // Share workers across both sets so a long runtime test can overlap the
-    // registered cases. Receipt validation still checks each set independently.
     validate_priority_tests(selected.keys().chain(runtime_suite.keys()))?;
     let execution_started = Instant::now();
+    // Run priority tests in dedicated phases of one, then two workers; the
+    // remaining registered and runtime tests share PARALLELISM workers. Receipt
+    // validation still checks the two test sets independently.
     let (all_outcomes, execution_phases) = execute_harnesses(
         root,
         selected.iter().map(|(r, p)| (r.clone(), p.clone())).chain(

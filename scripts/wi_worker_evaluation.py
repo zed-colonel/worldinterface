@@ -176,10 +176,10 @@ def check_packet(root, require_committed=False):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(__doc__)
-    parser.add_argument("--root", type=Path, default=Path.cwd())
-    parser.add_argument("--require-committed", action="store_true")
-    parser.add_argument("--serve", action="store_true")
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--root", type=Path, default=Path.cwd(), help="repository root (default: current directory)")
+    parser.add_argument("--require-committed", action="store_true", help="require the manifest and every bound source byte to match HEAD")
+    parser.add_argument("--serve", action="store_true", help="read 'check' lines from stdin; emit one JSON result or error per line, reconstructing the packet for each request")
     args = parser.parse_args()
 
     def result():

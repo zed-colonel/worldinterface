@@ -23,9 +23,12 @@ CraftingTable integration remain required. This document does not assert that a
 future campaign has passed. Its machine-readable counterpart is
 [`proof/handoff.json`](../../conformance/wi-fabric-2/proof/handoff.json).
 
-No consumer task acceptance, ordinary-use admission, parent acceptance, G5,
-release, remote parity, two-host qualification, strong isolation or hostile-code
-qualification is supplied. `contracts/milestones.json` retains its historical
+This worker proof supplies no consumer task acceptance, ordinary-use admission,
+parent acceptance, G5, release, remote parity, two-host qualification, strong
+isolation or hostile-code qualification. See the separate
+[WI-WORKER-G5 evidence](WI-WORKER-G5.md) and
+[alpha.2 release notes](../release/0.2.0-alpha.2.md) for supervisor evidence and
+release preparation. `contracts/milestones.json` retains its historical
 WI-01 state; the off-map proof does not advance full-parent/release obligations.
 The legacy root workspace and daemon/CLI are historical and are outside this
 embedded proof. There is no supported daemon, remote, Python or Platform worker
@@ -81,12 +84,14 @@ Run at the repository root with the supplied external `CARGO_TARGET_DIR` and
 `TMPDIR`; evidence belongs in `$TMPDIR/verification`, outside source/build output.
 Fetch first if dependencies are absent (`cargo fetch --locked --manifest-path`
 for each of the three active manifests). Do not resolve runtime to satisfy a
-foundation check. Before presenting a changed packet:
+foundation check. Before committing a changed packet:
 
 ```sh
 cargo run --locked --manifest-path tools/wi-contract-check/Cargo.toml -- hashes refresh
 cargo run --locked --offline --manifest-path tools/wi-contract-check/Cargo.toml -- handoff generate > "$TMPDIR/verification/handoff-descriptor.json"
 cp "$TMPDIR/verification/handoff-descriptor.json" conformance/wi-fabric-2/proof/handoff.json
+cp conformance/wi-fabric-2/proof/handoff.json crates/worldinterface-runtime/release/handoff.json
+cargo run --locked --manifest-path tools/wi-contract-check/Cargo.toml -- hashes refresh
 python3 scripts/refresh-wi-worker-evaluation.py
 scripts/build-wi-worker-evaluation.sh
 ```

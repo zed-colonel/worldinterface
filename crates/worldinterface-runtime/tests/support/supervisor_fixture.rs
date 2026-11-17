@@ -14,6 +14,8 @@ use std::{
 use worldinterface_protocol::{ContentHash, OpaqueRef};
 use worldinterface_runtime::supervisor::*;
 use worldinterface_worker::supervisor::*;
+pub const SUPERVISOR_FD: i32 = 198;
+
 pub fn r(s: &str) -> OpaqueRef {
     s.to_owned().try_into().unwrap()
 }
@@ -206,7 +208,7 @@ pub fn transfer(command: &mut Process, stream: &UnixStream) {
     let fd = stream.as_raw_fd();
     unsafe {
         command.pre_exec(move || {
-            if libc::dup2(fd, 198) < 0 {
+            if libc::dup2(fd, SUPERVISOR_FD) < 0 {
                 return Err(std::io::Error::last_os_error());
             }
             Ok(())
@@ -231,7 +233,7 @@ pub fn channel(root: &Path, config: &Config) -> (Arc<Client>, KillOnDrop) {
 pub fn server_child(root: &Path) {
     let config: Config =
         serde_json::from_slice(&std::fs::read(root.join("config.json")).unwrap()).unwrap();
-    let stream = unsafe { UnixStream::from_raw_fd(198) };
+    let stream = unsafe { UnixStream::from_raw_fd(SUPERVISOR_FD) };
     let mut channel = PrivateChannel::from_provisioned(stream, config.policy());
     let server =
         Server::open(&root.join("journal"), Arc::new(Fixture { root: root.to_owned() })).unwrap();

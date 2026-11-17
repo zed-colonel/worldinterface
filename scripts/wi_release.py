@@ -75,7 +75,8 @@ def git(*args):
 
 def clean(commit):
     require(re.fullmatch('[a-f0-9]{40}', commit or ''), 'commit must be a full SHA')
-    require(git('rev-parse', 'HEAD') == commit, 'different source checkout')
+    head = git('rev-parse', 'HEAD')
+    require(head == commit, f'different source checkout: HEAD {head}, expected {commit}')
     require(not git('status', '--porcelain', '--untracked-files=all'), 'dirty source checkout')
     # Ignore-index bits must not hide modified tracked bytes.
     require(all(x.startswith('H ') for x in git('ls-files', '-v').splitlines()), 'index flags hide source state')

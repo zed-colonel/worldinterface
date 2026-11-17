@@ -44,7 +44,7 @@ fn wi_supervisor_child() {
     let root = PathBuf::from(root);
     let config: Config =
         serde_json::from_slice(&std::fs::read(root.join("config.json")).unwrap()).unwrap();
-    let stream = unsafe { UnixStream::from_raw_fd(198) };
+    let stream = unsafe { UnixStream::from_raw_fd(SUPERVISOR_FD) };
     let snapshot: AuthorizationSnapshot =
         serde_json::from_slice(&std::fs::read(root.join("snapshot.json")).unwrap()).unwrap();
     let connector = Arc::new(
@@ -268,14 +268,15 @@ fn assert_guest_isolated(pid: u32, readiness: &mut UnixStream) {
     }
 }
 
-fn lifecycle(
-    case: &str,
-    operation: Operation,
+#[derive(Default)]
+struct Scenario<'a> {
     lost_ack: bool,
     ambiguous: bool,
     failed_guest_first: bool,
-    cut: Option<&str>,
-) {
+    cut: Option<&'a str>,
+}
+fn lifecycle(case: &str, operation: Operation, scenario: Scenario<'_>) {
+    let Scenario { lost_ack, ambiguous, failed_guest_first, cut } = scenario;
     live_packet();
     let temp = tempfile::tempdir().unwrap();
     let wi_root = temp.path();
@@ -473,15 +474,15 @@ fn wp_035_authenticated_supervisor_binds_exact_lifecycle_operation() {
     .unwrap_err();
     assert!(error.contains("lifecycle target operation mismatch"), "{error}");
     drop(bundle);
-    lifecycle("WP-035", Operation::Stop, false, false, false, None);
+    lifecycle("WP-035", Operation::Stop, Scenario::default());
 }
 #[test]
 fn wp_036_acceptance_is_uncertain_until_external_transition_completes() {
-    lifecycle("WP-036", Operation::Stop, false, false, false, None);
+    lifecycle("WP-036", Operation::Stop, Scenario::default());
 }
 #[test]
 fn wp_037_external_result_survives_stopped_guest_and_wi_restart() {
-    lifecycle("WP-037", Operation::Replace, false, false, false, None);
+    lifecycle("WP-037", Operation::Replace, Scenario::default());
 }
 #[test]
 fn wp_038_lost_ack_and_callback_converge_through_durable_inspect() {
@@ -490,10 +491,18 @@ fn wp_038_lost_ack_and_callback_converge_through_durable_inspect() {
         "fabric-receipt-committed",
         "reconciliation-transition-committed",
     ] {
-        lifecycle("WP-038", Operation::Replace, true, true, false, Some(cut));
+        lifecycle(
+            "WP-038",
+            Operation::Replace,
+            Scenario { lost_ack: true, ambiguous: true, cut: Some(cut), ..Scenario::default() },
+        );
     }
 }
 #[test]
 fn wp_039_operator_recovery_is_independent_of_failed_guest() {
-    lifecycle("WP-039", Operation::Recover, false, false, true, None);
+    lifecycle(
+        "WP-039",
+        Operation::Recover,
+        Scenario { failed_guest_first: true, ..Scenario::default() },
+    );
 }

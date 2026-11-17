@@ -15,7 +15,7 @@ pub struct PrivateChannel {
 }
 impl PrivateChannel {
     pub fn provision(policy: ChannelPolicy) -> Result<(Client, Self)> {
-        if policy.grants.len() > 32 {
+        if policy.grants.len() > MAX_GRANTS {
             return Err("supervisor grant capacity".into());
         }
         let (client, server) = UnixStream::pair()?;
@@ -52,14 +52,18 @@ impl PrivateChannel {
     pub fn into_parts(self) -> (UnixStream, ChannelPolicy) {
         (self.stream, self.policy)
     }
+    /// Reconstitute a server endpoint and its host-owned policy after trusted
+    /// process transfer. The stream must be the provisioned private channel.
     pub fn from_provisioned(stream: UnixStream, policy: ChannelPolicy) -> Self {
         Self { stream, policy }
     }
 }
+/// Trusted WI client endpoint of a provisioned private supervisor channel.
 pub struct Client {
     stream: Mutex<UnixStream>,
 }
 impl Client {
+    /// Adopt the client endpoint transferred by trusted host composition.
     pub fn from_provisioned(stream: UnixStream) -> Self {
         Self { stream: Mutex::new(stream) }
     }
@@ -140,7 +144,7 @@ fn read_frame(stream: &mut UnixStream) -> Result<Option<Vec<u8>>> {
     let len = u32::from_be_bytes(size) as usize;
     if len > MAX_FRAME_BYTES {
         let _ = stream.shutdown(std::net::Shutdown::Both);
-        return Err("supervisor frame bound".into());
+        return Err("supervisor frame exceeds bound".into());
     }
     let mut bytes = vec![0; len];
     read_exact(stream, &mut bytes, start)?;
@@ -149,7 +153,7 @@ fn read_frame(stream: &mut UnixStream) -> Result<Option<Vec<u8>>> {
 
 fn write_frame(stream: &mut UnixStream, bytes: &[u8]) -> Result<()> {
     if bytes.len() > MAX_FRAME_BYTES {
-        return Err("supervisor frame bound".into());
+        return Err("supervisor frame exceeds bound".into());
     }
     let start = Instant::now();
     let frame = [(bytes.len() as u32).to_be_bytes().as_slice(), bytes].concat();

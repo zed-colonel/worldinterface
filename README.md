@@ -30,7 +30,11 @@ acceptance, ordinary use, release, remote execution and isolation remain separat
 
 The root Cargo workspace, daemon/CLI and architecture below are historical
 maintenance surfaces, outside the supported embedded proof. See the
-[active ledger](docs/work-items/wi-worker-proof-1.md) for retained obligations.
+[historical worker-proof ledger](docs/work-items/wi-worker-proof-1.md) for retained obligations.
+The active WI-SUPERVISOR-PROOF-1 handoff is documented in the
+[alpha.2 release notes](docs/release/0.2.0-alpha.2.md),
+[publication procedure](docs/release/publication-staging.md) and
+[WI-WORKER-G5 evidence](docs/evidence/WI-WORKER-G5.md).
 
 ## Architecture
 

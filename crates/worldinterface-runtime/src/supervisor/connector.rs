@@ -14,6 +14,7 @@ use worldinterface_protocol::*;
 use worldinterface_worker::supervisor::Record;
 use worldinterface_worker::supervisor::*;
 
+/// Describe one host-supervisor lifecycle operation and its reconciliation bounds.
 pub fn descriptor(operation: Operation) -> Result<ConnectorDescriptor> {
     Ok(ConnectorDescriptor {
         version: 1,

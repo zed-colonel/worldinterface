@@ -163,7 +163,7 @@ pub fn current() -> &'static WorkerBuild {
 /// Check commitment on every access, before consulting the cached build.
 pub fn live_from(root: &Path) -> worldinterface_runtime::Result<&'static WorkerBuild> {
     packet::live_setup(root, |manifest| {
-        let build = current();
+        let build = cached();
         if manifest.digest()? != build.packet {
             return Err("live build packet drift".into());
         }
@@ -173,14 +173,5 @@ pub fn live_from(root: &Path) -> worldinterface_runtime::Result<&'static WorkerB
 
 pub fn live() -> &'static WorkerBuild {
     let root = Path::new(env!("CARGO_MANIFEST_DIR")).join("../..");
-    // The fresh committed check covers this exact compiler source root. Do not
-    // repeat current()'s weaker non-live reconstruction of the same bytes.
-    packet::live_setup(&root, |manifest| {
-        let build = cached();
-        if manifest.digest()? != build.packet {
-            return Err("live build packet drift".into());
-        }
-        Ok(build)
-    })
-    .expect("committed evaluation packet")
+    live_from(&root).expect("committed evaluation packet")
 }

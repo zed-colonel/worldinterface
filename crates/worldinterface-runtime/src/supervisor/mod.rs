@@ -17,6 +17,7 @@ use std::{
 pub use transport::{Client, PrivateChannel};
 use worldinterface_worker::supervisor::*;
 
+/// Durable lifecycle server with one outstanding trusted backend call.
 pub struct Server {
     journal: Arc<Mutex<Journal>>,
     handler: Arc<dyn SupervisorHandler>,
@@ -26,8 +27,11 @@ pub struct Server {
 /// the operator and checked on inspect as well as submit. Guests get no channel.
 #[derive(Clone)]
 pub struct ChannelPolicy {
+    /// Host-authenticated identity; never populated from request fields.
     pub session: Session,
+    /// Exact allowed requests, bounded by [`MAX_GRANTS`].
     pub grants: Vec<Grant>,
+    /// Shared operator revocation flag, checked on both submit and inspect.
     pub revoked: Arc<AtomicBool>,
 }
 impl ChannelPolicy {
@@ -47,9 +51,19 @@ impl ChannelPolicy {
     }
 }
 impl Server {
+    /// Open an operator-owned journal outside the target's filesystem/lifetime
+    /// and outside `StoreBundle`. A missing root is created privately; its parent
+    /// must exist. No root or ancestor may be a symlink. An existing root must be
+    /// an effective-user-owned directory with no group/other permissions (normally
+    /// mode 0700). Journal files must likewise be private and singly linked.
+    ///
+    /// Returns an error for a handler lacking authoritative inspect, unsafe paths
+    /// or permissions, failure to acquire the exclusive owner lock, I/O failures,
+    /// corrupt records, or more than 256 retained records. An outstanding handler
+    /// call keeps that lock even if the `Server` is dropped.
     pub fn open(root: &Path, handler: Arc<dyn SupervisorHandler>) -> Result<Self> {
         if !handler.supports_authoritative_inspect() {
-            return Err("backend cannot reconcile dispatch".into());
+            return Err("supervisor handler lacks authoritative inspect".into());
         }
         Ok(Self {
             journal: Arc::new(Mutex::new(Journal::open(root)?)),

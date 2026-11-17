@@ -40,7 +40,7 @@ impl<V: EvidenceAuthority, C: TrustedClock> EvidenceAuthority for ManagedEvidenc
                 return Err("invalid embedded recovery scope".into());
             }
         } else if snapshot.worker.is_some() {
-            self.evaluation.as_ref().ok_or("evaluation approval unavailable")?.verify()?;
+            self.evaluation.as_ref().ok_or("evaluation packet unavailable")?.verify()?;
         }
         let principal =
             snapshot.bindings.first().ok_or("managed binding absent")?.principal.clone();

@@ -109,7 +109,7 @@ pub fn authorize_admission(
     Ok(registration.binding.digest()?)
 }
 /// Trusted host composition supplies current recovery policy independently of old
-/// admission approval. No Deserialize path, no launch or export authority.
+/// evaluation packet. No Deserialize path, no launch or export authority.
 pub struct RecoveryPolicy {
     scope: HostScope,
     current: ContentHash,

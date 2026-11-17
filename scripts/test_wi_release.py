@@ -1,9 +1,11 @@
 """Non-live release regressions, including real Cargo local-registry resolution."""
 import copy
+from contextlib import redirect_stderr
 import hashlib
 import io
 import json
 import os
+import runpy
 from pathlib import Path
 import shutil
 import subprocess
@@ -28,6 +30,23 @@ class ReleaseTests(unittest.TestCase):
 
     def tearDown(self):
         self.temp.cleanup()
+
+    def test_cli_refusals_name_missing_fields_and_handle_corrupt_archives(self):
+        archive = self.base / 'corrupt.crate'
+        archive.write_bytes(b'not a tar archive')
+        def corrupt_archive(*args):
+            return shared.archive_files(archive, 'worldinterface-protocol', VERSION)
+        for failure, expected in [(KeyError('evidence'), "missing field 'evidence'"),
+                                  (corrupt_archive, 'not a gzip file')]:
+            stderr = io.StringIO()
+            with patch.object(sys, 'argv', ['release.py', 'verify', '--manifest', str(self.base / 'release-manifest.json')]), \
+                    patch.object(shared, 'read', side_effect=failure), redirect_stderr(stderr), \
+                    self.assertRaises(SystemExit) as exit_status:
+                runpy.run_path(str(shared.ROOT / 'scripts/release.py'), run_name='__main__')
+            self.assertEqual(exit_status.exception.code, 1)
+            self.assertIn('Release refused: ', stderr.getvalue())
+            self.assertIn(expected, stderr.getvalue())
+            self.assertNotIn('Traceback', stderr.getvalue())
 
     def test_safe_paths_reject_traversal_aliases_and_parent_symlinks(self):
         (self.base / 'good').write_text('safe')
@@ -502,12 +521,16 @@ class ReleaseTests(unittest.TestCase):
         path = self.base / 'release-manifest.json'
         with patch.object(release, 'clean'), patch.object(release, 'metadata', return_value=meta), \
                 patch.object(release, 'git', return_value=manifest['source_before']['tree']), \
-                patch.object(release.subprocess, 'run'), \
+                patch.object(release.subprocess, 'run', return_value=subprocess.CompletedProcess([], 0)) as command, \
                 patch.object(release, 'check_cargo_configs'), \
                 patch.object(release.subprocess, 'check_output', return_value=manifest['source_commit'] + ' HEAD\n'), \
                 patch.object(release, 'validate_packages') as package_check, patch.object(release, 'plan'):
             release.verify(path)
             package_check.assert_called_once_with(manifest, self.base)
+            command.return_value.returncode = 1
+            with self.assertRaisesRegex(ValueError, 'source commit does not descend from baseline ' + shared.BASELINE):
+                release.verify(path)
+            command.return_value.returncode = 0
             # Every artifact class, including crates, binaries, docs, provenance,
             # gate logs/results, both environments and the preparation receipt.
             for artifact in manifest['artifacts']:

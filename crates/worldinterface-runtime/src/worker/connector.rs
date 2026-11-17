@@ -315,7 +315,7 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
         super::catalog::verify_registration(
             record,
             binding,
-            self.evaluation.as_ref().ok_or("admission approval absent")?,
+            self.evaluation.as_ref().ok_or("evaluation packet absent")?,
             self.clock.unix_ms(),
         )?;
         Ok(())
@@ -595,7 +595,7 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
         self.port.spawn_attempts()
     }
     pub fn read_artifact(&self, binding: &WorkerBinding, reference: &str) -> Result<Vec<u8>> {
-        self.evaluation.as_ref().ok_or("admission approval absent")?.verify()?;
+        self.evaluation.as_ref().ok_or("evaluation packet absent")?.verify()?;
         if binding.tenant.as_str() != self.scope.tenant
             || binding.principal.as_str() != self.scope.principal
         {
@@ -712,7 +712,7 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
                 .worker_provider_quarantine(&binding.tenant, &binding.provider)?
                 .is_some()
         {
-            // Approval invalidation fences this run. Only an attributed incident
+            // Evaluation packet invalidation fences this run. Only an attributed incident
             // decision may permanently quarantine the tenant/provider.
             super::recovery::quarantine(self.bundle.wi(), binding)?;
             let _ = self.port.stop(binding.provider.as_str(), binding.run.as_str());
@@ -844,7 +844,7 @@ impl<S: TrustedWorkerBuild + 'static> Connector for WorkerConnector<S> {
         let admitted = derive(
             self.runtime.bundle.wi(),
             &r,
-            self.runtime.evaluation.as_ref().ok_or("admission approval absent")?,
+            self.runtime.evaluation.as_ref().ok_or("evaluation packet absent")?,
             self.runtime.clock.unix_ms(),
             &self.runtime.executable,
             &self.runtime.helper_digest,
@@ -943,7 +943,7 @@ impl<S: TrustedWorkerBuild + 'static> Connector for WorkerConnector<S> {
         if !state.stop_requested && !state.cleanup_confirmed {
             root.request_worker_stop(&state)?;
         }
-        // A stop obligation survives grant/approval expiry; it cannot authorize fresh work.
+        // A stop obligation survives grant expiry or packet invalidation; it cannot authorize fresh work.
         let _ = self.runtime.port.stop(state.binding.provider.as_str(), state.binding.run.as_str());
         Ok(CancelObservation::Requested)
     }
@@ -958,7 +958,7 @@ fn default_recovery_policy(scope: HostScope) -> Result<super::catalog::RecoveryP
         ContentHash::of(b"wi-worker-recovery:1"),
     )
 }
-/// A recovery-only host has no executable registration or admission approval.
+/// A recovery-only host has no executable registration or evaluation packet.
 pub struct RecoveryOnly;
 impl TrustedApprovals for RecoveryOnly {
     fn accepted(&self, _: &super::evaluation::EvaluationManifest, _: &Path) -> Result<bool> {
@@ -1006,7 +1006,7 @@ mod tests {
     };
     use worldinterface_worker::profile::ProfileBinding;
 
-    /// No executable, runtime approval or provider is constructed. Exercise the
+    /// No executable, evaluation packet or provider is constructed. Exercise the
     /// domain publication validator used by the executor against all success
     /// responses: fresh completion, replay, inspect and quarantined termination.
     #[test]

@@ -154,10 +154,11 @@ fn public_server_durable_acceptance_replay_revocation_and_terminal_immutability(
 }
 #[test]
 fn private_transport_rejects_malformed_and_oversized_frames_outside_guest() {
-    use std::io::Write;
+    use std::io::{Read, Write};
     let temp = tempfile::tempdir().unwrap();
     let (_, policy) = config();
-    let server = Server::open(&temp.path().join("supervisor"), Arc::new(Consumer::new())).unwrap();
+    let handler = Arc::new(Consumer::new());
+    let server = Server::open(&temp.path().join("supervisor"), handler.clone()).unwrap();
     let (client, mut channel) = PrivateChannel::provision(policy.clone()).unwrap();
     let mut stream = client.into_stream().unwrap();
     stream.write_all(&((MAX_FRAME_BYTES + 1) as u32).to_be_bytes()).unwrap();
@@ -168,6 +169,15 @@ fn private_transport_rejects_malformed_and_oversized_frames_outside_guest() {
     stream.write_all(&(bytes.len() as u32).to_be_bytes()).unwrap();
     stream.write_all(bytes).unwrap();
     channel.serve_one(&server, || 1).unwrap();
+    stream.set_read_timeout(Some(std::time::Duration::from_secs(5))).unwrap();
+    let mut size = [0; 4];
+    stream.read_exact(&mut size).unwrap();
+    let len = u32::from_be_bytes(size) as usize;
+    assert!(len <= MAX_FRAME_BYTES);
+    let mut response = vec![0; len];
+    stream.read_exact(&mut response).unwrap();
+    assert_eq!(decode::<Response>(&response).unwrap(), Response::Unavailable);
+    assert_eq!(handler.calls.load(Ordering::SeqCst), 0);
 }
 
 #[test]
@@ -304,7 +314,7 @@ fn private_transport_partial_progress_does_not_renew_frame_deadline() {
 }
 
 #[test]
-fn connector_rejects_stale_authenticated_response_and_never_treats_acceptance_as_commit() {
+fn connector_escalates_stale_authenticated_response() {
     use worldinterface_domain::resource::{Target, TargetDocument};
     use worldinterface_protocol::{ConnectorExecution, PrincipalId};
     use worldinterface_runtime::connector::{

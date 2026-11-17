@@ -15,10 +15,13 @@ pub fn packet(root: &Path) -> Result<Value> {
         .arg("--require-committed")
         .output()?;
     if !output.status.success() {
-        return Err(format!(
-            "evaluation packet rejected: {}",
-            String::from_utf8_lossy(&output.stderr)
-        )
+        let stderr = String::from_utf8_lossy(&output.stderr);
+        let message = stderr.trim();
+        return Err(if message.is_empty() {
+            format!("evaluation packet validator failed: {}", output.status)
+        } else {
+            message.to_owned()
+        }
         .into());
     }
     let result: Value = serde_json::from_slice(&output.stdout)?;

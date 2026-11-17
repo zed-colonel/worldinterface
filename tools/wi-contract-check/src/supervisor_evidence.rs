@@ -61,16 +61,20 @@ fn bounded_file(base: &Path, name: &str) -> Result<PathBuf> {
     let mut path = base.to_owned();
     for part in Path::new(name).components() {
         let Component::Normal(part) = part else {
-            return Err("unsafe supervisor evidence path".into());
+            return Err(format!("unsafe supervisor evidence path: {name}").into());
         };
         path.push(part);
-        if fs::symlink_metadata(&path)?.file_type().is_symlink() {
-            return Err("symlink supervisor evidence".into());
+        if fs::symlink_metadata(&path)
+            .map_err(|e| format!("supervisor evidence {name}: {e}"))?
+            .file_type()
+            .is_symlink()
+        {
+            return Err(format!("symlink supervisor evidence: {name}").into());
         }
     }
-    let meta = fs::metadata(&path)?;
+    let meta = fs::metadata(&path).map_err(|e| format!("supervisor evidence {name}: {e}"))?;
     if !meta.is_file() || meta.len() > MAX_BYTES {
-        return Err("supervisor evidence bound/type".into());
+        return Err(format!("supervisor evidence bound/type: {name}").into());
     }
     Ok(path)
 }
@@ -232,12 +236,14 @@ pub fn validate(root: &Path, receipt: &Value, base: &Path, outcomes: &[Outcome])
     }
     for (case, scenario, test) in scenarios() {
         let name = name(case, scenario);
-        let bytes = fs::read(bounded_file(base, &name)?)?;
+        let bytes = fs::read(bounded_file(base, &name)?)
+            .map_err(|e| format!("supervisor evidence {name}: {e}"))?;
         let outcome = outcomes
             .iter()
             .find(|o| o.reference == owner(test) && o.passed)
             .ok_or("missing passing supervisor evidence owner")?;
-        let log = fs::read_to_string(bounded_file(base, &outcome.log)?)?;
+        let log = fs::read_to_string(bounded_file(base, &outcome.log)?)
+            .map_err(|e| format!("supervisor evidence {}: {e}", outcome.log))?;
         if !log.lines().any(|l| l == format!("WI-SUPERVISOR-OBSERVATION {name} {}", hash(&bytes))) {
             return Err("supervisor observation not produced by exact test outcome".into());
         }
@@ -286,15 +292,19 @@ pub fn validate(root: &Path, receipt: &Value, base: &Path, outcomes: &[Outcome])
             #[cfg(unix)]
             {
                 use std::os::unix::fs::{MetadataExt, PermissionsExt};
-                let meta = fs::metadata(&path)?;
+                let meta =
+                    fs::metadata(&path).map_err(|e| format!("supervisor evidence {name}: {e}"))?;
                 if meta.permissions().mode() & 0o077 != 0
                     || meta.uid() != fs::metadata(base)?.uid()
                     || meta.nlink() != 1
                 {
-                    return Err("retained supervisor record is not operator-private".into());
+                    return Err(format!(
+                        "retained supervisor record is not operator-private: {name}"
+                    )
+                    .into());
                 }
             }
-            let bytes = fs::read(&path)?;
+            let bytes = fs::read(&path).map_err(|e| format!("supervisor evidence {name}: {e}"))?;
             size += bytes.len() as u64;
             if *pin != hash(&bytes) {
                 return Err("substituted retained operator record".into());

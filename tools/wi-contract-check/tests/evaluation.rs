@@ -52,7 +52,9 @@ fn adopted_evaluation_check_rejects_stale_packets_and_uncommitted_refresh() {
     ]);
     assert!(evaluation::check(root.path()).unwrap().is_empty());
     fs::write(root.path().join("crates/worldinterface-runtime/src/lib.rs"), b"changed").unwrap();
-    assert!(evaluation::check(root.path()).is_err());
+    let error = evaluation::check(root.path()).unwrap_err().to_string();
+    assert_eq!(error.matches("evaluation packet rejected:").count(), 1, "{error}");
+    assert_eq!(error, error.trim());
     assert!(Command::new("python3")
         .args(["-B", "scripts/refresh-wi-worker-evaluation.py"])
         .current_dir(root.path())
@@ -61,6 +63,17 @@ fn adopted_evaluation_check_rejects_stale_packets_and_uncommitted_refresh() {
         .status
         .success());
     assert!(evaluation::check(root.path()).is_err());
+}
+
+#[test]
+fn validator_failure_without_stderr_names_exit_status() {
+    let root = tempfile::tempdir().unwrap();
+    fs::create_dir(root.path().join("scripts")).unwrap();
+    fs::write(root.path().join("scripts/wi_worker_evaluation.py"), b"raise SystemExit(124)\n")
+        .unwrap();
+    let error = evaluation::check(root.path()).unwrap_err().to_string();
+    assert!(error.contains("evaluation packet validator failed:"), "{error}");
+    assert!(error.contains("124"), "{error}");
 }
 
 #[test]

@@ -54,7 +54,7 @@ CREATE TRIGGER dispatch_fault_no_update BEFORE UPDATE ON effect_dispatch_fault_h
 CREATE TRIGGER dispatch_fault_no_delete BEFORE DELETE ON effect_dispatch_fault_history BEGIN SELECT RAISE(ABORT,'append only'); END;
 CREATE TABLE effect_outbox(tenant TEXT NOT NULL, intent TEXT NOT NULL, dispatch BLOB NOT NULL, PRIMARY KEY(tenant,intent));
 ";
-// Tenant-wide snapshots are for inspection/recovery, never the ordinary command path.
+// Read only the tenant journal header, without aggregate projections.
 fn catalog(c: &Connection, tenant: &OpaqueRef) -> Result<EffectState> {
     let b: Option<Vec<u8>> = c
         .query_row("SELECT state FROM effect_state WHERE tenant=?", [tenant.as_str()], |r| r.get(0))
@@ -87,6 +87,7 @@ fn load_intent(
     }
     Ok(())
 }
+// Tenant-wide snapshots are for inspection/recovery, never the ordinary command path.
 fn snapshot(c: &Connection, tenant: &OpaqueRef) -> Result<EffectState> {
     let mut state = catalog(c, tenant)?;
     let mut q =
@@ -737,6 +738,8 @@ impl StoreRoot {
         tx.commit()?;
         Ok(state)
     }
+    /// Read the complete tenant state for inspection/recovery only. Ordinary
+    /// commands should use bounded action, intent or owner snapshots instead.
     pub fn effect_snapshot(&self, tenant: &OpaqueRef) -> Result<EffectState> {
         let c = self.connect(StoreKind::Fabric)?;
         let tx = c.unchecked_transaction()?;

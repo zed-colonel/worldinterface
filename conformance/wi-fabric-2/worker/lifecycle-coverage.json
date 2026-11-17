@@ -148,7 +148,7 @@
       {
         "manifest": "crates/worldinterface-runtime/Cargo.toml",
         "package": "worldinterface-runtime",
-        "test": "packet_acceptance_is_independent_of_calendar_and_rejects_revocation"
+        "test": "packet_acceptance_takes_no_clock_and_rejects_revocation"
       },
       {
         "manifest": "crates/worldinterface-runtime/Cargo.toml",

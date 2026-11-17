@@ -44,7 +44,7 @@ fn fixture() -> (tempfile::TempDir, EvaluationVerifier<Trust>) {
     (t, v)
 }
 #[test]
-fn packet_acceptance_is_independent_of_calendar_and_rejects_revocation() {
+fn packet_acceptance_takes_no_clock_and_rejects_revocation() {
     let (_t, v) = fixture();
     v.verify().unwrap();
     v.trusted.revoked.store(true, Ordering::SeqCst);

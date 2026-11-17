@@ -314,7 +314,7 @@ fn catalog_quarantine_fences_stale_admission_and_survives_cleanup_replacement_re
     );
     v.trusted.revoked.store(true, Ordering::SeqCst);
     assert_eq!(
-        inspect_registration(&root, &worker, Some(&registration(&binding)), &binding, &v, 200)
+        inspect_registration(&root, &worker, Some(&registration(&binding)), &binding, &v, 100)
             .unwrap()
             .registration
             .as_str(),
@@ -929,7 +929,6 @@ fn catalog_poll_invalid_packet_quarantines_only_the_run_and_preserves_provider_a
         // Renewed valid host provenance can admit another run. No incident was
         // invented or attributed to the principal while processing invalidation.
         std::fs::write(temp.path().join("source.rs"), b"non-live catalog test").unwrap();
-        clock.0.store(100, Ordering::SeqCst);
         verifier.trusted.revoked.store(false, Ordering::SeqCst);
         let registration =
             verify_registration(&registration(&binding), &binding, &verifier, 100).unwrap();

@@ -35,7 +35,7 @@
       {
         "manifest": "crates/worldinterface-runtime/Cargo.toml",
         "package": "worldinterface-runtime",
-        "test": "connector_rejects_stale_authenticated_response_and_never_treats_acceptance_as_commit"
+        "test": "connector_escalates_stale_authenticated_response"
       },
       {
         "manifest": "crates/worldinterface-runtime/Cargo.toml",

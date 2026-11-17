@@ -13167,6 +13167,13 @@
     "source": "docs/work-items/WSP-03.md; accepted WI-SUPERVISOR-PROOF-1 WSP-03 design; WI-ADR-010/016/018"
   },
   {
+    "id": "crates/worldinterface-runtime/tests/worker_supervisor.rs::::struct:Scenario",
+    "disposition": "test-evidence",
+    "target": "bounded-host-supervisor",
+    "rationale": "Named supervisor fixture scenario flags clarify WP-035 through WP-039 without changing lifecycle behavior, authority or bounds. Retained test evidence; subject to qualifying review/merge.",
+    "source": "WI-SUPERVISOR-PROOF-1 selected polish finding F-056"
+  },
+  {
     "id": "crates/worldinterface-runtime/tests/worker_supervisor.rs::support::module:child",
     "disposition": "test-evidence",
     "target": "bounded-host-supervisor",
