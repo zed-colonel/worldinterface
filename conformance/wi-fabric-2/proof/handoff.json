@@ -3592,7 +3592,7 @@
     "crates/worldinterface-runtime/tests/support/worker_fixture.rs": "938dc4af0cfaa42486e1f45eeb47d0839a4eafef86c12f4f2f4c9a556092566b",
     "crates/worldinterface-runtime/tests/support/worker_seam.rs": "0f050f1e154faccc2d1cd1530dff25fc933714da6e22a387cd50a76bdbaa72da",
     "crates/worldinterface-runtime/tests/worker_supervisor.rs": "65c0af08be39ee2c98261532ae1c31897b8284550b681d2f543837ef68e0d717",
-    "docs/evidence/WI-EMBEDDED-WORKER-PROOF-1.md": "b876c6eb5e246948be3027f83dd5ff7feec3ce6b24c991c297c9110fcaab2984",
+    "docs/evidence/WI-EMBEDDED-WORKER-PROOF-1.md": "e0becf4ea9d81f718929d486ca9344f0b4949d448f23685780c4db4201261563",
     "docs/evidence/WI-WORKER-G5.md": "9575896b26bc20ea079e179ddbe42905e4bfbbe465b018930a5937e594769dc0",
     "docs/release/0.2.0-alpha.2.md": "1de61df71c13b2a375ccb06ed0188113387b9eb0777356d36c0e3b98829b0ee8",
     "docs/release/package-tests.json": "2c17e1d7844413c84632034ab38c7a91c5dac92f1b543d72d48c04be29370538",

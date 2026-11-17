@@ -1254,7 +1254,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/release/handoff.json",
-          "source_sha256": "958487ce59818c0ba37be3f1e0b28af1c6eb1eea2ac3d64355914926bb3aca12",
+          "source_sha256": "e1da24185c9a5004d05f41a7560fd28922e6d017774dff2b11aadf4ec4456860",
           "treatment": "Retain WSP-02 package evidence/support and registry consumer. Future legacy removal must preserve authoritative byte equality and release consumer coverage."
         },
         {
@@ -1299,7 +1299,7 @@
         },
         {
           "path": "docs/evidence/WI-EMBEDDED-WORKER-PROOF-1.md",
-          "source_sha256": "b876c6eb5e246948be3027f83dd5ff7feec3ce6b24c991c297c9110fcaab2984",
+          "source_sha256": "e0becf4ea9d81f718929d486ca9344f0b4949d448f23685780c4db4201261563",
           "treatment": "Preserve WIP-16 producer evidence, exact test mappings and seam timing semantics during selective legacy delay removal; this document composes no legacy connector. WIP-16 adds this explicit candidate documentation disposition for review."
         },
         {
@@ -9053,7 +9053,7 @@
         },
         {
           "path": "crates/worldinterface-runtime/release/handoff.json",
-          "source_sha256": "958487ce59818c0ba37be3f1e0b28af1c6eb1eea2ac3d64355914926bb3aca12",
+          "source_sha256": "e1da24185c9a5004d05f41a7560fd28922e6d017774dff2b11aadf4ec4456860",
           "treatment": "WSP-04: retain the new supervisor interface/reconciliation evidence and selective legacy references; this surface does not grant legacy removal, Kata qualification or ordinary use."
         },
         {
