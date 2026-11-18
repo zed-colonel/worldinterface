@@ -2,7 +2,7 @@
 use super::{
     bootstrap::{self, Decoder, Launch, Message},
     io, launch,
-    ownership::{self, Context, Owned},
+    ownership::{self, Acquisition, Context, Owned},
     Result,
 };
 use serde::{Deserialize, Serialize};
@@ -74,22 +74,26 @@ impl Tree {
                         self.finding("descendant handle bound");
                         continue;
                     }
-                    match Owned::acquire_if_present(pid, parent, &self.context) {
-                        Ok(Some(member)) => {
+                    match Owned::acquire_descendant(pid, parent, Some(root), &self.context) {
+                        Ok(Acquisition::Acquired(member)) => {
                             // Parent identity is pinned and revalidated after acquiring the child.
-                            if parent != root
-                                && self
-                                    .members
-                                    .get(&parent)
-                                    .is_none_or(|p| p.validate(&self.context).is_err())
-                            {
-                                self.finding("descendant relationship uncertain");
-                                continue;
+                            if parent != root {
+                                let Some(ancestor) = self.members.get(&parent) else { continue };
+                                let validation = ancestor.validate(&self.context);
+                                // A departed ancestor's children move to this dedicated
+                                // subreaper and are reacquired on its next root scan.
+                                if ancestor.exited() {
+                                    continue;
+                                }
+                                if validation.is_err() {
+                                    self.finding("descendant relationship uncertain");
+                                    continue;
+                                }
                             }
                             self.members.insert(pid, member);
                             self.report.descendants_observed += 1;
                         }
-                        Ok(None) => continue,
+                        Ok(Acquisition::Departed | Acquisition::Rediscover) => continue,
                         Err(_) => {
                             self.finding("descendant ownership unavailable");
                             continue;

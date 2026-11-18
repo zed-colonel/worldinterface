@@ -175,6 +175,10 @@ pub struct EffectAggregate {
 #[serde(deny_unknown_fields)]
 pub struct EffectState {
     pub revision: u64,
+    /// Version-3 journal fence: retained intent count and previous entry hash.
+    /// A bounded view carries the same fence as the complete tenant projection.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub ledger: Option<(u64, ContentHash)>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub last_at: Option<Timestamp>,
     pub effects: BTreeMap<EffectIntentId, EffectAggregate>,
@@ -562,12 +566,33 @@ impl ValidatedEffectCommand {
     pub fn bytes(&self) -> &[u8] {
         &self.bytes
     }
-    /// Digest of the exact journal state against which this command was validated.
+    /// Digest of the journal fence and exact command read set at validation.
     pub fn base_digest(&self) -> &ContentHash {
         &self.before
     }
     pub fn tenant(&self) -> &OpaqueRef {
         &self.tenant
+    }
+    /// Bounded command read set, or None for historical full-state entries.
+    pub fn scope(&self) -> Result<Option<(Vec<EffectIntentId>, Option<ContentHash>)>> {
+        let entry = decode_entry(&self.tenant, &self.bytes)?;
+        if entry.version != 3 {
+            return Ok(None);
+        }
+        action_scope(&entry.tenant, &entry.principal, &entry.action).map(Some)
+    }
+    /// Revalidate and reduce against the current journal fence and read set. None is an
+    /// optimistic journal conflict, including divergent read sets at one revision.
+    /// The digest is computed here and reused only for this immutable state;
+    /// no caller-supplied digest or previous validation result is trusted.
+    pub fn apply_to(&self, state: &EffectState) -> Result<Option<(EffectState, EffectIntentId)>> {
+        let entry = decode_entry(&self.tenant, &self.bytes)?;
+        let before =
+            entry_base(state, entry.version, &entry.tenant, &entry.principal, &entry.action)?;
+        if before != self.before {
+            return Ok(None);
+        }
+        apply_with_digest(state, &entry, &before).map(Some)
     }
 }
 pub fn validate_command(
@@ -577,24 +602,29 @@ pub fn validate_command(
     action: EffectAction,
 ) -> Result<ValidatedEffectCommand> {
     let action: JournalAction = action.into();
-    let version = match &action {
-        JournalAction::ReconciliationCase { .. } => 2,
-        JournalAction::Outcome { evidence, .. }
-            if evidence.classification.is_some() || evidence.reconciliation_admission.is_some() =>
-        {
-            2
+    let version = if state.ledger.is_some() {
+        3
+    } else {
+        match &action {
+            JournalAction::ReconciliationCase { .. } => 2,
+            JournalAction::Outcome { evidence, .. }
+                if evidence.classification.is_some()
+                    || evidence.reconciliation_admission.is_some() =>
+            {
+                2
+            }
+            _ => 1,
         }
-        _ => 1,
     };
     let entry = Entry {
         version,
-        before: state_digest(state)?,
+        before: entry_base(state, version, &caller.tenant, &caller.principal, &action)?,
         tenant: caller.tenant.clone(),
         principal: caller.principal.clone(),
         at,
         action,
     };
-    apply(state, &entry)?;
+    apply_with_digest(state, &entry, &entry.before)?;
     Ok(ValidatedEffectCommand {
         bytes: canonical_data(&entry)?,
         tenant: caller.tenant.clone(),
@@ -610,11 +640,14 @@ pub fn replay_command(
     tenant: &OpaqueRef,
     bytes: &[u8],
 ) -> Result<(EffectState, EffectIntentId)> {
+    apply(state, &decode_entry(tenant, bytes)?)
+}
+fn decode_entry(tenant: &OpaqueRef, bytes: &[u8]) -> Result<Entry> {
     let e: Entry = serde_json::from_value(strict_json(bytes)?).map_err(|e| e.to_string())?;
     if &e.tenant != tenant || canonical_data(&e)? != bytes {
         return Err("noncanonical or cross-tenant journal".into());
     }
-    apply(state, &e)
+    Ok(e)
 }
 fn current(
     e: &EffectAggregate,
@@ -703,9 +736,110 @@ pub fn validate_outcome_publication(tenant: &OpaqueRef, o: &OutcomeEvidence) -> 
     Ok(phase)
 }
 
+/// Exact bounded read set for a command. Storage must also load the request's
+/// existing target, if any, and keep tenant revision, time and shared use counts.
+pub fn effect_action_scope(
+    caller: &AuthenticatedCaller,
+    action: &EffectAction,
+) -> Result<(Vec<EffectIntentId>, Option<ContentHash>)> {
+    action_scope(caller.tenant(), caller.principal(), &action.clone().into())
+}
+fn action_scope(
+    tenant: &OpaqueRef,
+    principal: &PrincipalId,
+    action: &JournalAction,
+) -> Result<(Vec<EffectIntentId>, Option<ContentHash>)> {
+    let id = match action {
+        JournalAction::Resolve { id, .. }
+        | JournalAction::Authorize { id, .. }
+        | JournalAction::Prepare { id, .. }
+        | JournalAction::PrepareProduction { id, .. }
+        | JournalAction::AcknowledgeProduction { id, .. }
+        | JournalAction::ObserveRun { id, .. }
+        | JournalAction::AdvanceDiscovery { id, .. }
+        | JournalAction::Acknowledge { id, .. }
+        | JournalAction::Start { id, .. }
+        | JournalAction::StartProduction { id, .. }
+        | JournalAction::Cancel { id }
+        | JournalAction::Outcome { id, .. }
+        | JournalAction::Reconcile { id, .. }
+        | JournalAction::ReconciliationCase { id, .. }
+        | JournalAction::PermitRetry { id, .. } => id,
+        JournalAction::Submit { id, .. } => id,
+    };
+
+    let mut ids = vec![id.clone()];
+    let key = if let JournalAction::Submit { submission, owner, link, .. } = action {
+        if let Some(link) = link {
+            ids.push(link.original.clone());
+        }
+        Some(if let Some(owner) = owner {
+            digest(&(tenant, principal, "flow-effect", owner))?
+        } else {
+            digest(&(tenant, principal, "effect", &submission.client_request_id))?
+        })
+    } else {
+        None
+    };
+    Ok((ids, key))
+}
+/// Seed the bounded ledger from a complete historical projection before its
+/// first version-3 entry. Replay and storage must use this identical transition.
+pub fn legacy_ledger(state: &EffectState) -> Result<(u64, ContentHash)> {
+    Ok((state.effects.len() as u64, state_digest(state)?))
+}
+fn entry_base(
+    state: &EffectState,
+    version: u32,
+    tenant: &OpaqueRef,
+    principal: &PrincipalId,
+    action: &JournalAction,
+) -> Result<ContentHash> {
+    if version != 3 {
+        return state_digest(state);
+    }
+    let (ids, key) = action_scope(tenant, principal, action)?;
+    let mut view = EffectState {
+        revision: state.revision,
+        last_at: state.last_at.clone(),
+        uses: state.uses.clone(),
+        ledger: Some(match &state.ledger {
+            Some(ledger) => ledger.clone(),
+            None => legacy_ledger(state)?,
+        }),
+        ..Default::default()
+    };
+    for id in ids {
+        if let Some(effect) = state.effects.get(&id) {
+            view.effects.insert(id, effect.clone());
+        }
+    }
+    if let Some(key) = key {
+        if let Some(id) = state.requests.get(&key) {
+            view.requests.insert(key, id.clone());
+            view.effects
+                .insert(id.clone(), state.effects.get(id).ok_or("request without effect")?.clone());
+        }
+    }
+    state_digest(&view)
+}
+
 fn apply(state: &EffectState, entry: &Entry) -> Result<(EffectState, EffectIntentId)> {
-    if ![1, 2].contains(&entry.version)
-        || entry.before != state_digest(state)?
+    apply_with_digest(
+        state,
+        entry,
+        &entry_base(state, entry.version, &entry.tenant, &entry.principal, &entry.action)?,
+    )
+}
+// Only private callers may reuse a digest computed from this same immutable
+// state. Replay always computes it anew; no caller-supplied digest is trusted.
+fn apply_with_digest(
+    state: &EffectState,
+    entry: &Entry,
+    before: &ContentHash,
+) -> Result<(EffectState, EffectIntentId)> {
+    if ![1, 2, 3].contains(&entry.version)
+        || &entry.before != before
         || state.last_at.as_ref().is_some_and(|t| t > &entry.at)
     {
         return Err("stale or unsupported effect journal".into());
@@ -716,6 +850,9 @@ fn apply(state: &EffectState, entry: &Entry) -> Result<(EffectState, EffectInten
     );
     let now = &entry.at;
     let mut s = state.clone();
+    if entry.version == 3 && s.ledger.is_none() {
+        s.ledger = Some(legacy_ledger(state)?);
+    }
     if let JournalAction::Submit { id, submission, snapshot, link, owner } = &entry.action {
         let key = if let Some(owner) = owner {
             digest(&(&entry.tenant, &entry.principal, "flow-effect", owner))?
@@ -733,7 +870,7 @@ fn apply(state: &EffectState, entry: &Entry) -> Result<(EffectState, EffectInten
             return Ok((state.clone(), old.clone()));
         }
         if s.effects.contains_key(id)
-            || s.effects.len() >= 10000
+            || s.ledger.as_ref().map_or(s.effects.len() as u64, |v| v.0) >= 10000
             || submission.input.artifact.scope != entry.tenant
         {
             return Err("intent identity, capacity or input scope".into());
@@ -786,6 +923,10 @@ fn apply(state: &EffectState, entry: &Entry) -> Result<(EffectState, EffectInten
         s.requests.insert(key, id.clone());
         s.revision = s.revision.checked_add(1).ok_or("revision overflow")?;
         s.last_at = Some(now.clone());
+        if let Some((count, head)) = &mut s.ledger {
+            *count = count.checked_add(1).ok_or("intent count overflow")?;
+            *head = ContentHash::of(&canonical_data(entry)?);
+        }
         return Ok((s, id.clone()));
     }
     let id = match &entry.action {
@@ -1230,6 +1371,9 @@ fn apply(state: &EffectState, entry: &Entry) -> Result<(EffectState, EffectInten
     inspect_effect(e)?;
     s.revision = s.revision.checked_add(1).ok_or("revision overflow")?;
     s.last_at = Some(now.clone());
+    if let Some((_, head)) = &mut s.ledger {
+        *head = ContentHash::of(&canonical_data(entry)?);
+    }
     Ok((s, id.clone()))
 }
 

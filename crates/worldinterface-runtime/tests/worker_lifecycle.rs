@@ -99,14 +99,15 @@ async fn wp_018_duplicate_admission_and_start_preserve_one_immutable_run() {
 #[tokio::test]
 async fn one_host_releases_capacity_for_more_than_64_sequential_runs() {
     async fn operation(h: &Harness, op: Operation) {
-        let mut snapshot = h.demand(op).1;
+        let (submission, mut snapshot, config) = h.demand(op);
         // The default 100-use grant runs out after 50 provision/release pairs,
         // before this test can reach the provider's former 64-run lifetime cap.
         for grant in &mut snapshot.grants {
             grant.max_uses = 256;
         }
+        let outcome = h.operation_prepared(op, submission, snapshot, config).await;
         assert_eq!(
-            h.operation_snapshot(op, snapshot).await,
+            outcome,
             worldinterface_storage::flow::FlowOutcome::Succeeded,
             "run {} operation {op:?}",
             h.run
@@ -208,11 +209,8 @@ async fn wp_026_unavailable_operations_are_not_registered_or_decoded_as_availabl
     }
     let h = Harness::new(Task::Probe, "WP-026", 1500, 65536);
     let (submission, snapshot, config) = h.demand(Operation::Start);
-    let evidence = Evidence {
-        base: HostEvidence(snapshot.clone()),
-        evaluation: h.evaluation.clone(),
-        clock: HostClock,
-    };
+    let evidence =
+        Evidence { base: HostEvidence(snapshot.clone()), evaluation: h.evaluation.clone() };
     let resolver = support::flow_fixture::Resolver(snapshot.facts[0].clone());
     let mut q = worldinterface_runtime::aq_adapter::QueueEngine::bootstrap(
         &h.bundle,
@@ -380,7 +378,9 @@ async fn wp_020_mismatched_and_damaged_private_ownership_never_adopts_an_unrelat
     let h = Harness::new(Task::Probe, "WP-020", 1500, 65536);
     h.operation(Operation::Start).await;
     h.finish().await;
-    let other = Harness::new(Task::Sleep { millis: 5000 }, "WP-020", 3000, 65536);
+    // Keep the unrelated run live through complete packet checks and journal
+    // mutations; its task must not race the ownership assertions or explicit stop.
+    let other = Harness::new(Task::Sleep { millis: 30000 }, "WP-020", 15000, 65536);
     other.operation(Operation::Start).await;
     fn journal(h: &Harness) -> std::path::PathBuf {
         std::fs::read_dir(h.temp.path().join("process"))
@@ -405,7 +405,8 @@ async fn wp_020_mismatched_and_damaged_private_ownership_never_adopts_an_unrelat
     std::fs::write(&path, &original).unwrap();
     assert!(h.runtime.recovery_evidence(&h.binding()).unwrap().unwrap().cleanup_confirmed);
     other.operation(Operation::Terminate).await;
-    assert!(other.finish().await.cleanup_confirmed);
+    let cleanup = other.finish().await;
+    assert!(cleanup.cleanup_confirmed, "unrelated run cleanup: {cleanup:?}");
 }
 #[tokio::test]
 async fn wp_019_helper_death_retains_capacity_without_a_cleanup_or_success_claim() {

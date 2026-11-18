@@ -27,6 +27,11 @@ fn fixture() -> TempDir {
             gate["id"].as_str().unwrap()
         ));
     }
+    let copies = read(&source.join("docs/release/package-tests.json")).unwrap();
+    for (dest, source) in copies["byte_copies"].as_object().unwrap() {
+        paths.push(dest.clone());
+        paths.push(source.as_str().unwrap().to_owned());
+    }
     for name in paths {
         let dest = temp.path().join(&name);
         fs::create_dir_all(dest.parent().unwrap()).unwrap();
@@ -95,17 +100,18 @@ fn wp_034_publication_rejects_stale_profile_fixture_lock_and_recipe_pins() {
     changed["aq"]["runtime_release"]["tag"] = json!("v0.2.0");
     assert!(handoff::validate(temp.path(), &changed).is_err());
     let packet = json!({"fixture":"non-live-packet"});
-    let approval = json!({"manifest":wi_contract_check::hash(serde_json::to_vec(&packet).unwrap()),"expires_unix_ms":100});
-    worker_campaign::validate_approval(&approval, &packet, 99).unwrap();
-    assert!(worker_campaign::validate_approval(&approval, &packet, 100).is_err());
-    assert!(worker_campaign::validate_approval(&approval, &packet, 101).is_err());
-    assert!(worker_campaign::validate_approval(&approval, &json!({"changed":true}), 99).is_err());
-    assert!(worker_campaign::validate_approval(
-        &json!({"manifest":approval["manifest"]}),
-        &packet,
-        99
-    )
-    .is_err());
+    let record = wi_contract_check::evaluation::packet_record(&packet).unwrap();
+    wi_contract_check::evaluation::validate_record(&record, &packet).unwrap();
+    for changed in [
+        json!({"manifest":record["manifest"]}),
+        json!({"manifest":"substituted","acceptance_policy":wi_contract_check::evaluation::POLICY}),
+        json!({"manifest":record["manifest"],"acceptance_policy":"receipt-expiry"}),
+    ] {
+        assert!(wi_contract_check::evaluation::validate_record(&changed, &packet).is_err());
+    }
+    assert!(
+        wi_contract_check::evaluation::validate_record(&record, &json!({"changed":true})).is_err()
+    );
     handoff::validate(temp.path(), &value).unwrap();
 }
 
@@ -118,6 +124,7 @@ fn wp_034_publication_requires_complete_gate_state_and_valid_descriptor() {
         .unwrap()
         .iter()
         .map(|g| (g["id"].as_str().unwrap().to_string(), g["status"].clone()))
+        .chain(std::iter::once(("WI-WORKER-G5".to_string(), json!("closed"))))
         .collect();
     worker_campaign::validate_gates(temp.path(), &states).unwrap();
     for id in ["WI-WORKER-G4", "WI-EMBEDDED-WORKER-PROOF-1", "WI-AQ-G1"] {
@@ -174,4 +181,84 @@ fn wp_034_publication_binds_external_evidence_and_never_grants_reviewed_closure(
     fs::remove_file(evidence.path().join("coding.json")).unwrap();
     assert!(handoff::publication(source.path(), &receipt, evidence.path()).is_err());
     assert!(handoff::verify(source.path(), evidence.path()).is_err());
+}
+
+#[test]
+fn packaged_handoff_gates_fixtures_and_repository_lock_reject_drift() {
+    let temp = fixture();
+    handoff::validate_package_data(temp.path()).unwrap();
+    let copies = read(&temp.path().join("docs/release/package-tests.json")).unwrap();
+    for dest in copies["byte_copies"].as_object().unwrap().keys() {
+        let path = temp.path().join(dest);
+        let original = fs::read(&path).unwrap();
+        fs::write(&path, b"substituted").unwrap();
+        assert!(handoff::validate_package_data(temp.path()).is_err(), "{dest}");
+        fs::write(path, original).unwrap();
+    }
+    let value = handoff::descriptor(temp.path()).unwrap();
+    assert_eq!(value["release"]["package_version"], "0.2.0-alpha.2");
+    assert!(value["identities"]["docs/release/0.2.0-alpha.2.md"].is_string());
+    assert!(value["identities"].get("docs/release/0.2.0-alpha.1.md").is_none());
+}
+
+#[test]
+fn alpha2_handoff_requires_g5_release_and_two_way_store_incompatibility() {
+    let temp = fixture();
+    let value = read(&temp.path().join(handoff::DESCRIPTOR)).unwrap();
+    assert_eq!(value["supervisor"]["available_since"], "0.2.0-alpha.2");
+    let compatibility = &value["release"]["store_compatibility"];
+    assert_eq!(compatibility["previous_version"], "0.2.0-alpha.1");
+    assert_eq!(compatibility["previous_store_requires_recreation"], true);
+    assert_eq!(compatibility["current_store_readable_by_previous"], false);
+    for (parent, key) in std::iter::once(("/supervisor", "available_since".to_owned())).chain(
+        compatibility
+            .as_object()
+            .unwrap()
+            .keys()
+            .map(|k| ("/release/store_compatibility", k.clone())),
+    ) {
+        for remove in [false, true] {
+            let mut changed = value.clone();
+            let fields = changed.pointer_mut(parent).unwrap().as_object_mut().unwrap();
+            if remove {
+                fields.remove(&key);
+            } else {
+                fields.insert(key.clone(), json!("substituted"));
+            }
+            assert!(handoff::validate(temp.path(), &changed).is_err(), "{parent}/{key}");
+        }
+    }
+}
+
+#[test]
+fn wp_040_supervisor_handoff_limits_claims_to_interface_and_reconciliation() {
+    let temp = fixture();
+    let value = read(&temp.path().join(handoff::DESCRIPTOR)).unwrap();
+    handoff::validate(temp.path(), &value).unwrap();
+    assert_eq!(value["cases"].as_array().unwrap().len(), 55);
+    assert_eq!(value["gates"].as_array().unwrap().len(), 10);
+    assert_eq!(value["supervisor"]["cases"].as_array().unwrap().len(), 6);
+    for pointer in [
+        "/supervisor/claims/kata_lifecycle_qualified",
+        "/supervisor/claims/isolation_qualified",
+        "/supervisor/execution_grants_closure",
+        "/supervisor/scope",
+        "/supervisor/consumer/owner",
+        "/supervisor/evidence/producer",
+        "/supervisor/gate/effective_on",
+    ] {
+        let mut changed = value.clone();
+        *changed.pointer_mut(pointer).unwrap() = json!("inflated");
+        assert!(handoff::validate(temp.path(), &changed).is_err(), "{pointer}");
+    }
+    for pointer in [
+        "/supervisor/cases",
+        "/supervisor/consumer/obligations",
+        "/supervisor/evidence/binding",
+        "/supervisor/gate/requirement_bindings",
+    ] {
+        let mut changed = value.clone();
+        changed.pointer_mut(pointer).unwrap().as_array_mut().unwrap().pop();
+        assert!(handoff::validate(temp.path(), &changed).is_err(), "{pointer}");
+    }
 }

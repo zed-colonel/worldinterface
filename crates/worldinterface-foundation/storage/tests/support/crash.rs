@@ -57,10 +57,8 @@ fn profile() -> StoreProfile {
     }
 }
 fn submission() -> Envelope {
-    let v: serde_json::Value = serde_json::from_slice(include_bytes!(
-        "../../../../../conformance/wi-fabric-2/domain/canonical-vectors.json"
-    ))
-    .unwrap();
+    let v: serde_json::Value =
+        serde_json::from_slice(include_bytes!("canonical-vectors.json")).unwrap();
     Envelope::parse(&serde_json::to_vec(&v[0]["envelope"]).unwrap()).unwrap()
 }
 fn submit(root: &StoreRoot) -> EntityId {
@@ -130,10 +128,7 @@ fn child() {
 }
 
 fn fabric_fixture() -> (EffectSubmission, AuthorizationSnapshot) {
-    let fixture: serde_json::Value = serde_json::from_str(include_str!(
-        "../../../../../conformance/wi-fabric-2/egress/fixture.json"
-    ))
-    .unwrap();
+    let fixture: serde_json::Value = serde_json::from_str(include_str!("egress.json")).unwrap();
     (
         serde_json::from_value(fixture["submission"].clone()).unwrap(),
         serde_json::from_value(fixture["snapshot"].clone()).unwrap(),

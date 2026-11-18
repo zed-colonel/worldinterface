@@ -354,7 +354,7 @@ impl Repository<'_> {
         let mut c = self.root.connect(self.kind)?;
         let tx = c.transaction_with_behavior(TransactionBehavior::Immediate)?;
         crate::continuation::validate_source_order(&tx)?;
-        tx.execute_batch("DELETE FROM control_entries; DELETE FROM control_state; DELETE FROM projections; DELETE FROM records; DELETE FROM admissions; DELETE FROM outbox; DELETE FROM ingress_state; DELETE FROM ingress_receipt_index; DELETE FROM effect_state; DELETE FROM effect_outbox; DELETE FROM publication_index; DELETE FROM receipt_index; DELETE FROM flow_state; DELETE FROM flow_runs; DELETE FROM flow_tasks; DELETE FROM signal_outbox; DELETE FROM worker_event_sequences; DELETE FROM callback_revisions; DELETE FROM worker_runs; DELETE FROM worker_limits; DELETE FROM worker_launches; DELETE FROM worker_providers;")?;
+        tx.execute_batch("DELETE FROM control_entries; DELETE FROM control_state; DELETE FROM projections; DELETE FROM records; DELETE FROM admissions; DELETE FROM outbox; DELETE FROM ingress_state; DELETE FROM ingress_receipt_index; DELETE FROM effect_state; DELETE FROM effect_instances; DELETE FROM effect_requests; DELETE FROM effect_outbox; DELETE FROM publication_index; DELETE FROM receipt_index; DELETE FROM flow_state; DELETE FROM flow_runs; DELETE FROM flow_tasks; DELETE FROM signal_outbox; DELETE FROM worker_event_sequences; DELETE FROM callback_revisions; DELETE FROM worker_runs; DELETE FROM worker_limits; DELETE FROM worker_launches; DELETE FROM worker_providers;")?;
         replay_into(&tx, &tx)?;
         crate::ingress::replay(&tx, &tx)?;
         crate::effect::replay(&tx, &tx)?;
@@ -401,7 +401,6 @@ fn replay_into(source: &Connection, target: &Connection) -> Result<()> {
 pub(crate) fn validate_database(c: &Connection) -> Result<()> {
     // Validate under one SQLite read snapshot. Replay never calls authorization or providers.
     c.execute_batch("BEGIN")?;
-    crate::continuation::validate_source_order(c)?;
     let expected = Connection::open_in_memory()?;
     expected.execute_batch(SCHEMA)?;
     expected.execute_batch(crate::ingress::SCHEMA)?;
@@ -410,6 +409,28 @@ pub(crate) fn validate_database(c: &Connection) -> Result<()> {
     expected.execute_batch(crate::continuation::SCHEMA)?;
     expected.execute_batch(crate::worker::SCHEMA)?;
     expected.execute_batch(crate::control_plane::SCHEMA)?;
+    // Schema SQL (including append-only triggers and unique indexes) must match exactly.
+    let sql =
+        "SELECT type,name,sql FROM sqlite_master WHERE name NOT LIKE 'sqlite_%' ORDER BY name";
+    let schema = |c: &Connection| -> Result<Vec<(String, String, String)>> {
+        let mut q = c.prepare(sql)?;
+        let rows = q.query_map([], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)))?;
+        Ok(rows.collect::<rusqlite::Result<Vec<_>>>()?)
+    };
+    // The only optional schema-1 addition is a derived scheduling index. Match
+    // its exact definition too: an index with the same name cannot hide drift.
+    let scheduling_index: bool = c.query_row(
+        "SELECT EXISTS(SELECT 1 FROM sqlite_master WHERE name='flow_pending_global')",
+        [],
+        |r| r.get(0),
+    )?;
+    if scheduling_index {
+        expected.execute_batch(crate::flow::SCHEDULING_INDEX_SQL)?;
+    }
+    if schema(c)? != schema(&expected)? {
+        return Err(invalid("unsupported schema: recreate the store for this version"));
+    }
+    crate::continuation::validate_source_order(c)?;
     replay_into(c, &expected)?;
     crate::ingress::replay(c, &expected)?;
     crate::effect::replay(c, &expected)?;
@@ -419,7 +440,7 @@ pub(crate) fn validate_database(c: &Connection) -> Result<()> {
     crate::worker::replay(c, &expected)?;
     crate::continuation::replay(c, &expected)?;
     crate::control_plane::replay(c, &expected)?;
-    for query in ["SELECT collection,key,value FROM control_entries ORDER BY collection,key", "SELECT singleton,state FROM control_state ORDER BY singleton", "SELECT tenant,provider,run,record FROM worker_launches ORDER BY tenant,provider,run", "SELECT tenant,provider,record FROM worker_providers ORDER BY tenant,provider", "SELECT tenant,provider,run,request,reserved,state FROM worker_runs ORDER BY tenant,provider,run", "SELECT tenant,slots FROM worker_limits ORDER BY tenant", "SELECT id,canonical,digest FROM event_sources ORDER BY id","SELECT stream,sequence,id,tenant,source FROM worker_event_sequences ORDER BY stream,sequence","SELECT stream,source,revision FROM callback_revisions ORDER BY stream,source","SELECT id,tenant,event,request,digest,sequence,rejection FROM signal_outbox ORDER BY id", "SELECT tenant,id,request,terminal,quarantine,state FROM flow_runs ORDER BY tenant,id", "SELECT tenant,task,run FROM flow_tasks ORDER BY tenant,task", "SELECT tenant,state FROM flow_state ORDER BY tenant", "SELECT run,tenant,intent,task FROM effect_run_index ORDER BY run", "SELECT tenant,state FROM effect_state ORDER BY tenant", "SELECT tenant,intent,dispatch FROM effect_outbox ORDER BY tenant,intent", "SELECT tenant,state FROM ingress_state ORDER BY tenant", "SELECT id,tenant,identity,digest,canonical FROM ingress_receipt_index ORDER BY id", "SELECT entity,revision,state FROM projections ORDER BY entity", "SELECT entity,digest,canonical FROM records ORDER BY seq", "SELECT scope,principal,class,request,digest,entity FROM admissions ORDER BY scope,principal,class,request", "SELECT key,entity,payload,delivered FROM outbox ORDER BY key", "SELECT identity,scope,content,size,state FROM publication_index ORDER BY identity", "SELECT id,digest,tenant,intent FROM receipt_index ORDER BY id"] {
+    for query in ["SELECT collection,key,value FROM control_entries ORDER BY collection,key", "SELECT singleton,state FROM control_state ORDER BY singleton", "SELECT tenant,provider,run,record FROM worker_launches ORDER BY tenant,provider,run", "SELECT tenant,provider,record FROM worker_providers ORDER BY tenant,provider", "SELECT tenant,provider,run,request,reserved,state FROM worker_runs ORDER BY tenant,provider,run", "SELECT tenant,slots FROM worker_limits ORDER BY tenant", "SELECT id,canonical,digest FROM event_sources ORDER BY id","SELECT stream,sequence,id,tenant,source FROM worker_event_sequences ORDER BY stream,sequence","SELECT stream,source,revision FROM callback_revisions ORDER BY stream,source","SELECT id,tenant,event,request,digest,sequence,rejection FROM signal_outbox ORDER BY id", "SELECT tenant,id,request,terminal,quarantine,state FROM flow_runs ORDER BY tenant,id", "SELECT tenant,task,run FROM flow_tasks ORDER BY tenant,task", "SELECT tenant,state FROM flow_state ORDER BY tenant", "SELECT run,tenant,intent,task FROM effect_run_index ORDER BY run", "SELECT tenant,state FROM effect_state ORDER BY tenant", "SELECT tenant,intent,flow,node,state FROM effect_instances ORDER BY tenant,intent", "SELECT tenant,request,intent FROM effect_requests ORDER BY tenant,request", "SELECT tenant,intent,dispatch FROM effect_outbox ORDER BY tenant,intent", "SELECT tenant,state FROM ingress_state ORDER BY tenant", "SELECT id,tenant,identity,digest,canonical FROM ingress_receipt_index ORDER BY id", "SELECT entity,revision,state FROM projections ORDER BY entity", "SELECT entity,digest,canonical FROM records ORDER BY seq", "SELECT scope,principal,class,request,digest,entity FROM admissions ORDER BY scope,principal,class,request", "SELECT key,entity,payload,delivered FROM outbox ORDER BY key", "SELECT identity,scope,content,size,state FROM publication_index ORDER BY identity", "SELECT id,digest,tenant,intent FROM receipt_index ORDER BY id"] {
         // Compare one row at a time: recovery must not materialize two copies
         // of every retained Flow run merely to compare rebuilt projections.
         let mut actual = c.prepare(query)?;
@@ -441,23 +462,35 @@ pub(crate) fn validate_database(c: &Connection) -> Result<()> {
             }
         }
  }
-    // Schema SQL (including append-only triggers and unique indexes) must match exactly.
-    let sql =
-        "SELECT type,name,sql FROM sqlite_master WHERE name NOT LIKE 'sqlite_%' ORDER BY name";
-    let schema = |c: &Connection| -> Result<Vec<(String, String, String)>> {
-        let mut q = c.prepare(sql)?;
-        let rows = q.query_map([], |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)))?;
-        Ok(rows.collect::<rusqlite::Result<Vec<_>>>()?)
-    };
-    if schema(c)? != schema(&expected)? {
-        return Err(invalid("unsupported schema"));
-    }
     c.execute_batch("COMMIT")?;
     Ok(())
 }
 #[cfg(test)]
 mod tests {
     use super::*;
+    #[test]
+    fn optional_scheduling_index_preserves_legacy_schema_and_rejects_drift() {
+        let c = Connection::open_in_memory().unwrap();
+        for schema in [
+            SCHEMA,
+            crate::ingress::SCHEMA,
+            crate::effect::SCHEMA,
+            crate::flow::SCHEMA,
+            crate::continuation::SCHEMA,
+            crate::worker::SCHEMA,
+            crate::control_plane::SCHEMA,
+        ] {
+            c.execute_batch(schema).unwrap();
+        }
+        validate_database(&c).unwrap();
+        c.execute_batch(crate::flow::SCHEDULING_INDEX_SQL).unwrap();
+        validate_database(&c).unwrap();
+        c.execute_batch(
+            "DROP INDEX flow_pending_global; CREATE INDEX flow_pending_global ON flow_runs(tenant)",
+        )
+        .unwrap();
+        assert!(validate_database(&c).unwrap_err().to_string().contains("unsupported schema"));
+    }
     #[test]
     fn every_transaction_fault_rolls_back_records_outbox_history_and_projection() {
         for fault in ["records", "outbox", "history"] {

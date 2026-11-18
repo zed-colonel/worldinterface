@@ -17,6 +17,44 @@ fn fixture() -> (EffectSubmission, AuthorizationSnapshot) {
     )
 }
 #[test]
+fn validated_command_matches_journal_replay_and_fences_divergent_same_revision_state() {
+    let (submission, snapshot) = fixture();
+    let caller = AuthenticatedCaller::from_trusted_authentication(
+        snapshot.bindings[0].tenant.clone(),
+        snapshot.bindings[0].principal.clone(),
+    );
+    let base = EffectState::default();
+    let command = validate_command(
+        &base,
+        &caller,
+        "2026-09-21T00:00:00.000000000Z".to_string().try_into().unwrap(),
+        EffectAction::Submit {
+            id: EffectIntentId::generate(),
+            submission: Box::new(submission),
+            snapshot: VerifiedSnapshot::from_trusted_verifier(snapshot).unwrap(),
+            link: None,
+        },
+    )
+    .unwrap();
+    let applied = command.apply_to(&base).unwrap().unwrap();
+    assert_eq!(
+        applied,
+        worldinterface_domain::effect::replay_command(&base, caller.tenant(), command.bytes())
+            .unwrap()
+    );
+    assert!(command.apply_to(&applied.0).unwrap().is_none());
+    let mut divergent = base.clone();
+    divergent.uses.insert(ContentHash::of(b"other reservation"), 1);
+    assert_eq!(divergent.revision, base.revision);
+    assert!(command.apply_to(&divergent).unwrap().is_none());
+    assert!(worldinterface_domain::effect::replay_command(
+        &divergent,
+        caller.tenant(),
+        command.bytes()
+    )
+    .is_err());
+}
+#[test]
 fn campaign_labels_are_attribution_and_material_differences_remain_visible() {
     let (submission, snapshot) = fixture();
     let tenant = snapshot.bindings[0].tenant.clone();

@@ -20,6 +20,54 @@ use worldinterface_runtime::{
 };
 use worldinterface_storage::{flow::*, StoreKind};
 
+#[test]
+fn bootstrap_prepares_missing_scheduling_index_and_pending_page_survives_reopen() {
+    let f = Fixture::new();
+    let database = f._temp.path().join("bundle/wi/flow.sqlite");
+    let connect = || {
+        rusqlite::Connection::open_with_flags(&database, rusqlite::OpenFlags::SQLITE_OPEN_READ_ONLY)
+            .unwrap()
+    };
+    let index_count = || -> u64 {
+        connect().query_row(
+            "SELECT COUNT(*) FROM sqlite_master WHERE type='index' AND name='flow_pending_global'",
+            [],
+            |row| row.get(0),
+        ).unwrap()
+    };
+    assert_eq!(index_count(), 0);
+    let error = f.bundle.wi().flow_pending_global_page(0, i64::MAX, 1).err().unwrap();
+    assert!(error.is::<FlowIntegrity>());
+    assert_eq!(error.to_string(), "Flow scheduling index missing; call flow_prepare_scheduling before reading global pending pages");
+    assert_eq!(index_count(), 0);
+
+    let evidence = Evidence(f.snapshot.clone());
+    let service = f.service(&evidence);
+    let d = definition(&f, true, SignalProgress::Once {}, None);
+    service.activate_flow_version(&(), d.clone(), None).unwrap();
+    let mut q = QueueEngine::bootstrap(&f.bundle, f.handler(), host()).unwrap();
+    assert_eq!(index_count(), 1);
+    let id = service.submit_flow(&(), &d.id, f.submission.clone(), &mut q).unwrap();
+    let pending = f.run(&id);
+    q.shutdown().unwrap();
+    drop(f.bundle);
+
+    let reopened =
+        worldinterface_runtime::storage::StoreBundle::open(&f._temp.path().join("bundle")).unwrap();
+    assert_eq!(index_count(), 1);
+    let schema: u32 = connect().query_row("PRAGMA user_version", [], |row| row.get(0)).unwrap();
+    assert_eq!(schema, 1);
+    let page = reopened.wi().flow_pending_global_page(0, i64::MAX, 1).unwrap();
+    assert_eq!(page.len(), 1);
+    assert_eq!(page[0].run, pending);
+    assert!(page[0].quarantine.is_none());
+    assert!(reopened
+        .wi()
+        .flow_pending_global_page(page[0].position, i64::MAX, 1)
+        .unwrap()
+        .is_empty());
+}
+
 // Observe inside the executor, before control returns to tick's next outbox
 // drain. This distinguishes handler repair from eventual scan acknowledgment.
 struct CheckWakeAcknowledgment<H> {
@@ -635,9 +683,8 @@ async fn signal_cancel_acceptance_and_deadline_winners_replay_across_paired_reop
 }
 
 /// F-012: idle scheduling must not repeat a full reconciliation per waiting
-/// Flow. The 250 ms average budget leaves ample headroom over an empty tick
-/// while catching the reviewed 500+ ms cost at 100 waits. The active phase
-/// qualifies the documented supported waiting workload (F-018).
+/// Flow. Count limits bound reconciliation work independently of host load;
+/// elapsed timings remain diagnostics for the supported workload (F-018).
 #[tokio::test]
 async fn idle_ticks_skip_unchanged_waiting_flows_and_reconcile_changes_after_restart() {
     use actionqueue_core::run::RunState;
@@ -680,21 +727,30 @@ async fn idle_ticks_skip_unchanged_waiting_flows_and_reconcile_changes_after_res
         q.engine().projection().run_instances().filter(|r| r.state() == RunState::Awaiting).count(),
         200
     );
-    // Complete the final disposable watermark pass before measurement.
-    for _ in 0..2 {
+    // Let the finite, budgeted traversal settle before measuring steady idle.
+    // Two ticks no longer suffice for a 100-row pass with an eight-row budget.
+    let mut settled = false;
+    for _ in 0..64 {
         let _ = q.tick().await.unwrap();
+        if q.tick_diagnostics.work.rows == 0 {
+            settled = true;
+            break;
+        }
     }
+    assert!(settled, "unchanged waiting flows never reached a zero-work tick");
     let started = Instant::now();
     for _ in 0..8 {
         let tick = q.tick().await.unwrap();
         assert_eq!(tick.dispatched, 0);
+        assert_eq!(q.tick_diagnostics.work.rows, 0);
+        assert_eq!(q.tick_diagnostics.work.plans, 0);
+        assert_eq!(q.tick_diagnostics.work.artifacts, 0);
     }
     let average = started.elapsed() / 8;
     eprintln!("100 waiting Flows: average idle tick {average:?}");
-    assert!(average < Duration::from_millis(250), "idle tick: {average:?}");
 
     // Each unrelated source/outbox commit advances AQ without satisfying any
-    // Flow. Unlike idle ticks, every measured tick must reconcile all waits.
+    // Flow. Every tick shares the bounded reconciliation budget.
     let mut traffic_route = event_route(&f);
     traffic_route.correlation = r("scale-traffic");
     let traffic_policy = Policy(traffic_route);
@@ -717,6 +773,12 @@ async fn idle_ticks_skip_unchanged_waiting_flows_and_reconcile_changes_after_res
         let started = Instant::now();
         assert_eq!(q.tick().await.unwrap().dispatched, 0);
         active.push(started.elapsed());
+        assert!(
+            q.tick_diagnostics.work.rows
+                <= worldinterface_runtime::aq_adapter::RECONCILE_ROWS_PER_TICK
+        );
+        assert!(q.tick_diagnostics.work.plans <= q.tick_diagnostics.work.rows);
+        eprintln!("active tick: {:?}", q.tick_diagnostics);
         assert!(f
             .bundle
             .wi()
@@ -738,8 +800,6 @@ async fn idle_ticks_skip_unchanged_waiting_flows_and_reconcile_changes_after_res
     eprintln!(
         "100 waiting Flows under unrelated traffic: average tick {average:?}, maximum {maximum:?}"
     );
-    assert!(average < Duration::from_millis(500), "active average tick: {average:?}");
-    assert!(maximum < Duration::from_secs(2), "active maximum tick: {maximum:?}");
 
     // WI and AQ mutations both invalidate the disposable watermark. A newly
     // admitted unrelated Flow must progress while all 100 waits stay unresolved.
@@ -749,7 +809,29 @@ async fn idle_ticks_skip_unchanged_waiting_flows_and_reconcile_changes_after_res
     pure.body.entries = vec![r("value")];
     service.activate_flow_version(&(), pure.clone(), None).unwrap();
     let unrelated = service.submit_flow(&(), &pure.id, submissions[100].clone(), &mut q).unwrap();
-    f.drive(&mut q, &unrelated).await;
+    for sequence in 9..=16 {
+        intake
+            .worker_observation(
+                &(),
+                worldinterface_worker::ports::Observation {
+                    provider: "scale-traffic".into(),
+                    run: "unrelated".into(),
+                    event: format!("traffic-{sequence}"),
+                    sequence,
+                    kind: worldinterface_worker::ports::ObservationKind::Exited,
+                },
+            )
+            .unwrap();
+        let _ = q.tick().await.unwrap();
+        assert!(
+            q.tick_diagnostics.work.rows
+                <= worldinterface_runtime::aq_adapter::RECONCILE_ROWS_PER_TICK
+        );
+        if f.run(&unrelated).outcome.is_some() {
+            break;
+        }
+        tokio::time::sleep(Duration::from_millis(1)).await;
+    }
     assert_eq!(f.run(&unrelated).outcome, Some(FlowOutcome::Succeeded));
     let canceled = ids.last().unwrap();
     q.cancel_task(f.run(canceled).coordinator_task.as_str().parse().unwrap()).unwrap();
@@ -765,4 +847,182 @@ async fn idle_ticks_skip_unchanged_waiting_flows_and_reconcile_changes_after_res
     assert_eq!(f.run(&ids[0]).outcome, Some(FlowOutcome::Succeeded));
     assert_eq!(f.run(canceled).outcome, Some(FlowOutcome::Canceled));
     q.shutdown().unwrap();
+}
+
+#[tokio::test]
+async fn reconciliation_work_is_bounded_independently_of_waits_and_history() {
+    for (waiting, history) in [(0, 0), (10, 0), (100, 0), (10, 100)] {
+        let mut f = Fixture::new();
+        let submissions: Vec<_> = (0..waiting + history)
+            .map(|i| {
+                let mut s = f.submission.clone();
+                s.client_request_id = format!("profile:{i}").try_into().unwrap();
+                s
+            })
+            .collect();
+        allow_demands(&mut f, &submissions);
+        let evidence = Evidence(f.snapshot.clone());
+        let service = f.service(&evidence);
+        let d = definition(&f, true, SignalProgress::Once {}, None);
+        service.activate_flow_version(&(), d.clone(), None).unwrap();
+        let mut pure = d.clone();
+        pure.id = r("profile-history");
+        pure.body.nodes = vec![pure_node("value", vec![], true.into(), "bool")];
+        pure.body.entries = vec![r("value")];
+        service.activate_flow_version(&(), pure.clone(), None).unwrap();
+        let mut q = QueueEngine::bootstrap(&f.bundle, f.handler(), host()).unwrap();
+        for s in &submissions[..history] {
+            let id = service.submit_flow(&(), &pure.id, s.clone(), &mut q).unwrap();
+            f.drive(&mut q, &id).await;
+        }
+        let ids: Vec<_> = submissions[history..]
+            .iter()
+            .map(|s| service.submit_flow(&(), &d.id, s.clone(), &mut q).unwrap())
+            .collect();
+        for id in &ids {
+            until_wait(&f, &mut q, id).await;
+        }
+        for _ in 0..20 {
+            let _ = q.tick().await.unwrap();
+        }
+        eprintln!("PROFILE waiting={waiting} completed_history={history}");
+        // Unrelated AQ progress invalidates the old watermark each time.
+        let mut route = event_route(&f);
+        route.correlation = r("profile-unrelated");
+        let policy = Policy(route);
+        let intake = EventIntake { root: f.bundle.wi(), authentication: &f.auth, policy: &policy };
+        for sequence in 1..=4 {
+            intake
+                .worker_observation(
+                    &(),
+                    worldinterface_worker::ports::Observation {
+                        provider: "profile".into(),
+                        run: "unrelated".into(),
+                        event: format!("profile-{sequence}"),
+                        sequence,
+                        kind: worldinterface_worker::ports::ObservationKind::Exited,
+                    },
+                )
+                .unwrap();
+            let _ = q.tick().await.unwrap();
+            let w = &q.tick_diagnostics.work;
+            assert!(w.rows <= worldinterface_runtime::aq_adapter::RECONCILE_ROWS_PER_TICK);
+            assert_eq!(w.plans, w.rows);
+            assert!(w.artifacts <= 2 * w.rows);
+            assert!(w.pages <= 2);
+            assert!(w.task_lookups <= 128);
+            eprintln!("waiting={waiting} history={history}: {:?}", q.tick_diagnostics);
+        }
+        q.shutdown().unwrap();
+    }
+}
+
+/// F-001: a fresh Flow must not wait for the scan of unchanged waits or
+/// history-only tenants, nor accrue an AQ attempt for every skipped scan page.
+#[test]
+fn new_flow_progress_and_attempts_are_independent_of_waits_and_history_tenants() {
+    // One blocking worker makes the completion marker an executor barrier.
+    // The fixture has one active Flow; unchanged waiting Flows remain in storage.
+    tokio::runtime::Builder::new_current_thread()
+        .enable_all()
+        .max_blocking_threads(1)
+        .build()
+        .unwrap()
+        .block_on(assert_flow_progress_after_executor_completion());
+}
+
+async fn assert_flow_progress_after_executor_completion() {
+    let mut baseline = None;
+    for (waiting, history_tenants) in [(0, 0), (100, 0), (0, 100), (100, 100)] {
+        let mut f = Fixture::new();
+        let submissions: Vec<_> = (0..waiting + 2)
+            .map(|i| {
+                let mut s = f.submission.clone();
+                s.client_request_id = format!("latency:{i}").try_into().unwrap();
+                s
+            })
+            .collect();
+        allow_demands(&mut f, &submissions);
+        let evidence = Evidence(f.snapshot.clone());
+        let service = f.service(&evidence);
+        let d = definition(&f, true, SignalProgress::Once {}, None);
+        // Populate definition-only history before the live tenant, so the old
+        // tenant-at-a-time traversal must cross every one to reach new work.
+        for i in 0..history_tenants {
+            f.bundle
+                .wi()
+                .flow_transact(
+                    &r(&format!("history-tenant:{i}")),
+                    0,
+                    FlowCommand::InsertVersion { definition: d.clone() },
+                )
+                .unwrap();
+        }
+        service.activate_flow_version(&(), d.clone(), None).unwrap();
+        let mut pure = d.clone();
+        pure.id = r("latency-pure");
+        pure.body.nodes = vec![pure_node("value", vec![], true.into(), "bool")];
+        pure.body.entries = vec![r("value")];
+        service.activate_flow_version(&(), pure.clone(), None).unwrap();
+        let mut q = QueueEngine::bootstrap(&f.bundle, f.handler(), host()).unwrap();
+        let ids: Vec<_> = submissions[..waiting]
+            .iter()
+            .map(|s| service.submit_flow(&(), &d.id, s.clone(), &mut q).unwrap())
+            .collect();
+        for id in &ids {
+            until_wait(&f, &mut q, id).await;
+        }
+        // Check both an established host and a reopened host with no scan cursor.
+        for restart in [false, true] {
+            if restart {
+                q.shutdown().unwrap();
+                q = QueueEngine::bootstrap(&f.bundle, f.handler(), host()).unwrap();
+            }
+            let submission = submissions[waiting + usize::from(restart)].clone();
+            let id = service.submit_flow(&(), &pure.id, submission, &mut q).unwrap();
+            // Occupy the one blocking worker beyond the old eight 10-ms sleeps.
+            // This models executor scheduling contention independently of Flow history.
+            let occupied = tokio::task::spawn_blocking(|| {
+                std::thread::sleep(std::time::Duration::from_millis(250));
+            });
+            let mut ticks = 0;
+            while f.run(&id).outcome.is_none() && ticks < 8 {
+                let _ = q.tick().await.unwrap();
+                ticks += 1;
+                // AQ queues handlers with spawn_blocking. With one worker, this
+                // FIFO marker runs after every handler queued by the tick, including
+                // AQ's result publication. Count host scheduling ticks only after
+                // that work has finished, without another tick or a wall-time guess.
+                tokio::task::spawn_blocking(|| ()).await.unwrap();
+                assert!(
+                    q.tick_diagnostics.work.rows
+                        <= worldinterface_runtime::aq_adapter::RECONCILE_ROWS_PER_TICK
+                );
+            }
+            occupied.await.unwrap();
+            let run = f.run(&id);
+            assert_eq!(
+                run.outcome,
+                Some(FlowOutcome::Succeeded),
+                "waiting={waiting} history={history_tenants} restart={restart}"
+            );
+            let attempts = |task: &OpaqueRef| {
+                let runs = q.engine().projection().run_ids_for_task(task.as_str().parse().unwrap());
+                assert_eq!(runs.len(), 1);
+                q.engine().projection().get_attempt_history(&runs[0]).unwrap().len()
+            };
+            let counts = (attempts(&run.coordinator_task), attempts(&run.node_tasks[&r("value")]));
+            eprintln!("F-001 waiting={waiting} history_tenants={history_tenants} restart={restart}: ticks={ticks} attempts={counts:?}");
+            assert!(ticks <= 8, "progress waited behind unchanged Flows");
+            assert!(counts.0 <= 2 && counts.1 <= 2, "binding waits inflated AQ history");
+            if !restart {
+                if let Some(expected) = baseline {
+                    assert_eq!(counts, expected);
+                } else {
+                    baseline = Some(counts);
+                }
+            }
+        }
+        q.shutdown().unwrap();
+    }
 }

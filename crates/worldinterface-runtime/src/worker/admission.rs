@@ -74,7 +74,7 @@ pub fn derive<S: TrustedApprovals>(
 ) -> Result<AdmittedWorker> {
     let demand = WorkerEffect::decode(&bound.input)?;
     let request = &demand.worker;
-    let state = root.effect_snapshot(&bound.tenant)?;
+    let state = root.effect_intent_snapshot(&bound.tenant, &bound.intent)?;
     let effect = state.effects.get(&bound.intent).ok_or("worker effect absent")?;
     let authorization = effect.authorization.as_ref().ok_or("worker effect unauthorized")?;
     if authorization.decision != Decision::Allow
@@ -107,7 +107,6 @@ pub fn derive<S: TrustedApprovals>(
         return Err("worker realization drift".into());
     }
     let verified = evaluation.authorize(
-        now_ms,
         &demand.case,
         request.operation.name(),
         &demand.task,

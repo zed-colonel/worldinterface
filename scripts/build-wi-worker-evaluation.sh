@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Compile and measure the packet without executing process fixtures or granting approval.
+# Compile and measure the packet without executing process fixtures.
 set -euo pipefail
 repo="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")/.." && pwd)"
 cd -- "$repo"
@@ -11,13 +11,13 @@ python3 -I -B "$repo/scripts/wi_worker_evaluation.py"
 # requiring unfinished executable bytes during macro expansion.
 timeout 1800 cargo test --locked --offline --manifest-path crates/worldinterface-runtime/Cargo.toml --lib --test '*' --no-run --message-format=json > "$TMPDIR/verification/revised-packet/cargo-build.jsonl"
 # These two tests build and publish reviewed artifacts and reject path replacement.
-# They launch no fixture/helper and do not require or create an evaluation approval.
+# They launch no fixture/helper and exercise non-live artifact publication.
 timeout 1200 cargo test --locked --offline --manifest-path crates/worldinterface-runtime/Cargo.toml --test worker_build
 python3 -I -B - "$repo" <<'PY'
 import json,os,pathlib,sys
 sys.path.append(str(pathlib.Path(sys.argv[1]) / 'scripts'))
-from wi_worker_evaluation import canonical, check_drift, digest
-manifest=check_drift(pathlib.Path(sys.argv[1]))
+from wi_worker_evaluation import canonical, check_packet, digest
+manifest=check_packet(pathlib.Path(sys.argv[1]))
 packet_digest=digest(canonical(manifest))
 verification=pathlib.Path(os.environ['TMPDIR'])/'verification/revised-packet'
 records=[]

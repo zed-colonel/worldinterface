@@ -1,0 +1,254 @@
+{
+  "version": 1,
+  "id": "WI-EMBEDDED-CORE-1",
+  "source_record_sha256": "89c703a0cd92062f39e9e649d8cd35309ae656206d7910421e0f79dd723f7f46",
+  "pass_criteria": [
+    "Real embedded protocol/store/ingress/intent/receipt/executor/Flow/continuation conformance on exact AQ/WI implementation and fixture pins; no mock substitutes.",
+    "Consumer assumption reconciliation covers the actual embedded surfaces. This is a newly scoped evidence barrier, never an alias for EXO-WI-G3 or accepted WI-06/07/08 parents.",
+    "Parent-owned worker and supervisor cases remain mandatory at full parent acceptance; production activation needs ordinary authority and qualified profiles."
+  ],
+  "requires": [
+    {
+      "id": "STACK-PLAN-ACCEPTED",
+      "kind": "checkpoint",
+      "state": "passed"
+    },
+    {
+      "id": "wi/WI-02/integration",
+      "kind": "slice",
+      "state": "verified"
+    },
+    {
+      "id": "wi/WI-03/integration",
+      "kind": "slice",
+      "state": "verified"
+    },
+    {
+      "id": "wi/WI-04/integration",
+      "kind": "slice",
+      "state": "verified"
+    },
+    {
+      "id": "wi/WI-05/integration",
+      "kind": "slice",
+      "state": "verified"
+    },
+    {
+      "id": "wi/WI-06/integration",
+      "kind": "slice",
+      "state": "verified"
+    },
+    {
+      "id": "wi/WI-07/integration",
+      "kind": "slice",
+      "state": "verified"
+    },
+    {
+      "id": "wi/WI-08/integration",
+      "kind": "slice",
+      "state": "verified"
+    },
+    {
+      "id": "WI-AQ-G1",
+      "kind": "checkpoint",
+      "state": "passed"
+    },
+    {
+      "id": "WI-AQ-G2",
+      "kind": "checkpoint",
+      "state": "passed"
+    },
+    {
+      "id": "WI-AQ-G3",
+      "kind": "checkpoint",
+      "state": "passed"
+    },
+    {
+      "id": "WI-AQ-G4",
+      "kind": "checkpoint",
+      "state": "passed"
+    }
+  ],
+  "required_cases": [
+    "AB-WI-001",
+    "AB-WI-002",
+    "AB-WI-003",
+    "AB-WI-004",
+    "AB-WI-005",
+    "AB-WI-006",
+    "AB-WI-007",
+    "AB-WI-008",
+    "AB-WI-009",
+    "AB-WI-010",
+    "AB-WI-011",
+    "AB-WI-012",
+    "AB-WI-013",
+    "AB-WI-014",
+    "AB-WI-015",
+    "AB-WI-016",
+    "AB-WI-020",
+    "AB-WI-022",
+    "AB-WI-023"
+  ],
+  "closing_item": "WIP-08",
+  "status": "closed",
+  "effective_on": "reviewed-merge-with-adopted-checks",
+  "historical_evidence": [],
+  "requirement_bindings": [
+    {
+      "requirement": {
+        "id": "STACK-PLAN-ACCEPTED",
+        "kind": "checkpoint",
+        "state": "passed"
+      },
+      "binding": {
+        "kind": "plan-import",
+        "plan_version": "9212604c-4873-4cd5-b492-1ee3141b8b0b",
+        "date": "2026-10-13",
+        "historical_acceptance": "2026-10-01"
+      }
+    },
+    {
+      "requirement": {
+        "id": "wi/WI-02/integration",
+        "kind": "slice",
+        "state": "verified"
+      },
+      "binding": {
+        "kind": "reviewed-item-scope",
+        "covering_items": [
+          "WIP-01"
+        ],
+        "effective_on": "reviewed-merge-with-adopted-checks"
+      }
+    },
+    {
+      "requirement": {
+        "id": "wi/WI-03/integration",
+        "kind": "slice",
+        "state": "verified"
+      },
+      "binding": {
+        "kind": "reviewed-item-scope",
+        "covering_items": [
+          "WIP-03"
+        ],
+        "effective_on": "reviewed-merge-with-adopted-checks"
+      }
+    },
+    {
+      "requirement": {
+        "id": "wi/WI-04/integration",
+        "kind": "slice",
+        "state": "verified"
+      },
+      "binding": {
+        "kind": "reviewed-item-scope",
+        "covering_items": [
+          "WIP-02"
+        ],
+        "effective_on": "reviewed-merge-with-adopted-checks"
+      }
+    },
+    {
+      "requirement": {
+        "id": "wi/WI-05/integration",
+        "kind": "slice",
+        "state": "verified"
+      },
+      "binding": {
+        "kind": "reviewed-item-scope",
+        "covering_items": [
+          "WIP-04"
+        ],
+        "effective_on": "reviewed-merge-with-adopted-checks"
+      }
+    },
+    {
+      "requirement": {
+        "id": "wi/WI-06/integration",
+        "kind": "slice",
+        "state": "verified"
+      },
+      "binding": {
+        "kind": "reviewed-item-scope",
+        "covering_items": [
+          "WIP-05"
+        ],
+        "effective_on": "reviewed-merge-with-adopted-checks"
+      }
+    },
+    {
+      "requirement": {
+        "id": "wi/WI-07/integration",
+        "kind": "slice",
+        "state": "verified"
+      },
+      "binding": {
+        "kind": "reviewed-item-scope",
+        "covering_items": [
+          "WIP-07"
+        ],
+        "effective_on": "reviewed-merge-with-adopted-checks"
+      }
+    },
+    {
+      "requirement": {
+        "id": "wi/WI-08/integration",
+        "kind": "slice",
+        "state": "verified"
+      },
+      "binding": {
+        "kind": "reviewed-item-scope",
+        "covering_items": [
+          "WIP-08"
+        ],
+        "effective_on": "reviewed-merge-with-adopted-checks"
+      }
+    },
+    {
+      "requirement": {
+        "id": "WI-AQ-G1",
+        "kind": "checkpoint",
+        "state": "passed"
+      },
+      "binding": {
+        "kind": "closed-gate",
+        "record": "conformance/wi-fabric-2/proof/gates/WI-AQ-G1.json"
+      }
+    },
+    {
+      "requirement": {
+        "id": "WI-AQ-G2",
+        "kind": "checkpoint",
+        "state": "passed"
+      },
+      "binding": {
+        "kind": "closed-gate",
+        "record": "conformance/wi-fabric-2/proof/gates/WI-AQ-G2.json"
+      }
+    },
+    {
+      "requirement": {
+        "id": "WI-AQ-G3",
+        "kind": "checkpoint",
+        "state": "passed"
+      },
+      "binding": {
+        "kind": "closed-gate",
+        "record": "conformance/wi-fabric-2/proof/gates/WI-AQ-G3.json"
+      }
+    },
+    {
+      "requirement": {
+        "id": "WI-AQ-G4",
+        "kind": "checkpoint",
+        "state": "passed"
+      },
+      "binding": {
+        "kind": "closed-gate",
+        "record": "conformance/wi-fabric-2/proof/gates/WI-AQ-G4.json"
+      }
+    }
+  ]
+}

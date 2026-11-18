@@ -70,8 +70,33 @@ struct Case {
     receipt: ReceiptId,
     digest: ContentHash,
 }
+fn receipt_fixture() -> (EffectSubmission, AuthorizationSnapshot) {
+    let (mut submission, mut snapshot) = fixture();
+    // Receipt inspection qualifies data and disclosure, not one-second journal
+    // throughput under a concurrent campaign. Bind the 15-second budget exactly.
+    submission.budget.timeout_millis = 15_000;
+    let demand = worldinterface_domain::ingress::digest(&submission).unwrap();
+    let binding = &mut snapshot.bindings[0];
+    for authority in [
+        &mut binding.principal_authority,
+        &mut binding.capacity_authority,
+        &mut snapshot.policy.platform,
+        &mut snapshot.policy.resource,
+        &mut snapshot.policy.information_use,
+        &mut snapshot.grants[0].authority,
+    ] {
+        *authority = [demand.clone()].into_iter().collect();
+    }
+    (submission, snapshot)
+}
 impl Case {
     fn new(evidence: Vec<(OpaqueRef, Vec<u8>)>) -> Self {
+        Self::new_with_delay(evidence, std::time::Duration::ZERO)
+    }
+    fn new_with_delay(
+        evidence: Vec<(OpaqueRef, Vec<u8>)>,
+        invocation_delay: std::time::Duration,
+    ) -> Self {
         let temp = tempfile::tempdir().unwrap();
         let bundle = Arc::new(
             StoreBundle::initialize(
@@ -84,9 +109,13 @@ impl Case {
             )
             .unwrap(),
         );
-        let (submission, snapshot) = fixture();
+        let (submission, snapshot) = receipt_fixture();
         let id = authorize(&bundle, submission, &snapshot);
-        complete(bundle.clone(), &id, &snapshot, evidence);
+        if invocation_delay.is_zero() {
+            complete(bundle.clone(), &id, &snapshot, evidence);
+        } else {
+            complete_with_delay(bundle.clone(), &id, &snapshot, evidence, invocation_delay);
+        }
         let (receipt, digest, _) =
             bundle.wi().effect_receipts(caller(&snapshot).tenant(), &id).unwrap()[0].clone();
         Self { temp, bundle, snapshot, id, receipt, digest }
@@ -98,6 +127,18 @@ impl Case {
 }
 fn full() -> Disclosure {
     Disclosure { profile: DisclosureProfile::Full, restricted: None, evidence: None }
+}
+
+#[test]
+fn receipt_fixture_keeps_completion_when_provider_work_exceeds_one_second() {
+    let case = Case::new_with_delay(vec![], std::time::Duration::from_millis(1200));
+    let auth = Auth;
+    let disclosure = full();
+    let inspector =
+        ReceiptInspector { root: case.bundle.wi(), authentication: &auth, disclosure: &disclosure };
+    let receipt = inspector.receipt(&case.session(), &case.receipt).unwrap().unwrap();
+    assert_eq!(receipt.digest, Some(case.digest.clone()));
+    assert!(receipt.canonical.is_some());
 }
 
 #[test]
@@ -165,7 +206,7 @@ fn authenticated_redaction_and_cross_tenant_principal_denials() {
 fn proof_bundles_bind_receipts_and_authorize_every_member() {
     let case = Case::new(vec![]);
     let tenant = case.session().0;
-    let (mut submission, mut snapshot) = fixture();
+    let (mut submission, mut snapshot) = receipt_fixture();
     submission.client_request_id = "second-request".to_owned().try_into().unwrap();
     let demand = worldinterface_domain::ingress::digest(&submission).unwrap();
     let binding = &mut snapshot.bindings[0];

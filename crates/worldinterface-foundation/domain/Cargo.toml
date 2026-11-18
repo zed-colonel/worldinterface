@@ -1,13 +1,19 @@
 [package]
 name = "worldinterface-domain"
-version = "0.2.0"
+version = "0.2.0-alpha.2"
 edition = "2021"
-publish = false
+rust-version = "1.89"
+description = "Domain layer for WorldInterface durable embedded workflows"
+license = "Apache-2.0"
+repository = "https://github.com/zed-colonel/worldinterface"
+readme = "README.md"
+keywords = ["workflow", "embedded", "durable"]
+include = ["Cargo.toml", "README.md", "LICENSE", "src/**", "tests/support/**", "tests/control_plane.rs"]
 
 [dependencies]
 serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-worldinterface-protocol = { path = "../protocol" }
+worldinterface-protocol = { version = "=0.2.0-alpha.2", path = "../protocol" }
 
 [dev-dependencies]
 proptest = "1"

@@ -360,3 +360,13 @@ are historical evidence only. Changed WIP-16 packet bytes require fresh finite
 operator acceptance after source-bound non-live validation, then all ten adopted
 committed-head checks and fresh external campaign evidence. After the accepted
 expiry live verification fails closed on both candidate and merged heads.
+
+
+## WSP-01 policy successor (2026-11-09)
+
+The supervisor-proof plan starts at `928b5ef07797762bc002920af05a01aa4a4b0e0c`.
+[WSP-01](WSP-01.md) applies the operator decision that a reviewed, merged packet
+is accepted without a separate evaluation receipt, anchor or expiry. Earlier
+approval and renewal records above are historical provenance. Current candidate
+live checks require complete committed packet/source matching; the same rule
+covers reviewed fixture catalog registration, retaining all scope restrictions.

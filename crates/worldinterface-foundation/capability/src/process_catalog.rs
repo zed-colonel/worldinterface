@@ -64,8 +64,15 @@ impl OrdinaryQualificationRecord {
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
 pub enum ProcessRegistrationRecord {
-    Evaluation { binding: ProcessCatalogBinding, approval: ContentHash },
-    Ordinary { qualification: OrdinaryQualificationRecord },
+    /// Reviewed fixture registration; `approval` identifies the evaluation packet,
+    /// rather than a separate operator receipt. Exact host-owned bindings remain required.
+    Evaluation {
+        binding: ProcessCatalogBinding,
+        approval: ContentHash,
+    },
+    Ordinary {
+        qualification: OrdinaryQualificationRecord,
+    },
 }
 #[derive(Clone, Debug, PartialEq, Eq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]

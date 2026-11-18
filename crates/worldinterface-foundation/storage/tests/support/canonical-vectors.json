@@ -1,0 +1,1172 @@
+[
+  {
+    "name": "effect_submission",
+    "envelope": {
+      "contract": "WI-FABRIC-2",
+      "canonical_profile": "wi-json-1",
+      "schema": 1,
+      "record": {
+        "kind": "effect_submission",
+        "body": {
+          "client_request_id": "request-1",
+          "requested_accountable_principal": "12345678-1234-4234-8234-123456789abc",
+          "submitted_by": "12345678-1234-4234-8234-123456789abc",
+          "purpose": "purpose-ref",
+          "causal_refs": [
+            "causal_refs-ref"
+          ],
+          "acting_capacity": {
+            "principal_ref": "12345678-1234-4234-8234-123456789abc",
+            "assignment_ref": "assignment_ref-ref",
+            "organization_ref": "12345678-1234-4234-8234-123456789abc",
+            "attestation_ref": {
+              "artifact": {
+                "scope": "scope-ref",
+                "content": "ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73",
+                "size": 1
+              },
+              "schema": "schema-ref"
+            }
+          },
+          "information_use": {
+            "purpose_refs": [
+              "purpose_refs-ref"
+            ],
+            "allowed_audiences": [
+              "12345678-1234-4234-8234-123456789abc"
+            ],
+            "retention_policy_ref": "retention_policy_ref-ref",
+            "disclosure_policy_ref": "disclosure_policy_ref-ref",
+            "derivation_policy_ref": "derivation_policy_ref-ref",
+            "redistribution": "named_audiences",
+            "expiration": "2026-09-19T23:00:00.123456789Z",
+            "source_obligation_refs": [
+              "source_obligation_refs-ref"
+            ]
+          },
+          "effect_class": "control",
+          "resource": {
+            "namespace": "namespace-ref",
+            "selector": "selector-ref"
+          },
+          "input": {
+            "artifact": {
+              "scope": "scope-ref",
+              "content": "ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73",
+              "size": 1
+            }
+          },
+          "requested_authority_refs": [
+            "requested_authority_refs-ref"
+          ],
+          "approval_attestations": [
+            "approval_attestations-ref"
+          ],
+          "deadline": "2026-09-19T23:00:00.123456789Z",
+          "requested_receipt_profile": "requested_receipt_profile-ref",
+          "budget": {
+            "max_attempts": 1,
+            "timeout_millis": 1
+          },
+          "expected_outcome": "expected_outcome-ref",
+          "delegation_credential": {
+            "artifact": {
+              "scope": "scope-ref",
+              "content": "ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73",
+              "size": 1
+            },
+            "schema": "schema-ref"
+          }
+        }
+      }
+    },
+    "canonical": "{\"canonical_profile\":\"wi-json-1\",\"contract\":\"WI-FABRIC-2\",\"record\":{\"body\":{\"acting_capacity\":{\"assignment_ref\":\"assignment_ref-ref\",\"attestation_ref\":{\"artifact\":{\"content\":\"ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73\",\"scope\":\"scope-ref\",\"size\":1},\"schema\":\"schema-ref\"},\"organization_ref\":\"12345678-1234-4234-8234-123456789abc\",\"principal_ref\":\"12345678-1234-4234-8234-123456789abc\"},\"approval_attestations\":[\"approval_attestations-ref\"],\"budget\":{\"max_attempts\":1,\"timeout_millis\":1},\"causal_refs\":[\"causal_refs-ref\"],\"client_request_id\":\"request-1\",\"deadline\":\"2026-09-19T23:00:00.123456789Z\",\"delegation_credential\":{\"artifact\":{\"content\":\"ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73\",\"scope\":\"scope-ref\",\"size\":1},\"schema\":\"schema-ref\"},\"effect_class\":\"control\",\"expected_outcome\":\"expected_outcome-ref\",\"information_use\":{\"allowed_audiences\":[\"12345678-1234-4234-8234-123456789abc\"],\"derivation_policy_ref\":\"derivation_policy_ref-ref\",\"disclosure_policy_ref\":\"disclosure_policy_ref-ref\",\"expiration\":\"2026-09-19T23:00:00.123456789Z\",\"purpose_refs\":[\"purpose_refs-ref\"],\"redistribution\":\"named_audiences\",\"retention_policy_ref\":\"retention_policy_ref-ref\",\"source_obligation_refs\":[\"source_obligation_refs-ref\"]},\"input\":{\"artifact\":{\"content\":\"ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73\",\"scope\":\"scope-ref\",\"size\":1}},\"purpose\":\"purpose-ref\",\"requested_accountable_principal\":\"12345678-1234-4234-8234-123456789abc\",\"requested_authority_refs\":[\"requested_authority_refs-ref\"],\"requested_receipt_profile\":\"requested_receipt_profile-ref\",\"resource\":{\"namespace\":\"namespace-ref\",\"selector\":\"selector-ref\"},\"submitted_by\":\"12345678-1234-4234-8234-123456789abc\"},\"kind\":\"effect_submission\"},\"schema\":1}",
+    "digest": "ace5574b21e37159112b49bb46b43c199c70eccd6cc673636847b7cdaf3608a9"
+  },
+  {
+    "name": "ingress_binding_submission",
+    "envelope": {
+      "contract": "WI-FABRIC-2",
+      "canonical_profile": "wi-json-1",
+      "schema": 1,
+      "record": {
+        "kind": "ingress_binding_submission",
+        "body": {
+          "client_request_id": "request-1",
+          "source": {
+            "namespace": "namespace-ref",
+            "selector": "selector-ref"
+          },
+          "subscriber": "subscriber-ref",
+          "event_scope": "event_scope-ref",
+          "delivery_policy": "delivery_policy-ref",
+          "requested_authority_refs": [
+            "requested_authority_refs-ref"
+          ]
+        }
+      }
+    },
+    "canonical": "{\"canonical_profile\":\"wi-json-1\",\"contract\":\"WI-FABRIC-2\",\"record\":{\"body\":{\"client_request_id\":\"request-1\",\"delivery_policy\":\"delivery_policy-ref\",\"event_scope\":\"event_scope-ref\",\"requested_authority_refs\":[\"requested_authority_refs-ref\"],\"source\":{\"namespace\":\"namespace-ref\",\"selector\":\"selector-ref\"},\"subscriber\":\"subscriber-ref\"},\"kind\":\"ingress_binding_submission\"},\"schema\":1}",
+    "digest": "7184f9485696255db9ce3a32e559e5f8c02f3a92d939c6a8fbd5f97a5da51871"
+  },
+  {
+    "name": "agency_context",
+    "envelope": {
+      "contract": "WI-FABRIC-2",
+      "canonical_profile": "wi-json-1",
+      "schema": 1,
+      "record": {
+        "kind": "agency_context",
+        "body": {
+          "accountable_principal": "12345678-1234-4234-8234-123456789abc",
+          "requester": "12345678-1234-4234-8234-123456789abc",
+          "delegation_chain": [
+            "delegation_chain-ref"
+          ],
+          "submitted_by": "12345678-1234-4234-8234-123456789abc",
+          "purpose": "purpose-ref",
+          "causal_refs": [
+            "causal_refs-ref"
+          ],
+          "acting_capacity": {
+            "principal_ref": "12345678-1234-4234-8234-123456789abc",
+            "assignment_ref": "assignment_ref-ref",
+            "organization_ref": "12345678-1234-4234-8234-123456789abc",
+            "attestation_ref": {
+              "artifact": {
+                "scope": "scope-ref",
+                "content": "ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73",
+                "size": 1
+              },
+              "schema": "schema-ref"
+            }
+          }
+        }
+      }
+    },
+    "canonical": "{\"canonical_profile\":\"wi-json-1\",\"contract\":\"WI-FABRIC-2\",\"record\":{\"body\":{\"accountable_principal\":\"12345678-1234-4234-8234-123456789abc\",\"acting_capacity\":{\"assignment_ref\":\"assignment_ref-ref\",\"attestation_ref\":{\"artifact\":{\"content\":\"ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73\",\"scope\":\"scope-ref\",\"size\":1},\"schema\":\"schema-ref\"},\"organization_ref\":\"12345678-1234-4234-8234-123456789abc\",\"principal_ref\":\"12345678-1234-4234-8234-123456789abc\"},\"causal_refs\":[\"causal_refs-ref\"],\"delegation_chain\":[\"delegation_chain-ref\"],\"purpose\":\"purpose-ref\",\"requester\":\"12345678-1234-4234-8234-123456789abc\",\"submitted_by\":\"12345678-1234-4234-8234-123456789abc\"},\"kind\":\"agency_context\"},\"schema\":1}",
+    "digest": "8d308fa32cf016ca0f383929b99cf3e0cfd7745b2337b383cc6bbc9e300469bf"
+  },
+  {
+    "name": "effect_intent",
+    "envelope": {
+      "contract": "WI-FABRIC-2",
+      "canonical_profile": "wi-json-1",
+      "schema": 1,
+      "record": {
+        "kind": "effect_intent",
+        "body": {
+          "id": "12345678-1234-4234-8234-123456789abc",
+          "submission": {
+            "client_request_id": "request-1",
+            "requested_accountable_principal": "12345678-1234-4234-8234-123456789abc",
+            "submitted_by": "12345678-1234-4234-8234-123456789abc",
+            "purpose": "purpose-ref",
+            "causal_refs": [
+              "causal_refs-ref"
+            ],
+            "acting_capacity": {
+              "principal_ref": "12345678-1234-4234-8234-123456789abc",
+              "assignment_ref": "assignment_ref-ref",
+              "organization_ref": "12345678-1234-4234-8234-123456789abc",
+              "attestation_ref": {
+                "artifact": {
+                  "scope": "scope-ref",
+                  "content": "ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73",
+                  "size": 1
+                },
+                "schema": "schema-ref"
+              }
+            },
+            "information_use": {
+              "purpose_refs": [
+                "purpose_refs-ref"
+              ],
+              "allowed_audiences": [
+                "12345678-1234-4234-8234-123456789abc"
+              ],
+              "retention_policy_ref": "retention_policy_ref-ref",
+              "disclosure_policy_ref": "disclosure_policy_ref-ref",
+              "derivation_policy_ref": "derivation_policy_ref-ref",
+              "redistribution": "named_audiences",
+              "expiration": "2026-09-19T23:00:00.123456789Z",
+              "source_obligation_refs": [
+                "source_obligation_refs-ref"
+              ]
+            },
+            "effect_class": "control",
+            "resource": {
+              "namespace": "namespace-ref",
+              "selector": "selector-ref"
+            },
+            "input": {
+              "artifact": {
+                "scope": "scope-ref",
+                "content": "ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73",
+                "size": 1
+              }
+            },
+            "requested_authority_refs": [
+              "requested_authority_refs-ref"
+            ],
+            "approval_attestations": [
+              "approval_attestations-ref"
+            ],
+            "deadline": "2026-09-19T23:00:00.123456789Z",
+            "requested_receipt_profile": "requested_receipt_profile-ref",
+            "budget": {
+              "max_attempts": 1,
+              "timeout_millis": 1
+            },
+            "expected_outcome": "expected_outcome-ref",
+            "delegation_credential": {
+              "artifact": {
+                "scope": "scope-ref",
+                "content": "ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73",
+                "size": 1
+              },
+              "schema": "schema-ref"
+            }
+          },
+          "agency": {
+            "accountable_principal": "12345678-1234-4234-8234-123456789abc",
+            "requester": "12345678-1234-4234-8234-123456789abc",
+            "delegation_chain": [
+              "delegation_chain-ref"
+            ],
+            "submitted_by": "12345678-1234-4234-8234-123456789abc",
+            "purpose": "purpose-ref",
+            "causal_refs": [
+              "causal_refs-ref"
+            ],
+            "acting_capacity": {
+              "principal_ref": "12345678-1234-4234-8234-123456789abc",
+              "assignment_ref": "assignment_ref-ref",
+              "organization_ref": "12345678-1234-4234-8234-123456789abc",
+              "attestation_ref": {
+                "artifact": {
+                  "scope": "scope-ref",
+                  "content": "ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73",
+                  "size": 1
+                },
+                "schema": "schema-ref"
+              }
+            }
+          },
+          "stable_idempotency_identity": "stable_idempotency_identity-ref",
+          "submitted_at": "2026-09-19T23:00:00.123456789Z"
+        }
+      }
+    },
+    "canonical": "{\"canonical_profile\":\"wi-json-1\",\"contract\":\"WI-FABRIC-2\",\"record\":{\"body\":{\"agency\":{\"accountable_principal\":\"12345678-1234-4234-8234-123456789abc\",\"acting_capacity\":{\"assignment_ref\":\"assignment_ref-ref\",\"attestation_ref\":{\"artifact\":{\"content\":\"ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73\",\"scope\":\"scope-ref\",\"size\":1},\"schema\":\"schema-ref\"},\"organization_ref\":\"12345678-1234-4234-8234-123456789abc\",\"principal_ref\":\"12345678-1234-4234-8234-123456789abc\"},\"causal_refs\":[\"causal_refs-ref\"],\"delegation_chain\":[\"delegation_chain-ref\"],\"purpose\":\"purpose-ref\",\"requester\":\"12345678-1234-4234-8234-123456789abc\",\"submitted_by\":\"12345678-1234-4234-8234-123456789abc\"},\"id\":\"12345678-1234-4234-8234-123456789abc\",\"stable_idempotency_identity\":\"stable_idempotency_identity-ref\",\"submission\":{\"acting_capacity\":{\"assignment_ref\":\"assignment_ref-ref\",\"attestation_ref\":{\"artifact\":{\"content\":\"ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73\",\"scope\":\"scope-ref\",\"size\":1},\"schema\":\"schema-ref\"},\"organization_ref\":\"12345678-1234-4234-8234-123456789abc\",\"principal_ref\":\"12345678-1234-4234-8234-123456789abc\"},\"approval_attestations\":[\"approval_attestations-ref\"],\"budget\":{\"max_attempts\":1,\"timeout_millis\":1},\"causal_refs\":[\"causal_refs-ref\"],\"client_request_id\":\"request-1\",\"deadline\":\"2026-09-19T23:00:00.123456789Z\",\"delegation_credential\":{\"artifact\":{\"content\":\"ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73\",\"scope\":\"scope-ref\",\"size\":1},\"schema\":\"schema-ref\"},\"effect_class\":\"control\",\"expected_outcome\":\"expected_outcome-ref\",\"information_use\":{\"allowed_audiences\":[\"12345678-1234-4234-8234-123456789abc\"],\"derivation_policy_ref\":\"derivation_policy_ref-ref\",\"disclosure_policy_ref\":\"disclosure_policy_ref-ref\",\"expiration\":\"2026-09-19T23:00:00.123456789Z\",\"purpose_refs\":[\"purpose_refs-ref\"],\"redistribution\":\"named_audiences\",\"retention_policy_ref\":\"retention_policy_ref-ref\",\"source_obligation_refs\":[\"source_obligation_refs-ref\"]},\"input\":{\"artifact\":{\"content\":\"ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73\",\"scope\":\"scope-ref\",\"size\":1}},\"purpose\":\"purpose-ref\",\"requested_accountable_principal\":\"12345678-1234-4234-8234-123456789abc\",\"requested_authority_refs\":[\"requested_authority_refs-ref\"],\"requested_receipt_profile\":\"requested_receipt_profile-ref\",\"resource\":{\"namespace\":\"namespace-ref\",\"selector\":\"selector-ref\"},\"submitted_by\":\"12345678-1234-4234-8234-123456789abc\"},\"submitted_at\":\"2026-09-19T23:00:00.123456789Z\"},\"kind\":\"effect_intent\"},\"schema\":1}",
+    "digest": "3400a5e62bf1acbe57be63c3b2b7f38760962a987029c29318295f6271316161"
+  },
+  {
+    "name": "resolved_effect",
+    "envelope": {
+      "contract": "WI-FABRIC-2",
+      "canonical_profile": "wi-json-1",
+      "schema": 1,
+      "record": {
+        "kind": "resolved_effect",
+        "body": {
+          "intent_id": "12345678-1234-4234-8234-123456789abc",
+          "effect_class": "control",
+          "resource": {
+            "namespace": "namespace-ref",
+            "resource": "resource-ref",
+            "version": "version-ref"
+          },
+          "normalized_parameters": {
+            "artifact": {
+              "scope": "scope-ref",
+              "content": "ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73",
+              "size": 1
+            }
+          },
+          "resolver_version": "resolver_version-ref",
+          "registry_snapshot": "2b79ed7d25db33a952fd66dd81a28d21181d19cf856273bcdbc5eb570636a0e1",
+          "connector": "connector-ref",
+          "idempotency_semantics": "idempotency_semantics-ref",
+          "sensitivity": "sensitivity-ref"
+        }
+      }
+    },
+    "canonical": "{\"canonical_profile\":\"wi-json-1\",\"contract\":\"WI-FABRIC-2\",\"record\":{\"body\":{\"connector\":\"connector-ref\",\"effect_class\":\"control\",\"idempotency_semantics\":\"idempotency_semantics-ref\",\"intent_id\":\"12345678-1234-4234-8234-123456789abc\",\"normalized_parameters\":{\"artifact\":{\"content\":\"ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73\",\"scope\":\"scope-ref\",\"size\":1}},\"registry_snapshot\":\"2b79ed7d25db33a952fd66dd81a28d21181d19cf856273bcdbc5eb570636a0e1\",\"resolver_version\":\"resolver_version-ref\",\"resource\":{\"namespace\":\"namespace-ref\",\"resource\":\"resource-ref\",\"version\":\"version-ref\"},\"sensitivity\":\"sensitivity-ref\"},\"kind\":\"resolved_effect\"},\"schema\":1}",
+    "digest": "89248ff89acebacea7431d902596839c235e2ef2f748af0a3d93214214bb2b56"
+  },
+  {
+    "name": "authorization_decision",
+    "envelope": {
+      "contract": "WI-FABRIC-2",
+      "canonical_profile": "wi-json-1",
+      "schema": 1,
+      "record": {
+        "kind": "authorization_decision",
+        "body": {
+          "id": "12345678-1234-4234-8234-123456789abc",
+          "intent_id": "12345678-1234-4234-8234-123456789abc",
+          "resolved_effect_digest": "2977bfc09fd056b117d7f085eb1c0800ac4d5116fa6811513d2e91ccd3d7fa67",
+          "agency_digest": "cebf4ee292d81143a874cd7b6c0754b4dfb6aca076dfc5a41c578b72a3e49a89",
+          "policy_version": "policy_version-ref",
+          "resolver_version": "resolver_version-ref",
+          "grant_refs": [
+            "grant_refs-ref"
+          ],
+          "approval_refs": [
+            "approval_refs-ref"
+          ],
+          "constraints": {
+            "scope": "scope-ref",
+            "content": "ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73",
+            "size": 1
+          },
+          "versions": {
+            "resolver": "resolver-ref",
+            "capability_descriptor": "c9a20cfd19ca18f5409faf833cc02859d1b47d8e94545bf517b9050668cec177",
+            "policy": "policy-ref",
+            "grant_versions": [
+              "cf55c1c0ebea895239c8c198de87beb06e20c1611c9d2aabd5342538aa3aee8c"
+            ],
+            "connector_profile": "f40866a91b5eb53e17dac9892593a2c51511aa016a0c760305ee092c06ae18cc",
+            "provider_profile": "3de22ef1eb90f2dd5c4634e76774f1d36e967694afb8f856946ea20507e28b84"
+          },
+          "decision": "allow",
+          "expires_at": "2026-09-19T23:00:00.123456789Z"
+        }
+      }
+    },
+    "canonical": "{\"canonical_profile\":\"wi-json-1\",\"contract\":\"WI-FABRIC-2\",\"record\":{\"body\":{\"agency_digest\":\"cebf4ee292d81143a874cd7b6c0754b4dfb6aca076dfc5a41c578b72a3e49a89\",\"approval_refs\":[\"approval_refs-ref\"],\"constraints\":{\"content\":\"ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73\",\"scope\":\"scope-ref\",\"size\":1},\"decision\":\"allow\",\"expires_at\":\"2026-09-19T23:00:00.123456789Z\",\"grant_refs\":[\"grant_refs-ref\"],\"id\":\"12345678-1234-4234-8234-123456789abc\",\"intent_id\":\"12345678-1234-4234-8234-123456789abc\",\"policy_version\":\"policy_version-ref\",\"resolved_effect_digest\":\"2977bfc09fd056b117d7f085eb1c0800ac4d5116fa6811513d2e91ccd3d7fa67\",\"resolver_version\":\"resolver_version-ref\",\"versions\":{\"capability_descriptor\":\"c9a20cfd19ca18f5409faf833cc02859d1b47d8e94545bf517b9050668cec177\",\"connector_profile\":\"f40866a91b5eb53e17dac9892593a2c51511aa016a0c760305ee092c06ae18cc\",\"grant_versions\":[\"cf55c1c0ebea895239c8c198de87beb06e20c1611c9d2aabd5342538aa3aee8c\"],\"policy\":\"policy-ref\",\"provider_profile\":\"3de22ef1eb90f2dd5c4634e76774f1d36e967694afb8f856946ea20507e28b84\",\"resolver\":\"resolver-ref\"}},\"kind\":\"authorization_decision\"},\"schema\":1}",
+    "digest": "7129ab8efdd454414498e1e97a21817d0b0c1004b912e33ed380d5d38c4a2d0f"
+  },
+  {
+    "name": "boundary_observation",
+    "envelope": {
+      "contract": "WI-FABRIC-2",
+      "canonical_profile": "wi-json-1",
+      "schema": 1,
+      "record": {
+        "kind": "boundary_observation",
+        "body": {
+          "id": "12345678-1234-4234-8234-123456789abc",
+          "binding_id": "12345678-1234-4234-8234-123456789abc",
+          "source_connector": "source_connector-ref",
+          "canonical_source": {
+            "namespace": "namespace-ref",
+            "resource": "resource-ref",
+            "version": "version-ref"
+          },
+          "provider_event_id": "provider_event_id-ref",
+          "deduplication_key": "deduplication_key-ref",
+          "asserted_sender": "asserted_sender-ref",
+          "asserted_audience": [
+            "asserted_audience-ref"
+          ],
+          "authentication_assurance": "authentication_assurance-ref",
+          "content_ref": {
+            "scope": "scope-ref",
+            "content": "ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73",
+            "size": 1
+          },
+          "attachment_refs": [
+            {
+              "scope": "scope-ref",
+              "content": "ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73",
+              "size": 1
+            }
+          ],
+          "temporal": {
+            "occurred_at": {
+              "at": "2026-09-19T23:00:00.123456789Z",
+              "source": "source-ref",
+              "assurance": "assurance-ref",
+              "uncertainty_nanos": 1
+            },
+            "observed_at": {
+              "at": "2026-09-19T23:00:00.123456789Z",
+              "source": "source-ref",
+              "assurance": "assurance-ref",
+              "uncertainty_nanos": 1
+            },
+            "received_at": {
+              "at": "2026-09-19T23:00:00.123456789Z",
+              "source": "source-ref",
+              "assurance": "assurance-ref",
+              "uncertainty_nanos": 1
+            },
+            "admitted_at": {
+              "at": "2026-09-19T23:00:00.123456789Z",
+              "source": "source-ref",
+              "assurance": "assurance-ref",
+              "uncertainty_nanos": 1
+            },
+            "dispatched_at": {
+              "at": "2026-09-19T23:00:00.123456789Z",
+              "source": "source-ref",
+              "assurance": "assurance-ref",
+              "uncertainty_nanos": 1
+            },
+            "committed_at": {
+              "at": "2026-09-19T23:00:00.123456789Z",
+              "source": "source-ref",
+              "assurance": "assurance-ref",
+              "uncertainty_nanos": 1
+            },
+            "reconciled_at": {
+              "at": "2026-09-19T23:00:00.123456789Z",
+              "source": "source-ref",
+              "assurance": "assurance-ref",
+              "uncertainty_nanos": 1
+            },
+            "sequence": "sequence-ref"
+          },
+          "information_use": {
+            "purpose_refs": [
+              "purpose_refs-ref"
+            ],
+            "allowed_audiences": [
+              "12345678-1234-4234-8234-123456789abc"
+            ],
+            "retention_policy_ref": "retention_policy_ref-ref",
+            "disclosure_policy_ref": "disclosure_policy_ref-ref",
+            "derivation_policy_ref": "derivation_policy_ref-ref",
+            "redistribution": "named_audiences",
+            "expiration": "2026-09-19T23:00:00.123456789Z",
+            "source_obligation_refs": [
+              "source_obligation_refs-ref"
+            ]
+          }
+        }
+      }
+    },
+    "canonical": "{\"canonical_profile\":\"wi-json-1\",\"contract\":\"WI-FABRIC-2\",\"record\":{\"body\":{\"asserted_audience\":[\"asserted_audience-ref\"],\"asserted_sender\":\"asserted_sender-ref\",\"attachment_refs\":[{\"content\":\"ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73\",\"scope\":\"scope-ref\",\"size\":1}],\"authentication_assurance\":\"authentication_assurance-ref\",\"binding_id\":\"12345678-1234-4234-8234-123456789abc\",\"canonical_source\":{\"namespace\":\"namespace-ref\",\"resource\":\"resource-ref\",\"version\":\"version-ref\"},\"content_ref\":{\"content\":\"ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73\",\"scope\":\"scope-ref\",\"size\":1},\"deduplication_key\":\"deduplication_key-ref\",\"id\":\"12345678-1234-4234-8234-123456789abc\",\"information_use\":{\"allowed_audiences\":[\"12345678-1234-4234-8234-123456789abc\"],\"derivation_policy_ref\":\"derivation_policy_ref-ref\",\"disclosure_policy_ref\":\"disclosure_policy_ref-ref\",\"expiration\":\"2026-09-19T23:00:00.123456789Z\",\"purpose_refs\":[\"purpose_refs-ref\"],\"redistribution\":\"named_audiences\",\"retention_policy_ref\":\"retention_policy_ref-ref\",\"source_obligation_refs\":[\"source_obligation_refs-ref\"]},\"provider_event_id\":\"provider_event_id-ref\",\"source_connector\":\"source_connector-ref\",\"temporal\":{\"admitted_at\":{\"assurance\":\"assurance-ref\",\"at\":\"2026-09-19T23:00:00.123456789Z\",\"source\":\"source-ref\",\"uncertainty_nanos\":1},\"committed_at\":{\"assurance\":\"assurance-ref\",\"at\":\"2026-09-19T23:00:00.123456789Z\",\"source\":\"source-ref\",\"uncertainty_nanos\":1},\"dispatched_at\":{\"assurance\":\"assurance-ref\",\"at\":\"2026-09-19T23:00:00.123456789Z\",\"source\":\"source-ref\",\"uncertainty_nanos\":1},\"observed_at\":{\"assurance\":\"assurance-ref\",\"at\":\"2026-09-19T23:00:00.123456789Z\",\"source\":\"source-ref\",\"uncertainty_nanos\":1},\"occurred_at\":{\"assurance\":\"assurance-ref\",\"at\":\"2026-09-19T23:00:00.123456789Z\",\"source\":\"source-ref\",\"uncertainty_nanos\":1},\"received_at\":{\"assurance\":\"assurance-ref\",\"at\":\"2026-09-19T23:00:00.123456789Z\",\"source\":\"source-ref\",\"uncertainty_nanos\":1},\"reconciled_at\":{\"assurance\":\"assurance-ref\",\"at\":\"2026-09-19T23:00:00.123456789Z\",\"source\":\"source-ref\",\"uncertainty_nanos\":1},\"sequence\":\"sequence-ref\"}},\"kind\":\"boundary_observation\"},\"schema\":1}",
+    "digest": "319fe2fce3e7b7924bc5ce7be0dfb97cca7ce16913d96fdd12426f95ceb0a02d"
+  },
+  {
+    "name": "execution_record",
+    "envelope": {
+      "contract": "WI-FABRIC-2",
+      "canonical_profile": "wi-json-1",
+      "schema": 1,
+      "record": {
+        "kind": "execution_record",
+        "body": {
+          "intent_id": "12345678-1234-4234-8234-123456789abc",
+          "attempt": "attempt-ref",
+          "outcome": "uncertain",
+          "evidence": [
+            {
+              "artifact": {
+                "scope": "scope-ref",
+                "content": "ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73",
+                "size": 1
+              },
+              "schema": "schema-ref"
+            }
+          ],
+          "recorded_at": "2026-09-19T23:00:00.123456789Z"
+        }
+      }
+    },
+    "canonical": "{\"canonical_profile\":\"wi-json-1\",\"contract\":\"WI-FABRIC-2\",\"record\":{\"body\":{\"attempt\":\"attempt-ref\",\"evidence\":[{\"artifact\":{\"content\":\"ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73\",\"scope\":\"scope-ref\",\"size\":1},\"schema\":\"schema-ref\"}],\"intent_id\":\"12345678-1234-4234-8234-123456789abc\",\"outcome\":\"uncertain\",\"recorded_at\":\"2026-09-19T23:00:00.123456789Z\"},\"kind\":\"execution_record\"},\"schema\":1}",
+    "digest": "9ecd3c2f3fb8a190f1c10069d363f36bc6087611196f21a7172f9c293c9f9616"
+  },
+  {
+    "name": "reconciliation_record",
+    "envelope": {
+      "contract": "WI-FABRIC-2",
+      "canonical_profile": "wi-json-1",
+      "schema": 1,
+      "record": {
+        "kind": "reconciliation_record",
+        "body": {
+          "id": "12345678-1234-4234-8234-123456789abc",
+          "intent_id": "12345678-1234-4234-8234-123456789abc",
+          "result": "still_uncertain",
+          "evidence": [
+            {
+              "artifact": {
+                "scope": "scope-ref",
+                "content": "ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73",
+                "size": 1
+              },
+              "schema": "schema-ref"
+            }
+          ],
+          "recorded_at": "2026-09-19T23:00:00.123456789Z"
+        }
+      }
+    },
+    "canonical": "{\"canonical_profile\":\"wi-json-1\",\"contract\":\"WI-FABRIC-2\",\"record\":{\"body\":{\"evidence\":[{\"artifact\":{\"content\":\"ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73\",\"scope\":\"scope-ref\",\"size\":1},\"schema\":\"schema-ref\"}],\"id\":\"12345678-1234-4234-8234-123456789abc\",\"intent_id\":\"12345678-1234-4234-8234-123456789abc\",\"recorded_at\":\"2026-09-19T23:00:00.123456789Z\",\"result\":\"still_uncertain\"},\"kind\":\"reconciliation_record\"},\"schema\":1}",
+    "digest": "1539aa40dc25eceb19df022fab84592379a8877065e31e4345dc3c39f6f0464f"
+  },
+  {
+    "name": "boundary_receipt",
+    "envelope": {
+      "contract": "WI-FABRIC-2",
+      "canonical_profile": "wi-json-1",
+      "schema": 1,
+      "record": {
+        "kind": "boundary_receipt",
+        "body": {
+          "id": "12345678-1234-4234-8234-123456789abc",
+          "profile": "profile-ref",
+          "versions": {
+            "resolver": "resolver-ref",
+            "capability_descriptor": "c9a20cfd19ca18f5409faf833cc02859d1b47d8e94545bf517b9050668cec177",
+            "policy": "policy-ref",
+            "grant_versions": [
+              "cf55c1c0ebea895239c8c198de87beb06e20c1611c9d2aabd5342538aa3aee8c"
+            ],
+            "connector_profile": "f40866a91b5eb53e17dac9892593a2c51511aa016a0c760305ee092c06ae18cc",
+            "provider_profile": "3de22ef1eb90f2dd5c4634e76774f1d36e967694afb8f856946ea20507e28b84"
+          },
+          "body": {
+            "direction": "egress",
+            "body": {
+              "intent_id": "12345678-1234-4234-8234-123456789abc",
+              "agency_digest": "cebf4ee292d81143a874cd7b6c0754b4dfb6aca076dfc5a41c578b72a3e49a89",
+              "authorization_digest": "8456ba24cdbb33f531855eefe150bd11287166d52a3ec23f73bb603dc64a7aa8",
+              "resolved_effect_digest": "2977bfc09fd056b117d7f085eb1c0800ac4d5116fa6811513d2e91ccd3d7fa67",
+              "attempt": "attempt-ref",
+              "executor": "executor-ref",
+              "outcome": "uncertain",
+              "output_refs": [
+                {
+                  "scope": "scope-ref",
+                  "content": "ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73",
+                  "size": 1
+                }
+              ]
+            }
+          },
+          "temporal": {
+            "occurred_at": {
+              "at": "2026-09-19T23:00:00.123456789Z",
+              "source": "source-ref",
+              "assurance": "assurance-ref",
+              "uncertainty_nanos": 1
+            },
+            "observed_at": {
+              "at": "2026-09-19T23:00:00.123456789Z",
+              "source": "source-ref",
+              "assurance": "assurance-ref",
+              "uncertainty_nanos": 1
+            },
+            "received_at": {
+              "at": "2026-09-19T23:00:00.123456789Z",
+              "source": "source-ref",
+              "assurance": "assurance-ref",
+              "uncertainty_nanos": 1
+            },
+            "admitted_at": {
+              "at": "2026-09-19T23:00:00.123456789Z",
+              "source": "source-ref",
+              "assurance": "assurance-ref",
+              "uncertainty_nanos": 1
+            },
+            "dispatched_at": {
+              "at": "2026-09-19T23:00:00.123456789Z",
+              "source": "source-ref",
+              "assurance": "assurance-ref",
+              "uncertainty_nanos": 1
+            },
+            "committed_at": {
+              "at": "2026-09-19T23:00:00.123456789Z",
+              "source": "source-ref",
+              "assurance": "assurance-ref",
+              "uncertainty_nanos": 1
+            },
+            "reconciled_at": {
+              "at": "2026-09-19T23:00:00.123456789Z",
+              "source": "source-ref",
+              "assurance": "assurance-ref",
+              "uncertainty_nanos": 1
+            },
+            "sequence": "sequence-ref"
+          },
+          "evidence": [
+            {
+              "artifact": {
+                "scope": "scope-ref",
+                "content": "ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73",
+                "size": 1
+              },
+              "schema": "schema-ref"
+            }
+          ],
+          "causal_refs": [
+            "causal_refs-ref"
+          ]
+        }
+      }
+    },
+    "canonical": "{\"canonical_profile\":\"wi-json-1\",\"contract\":\"WI-FABRIC-2\",\"record\":{\"body\":{\"body\":{\"body\":{\"agency_digest\":\"cebf4ee292d81143a874cd7b6c0754b4dfb6aca076dfc5a41c578b72a3e49a89\",\"attempt\":\"attempt-ref\",\"authorization_digest\":\"8456ba24cdbb33f531855eefe150bd11287166d52a3ec23f73bb603dc64a7aa8\",\"executor\":\"executor-ref\",\"intent_id\":\"12345678-1234-4234-8234-123456789abc\",\"outcome\":\"uncertain\",\"output_refs\":[{\"content\":\"ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73\",\"scope\":\"scope-ref\",\"size\":1}],\"resolved_effect_digest\":\"2977bfc09fd056b117d7f085eb1c0800ac4d5116fa6811513d2e91ccd3d7fa67\"},\"direction\":\"egress\"},\"causal_refs\":[\"causal_refs-ref\"],\"evidence\":[{\"artifact\":{\"content\":\"ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73\",\"scope\":\"scope-ref\",\"size\":1},\"schema\":\"schema-ref\"}],\"id\":\"12345678-1234-4234-8234-123456789abc\",\"profile\":\"profile-ref\",\"temporal\":{\"admitted_at\":{\"assurance\":\"assurance-ref\",\"at\":\"2026-09-19T23:00:00.123456789Z\",\"source\":\"source-ref\",\"uncertainty_nanos\":1},\"committed_at\":{\"assurance\":\"assurance-ref\",\"at\":\"2026-09-19T23:00:00.123456789Z\",\"source\":\"source-ref\",\"uncertainty_nanos\":1},\"dispatched_at\":{\"assurance\":\"assurance-ref\",\"at\":\"2026-09-19T23:00:00.123456789Z\",\"source\":\"source-ref\",\"uncertainty_nanos\":1},\"observed_at\":{\"assurance\":\"assurance-ref\",\"at\":\"2026-09-19T23:00:00.123456789Z\",\"source\":\"source-ref\",\"uncertainty_nanos\":1},\"occurred_at\":{\"assurance\":\"assurance-ref\",\"at\":\"2026-09-19T23:00:00.123456789Z\",\"source\":\"source-ref\",\"uncertainty_nanos\":1},\"received_at\":{\"assurance\":\"assurance-ref\",\"at\":\"2026-09-19T23:00:00.123456789Z\",\"source\":\"source-ref\",\"uncertainty_nanos\":1},\"reconciled_at\":{\"assurance\":\"assurance-ref\",\"at\":\"2026-09-19T23:00:00.123456789Z\",\"source\":\"source-ref\",\"uncertainty_nanos\":1},\"sequence\":\"sequence-ref\"},\"versions\":{\"capability_descriptor\":\"c9a20cfd19ca18f5409faf833cc02859d1b47d8e94545bf517b9050668cec177\",\"connector_profile\":\"f40866a91b5eb53e17dac9892593a2c51511aa016a0c760305ee092c06ae18cc\",\"grant_versions\":[\"cf55c1c0ebea895239c8c198de87beb06e20c1611c9d2aabd5342538aa3aee8c\"],\"policy\":\"policy-ref\",\"provider_profile\":\"3de22ef1eb90f2dd5c4634e76774f1d36e967694afb8f856946ea20507e28b84\",\"resolver\":\"resolver-ref\"}},\"kind\":\"boundary_receipt\"},\"schema\":1}",
+    "digest": "82c98893cd8ff1804cd49779c3b68c67a4d638b7967b3dfa2f231dc60ea89444"
+  },
+  {
+    "name": "ingress_receipt",
+    "envelope": {
+      "contract": "WI-FABRIC-2",
+      "canonical_profile": "wi-json-1",
+      "schema": 1,
+      "record": {
+        "kind": "boundary_receipt",
+        "body": {
+          "id": "12345678-1234-4234-8234-123456789abc",
+          "profile": "profile-ref",
+          "versions": {
+            "resolver": "resolver-ref",
+            "capability_descriptor": "c9a20cfd19ca18f5409faf833cc02859d1b47d8e94545bf517b9050668cec177",
+            "policy": "policy-ref",
+            "grant_versions": [
+              "cf55c1c0ebea895239c8c198de87beb06e20c1611c9d2aabd5342538aa3aee8c"
+            ],
+            "connector_profile": "f40866a91b5eb53e17dac9892593a2c51511aa016a0c760305ee092c06ae18cc",
+            "provider_profile": "3de22ef1eb90f2dd5c4634e76774f1d36e967694afb8f856946ea20507e28b84"
+          },
+          "body": {
+            "direction": "ingress",
+            "body": {
+              "observation_id": "12345678-1234-4234-8234-123456789abc",
+              "binding_id": "12345678-1234-4234-8234-123456789abc",
+              "source": {
+                "namespace": "namespace-ref",
+                "resource": "resource-ref",
+                "version": "version-ref"
+              },
+              "observation_digest": "b2753695f9b7ead4c79affdca4efc749b2796bdb18d57f1949cee4807f59d01d",
+              "validation": "validation-ref"
+            }
+          },
+          "temporal": {
+            "occurred_at": {
+              "at": "2026-09-19T23:00:00.123456789Z",
+              "source": "source-ref",
+              "assurance": "assurance-ref",
+              "uncertainty_nanos": 1
+            },
+            "observed_at": {
+              "at": "2026-09-19T23:00:00.123456789Z",
+              "source": "source-ref",
+              "assurance": "assurance-ref",
+              "uncertainty_nanos": 1
+            },
+            "received_at": {
+              "at": "2026-09-19T23:00:00.123456789Z",
+              "source": "source-ref",
+              "assurance": "assurance-ref",
+              "uncertainty_nanos": 1
+            },
+            "admitted_at": {
+              "at": "2026-09-19T23:00:00.123456789Z",
+              "source": "source-ref",
+              "assurance": "assurance-ref",
+              "uncertainty_nanos": 1
+            },
+            "dispatched_at": {
+              "at": "2026-09-19T23:00:00.123456789Z",
+              "source": "source-ref",
+              "assurance": "assurance-ref",
+              "uncertainty_nanos": 1
+            },
+            "committed_at": {
+              "at": "2026-09-19T23:00:00.123456789Z",
+              "source": "source-ref",
+              "assurance": "assurance-ref",
+              "uncertainty_nanos": 1
+            },
+            "reconciled_at": {
+              "at": "2026-09-19T23:00:00.123456789Z",
+              "source": "source-ref",
+              "assurance": "assurance-ref",
+              "uncertainty_nanos": 1
+            },
+            "sequence": "sequence-ref"
+          },
+          "evidence": [
+            {
+              "artifact": {
+                "scope": "scope-ref",
+                "content": "ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73",
+                "size": 1
+              },
+              "schema": "schema-ref"
+            }
+          ],
+          "causal_refs": [
+            "causal_refs-ref"
+          ]
+        }
+      }
+    },
+    "canonical": "{\"canonical_profile\":\"wi-json-1\",\"contract\":\"WI-FABRIC-2\",\"record\":{\"body\":{\"body\":{\"body\":{\"binding_id\":\"12345678-1234-4234-8234-123456789abc\",\"observation_digest\":\"b2753695f9b7ead4c79affdca4efc749b2796bdb18d57f1949cee4807f59d01d\",\"observation_id\":\"12345678-1234-4234-8234-123456789abc\",\"source\":{\"namespace\":\"namespace-ref\",\"resource\":\"resource-ref\",\"version\":\"version-ref\"},\"validation\":\"validation-ref\"},\"direction\":\"ingress\"},\"causal_refs\":[\"causal_refs-ref\"],\"evidence\":[{\"artifact\":{\"content\":\"ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73\",\"scope\":\"scope-ref\",\"size\":1},\"schema\":\"schema-ref\"}],\"id\":\"12345678-1234-4234-8234-123456789abc\",\"profile\":\"profile-ref\",\"temporal\":{\"admitted_at\":{\"assurance\":\"assurance-ref\",\"at\":\"2026-09-19T23:00:00.123456789Z\",\"source\":\"source-ref\",\"uncertainty_nanos\":1},\"committed_at\":{\"assurance\":\"assurance-ref\",\"at\":\"2026-09-19T23:00:00.123456789Z\",\"source\":\"source-ref\",\"uncertainty_nanos\":1},\"dispatched_at\":{\"assurance\":\"assurance-ref\",\"at\":\"2026-09-19T23:00:00.123456789Z\",\"source\":\"source-ref\",\"uncertainty_nanos\":1},\"observed_at\":{\"assurance\":\"assurance-ref\",\"at\":\"2026-09-19T23:00:00.123456789Z\",\"source\":\"source-ref\",\"uncertainty_nanos\":1},\"occurred_at\":{\"assurance\":\"assurance-ref\",\"at\":\"2026-09-19T23:00:00.123456789Z\",\"source\":\"source-ref\",\"uncertainty_nanos\":1},\"received_at\":{\"assurance\":\"assurance-ref\",\"at\":\"2026-09-19T23:00:00.123456789Z\",\"source\":\"source-ref\",\"uncertainty_nanos\":1},\"reconciled_at\":{\"assurance\":\"assurance-ref\",\"at\":\"2026-09-19T23:00:00.123456789Z\",\"source\":\"source-ref\",\"uncertainty_nanos\":1},\"sequence\":\"sequence-ref\"},\"versions\":{\"capability_descriptor\":\"c9a20cfd19ca18f5409faf833cc02859d1b47d8e94545bf517b9050668cec177\",\"connector_profile\":\"f40866a91b5eb53e17dac9892593a2c51511aa016a0c760305ee092c06ae18cc\",\"grant_versions\":[\"cf55c1c0ebea895239c8c198de87beb06e20c1611c9d2aabd5342538aa3aee8c\"],\"policy\":\"policy-ref\",\"provider_profile\":\"3de22ef1eb90f2dd5c4634e76774f1d36e967694afb8f856946ea20507e28b84\",\"resolver\":\"resolver-ref\"}},\"kind\":\"boundary_receipt\"},\"schema\":1}",
+    "digest": "c96e4f43aafb2fcdb1d21c0872a4034c80e2b82bb4f893c05a4e4bca2e9974a3"
+  },
+  {
+    "name": "acting_capacity_ref",
+    "envelope": {
+      "contract": "WI-FABRIC-2",
+      "canonical_profile": "wi-json-1",
+      "schema": 1,
+      "record": {
+        "kind": "acting_capacity_ref",
+        "body": {
+          "principal_ref": "12345678-1234-4234-8234-123456789abc",
+          "assignment_ref": "assignment_ref-ref",
+          "organization_ref": "12345678-1234-4234-8234-123456789abc",
+          "attestation_ref": {
+            "artifact": {
+              "scope": "scope-ref",
+              "content": "ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73",
+              "size": 1
+            },
+            "schema": "schema-ref"
+          }
+        }
+      }
+    },
+    "canonical": "{\"canonical_profile\":\"wi-json-1\",\"contract\":\"WI-FABRIC-2\",\"record\":{\"body\":{\"assignment_ref\":\"assignment_ref-ref\",\"attestation_ref\":{\"artifact\":{\"content\":\"ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73\",\"scope\":\"scope-ref\",\"size\":1},\"schema\":\"schema-ref\"},\"organization_ref\":\"12345678-1234-4234-8234-123456789abc\",\"principal_ref\":\"12345678-1234-4234-8234-123456789abc\"},\"kind\":\"acting_capacity_ref\"},\"schema\":1}",
+    "digest": "e4cd23d8226507b414a40e5cb900ff332863388e67e893635ba9fdb835cd5fd9"
+  },
+  {
+    "name": "information_use_envelope",
+    "envelope": {
+      "contract": "WI-FABRIC-2",
+      "canonical_profile": "wi-json-1",
+      "schema": 1,
+      "record": {
+        "kind": "information_use_envelope",
+        "body": {
+          "purpose_refs": [
+            "purpose_refs-ref"
+          ],
+          "allowed_audiences": [
+            "12345678-1234-4234-8234-123456789abc"
+          ],
+          "retention_policy_ref": "retention_policy_ref-ref",
+          "disclosure_policy_ref": "disclosure_policy_ref-ref",
+          "derivation_policy_ref": "derivation_policy_ref-ref",
+          "redistribution": "named_audiences",
+          "expiration": "2026-09-19T23:00:00.123456789Z",
+          "source_obligation_refs": [
+            "source_obligation_refs-ref"
+          ]
+        }
+      }
+    },
+    "canonical": "{\"canonical_profile\":\"wi-json-1\",\"contract\":\"WI-FABRIC-2\",\"record\":{\"body\":{\"allowed_audiences\":[\"12345678-1234-4234-8234-123456789abc\"],\"derivation_policy_ref\":\"derivation_policy_ref-ref\",\"disclosure_policy_ref\":\"disclosure_policy_ref-ref\",\"expiration\":\"2026-09-19T23:00:00.123456789Z\",\"purpose_refs\":[\"purpose_refs-ref\"],\"redistribution\":\"named_audiences\",\"retention_policy_ref\":\"retention_policy_ref-ref\",\"source_obligation_refs\":[\"source_obligation_refs-ref\"]},\"kind\":\"information_use_envelope\"},\"schema\":1}",
+    "digest": "32f70446693488de900b1db368cb2fef174cb2656f87798fa38e8bba0907e7d0"
+  },
+  {
+    "name": "temporal_provenance",
+    "envelope": {
+      "contract": "WI-FABRIC-2",
+      "canonical_profile": "wi-json-1",
+      "schema": 1,
+      "record": {
+        "kind": "temporal_provenance",
+        "body": {
+          "occurred_at": {
+            "at": "2026-09-19T23:00:00.123456789Z",
+            "source": "source-ref",
+            "assurance": "assurance-ref",
+            "uncertainty_nanos": 1
+          },
+          "observed_at": {
+            "at": "2026-09-19T23:00:00.123456789Z",
+            "source": "source-ref",
+            "assurance": "assurance-ref",
+            "uncertainty_nanos": 1
+          },
+          "received_at": {
+            "at": "2026-09-19T23:00:00.123456789Z",
+            "source": "source-ref",
+            "assurance": "assurance-ref",
+            "uncertainty_nanos": 1
+          },
+          "admitted_at": {
+            "at": "2026-09-19T23:00:00.123456789Z",
+            "source": "source-ref",
+            "assurance": "assurance-ref",
+            "uncertainty_nanos": 1
+          },
+          "dispatched_at": {
+            "at": "2026-09-19T23:00:00.123456789Z",
+            "source": "source-ref",
+            "assurance": "assurance-ref",
+            "uncertainty_nanos": 1
+          },
+          "committed_at": {
+            "at": "2026-09-19T23:00:00.123456789Z",
+            "source": "source-ref",
+            "assurance": "assurance-ref",
+            "uncertainty_nanos": 1
+          },
+          "reconciled_at": {
+            "at": "2026-09-19T23:00:00.123456789Z",
+            "source": "source-ref",
+            "assurance": "assurance-ref",
+            "uncertainty_nanos": 1
+          },
+          "sequence": "sequence-ref"
+        }
+      }
+    },
+    "canonical": "{\"canonical_profile\":\"wi-json-1\",\"contract\":\"WI-FABRIC-2\",\"record\":{\"body\":{\"admitted_at\":{\"assurance\":\"assurance-ref\",\"at\":\"2026-09-19T23:00:00.123456789Z\",\"source\":\"source-ref\",\"uncertainty_nanos\":1},\"committed_at\":{\"assurance\":\"assurance-ref\",\"at\":\"2026-09-19T23:00:00.123456789Z\",\"source\":\"source-ref\",\"uncertainty_nanos\":1},\"dispatched_at\":{\"assurance\":\"assurance-ref\",\"at\":\"2026-09-19T23:00:00.123456789Z\",\"source\":\"source-ref\",\"uncertainty_nanos\":1},\"observed_at\":{\"assurance\":\"assurance-ref\",\"at\":\"2026-09-19T23:00:00.123456789Z\",\"source\":\"source-ref\",\"uncertainty_nanos\":1},\"occurred_at\":{\"assurance\":\"assurance-ref\",\"at\":\"2026-09-19T23:00:00.123456789Z\",\"source\":\"source-ref\",\"uncertainty_nanos\":1},\"received_at\":{\"assurance\":\"assurance-ref\",\"at\":\"2026-09-19T23:00:00.123456789Z\",\"source\":\"source-ref\",\"uncertainty_nanos\":1},\"reconciled_at\":{\"assurance\":\"assurance-ref\",\"at\":\"2026-09-19T23:00:00.123456789Z\",\"source\":\"source-ref\",\"uncertainty_nanos\":1},\"sequence\":\"sequence-ref\"},\"kind\":\"temporal_provenance\"},\"schema\":1}",
+    "digest": "11277d2d538f5f541ea189cf6ac766b0f25344c2945460031759664882453c25"
+  },
+  {
+    "name": "commissioning_submission",
+    "envelope": {
+      "contract": "WI-FABRIC-2",
+      "canonical_profile": "wi-json-1",
+      "schema": 1,
+      "record": {
+        "kind": "commissioning_submission",
+        "body": {
+          "client_request_id": "request-1",
+          "accountable_principal": "12345678-1234-4234-8234-123456789abc",
+          "genesis_ref": "genesis_ref-ref",
+          "acting_capacity_ref": {
+            "principal_ref": "12345678-1234-4234-8234-123456789abc",
+            "assignment_ref": "assignment_ref-ref",
+            "organization_ref": "12345678-1234-4234-8234-123456789abc",
+            "attestation_ref": {
+              "artifact": {
+                "scope": "scope-ref",
+                "content": "ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73",
+                "size": 1
+              },
+              "schema": "schema-ref"
+            }
+          },
+          "requested_operations": [
+            {
+              "client_request_id": "request-1",
+              "requested_accountable_principal": "12345678-1234-4234-8234-123456789abc",
+              "submitted_by": "12345678-1234-4234-8234-123456789abc",
+              "purpose": "purpose-ref",
+              "causal_refs": [
+                "causal_refs-ref"
+              ],
+              "acting_capacity": {
+                "principal_ref": "12345678-1234-4234-8234-123456789abc",
+                "assignment_ref": "assignment_ref-ref",
+                "organization_ref": "12345678-1234-4234-8234-123456789abc",
+                "attestation_ref": {
+                  "artifact": {
+                    "scope": "scope-ref",
+                    "content": "ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73",
+                    "size": 1
+                  },
+                  "schema": "schema-ref"
+                }
+              },
+              "information_use": {
+                "purpose_refs": [
+                  "purpose_refs-ref"
+                ],
+                "allowed_audiences": [
+                  "12345678-1234-4234-8234-123456789abc"
+                ],
+                "retention_policy_ref": "retention_policy_ref-ref",
+                "disclosure_policy_ref": "disclosure_policy_ref-ref",
+                "derivation_policy_ref": "derivation_policy_ref-ref",
+                "redistribution": "named_audiences",
+                "expiration": "2026-09-19T23:00:00.123456789Z",
+                "source_obligation_refs": [
+                  "source_obligation_refs-ref"
+                ]
+              },
+              "effect_class": "control",
+              "resource": {
+                "namespace": "namespace-ref",
+                "selector": "selector-ref"
+              },
+              "input": {
+                "artifact": {
+                  "scope": "scope-ref",
+                  "content": "ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73",
+                  "size": 1
+                }
+              },
+              "requested_authority_refs": [
+                "requested_authority_refs-ref"
+              ],
+              "approval_attestations": [
+                "approval_attestations-ref"
+              ],
+              "deadline": "2026-09-19T23:00:00.123456789Z",
+              "requested_receipt_profile": "requested_receipt_profile-ref",
+              "budget": {
+                "max_attempts": 1,
+                "timeout_millis": 1
+              },
+              "expected_outcome": "expected_outcome-ref",
+              "delegation_credential": {
+                "artifact": {
+                  "scope": "scope-ref",
+                  "content": "ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73",
+                  "size": 1
+                },
+                "schema": "schema-ref"
+              }
+            }
+          ],
+          "disclosure_policy_ref": "disclosure_policy_ref-ref"
+        }
+      }
+    },
+    "canonical": "{\"canonical_profile\":\"wi-json-1\",\"contract\":\"WI-FABRIC-2\",\"record\":{\"body\":{\"accountable_principal\":\"12345678-1234-4234-8234-123456789abc\",\"acting_capacity_ref\":{\"assignment_ref\":\"assignment_ref-ref\",\"attestation_ref\":{\"artifact\":{\"content\":\"ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73\",\"scope\":\"scope-ref\",\"size\":1},\"schema\":\"schema-ref\"},\"organization_ref\":\"12345678-1234-4234-8234-123456789abc\",\"principal_ref\":\"12345678-1234-4234-8234-123456789abc\"},\"client_request_id\":\"request-1\",\"disclosure_policy_ref\":\"disclosure_policy_ref-ref\",\"genesis_ref\":\"genesis_ref-ref\",\"requested_operations\":[{\"acting_capacity\":{\"assignment_ref\":\"assignment_ref-ref\",\"attestation_ref\":{\"artifact\":{\"content\":\"ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73\",\"scope\":\"scope-ref\",\"size\":1},\"schema\":\"schema-ref\"},\"organization_ref\":\"12345678-1234-4234-8234-123456789abc\",\"principal_ref\":\"12345678-1234-4234-8234-123456789abc\"},\"approval_attestations\":[\"approval_attestations-ref\"],\"budget\":{\"max_attempts\":1,\"timeout_millis\":1},\"causal_refs\":[\"causal_refs-ref\"],\"client_request_id\":\"request-1\",\"deadline\":\"2026-09-19T23:00:00.123456789Z\",\"delegation_credential\":{\"artifact\":{\"content\":\"ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73\",\"scope\":\"scope-ref\",\"size\":1},\"schema\":\"schema-ref\"},\"effect_class\":\"control\",\"expected_outcome\":\"expected_outcome-ref\",\"information_use\":{\"allowed_audiences\":[\"12345678-1234-4234-8234-123456789abc\"],\"derivation_policy_ref\":\"derivation_policy_ref-ref\",\"disclosure_policy_ref\":\"disclosure_policy_ref-ref\",\"expiration\":\"2026-09-19T23:00:00.123456789Z\",\"purpose_refs\":[\"purpose_refs-ref\"],\"redistribution\":\"named_audiences\",\"retention_policy_ref\":\"retention_policy_ref-ref\",\"source_obligation_refs\":[\"source_obligation_refs-ref\"]},\"input\":{\"artifact\":{\"content\":\"ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73\",\"scope\":\"scope-ref\",\"size\":1}},\"purpose\":\"purpose-ref\",\"requested_accountable_principal\":\"12345678-1234-4234-8234-123456789abc\",\"requested_authority_refs\":[\"requested_authority_refs-ref\"],\"requested_receipt_profile\":\"requested_receipt_profile-ref\",\"resource\":{\"namespace\":\"namespace-ref\",\"selector\":\"selector-ref\"},\"submitted_by\":\"12345678-1234-4234-8234-123456789abc\"}]},\"kind\":\"commissioning_submission\"},\"schema\":1}",
+    "digest": "f6ef1fd9e8cf8202e21f674fbbf263f1ed71807ca5494963d825b4cac331a904"
+  },
+  {
+    "name": "candidate_artifact",
+    "envelope": {
+      "contract": "WI-FABRIC-2",
+      "canonical_profile": "wi-json-1",
+      "schema": 1,
+      "record": {
+        "kind": "candidate_artifact",
+        "body": {
+          "candidate_id": "12345678-1234-4234-8234-123456789abc",
+          "component_class": "component_class-ref",
+          "subject_ref": "subject_ref-ref",
+          "source_revision_ref": {
+            "scope": "scope-ref",
+            "content": "ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73",
+            "size": 1
+          },
+          "build_artifact_ref": {
+            "scope": "scope-ref",
+            "content": "ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73",
+            "size": 1
+          },
+          "build_provenance_ref": {
+            "artifact": {
+              "scope": "scope-ref",
+              "content": "ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73",
+              "size": 1
+            },
+            "schema": "schema-ref"
+          },
+          "evaluation_plan_ref": "evaluation_plan_ref-ref"
+        }
+      }
+    },
+    "canonical": "{\"canonical_profile\":\"wi-json-1\",\"contract\":\"WI-FABRIC-2\",\"record\":{\"body\":{\"build_artifact_ref\":{\"content\":\"ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73\",\"scope\":\"scope-ref\",\"size\":1},\"build_provenance_ref\":{\"artifact\":{\"content\":\"ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73\",\"scope\":\"scope-ref\",\"size\":1},\"schema\":\"schema-ref\"},\"candidate_id\":\"12345678-1234-4234-8234-123456789abc\",\"component_class\":\"component_class-ref\",\"evaluation_plan_ref\":\"evaluation_plan_ref-ref\",\"source_revision_ref\":{\"content\":\"ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73\",\"scope\":\"scope-ref\",\"size\":1},\"subject_ref\":\"subject_ref-ref\"},\"kind\":\"candidate_artifact\"},\"schema\":1}",
+    "digest": "c22315c4392e08badb4729a343193de259b5f5131fd4d58d3f5ca0891cbf4de2"
+  },
+  {
+    "name": "candidate_verification",
+    "envelope": {
+      "contract": "WI-FABRIC-2",
+      "canonical_profile": "wi-json-1",
+      "schema": 1,
+      "record": {
+        "kind": "candidate_verification",
+        "body": {
+          "candidate_id": "12345678-1234-4234-8234-123456789abc",
+          "report": {
+            "artifact": {
+              "scope": "scope-ref",
+              "content": "ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73",
+              "size": 1
+            },
+            "schema": "schema-ref"
+          },
+          "verifier": "12345678-1234-4234-8234-123456789abc"
+        }
+      }
+    },
+    "canonical": "{\"canonical_profile\":\"wi-json-1\",\"contract\":\"WI-FABRIC-2\",\"record\":{\"body\":{\"candidate_id\":\"12345678-1234-4234-8234-123456789abc\",\"report\":{\"artifact\":{\"content\":\"ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73\",\"scope\":\"scope-ref\",\"size\":1},\"schema\":\"schema-ref\"},\"verifier\":\"12345678-1234-4234-8234-123456789abc\"},\"kind\":\"candidate_verification\"},\"schema\":1}",
+    "digest": "2639e47407c63997faaec26590daaee711a43d078fa1844de07e5c3219ac6abb"
+  },
+  {
+    "name": "candidate_acceptance",
+    "envelope": {
+      "contract": "WI-FABRIC-2",
+      "canonical_profile": "wi-json-1",
+      "schema": 1,
+      "record": {
+        "kind": "candidate_acceptance",
+        "body": {
+          "candidate_id": "12345678-1234-4234-8234-123456789abc",
+          "decision_ref": "decision_ref-ref",
+          "accountable_principal": "12345678-1234-4234-8234-123456789abc"
+        }
+      }
+    },
+    "canonical": "{\"canonical_profile\":\"wi-json-1\",\"contract\":\"WI-FABRIC-2\",\"record\":{\"body\":{\"accountable_principal\":\"12345678-1234-4234-8234-123456789abc\",\"candidate_id\":\"12345678-1234-4234-8234-123456789abc\",\"decision_ref\":\"decision_ref-ref\"},\"kind\":\"candidate_acceptance\"},\"schema\":1}",
+    "digest": "410c246745b900a8129b51af81111761e8fe752deac6e9680f9be651c00f93e4"
+  },
+  {
+    "name": "lifecycle_record",
+    "envelope": {
+      "contract": "WI-FABRIC-2",
+      "canonical_profile": "wi-json-1",
+      "schema": 1,
+      "record": {
+        "kind": "lifecycle_record",
+        "body": {
+          "candidate_id": "12345678-1234-4234-8234-123456789abc",
+          "operation": "activate",
+          "intent_id": "12345678-1234-4234-8234-123456789abc",
+          "source_lineage": "source_lineage-ref",
+          "target": "target-ref",
+          "authorizer": "12345678-1234-4234-8234-123456789abc",
+          "receipt": "12345678-1234-4234-8234-123456789abc",
+          "recorded_at": "2026-09-19T23:00:00.123456789Z"
+        }
+      }
+    },
+    "canonical": "{\"canonical_profile\":\"wi-json-1\",\"contract\":\"WI-FABRIC-2\",\"record\":{\"body\":{\"authorizer\":\"12345678-1234-4234-8234-123456789abc\",\"candidate_id\":\"12345678-1234-4234-8234-123456789abc\",\"intent_id\":\"12345678-1234-4234-8234-123456789abc\",\"operation\":\"activate\",\"receipt\":\"12345678-1234-4234-8234-123456789abc\",\"recorded_at\":\"2026-09-19T23:00:00.123456789Z\",\"source_lineage\":\"source_lineage-ref\",\"target\":\"target-ref\"},\"kind\":\"lifecycle_record\"},\"schema\":1}",
+    "digest": "a9e42983ad8b831561aa89e8a4c5f94362fdb9d61bf2520e18cbad19ac1672db"
+  },
+  {
+    "name": "component_provenance",
+    "envelope": {
+      "contract": "WI-FABRIC-2",
+      "canonical_profile": "wi-json-1",
+      "schema": 1,
+      "record": {
+        "kind": "component_provenance",
+        "body": {
+          "component": "component-ref",
+          "source": {
+            "scope": "scope-ref",
+            "content": "ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73",
+            "size": 1
+          },
+          "build": {
+            "scope": "scope-ref",
+            "content": "ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73",
+            "size": 1
+          },
+          "toolchain": {
+            "scope": "scope-ref",
+            "content": "ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73",
+            "size": 1
+          },
+          "builder": "12345678-1234-4234-8234-123456789abc",
+          "inputs": [
+            {
+              "scope": "scope-ref",
+              "content": "ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73",
+              "size": 1
+            }
+          ],
+          "outputs": [
+            {
+              "scope": "scope-ref",
+              "content": "ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73",
+              "size": 1
+            }
+          ]
+        }
+      }
+    },
+    "canonical": "{\"canonical_profile\":\"wi-json-1\",\"contract\":\"WI-FABRIC-2\",\"record\":{\"body\":{\"build\":{\"content\":\"ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73\",\"scope\":\"scope-ref\",\"size\":1},\"builder\":\"12345678-1234-4234-8234-123456789abc\",\"component\":\"component-ref\",\"inputs\":[{\"content\":\"ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73\",\"scope\":\"scope-ref\",\"size\":1}],\"outputs\":[{\"content\":\"ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73\",\"scope\":\"scope-ref\",\"size\":1}],\"source\":{\"content\":\"ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73\",\"scope\":\"scope-ref\",\"size\":1},\"toolchain\":{\"content\":\"ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73\",\"scope\":\"scope-ref\",\"size\":1}},\"kind\":\"component_provenance\"},\"schema\":1}",
+    "digest": "1a10d01f4f2beb78e4f3c56cf4fad1b75cadf95d272f5537b749c4a1bfe65ab1"
+  },
+  {
+    "name": "immutable_artifact_manifest",
+    "envelope": {
+      "contract": "WI-FABRIC-2",
+      "canonical_profile": "wi-json-1",
+      "schema": 1,
+      "record": {
+        "kind": "immutable_artifact_manifest",
+        "body": {
+          "executable": {
+            "scope": "scope-ref",
+            "content": "ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73",
+            "size": 1
+          },
+          "dependencies": [
+            {
+              "scope": "scope-ref",
+              "content": "ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73",
+              "size": 1
+            }
+          ],
+          "configuration": {
+            "scope": "scope-ref",
+            "content": "ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73",
+            "size": 1
+          },
+          "profile_definition": {
+            "scope": "scope-ref",
+            "content": "ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73",
+            "size": 1
+          },
+          "adapter": {
+            "scope": "scope-ref",
+            "content": "ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73",
+            "size": 1
+          }
+        }
+      }
+    },
+    "canonical": "{\"canonical_profile\":\"wi-json-1\",\"contract\":\"WI-FABRIC-2\",\"record\":{\"body\":{\"adapter\":{\"content\":\"ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73\",\"scope\":\"scope-ref\",\"size\":1},\"configuration\":{\"content\":\"ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73\",\"scope\":\"scope-ref\",\"size\":1},\"dependencies\":[{\"content\":\"ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73\",\"scope\":\"scope-ref\",\"size\":1}],\"executable\":{\"content\":\"ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73\",\"scope\":\"scope-ref\",\"size\":1},\"profile_definition\":{\"content\":\"ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73\",\"scope\":\"scope-ref\",\"size\":1}},\"kind\":\"immutable_artifact_manifest\"},\"schema\":1}",
+    "digest": "9d82fb0711ee9c3798e6014e45fc5eb070dbe7c69fafc958a34c8b8b3c3d5f56"
+  },
+  {
+    "name": "control_evidence",
+    "envelope": {
+      "contract": "WI-FABRIC-2",
+      "canonical_profile": "wi-json-1",
+      "schema": 1,
+      "record": {
+        "kind": "control_evidence",
+        "body": {
+          "version": 1,
+          "provider_kind": "process",
+          "provider_ref": "provider_ref-ref",
+          "run_ref": "run_ref-ref",
+          "resource_ref": "resource_ref-ref",
+          "profile": "profile-ref",
+          "realization": {
+            "scope": "scope-ref",
+            "content": "ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73",
+            "size": 1
+          },
+          "image": "not_applicable",
+          "requested": {
+            "cpu_millis": 1,
+            "memory_bytes": 1,
+            "network": "network-ref"
+          },
+          "advertised": {
+            "cpu_millis": 1,
+            "memory_bytes": 1,
+            "network": "network-ref"
+          },
+          "applied": {
+            "cpu_millis": 1,
+            "memory_bytes": 1,
+            "network": "network-ref"
+          },
+          "observed": {
+            "cpu_millis": 1,
+            "memory_bytes": 1,
+            "network": "network-ref"
+          },
+          "enclosing_instance": {
+            "artifact": {
+              "scope": "scope-ref",
+              "content": "ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73",
+              "size": 1
+            },
+            "schema": "schema-ref"
+          },
+          "enclosing_source": "enclosing_source-ref",
+          "enclosing_trust": "enclosing_trust-ref"
+        }
+      }
+    },
+    "canonical": "{\"canonical_profile\":\"wi-json-1\",\"contract\":\"WI-FABRIC-2\",\"record\":{\"body\":{\"advertised\":{\"cpu_millis\":1,\"memory_bytes\":1,\"network\":\"network-ref\"},\"applied\":{\"cpu_millis\":1,\"memory_bytes\":1,\"network\":\"network-ref\"},\"enclosing_instance\":{\"artifact\":{\"content\":\"ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73\",\"scope\":\"scope-ref\",\"size\":1},\"schema\":\"schema-ref\"},\"enclosing_source\":\"enclosing_source-ref\",\"enclosing_trust\":\"enclosing_trust-ref\",\"image\":\"not_applicable\",\"observed\":{\"cpu_millis\":1,\"memory_bytes\":1,\"network\":\"network-ref\"},\"profile\":\"profile-ref\",\"provider_kind\":\"process\",\"provider_ref\":\"provider_ref-ref\",\"realization\":{\"content\":\"ed7002b439e9ac845f22357d822bac1444730fbdb6016d3ec9432297b9ec9f73\",\"scope\":\"scope-ref\",\"size\":1},\"requested\":{\"cpu_millis\":1,\"memory_bytes\":1,\"network\":\"network-ref\"},\"resource_ref\":\"resource_ref-ref\",\"run_ref\":\"run_ref-ref\",\"version\":1},\"kind\":\"control_evidence\"},\"schema\":1}",
+    "digest": "fdef14465ae506b8e719d53c138c97a278ede02093b53c8162c8779e3f6e57ed"
+  }
+]

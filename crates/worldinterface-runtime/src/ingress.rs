@@ -29,7 +29,7 @@ use worldinterface_ingress::{
 };
 use worldinterface_protocol::{
     BindingStatus, BindingVersion, ContentHash, DeliveryAcknowledgment, DeliveryId, DeliveryState,
-    ObservationId, OpaqueRef, PrincipalId, ReceiptId,
+    ObservationId, OpaqueRef, PrincipalId, ReceiptId, Timestamp,
 };
 use worldinterface_storage::StoreRoot;
 
@@ -719,12 +719,22 @@ pub struct SubscriberRegistry {
     transports: Arc<BTreeMap<PrincipalId, Arc<dyn SubscriberTransport>>>,
 }
 
+struct DeliverySystemClock;
+impl crate::authority::TrustedClock for DeliverySystemClock {
+    fn now(&self) -> Result<Timestamp> {
+        Ok(Timestamp::from_epoch_millis(
+            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH)?.as_millis() as u64,
+        )?)
+    }
+}
+
 /// AQ executes delivery work and owns the acknowledgment wait and retry deadline.
 /// This handler reloads current Fabric state on every physical attempt.
 pub struct IngressDeliveryHandler {
     bundle: Arc<crate::storage::StoreBundle>,
     tenant: OpaqueRef,
     subscribers: SubscriberRegistry,
+    clock: Arc<dyn crate::authority::TrustedClock + Send + Sync>,
 }
 impl IngressDeliveryHandler {
     pub fn new(
@@ -744,7 +754,16 @@ impl IngressDeliveryHandler {
             tenant: tenant.clone(),
             transports: Arc::new(subscribers.into_iter().collect()),
         };
-        Self { bundle, tenant, subscribers }
+        Self { bundle, tenant, subscribers, clock: Arc::new(DeliverySystemClock) }
+    }
+    /// Install a trusted host clock, shared with admission, dispatch and AQ.
+    /// The default uses system time. Provider/task data cannot set this clock.
+    pub fn with_clock(
+        mut self,
+        clock: Arc<dyn crate::authority::TrustedClock + Send + Sync>,
+    ) -> Self {
+        self.clock = clock;
+        self
     }
     /// Capture before moving this handler into AQ; pass the clone to recovery.
     pub fn subscriber_registry(&self) -> SubscriberRegistry {
@@ -769,8 +788,7 @@ impl IngressDeliveryHandler {
             .to_owned()
             .try_into()?;
         let root = self.bundle.wi();
-        let now =
-            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH)?.as_millis() as u64;
+        let now = self.clock.now()?.epoch_millis()?;
         let readiness = reconcile_delivery(root, &self.tenant, &id, now)?;
         if readiness == DeliveryReadiness::Closed {
             return Ok(AttemptDisposition::complete(None));
@@ -853,9 +871,7 @@ impl IngressDeliveryHandler {
             };
             if let Some(issued) = claimed {
                 let succeeded = transport.deliver(&issued).is_ok();
-                let finished_at = std::time::SystemTime::now()
-                    .duration_since(std::time::UNIX_EPOCH)?
-                    .as_millis() as u64;
+                let finished_at = self.clock.now()?.epoch_millis()?;
                 Ingress::new(root).record_wake(
                     &self.tenant,
                     id.clone(),
@@ -865,8 +881,7 @@ impl IngressDeliveryHandler {
                 )?;
             }
         }
-        let finished_at =
-            std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH)?.as_millis() as u64;
+        let finished_at = self.clock.now()?.epoch_millis()?;
         if reconcile_delivery(root, &self.tenant, &id, finished_at)? != DeliveryReadiness::Ready {
             return Ok(AttemptDisposition::complete(None));
         }

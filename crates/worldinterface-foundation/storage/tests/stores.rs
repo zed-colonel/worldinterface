@@ -79,6 +79,93 @@ fn snapshot(path: &Path) -> BTreeMap<String, Vec<u8>> {
     out
 }
 #[test]
+fn alpha1_schema_is_refused_with_recreation_guidance_without_mutating_the_store() {
+    use worldinterface_domain::{
+        agency::AuthenticatedCaller,
+        authorization::{AuthorizationSnapshot, VerifiedSnapshot},
+        effect::{validate_command, EffectAction, EffectState},
+    };
+    for populated in [false, true] {
+        let t = tempfile::tempdir().unwrap();
+        let path = t.path().join("alpha1");
+        let root = StoreRoot::create_empty(&path, profile(false)).unwrap();
+        if populated {
+            let fixture: serde_json::Value =
+                serde_json::from_str(include_str!("support/egress.json")).unwrap();
+            let submission: EffectSubmission =
+                serde_json::from_value(fixture["submission"].clone()).unwrap();
+            let authorization: AuthorizationSnapshot =
+                serde_json::from_value(fixture["snapshot"].clone()).unwrap();
+            let caller = AuthenticatedCaller::from_trusted_authentication(
+                authorization.bindings[0].tenant.clone(),
+                authorization.bindings[0].principal.clone(),
+            );
+            let tenant = authorization.bindings[0].tenant.clone();
+            for bytes in [
+                "input",
+                "resolution",
+                "grant",
+                "worker",
+                "executable",
+                "dependency",
+                "configuration",
+                "profile-definition",
+                "adapter",
+                "fixture-review",
+            ] {
+                root.publish(tenant.clone(), bytes.as_bytes()).unwrap();
+            }
+            let command = validate_command(
+                &EffectState::default(),
+                &caller,
+                "2026-09-21T00:00:00.000000000Z".to_owned().try_into().unwrap(),
+                EffectAction::Submit {
+                    id: EffectIntentId::generate(),
+                    submission: Box::new(submission),
+                    snapshot: VerifiedSnapshot::from_trusted_verifier(authorization).unwrap(),
+                    link: None,
+                },
+            )
+            .unwrap();
+            root.effect_transact(&command).unwrap();
+            let state = root.effect_snapshot(&tenant).unwrap();
+            assert_eq!(state.effects.len(), 1);
+            assert!(state.ledger.is_none(), "legacy v2 journal entry");
+            // Alpha.1 stored the full effect projection in effect_state.
+            let c = rusqlite::Connection::open(path.join("fabric.sqlite")).unwrap();
+            c.execute(
+                "UPDATE effect_state SET state=? WHERE tenant=?",
+                rusqlite::params![canonical_data(&state).unwrap(), tenant.as_str()],
+            )
+            .unwrap();
+        }
+        drop(root);
+        // These are exactly the tables/indexes added after alpha.1. Retain the
+        // schema-1 marker, identity, history and (when populated) legacy effect row.
+        for name in ["fabric", "flow", "context"] {
+            let c = rusqlite::Connection::open(path.join(format!("{name}.sqlite"))).unwrap();
+            c.execute_batch("DROP TABLE effect_instances; DROP TABLE effect_requests; DROP INDEX worker_reserved;").unwrap();
+            let version: u32 = c.query_row("PRAGMA user_version", [], |r| r.get(0)).unwrap();
+            assert_eq!(version, 1);
+        }
+        let before = snapshot(&path);
+        for maintenance in [false, true] {
+            let result = if maintenance {
+                StoreRoot::open_maintenance(&path)
+            } else {
+                StoreRoot::open_existing(&path)
+            };
+            assert!(result
+                .err()
+                .unwrap()
+                .to_string()
+                .contains("unsupported schema: recreate the store for this version"));
+            assert_eq!(before, snapshot(&path));
+        }
+    }
+}
+
+#[test]
 fn single_component_relative_store_paths() {
     const MODE: &str = "WI_STORE_RELATIVE_PATH_TEST";
     let Ok(mode) = std::env::var(MODE) else {

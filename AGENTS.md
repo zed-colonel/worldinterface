@@ -15,9 +15,18 @@ and embedded host surfaces.
   `handoff check` validates the committed descriptor; `handoff verify DIRECTORY`
   validates fresh external campaign evidence on the unchanged committed head.
   Reviewed closure is effective only on reviewed merge with adopted checks.
-- After packet-bound changes, prepare and non-live validate exact bytes, then
-  obtain actual operator acceptance with expiry at most seven days later before
-  live tests. Expired or changed approval fails closed, including after merge.
+- WSP-01 operator decision (2026-11-09): a reviewed, merged evaluation packet is
+  accepted without an operator receipt, trusted anchor or calendar expiry.
+  Prepare and non-live validate packet-bound changes, refresh the complete manifest
+  in the same commit, then run live candidate verification only when the manifest
+  and every bound source byte match HEAD exactly. Drift fails closed, including in
+  adopted contract-check. Tests grant no review, integration, publication or closure.
+- The rule also covers host catalog registration of reviewed nonsensitive fixtures
+  in a reviewed commit, with exact bindings and no separate approval record. Scope
+  remains the same cases/tasks and six operations, 15000 ms wall time and 65536
+  retained output bytes; ordinary use and production credentials remain disabled.
+  Historical receipts and anchors remain provenance. WSP-01 supersedes only the
+  imported profile's explicit evaluation-approval procedure, not its exclusions.
 
 ## Historical repository structure
 
@@ -36,7 +45,12 @@ and embedded host surfaces.
 
 ## Active work items
 
-- Work targets `wi-worker-proof-1` under the [active ledger](docs/work-items/wi-worker-proof-1.md).
+- Active work: WI-SUPERVISOR-PROOF-1, [WSP-05](docs/work-items/WSP-05.md).
+  Supervisor lifecycle authority is separate from WorkerPort; preserve the original
+  55-case worker milestone and ten gates. WSP-03 adds WP-035–039 to the campaign
+  and evaluation packet, with separate operator grants and no new worker operation.
+  WSP-04 adds WP-040 and a separate supervisor G5 gate and handoff; actual Kata
+  lifecycle and deployment qualification remain Exoskeleton-owned.
 - Register implemented cases in `conformance/wi-fabric-2/proof/cases.json`; preserve
   authoritative scope coverage and exact manifest/package/test references.
 - Run `cargo run --locked --manifest-path tools/wi-contract-check/Cargo.toml -- hashes refresh`

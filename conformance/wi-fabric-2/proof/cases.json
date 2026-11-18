@@ -144,7 +144,7 @@
         {
           "manifest": "crates/worldinterface-runtime/Cargo.toml",
           "package": "worldinterface-runtime",
-          "test": "wp_007_exact_operator_packet_runs_only_supported_bounded_evaluation_through_wi_aq"
+          "test": "wp_007_exact_committed_packet_runs_only_supported_bounded_evaluation_through_wi_aq"
         },
         {
           "manifest": "tools/wi-contract-check/Cargo.toml",
@@ -160,6 +160,36 @@
           "manifest": "tools/wi-contract-check/Cargo.toml",
           "package": "wi-contract-check",
           "test": "wp007_unqualified_and_evaluation_table"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "packet_acceptance_takes_no_clock_and_rejects_revocation"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "committed_packet_cannot_widen_tasks_operations_cases_environment_or_source_bindings"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "live_setup_rejects_stale_and_uncommitted_packets_before_fixture_execution"
+        },
+        {
+          "manifest": "tools/wi-contract-check/Cargo.toml",
+          "package": "wi-contract-check",
+          "test": "complete_packet_validator_regressions"
+        },
+        {
+          "manifest": "tools/wi-contract-check/Cargo.toml",
+          "package": "wi-contract-check",
+          "test": "adopted_evaluation_check_rejects_stale_packets_and_uncommitted_refresh"
+        },
+        {
+          "manifest": "tools/wi-contract-check/Cargo.toml",
+          "package": "wi-contract-check",
+          "test": "campaign_packet_and_build_identity_cannot_be_substituted"
         }
       ]
     },
@@ -1009,7 +1039,7 @@
         {
           "manifest": "crates/worldinterface-runtime/Cargo.toml",
           "package": "worldinterface-runtime",
-          "test": "catalog_poll_invalid_approval_quarantines_only_the_run_and_preserves_provider_admission"
+          "test": "catalog_poll_invalid_packet_quarantines_only_the_run_and_preserves_provider_admission"
         },
         {
           "manifest": "crates/worldinterface-runtime/Cargo.toml",
@@ -1999,6 +2029,169 @@
           "manifest": "crates/worldinterface-runtime/Cargo.toml",
           "package": "worldinterface-runtime",
           "test": "spi_provider_and_reconciliation_crash_cuts_never_duplicate_commit"
+        }
+      ]
+    },
+    {
+      "id": "WP-035",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "045d86bda56c51e424d2e175302e846821efd9227ec6343765ce8912cfa8b8a3",
+      "gate": "WI-WORKER-G5",
+      "owning_item": "WSP-03",
+      "status": "implemented",
+      "coverage_refs": [
+        "conformance/wi-fabric-2/worker/supervisor-coverage.json"
+      ],
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_035_authenticated_supervisor_binds_exact_lifecycle_operation"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "public_server_durable_acceptance_replay_revocation_and_terminal_immutability"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "private_transport_rejects_malformed_and_oversized_frames_outside_guest"
+        },
+        {
+          "manifest": "crates/worldinterface-foundation/Cargo.toml",
+          "package": "worldinterface-worker",
+          "test": "strict_supervisor_protocol_and_exact_server_authorization"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "connector_escalates_stale_authenticated_response"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "supervisor_generation_deadline_and_unsupported_recovery_fail_closed"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "private_transport_samples_authorization_clock_after_receiving_submit"
+        }
+      ]
+    },
+    {
+      "id": "WP-036",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "3e8c000c638d7bfcbdd020f61cea479f7580d0b02d859dd6bd0e8c7cfa3b3512",
+      "gate": "WI-WORKER-G5",
+      "owning_item": "WSP-03",
+      "status": "implemented",
+      "coverage_refs": [
+        "conformance/wi-fabric-2/worker/supervisor-coverage.json"
+      ],
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_036_acceptance_is_uncertain_until_external_transition_completes"
+        }
+      ]
+    },
+    {
+      "id": "WP-037",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "1cb298b6bbb33e1e58cf57dc971f7b84a883bb21988c54b24cf8603b7a32a6c4",
+      "gate": "WI-WORKER-G5",
+      "owning_item": "WSP-03",
+      "status": "implemented",
+      "coverage_refs": [
+        "conformance/wi-fabric-2/worker/supervisor-coverage.json"
+      ],
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_037_external_result_survives_stopped_guest_and_wi_restart"
+        }
+      ]
+    },
+    {
+      "id": "WP-038",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "2f7330eabed0c6cc1046dcd782dc5a5077ebdeac328cea6583e235e5e57ac0d7",
+      "gate": "WI-WORKER-G5",
+      "owning_item": "WSP-03",
+      "status": "implemented",
+      "coverage_refs": [
+        "conformance/wi-fabric-2/worker/supervisor-coverage.json"
+      ],
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_038_lost_ack_and_callback_converge_through_durable_inspect"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "interrupted_result_persistence_requires_reopen_and_authoritative_inspect"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "authenticated_inspect_recovers_retained_backend_completion_after_dispatch_deadline"
+        },
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "transient_inspect_error_after_deadline_preserves_recovery_after_restart"
+        }
+      ]
+    },
+    {
+      "id": "WP-039",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "fee593b1d89f038e5d2a4afa9d586f2accaeaf47482c45133e5796121e45eb28",
+      "gate": "WI-WORKER-G5",
+      "owning_item": "WSP-03",
+      "status": "implemented",
+      "coverage_refs": [
+        "conformance/wi-fabric-2/worker/supervisor-coverage.json"
+      ],
+      "tests": [
+        {
+          "manifest": "crates/worldinterface-runtime/Cargo.toml",
+          "package": "worldinterface-runtime",
+          "test": "wp_039_operator_recovery_is_independent_of_failed_guest"
+        }
+      ]
+    },
+    {
+      "id": "WP-040",
+      "source_matrix": "contracts/sources/wi-fabric-2-worker-execution-acceptance-matrix.yaml",
+      "source_record_sha256": "ad5cfcc32da64ad704585c7348993a4d35f22232914ee1a88d70f63fc2310677",
+      "gate": "WI-WORKER-G5",
+      "owning_item": "WSP-04",
+      "status": "implemented",
+      "coverage_refs": [
+        "conformance/wi-fabric-2/worker/supervisor-coverage.json"
+      ],
+      "tests": [
+        {
+          "manifest": "tools/wi-contract-check/Cargo.toml",
+          "package": "wi-contract-check",
+          "test": "wp_040_supervisor_handoff_limits_claims_to_interface_and_reconciliation"
+        },
+        {
+          "manifest": "tools/wi-contract-check/Cargo.toml",
+          "package": "wi-contract-check",
+          "test": "supervisor_observations_reject_contradictions_and_incomplete_wi_evidence"
+        },
+        {
+          "manifest": "tools/wi-contract-check/Cargo.toml",
+          "package": "wi-contract-check",
+          "test": "supervisor_campaign_rejects_missing_substituted_unowned_and_unbound_retained_records"
         }
       ]
     }

@@ -26,7 +26,9 @@
     "/bin/sleep",
     "timeout",
     "cargo",
-    "rustc"
+    "rustc",
+    "python3 (trusted host packet validation only)",
+    "git (trusted host committed-source validation only)"
   ],
   "operations": [
     "provision",
@@ -37,16 +39,15 @@
     "release"
   ],
   "ordinary_use": false,
-  "approval_provisioning_exclusions": [
-    "conformance/wi-fabric-2/worker/evaluation-approval.json",
-    "crates/worldinterface-runtime/tests/support/worker_approval_anchor.rs"
-  ],
-  "approval_provisioning_rule": "These separate host trust records may only encode actual explicit acceptance and provenance for this unchanged packet; they cannot widen its source, task, case, operation, bound or environment scope.",
   "support_binary_sha256": {
     "/bin/cat": "b97039a4875fc8d2262bb78523032f5b7637308da54551fb55038c38274817be",
     "/bin/sleep": "cf9cdc41dbdbdc37c05b62b6713523e773d63f098b4455ec0a8d84b0009db57b",
     "/usr/bin/timeout": "629cb6e82df4bb47188eec340f2ceb5f45def2e7b1aac1bd7443beecdcb42a6a"
   },
-  "maximum_evaluation_validity": "7 days from actual explicit operator acceptance, only for this candidate verification/review",
-  "build_provenance": "The source-bound test host verifies the packet, runs a fixed locked/offline Cargo build of the reviewed binary targets with an allowlisted compiler environment and Rust 1.89.0, and records compiler-attested output digests before copying bytes into private artifact paths. Those independent digests fence launch-path substitution. Builder success grants no worker operation or evaluation approval. No build scripts or source-generator policy exceptions are introduced."
+  "build_provenance": "The source-bound test host verifies the packet, runs a fixed locked/offline Cargo build of the reviewed binary targets with an allowlisted compiler environment and Rust 1.89.0, and records compiler-attested output digests before copying bytes into private artifact paths. Those independent digests fence launch-path substitution. Builder success grants no worker operation, reviewed acceptance or integration authority. No build scripts or source-generator policy exceptions are introduced.",
+  "historical_provenance_exclusions": [
+    "conformance/wi-fabric-2/worker/evaluation-approval.json",
+    "crates/worldinterface-runtime/tests/support/worker_approval_anchor.rs"
+  ],
+  "acceptance_rule": "2026-11-09 operator decision: complete manifest and source bytes must match HEAD before bounded candidate verification; reviewed merge with adopted checks establishes durable acceptance without an approval receipt, trusted anchor or calendar expiry. Historical records cannot widen scope."
 }

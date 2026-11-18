@@ -18,10 +18,9 @@ use std::{
 
 pub const COVERAGE: &str = "conformance/wi-fabric-2/worker/campaign-coverage.json";
 pub const ENTRY: &str = "wi_owned_worker_acceptance_campaign";
-pub const PARALLELISM: usize = 8;
+pub const PARALLELISM: usize = 12;
 use crate::proof::RUNTIME;
 const PACKET: &str = "conformance/wi-fabric-2/worker/evaluation-manifest.json";
-const APPROVAL: &str = "conformance/wi-fabric-2/worker/evaluation-approval.json";
 const LOCKS: [&str; 3] = [
     "crates/worldinterface-foundation/Cargo.lock",
     "crates/worldinterface-runtime/Cargo.lock",
@@ -52,7 +51,6 @@ fn pins(root: &Path) -> Result<Value> {
     let mut sources = BTreeMap::new();
     for path in LOCKS.into_iter().chain([
         PACKET,
-        APPROVAL,
         COVERAGE,
         "conformance/wi-fabric-2/proof/cases.json",
         "contracts/aq-integration-target.json",
@@ -91,8 +89,9 @@ fn pins(root: &Path) -> Result<Value> {
             );
         }
     }
-    if aq.len() != 6 || registry.cases.len() != 55 {
-        return Err("incomplete AQ graph or registry".into());
+    proof::validate_campaign_scope(&registry)?;
+    if aq.len() != 6 {
+        return Err("incomplete AQ graph: expected 6 actionqueue packages".into());
     }
     Ok(json!({"commit":output(root,"git", &["rev-parse","HEAD"])? ,
         "tree":output(root,"git", &["rev-parse","HEAD^{tree}"])? ,
@@ -165,6 +164,7 @@ pub fn validate_gates(root: &Path, gates: &Value) -> Result<()> {
         "WI-WORKER-G2",
         "WI-WORKER-G3",
         "WI-WORKER-G4",
+        "WI-WORKER-G5",
         "WI-EMBEDDED-CORE-1",
         "WI-EMBEDDED-WORKER-PROOF-1",
     ];
@@ -181,7 +181,7 @@ pub fn validate_gates(root: &Path, gates: &Value) -> Result<()> {
         })
     {
         return Err(
-            "campaign requires eight closed/two open or ten closed gates; mixed states rejected"
+            "campaign requires eleven gates including separate supervisor G5; mixed states rejected"
                 .into(),
         );
     }
@@ -192,6 +192,7 @@ pub fn validate_gates(root: &Path, gates: &Value) -> Result<()> {
 }
 /// Static coverage remains definition-review evidence, never a runtime pass claim.
 pub fn validate_coverage(root: &Path, registry: &Registry, index: &proof::TestIndex) -> Result<()> {
+    proof::validate_supervisor(root, registry, index)?;
     let contract = read(&root.join("conformance/wi-fabric-2/worker/handoff-contract.json"))?;
     if contract["version"] != 1
         || contract["kind"] != "wi-producer-evidence-v1"
@@ -231,27 +232,6 @@ pub fn validate_coverage(root: &Path, registry: &Registry, index: &proof::TestIn
         if refs.is_empty() || refs.iter().any(|t| index.get(t) != Some(&1) || !all.contains(t)) {
             return Err("missing, ignored or unregistered campaign obligation".into());
         }
-    }
-    Ok(())
-}
-fn approval(root: &Path) -> Result<Value> {
-    let packet = read(&root.join(PACKET))?;
-    for (path, digest) in packet["files"].as_object().ok_or("packet files missing")? {
-        if json!(digest_file(root, path)?) != *digest {
-            return Err(format!("packet source drift: {path}").into());
-        }
-    }
-    let receipt = read(&root.join(APPROVAL))?;
-    let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH)?.as_millis();
-    validate_approval(&receipt, &packet, now)?;
-    Ok(receipt)
-}
-pub fn validate_approval(receipt: &Value, packet: &Value, now: u128) -> Result<()> {
-    if receipt["manifest"] != hash(serde_json::to_vec(&packet)?) {
-        return Err("renewed operator acceptance of the concrete evaluation packet required".into());
-    }
-    if receipt["expires_unix_ms"].as_u64().is_none_or(|expiry| u128::from(expiry) <= now) {
-        return Err("evaluation approval expired; renewed exact-packet acceptance required".into());
     }
     Ok(())
 }
@@ -296,7 +276,7 @@ pub fn run(root: &Path, directory: &Path) -> Result<()> {
     }
     let before = pins(root)?;
     validate_generation(&before, &before)?;
-    let acceptance = approval(root)?;
+    let acceptance = crate::evaluation::packet(root)?;
     let gates = gate_states(root)?;
     validate_gates(root, &gates)?;
     let (registry, gate_records) = proof::load(root)?;
@@ -312,10 +292,12 @@ pub fn run(root: &Path, directory: &Path) -> Result<()> {
     // The campaign is also the sole owner of non-registered runtime tests. Do
     // not lose suite coverage when removing Cargo's duplicate default execution.
     let runtime_suite = runtime_remainder(&harnesses, &selected)?;
-    // Share workers across both sets so a long runtime test can overlap the
-    // registered cases. Receipt validation still checks each set independently.
+    validate_priority_tests(selected.keys().chain(runtime_suite.keys()))?;
     let execution_started = Instant::now();
-    let all_outcomes = execute_harnesses(
+    // Run priority tests in dedicated phases of one, then two workers; the
+    // remaining registered and runtime tests share PARALLELISM workers. Receipt
+    // validation still checks the two test sets independently.
+    let (all_outcomes, execution_phases) = execute_harnesses(
         root,
         selected.iter().map(|(r, p)| (r.clone(), p.clone())).chain(
             runtime_suite
@@ -345,10 +327,11 @@ pub fn run(root: &Path, directory: &Path) -> Result<()> {
             )
         })
         .collect();
-    let receipt = json!({"version":2,"before":before,"after":after,"os":{
+    let supervisor_observations = crate::supervisor_evidence::bindings(&directory, &outcomes);
+    let receipt = json!({"version":4,"before":before,"after":after,"os":{
         "kernel":output(root,"uname", &["-srv"])? ,"architecture":output(root,"uname", &["-m"])? ,
         "release":fs::read_to_string("/etc/os-release")?},"execution_identity":output(root,"id",&[])? ,
-        "evaluation_approval":acceptance,"outcomes":outcomes,"runtime_suite_outcomes":runtime_suite_outcomes,"cases":cases,"embedded_observations":observations,
+        "evaluation_packet":acceptance,"outcomes":outcomes,"runtime_suite_outcomes":runtime_suite_outcomes,"cases":cases,"embedded_observations":observations,"supervisor_observations":supervisor_observations,
         "gates":gates,"claims":claims(),"limitations":limitations(),
         "campaign_parallelism":PARALLELISM});
     fs::write(directory.join("receipt.json"), serde_json::to_vec_pretty(&receipt)?)?;
@@ -372,7 +355,7 @@ pub fn run(root: &Path, directory: &Path) -> Result<()> {
         )?;
     }
     let timing = json!({"discovery_build_and_listing_seconds":discovery_seconds,
-        "campaign_execution_seconds":execution_seconds,"execution_phases":1,
+        "campaign_execution_seconds":execution_seconds,"execution_phases":execution_phases,
         "receipt_validation_seconds":validation_started.elapsed().as_secs_f64(),
         "total_seconds":started.elapsed().as_secs_f64(),"discovery_passes":1,
         "registered_tests":outcomes.len(),"additional_runtime_tests":runtime_suite_outcomes.len()});
@@ -409,6 +392,7 @@ pub fn execute_selected(
     directory: &Path,
 ) -> Result<Vec<Outcome>> {
     execute_harnesses(root, selected.iter().map(|(r, p)| (r.clone(), p.clone())), directory)
+        .map(|(outcomes, _)| outcomes)
 }
 fn cached_digest<'a>(digests: &'a mut BTreeMap<PathBuf, String>, path: &Path) -> Result<&'a str> {
     use std::collections::btree_map::Entry;
@@ -417,62 +401,116 @@ fn cached_digest<'a>(digests: &'a mut BTreeMap<PathBuf, String>, path: &Path) ->
         Entry::Vacant(entry) => entry.insert(hash(fs::read(path)?)),
     })
 }
+const PRIORITY_TESTS: [&str; 3] = [
+    "reviewed_build_artifacts_are_bounded_and_publishable_without_launch",
+    "one_host_releases_capacity_for_more_than_64_sequential_runs",
+    "flow_capacity_is_enforced_without_losing_existing_history",
+];
+/// A rename/removal must fail before execution, never silently demote a long test.
+/// Supplemental partial selections use execute_selected without this requirement.
+pub fn validate_priority_tests<'a>(selected: impl Iterator<Item = &'a TestRef>) -> Result<()> {
+    let selected = selected.collect::<Vec<_>>();
+    for test in PRIORITY_TESTS {
+        let count = selected.iter().filter(|r| is_runtime_test(r, test)).count();
+        if count != 1 {
+            return Err(format!(
+                "required campaign priority test {test}: expected one selection, found {count}"
+            )
+            .into());
+        }
+    }
+    Ok(())
+}
+fn is_runtime_test(reference: &TestRef, name: &str) -> bool {
+    reference.manifest == RUNTIME
+        && reference.package == "worldinterface-runtime"
+        && reference.test == name
+}
+fn execution_priority(reference: &TestRef) -> u8 {
+    PRIORITY_TESTS.iter().position(|test| is_runtime_test(reference, test)).map_or(2, |index| {
+        if index == 0 {
+            0
+        } else {
+            1
+        }
+    })
+}
 fn execute_harnesses(
     root: &Path,
     selected: impl Iterator<Item = (TestRef, PathBuf)>,
     directory: &Path,
-) -> Result<Vec<Outcome>> {
-    let selected = selected.collect::<VecDeque<_>>();
+) -> Result<(Vec<Outcome>, usize)> {
+    let mut selected = selected.collect::<Vec<_>>();
+    // Count the existing non-live build test once before worker cases. The
+    // two history-heavy regressions then share a bounded pair of workers before
+    // the general pool. They retain all coverage and their 600s deadlines without
+    // competing with twelve packet-verifying harnesses or cold compiler setup.
+    selected.sort_by_key(|(reference, _)| execution_priority(reference));
     let mut digests = BTreeMap::new();
     for (_, executable) in &selected {
         cached_digest(&mut digests, executable)?;
     }
-    let pending = Mutex::new(selected);
-    let batches = std::thread::scope(|scope| {
-        let workers = (0..PARALLELISM)
-            .map(|_| {
-                scope.spawn(|| {
-                    let mut batches = Vec::new();
-                    loop {
-                        let Some((reference, executable)) = pending.lock().unwrap().pop_front()
-                        else {
-                            break;
-                        };
-                        let outcome = execute_bound(
-                            root,
-                            reference,
-                            &executable,
-                            directory,
-                            &digests[&executable],
-                        );
-                        if let Ok(outcome) = &outcome {
-                            eprintln!(
-                                "campaign {}: {}",
-                                outcome.reference.test,
-                                if outcome.passed { "passed" } else { "FAILED" }
+    let mut selected = VecDeque::from(selected);
+    let mut outcomes = Vec::new();
+    let mut execution_phases = 0;
+    for (priority, parallelism) in [(0, 1), (1, 2), (2, PARALLELISM)] {
+        let mut phase = VecDeque::new();
+        while selected
+            .front()
+            .is_some_and(|(reference, _)| execution_priority(reference) == priority)
+        {
+            phase.push_back(selected.pop_front().unwrap());
+        }
+        if phase.is_empty() {
+            continue;
+        }
+        execution_phases += 1;
+        let pending = Mutex::new(phase);
+        let batches = std::thread::scope(|scope| {
+            let workers = (0..parallelism)
+                .map(|_| {
+                    scope.spawn(|| {
+                        let mut batches = Vec::new();
+                        loop {
+                            let Some((reference, executable)) = pending.lock().unwrap().pop_front()
+                            else {
+                                break;
+                            };
+                            let outcome = execute_bound(
+                                root,
+                                reference,
+                                &executable,
+                                directory,
+                                &digests[&executable],
                             );
+                            if let Ok(outcome) = &outcome {
+                                eprintln!(
+                                    "campaign {}: {}",
+                                    outcome.reference.test,
+                                    if outcome.passed { "passed" } else { "FAILED" }
+                                );
+                            }
+                            batches.push(outcome.map_err(|e| e.to_string()));
                         }
-                        batches.push(outcome.map_err(|e| e.to_string()));
-                    }
-                    batches
+                        batches
+                    })
                 })
-            })
-            .collect::<Vec<_>>();
-        workers.into_iter().map(|w| w.join()).collect::<Vec<_>>()
-    });
+                .collect::<Vec<_>>();
+            workers.into_iter().map(|w| w.join()).collect::<Vec<_>>()
+        });
+        for worker in batches {
+            for batch in worker.map_err(|_| "campaign worker panicked")? {
+                outcomes.push(batch.map_err(|e| format!("campaign harness failed: {e}"))?);
+            }
+        }
+    }
     for (executable, digest) in digests {
         if digest != hash(fs::read(executable)?) {
             return Err("campaign harness changed during execution".into());
         }
     }
-    let mut outcomes = Vec::new();
-    for worker in batches {
-        for batch in worker.map_err(|_| "campaign worker panicked")? {
-            outcomes.push(batch.map_err(|e| format!("campaign harness failed: {e}"))?);
-        }
-    }
     outcomes.sort_by(|a, b| (&a.reference, &a.log).cmp(&(&b.reference, &b.log)));
-    Ok(outcomes)
+    Ok((outcomes, execution_phases))
 }
 pub fn execute(
     root: &Path,
@@ -487,6 +525,18 @@ pub fn execute(
     }
     Ok(outcome)
 }
+/// The capacity batch covers 10,000 durable admissions, default AQ checkpoints,
+/// paired recovery and a full history rebuild. Its measured isolated duration
+/// was 577s on the shared host; 600s left no recovery margin under contention.
+/// This harness budget is separate from bounded worker/supervisor operations
+/// and does not change the adopted command's ceiling or its timing obligation.
+pub fn harness_timeout_seconds(reference: &TestRef) -> u64 {
+    if is_runtime_test(reference, "flow_capacity_is_enforced_without_losing_existing_history") {
+        900
+    } else {
+        600
+    }
+}
 fn log_name(reference: &TestRef, executable: &Path) -> Result<String> {
     Ok(format!("{}.log", hash(serde_json::to_vec(&(reference, executable))?)))
 }
@@ -498,8 +548,11 @@ fn execute_bound(
     executable_sha256: &str,
 ) -> Result<Outcome> {
     let name = log_name(&reference, executable)?;
+    let timeout = harness_timeout_seconds(&reference);
+    let started = Instant::now();
     let out = Command::new("timeout")
-        .args(["--kill-after=10s", "600s"])
+        .arg("--kill-after=10s")
+        .arg(format!("{timeout}s"))
         .arg(executable)
         .args([&reference.test, "--exact", "--nocapture", "--test-threads=1"])
         .current_dir(root)
@@ -510,6 +563,13 @@ fn execute_bound(
     let mut log = out.stdout;
     log.extend_from_slice(&out.stderr);
     let passed = exact_pass(out.status.success(), &String::from_utf8_lossy(&log));
+    log.extend_from_slice(
+        format!(
+        "\nCampaign harness: timeout_seconds={timeout}, elapsed_seconds={:.3}, exit_status={}\n",
+        started.elapsed().as_secs_f64(), out.status,
+    )
+        .as_bytes(),
+    );
     fs::write(directory.join(&name), &log)?;
     Ok(Outcome {
         reference,
@@ -526,6 +586,7 @@ pub fn limitations() -> Value {
         "no independent VM or hostile-code qualification",
         "seam simulation only; no remote provider qualification",
         "worker exit and WI receipt do not establish consumer task acceptance",
+        "supervisor fixture evidence covers authenticated interface and durable reconciliation; Exoskeleton owns actual Kata lifecycle, storage durability, image compatibility, deployment controls and isolation qualification",
         "reviewed milestone closure is effective only on reviewed merge with adopted checks; execution grants no closure"
     ])
 }
@@ -559,18 +620,19 @@ fn validate_receipt_with_harnesses(
             "after",
             "os",
             "execution_identity",
-            "evaluation_approval",
+            "evaluation_packet",
             "outcomes",
             "runtime_suite_outcomes",
             "cases",
             "embedded_observations",
+            "supervisor_observations",
             "gates",
             "claims",
             "limitations",
             "campaign_parallelism",
         ],
     )?;
-    if receipt["version"] != 2 || receipt["campaign_parallelism"] != PARALLELISM {
+    if receipt["version"] != 4 || receipt["campaign_parallelism"] != PARALLELISM {
         return Err("unsupported campaign receipt".into());
     }
     validate_generation(&receipt["before"], &receipt["after"])?;
@@ -581,7 +643,7 @@ fn validate_receipt_with_harnesses(
     validate_gates(root, &receipt["gates"])?;
     if receipt["gates"] != gate_states(root)?
         || receipt["limitations"] != limitations()
-        || receipt["evaluation_approval"] != approval(root)?
+        || receipt["evaluation_packet"] != crate::evaluation::packet(root)?
     {
         return Err("campaign scope drift".into());
     }
@@ -605,7 +667,7 @@ fn validate_receipt_with_harnesses(
     validate_runtime_results(&runtime_suite, &additional, base)?;
     validate_executables(&outcomes, &selected)?;
     let cases = receipt["cases"].as_object().ok_or("missing case outcomes")?;
-    if cases.len() != 55
+    if cases.keys().cloned().collect::<BTreeSet<_>>() != proof::campaign_case_ids()
         || registry
             .cases
             .iter()
@@ -613,6 +675,7 @@ fn validate_receipt_with_harnesses(
     {
         return Err("incomplete case aggregation".into());
     }
+    crate::supervisor_evidence::validate(root, receipt, base, &outcomes)?;
     let observations =
         receipt["embedded_observations"].as_object().ok_or("missing embedded evidence")?;
     if observations.len() != 3 {
@@ -641,14 +704,11 @@ fn validate_receipt_with_harnesses(
         }
         let observation: Value = serde_json::from_slice(&bytes)?;
         validate_observation(&observation, name == "seam.json")?;
-        if observation["build"]["packet"] != receipt["evaluation_approval"]["manifest"]
-            || observation["build"]["profile_definition"]
-                != hash(fs::read(
-                    root.join("contracts/sources/wi-fabric-2-worker-execution-profile.yaml"),
-                )?)
-        {
-            return Err("unbound fixture build or profile definition".into());
-        }
+        validate_build_packet(
+            &observation,
+            &receipt["evaluation_packet"],
+            &digest_file(root, "contracts/sources/wi-fabric-2-worker-execution-profile.yaml")?,
+        )?;
         if observation["build"]["seam_implementation"]
             != digest_file(root, "crates/worldinterface-runtime/tests/support/worker_seam.rs")?
         {
@@ -662,6 +722,15 @@ fn validate_receipt_with_harnesses(
                 return Err("missing build digest".into());
             }
         }
+    }
+    Ok(())
+}
+pub fn validate_build_packet(observation: &Value, packet: &Value, profile: &str) -> Result<()> {
+    if packet["acceptance_policy"] != crate::evaluation::POLICY
+        || observation["build"]["packet"] != packet["manifest"]
+        || observation["build"]["profile_definition"] != profile
+    {
+        return Err("unbound fixture build or profile definition".into());
     }
     Ok(())
 }
@@ -810,10 +879,18 @@ pub fn validate_observation(v: &Value, seam: bool) -> Result<()> {
 /// Generate the contract payload from receipt evidence. Callers granting passage
 /// must first validate the receipt; this function also supports non-live fixtures.
 pub fn handoff_candidate(receipt: &Value, base: &Path) -> Result<Value> {
+    let worker_cases: BTreeMap<_, _> = receipt["cases"]
+        .as_object()
+        .into_iter()
+        .flatten()
+        .filter(|(id, _)| proof::worker_case_ids().contains(*id))
+        .map(|(id, result)| (id.clone(), result.clone()))
+        .collect();
     Ok(json!({"version":1,"kind":"wi-producer-evidence-v1", "producer":receipt["after"],
-        "campaign_sha256":hash(serde_json::to_vec(receipt)?),"cases":receipt["cases"],
+        "campaign_sha256":hash(serde_json::to_vec(receipt)?),"cases":worker_cases,
         "tests":receipt["outcomes"],"runtime_suite_tests":receipt["runtime_suite_outcomes"],"observations":receipt["embedded_observations"],
         "gates":receipt["gates"],"claims":claims(),
+        "supervisor":{"observations":receipt["supervisor_observations"],"gate":receipt["gates"]["WI-WORKER-G5"],"scope":"authenticated interface and durable reconciliation only","kata_lifecycle_qualified":false},
         "producer_execution": [read(&local(base,"coding.json")?)?,read(&local(base,"transform.json")?)?,read(&local(base,"seam.json")?)?],"limitations":limitations(),
         "supported_operations":["provision","start","inspect","terminate","collect_artifacts","release"],
         "unavailable_operations":["pause","resume","checkpoint","remote-provider","daemon","python"],
@@ -834,4 +911,14 @@ pub fn validate_contract(handoff: &Value, expected: &Value) -> Result<()> {
         return Err("handoff substitution, incomplete pins or semantic completion claim".into());
     }
     Ok(())
+}
+
+#[cfg(test)]
+#[test]
+fn no_selected_tests_execute_no_phases() {
+    let temp = tempfile::tempdir().unwrap();
+    let (outcomes, phases) =
+        execute_harnesses(temp.path(), std::iter::empty(), temp.path()).unwrap();
+    assert!(outcomes.is_empty());
+    assert_eq!(phases, 0);
 }

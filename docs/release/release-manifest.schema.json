@@ -1,0 +1,21 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "WorldInterface prepared release; crate-release compatible",
+  "type": "object",
+  "required": ["schema_version", "version", "tag", "source_commit", "crates", "artifacts", "evidence", "blockers", "aq", "repository_locks", "packaged_locks", "descriptor_sha256", "feature_profiles"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "source_commit": {"type": "string", "pattern": "^[a-f0-9]{40}$"},
+    "version": {"type": "string", "pattern": "^0\\.2\\.0-alpha\\.[1-9][0-9]*$"},
+    "tag": {"type": "string"},
+    "crates": {"type": "array", "minItems": 8, "maxItems": 8, "items": {"type": "object", "required": ["name", "version"], "properties": {"name": {"type": "string"}, "version": {"type": "string"}}, "additionalProperties": false}},
+    "artifacts": {"type": "array", "minItems": 1, "items": {"type": "object", "required": ["path", "sha256"], "properties": {"path": {"type": "string", "minLength": 1}, "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}}, "additionalProperties": false}},
+    "evidence": {"type": "array", "minItems": 13, "items": {"type": "object", "required": ["gate", "command", "source_commit", "result", "log", "record", "sha256"], "properties": {"result": {"const": "passed"}}}},
+    "blockers": {"const": []},
+    "aq": {"type": "object"},
+    "repository_locks": {"type": "object"},
+    "packaged_locks": {"type": "object"},
+    "descriptor_sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "feature_profiles": {"type": "object"}
+  }
+}

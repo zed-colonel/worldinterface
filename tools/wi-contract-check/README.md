@@ -96,7 +96,12 @@ eligibility. Neither static check asserts execution or reviewed closure.
 The campaign generates an external `handoff.json` alongside its receipt and
 candidate. `handoff verify DIRECTORY` validates that publication, the descriptor
 binding and the complete live campaign pins, binaries, logs and observations.
-It requires the unchanged clean committed source and current accepted packet.
+It requires the unchanged clean committed source and current committed matching packet.
 Worker completion remains nonsemantic; reviewed milestone closure requires
-reviewed merge and all adopted checks. See the evidence document for approval,
-expiry and consumer reproduction instructions.
+reviewed merge and all adopted checks. `evaluation check`, also included in `all check`, reconstructs the complete
+packet with the shared Python validator and verifies manifest/source bytes against
+HEAD. It fails closed on omissions, additions, scope drift or validator failure.
+Refresh never occurs during checking. Campaign schema 3 binds `evaluation_packet`
+(manifest digest and `reviewed-merged-packet-2026-11-09` policy) and embedded builds
+instead of an approval receipt. Historical campaign schema 2 remains provenance.
+See the evidence document for candidate verification and consumer reproduction.

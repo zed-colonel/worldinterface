@@ -1,0 +1,97 @@
+{
+  "version": 1,
+  "id": "WI-WORKER-G2",
+  "source_record_sha256": "5d2d183b635cd915b3ffa9081f0351393346f6c35ef514afe944d0c4a0f1a3c1",
+  "pass_criteria": [
+    "Exact-profile admission, unsupported-control denials and worker/instance evidence separation proven in producer fixtures.",
+    "Source-owned evidence cases are bound in acceptance_coverage; owner PR IDs attribute work and are not automatic accepted-parent prerequisites."
+  ],
+  "requires": [
+    {
+      "id": "STACK-PLAN-ACCEPTED",
+      "kind": "checkpoint",
+      "state": "passed"
+    },
+    {
+      "id": "WI-WORKER-G1",
+      "kind": "checkpoint",
+      "state": "passed"
+    },
+    {
+      "id": "wi/WI-04/domain",
+      "kind": "slice",
+      "state": "verified"
+    },
+    {
+      "id": "wi/WI-05/domain",
+      "kind": "slice",
+      "state": "verified"
+    }
+  ],
+  "required_cases": [
+    "WP-009",
+    "WP-010",
+    "WP-011",
+    "WP-012",
+    "WP-013",
+    "WP-014",
+    "WP-015",
+    "WP-016"
+  ],
+  "closing_item": "WIP-04",
+  "status": "closed",
+  "effective_on": "reviewed-merge-with-adopted-checks",
+  "historical_evidence": [],
+  "requirement_bindings": [
+    {
+      "requirement": {
+        "id": "STACK-PLAN-ACCEPTED",
+        "kind": "checkpoint",
+        "state": "passed"
+      },
+      "binding": {
+        "kind": "plan-import",
+        "plan_version": "9212604c-4873-4cd5-b492-1ee3141b8b0b",
+        "date": "2026-10-13",
+        "historical_acceptance": "2026-10-01"
+      }
+    },
+    {
+      "requirement": {
+        "id": "WI-WORKER-G1",
+        "kind": "checkpoint",
+        "state": "passed"
+      },
+      "binding": {
+        "kind": "closed-gate",
+        "record": "conformance/wi-fabric-2/proof/gates/WI-WORKER-G1.json"
+      }
+    },
+    {
+      "requirement": {
+        "id": "wi/WI-04/domain",
+        "kind": "slice",
+        "state": "verified"
+      },
+      "binding": {
+        "kind": "historical-verified-slice",
+        "revisions": [
+          "9e92972"
+        ]
+      }
+    },
+    {
+      "requirement": {
+        "id": "wi/WI-05/domain",
+        "kind": "slice",
+        "state": "verified"
+      },
+      "binding": {
+        "kind": "historical-verified-slice",
+        "revisions": [
+          "afa130d"
+        ]
+      }
+    }
+  ]
+}

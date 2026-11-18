@@ -2,7 +2,9 @@
 //! The root is trusted local storage, never an authenticated public API.
 use crate::{invalid, Batch, Result, StoreKind, StoreRoot};
 use rusqlite::{params, Connection, OptionalExtension, TransactionBehavior};
-use worldinterface_domain::effect::{replay_command, EffectState, ValidatedEffectCommand};
+use worldinterface_domain::effect::{
+    legacy_ledger, replay_command, EffectState, ValidatedEffectCommand,
+};
 use worldinterface_protocol::*;
 
 /// Optimistic journal conflict or SQLite writer contention. Callers must
@@ -27,12 +29,7 @@ fn replay_validated(
     state: &EffectState,
     command: &ValidatedEffectCommand,
 ) -> Result<(EffectState, EffectIntentId)> {
-    if &worldinterface_domain::effect::state_digest(state).map_err(invalid)?
-        != command.base_digest()
-    {
-        return Err(EffectJournalConflict.into());
-    }
-    replay_command(state, command.tenant(), command.bytes()).map_err(invalid)
+    command.apply_to(state).map_err(invalid)?.ok_or_else(|| EffectJournalConflict.into())
 }
 
 /// Prepared under the Fabric writer lock; the receipt is still domain validated.
@@ -49,16 +46,108 @@ CREATE TRIGGER effect_no_update BEFORE UPDATE ON effect_history BEGIN SELECT RAI
 CREATE TRIGGER effect_no_delete BEFORE DELETE ON effect_history BEGIN SELECT RAISE(ABORT,'append only'); END;
 CREATE TABLE effect_run_index(run TEXT PRIMARY KEY, tenant TEXT NOT NULL, intent TEXT NOT NULL, task TEXT NOT NULL);
 CREATE TABLE effect_state(tenant TEXT PRIMARY KEY, state BLOB NOT NULL);
+CREATE TABLE effect_instances(tenant TEXT NOT NULL, intent TEXT NOT NULL, flow TEXT, node TEXT, state BLOB NOT NULL, PRIMARY KEY(tenant,intent));
+CREATE INDEX effect_owner ON effect_instances(tenant,flow,node);
+CREATE TABLE effect_requests(tenant TEXT NOT NULL, request TEXT NOT NULL, intent TEXT NOT NULL, PRIMARY KEY(tenant,request));
 CREATE TABLE effect_dispatch_fault_history(seq INTEGER PRIMARY KEY, tenant TEXT NOT NULL, intent TEXT NOT NULL, run TEXT NOT NULL, code TEXT NOT NULL, digest TEXT NOT NULL, UNIQUE(tenant,intent,run,code));
 CREATE TRIGGER dispatch_fault_no_update BEFORE UPDATE ON effect_dispatch_fault_history BEGIN SELECT RAISE(ABORT,'append only'); END;
 CREATE TRIGGER dispatch_fault_no_delete BEFORE DELETE ON effect_dispatch_fault_history BEGIN SELECT RAISE(ABORT,'append only'); END;
 CREATE TABLE effect_outbox(tenant TEXT NOT NULL, intent TEXT NOT NULL, dispatch BLOB NOT NULL, PRIMARY KEY(tenant,intent));
 ";
-fn snapshot(c: &Connection, tenant: &OpaqueRef) -> Result<EffectState> {
+// Read only the tenant journal header, without aggregate projections.
+fn catalog(c: &Connection, tenant: &OpaqueRef) -> Result<EffectState> {
     let b: Option<Vec<u8>> = c
         .query_row("SELECT state FROM effect_state WHERE tenant=?", [tenant.as_str()], |r| r.get(0))
         .optional()?;
-    b.map_or_else(|| Ok(EffectState::default()), |b| crate::decode_collection(&b))
+    let state: EffectState =
+        b.map_or_else(|| Ok(EffectState::default()), |b| crate::decode_collection(&b))?;
+    if !state.effects.is_empty() || !state.requests.is_empty() {
+        return Err(invalid("effect catalog contains aggregate projections"));
+    }
+    Ok(state)
+}
+fn load_intent(
+    c: &Connection,
+    tenant: &OpaqueRef,
+    id: &EffectIntentId,
+    state: &mut EffectState,
+) -> Result<()> {
+    if state.effects.contains_key(id) {
+        return Ok(());
+    }
+    let bytes: Option<Vec<u8>> = c
+        .query_row(
+            "SELECT state FROM effect_instances WHERE tenant=? AND intent=?",
+            params![tenant.as_str(), id.as_str()],
+            |r| r.get(0),
+        )
+        .optional()?;
+    if let Some(bytes) = bytes {
+        state.effects.insert(id.clone(), crate::decode_collection(&bytes)?);
+    }
+    Ok(())
+}
+// Tenant-wide snapshots are for inspection/recovery, never the ordinary command path.
+fn snapshot(c: &Connection, tenant: &OpaqueRef) -> Result<EffectState> {
+    let mut state = catalog(c, tenant)?;
+    let mut q =
+        c.prepare("SELECT intent,state FROM effect_instances WHERE tenant=? ORDER BY intent")?;
+    for row in
+        q.query_map([tenant.as_str()], |r| Ok((r.get::<_, String>(0)?, r.get::<_, Vec<u8>>(1)?)))?
+    {
+        let (id, bytes) = row?;
+        state.effects.insert(id.try_into().map_err(invalid)?, crate::decode_collection(&bytes)?);
+    }
+    let mut q =
+        c.prepare("SELECT request,intent FROM effect_requests WHERE tenant=? ORDER BY request")?;
+    for row in
+        q.query_map([tenant.as_str()], |r| Ok((r.get::<_, String>(0)?, r.get::<_, String>(1)?)))?
+    {
+        let (key, id) = row?;
+        state.requests.insert(key.try_into().map_err(invalid)?, id.try_into().map_err(invalid)?);
+    }
+    Ok(state)
+}
+fn bounded_view(
+    c: &Connection,
+    tenant: &OpaqueRef,
+    ids: &[EffectIntentId],
+    key: Option<&ContentHash>,
+) -> Result<EffectState> {
+    let mut state = catalog(c, tenant)?;
+    if state.ledger.is_none() {
+        // One-time transition from historical full-state commands. Replay derives
+        // the identical seed from the complete legacy projection.
+        state = snapshot(c, tenant)?;
+        let ledger = legacy_ledger(&state).map_err(invalid)?;
+        state.effects.clear();
+        state.requests.clear();
+        state.ledger = Some(ledger);
+    }
+    for id in ids {
+        load_intent(c, tenant, id, &mut state)?;
+    }
+    if let Some(key) = key {
+        let id: Option<String> = c
+            .query_row(
+                "SELECT intent FROM effect_requests WHERE tenant=? AND request=?",
+                params![tenant.as_str(), key.as_str()],
+                |r| r.get(0),
+            )
+            .optional()?;
+        if let Some(id) = id {
+            let id: EffectIntentId = id.try_into().map_err(invalid)?;
+            load_intent(c, tenant, &id, &mut state)?;
+            state.requests.insert(key.clone(), id);
+        }
+    }
+    Ok(state)
+}
+fn command_snapshot(c: &Connection, command: &ValidatedEffectCommand) -> Result<EffectState> {
+    match command.scope().map_err(invalid)? {
+        Some((ids, key)) => bounded_view(c, command.tenant(), &ids, key.as_ref()),
+        None => snapshot(c, command.tenant()),
+    }
 }
 pub(crate) fn snapshot_for_replay(c: &Connection, tenant: &OpaqueRef) -> Result<EffectState> {
     snapshot(c, tenant)
@@ -126,18 +215,38 @@ pub(crate) fn snapshot_at_revision(
     }
     Ok(state)
 }
-fn write(c: &Connection, tenant: &OpaqueRef, s: &EffectState, fault: Option<&str>) -> Result<()> {
-    write_projection(c, tenant, s, fault, false)
+fn write(
+    c: &Connection,
+    tenant: &OpaqueRef,
+    s: &EffectState,
+    changed: &EffectIntentId,
+    fault: Option<&str>,
+) -> Result<()> {
+    write_projection(c, tenant, s, changed, fault, false)
 }
 fn write_projection(
     c: &Connection,
     tenant: &OpaqueRef,
     s: &EffectState,
+    changed: &EffectIntentId,
     fault: Option<&str>,
     receipt: bool,
 ) -> Result<()> {
+    // A reducer command changes exactly the returned effect ID (plus tenant
+    // revision/use accounting). Other dispatch projections are immutable for
+    // this command; rewriting them makes sequential admissions quadratic.
+    let e = s.effects.get(changed).ok_or_else(|| invalid("changed effect absent"))?;
     let _ = receipt;
-    c.execute("INSERT INTO effect_state VALUES(?,?) ON CONFLICT(tenant) DO UPDATE SET state=excluded.state",params![tenant.as_str(),canonical_collection(s).map_err(invalid)?])?;
+    let mut header = s.clone();
+    header.effects.clear();
+    header.requests.clear();
+    c.execute("INSERT INTO effect_state VALUES(?,?) ON CONFLICT(tenant) DO UPDATE SET state=excluded.state",params![tenant.as_str(),canonical_collection(&header).map_err(invalid)?])?;
+    c.execute("INSERT INTO effect_instances VALUES(?,?,?,?,?) ON CONFLICT(tenant,intent) DO UPDATE SET flow=excluded.flow,node=excluded.node,state=excluded.state",params![tenant.as_str(),changed.as_str(), e.owner.as_ref().map(|o|o.flow.as_str()),e.owner.as_ref().map(|o|o.node.as_str()),canonical_collection(e).map_err(invalid)?])?;
+    for (key, id) in &s.requests {
+        if id == changed {
+            c.execute("INSERT INTO effect_requests VALUES(?,?,?) ON CONFLICT(tenant,request) DO UPDATE SET intent=excluded.intent",params![tenant.as_str(),key.as_str(),id.as_str()])?;
+        }
+    }
     if fault == Some("state") {
         return Err(invalid("injected effect state"));
     }
@@ -147,30 +256,29 @@ fn write_projection(
         #[cfg(all(feature = "crash-points", not(test)))]
         crate::crashpoint::checkpoint("fabric-receipt-state");
     }
-    for (id, e) in &s.effects {
-        // An empty list is the durable non-dispatch-ready source outbox. Queue delivery cannot read
-        // it as a request. All operation requests/acks remain in the authoritative journal.
-        c.execute("INSERT INTO effect_outbox VALUES(?,?,?) ON CONFLICT(tenant,intent) DO UPDATE SET dispatch=excluded.dispatch",params![tenant.as_str(),id.as_str(),canonical_data(&e.dispatches).map_err(invalid)?])?;
-        for admission in e.dispatches.iter().filter_map(|d| d.admission.as_ref()) {
-            for run in &admission.observed_runs {
-                c.execute(
-                    "INSERT OR IGNORE INTO effect_run_index VALUES(?,?,?,?)",
-                    params![run.as_str(), tenant.as_str(), id.as_str(), admission.task.as_str()],
-                )?;
-                let binding: (String, String, String) = c.query_row(
-                    "SELECT tenant,intent,task FROM effect_run_index WHERE run=?",
-                    [run.as_str()],
-                    |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
-                )?;
-                if binding
-                    != (
-                        tenant.as_str().to_owned(),
-                        id.as_str().to_owned(),
-                        admission.task.as_str().to_owned(),
-                    )
-                {
-                    return Err(invalid("conflicting effect run binding"));
-                }
+    let id = changed;
+    // An empty list is the durable non-dispatch-ready source outbox. Queue delivery cannot read
+    // it as a request. All operation requests/acks remain in the authoritative journal.
+    c.execute("INSERT INTO effect_outbox VALUES(?,?,?) ON CONFLICT(tenant,intent) DO UPDATE SET dispatch=excluded.dispatch",params![tenant.as_str(),id.as_str(),canonical_data(&e.dispatches).map_err(invalid)?])?;
+    for admission in e.dispatches.iter().filter_map(|d| d.admission.as_ref()) {
+        for run in &admission.observed_runs {
+            c.execute(
+                "INSERT OR IGNORE INTO effect_run_index VALUES(?,?,?,?)",
+                params![run.as_str(), tenant.as_str(), id.as_str(), admission.task.as_str()],
+            )?;
+            let binding: (String, String, String) = c.query_row(
+                "SELECT tenant,intent,task FROM effect_run_index WHERE run=?",
+                [run.as_str()],
+                |r| Ok((r.get(0)?, r.get(1)?, r.get(2)?)),
+            )?;
+            if binding
+                != (
+                    tenant.as_str().to_owned(),
+                    id.as_str().to_owned(),
+                    admission.task.as_str().to_owned(),
+                )
+            {
+                return Err(invalid("conflicting effect run binding"));
             }
         }
     }
@@ -183,11 +291,20 @@ fn transact(
     c: &mut Connection,
     command: &ValidatedEffectCommand,
     fault: Option<&str>,
+    verify_artifacts: impl FnOnce(&worldinterface_domain::effect::EffectAggregate) -> Result<()>,
 ) -> Result<EffectIntentId> {
     let tx = c.transaction_with_behavior(TransactionBehavior::Immediate)?;
     let tenant = command.tenant();
-    let old = snapshot(&tx, tenant)?;
+    let old = command_snapshot(&tx, command)?;
     let (new, id) = replay_validated(&old, command)?;
+    let aggregate = new.effects.get(&id).ok_or_else(|| invalid("missing effect"))?;
+    if aggregate.outcomes.len() != old.effects.get(&id).map_or(0, |e| e.outcomes.len()) {
+        return Err(invalid("outcome requires atomic receipt transaction"));
+    }
+    // Verify the same reduced state that will be committed, under the writer
+    // lock. A separate preflight snapshot/replay doubled work for every command
+    // and could not eliminate the need to validate again under this lock.
+    verify_artifacts(aggregate)?;
     crate::control_plane::reserve_effect(&tx, tenant, &old, &new, &id, command.bytes())?;
     if !old.effects.contains_key(&id) {
         let exists: bool = tx.query_row(
@@ -212,7 +329,7 @@ fn transact(
         if fault == Some("history") {
             return Err(invalid("injected effect history"));
         }
-        write(&tx, tenant, &new, fault)?;
+        write(&tx, tenant, &new, &id, fault)?;
         crate::continuation::effect_events(&tx, tenant, &old, &new)?;
     }
     tx.commit()?;
@@ -283,7 +400,7 @@ fn receipt_source(
         }
         let entry = strict_json(&bytes).map_err(invalid)?;
         let action = &entry["action"];
-        if !matches!(entry["version"].as_u64(), Some(1 | 2))
+        if !matches!(entry["version"].as_u64(), Some(1..=3))
             || canonical_data(&entry).map_err(invalid)? != bytes
             || entry["tenant"].as_str() != Some(tenant.as_str())
             || action["id"].as_str() != Some(id.as_str())
@@ -481,7 +598,7 @@ impl StoreRoot {
         }
         let mut c = self.connect(StoreKind::Fabric)?;
         let tx = c.transaction_with_behavior(TransactionBehavior::Immediate)?;
-        let state = snapshot(&tx, tenant)?;
+        let state = bounded_view(&tx, tenant, std::slice::from_ref(id), None)?;
         let effect = state.effects.get(id).ok_or_else(|| invalid("fault without effect"))?;
         if effect.phase != worldinterface_domain::Phase::DispatchPending
             || effect.attempt.is_some()
@@ -538,7 +655,7 @@ impl StoreRoot {
         if !["completed", "failed", "canceled"].contains(&queue) {
             return Err(invalid("invalid AQ terminal state"));
         }
-        let state = self.effect_snapshot(tenant)?;
+        let state = self.effect_intent_snapshot(tenant, id)?;
         let effect = state.effects.get(id).ok_or_else(|| invalid("fault without effect"))?;
         if effect.outcomes.last().is_none_or(|o| &o.outcome != fabric)
             || effect
@@ -567,20 +684,76 @@ impl StoreRoot {
         tenants
     }
     /// Trusted-host lookup; the host must authorize the tenant and effect principal.
+    pub fn effect_action_snapshot(
+        &self,
+        caller: &worldinterface_domain::agency::AuthenticatedCaller,
+        action: &worldinterface_domain::effect::EffectAction,
+    ) -> Result<EffectState> {
+        let (ids, key) =
+            worldinterface_domain::effect::effect_action_scope(caller, action).map_err(invalid)?;
+        let c = self.connect(StoreKind::Fabric)?;
+        let tx = c.unchecked_transaction()?;
+        let state = bounded_view(&tx, caller.tenant(), &ids, key.as_ref())?;
+        tx.commit()?;
+        Ok(state)
+    }
+    /// Trusted-host bounded lookup; the host still authenticates and authorizes access.
+    pub fn effect_intent_snapshot(
+        &self,
+        tenant: &OpaqueRef,
+        id: &EffectIntentId,
+    ) -> Result<EffectState> {
+        let c = self.connect(StoreKind::Fabric)?;
+        let tx = c.unchecked_transaction()?;
+        let state = bounded_view(&tx, tenant, std::slice::from_ref(id), None)?;
+        tx.commit()?;
+        Ok(state)
+    }
+    /// Indexed owner lookup, bounded by one flow's nodes rather than tenant history.
+    pub fn effect_owner_snapshot(
+        &self,
+        tenant: &OpaqueRef,
+        flow: &OpaqueRef,
+        node: Option<&OpaqueRef>,
+    ) -> Result<EffectState> {
+        let c = self.connect(StoreKind::Fabric)?;
+        let tx = c.unchecked_transaction()?;
+        let mut state = catalog(&tx, tenant)?;
+        let sql = if node.is_some() {
+            "SELECT intent,state FROM effect_instances WHERE tenant=?1 AND flow=?2 AND node=?3"
+        } else {
+            "SELECT intent,state FROM effect_instances WHERE tenant=?1 AND flow=?2 AND ?3 IS NULL"
+        };
+        let mut q = tx.prepare(sql)?;
+        for row in q.query_map(
+            params![tenant.as_str(), flow.as_str(), node.map(OpaqueRef::as_str)],
+            |r| Ok((r.get::<_, String>(0)?, r.get::<_, Vec<u8>>(1)?)),
+        )? {
+            let (id, bytes) = row?;
+            state
+                .effects
+                .insert(id.try_into().map_err(invalid)?, crate::decode_collection(&bytes)?);
+        }
+        drop(q);
+        tx.commit()?;
+        Ok(state)
+    }
+    /// Read the complete tenant state for inspection/recovery only. Ordinary
+    /// commands should use bounded action, intent or owner snapshots instead.
     pub fn effect_snapshot(&self, tenant: &OpaqueRef) -> Result<EffectState> {
-        snapshot(&self.connect(StoreKind::Fabric)?, tenant)
+        let c = self.connect(StoreKind::Fabric)?;
+        let tx = c.unchecked_transaction()?;
+        let state = snapshot(&tx, tenant)?;
+        tx.commit()?;
+        Ok(state)
     }
     pub fn effect_transact(&self, command: &ValidatedEffectCommand) -> Result<EffectIntentId> {
-        let state = self.effect_snapshot(command.tenant())?;
-        let (new, id) = replay_validated(&state, command)?;
-        let aggregate = new.effects.get(&id).ok_or_else(|| invalid("missing effect"))?;
-        if aggregate.outcomes.len() != state.effects.get(&id).map_or(0, |e| e.outcomes.len()) {
-            return Err(invalid("outcome requires atomic receipt transaction"));
-        }
-        for reference in worldinterface_domain::effect::required_artifacts(aggregate) {
-            self.read_artifact(reference)?;
-        }
-        transact(&mut self.connect(StoreKind::Fabric)?, command, None)
+        transact(&mut self.connect(StoreKind::Fabric)?, command, None, |aggregate| {
+            for reference in worldinterface_domain::effect::required_artifacts(aggregate) {
+                self.read_artifact(reference)?;
+            }
+            Ok(())
+        })
     }
     /// Commits a local outcome, receipt and effect outbox in one Fabric transaction.
     /// The command must append exactly one new Outcome; other actions use effect_transact.
@@ -600,7 +773,7 @@ impl StoreRoot {
         {
             return Ok(digest);
         }
-        let state = snapshot(&tx, tenant)?;
+        let state = command_snapshot(&tx, command)?;
         let digest = self.write_receipt(&tx, &state, command, receipt_id, execution, temporal)?;
         tx.commit()?;
         #[cfg(test)]
@@ -626,7 +799,7 @@ impl StoreRoot {
     ) -> Result<Option<ContentHash>> {
         let mut c = self.connect(StoreKind::Fabric)?;
         let tx = c.transaction_with_behavior(TransactionBehavior::Immediate)?;
-        let state = snapshot(&tx, tenant)?;
+        let state = bounded_view(&tx, tenant, std::slice::from_ref(id), None)?;
         let effect = state.effects.get(id).ok_or_else(|| invalid("missing completion effect"))?;
         if effect.phase != worldinterface_domain::Phase::Running
             || effect.attempt.as_ref() != Some(attempt)
@@ -719,7 +892,7 @@ impl StoreRoot {
         crate::crash::checkpoint("fabric-receipt-history");
         #[cfg(all(feature = "crash-points", not(test)))]
         crate::crashpoint::checkpoint("fabric-receipt-history");
-        write_projection(c, tenant, &new, None, true)?;
+        write_projection(c, tenant, &new, &id, None, true)?;
         crate::continuation::effect_events(c, tenant, old, &new)?;
         #[cfg(test)]
         crate::crash::checkpoint("fabric-receipt-outbox");
@@ -841,11 +1014,11 @@ pub(crate) fn replay(source: &Connection, target: &Connection) -> Result<()> {
         }
         let tenant: OpaqueRef = tenant.try_into().map_err(invalid)?;
         let old = snapshot(target, &tenant)?;
-        let (new, _) = replay_command(&old, &tenant, &bytes).map_err(invalid)?;
+        let (new, id) = replay_command(&old, &tenant, &bytes).map_err(invalid)?;
         if new.revision != revision || old.revision.checked_add(1) != Some(revision) {
             return Err(invalid("effect journal revision"));
         }
-        write(target, &tenant, &new, None)?;
+        write(target, &tenant, &new, &id, None)?;
         crate::continuation::effect_events(target, &tenant, &old, &new)?;
     }
     Ok(())
@@ -865,6 +1038,228 @@ pub(crate) fn reject_generic(c: &Connection, batch: &Batch) -> Result<()> {
 mod tests {
     use super::*;
     #[test]
+    fn one_effect_update_preserves_other_outboxes_and_replay_rebuilds_identical_state() {
+        use worldinterface_domain::{
+            agency::AuthenticatedCaller,
+            authorization::{AuthorizationSnapshot, VerifiedSnapshot},
+            effect::{validate_command, EffectAction},
+        };
+        let fixture: serde_json::Value =
+            serde_json::from_str(include_str!("../tests/support/egress.json")).unwrap();
+        let source: EffectSubmission =
+            serde_json::from_value(fixture["submission"].clone()).unwrap();
+        let snapshot: AuthorizationSnapshot =
+            serde_json::from_value(fixture["snapshot"].clone()).unwrap();
+        let caller = AuthenticatedCaller::from_trusted_authentication(
+            snapshot.bindings[0].tenant.clone(),
+            snapshot.bindings[0].principal.clone(),
+        );
+        let at: Timestamp = "2026-09-21T00:00:00.000000000Z".to_owned().try_into().unwrap();
+        let mut c = Connection::open_in_memory().unwrap();
+        for schema in [
+            SCHEMA,
+            crate::continuation::SCHEMA,
+            crate::repository::SCHEMA,
+            crate::control_plane::SCHEMA,
+        ] {
+            c.execute_batch(schema).unwrap();
+        }
+        let mut first = None;
+        for n in 0..3 {
+            let mut submission = source.clone();
+            submission.client_request_id = format!("projection-{n}").try_into().unwrap();
+            let demand = worldinterface_protocol::data_digest(&submission).unwrap();
+            let mut facts = snapshot.clone();
+            for binding in &mut facts.bindings {
+                binding.principal_authority.insert(demand.clone());
+                binding.capacity_authority.insert(demand.clone());
+            }
+            let mut state = snapshot_state(&c, &caller);
+            if n == 2 {
+                // First v3 command after legacy entries derives a full legacy
+                // seed once; byte replay must make the identical transition.
+                state.ledger = Some(legacy_ledger(&state).unwrap());
+            }
+            let command = validate_command(
+                &state,
+                &caller,
+                at.clone(),
+                EffectAction::Submit {
+                    id: EffectIntentId::generate(),
+                    submission: Box::new(submission),
+                    snapshot: VerifiedSnapshot::from_trusted_verifier(facts).unwrap(),
+                    link: None,
+                },
+            )
+            .unwrap();
+            let id = transact(&mut c, &command, None, |_| Ok(())).unwrap();
+            if n == 0 {
+                // Even an identical upsert of the retained intent is forbidden.
+                // The next command must update only its own derived outbox.
+                c.execute_batch(&format!(
+                    "CREATE TEMP TRIGGER retain_insert BEFORE INSERT ON effect_outbox WHEN NEW.intent='{}' BEGIN SELECT RAISE(ABORT,'rewrote retained outbox'); END; CREATE TEMP TRIGGER retain_update BEFORE UPDATE ON effect_outbox WHEN OLD.intent='{}' BEGIN SELECT RAISE(ABORT,'rewrote retained outbox'); END;",
+                    id.as_str(), id.as_str()
+                ))
+                .unwrap();
+                first = Some(id);
+            }
+        }
+        let outboxes = |c: &Connection| {
+            let mut q =
+                c.prepare("SELECT intent,dispatch FROM effect_outbox ORDER BY intent").unwrap();
+            q.query_map([], |r| Ok((r.get::<_, String>(0)?, r.get::<_, Vec<u8>>(1)?)))
+                .unwrap()
+                .collect::<rusqlite::Result<Vec<_>>>()
+                .unwrap()
+        };
+        let before = outboxes(&c);
+        assert_eq!(before.len(), 3);
+        assert!(before
+            .iter()
+            .any(|(id, bytes)| Some(id.as_str()) == first.as_ref().map(EffectIntentId::as_str)
+                && bytes == b"[]"));
+        let rebuilt = Connection::open_in_memory().unwrap();
+        rebuilt.execute_batch(SCHEMA).unwrap();
+        rebuilt.execute_batch(crate::continuation::SCHEMA).unwrap();
+        replay(&c, &rebuilt).unwrap();
+        assert_eq!(snapshot_state(&c, &caller), snapshot_state(&rebuilt, &caller));
+        assert_eq!(before, outboxes(&rebuilt));
+    }
+    #[test]
+    fn bounded_effect_commands_keep_row_reads_and_commits_constant_with_history() {
+        use worldinterface_domain::{
+            agency::AuthenticatedCaller,
+            authorization::{AuthorizationSnapshot, VerifiedSnapshot},
+            effect::{validate_command, EffectAction},
+        };
+        let fixture: serde_json::Value =
+            serde_json::from_str(include_str!("../tests/support/egress.json")).unwrap();
+        let source: EffectSubmission =
+            serde_json::from_value(fixture["submission"].clone()).unwrap();
+        let snapshot: AuthorizationSnapshot =
+            serde_json::from_value(fixture["snapshot"].clone()).unwrap();
+        let caller = AuthenticatedCaller::from_trusted_authentication(
+            snapshot.bindings[0].tenant.clone(),
+            snapshot.bindings[0].principal.clone(),
+        );
+        let at: Timestamp = "2026-09-21T00:00:00.000000000Z".to_string().try_into().unwrap();
+        let mut c = Connection::open_in_memory().unwrap();
+        for schema in [
+            SCHEMA,
+            crate::continuation::SCHEMA,
+            crate::repository::SCHEMA,
+            crate::control_plane::SCHEMA,
+        ] {
+            c.execute_batch(schema).unwrap();
+        }
+        // Count actual SQLite result rows, full-scan steps, decoded column bytes
+        // and durable commits, including the writer's independent revalidation.
+        unsafe extern "C" fn trace(
+            mask: u32,
+            ctx: *mut std::ffi::c_void,
+            stmt: *mut std::ffi::c_void,
+            _: *mut std::ffi::c_void,
+        ) -> std::ffi::c_int {
+            let stats = &mut *ctx.cast::<(u64, u64, u64, u64)>();
+            let stmt = stmt.cast::<rusqlite::ffi::sqlite3_stmt>();
+            if mask == rusqlite::ffi::SQLITE_TRACE_ROW as u32 {
+                stats.0 += 1;
+                for col in 0..rusqlite::ffi::sqlite3_column_count(stmt) {
+                    stats.2 += rusqlite::ffi::sqlite3_column_bytes(stmt, col) as u64;
+                }
+            } else {
+                stats.1 += rusqlite::ffi::sqlite3_stmt_status(
+                    stmt,
+                    rusqlite::ffi::SQLITE_STMTSTATUS_FULLSCAN_STEP,
+                    0,
+                ) as u64;
+            }
+            0
+        }
+        unsafe extern "C" fn commit(ctx: *mut std::ffi::c_void) -> std::ffi::c_int {
+            (*ctx.cast::<(u64, u64, u64, u64)>()).3 += 1;
+            0
+        }
+        let mut baseline = None;
+        for n in 0..66 {
+            let mut submission = source.clone();
+            submission.client_request_id = format!("bounded-{n}").try_into().unwrap();
+            let demand = worldinterface_protocol::data_digest(&submission).unwrap();
+            let mut facts = snapshot.clone();
+            for binding in &mut facts.bindings {
+                binding.principal_authority.insert(demand.clone());
+                binding.capacity_authority.insert(demand.clone());
+            }
+            let action = EffectAction::Submit {
+                id: EffectIntentId::generate(),
+                submission: Box::new(submission),
+                snapshot: VerifiedSnapshot::from_trusted_verifier(facts).unwrap(),
+                link: None,
+            };
+            let (ids, key) =
+                worldinterface_domain::effect::effect_action_scope(&caller, &action).unwrap();
+            let mut stats = (0u64, 0u64, 0u64, 0u64);
+            unsafe {
+                rusqlite::ffi::sqlite3_trace_v2(
+                    c.handle(),
+                    (rusqlite::ffi::SQLITE_TRACE_ROW | rusqlite::ffi::SQLITE_TRACE_PROFILE) as u32,
+                    Some(trace),
+                    (&mut stats as *mut (u64, u64, u64, u64)).cast(),
+                );
+                rusqlite::ffi::sqlite3_commit_hook(
+                    c.handle(),
+                    Some(commit),
+                    (&mut stats as *mut (u64, u64, u64, u64)).cast(),
+                );
+            }
+            let state = bounded_view(&c, caller.tenant(), &ids, key.as_ref()).unwrap();
+            assert!(state.effects.is_empty());
+            let command = validate_command(&state, &caller, at.clone(), action).unwrap();
+            transact(&mut c, &command, None, |_| Ok(())).unwrap();
+            unsafe {
+                rusqlite::ffi::sqlite3_trace_v2(c.handle(), 0, None, std::ptr::null_mut());
+                rusqlite::ffi::sqlite3_commit_hook(c.handle(), None, std::ptr::null_mut());
+            }
+            assert!(is_effect_contention(
+                transact(&mut c, &command, None, |_| Ok(())).unwrap_err().as_ref()
+            ));
+            if n == 1 {
+                baseline = Some(stats);
+            }
+            if n >= 2 {
+                let first = baseline.unwrap();
+                assert_eq!(
+                    (stats.0, stats.1, stats.3),
+                    (first.0, 0, 1),
+                    "history {n}: {stats:?}, baseline {first:?}"
+                );
+                assert!(stats.2 <= first.2 + 32, "read retained history at {n}: {stats:?}");
+            }
+            if n == 1 || n == 60 {
+                eprintln!(
+                    "bounded history {n}: rows={}, fullscan={}, column_bytes={}, commits={}",
+                    stats.0, stats.1, stats.2, stats.3
+                );
+            }
+        }
+        assert_eq!(snapshot_state(&c, &caller).effects.len(), 66);
+        let rebuilt = Connection::open_in_memory().unwrap();
+        rebuilt.execute_batch(SCHEMA).unwrap();
+        rebuilt.execute_batch(crate::continuation::SCHEMA).unwrap();
+        replay(&c, &rebuilt).unwrap();
+        assert_eq!(snapshot_state(&c, &caller), snapshot_state(&rebuilt, &caller));
+        let full = snapshot_state(&c, &caller);
+        c.execute(
+            "UPDATE effect_state SET state=? WHERE tenant=?",
+            params![canonical_collection(&full).unwrap(), caller.tenant().as_str()],
+        )
+        .unwrap();
+        assert!(bounded_view(&c, caller.tenant(), &[], None)
+            .unwrap_err()
+            .to_string()
+            .contains("effect catalog contains aggregate projections"));
+    }
+    #[test]
     fn receipt_source_seeks_one_intent_and_fences_revision_tenant_dispatch_and_start() {
         use worldinterface_domain::effect::{
             CommitObservation, OutcomeEvidence, ProductionAdmission,
@@ -875,9 +1270,10 @@ mod tests {
         let tenant: OpaqueRef = "tenant-a".to_owned().try_into().unwrap();
         let id = EffectIntentId::generate();
         let insert = |scope: &str, revision, action: serde_json::Value| {
-            let bytes =
-                canonical_data(&serde_json::json!({"version":1,"tenant":scope,"action":action}))
-                    .unwrap();
+            let bytes = canonical_data(
+                &serde_json::json!({"version":1 + revision % 3,"tenant":scope,"action":action}),
+            )
+            .unwrap();
             c.execute(
                 "INSERT INTO effect_history(tenant,revision,entry,digest) VALUES(?,?,?,?)",
                 params![scope, revision, &bytes, ContentHash::of(&bytes).as_str()],
@@ -894,10 +1290,8 @@ mod tests {
             );
         }
         let mut expected = Vec::new();
-        let fixture: serde_json::Value = serde_json::from_str(include_str!(
-            "../../../../conformance/wi-fabric-2/egress/fixture.json"
-        ))
-        .unwrap();
+        let fixture: serde_json::Value =
+            serde_json::from_str(include_str!("../tests/support/egress.json")).unwrap();
         let snapshot: worldinterface_domain::authorization::AuthorizationSnapshot =
             serde_json::from_value(fixture["snapshot"].clone()).unwrap();
         for dispatch in 0..2 {
@@ -976,7 +1370,31 @@ mod tests {
         assert!(plan.iter().any(|s| s.contains("effect_history_intent (tenant=? AND <expr>=? AND revision<?)")), "{plan:?}");
         assert!(!plan.iter().any(|s| s.contains("SCAN") || s.contains("TEMP B-TREE")), "{plan:?}");
         drop(q);
-        c.execute_batch("DROP TRIGGER effect_no_update; UPDATE effect_history SET digest='bad' WHERE tenant='tenant-a' AND revision=2010").unwrap();
+        c.execute_batch("DROP TRIGGER effect_no_update").unwrap();
+        // Unknown versions still fail with valid canonical bytes and digest.
+        let bytes: Vec<u8> = c
+            .query_row(
+                "SELECT entry FROM effect_history WHERE tenant='tenant-a' AND revision=2010",
+                [],
+                |r| r.get(0),
+            )
+            .unwrap();
+        let mut entry = strict_json(&bytes).unwrap();
+        entry["version"] = serde_json::json!(4);
+        let bytes = canonical_data(&entry).unwrap();
+        c.execute(
+            "UPDATE effect_history SET entry=?,digest=? WHERE tenant='tenant-a' AND revision=2010",
+            params![bytes, ContentHash::of(&bytes).as_str()],
+        )
+        .unwrap();
+        assert!(receipt_source(&c, &tenant, &id, 2010)
+            .unwrap_err()
+            .to_string()
+            .contains("receipt source journal binding"));
+        c.execute_batch(
+            "UPDATE effect_history SET digest='bad' WHERE tenant='tenant-a' AND revision=2010",
+        )
+        .unwrap();
         assert!(receipt_source(&c, &tenant, &id, 2010).is_err());
     }
 
@@ -1068,17 +1486,18 @@ mod tests {
         let before = std::fs::read(&fabric).unwrap();
         for _ in 0..2 {
             let error = StoreRoot::open_existing(&path).err().expect("incompatible interim layout");
-            assert_eq!(error.to_string(), "unsupported schema");
+            assert_eq!(
+                error.to_string(),
+                "unsupported schema: recreate the store for this version"
+            );
             assert_eq!(std::fs::read(&fabric).unwrap(), before);
         }
     }
 
     #[test]
     fn effect_journal_faults_roll_back_every_projection() {
-        let fixture: serde_json::Value = serde_json::from_str(include_str!(
-            "../../../../conformance/wi-fabric-2/egress/fixture.json"
-        ))
-        .unwrap();
+        let fixture: serde_json::Value =
+            serde_json::from_str(include_str!("../tests/support/egress.json")).unwrap();
         let submission: EffectSubmission =
             serde_json::from_value(fixture["submission"].clone()).unwrap();
         let snapshot: worldinterface_domain::authorization::AuthorizationSnapshot =
@@ -1123,15 +1542,27 @@ mod tests {
             let cmd =
                 worldinterface_domain::effect::validate_command(&old, &caller, at.clone(), action)
                     .unwrap();
+            // Rejection by artifact verification must publish no journal,
+            // accounting, state or outbox; the same command remains usable.
+            let error = transact(&mut c, &cmd, None, |aggregate| {
+                assert_eq!(&aggregate.intent.id, &id);
+                Err(invalid("missing or corrupt artifact"))
+            })
+            .unwrap_err();
+            assert_eq!(error.to_string(), "missing or corrupt artifact");
+            assert_eq!(snapshot_state(&c, &caller), old);
+            let count: u64 =
+                c.query_row("SELECT count(*) FROM effect_history", [], |r| r.get(0)).unwrap();
+            assert_eq!(count, old.revision);
             for fault in ["history", "state", "outbox"] {
-                assert!(transact(&mut c, &cmd, Some(fault)).is_err());
+                assert!(transact(&mut c, &cmd, Some(fault), |_| Ok(())).is_err());
                 assert_eq!(snapshot_state(&c, &caller), old);
                 let count: u64 =
                     c.query_row("SELECT count(*) FROM effect_history", [], |r| r.get(0)).unwrap();
                 assert_eq!(count, old.revision);
             }
-            transact(&mut c, &cmd, None).unwrap();
-            let conflict = transact(&mut c, &cmd, None).unwrap_err();
+            transact(&mut c, &cmd, None, |_| Ok(())).unwrap();
+            let conflict = transact(&mut c, &cmd, None, |_| Ok(())).unwrap_err();
             assert!(conflict.is::<EffectJournalConflict>());
             assert!(is_effect_contention(conflict.as_ref()));
             assert!(!is_effect_contention(invalid("stale or unsupported effect journal").as_ref()));
@@ -1152,10 +1583,10 @@ mod tests {
         )
         .unwrap();
         for fault in ["history", "state", "outbox"] {
-            assert!(transact(&mut c, &cmd, Some(fault)).is_err());
+            assert!(transact(&mut c, &cmd, Some(fault), |_| Ok(())).is_err());
             assert_eq!(snapshot_state(&c, &caller), old);
         }
-        transact(&mut c, &cmd, None).unwrap();
+        transact(&mut c, &cmd, None, |_| Ok(())).unwrap();
     }
     fn snapshot_state(
         c: &Connection,

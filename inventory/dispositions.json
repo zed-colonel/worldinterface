@@ -5169,8 +5169,8 @@
     "id": "crates/worldinterface-foundation/storage/src/repository.rs::::source-module:crates/worldinterface-foundation/storage/src/repository.rs",
     "disposition": "retain-align",
     "target": "worldinterface-storage",
-    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses",
-    "rationale": "Fresh local persistence and query/backup primitives; no legacy readers or external effects."
+    "source": "implementation plan WI-02; accepted wi/WI-02/domain design; ADR-001/002/003 and ADR-016 early clauses; docs/work-items/WSP-04.md: F-001 remediation",
+    "rationale": "Fresh local persistence and query/backup primitives; no legacy readers or external effects. WSP-04 F-001 remediation: AQ changed-task hints prioritize active Flows within the shared eight-row bound; an optional exactly validated global pending index skips history tenants. Submitted for qualifying source review with adopted checks."
   },
   {
     "id": "crates/worldinterface-foundation/storage/src/repository.rs::::struct:Admission",
@@ -8358,6 +8358,13 @@
     "source": "docs/work-items/WIP-04.md; accepted WI-05 takeover plan and WI-ADR-007/008/009/010"
   },
   {
+    "id": "crates/worldinterface-runtime/tests/completion_crash.rs::::struct:DispositionFixture",
+    "disposition": "test-evidence",
+    "target": "conformance/wi-fabric-2/completion",
+    "rationale": "F-007 test-only guard retains the two-store crash bundle and attempt diagnostics on failure",
+    "source": "docs/work-items/WSP-03.md; operator F-007 remediation guidance"
+  },
+  {
     "id": "crates/worldinterface-runtime/tests/completion_crash.rs::::struct:Evidence",
     "disposition": "test-evidence",
     "target": "conformance/wi-fabric-2/completion",
@@ -10328,8 +10335,8 @@
     "id": "crates/worldinterface-runtime/src/flow_coordinator.rs::::struct:ReconcileCursor",
     "disposition": "retain-align",
     "target": "continuation domain/storage/runtime",
-    "rationale": "WIP-08 F-011 through F-014 remediation: disposable scalar scan cursor and acknowledgment/operator regression fixtures.",
-    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015"
+    "rationale": "WIP-08 F-011 through F-014 remediation: disposable scalar scan cursor and acknowledgment/operator regression fixtures. WSP-04 F-001 remediation: AQ changed-task hints prioritize active Flows within the shared eight-row bound; an optional exactly validated global pending index skips history tenants. Submitted for qualifying source review with adopted checks.",
+    "source": "docs/work-items/WIP-08.md; accepted WI-ADR-015; docs/work-items/WSP-04.md: F-001 remediation"
   },
   {
     "id": "crates/worldinterface-runtime/tests/continuation_recovery.rs::::struct:CheckWakeAcknowledgment",
@@ -10920,13 +10927,6 @@
     "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
   },
   {
-    "id": "crates/worldinterface-runtime/src/worker/evaluation.rs::::struct:OperatorApprovalReceipt",
-    "disposition": "retain-align",
-    "target": "worker-lifecycle-runtime",
-    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
-    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
-  },
-  {
     "id": "crates/worldinterface-runtime/src/worker/evaluation.rs::::struct:VerifiedEvaluation",
     "disposition": "retain-align",
     "target": "worker-lifecycle-runtime",
@@ -11061,13 +11061,6 @@
   },
   {
     "id": "crates/worldinterface-runtime/tests/support/worker_approval_anchor.rs::::source-module:crates/worldinterface-runtime/tests/support/worker_approval_anchor.rs",
-    "disposition": "test-evidence",
-    "target": "worker-lifecycle-test-evidence",
-    "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
-    "source": "docs/work-items/WIP-10.md; accepted WIP-10 lifecycle design; WI-ADR-016"
-  },
-  {
-    "id": "crates/worldinterface-runtime/tests/support/worker_fixture.rs::::module:anchor",
     "disposition": "test-evidence",
     "target": "worker-lifecycle-test-evidence",
     "rationale": "WIP-10 candidate: durable worker lifecycle, exact evaluation admission and conservative process ownership; subject to source review and explicit live packet acceptance.",
@@ -11291,11 +11284,11 @@
     "source": "docs/work-items/WIP-10.md; 2026-11-03 operator direction to prepare revised packet; WI-ADR-016"
   },
   {
-    "id": "crates/worldinterface-runtime/tests/worker_process.rs::registry::registration:b9bace7bbcd2ccd282cff5143f759c8ec36853698da4726e94352c40052b7604#1",
+    "id": "crates/worldinterface-runtime/tests/worker_process.rs::registry::registration:3a91e2826ba065ec460ba9aac4a2744a0c6bfdd70efa558558035605da299fbe#1",
     "disposition": "test-evidence",
     "target": "worker-lifecycle-test-evidence",
-    "rationale": "WIP-10 revised packet: trusted test-host compilation of verified locked sources, independent executable digests and private artifact copies, and non-launching build/journal regressions. Replaces pathname-only adapter registration binding. No source-generator exception or live evaluation approval.",
-    "source": "docs/work-items/WIP-10.md; 2026-11-03 operator direction to prepare revised packet; WI-ADR-016"
+    "rationale": "WSP-01 F-001: process fixture registration uses the committed-packet live build accessor before returning cached artifacts; exact executable digest binding remains required.",
+    "source": "docs/work-items/WSP-01.md; operator decision 2026-11-09"
   },
   {
     "id": "crates/worldinterface-runtime/src/worker/connector.rs::::module:tests@10d1b0eff34c",
@@ -12773,5 +12766,502 @@
     "target": "process-managed-proof-1 runtime adapter",
     "rationale": "F-002: deterministic trusted host clock proves collection, cleanup and inspection survive bootstrap credential expiry while worker-facing access still fails closed. Candidate for correctness review.",
     "source": "docs/work-items/WI-WORKER-PROOF-1-correctness.md; active F-002 and operator correctness remediation guidance"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/worker_build.rs::::module:packet",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WSP-01: complete committed packet verification in the trusted test host, including pre-setup rejection and current cached-build checks. Reviewed merge establishes acceptance without receipt, anchor or expiry; scope and catalog bindings remain unchanged.",
+    "source": "docs/work-items/WSP-01.md; operator decision 2026-11-09"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/worker_fixture.rs::::module:packet",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WSP-01: complete committed packet verification in the trusted test host, including pre-setup rejection and current cached-build checks. Reviewed merge establishes acceptance without receipt, anchor or expiry; scope and catalog bindings remain unchanged.",
+    "source": "docs/work-items/WSP-01.md; operator decision 2026-11-09"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/worker_packet.rs::::source-module:crates/worldinterface-runtime/tests/support/worker_packet.rs",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WSP-01: complete committed packet verification in the trusted test host, including pre-setup rejection and current cached-build checks. Reviewed merge establishes acceptance without receipt, anchor or expiry; scope and catalog bindings remain unchanged.",
+    "source": "docs/work-items/WSP-01.md; operator decision 2026-11-09"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_evaluation.rs::::module:packet",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WSP-01: complete committed packet verification in the trusted test host, including pre-setup rejection and current cached-build checks. Reviewed merge establishes acceptance without receipt, anchor or expiry; scope and catalog bindings remain unchanged.",
+    "source": "docs/work-items/WSP-01.md; operator decision 2026-11-09"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/worker_packet.rs::::struct:Validator",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WSP-01: owned resident validator removes interpreter startup while reconstructing and checking the complete committed packet on every request, with no cross-request result cache; fail closed on drift or protocol errors and reap the owned process.",
+    "source": "docs/work-items/WSP-01.md; operator decision 2026-11-09"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/worker_packet.rs::::struct:ValidatorProcess",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WSP-01: owned resident validator removes interpreter startup while reconstructing and checking the complete committed packet on every request, with no cross-request result cache; fail closed on drift or protocol errors and reap the owned process.",
+    "source": "docs/work-items/WSP-01.md; operator decision 2026-11-09"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_evaluation.rs::::module:build",
+    "disposition": "test-evidence",
+    "target": "worker-lifecycle-test-evidence",
+    "rationale": "WSP-01 F-001: non-live regression exercises the process harness live build accessor with stale, refreshed-uncommitted and staged packets, including a packet matching the cached build.",
+    "source": "docs/work-items/WSP-01.md; operator decision 2026-11-09"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/tests/support/control_plane.rs::::source-module:crates/worldinterface-foundation/storage/tests/support/control_plane.rs",
+    "disposition": "test-evidence",
+    "target": "release-preparation",
+    "rationale": "WSP-02 package-local test support or standalone registry consumer; no production registration.",
+    "source": "WI-SUPERVISOR-PROOF-1 WSP-02 accepted release-preparation design"
+  },
+  {
+    "id": "examples/downstream-consumer/Cargo.toml::auxiliary-crate:wi-downstream-consumer",
+    "disposition": "test-evidence",
+    "target": "release-preparation",
+    "rationale": "WSP-02 package-local test support or standalone registry consumer; no production registration.",
+    "source": "WI-SUPERVISOR-PROOF-1 WSP-02 accepted release-preparation design"
+  },
+  {
+    "id": "examples/downstream-consumer/src/main.rs::::source-module:examples/downstream-consumer/src/main.rs",
+    "disposition": "test-evidence",
+    "target": "release-preparation",
+    "rationale": "WSP-02 package-local test support or standalone registry consumer; no production registration.",
+    "source": "WI-SUPERVISOR-PROOF-1 WSP-02 accepted release-preparation design"
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/lib.rs::::module:supervisor",
+    "disposition": "retain-align",
+    "target": "bounded-host-supervisor",
+    "rationale": "WSP-03 candidate: separate public supervisor lifecycle API, authenticated private channel, independent durable journal and bounded reconciliation. No engine client or worker instance-control authority. Effective only through qualifying source review/merge.",
+    "source": "docs/work-items/WSP-03.md; accepted WI-SUPERVISOR-PROOF-1 WSP-03 design; WI-ADR-010/016/018"
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/supervisor/mod.rs::::enum:Operation",
+    "disposition": "retain-align",
+    "target": "bounded-host-supervisor",
+    "rationale": "WSP-03 candidate: separate public supervisor lifecycle API, authenticated private channel, independent durable journal and bounded reconciliation. No engine client or worker instance-control authority. Effective only through qualifying source review/merge.",
+    "source": "docs/work-items/WSP-03.md; accepted WI-SUPERVISOR-PROOF-1 WSP-03 design; WI-ADR-010/016/018"
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/supervisor/mod.rs::::enum:Request",
+    "disposition": "retain-align",
+    "target": "bounded-host-supervisor",
+    "rationale": "WSP-03 candidate: separate public supervisor lifecycle API, authenticated private channel, independent durable journal and bounded reconciliation. No engine client or worker instance-control authority. Effective only through qualifying source review/merge.",
+    "source": "docs/work-items/WSP-03.md; accepted WI-SUPERVISOR-PROOF-1 WSP-03 design; WI-ADR-010/016/018"
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/supervisor/mod.rs::::enum:Response",
+    "disposition": "retain-align",
+    "target": "bounded-host-supervisor",
+    "rationale": "WSP-03 candidate: separate public supervisor lifecycle API, authenticated private channel, independent durable journal and bounded reconciliation. No engine client or worker instance-control authority. Effective only through qualifying source review/merge.",
+    "source": "docs/work-items/WSP-03.md; accepted WI-SUPERVISOR-PROOF-1 WSP-03 design; WI-ADR-010/016/018"
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/supervisor/mod.rs::::enum:State",
+    "disposition": "retain-align",
+    "target": "bounded-host-supervisor",
+    "rationale": "WSP-03 candidate: separate public supervisor lifecycle API, authenticated private channel, independent durable journal and bounded reconciliation. No engine client or worker instance-control authority. Effective only through qualifying source review/merge.",
+    "source": "docs/work-items/WSP-03.md; accepted WI-SUPERVISOR-PROOF-1 WSP-03 design; WI-ADR-010/016/018"
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/supervisor/mod.rs::::source-module:crates/worldinterface-foundation/worker/src/supervisor/mod.rs",
+    "disposition": "retain-align",
+    "target": "bounded-host-supervisor",
+    "rationale": "WSP-03 candidate: separate public supervisor lifecycle API, authenticated private channel, independent durable journal and bounded reconciliation. No engine client or worker instance-control authority. Effective only through qualifying source review/merge.",
+    "source": "docs/work-items/WSP-03.md; accepted WI-SUPERVISOR-PROOF-1 WSP-03 design; WI-ADR-010/016/018"
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/supervisor/mod.rs::::struct:AuthorizedSupervisorCommand",
+    "disposition": "retain-align",
+    "target": "bounded-host-supervisor",
+    "rationale": "WSP-03 candidate: separate public supervisor lifecycle API, authenticated private channel, independent durable journal and bounded reconciliation. No engine client or worker instance-control authority. Effective only through qualifying source review/merge.",
+    "source": "docs/work-items/WSP-03.md; accepted WI-SUPERVISOR-PROOF-1 WSP-03 design; WI-ADR-010/016/018"
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/supervisor/mod.rs::::struct:AuthorizedSupervisorInspect",
+    "disposition": "retain-align",
+    "target": "bounded-host-supervisor",
+    "rationale": "WSP-03 candidate: separate public supervisor lifecycle API, authenticated private channel, independent durable journal and bounded reconciliation. No engine client or worker instance-control authority. Effective only through qualifying source review/merge.",
+    "source": "docs/work-items/WSP-03.md; accepted WI-SUPERVISOR-PROOF-1 WSP-03 design; WI-ADR-010/016/018"
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/supervisor/mod.rs::::struct:Command",
+    "disposition": "retain-align",
+    "target": "bounded-host-supervisor",
+    "rationale": "WSP-03 candidate: separate public supervisor lifecycle API, authenticated private channel, independent durable journal and bounded reconciliation. No engine client or worker instance-control authority. Effective only through qualifying source review/merge.",
+    "source": "docs/work-items/WSP-03.md; accepted WI-SUPERVISOR-PROOF-1 WSP-03 design; WI-ADR-010/016/018"
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/supervisor/mod.rs::::struct:Grant",
+    "disposition": "retain-align",
+    "target": "bounded-host-supervisor",
+    "rationale": "WSP-03 candidate: separate public supervisor lifecycle API, authenticated private channel, independent durable journal and bounded reconciliation. No engine client or worker instance-control authority. Effective only through qualifying source review/merge.",
+    "source": "docs/work-items/WSP-03.md; accepted WI-SUPERVISOR-PROOF-1 WSP-03 design; WI-ADR-010/016/018"
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/supervisor/mod.rs::::struct:Inspect",
+    "disposition": "retain-align",
+    "target": "bounded-host-supervisor",
+    "rationale": "WSP-03 candidate: separate public supervisor lifecycle API, authenticated private channel, independent durable journal and bounded reconciliation. No engine client or worker instance-control authority. Effective only through qualifying source review/merge.",
+    "source": "docs/work-items/WSP-03.md; accepted WI-SUPERVISOR-PROOF-1 WSP-03 design; WI-ADR-010/016/018"
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/supervisor/mod.rs::::struct:LifecycleRequest",
+    "disposition": "retain-align",
+    "target": "bounded-host-supervisor",
+    "rationale": "WSP-03 candidate: separate public supervisor lifecycle API, authenticated private channel, independent durable journal and bounded reconciliation. No engine client or worker instance-control authority. Effective only through qualifying source review/merge.",
+    "source": "docs/work-items/WSP-03.md; accepted WI-SUPERVISOR-PROOF-1 WSP-03 design; WI-ADR-010/016/018"
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/supervisor/mod.rs::::struct:Observation",
+    "disposition": "retain-align",
+    "target": "bounded-host-supervisor",
+    "rationale": "WSP-03 candidate: separate public supervisor lifecycle API, authenticated private channel, independent durable journal and bounded reconciliation. No engine client or worker instance-control authority. Effective only through qualifying source review/merge.",
+    "source": "docs/work-items/WSP-03.md; accepted WI-SUPERVISOR-PROOF-1 WSP-03 design; WI-ADR-010/016/018"
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/supervisor/mod.rs::::struct:Record",
+    "disposition": "retain-align",
+    "target": "bounded-host-supervisor",
+    "rationale": "WSP-03 candidate: separate public supervisor lifecycle API, authenticated private channel, independent durable journal and bounded reconciliation. No engine client or worker instance-control authority. Effective only through qualifying source review/merge.",
+    "source": "docs/work-items/WSP-03.md; accepted WI-SUPERVISOR-PROOF-1 WSP-03 design; WI-ADR-010/016/018"
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/supervisor/mod.rs::::struct:Session",
+    "disposition": "retain-align",
+    "target": "bounded-host-supervisor",
+    "rationale": "WSP-03 candidate: separate public supervisor lifecycle API, authenticated private channel, independent durable journal and bounded reconciliation. No engine client or worker instance-control authority. Effective only through qualifying source review/merge.",
+    "source": "docs/work-items/WSP-03.md; accepted WI-SUPERVISOR-PROOF-1 WSP-03 design; WI-ADR-010/016/018"
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/src/supervisor/mod.rs::::trait:SupervisorHandler",
+    "disposition": "retain-align",
+    "target": "bounded-host-supervisor",
+    "rationale": "WSP-03 candidate: separate public supervisor lifecycle API, authenticated private channel, independent durable journal and bounded reconciliation. No engine client or worker instance-control authority. Effective only through qualifying source review/merge.",
+    "source": "docs/work-items/WSP-03.md; accepted WI-SUPERVISOR-PROOF-1 WSP-03 design; WI-ADR-010/016/018"
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/tests/supervisor.rs::::source-module:crates/worldinterface-foundation/worker/tests/supervisor.rs",
+    "disposition": "test-evidence",
+    "target": "bounded-host-supervisor",
+    "rationale": "WSP-03 candidate: separate public supervisor lifecycle API, authenticated private channel, independent durable journal and bounded reconciliation. No engine client or worker instance-control authority. Effective only through qualifying source review/merge.",
+    "source": "docs/work-items/WSP-03.md; accepted WI-SUPERVISOR-PROOF-1 WSP-03 design; WI-ADR-010/016/018"
+  },
+  {
+    "id": "crates/worldinterface-foundation/worker/tests/supervisor.rs::::struct:Consumer",
+    "disposition": "test-evidence",
+    "target": "bounded-host-supervisor",
+    "rationale": "WSP-03 candidate: separate public supervisor lifecycle API, authenticated private channel, independent durable journal and bounded reconciliation. No engine client or worker instance-control authority. Effective only through qualifying source review/merge.",
+    "source": "docs/work-items/WSP-03.md; accepted WI-SUPERVISOR-PROOF-1 WSP-03 design; WI-ADR-010/016/018"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/lib.rs::::module:supervisor@df3b8e4ab04d",
+    "disposition": "retain-align",
+    "target": "bounded-host-supervisor",
+    "rationale": "WSP-03 candidate: separate public supervisor lifecycle API, authenticated private channel, independent durable journal and bounded reconciliation. No engine client or worker instance-control authority. Effective only through qualifying source review/merge.",
+    "source": "docs/work-items/WSP-03.md; accepted WI-SUPERVISOR-PROOF-1 WSP-03 design; WI-ADR-010/016/018"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/supervisor/connector.rs::::connector:SupervisorConnector",
+    "disposition": "retain-align",
+    "target": "bounded-host-supervisor",
+    "rationale": "WSP-03 candidate: separate public supervisor lifecycle API, authenticated private channel, independent durable journal and bounded reconciliation. No engine client or worker instance-control authority. Effective only through qualifying source review/merge.",
+    "source": "docs/work-items/WSP-03.md; accepted WI-SUPERVISOR-PROOF-1 WSP-03 design; WI-ADR-010/016/018"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/supervisor/connector.rs::::source-module:crates/worldinterface-runtime/src/supervisor/connector.rs",
+    "disposition": "retain-align",
+    "target": "bounded-host-supervisor",
+    "rationale": "WSP-03 candidate: separate public supervisor lifecycle API, authenticated private channel, independent durable journal and bounded reconciliation. No engine client or worker instance-control authority. Effective only through qualifying source review/merge.",
+    "source": "docs/work-items/WSP-03.md; accepted WI-SUPERVISOR-PROOF-1 WSP-03 design; WI-ADR-010/016/018"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/supervisor/connector.rs::::struct:SupervisorConnector",
+    "disposition": "retain-align",
+    "target": "bounded-host-supervisor",
+    "rationale": "WSP-03 candidate: separate public supervisor lifecycle API, authenticated private channel, independent durable journal and bounded reconciliation. No engine client or worker instance-control authority. Effective only through qualifying source review/merge.",
+    "source": "docs/work-items/WSP-03.md; accepted WI-SUPERVISOR-PROOF-1 WSP-03 design; WI-ADR-010/016/018"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/supervisor/journal.rs::::source-module:crates/worldinterface-runtime/src/supervisor/journal.rs",
+    "disposition": "retain-align",
+    "target": "bounded-host-supervisor",
+    "rationale": "WSP-03 candidate: separate public supervisor lifecycle API, authenticated private channel, independent durable journal and bounded reconciliation. No engine client or worker instance-control authority. Effective only through qualifying source review/merge.",
+    "source": "docs/work-items/WSP-03.md; accepted WI-SUPERVISOR-PROOF-1 WSP-03 design; WI-ADR-010/016/018"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/supervisor/journal.rs::::struct:Journal",
+    "disposition": "retain-align",
+    "target": "bounded-host-supervisor",
+    "rationale": "WSP-03 candidate: separate public supervisor lifecycle API, authenticated private channel, independent durable journal and bounded reconciliation. No engine client or worker instance-control authority. Effective only through qualifying source review/merge.",
+    "source": "docs/work-items/WSP-03.md; accepted WI-SUPERVISOR-PROOF-1 WSP-03 design; WI-ADR-010/016/018"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/supervisor/journal.rs::::struct:Stored",
+    "disposition": "retain-align",
+    "target": "bounded-host-supervisor",
+    "rationale": "WSP-03 candidate: separate public supervisor lifecycle API, authenticated private channel, independent durable journal and bounded reconciliation. No engine client or worker instance-control authority. Effective only through qualifying source review/merge.",
+    "source": "docs/work-items/WSP-03.md; accepted WI-SUPERVISOR-PROOF-1 WSP-03 design; WI-ADR-010/016/018"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/supervisor/mod.rs::::module:connector",
+    "disposition": "retain-align",
+    "target": "bounded-host-supervisor",
+    "rationale": "WSP-03 candidate: separate public supervisor lifecycle API, authenticated private channel, independent durable journal and bounded reconciliation. No engine client or worker instance-control authority. Effective only through qualifying source review/merge.",
+    "source": "docs/work-items/WSP-03.md; accepted WI-SUPERVISOR-PROOF-1 WSP-03 design; WI-ADR-010/016/018"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/supervisor/mod.rs::::module:journal",
+    "disposition": "retain-align",
+    "target": "bounded-host-supervisor",
+    "rationale": "WSP-03 candidate: separate public supervisor lifecycle API, authenticated private channel, independent durable journal and bounded reconciliation. No engine client or worker instance-control authority. Effective only through qualifying source review/merge.",
+    "source": "docs/work-items/WSP-03.md; accepted WI-SUPERVISOR-PROOF-1 WSP-03 design; WI-ADR-010/016/018"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/supervisor/mod.rs::::module:transport",
+    "disposition": "retain-align",
+    "target": "bounded-host-supervisor",
+    "rationale": "WSP-03 candidate: separate public supervisor lifecycle API, authenticated private channel, independent durable journal and bounded reconciliation. No engine client or worker instance-control authority. Effective only through qualifying source review/merge.",
+    "source": "docs/work-items/WSP-03.md; accepted WI-SUPERVISOR-PROOF-1 WSP-03 design; WI-ADR-010/016/018"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/supervisor/mod.rs::::source-module:crates/worldinterface-runtime/src/supervisor/mod.rs",
+    "disposition": "retain-align",
+    "target": "bounded-host-supervisor",
+    "rationale": "WSP-03 candidate: separate public supervisor lifecycle API, authenticated private channel, independent durable journal and bounded reconciliation. No engine client or worker instance-control authority. Effective only through qualifying source review/merge.",
+    "source": "docs/work-items/WSP-03.md; accepted WI-SUPERVISOR-PROOF-1 WSP-03 design; WI-ADR-010/016/018"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/supervisor/mod.rs::::struct:ChannelPolicy",
+    "disposition": "retain-align",
+    "target": "bounded-host-supervisor",
+    "rationale": "WSP-03 candidate: separate public supervisor lifecycle API, authenticated private channel, independent durable journal and bounded reconciliation. No engine client or worker instance-control authority. Effective only through qualifying source review/merge.",
+    "source": "docs/work-items/WSP-03.md; accepted WI-SUPERVISOR-PROOF-1 WSP-03 design; WI-ADR-010/016/018"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/supervisor/mod.rs::::struct:Server",
+    "disposition": "retain-align",
+    "target": "bounded-host-supervisor",
+    "rationale": "WSP-03 candidate: separate public supervisor lifecycle API, authenticated private channel, independent durable journal and bounded reconciliation. No engine client or worker instance-control authority. Effective only through qualifying source review/merge.",
+    "source": "docs/work-items/WSP-03.md; accepted WI-SUPERVISOR-PROOF-1 WSP-03 design; WI-ADR-010/016/018"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/supervisor/mod.rs::impl Server::struct:Release",
+    "disposition": "retain-align",
+    "target": "bounded-host-supervisor",
+    "rationale": "WSP-03 candidate: separate public supervisor lifecycle API, authenticated private channel, independent durable journal and bounded reconciliation. No engine client or worker instance-control authority. Effective only through qualifying source review/merge.",
+    "source": "docs/work-items/WSP-03.md; accepted WI-SUPERVISOR-PROOF-1 WSP-03 design; WI-ADR-010/016/018"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/supervisor/transport.rs::::source-module:crates/worldinterface-runtime/src/supervisor/transport.rs",
+    "disposition": "retain-align",
+    "target": "bounded-host-supervisor",
+    "rationale": "WSP-03 candidate: separate public supervisor lifecycle API, authenticated private channel, independent durable journal and bounded reconciliation. No engine client or worker instance-control authority. Effective only through qualifying source review/merge.",
+    "source": "docs/work-items/WSP-03.md; accepted WI-SUPERVISOR-PROOF-1 WSP-03 design; WI-ADR-010/016/018"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/supervisor/transport.rs::::struct:Client",
+    "disposition": "retain-align",
+    "target": "bounded-host-supervisor",
+    "rationale": "WSP-03 candidate: separate public supervisor lifecycle API, authenticated private channel, independent durable journal and bounded reconciliation. No engine client or worker instance-control authority. Effective only through qualifying source review/merge.",
+    "source": "docs/work-items/WSP-03.md; accepted WI-SUPERVISOR-PROOF-1 WSP-03 design; WI-ADR-010/016/018"
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/supervisor/transport.rs::::struct:PrivateChannel",
+    "disposition": "retain-align",
+    "target": "bounded-host-supervisor",
+    "rationale": "WSP-03 candidate: separate public supervisor lifecycle API, authenticated private channel, independent durable journal and bounded reconciliation. No engine client or worker instance-control authority. Effective only through qualifying source review/merge.",
+    "source": "docs/work-items/WSP-03.md; accepted WI-SUPERVISOR-PROOF-1 WSP-03 design; WI-ADR-010/016/018"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/supervisor_consumer.rs::::source-module:crates/worldinterface-runtime/tests/supervisor_consumer.rs",
+    "disposition": "test-evidence",
+    "target": "bounded-host-supervisor",
+    "rationale": "WSP-03 candidate: separate public supervisor lifecycle API, authenticated private channel, independent durable journal and bounded reconciliation. No engine client or worker instance-control authority. Effective only through qualifying source review/merge.",
+    "source": "docs/work-items/WSP-03.md; accepted WI-SUPERVISOR-PROOF-1 WSP-03 design; WI-ADR-010/016/018"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/supervisor_consumer.rs::::struct:Consumer",
+    "disposition": "test-evidence",
+    "target": "bounded-host-supervisor",
+    "rationale": "WSP-03 candidate: separate public supervisor lifecycle API, authenticated private channel, independent durable journal and bounded reconciliation. No engine client or worker instance-control authority. Effective only through qualifying source review/merge.",
+    "source": "docs/work-items/WSP-03.md; accepted WI-SUPERVISOR-PROOF-1 WSP-03 design; WI-ADR-010/016/018"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/supervisor_consumer.rs::interrupted_result_persistence_requires_reopen_and_authoritative_inspect::struct:Backend",
+    "disposition": "test-evidence",
+    "target": "bounded-host-supervisor",
+    "rationale": "WSP-03 candidate: separate public supervisor lifecycle API, authenticated private channel, independent durable journal and bounded reconciliation. No engine client or worker instance-control authority. Effective only through qualifying source review/merge.",
+    "source": "docs/work-items/WSP-03.md; accepted WI-SUPERVISOR-PROOF-1 WSP-03 design; WI-ADR-010/016/018"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/supervisor_consumer.rs::supervisor_generation_deadline_and_unsupported_recovery_fail_closed::struct:Unsupported",
+    "disposition": "test-evidence",
+    "target": "bounded-host-supervisor",
+    "rationale": "WSP-03 candidate: separate public supervisor lifecycle API, authenticated private channel, independent durable journal and bounded reconciliation. No engine client or worker instance-control authority. Effective only through qualifying source review/merge.",
+    "source": "docs/work-items/WSP-03.md; accepted WI-SUPERVISOR-PROOF-1 WSP-03 design; WI-ADR-010/016/018"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/supervisor_fixture.rs::::source-module:crates/worldinterface-runtime/tests/support/supervisor_fixture.rs",
+    "disposition": "test-evidence",
+    "target": "bounded-host-supervisor",
+    "rationale": "WSP-03 candidate: separate public supervisor lifecycle API, authenticated private channel, independent durable journal and bounded reconciliation. No engine client or worker instance-control authority. Effective only through qualifying source review/merge.",
+    "source": "docs/work-items/WSP-03.md; accepted WI-SUPERVISOR-PROOF-1 WSP-03 design; WI-ADR-010/016/018"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/supervisor_fixture.rs::::struct:Config",
+    "disposition": "test-evidence",
+    "target": "bounded-host-supervisor",
+    "rationale": "WSP-03 candidate: separate public supervisor lifecycle API, authenticated private channel, independent durable journal and bounded reconciliation. No engine client or worker instance-control authority. Effective only through qualifying source review/merge.",
+    "source": "docs/work-items/WSP-03.md; accepted WI-SUPERVISOR-PROOF-1 WSP-03 design; WI-ADR-010/016/018"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/supervisor_fixture.rs::::struct:Fixture",
+    "disposition": "test-evidence",
+    "target": "bounded-host-supervisor",
+    "rationale": "WSP-03 candidate: separate public supervisor lifecycle API, authenticated private channel, independent durable journal and bounded reconciliation. No engine client or worker instance-control authority. Effective only through qualifying source review/merge.",
+    "source": "docs/work-items/WSP-03.md; accepted WI-SUPERVISOR-PROOF-1 WSP-03 design; WI-ADR-010/016/018"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/supervisor_harness.rs::::source-module:crates/worldinterface-runtime/tests/support/supervisor_harness.rs",
+    "disposition": "test-evidence",
+    "target": "bounded-host-supervisor",
+    "rationale": "WSP-03 candidate: separate public supervisor lifecycle API, authenticated private channel, independent durable journal and bounded reconciliation. No engine client or worker instance-control authority. Effective only through qualifying source review/merge.",
+    "source": "docs/work-items/WSP-03.md; accepted WI-SUPERVISOR-PROOF-1 WSP-03 design; WI-ADR-010/016/018"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/support/supervisor_harness.rs::::struct:Harness",
+    "disposition": "test-evidence",
+    "target": "bounded-host-supervisor",
+    "rationale": "WSP-03 candidate: separate public supervisor lifecycle API, authenticated private channel, independent durable journal and bounded reconciliation. No engine client or worker instance-control authority. Effective only through qualifying source review/merge.",
+    "source": "docs/work-items/WSP-03.md; accepted WI-SUPERVISOR-PROOF-1 WSP-03 design; WI-ADR-010/016/018"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_supervisor.rs::::module:support",
+    "disposition": "test-evidence",
+    "target": "bounded-host-supervisor",
+    "rationale": "WSP-03 candidate: separate public supervisor lifecycle API, authenticated private channel, independent durable journal and bounded reconciliation. No engine client or worker instance-control authority. Effective only through qualifying source review/merge.",
+    "source": "docs/work-items/WSP-03.md; accepted WI-SUPERVISOR-PROOF-1 WSP-03 design; WI-ADR-010/016/018"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_supervisor.rs::::source-module:crates/worldinterface-runtime/tests/worker_supervisor.rs",
+    "disposition": "test-evidence",
+    "target": "bounded-host-supervisor",
+    "rationale": "WSP-03 candidate: separate public supervisor lifecycle API, authenticated private channel, independent durable journal and bounded reconciliation. No engine client or worker instance-control authority. Effective only through qualifying source review/merge.",
+    "source": "docs/work-items/WSP-03.md; accepted WI-SUPERVISOR-PROOF-1 WSP-03 design; WI-ADR-010/016/018"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_supervisor.rs::::struct:Metadata",
+    "disposition": "test-evidence",
+    "target": "bounded-host-supervisor",
+    "rationale": "WSP-03 candidate: separate public supervisor lifecycle API, authenticated private channel, independent durable journal and bounded reconciliation. No engine client or worker instance-control authority. Effective only through qualifying source review/merge.",
+    "source": "docs/work-items/WSP-03.md; accepted WI-SUPERVISOR-PROOF-1 WSP-03 design; WI-ADR-010/016/018"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_supervisor.rs::::struct:Scenario",
+    "disposition": "test-evidence",
+    "target": "bounded-host-supervisor",
+    "rationale": "Named supervisor fixture scenario flags clarify WP-035 through WP-039 without changing lifecycle behavior, authority or bounds. Retained test evidence; subject to qualifying review/merge.",
+    "source": "WI-SUPERVISOR-PROOF-1 selected polish finding F-056"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_supervisor.rs::support::module:child",
+    "disposition": "test-evidence",
+    "target": "bounded-host-supervisor",
+    "rationale": "WSP-03 candidate: separate public supervisor lifecycle API, authenticated private channel, independent durable journal and bounded reconciliation. No engine client or worker instance-control authority. Effective only through qualifying source review/merge.",
+    "source": "docs/work-items/WSP-03.md; accepted WI-SUPERVISOR-PROOF-1 WSP-03 design; WI-ADR-010/016/018"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_supervisor.rs::support::module:connectors",
+    "disposition": "test-evidence",
+    "target": "bounded-host-supervisor",
+    "rationale": "WSP-03 candidate: separate public supervisor lifecycle API, authenticated private channel, independent durable journal and bounded reconciliation. No engine client or worker instance-control authority. Effective only through qualifying source review/merge.",
+    "source": "docs/work-items/WSP-03.md; accepted WI-SUPERVISOR-PROOF-1 WSP-03 design; WI-ADR-010/016/018"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_supervisor.rs::support::module:spi_harness",
+    "disposition": "test-evidence",
+    "target": "bounded-host-supervisor",
+    "rationale": "F-018/F-026 selected simplification: reuse SPI host, AQ clock, submission and admission helpers for supervisor evidence; no authority or case-scope change. Effective only through qualifying source review/merge.",
+    "source": "WI-SUPERVISOR-PROOF-1 selected batch F-018/F-026; docs/work-items/WSP-04.md"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_supervisor.rs::support::module:supervisor_fixture",
+    "disposition": "test-evidence",
+    "target": "bounded-host-supervisor",
+    "rationale": "WSP-03 candidate: separate public supervisor lifecycle API, authenticated private channel, independent durable journal and bounded reconciliation. No engine client or worker instance-control authority. Effective only through qualifying source review/merge.",
+    "source": "docs/work-items/WSP-03.md; accepted WI-SUPERVISOR-PROOF-1 WSP-03 design; WI-ADR-010/016/018"
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/worker_supervisor.rs::support::module:supervisor_harness",
+    "disposition": "test-evidence",
+    "target": "bounded-host-supervisor",
+    "rationale": "WSP-03 candidate: separate public supervisor lifecycle API, authenticated private channel, independent durable journal and bounded reconciliation. No engine client or worker instance-control authority. Effective only through qualifying source review/merge.",
+    "source": "docs/work-items/WSP-03.md; accepted WI-SUPERVISOR-PROOF-1 WSP-03 design; WI-ADR-010/016/018"
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/flow.rs::::module:scheduling_index_tests@10d1b0eff34c",
+    "disposition": "test-evidence",
+    "target": "WSP-04 supervisor conformance and carried regressions",
+    "source": "WI-SUPERVISOR-PROOF-1-PLAN-1 WSP-04; docs/work-items/WSP-04.md; operator F-008/F-009 and idle-tick instructions",
+    "rationale": "Bounded indexed reconciliation and its disposable diagnostic/test evidence, stable descendant acquisition states, or trusted delivery time. No new worker operation, continuation exception or consumer Kata qualification; submitted for qualifying source review/merge with adopted checks."
+  },
+  {
+    "id": "crates/worldinterface-foundation/storage/src/flow.rs::::struct:PendingFlow",
+    "disposition": "retain-align",
+    "target": "WSP-04 supervisor conformance and carried regressions",
+    "source": "WI-SUPERVISOR-PROOF-1-PLAN-1 WSP-04; docs/work-items/WSP-04.md; operator F-008/F-009 and idle-tick instructions",
+    "rationale": "Bounded indexed reconciliation and its disposable diagnostic/test evidence, stable descendant acquisition states, or trusted delivery time. No new worker operation, continuation exception or consumer Kata qualification; submitted for qualifying source review/merge with adopted checks."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/aq_adapter.rs::::struct:TickDiagnostics",
+    "disposition": "retain-align",
+    "target": "WSP-04 supervisor conformance and carried regressions",
+    "source": "WI-SUPERVISOR-PROOF-1-PLAN-1 WSP-04; docs/work-items/WSP-04.md; operator F-008/F-009 and idle-tick instructions",
+    "rationale": "Bounded indexed reconciliation and its disposable diagnostic/test evidence, stable descendant acquisition states, or trusted delivery time. No new worker operation, continuation exception or consumer Kata qualification; submitted for qualifying source review/merge with adopted checks."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/flow_coordinator.rs::::struct:ReconcileWork",
+    "disposition": "retain-align",
+    "target": "WSP-04 supervisor conformance and carried regressions",
+    "source": "WI-SUPERVISOR-PROOF-1-PLAN-1 WSP-04; docs/work-items/WSP-04.md; operator F-008/F-009 and idle-tick instructions",
+    "rationale": "Bounded indexed reconciliation and its disposable diagnostic/test evidence, stable descendant acquisition states, or trusted delivery time. No new worker operation, continuation exception or consumer Kata qualification; submitted for qualifying source review/merge with adopted checks."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/ingress.rs::::struct:DeliverySystemClock",
+    "disposition": "retain-align",
+    "target": "WSP-04 supervisor conformance and carried regressions",
+    "source": "WI-SUPERVISOR-PROOF-1-PLAN-1 WSP-04; docs/work-items/WSP-04.md; operator F-008/F-009 and idle-tick instructions",
+    "rationale": "Bounded indexed reconciliation and its disposable diagnostic/test evidence, stable descendant acquisition states, or trusted delivery time. No new worker operation, continuation exception or consumer Kata qualification; submitted for qualifying source review/merge with adopted checks."
+  },
+  {
+    "id": "crates/worldinterface-runtime/src/worker_process/ownership.rs::::enum:Acquisition",
+    "disposition": "retain-align",
+    "target": "WSP-04 supervisor conformance and carried regressions",
+    "source": "WI-SUPERVISOR-PROOF-1-PLAN-1 WSP-04; docs/work-items/WSP-04.md; operator F-008/F-009 and idle-tick instructions",
+    "rationale": "Bounded indexed reconciliation and its disposable diagnostic/test evidence, stable descendant acquisition states, or trusted delivery time. No new worker operation, continuation exception or consumer Kata qualification; submitted for qualifying source review/merge with adopted checks."
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/ingress_recovery.rs::::struct:DeliveryClock",
+    "disposition": "test-evidence",
+    "target": "WSP-04 supervisor conformance and carried regressions",
+    "source": "WI-SUPERVISOR-PROOF-1-PLAN-1 WSP-04; docs/work-items/WSP-04.md; operator F-008/F-009 and idle-tick instructions",
+    "rationale": "Bounded indexed reconciliation and its disposable diagnostic/test evidence, stable descendant acquisition states, or trusted delivery time. No new worker operation, continuation exception or consumer Kata qualification; submitted for qualifying source review/merge with adopted checks."
+  },
+  {
+    "id": "crates/worldinterface-runtime/tests/supervisor_consumer.rs::transient_inspect_error_after_deadline_preserves_recovery_after_restart::struct:Backend",
+    "disposition": "test-evidence",
+    "target": "bounded-host-supervisor",
+    "rationale": "Finalization F-003 regression backend: transient post-deadline inspect errors preserve retained completion without redispatch. Candidate disposition for correctness review; effective only through qualifying review/merge.",
+    "source": "WI-SUPERVISOR-PROOF-1 correctness finding F-003; docs/work-items/WSP-03.md"
   }
 ]

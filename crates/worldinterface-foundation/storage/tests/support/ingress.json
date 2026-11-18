@@ -1,0 +1,61 @@
+{
+  "id": "00000000-0000-4000-8000-000000000001",
+  "revision": 1,
+  "principal": "00000000-0000-4000-8000-000000000002",
+  "submission": {
+    "client_request_id": "request-1",
+    "source": {
+      "namespace": "provider",
+      "selector": "channel"
+    },
+    "subscriber": "subscriber-endpoint",
+    "event_scope": "messages",
+    "delivery_policy": "delivery-v1",
+    "requested_authority_refs": []
+  },
+  "subscriber": "00000000-0000-4000-8000-000000000003",
+  "profile": {
+    "version": "provider-v1",
+    "scope": {
+      "tenant": "tenant-a",
+      "account": "account-a",
+      "source": {
+        "namespace": "provider",
+        "resource": "channel",
+        "version": "1"
+      },
+      "namespace": "messages"
+    },
+    "identity": "stable_id",
+    "replay_window_ms": 100000,
+    "max_body_bytes": 16384,
+    "max_attachments": 8,
+    "capacity": 100,
+    "first_offset": 0,
+    "attachment_policy": {
+      "quarantine_all": {
+        "policy": "quarantine-1"
+      }
+    }
+  },
+  "policy": {
+    "version": "delivery-v1",
+    "max_attempts": 2,
+    "acknowledgment_timeout_ms": 10,
+    "backoff_ms": 5,
+    "retention_ms": 1000,
+    "physical_erasure": false
+  },
+  "resolver_version": "resolver-v1",
+  "authorization": {
+    "artifact": {
+      "scope": "tenant-a",
+      "content": "cbb82ebec6051b780ad26655ee48b5b42658c4ac49438888aac829e82195584f",
+      "size": 13
+    },
+    "schema": "binding-authorization-v1"
+  },
+  "authentication_requirement": "exact-byte-hmac",
+  "expires_at_ms": 1000000,
+  "status": "active"
+}

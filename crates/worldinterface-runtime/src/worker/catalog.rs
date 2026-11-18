@@ -69,8 +69,9 @@ pub fn verify_registration<S: TrustedApprovals>(
 ) -> Result<VerifiedRegistration> {
     current.validate()?;
     match record {
+        // `approval` is the exact packet identity, retained for record compatibility.
         ProcessRegistrationRecord::Evaluation { binding, approval } => {
-            let verified = evaluation.verify(now)?;
+            let verified = evaluation.verify()?;
             if !evaluation.trusted.registered(record, now)?
                 || binding != current
                 || approval != verified.digest()
@@ -108,7 +109,7 @@ pub fn authorize_admission(
     Ok(registration.binding.digest()?)
 }
 /// Trusted host composition supplies current recovery policy independently of old
-/// admission approval. No Deserialize path, no launch or export authority.
+/// evaluation packet. No Deserialize path, no launch or export authority.
 pub struct RecoveryPolicy {
     scope: HostScope,
     current: ContentHash,

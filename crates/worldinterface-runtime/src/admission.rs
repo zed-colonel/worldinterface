@@ -91,7 +91,7 @@ fn prepare_at(
         }
         return Ok(existing.clone());
     }
-    let state = root.effect_snapshot(caller.tenant())?;
+    let state = root.effect_intent_snapshot(caller.tenant(), id)?;
     let effect = state.effects.get(id).ok_or("missing admission effect")?;
     let index = effect.dispatches.len();
     let task = TaskId::new();
@@ -117,7 +117,7 @@ fn prepare_at(
     let bytes = encode_request(&request)?;
     let artifact = root.publish(caller.tenant().clone(), &bytes)?;
     let execution = {
-        let state = root.effect_snapshot(caller.tenant())?;
+        let state = root.effect_intent_snapshot(caller.tenant(), id)?;
         let e = state.effects.get(id).ok_or("missing admission effect")?;
         worldinterface_domain::ingress::digest(&(
             &e.intent,
@@ -279,7 +279,14 @@ pub(crate) fn require_top_level(
     tenant: &worldinterface_protocol::OpaqueRef,
     id: &EffectIntentId,
 ) -> Result<()> {
-    if root.effect_snapshot(tenant)?.effects.get(id).ok_or("missing effect")?.owner.is_some() {
+    if root
+        .effect_intent_snapshot(tenant, id)?
+        .effects
+        .get(id)
+        .ok_or("missing effect")?
+        .owner
+        .is_some()
+    {
         return Err("Flow-owned effect requires the plan executor".into());
     }
     Ok(())

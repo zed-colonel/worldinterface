@@ -64,10 +64,7 @@ pub fn bundle(snapshot: &AuthorizationSnapshot, profile: Profile) -> cp::Bootstr
     }
 }
 pub fn fixture(worker: bool) -> (EffectSubmission, AuthorizationSnapshot) {
-    let v: serde_json::Value = serde_json::from_str(include_str!(
-        "../../../../../conformance/wi-fabric-2/egress/fixture.json"
-    ))
-    .unwrap();
+    let v: serde_json::Value = serde_json::from_str(include_str!("egress.json")).unwrap();
     let mut submission: EffectSubmission = serde_json::from_value(v["submission"].clone()).unwrap();
     let mut snapshot: AuthorizationSnapshot =
         serde_json::from_value(v["snapshot"].clone()).unwrap();

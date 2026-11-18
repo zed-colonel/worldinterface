@@ -131,7 +131,10 @@ impl EvidenceAuthority for Evidence {
         })
     }
 }
-struct FixturePort(Vec<(OpaqueRef, Vec<u8>)>);
+struct FixturePort {
+    evidence: Vec<(OpaqueRef, Vec<u8>)>,
+    invocation_delay: std::time::Duration,
+}
 impl EffectExecutionPort for FixturePort {
     fn descriptor(&self) -> &worldinterface_protocol::ConnectorDescriptor {
         spi_fixture::descriptor()
@@ -163,12 +166,13 @@ impl EffectExecutionPort for FixturePort {
 
     fn invoke(&self, bound: BoundExecution, _: &CancellationToken) -> Result<PortObservation> {
         assert_eq!(bound.intent, bound.resolved.intent_id);
+        std::thread::sleep(self.invocation_delay);
         Ok(PortObservation {
             commit: CommitObservation::ConfirmedCommitted,
             outcome: ExecutionOutcome::Succeeded,
             outputs: vec![b"output".to_vec()],
             evidence: self
-                .0
+                .evidence
                 .iter()
                 .map(|(schema, bytes)| EvidenceBytes {
                     schema: schema.clone(),
@@ -186,7 +190,16 @@ pub(crate) fn complete(
     bundle: Arc<StoreBundle>,
     id: &EffectIntentId,
     snapshot: &AuthorizationSnapshot,
+    evidence: Vec<(OpaqueRef, Vec<u8>)>,
+) -> RunId {
+    complete_with_delay(bundle, id, snapshot, evidence, std::time::Duration::ZERO)
+}
+pub(crate) fn complete_with_delay(
+    bundle: Arc<StoreBundle>,
+    id: &EffectIntentId,
+    snapshot: &AuthorizationSnapshot,
     mut evidence: Vec<(OpaqueRef, Vec<u8>)>,
+    invocation_delay: std::time::Duration,
 ) -> RunId {
     evidence.push(("fixture-executor:1".to_owned().try_into().unwrap(), b"executed".to_vec()));
     let actor = caller(snapshot);
@@ -205,7 +218,7 @@ pub(crate) fn complete(
     queue.shutdown().unwrap();
     let handler = EffectAttemptHandler {
         bundle: bundle.clone(),
-        port: FixturePort(evidence),
+        port: FixturePort { evidence, invocation_delay },
         evidence: Evidence(snapshot.clone()),
         clock: Clock,
     };

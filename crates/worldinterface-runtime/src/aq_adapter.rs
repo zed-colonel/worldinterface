@@ -19,6 +19,20 @@ use actionqueue_storage::{recovery::reducer::ReplayReducer, store::StoreSession}
 use serde::{Deserialize, Serialize};
 use worldinterface_protocol::{canonical_data, strict_json, ArtifactRef};
 
+pub use crate::flow_coordinator::ReconcileWork;
+
+/// Disposable measurements from the last successfully completed tick.
+#[derive(Debug, Default)]
+pub struct TickDiagnostics {
+    pub reconcile: std::time::Duration,
+    pub work: ReconcileWork,
+    pub drain: std::time::Duration,
+    pub execute: std::time::Duration,
+}
+
+/// Maximum pending Flow rows read and validated by one tick.
+pub const RECONCILE_ROWS_PER_TICK: usize = crate::flow_coordinator::RECONCILE_ROWS_PER_TICK;
+
 /// Store identity is obtained from a validated, locked AQ session.
 #[derive(Clone, Copy, Debug, PartialEq, Eq)]
 pub struct QueueStoreId(uuid::Uuid);
@@ -41,6 +55,7 @@ pub struct QueueEngine<'a, H: ExecutorHandler + 'static> {
     signal_scan: crate::continuation::SignalScan,
     flow_scan: crate::flow_coordinator::ReconcileCursor,
     signal_limits: actionqueue_core::limits::SignalLimits,
+    pub tick_diagnostics: TickDiagnostics,
     pub signal_delivery_status: crate::continuation::SignalDeliveryStatus,
 }
 impl<'a, H: ExecutorHandler + 'static> QueueEngine<'a, H> {
@@ -83,14 +98,18 @@ impl<'a, H: ExecutorHandler + 'static> QueueEngine<'a, H> {
         if bundle.aq_store_id()? != store.as_uuid() {
             return Err("AQ store changed during engine bootstrap".into());
         }
+        bundle.wi().flow_prepare_scheduling()?;
+        let flow_scan =
+            crate::flow_coordinator::ReconcileCursor::new(engine.projection().latest_sequence());
         Ok(Self {
             bundle,
             store,
             engine,
             signal_scan: Default::default(),
-            flow_scan: Default::default(),
+            flow_scan,
             signal_delivery_status: Default::default(),
             signal_limits,
+            tick_diagnostics: Default::default(),
         })
     }
     pub fn wi(&self) -> &worldinterface_storage::StoreRoot {
@@ -152,23 +171,42 @@ impl<'a, H: ExecutorHandler + 'static> QueueEngine<'a, H> {
     }
     /// Host-owned reconciliation surrounds each scheduling tick, including restart.
     pub async fn tick(&mut self) -> Result<actionqueue_runtime::dispatch::TickResult> {
+        crate::flow_coordinator::begin_tick(&mut self.flow_scan);
+        let mut remaining = crate::flow_coordinator::RECONCILE_ROWS_PER_TICK;
+        let started = std::time::Instant::now();
         crate::flow_coordinator::reconcile(
             self.bundle.wi(),
             self.store.as_uuid(),
             &mut self.engine,
             &mut self.flow_scan,
+            &mut remaining,
         )?;
+        let reconcile = started.elapsed();
+        let started = std::time::Instant::now();
         self.signal_delivery_status =
             crate::continuation::drain(self.bundle.wi(), &mut self.engine, &mut self.signal_scan)?;
+        let drain = started.elapsed();
+        let started = std::time::Instant::now();
         let result = self.engine.tick().await?;
+        let execute = started.elapsed();
+        let started = std::time::Instant::now();
         crate::flow_coordinator::reconcile(
             self.bundle.wi(),
             self.store.as_uuid(),
             &mut self.engine,
             &mut self.flow_scan,
+            &mut remaining,
         )?;
+        let reconcile = reconcile + started.elapsed();
+        let started = std::time::Instant::now();
         self.signal_delivery_status =
             crate::continuation::drain(self.bundle.wi(), &mut self.engine, &mut self.signal_scan)?;
+        self.tick_diagnostics = TickDiagnostics {
+            work: crate::flow_coordinator::tick_work(&self.flow_scan),
+            reconcile,
+            drain: drain + started.elapsed(),
+            execute,
+        };
         Ok(result)
     }
     /// Trusted host cancellation retains AQ's normal child lifecycle semantics.
@@ -429,7 +467,8 @@ impl QueueReferences {
                             {
                                 return Err("invalid effect completion locator".into());
                             }
-                            let state = wi.effect_snapshot(&artifact.scope)?;
+                            let state =
+                                wi.effect_intent_snapshot(&artifact.scope, &locator.intent)?;
                             let effect = state
                                 .effects
                                 .get(&locator.intent)

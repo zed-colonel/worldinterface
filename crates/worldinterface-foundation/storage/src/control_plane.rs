@@ -617,7 +617,7 @@ impl cp::Repository for ControlPlaneRepository<'_> {
 }
 
 #[cfg(test)]
-#[path = "../../domain/tests/support/control_plane.rs"]
+#[path = "../tests/support/control_plane.rs"]
 #[allow(dead_code)] // Shared fixture; this test uses a subset.
 mod control_fixture;
 
@@ -692,10 +692,8 @@ mod tests {
     }
     #[test]
     fn control_projection_entries_do_not_share_a_16_mib_ceiling() {
-        let fixture: serde_json::Value = serde_json::from_str(include_str!(
-            "../../../../conformance/wi-fabric-2/egress/fixture.json"
-        ))
-        .unwrap();
+        let fixture: serde_json::Value =
+            serde_json::from_str(include_str!("../tests/support/egress.json")).unwrap();
         let mut b: worldinterface_domain::agency::Binding =
             serde_json::from_value(fixture["snapshot"]["bindings"][0].clone()).unwrap();
         b.principal_authority = (0u32..256).map(|n| ContentHash::of(&n.to_be_bytes())).collect();

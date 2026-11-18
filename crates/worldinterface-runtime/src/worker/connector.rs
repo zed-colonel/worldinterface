@@ -138,7 +138,7 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
         clock: Arc<dyn Clock>,
         slots: u32,
     ) -> Result<Self> {
-        let verified = evaluation.verify(clock.unix_ms())?;
+        let verified = evaluation.verify()?;
         let executable = executable_digest(fixture)?;
         let helper_digest = executable_digest(helper)?;
         evaluation.trusted.verify_build(verified.digest(), &executable, &helper_digest)?;
@@ -179,7 +179,7 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
         clock: Arc<dyn Clock>,
         slots: u32,
     ) -> Result<Self> {
-        let verified = evaluation.verify(clock.unix_ms())?;
+        let verified = evaluation.verify()?;
         if !provenance.seam_simulation {
             return Err("external provider requires separate qualification".into());
         }
@@ -231,7 +231,7 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
         &self,
         bound: &crate::completion::BoundExecution,
     ) -> Result<Option<(WorkerBinding, WorkerRequestV1)>> {
-        let snapshot = self.bundle.wi().effect_snapshot(&bound.tenant)?;
+        let snapshot = self.bundle.wi().effect_intent_snapshot(&bound.tenant, &bound.intent)?;
         let effect = snapshot.effects.get(&bound.intent).ok_or("worker effect absent")?;
         let facts = effect.authorization_inputs.as_ref().ok_or("worker authority absent")?;
         let Some(recovery) = &facts.recovery else {
@@ -315,7 +315,7 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
         super::catalog::verify_registration(
             record,
             binding,
-            self.evaluation.as_ref().ok_or("admission approval absent")?,
+            self.evaluation.as_ref().ok_or("evaluation packet absent")?,
             self.clock.unix_ms(),
         )?;
         Ok(())
@@ -595,10 +595,7 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
         self.port.spawn_attempts()
     }
     pub fn read_artifact(&self, binding: &WorkerBinding, reference: &str) -> Result<Vec<u8>> {
-        self.evaluation
-            .as_ref()
-            .ok_or("admission approval absent")?
-            .verify(self.clock.unix_ms())?;
+        self.evaluation.as_ref().ok_or("evaluation packet absent")?.verify()?;
         if binding.tenant.as_str() != self.scope.tenant
             || binding.principal.as_str() != self.scope.principal
         {
@@ -708,14 +705,14 @@ impl<S: TrustedWorkerBuild> WorkerRuntime<S> {
         if self.state(binding)?.stop_requested {
             let _ = self.port.stop(binding.provider.as_str(), binding.run.as_str());
         }
-        if self.evaluation.as_ref().is_none_or(|e| e.verify(self.clock.unix_ms()).is_err())
+        if self.evaluation.as_ref().is_none_or(|e| e.verify().is_err())
             || self
                 .bundle
                 .wi()
                 .worker_provider_quarantine(&binding.tenant, &binding.provider)?
                 .is_some()
         {
-            // Approval invalidation fences this run. Only an attributed incident
+            // Evaluation packet invalidation fences this run. Only an attributed incident
             // decision may permanently quarantine the tenant/provider.
             super::recovery::quarantine(self.bundle.wi(), binding)?;
             let _ = self.port.stop(binding.provider.as_str(), binding.run.as_str());
@@ -759,7 +756,7 @@ impl<S> Clone for WorkerConnector<S> {
 impl<S: TrustedWorkerBuild> WorkerConnector<S> {
     fn recovery_state(&self, r: &ReconcileRequest) -> Result<WorkerState> {
         let root = self.runtime.bundle.wi();
-        let snapshot = root.effect_snapshot(&r.tenant)?;
+        let snapshot = root.effect_intent_snapshot(&r.tenant, &r.intent)?;
         let effect = snapshot.effects.get(&r.intent).ok_or("recovery effect absent")?;
         let w = effect
             .authorization_inputs
@@ -847,7 +844,7 @@ impl<S: TrustedWorkerBuild + 'static> Connector for WorkerConnector<S> {
         let admitted = derive(
             self.runtime.bundle.wi(),
             &r,
-            self.runtime.evaluation.as_ref().ok_or("admission approval absent")?,
+            self.runtime.evaluation.as_ref().ok_or("evaluation packet absent")?,
             self.runtime.clock.unix_ms(),
             &self.runtime.executable,
             &self.runtime.helper_digest,
@@ -861,11 +858,7 @@ impl<S: TrustedWorkerBuild + 'static> Connector for WorkerConnector<S> {
     fn reconcile(&self, r: ReconcileRequest) -> Result<ReconcileOutcome> {
         let mut state = self.recovery_state(&r)?;
         let root = self.runtime.bundle.wi();
-        if self
-            .runtime
-            .evaluation
-            .as_ref()
-            .is_none_or(|e| e.verify(self.runtime.clock.unix_ms()).is_err())
+        if self.runtime.evaluation.as_ref().is_none_or(|e| e.verify().is_err())
             || root.worker_provider_quarantine(&r.tenant, &state.binding.provider)?.is_some()
         {
             super::recovery::quarantine(root, &state.binding)?;
@@ -950,7 +943,7 @@ impl<S: TrustedWorkerBuild + 'static> Connector for WorkerConnector<S> {
         if !state.stop_requested && !state.cleanup_confirmed {
             root.request_worker_stop(&state)?;
         }
-        // A stop obligation survives grant/approval expiry; it cannot authorize fresh work.
+        // A stop obligation survives grant expiry or packet invalidation; it cannot authorize fresh work.
         let _ = self.runtime.port.stop(state.binding.provider.as_str(), state.binding.run.as_str());
         Ok(CancelObservation::Requested)
     }
@@ -965,10 +958,10 @@ fn default_recovery_policy(scope: HostScope) -> Result<super::catalog::RecoveryP
         ContentHash::of(b"wi-worker-recovery:1"),
     )
 }
-/// A recovery-only host has no executable registration or admission approval.
+/// A recovery-only host has no executable registration or evaluation packet.
 pub struct RecoveryOnly;
 impl TrustedApprovals for RecoveryOnly {
-    fn accepted(&self, _: &super::evaluation::OperatorApprovalReceipt, _: u64) -> Result<bool> {
+    fn accepted(&self, _: &super::evaluation::EvaluationManifest, _: &Path) -> Result<bool> {
         Ok(false)
     }
 }
@@ -1013,7 +1006,7 @@ mod tests {
     };
     use worldinterface_worker::profile::ProfileBinding;
 
-    /// No executable, runtime approval or provider is constructed. Exercise the
+    /// No executable, evaluation packet or provider is constructed. Exercise the
     /// domain publication validator used by the executor against all success
     /// responses: fresh completion, replay, inspect and quarantined termination.
     #[test]

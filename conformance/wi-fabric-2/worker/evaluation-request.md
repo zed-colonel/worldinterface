@@ -1,3 +1,34 @@
+# Current evaluation rule — WSP-01 (2026-11-09 operator decision)
+
+A reviewed, merged evaluation packet counts as accepted with no operator approval
+receipt, trusted anchor or calendar expiry. Candidate live verification requires
+the complete committed `evaluation-manifest.json` to match the current source
+bytes and HEAD exactly, including the discovered file set, task/case/operation
+sets, environment, limits and exclusions. Refresh and non-live validate changed
+bytes, then commit manifest and sources together before live evaluation. Adopted
+`contract-check` validates this same rule before review. Checking never repairs a
+packet. Tests do not authenticate review or authorize integration, publication or
+gate closure; CraftingTable retains review and merge authority.
+
+Scope is unchanged: reviewed nonsensitive fixtures, the same typed tasks and cases,
+six operations (provision, start, inspect, terminate, collect_artifacts, release),
+15000 ms wall time and 65536 retained output bytes. No ordinary use or production
+credentials. Trusted host catalog registration of reviewed fixtures in a reviewed
+commit follows the same rule without a separate approval record; exact executable,
+configuration, policy, input, export and dependency bindings still apply. Request
+JSON cannot register itself. Revocation, quarantine and recovery controls remain.
+
+WSP-01 is the scoped successor to the frozen imported worker profile's explicit
+qualification-evaluation approval procedure. The historical profile identity and
+all other enforcement and exclusion requirements remain unchanged. The plan
+baseline is `928b5ef07797762bc002920af05a01aa4a4b0e0c`.
+`evaluation-approval.json`, `worker_approval_anchor.rs` and all requests below are
+superseded historical provenance, never inputs to the current live gate.
+
+---
+
+# Historical evaluation requests (superseded)
+
 # Finalization F-016 exact-packet evaluation request
 
 The campaign schedules individual exact tests in one pool of at most eight

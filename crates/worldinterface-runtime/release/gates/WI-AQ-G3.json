@@ -1,0 +1,68 @@
+{
+  "version": 1,
+  "id": "WI-AQ-G3",
+  "source_record_sha256": "39ce6dc3b5ebd8dc0ed53911fb291b3ce0a7a3d8fe3749797ce59a5267c5ed97",
+  "pass_criteria": [
+    "Early/late/duplicate signals, wait establishment, deadline/cancel races and restart converge.",
+    "Checkpoint and matched-signal references survive; no process-local fallback.",
+    "wi reviews its own mappings and applicable assumptions; a similarly named gate for another consumer is not an automatic pass.",
+    "Historical AQ-NN references identify retained capability/evidence obligations of the completed source; they are not runnable work. Review actual consumer candidate-branch fixtures on the exact accepted AQ build; independent gate attestation is still required and is not inferred from source presence."
+  ],
+  "requires": [
+    {
+      "id": "STACK-PLAN-ACCEPTED",
+      "kind": "checkpoint",
+      "state": "passed"
+    },
+    {
+      "id": "AQ-BASELINE-ACCEPTED",
+      "kind": "checkpoint",
+      "state": "passed"
+    }
+  ],
+  "required_cases": [
+    "AB-WI-006",
+    "AB-WI-007",
+    "AB-WI-008",
+    "AB-WI-009",
+    "AB-WI-010",
+    "AB-WI-011",
+    "AB-WI-022"
+  ],
+  "closing_item": "WIP-08",
+  "status": "closed",
+  "effective_on": "reviewed-merge-with-adopted-checks",
+  "historical_evidence": [
+    "300d033f"
+  ],
+  "requirement_bindings": [
+    {
+      "requirement": {
+        "id": "STACK-PLAN-ACCEPTED",
+        "kind": "checkpoint",
+        "state": "passed"
+      },
+      "binding": {
+        "kind": "plan-import",
+        "plan_version": "9212604c-4873-4cd5-b492-1ee3141b8b0b",
+        "date": "2026-10-13",
+        "historical_acceptance": "2026-10-01"
+      }
+    },
+    {
+      "requirement": {
+        "id": "AQ-BASELINE-ACCEPTED",
+        "kind": "checkpoint",
+        "state": "passed"
+      },
+      "binding": {
+        "kind": "published-aq",
+        "historical_submission": "7b060900",
+        "historical_acceptance": "2026-09-21",
+        "contract": "contracts/aq-integration-target.json",
+        "record": "published_release",
+        "check": "runtime-aq-graph"
+      }
+    }
+  ]
+}

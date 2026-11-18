@@ -15,7 +15,7 @@ impl StoreRoot {
         caller: &AuthenticatedCaller,
         intent: &EffectIntentId,
     ) -> Result<Vec<ReconciliationCase>> {
-        let s = self.effect_snapshot(caller.tenant())?;
+        let s = self.effect_intent_snapshot(caller.tenant(), intent)?;
         let e = s.effects.get(intent).ok_or("effect unavailable")?;
         if &e.agency.binding.principal != caller.principal() {
             return Err("effect unavailable".into());
@@ -38,7 +38,7 @@ impl StoreRoot {
         // observation of this case must never be overwritten.
         for retry in 0..32 {
             let result = (|| -> Result<()> {
-                let state = self.effect_snapshot(caller.tenant())?;
+                let state = self.effect_intent_snapshot(caller.tenant(), &case.intent)?;
                 // This is journal ordering time, not a fabricated provider time.
                 let at = state
                     .last_at

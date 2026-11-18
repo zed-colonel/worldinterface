@@ -88,7 +88,7 @@ static CONNECTOR_DIGEST: LazyLock<ContentHash> = LazyLock::new(|| {
 });
 
 pub fn dependencies_digest() -> ContentHash {
-    ContentHash::of(include_bytes!("../../Cargo.lock"))
+    ContentHash::of(include_bytes!("../../release/repository-Cargo.lock"))
 }
 type RunRegistry = BTreeMap<(String, String), Arc<Mutex<Run>>>;
 struct Run {

@@ -74,7 +74,7 @@ pub struct EmbeddedPorts<A, V, R, C, P, K> {
     pub custody: K,
     pub credential_recipient: OpaqueRef,
 }
-/// Recovery needs neither an evaluation approval nor executable files.
+/// Recovery needs neither an evaluation packet nor executable files.
 pub enum WorkerInstallation<S> {
     Process {
         scope: HostScope,

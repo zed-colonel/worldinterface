@@ -1,0 +1,188 @@
+{
+  "version": 1,
+  "id": "WI-WORKER-G1",
+  "source_record_sha256": "2e78294ba954add5571a257ecbbe8678f51382501b0641c72fdba33ca0c1a865",
+  "pass_criteria": [
+    "WI-ADR-016 and referenced authorization/evidence ADR clauses reviewed; limitations, field mapping and operation capability contract frozen.",
+    "Source-owned evidence cases are bound in acceptance_coverage; owner PR IDs attribute work and are not automatic accepted-parent prerequisites."
+  ],
+  "requires": [
+    {
+      "id": "STACK-PLAN-ACCEPTED",
+      "kind": "checkpoint",
+      "state": "passed"
+    },
+    {
+      "id": "wi/WI-02/domain",
+      "kind": "slice",
+      "state": "verified"
+    },
+    {
+      "id": "wi/WI-09/domain",
+      "kind": "slice",
+      "state": "verified"
+    },
+    {
+      "id": "wi/WI-10/domain",
+      "kind": "slice",
+      "state": "verified"
+    },
+    {
+      "id": "WI-ADR-016",
+      "kind": "checkpoint",
+      "state": "passed"
+    },
+    {
+      "id": "WI-ADR-005",
+      "kind": "checkpoint",
+      "state": "passed"
+    },
+    {
+      "id": "WI-ADR-006",
+      "kind": "checkpoint",
+      "state": "passed"
+    },
+    {
+      "id": "WI-ADR-008",
+      "kind": "checkpoint",
+      "state": "passed"
+    },
+    {
+      "id": "WI-ADR-010",
+      "kind": "checkpoint",
+      "state": "passed"
+    }
+  ],
+  "required_cases": [
+    "WP-001",
+    "WP-002",
+    "WP-003",
+    "WP-004",
+    "WP-005",
+    "WP-006",
+    "WP-007",
+    "WP-008"
+  ],
+  "closing_item": "WIP-01",
+  "status": "closed",
+  "effective_on": "reviewed-merge-with-adopted-checks",
+  "historical_evidence": [
+    "264d791e",
+    "b0f3e948"
+  ],
+  "requirement_bindings": [
+    {
+      "requirement": {
+        "id": "STACK-PLAN-ACCEPTED",
+        "kind": "checkpoint",
+        "state": "passed"
+      },
+      "binding": {
+        "kind": "plan-import",
+        "plan_version": "9212604c-4873-4cd5-b492-1ee3141b8b0b",
+        "date": "2026-10-13",
+        "historical_acceptance": "2026-10-01"
+      }
+    },
+    {
+      "requirement": {
+        "id": "wi/WI-02/domain",
+        "kind": "slice",
+        "state": "verified"
+      },
+      "binding": {
+        "kind": "historical-verified-slice",
+        "revisions": [
+          "9cbdb13",
+          "d8e1a49"
+        ]
+      }
+    },
+    {
+      "requirement": {
+        "id": "wi/WI-09/domain",
+        "kind": "slice",
+        "state": "verified"
+      },
+      "binding": {
+        "kind": "historical-verified-slice",
+        "revisions": [
+          "d5c4ad1"
+        ]
+      }
+    },
+    {
+      "requirement": {
+        "id": "wi/WI-10/domain",
+        "kind": "slice",
+        "state": "verified"
+      },
+      "binding": {
+        "kind": "historical-verified-slice",
+        "revisions": [
+          "f364bad"
+        ]
+      }
+    },
+    {
+      "requirement": {
+        "id": "WI-ADR-016",
+        "kind": "checkpoint",
+        "state": "passed"
+      },
+      "binding": {
+        "kind": "accepted-adr",
+        "approval_file": "docs/adr/approvals/WI-ADR-016-full.json",
+        "approval_sha256": "b25fea0d6571e51bfbd60d370a2c5fad7b30b664b05ba80c425ac2616cf7d9cf"
+      }
+    },
+    {
+      "requirement": {
+        "id": "WI-ADR-005",
+        "kind": "checkpoint",
+        "state": "passed"
+      },
+      "binding": {
+        "kind": "accepted-adr",
+        "approval_file": "docs/adr/approvals/WI-ADR-005.json",
+        "approval_sha256": "2471be57c19a1540b8caa03164d0e1817c317c19fa24916c7a60afae43f8c659"
+      }
+    },
+    {
+      "requirement": {
+        "id": "WI-ADR-006",
+        "kind": "checkpoint",
+        "state": "passed"
+      },
+      "binding": {
+        "kind": "accepted-adr",
+        "approval_file": "docs/adr/approvals/WI-ADR-006.json",
+        "approval_sha256": "2a826c9234ab0aebf218f95b679f13fbbca6036762e21c9ade1f771586f0b4c0"
+      }
+    },
+    {
+      "requirement": {
+        "id": "WI-ADR-008",
+        "kind": "checkpoint",
+        "state": "passed"
+      },
+      "binding": {
+        "kind": "accepted-adr",
+        "approval_file": "docs/adr/approvals/WI-ADR-008.json",
+        "approval_sha256": "81c1e9d516c944c77988c40c0720c0baf4e7844acd95498b60fb085591d73141"
+      }
+    },
+    {
+      "requirement": {
+        "id": "WI-ADR-010",
+        "kind": "checkpoint",
+        "state": "passed"
+      },
+      "binding": {
+        "kind": "accepted-adr",
+        "approval_file": "docs/adr/approvals/WI-ADR-010.json",
+        "approval_sha256": "858084bb5a3cc73d4b77be4839f507a44a4b9fc2d1f24629bd1be808955339f0"
+      }
+    }
+  ]
+}

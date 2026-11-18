@@ -1,0 +1,65 @@
+{
+  "version": 1,
+  "id": "WI-AQ-G4",
+  "source_record_sha256": "8e03e5f08487346ede8f06f6731dfb6a234c50f5af1bb201a7e475d4532337ab",
+  "pass_criteria": [
+    "Lease-fenced dispositions and atomic child-admission/parent-wait behavior pass.",
+    "Completion, cancellation, and output publication recover without semantic reinterpretation.",
+    "wi reviews its own mappings and applicable assumptions; a similarly named gate for another consumer is not an automatic pass.",
+    "Historical AQ-NN references identify retained capability/evidence obligations of the completed source; they are not runnable work. Review actual consumer candidate-branch fixtures on the exact accepted AQ build; independent gate attestation is still required and is not inferred from source presence."
+  ],
+  "requires": [
+    {
+      "id": "STACK-PLAN-ACCEPTED",
+      "kind": "checkpoint",
+      "state": "passed"
+    },
+    {
+      "id": "AQ-BASELINE-ACCEPTED",
+      "kind": "checkpoint",
+      "state": "passed"
+    }
+  ],
+  "required_cases": [
+    "AB-WI-005",
+    "AB-WI-012",
+    "AB-WI-013",
+    "AB-WI-014",
+    "AB-WI-020",
+    "AB-WI-023"
+  ],
+  "closing_item": "WIP-07",
+  "status": "closed",
+  "effective_on": "reviewed-merge-with-adopted-checks",
+  "historical_evidence": [],
+  "requirement_bindings": [
+    {
+      "requirement": {
+        "id": "STACK-PLAN-ACCEPTED",
+        "kind": "checkpoint",
+        "state": "passed"
+      },
+      "binding": {
+        "kind": "plan-import",
+        "plan_version": "9212604c-4873-4cd5-b492-1ee3141b8b0b",
+        "date": "2026-10-13",
+        "historical_acceptance": "2026-10-01"
+      }
+    },
+    {
+      "requirement": {
+        "id": "AQ-BASELINE-ACCEPTED",
+        "kind": "checkpoint",
+        "state": "passed"
+      },
+      "binding": {
+        "kind": "published-aq",
+        "historical_submission": "7b060900",
+        "historical_acceptance": "2026-09-21",
+        "contract": "contracts/aq-integration-target.json",
+        "record": "published_release",
+        "check": "runtime-aq-graph"
+      }
+    }
+  ]
+}

@@ -267,7 +267,8 @@ impl<P: Connector, C: TrustedClock> ReconciliationHandler<P, C> {
     }
     pub fn execute_bound(&self, ctx: &ExecutorContext) -> Result<AttemptDisposition> {
         let locator = CaseLocator::decode(&ctx.input.payload)?;
-        let state = storage(|| self.bundle.wi().effect_snapshot(&locator.tenant))?;
+        let state =
+            storage(|| self.bundle.wi().effect_intent_snapshot(&locator.tenant, &locator.intent))?;
         let effect = state.effects.get(&locator.intent).ok_or("missing reconciliation effect")?;
         let caller = AuthenticatedCaller::from_trusted_authentication(
             locator.tenant,

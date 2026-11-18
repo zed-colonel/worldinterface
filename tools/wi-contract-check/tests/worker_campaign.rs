@@ -16,6 +16,23 @@ fn reference(test: &str) -> TestRef {
     TestRef { manifest: "fixture".into(), package: "fixture".into(), test: test.into() }
 }
 #[test]
+fn capacity_batch_timeout_is_scoped_without_relaxing_operation_or_other_test_bounds() {
+    let mut batch = reference("flow_capacity_is_enforced_without_losing_existing_history");
+    assert_eq!(campaign::harness_timeout_seconds(&batch), 600);
+    batch.manifest = "crates/worldinterface-runtime/Cargo.toml".into();
+    assert_eq!(campaign::harness_timeout_seconds(&batch), 600);
+    batch.package = "worldinterface-runtime".into();
+    assert_eq!(campaign::harness_timeout_seconds(&batch), 900);
+    for name in [
+        "one_host_releases_capacity_for_more_than_64_sequential_runs",
+        "wp_035_authenticated_supervisor_binds_exact_lifecycle_operation",
+        "unrecognized_test",
+    ] {
+        batch.test = name.into();
+        assert_eq!(campaign::harness_timeout_seconds(&batch), 600);
+    }
+}
+#[test]
 fn wp_033_inflated_claims_cannot_convert_worker_success_to_consumer_acceptance() {
     campaign::validate_claims(&campaign::claims()).unwrap();
     for field in [
@@ -265,6 +282,9 @@ fn campaign_tests_in_one_harness_fill_the_bounded_pool_and_run_exactly_once() {
         r#"
 fn peer(index: usize) {{
     let base = std::path::PathBuf::from(std::env::var_os("WI_WORKER_CAMPAIGN_EVIDENCE").unwrap());
+    assert!(base.join("build.ready").exists());
+    assert!(base.join("capacity.done").exists() && base.join("history.done").exists(),
+        "general pool started before both long tests completed");
     std::fs::OpenOptions::new().write(true).create_new(true)
         .open(base.join(format!("{{index}}.ready"))).unwrap();
     let deadline = std::time::Instant::now() + std::time::Duration::from_secs(15);
@@ -280,8 +300,69 @@ fn peer(index: usize) {{
     for index in 0..campaign::PARALLELISM {
         let name = format!("peer_{index}");
         fixture.push_str(&format!("#[test] fn {name}() {{ peer({index}); }}\n"));
-        selected.insert(reference(&name), executable.clone());
+        let mut peer = reference(&name);
+        peer.manifest = "a-fixture".into();
+        selected.insert(peer, executable.clone());
     }
+    // Priority tests sort after every peer in the input map. Preparation runs
+    // alone, both long tests must overlap without peers, then all twelve peers
+    // must overlap. Create-once markers reject duplicate execution.
+    for (name, own, other) in [
+        ("one_host_releases_capacity_for_more_than_64_sequential_runs", "capacity", "history"),
+        ("flow_capacity_is_enforced_without_losing_existing_history", "history", "capacity"),
+    ] {
+        fixture.push_str(&format!(
+            r#"
+#[test] fn {name}() {{
+    let base = std::path::PathBuf::from(std::env::var_os("WI_WORKER_CAMPAIGN_EVIDENCE").unwrap());
+    assert!(base.join("build.ready").exists());
+    std::fs::OpenOptions::new().write(true).create_new(true)
+        .open(base.join("{own}.ready")).unwrap();
+    let deadline = std::time::Instant::now() + std::time::Duration::from_secs(15);
+    while !base.join("{other}.ready").exists() {{
+        assert!(std::time::Instant::now() < deadline, "long tests did not overlap");
+        std::thread::sleep(std::time::Duration::from_millis(10));
+    }}
+    std::thread::sleep(std::time::Duration::from_millis(100));
+    assert!(!(0..{parallelism}).any(|i| base.join(format!("{{i}}.ready")).exists()),
+        "long test overlapped general pool");
+    std::fs::OpenOptions::new().write(true).create_new(true)
+        .open(base.join("{own}.done")).unwrap();
+}}
+"#,
+            parallelism = campaign::PARALLELISM
+        ));
+        selected.insert(
+            TestRef {
+                manifest: "crates/worldinterface-runtime/Cargo.toml".into(),
+                package: "worldinterface-runtime".into(),
+                test: name.into(),
+            },
+            executable.clone(),
+        );
+    }
+    let build = "reviewed_build_artifacts_are_bounded_and_publishable_without_launch";
+    fixture.push_str(&format!(
+        r#"
+#[test] fn {build}() {{
+    let base = std::path::PathBuf::from(std::env::var_os("WI_WORKER_CAMPAIGN_EVIDENCE").unwrap());
+    assert!(!base.join("capacity.ready").exists() && !base.join("history.ready").exists());
+    std::thread::sleep(std::time::Duration::from_millis(100));
+    assert!(!(0..{parallelism}).any(|i| base.join(format!("{{i}}.ready")).exists()), "build test overlapped a peer");
+    std::fs::OpenOptions::new().write(true).create_new(true)
+        .open(base.join("build.ready")).unwrap();
+}}
+"#,
+        parallelism = campaign::PARALLELISM
+    ));
+    selected.insert(
+        TestRef {
+            manifest: "crates/worldinterface-runtime/Cargo.toml".into(),
+            package: "worldinterface-runtime".into(),
+            test: build.into(),
+        },
+        executable.clone(),
+    );
     fs::write(&source, fixture).unwrap();
     assert!(Command::new("timeout")
         .args(["60s", "rustc", "--test"])
@@ -366,4 +447,28 @@ fn campaign_shared_runtime_support_tests_retain_each_harness_and_reject_omission
         .is_err());
     fs::write(right, b"substituted binary").unwrap();
     assert!(campaign::validate_runtime_results(&expected, &outcomes, temp.path()).is_err());
+}
+
+#[test]
+fn priority_test_renames_and_removals_fail_before_campaign_execution() {
+    let names = [
+        "reviewed_build_artifacts_are_bounded_and_publishable_without_launch",
+        "one_host_releases_capacity_for_more_than_64_sequential_runs",
+        "flow_capacity_is_enforced_without_losing_existing_history",
+    ];
+    let required = names.map(|test| TestRef {
+        manifest: "crates/worldinterface-runtime/Cargo.toml".into(),
+        package: "worldinterface-runtime".into(),
+        test: test.into(),
+    });
+    campaign::validate_priority_tests(required.iter()).unwrap();
+    for omitted in 0..required.len() {
+        assert!(campaign::validate_priority_tests(
+            required.iter().enumerate().filter_map(|(i, r)| (i != omitted).then_some(r))
+        )
+        .is_err());
+        let mut renamed = required.clone();
+        renamed[omitted].test.push_str("_renamed");
+        assert!(campaign::validate_priority_tests(renamed.iter()).is_err());
+    }
 }

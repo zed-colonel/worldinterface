@@ -42,10 +42,8 @@ impl WorkerCredentialMetadata {
 #[cfg(test)]
 #[test]
 fn worker_metadata_translation_preserves_every_brokerage_scope_dimension() {
-    let fixture: serde_json::Value = serde_json::from_str(include_str!(
-        "../../../../conformance/wi-fabric-2/egress/fixture.json"
-    ))
-    .unwrap();
+    let fixture: serde_json::Value =
+        serde_json::from_str(include_str!("../../tests/support/egress.json")).unwrap();
     let fact: worldinterface_domain::resource::ResolutionFact =
         serde_json::from_value(fixture["snapshot"]["facts"][0].clone()).unwrap();
     let principal: PrincipalId = fixture["snapshot"]["bindings"][0]["principal"]

@@ -1,72 +1,151 @@
 # Operator publication staging
 
-WI-01 prepares evidence and a procedure. It does not publish, merge, create remote
-refs, alter remote protection settings, or claim the parent gate complete.
+WSP-02 prepared eight 0.2.0-alpha.1 archives and verification evidence on
+`wi-supervisor-proof-1`. WSP-05 prepares 0.2.0-alpha.2 with WI-WORKER-G5; finalization
+updates that candidate before alpha.2 publication. Publication is operator-owned.
+Neither work item tags, pushes, publishes, merges, changes remote
+protection, or records publication completion.
 
-The adopted authority is `craftingtable-repository-policy.json`, policy version 1,
-branch settings version 1, adopted at `2026-09-18T00:41:03.548Z` for plan version
-`4782bed3-97da-4d00-9535-64086eff6ea4`. Its controller-local controls already apply:
+The historical WSP-02 CraftingTable repository-policy observation had settings version 1,
+observed 2026-11-10T05:57:55.908Z, integration branch `wi-supervisor-proof-1` at
+`b67245d07f45b1e4e0ddf42d835355fc3cbb3a85`, and proposed `main` freeze at
+`928b5ef07797762bc002920af05a01aa4a4b0e0c`. Its controller controls require a
+qualifying review of exact source and target revisions before controller
+integration, under operator approval or recorded delegation. Final promotion
+requires explicit operator approval; `main` and `master` are manual branches.
+A proposed freeze or matching ref is an observation, not independent adoption
+of a freeze. Retain separately the applicable adopted freeze instruction and
+fresh observations at publication. These local controls do not establish GitHub
+protection or constrain direct Git outside CraftingTable.
 
-- Experimental `main` is frozen at
-  `f48df82e98203fa94c86eecae60425205c3e00e9`; evidence extraction is permitted,
-  further feature work is not. Ordinary controller merges into it are blocked.
-- Work proceeds on controller-managed work-item/slice branches. Only the controller
-  may integrate into `wi-fabric-2`, after qualifying review of the exact current
-  source and target commits, under operator approval or recorded integration policy.
-- Final promotion requires explicit operator approval. `main`, `master`, the
-  repository default and configured manual-merge branches cannot receive automatic
-  integration.
+For WSP-05, the supplied adopted repository-policy evidence is settings version 1,
+observed 2026-11-15T03:55:06.734Z: integration `wi-supervisor-proof-1` at
+`451aa6484a9552cc17eaa0d9c3c6f5b561a01ec8`, no reported issues, and proposed
+`main` freeze at `928b5ef07797762bc002920af05a01aa4a4b0e0c`. The same controller
+review and integration controls apply. This fresh local observation records no
+remote protection inspection or publication. Remote obligations remain in steps
+2–5; their absence does not block local preparation.
 
-These are local workflow controls, not remote hosting protections or an operating
-system write lock; direct Git commands outside CraftingTable are not constrained
-by them. Assess the supplied controller policy and review/integration records as
-local control evidence. Record fresh, timestamped observations of `main`,
-`worldinterface/pre-wi-fabric-2`, candidate and integration revisions separately
-from the adopted policy. A matching branch or tag is only a baseline observation,
-not proof of protection. Prior operator decisions are guidance, not test results.
+The former WI-01 procedure's `wi-fabric-2` destination, `f48df82` freeze,
+controller Cargo and `ct-act` references are historical. Current checks use Rust
+1.89.0 and crates.io ActionQueue 0.3.0. There is no controller Cargo launcher or
+cross-project AQ checkout pin. The separate preparation/completion receipt
+schemas and their WI validator remain authoritative.
 
-Remote protection and publication completion remain unverified. Under the adopted
-policy the operator must configure and independently verify applicable remote
-branch/review protections **before the first remote publication and final release
-approval**. This remote obligation does not defer the local freeze. All remote
-operations remain operator-owned; WI-FABRIC-2 supplies publication preparation.
+1. For alpha.2, select the exact finalized candidate head that the approved final
+   promotion brings into `main`, including all finalization fixes, and prepare
+   from that commit. Do not use the WSP-05 merge
+   `3cfce074d9a78e18513d8c70410a7b033d9d140a` on `wi-supervisor-proof-1`: it lacks
+   those fixes. Alpha.1 used the WSP-02 merge commit. Use a clean independent clone
+   outside CraftingTable's checkout and an external empty output directory. Keep
+   `CARGO_TARGET_DIR` external and separate from evidence. `TMPDIR` must name an
+   existing writable directory outside the checkout. Unset, empty or unusable
+   `TMPDIR` refuses preparation before toolchain probing, fetching or gates, with
+   instructions to create and export it. Preserve CraftingTable's supplied
+   temporary and build directories. In an ordinary shell, set up missing values:
 
-At the release milestone the operator uses their `bin` publication script. The
-script path, digest, destination and exact invocation must be supplied in the
-completion receipt; this repository cannot infer them or invent protection rules.
+   ```sh
+   if [ -z "${TMPDIR:-}" ]; then
+     export TMPDIR="$(mktemp -d /tmp/wi-release-tmp.XXXXXXXX)"
+   fi
+   export TMP="$TMPDIR" TEMP="$TMPDIR"
+   if [ -z "${CARGO_TARGET_DIR:-}" ]; then
+     export CARGO_TARGET_DIR="$(mktemp -d /tmp/wi-release-build.XXXXXXXX)"
+   fi
+   ```
 
-1. Verify the exact clean reviewed source revision with controller Cargo,
-   `ct-check`, and `ct-act`; preserve commands, toolchain/environment, fixture,
-   upstream and artifact identities outside build caches. Keep candidate, merged,
-   and post-rebase receipts separate. Rebase or merge requires new verification.
-2. Prepare a `publication-preparation` receipt conforming to preparation.schema.json.
-   Bind the source and baseline revisions, artifact hashes, successful commands
-   and verification receipts. Its publication status is always `not-performed`.
-   Validate with `wi-contract-check publication check PREPARATION.json`.
-3. Before any first remote publication action, including running the publication
-   script, the operator configures applicable remote branch/review protections and
-   obtains independent verification. Record the destination, applicable branches,
-   observed settings, observer and observation time in a hashed evidence artifact
-   referenced by the preparation receipt's `artifacts`. Check that this evidence
-   covers the intended destination and current settings; absent or stale evidence
-   blocks publication. An authentication failure proves neither presence nor
-   absence of protection. The same protection gate must be satisfied before final
-   release approval. Preparation alone does not satisfy either gate.
-4. At the release gate, after the protection gate above is satisfied, the operator
-   checks upstream and WI runtime conformance, authorizes the exact
-   script/action/destination, and runs the script. Local freeze and controller-local
-   review/integration controls continue to apply throughout; final promotion still
-   needs explicit operator approval.
-5. Independently capture observed remote refs, published artifacts and actual
-   protection/review settings, including observation time. This post-publication
-   observation supplements, and cannot replace, the pre-publication verification.
-   Write a separate
-   `publication-completion` receipt, referencing the preparation file digest,
-   source revision, operator, action, script digest, destination, successful command
-   and observed state artifact. Validate with the same command.
+   Caller-supplied paths are canonicalized for gates and staging, retaining the
+   store boundary's rejection of symlink components. Run:
 
-Receipt validation checks structure, artifact bytes and identity consistency. It
-cannot prove a remote observation truthful or authorize publication. Operator
-review of the observation and script remains required. No completion receipt is
-included in WI-01. The candidate preparation is written outside source after the
-clean commit is verified, avoiding a self-referential source revision.
+   ```sh
+   cargo +1.89.0 fetch --locked --manifest-path crates/worldinterface-foundation/Cargo.toml
+   cargo +1.89.0 fetch --locked --manifest-path crates/worldinterface-runtime/Cargo.toml
+   python3 -B scripts/release.py prepare --version 0.2.0-alpha.2 \
+     --commit "$(git rev-parse HEAD)" --output /absolute/new/wi-alpha2
+   python3 -B scripts/release.py verify --manifest /absolute/new/wi-alpha2/release-manifest.json
+   crate-release plan /absolute/new/wi-alpha2/release-manifest.json
+   crate-release check /absolute/new/wi-alpha2/release-manifest.json
+   ```
+
+   Preparation fetches dependencies, runs every adopted argv with separate logs,
+   builds archive dependencies through an external Cargo local registry of exact
+   checksum-verified archives, runs all packaged self-contained tests, builds
+   rustdoc with warnings denied, exercises the registry consumer and installs both
+   workers. Local-registry Cargo homes live under disposable staging; the shared
+   crates.io archive cache is read only during registry seeding. Rustdoc clears
+   the external target's `doc` directory before generating release documentation.
+   Archive sources come from the committed Git tree; ignored checkout files are
+   excluded. Gates clear inherited compiler flags, wrappers, C/C++ compiler
+   overrides and Cargo build/target/profile overrides. `gate-environment.json`
+   also records paths and SHA-256 digests (or absence) for both Cargo config
+   filenames in the gate and package Cargo homes and every ancestor of the checkout and staging
+   directory. Preparation refuses ambient source overrides (`paths`, `[patch]`,
+   `[source]`), compiler, target, profile and compiler environment settings before
+   gates run; only the exact committed repository
+   `.cargo/config.toml` may supply them. Package helpers check staging ancestors
+   too, and preparation refuses config drift between gates. Config contents are
+   excluded from evidence because they may contain credentials. The file
+   records that environment separately from the worker install environment in
+   `build-environment.json`; both are hashed into the receipt and manifest.
+   Worker builds add the path remappings recorded in the recipe. It produces source.bundle, notes, API docs, archives, resolution and
+   production-feature evidence, the linked consumer handoff, the WI preparation
+   receipt, release-manifest.json and SHA256SUMS. Failures retain logs without a
+   successful manifest. Rebase or merge requires fresh preparation. CraftingTable
+   separately runs its adopted definitions through `ct-check --declared ID` on
+   the committed candidate; the script's direct gate runs do not replace that.
+
+2. Before first remote publication and final release approval, configure and
+   independently verify the applicable remote branch/review protections (the
+   plan's default protects GitHub `main` against force pushes and deletion).
+   Record destination, branches, observed settings, observer and observation time
+   in hashed external evidence. Verify it covers the current destination and
+   settings. Missing or stale verification blocks publication, not local
+   preparation. Authentication failure establishes neither presence nor absence
+   of protection. No exemption is claimed by WSP-02 or WSP-05. Preserve this observation
+   with the publication records and reference it in the operator's final
+   preparation receipt; validate that receipt through WI's receipt validator.
+
+3. After the protection gate and release approval, create `v0.2.0-alpha.2` at the
+   exact finalized candidate head selected in step 1 and recorded as the source
+   commit in `release-manifest.json`, then push the tag. Publish that commit's
+   prepared bundle with
+   `crate-release publish /absolute/new/wi-alpha2/release-manifest.json --verified`.
+   The operator retains the exact publisher path, digest, invocation and
+   destination. That finalized head reaches `main` only through the approved final
+   promotion. Alpha.1 used the WSP-02 merge for `v0.2.0-alpha.1`. If any alpha.2
+   crate has already been published from a different commit, the remaining
+   changes to published code require alpha.3, prepared by the same procedure,
+   before Exoskeleton moves to them (plan §5). Any later finalization change to
+   published code after alpha.2 likewise requires alpha.3; never reuse a published
+   version for different bytes.
+
+4. From an external copy, run the registry-only consumer and worker install route
+   in [0.2.0-alpha.2.md](0.2.0-alpha.2.md), using crates.io with no replacement or
+   patches. Retain resolution, lock, commands, worker measurements and outcome
+   under `~/.local/share/worldinterface-releases/<version>/`. Record publication
+   for the Exoskeleton map's waiting item only after registry availability and
+   consumer verification. In that published map record, relay the exact prepared
+   `consumer-handoff.json` file and its SHA-256 from `release-manifest.json`, with
+   the version and source commit, to EXV-11 (EXV-27 for alpha.2). Supply the file as
+   an input to the downstream work item so its agents need only crates.io network
+   access. The receiving operator verifies the digest against the trusted release
+   manifest before forwarding it; the consumer verifies the supplied digest and
+   compares the handoff's crate checksums to its crates.io lockfile. Keep the
+   prepared bytes intact, including `publication_status: not-performed`; the map
+   record and separate completion receipt establish subsequent publication.
+
+5. Capture actual remote refs, published artifacts and fresh protection settings,
+   including observer/time. Write a separate `publication-completion` receipt per
+   `completion.schema.json`, referencing the preparation receipt digest, exact
+   source revision, operator, action, script digest, destination, successful
+   command/log and observed state. Validate it with:
+
+   ```sh
+   cargo run --locked --offline --manifest-path tools/wi-contract-check/Cargo.toml \
+     -- publication check /absolute/path/publication-completion.json
+   ```
+
+Receipt validation establishes structure, artifact integrity and identity
+consistency. Operator review establishes observation credibility and publication
+authority. No completion receipt is produced by preparation, and no release
+bundle certifies a source revision other than the exact clean commit it names.
